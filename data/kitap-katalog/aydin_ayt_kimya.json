@@ -1,0 +1,603 @@
+{
+ "name": "Aydın AYT Kimya Konu Özetli Soru Bankası",
+ "publisher": "Aydın Yayınları",
+ "subject": "AYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Taranmış PDF (416 s). Aydın deseni: test başlangıcında 'TEST N' (bölüm içi) + sağ üstte KÜRESEL numara; her test 2 sayfa. Konu adları her testin bant başlığından (vision üst-şerit). Bölüm başı 'Özet' sayfaları test değil.",
+  "Küresel test numarası zinciri 1..175: kopuksuz."
+ ],
+ "sections": [
+  {
+   "label": "Atom Modelleri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 17
+  },
+  {
+   "label": "Atomun Kuantum Modeli",
+   "test_count": 3,
+   "source": "serit",
+   "page": 19
+  },
+  {
+   "label": "Elektron Dizilimi",
+   "test_count": 2,
+   "source": "serit",
+   "page": 25
+  },
+  {
+   "label": "Konu Tarama (Modern Atom Teorisi)",
+   "test_count": 4,
+   "source": "serit",
+   "page": 29
+  },
+  {
+   "label": "Periyodik Cetvel Özellikleri ve Yer bulma",
+   "test_count": 1,
+   "source": "serit",
+   "page": 43
+  },
+  {
+   "label": "Periyodik Özellikler",
+   "test_count": 6,
+   "source": "serit",
+   "page": 45
+  },
+  {
+   "label": "Elementleri Tanıyalım",
+   "test_count": 2,
+   "source": "serit",
+   "page": 57
+  },
+  {
+   "label": "Bileşik Adlandırma ve Yükseltgenme Basamağı",
+   "test_count": 2,
+   "source": "serit",
+   "page": 61
+  },
+  {
+   "label": "Konu Tarama (Periyodik Cetvel)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 65
+  },
+  {
+   "label": "Mol",
+   "test_count": 4,
+   "source": "serit",
+   "page": 71
+  },
+  {
+   "label": "Kimyasal Tepkime Türleri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 79
+  },
+  {
+   "label": "Kimyasal Hesaplamalar",
+   "test_count": 3,
+   "source": "serit",
+   "page": 81
+  },
+  {
+   "label": "Gazların Özellikleri ve İdeal Gaz Denklemi",
+   "test_count": 1,
+   "source": "serit",
+   "page": 91
+  },
+  {
+   "label": "Gaz Yasaları",
+   "test_count": 3,
+   "source": "serit",
+   "page": 93
+  },
+  {
+   "label": "Birleşik Kaplar",
+   "test_count": 1,
+   "source": "serit",
+   "page": 99
+  },
+  {
+   "label": "Kısmi Basınç",
+   "test_count": 1,
+   "source": "serit",
+   "page": 101
+  },
+  {
+   "label": "Gazların Yayılma Hızı",
+   "test_count": 1,
+   "source": "serit",
+   "page": 103
+  },
+  {
+   "label": "Buhar Basıncı",
+   "test_count": 1,
+   "source": "serit",
+   "page": 105
+  },
+  {
+   "label": "Gerçek Gazlar",
+   "test_count": 1,
+   "source": "serit",
+   "page": 107
+  },
+  {
+   "label": "Konu Tarama (Gazlar)",
+   "test_count": 4,
+   "source": "serit",
+   "page": 109
+  },
+  {
+   "label": "Sıvı Ortamda Çözünme Olayı",
+   "test_count": 2,
+   "source": "serit",
+   "page": 121
+  },
+  {
+   "label": "Kütle Yüzde (%) Derişim",
+   "test_count": 1,
+   "source": "serit",
+   "page": 125
+  },
+  {
+   "label": "Hacimce Yüzde (%), ppm Derişim",
+   "test_count": 1,
+   "source": "serit",
+   "page": 127
+  },
+  {
+   "label": "Derişimle İlgili Hesaplamalar",
+   "test_count": 3,
+   "source": "serit",
+   "page": 129
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 3,
+   "source": "serit",
+   "page": 135
+  },
+  {
+   "label": "Çözünürlüğü Etkileyen Faktörler (Sıvı Çözeltiler)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 141
+  },
+  {
+   "label": "Çözünürlük Hesabı",
+   "test_count": 1,
+   "source": "serit",
+   "page": 145
+  },
+  {
+   "label": "Heterojen Karışımlar",
+   "test_count": 1,
+   "source": "serit",
+   "page": 147
+  },
+  {
+   "label": "Konu Tarama (Sıvı Çözeltiler)",
+   "test_count": 3,
+   "source": "serit",
+   "page": 149
+  },
+  {
+   "label": "Sistemlerde Entalpi Değişimi",
+   "test_count": 2,
+   "source": "serit",
+   "page": 157
+  },
+  {
+   "label": "Oluşum Entalpisi ve Tepkime Entalpisi Hesabı",
+   "test_count": 1,
+   "source": "serit",
+   "page": 161
+  },
+  {
+   "label": "Hess Yasası",
+   "test_count": 1,
+   "source": "serit",
+   "page": 163
+  },
+  {
+   "label": "Bağ Enerjisinden Tepkime Isısı Hesabı",
+   "test_count": 1,
+   "source": "serit",
+   "page": 165
+  },
+  {
+   "label": "Konu Tarama (Kimya ve Enerji)",
+   "test_count": 3,
+   "source": "serit",
+   "page": 167
+  },
+  {
+   "label": "Tepkime Hızının Ölçülmesi",
+   "test_count": 2,
+   "source": "serit",
+   "page": 177
+  },
+  {
+   "label": "Aktifleşme Enerjisinin Bulunması",
+   "test_count": 1,
+   "source": "serit",
+   "page": 181
+  },
+  {
+   "label": "Tepkime Hızına Bağlı Olduğu Faktörler",
+   "test_count": 3,
+   "source": "serit",
+   "page": 183
+  },
+  {
+   "label": "Tepkime Hız Denkleminin Yazılması",
+   "test_count": 2,
+   "source": "serit",
+   "page": 189
+  },
+  {
+   "label": "Konu Tarama (Kimyasal Tepkimelerde Hız)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 193
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Denge ve Denge İfadeleri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 201
+  },
+  {
+   "label": "Denge Sabiti ve Tepkime ile İlişkisi",
+   "test_count": 2,
+   "source": "serit",
+   "page": 203
+  },
+  {
+   "label": "Dengeyi Etkileyen Faktörler",
+   "test_count": 4,
+   "source": "serit",
+   "page": 207
+  },
+  {
+   "label": "Denge ile İlgili Hesaplamalar",
+   "test_count": 1,
+   "source": "serit",
+   "page": 215
+  },
+  {
+   "label": "Konu Tarama (Kimyasal Tepkimelerde Denge)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 217
+  },
+  {
+   "label": "Asit ve Bazların Özellikleri",
+   "test_count": 2,
+   "source": "serit",
+   "page": 225
+  },
+  {
+   "label": "Asit - Baz Çözeltilerinde pH Hesabı",
+   "test_count": 2,
+   "source": "serit",
+   "page": 227
+  },
+  {
+   "label": "Nötralleşme Tepkimeleri",
+   "test_count": 2,
+   "source": "serit",
+   "page": 233
+  },
+  {
+   "label": "Zayıf Asit ve Bazlar",
+   "test_count": 2,
+   "source": "serit",
+   "page": 235
+  },
+  {
+   "label": "Tampon Çözeltiler ve Hidroliz",
+   "test_count": 1,
+   "source": "serit",
+   "page": 241
+  },
+  {
+   "label": "Titrasyon",
+   "test_count": 1,
+   "source": "serit",
+   "page": 243
+  },
+  {
+   "label": "Konu Tarama (Asit ve Bazlar)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 245
+  },
+  {
+   "label": "Sulu Ortamda Çözünme",
+   "test_count": 1,
+   "source": "serit",
+   "page": 251
+  },
+  {
+   "label": "Çözünürlük Denklemi ve Hesapları",
+   "test_count": 1,
+   "source": "serit",
+   "page": 253
+  },
+  {
+   "label": "Çözünürlük Hesapları",
+   "test_count": 1,
+   "source": "serit",
+   "page": 255
+  },
+  {
+   "label": "Çözünürlüğe Ortak İyon Etkisi",
+   "test_count": 1,
+   "source": "serit",
+   "page": 257
+  },
+  {
+   "label": "Çözünürlüğü Etkileyen Faktörler (Çözünürlük Dengesi)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 259
+  },
+  {
+   "label": "Konu Tarama (Çözünürlük Dengesi)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 263
+  },
+  {
+   "label": "İndirgenme - Yükseltgenme Tepkimeleri",
+   "test_count": 3,
+   "source": "serit",
+   "page": 273
+  },
+  {
+   "label": "Aktiflik",
+   "test_count": 1,
+   "source": "serit",
+   "page": 279
+  },
+  {
+   "label": "Piller",
+   "test_count": 2,
+   "source": "serit",
+   "page": 281
+  },
+  {
+   "label": "Pil Gerilimini Etkileyen Faktörler",
+   "test_count": 2,
+   "source": "serit",
+   "page": 285
+  },
+  {
+   "label": "Derişim Pilleri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 289
+  },
+  {
+   "label": "Elektroliz",
+   "test_count": 2,
+   "source": "serit",
+   "page": 291
+  },
+  {
+   "label": "Konu Tarama (Elektrokimya)",
+   "test_count": 6,
+   "source": "serit",
+   "page": 295
+  },
+  {
+   "label": "Molekül - Basit Formül Bulma",
+   "test_count": 1,
+   "source": "serit",
+   "page": 317
+  },
+  {
+   "label": "Organik, Anorganik Maddeler ve Doğada Karbon",
+   "test_count": 1,
+   "source": "serit",
+   "page": 319
+  },
+  {
+   "label": "Karbon Kimyasına Giriş",
+   "test_count": 6,
+   "source": "serit",
+   "page": 321
+  },
+  {
+   "label": "Alkanların Adlandırılması",
+   "test_count": 2,
+   "source": "serit",
+   "page": 333
+  },
+  {
+   "label": "Alkanlarda İzomeri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 337
+  },
+  {
+   "label": "Alkanların Özellikleri ve Reaksiyonları",
+   "test_count": 1,
+   "source": "serit",
+   "page": 339
+  },
+  {
+   "label": "Alkenlerin Adlandırılması",
+   "test_count": 2,
+   "source": "serit",
+   "page": 341
+  },
+  {
+   "label": "Geometrik İzomeri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 345
+  },
+  {
+   "label": "Alkenlerin Eldesi ve Reaksiyonları",
+   "test_count": 1,
+   "source": "serit",
+   "page": 347
+  },
+  {
+   "label": "Alkinlerin Adlandırılması",
+   "test_count": 1,
+   "source": "serit",
+   "page": 349
+  },
+  {
+   "label": "Alkinlerde İzomeri, Eldesi ve Reaksiyonları",
+   "test_count": 1,
+   "source": "serit",
+   "page": 351
+  },
+  {
+   "label": "Alkinlerin Eldesi ve Reaksiyonları",
+   "test_count": 2,
+   "source": "serit",
+   "page": 353
+  },
+  {
+   "label": "Aromatik Bileşikler",
+   "test_count": 2,
+   "source": "serit",
+   "page": 357
+  },
+  {
+   "label": "Fonksiyonel Gruplar",
+   "test_count": 1,
+   "source": "serit",
+   "page": 361
+  },
+  {
+   "label": "Alkollerin Adlandırılması",
+   "test_count": 2,
+   "source": "serit",
+   "page": 363
+  },
+  {
+   "label": "Alkollerde İzomeri ve Eldesi",
+   "test_count": 1,
+   "source": "serit",
+   "page": 367
+  },
+  {
+   "label": "Alkollerin Eldesi ve Reaksiyonları",
+   "test_count": 2,
+   "source": "serit",
+   "page": 369
+  },
+  {
+   "label": "Eterlerin Adlandırılması ve İzomeri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 373
+  },
+  {
+   "label": "Eterlerin Eldesi, Özellikleri ve İzomeri",
+   "test_count": 2,
+   "source": "serit",
+   "page": 375
+  },
+  {
+   "label": "Aldehitlerin Adlandırılması",
+   "test_count": 1,
+   "source": "serit",
+   "page": 379
+  },
+  {
+   "label": "Ketonların Adlandırılması",
+   "test_count": 1,
+   "source": "serit",
+   "page": 381
+  },
+  {
+   "label": "Aldehit ve Ketonlarda İzomeri ve Eldesi",
+   "test_count": 1,
+   "source": "serit",
+   "page": 383
+  },
+  {
+   "label": "Aldehit ve Ketonların Eldesi ve Reaksiyonları",
+   "test_count": 2,
+   "source": "serit",
+   "page": 385
+  },
+  {
+   "label": "Karboksilik Asitlerin Adlandırılması",
+   "test_count": 2,
+   "source": "serit",
+   "page": 389
+  },
+  {
+   "label": "Karboksilik Asitlerin Eldesi, Özellikleri ve Reaksiyonları",
+   "test_count": 2,
+   "source": "serit",
+   "page": 393
+  },
+  {
+   "label": "Esterlerin Adlandırılması",
+   "test_count": 1,
+   "source": "serit",
+   "page": 397
+  },
+  {
+   "label": "Esterlerin Adlandırılması ve İzomeri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 399
+  },
+  {
+   "label": "Esterlerin Eldesi ve Reaksiyonları",
+   "test_count": 1,
+   "source": "serit",
+   "page": 401
+  },
+  {
+   "label": "İzomerlik",
+   "test_count": 1,
+   "source": "serit",
+   "page": 403
+  },
+  {
+   "label": "Fosil Yakıtlar",
+   "test_count": 1,
+   "source": "serit",
+   "page": 407
+  },
+  {
+   "label": "Alternatif Enerji Kaynakları",
+   "test_count": 1,
+   "source": "serit",
+   "page": 409
+  },
+  {
+   "label": "Sürdürülebilirlik",
+   "test_count": 1,
+   "source": "serit",
+   "page": 411
+  },
+  {
+   "label": "Nanoteknoloji",
+   "test_count": 1,
+   "source": "serit",
+   "page": 413
+  },
+  {
+   "label": "Konu Tarama (Enerji Kaynakları ve Bilimsel Gelişmeler)",
+   "test_count": 1,
+   "source": "serit",
+   "page": 415
+  }
+ ]
+}

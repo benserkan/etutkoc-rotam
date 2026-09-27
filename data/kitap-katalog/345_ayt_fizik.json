@@ -1,0 +1,231 @@
+{
+ "name": "345 AYT Fizik Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "AYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Taranmış PDF (402 s). 345 deseni (TYT Fizik ile aynı): konu başına 'N. bölüm Kazanım Odaklı Sorular' (her bölüm 2 sayfa = 1 test) + 'ÖSYM Tadında 1..k' + 'Günlük Hayat Uygulamaları 1..m' + 'Orijinal Sorular'. Satır = konu, test = dört serinin toplamı (breakdown alanında).",
+  "Seriler üst-şerit vision okumasından; İtme/Tork Günlük Hayat 2'leri, Çembersel Hareket'in 8 kazanım bölümü ve kitap sonu (son konuda Orijinal yok) sayfa görüntüsüyle teyit edildi."
+ ],
+ "sections": [
+  {
+   "label": "Vektörler",
+   "test_count": 4,
+   "source": "serit+goz",
+   "page": 6,
+   "breakdown": {
+    "kazanim": 2,
+    "osym_tadinda": 2,
+    "gunluk_hayat": 0,
+    "orijinal": 0
+   }
+  },
+  {
+   "label": "Bağıl Hareket",
+   "test_count": 6,
+   "source": "serit+goz",
+   "page": 14,
+   "breakdown": {
+    "kazanim": 2,
+    "osym_tadinda": 2,
+    "gunluk_hayat": 1,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Newton'ın Hareket Yasaları",
+   "test_count": 9,
+   "source": "serit+goz",
+   "page": 29,
+   "breakdown": {
+    "kazanim": 3,
+    "osym_tadinda": 4,
+    "gunluk_hayat": 1,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Bir Boyutta Sabit İvmeli Hareket",
+   "test_count": 10,
+   "source": "serit+goz",
+   "page": 47,
+   "breakdown": {
+    "kazanim": 3,
+    "osym_tadinda": 4,
+    "gunluk_hayat": 2,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Bir ve İki Boyutta Hareket (Atışlar)",
+   "test_count": 14,
+   "source": "serit+goz",
+   "page": 67,
+   "breakdown": {
+    "kazanim": 4,
+    "osym_tadinda": 6,
+    "gunluk_hayat": 3,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Enerji ve Hareket",
+   "test_count": 12,
+   "source": "serit+goz",
+   "page": 97,
+   "breakdown": {
+    "kazanim": 4,
+    "osym_tadinda": 5,
+    "gunluk_hayat": 2,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "İtme ve Çizgisel Momentum",
+   "test_count": 13,
+   "source": "serit+goz",
+   "page": 121,
+   "breakdown": {
+    "kazanim": 4,
+    "osym_tadinda": 6,
+    "gunluk_hayat": 2,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Tork, Denge, Kütle ve Ağırlık Merkezi",
+   "test_count": 11,
+   "source": "serit+goz",
+   "page": 151,
+   "breakdown": {
+    "kazanim": 5,
+    "osym_tadinda": 3,
+    "gunluk_hayat": 2,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 8,
+   "source": "serit+goz",
+   "page": 174,
+   "breakdown": {
+    "kazanim": 3,
+    "osym_tadinda": 3,
+    "gunluk_hayat": 1,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Elektriksel Kuvvet, Alan, Potansiyel ve Sığaçlar",
+   "test_count": 12,
+   "source": "serit+goz",
+   "page": 190,
+   "breakdown": {
+    "kazanim": 5,
+    "osym_tadinda": 5,
+    "gunluk_hayat": 1,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Manyetizma ve Elektromanyetik İndüksiyon",
+   "test_count": 12,
+   "source": "serit+goz",
+   "page": 214,
+   "breakdown": {
+    "kazanim": 5,
+    "osym_tadinda": 5,
+    "gunluk_hayat": 1,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Alternatif Akım ve Transformatörler",
+   "test_count": 7,
+   "source": "serit+goz",
+   "page": 238,
+   "breakdown": {
+    "kazanim": 3,
+    "osym_tadinda": 2,
+    "gunluk_hayat": 1,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Çembersel Hareket, Açısal Momentum ve Kütle Çekim",
+   "test_count": 17,
+   "source": "serit+goz",
+   "page": 252,
+   "breakdown": {
+    "kazanim": 8,
+    "osym_tadinda": 6,
+    "gunluk_hayat": 2,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Basit Harmonik Hareket",
+   "test_count": 11,
+   "source": "serit+goz",
+   "page": 287,
+   "breakdown": {
+    "kazanim": 3,
+    "osym_tadinda": 6,
+    "gunluk_hayat": 1,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Dalga Mekaniği",
+   "test_count": 12,
+   "source": "serit+goz",
+   "page": 310,
+   "breakdown": {
+    "kazanim": 3,
+    "osym_tadinda": 6,
+    "gunluk_hayat": 2,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Atom Fiziğine Giriş ve Radyoaktivite",
+   "test_count": 12,
+   "source": "serit+goz",
+   "page": 334,
+   "breakdown": {
+    "kazanim": 4,
+    "osym_tadinda": 6,
+    "gunluk_hayat": 1,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Modern Fizik",
+   "test_count": 14,
+   "source": "serit+goz",
+   "page": 360,
+   "breakdown": {
+    "kazanim": 5,
+    "osym_tadinda": 6,
+    "gunluk_hayat": 2,
+    "orijinal": 1
+   }
+  },
+  {
+   "label": "Modern Fiziğin Teknolojideki Uygulamaları",
+   "test_count": 6,
+   "source": "serit+goz",
+   "page": 389,
+   "breakdown": {
+    "kazanim": 3,
+    "osym_tadinda": 2,
+    "gunluk_hayat": 1,
+    "orijinal": 0
+   }
+  }
+ ]
+}

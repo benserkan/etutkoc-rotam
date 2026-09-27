@@ -1,0 +1,358 @@
+{
+ "name": "Paylaşım TYT Türkçe Anlatım Modülü",
+ "publisher": "Paylaşım Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "konu_anlatimli",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Kaynak: numunekitap.com demosu (117 s; 4 modülün kapak + içindekiler + örnek sayfaları). Kitap 4 modül / 16 ünite / 49 ders (12+12+12+13 — modül kapaklarıyla birebir); her modül 96 sayfa.",
+  "Satır = ders (içindekilerdeki 'Bölüm'); test = dersin 'Başarı İzleme Testi' sayısı ('1-2', '3-4', '5-6', '2-3' biçimindeki çift numaralı olanlar 2 test). Ders içindeki konu anlatımı örnek soruları test sayılmadı."
+ ],
+ "sections": [
+  {
+   "label": "Sözcükte Anlam Özellikleri",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Sözcükte Anlam"
+  },
+  {
+   "label": "Sözcükte Anlam İlişkileri",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Sözcükte Anlam"
+  },
+  {
+   "label": "Sözcükte Anlam Olayları",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Sözcükte Anlam"
+  },
+  {
+   "label": "Söz Öbeklerinde Anlam",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Sözcükte Anlam"
+  },
+  {
+   "label": "Cümlede Kavramlar ve Duygular - I",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümlede Kavramlar ve Duygular - II",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümlede Kavramlar ve Duygular - III",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümle Yorumu - I",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümle Yorumu - II (Cümle Oluşturma, Tamamlama, Birleştirme)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Cümlede Anlam"
+  },
+  {
+   "label": "Anlatım Teknikleri",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Paragraf"
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Paragraf"
+  },
+  {
+   "label": "Parçanın Dil ve Anlatım Özellikleri",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 1,
+   "unite": "Paragraf"
+  },
+  {
+   "label": "Paragrafın Yapısı - I",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Paragraf"
+  },
+  {
+   "label": "Paragrafın Yapısı - II",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Paragraf"
+  },
+  {
+   "label": "Paragrafın Yapısı - III",
+   "test_count": 2,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Paragraf"
+  },
+  {
+   "label": "Paragrafta Konu ve Ana Düşünce",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Paragraf"
+  },
+  {
+   "label": "Yardımcı Düşünceler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Paragraf"
+  },
+  {
+   "label": "İsim (Ad)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Sözcük Türleri"
+  },
+  {
+   "label": "Zamir (Adıl)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Sözcük Türleri"
+  },
+  {
+   "label": "Sıfat (Ön Ad)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Sözcük Türleri"
+  },
+  {
+   "label": "Zarf (Belirteç)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Sözcük Türleri"
+  },
+  {
+   "label": "Edat (İlgeç)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Sözcük Türleri"
+  },
+  {
+   "label": "Bağlaç - Ünlem",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Sözcük Türleri"
+  },
+  {
+   "label": "Tamlamalar (Sıfat ve İsim Tamlamaları)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 2,
+   "unite": "Tamlamalar"
+  },
+  {
+   "label": "Fiil (Eylem) - Kipler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Fiiller"
+  },
+  {
+   "label": "Ek Fiil",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Fiiller"
+  },
+  {
+   "label": "Fiilimsiler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Fiilimsiler"
+  },
+  {
+   "label": "Çekim Ekleri",
+   "test_count": 2,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Ekler"
+  },
+  {
+   "label": "Yapım Ekleri",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Ekler"
+  },
+  {
+   "label": "Basit - Türemiş - Birleşik Sözcük",
+   "test_count": 2,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Sözcüğün Yapısı"
+  },
+  {
+   "label": "Temel Ögeler",
+   "test_count": 2,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Cümle Ögeleri"
+  },
+  {
+   "label": "Yardımcı Ögeler - Vurgu - Ara Söz",
+   "test_count": 2,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Cümle Ögeleri"
+  },
+  {
+   "label": "Nesnesine Göre Fiiller",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Fiil Çatısı"
+  },
+  {
+   "label": "Öznesine Göre Fiiller",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Fiil Çatısı"
+  },
+  {
+   "label": "Yüklemine, Yüklemin Yerine, Anlamına Göre Cümleler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Cümle Çeşitleri"
+  },
+  {
+   "label": "Yapısına Göre Cümleler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 3,
+   "unite": "Cümle Çeşitleri"
+  },
+  {
+   "label": "Ünlülerle İlgili Ses Olayları",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Ses Bilgisi"
+  },
+  {
+   "label": "Ünsüzlerle İlgili Ses Olayları",
+   "test_count": 2,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Ses Bilgisi"
+  },
+  {
+   "label": "Büyük Harflerin Yazımı",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Yazım Kuralları"
+  },
+  {
+   "label": "Kısaltmalar, Tarih, Sayı, De-Ki-Mi, Pekiştirme ve İkilemelerin Yazımı",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Yazım Kuralları"
+  },
+  {
+   "label": "Birleşik Sözcüklerin Yazımı (Ayrı Yazılanlar)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Yazım Kuralları"
+  },
+  {
+   "label": "Bitişik Yazılan Birleşik Sözcükler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Yazım Kuralları"
+  },
+  {
+   "label": "Nokta, Virgül, Noktalı Virgül",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Noktalama İşaretleri"
+  },
+  {
+   "label": "İki Nokta, Üç Nokta, Soru İşareti, Ünlem İşareti",
+   "test_count": 2,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Kısa Çizgi, Uzun Çizgi, Eğik Çizgi, Tırnak İşareti",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Yay Ayraç, Köşeli Ayraç, Kesme İşareti",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Anlamla İlgili Anlatım Bozuklukları",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "Dil Bilgisiyle İlgili Anlatım Bozuklukları - I",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "Dil Bilgisiyle İlgili Anlatım Bozuklukları - II",
+   "test_count": 1,
+   "source": "icindekiler",
+   "modul": 4,
+   "unite": "Anlatım Bozuklukları"
+  }
+ ]
+}

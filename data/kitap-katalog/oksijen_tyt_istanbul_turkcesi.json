@@ -1,0 +1,730 @@
+{
+ "name": "Oksijen TYT İstanbul Türkçesi Soru Bankası",
+ "publisher": "Oksijen Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Kaynak: yayınevinin fliphtml5 demosu (ilk 3 ünite + tam içindekiler, 120 s). Test birimi demodan doğrulandı: her 'Test N' 2 sayfa; Ünite 1'de konu testleri s.11-38 = Test 1..14, Sınavda Kesin Çıkar 4, İkiz Sorular 2 — içindekiler sayfa numaralarıyla birebir. Ünite aralarında 2 sayfa kapak + son 10 yıl analizi (test değil).",
+  "Ünite 4-15 demoda yok: test sayıları içindekilerdeki sayfa aralıklarından (aralık/2) hesaplandı; Karma Dil Bilgisi öncesinde kapak olmadığı varsayıldı.",
+  "Fiil Çatısı'nda iki konu aynı sayfada başlıyor (s.337) — tek satırda birleştirildi."
+ ],
+ "sections": [
+  {
+   "label": "Sözcüğün Anlam Özellikleri - Çok Anlamlılık",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 11,
+   "pages": 6
+  },
+  {
+   "label": "Sözcükte Anlam İlişkileri",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 17,
+   "pages": 4
+  },
+  {
+   "label": "Sözcükte Anlam Olayları",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 21,
+   "pages": 2
+  },
+  {
+   "label": "Söz Öbeklerinde Anlam",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 23,
+   "pages": 6
+  },
+  {
+   "label": "Deyimler - İkilemeler",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 29,
+   "pages": 4
+  },
+  {
+   "label": "Atasözleri",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 33,
+   "pages": 4
+  },
+  {
+   "label": "Boş Bırakılan Yerleri Tamamlama",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 37,
+   "pages": 2
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Sözcükte ve Söz Öbeklerinde Anlam)",
+   "test_count": 4,
+   "source": "icindekiler",
+   "page": 39,
+   "pages": 8
+  },
+  {
+   "label": "İkiz Sorular (Sözcükte ve Söz Öbeklerinde Anlam)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 47,
+   "pages": 4
+  },
+  {
+   "label": "Cümlede Öne Çıkan Kavramlar",
+   "test_count": 5,
+   "source": "icindekiler",
+   "page": 53,
+   "pages": 10
+  },
+  {
+   "label": "Duygu Bildiren Cümleler",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 63,
+   "pages": 4
+  },
+  {
+   "label": "Cümlede Anlam İlişkileri",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 67,
+   "pages": 4
+  },
+  {
+   "label": "Cümle Yorumu",
+   "test_count": 7,
+   "source": "icindekiler",
+   "page": 71,
+   "pages": 14
+  },
+  {
+   "label": "Cümle Birleştirme ve Cümle Oluşturma",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 85,
+   "pages": 4
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Cümlede Anlam)",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 89,
+   "pages": 6
+  },
+  {
+   "label": "İkiz Sorular (Cümlede Anlam)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 95,
+   "pages": 4
+  },
+  {
+   "label": "Anlatım Biçimleri",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 101,
+   "pages": 4
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 5,
+   "source": "icindekiler",
+   "page": 105,
+   "pages": 10
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 115,
+   "pages": 4
+  },
+  {
+   "label": "İkiz Sorular (Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 119,
+   "pages": 2
+  },
+  {
+   "label": "Paragrafın Giriş Cümlesini Bulma",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 123,
+   "pages": 2
+  },
+  {
+   "label": "Paragrafta Boş Bırakılan Yerleri Tamamlama",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 125,
+   "pages": 6
+  },
+  {
+   "label": "Paragrafa Cümle Ekleme",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 131,
+   "pages": 2
+  },
+  {
+   "label": "Paragrafta Diyalog Tamamlama",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 133,
+   "pages": 4
+  },
+  {
+   "label": "Paragrafı İkiye Ayırma",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 137,
+   "pages": 4
+  },
+  {
+   "label": "Paragrafta Akışını Bozan Cümleyi Bulma",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 141,
+   "pages": 4
+  },
+  {
+   "label": "Paragrafta Cümlelerin Yerlerini Değiştirme",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 145,
+   "pages": 2
+  },
+  {
+   "label": "Paragraf Oluşturma",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 147,
+   "pages": 4
+  },
+  {
+   "label": "Paragrafta Konu, Başlık, Ana Düşünce",
+   "test_count": 9,
+   "source": "icindekiler",
+   "page": 151,
+   "pages": 18
+  },
+  {
+   "label": "Paragrafın Hangi Soruya Yanıt Olduğunu Bulma",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 169,
+   "pages": 4
+  },
+  {
+   "label": "Paragraftan Kesin Olarak Çıkarılabilecek Yargıyı Bulma",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 173,
+   "pages": 2
+  },
+  {
+   "label": "İkili Paragraflar",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 175,
+   "pages": 4
+  },
+  {
+   "label": "Paragrafta Yardımcı Düşünce",
+   "test_count": 9,
+   "source": "icindekiler",
+   "page": 179,
+   "pages": 18
+  },
+  {
+   "label": "Bir Parçaya Bağlı Birden Çok Soru",
+   "test_count": 5,
+   "source": "icindekiler",
+   "page": 197,
+   "pages": 10
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Paragrafta Anlam)",
+   "test_count": 5,
+   "source": "icindekiler",
+   "page": 207,
+   "pages": 10
+  },
+  {
+   "label": "İkiz Sorular (Paragrafta Anlam)",
+   "test_count": 5,
+   "source": "icindekiler",
+   "page": 217,
+   "pages": 10
+  },
+  {
+   "label": "Kökünün Türüne Göre Sözcükler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 229,
+   "pages": 2
+  },
+  {
+   "label": "Ekler",
+   "test_count": 5,
+   "source": "icindekiler",
+   "page": 231,
+   "pages": 10
+  },
+  {
+   "label": "Yapısına Göre Sözcükler",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 241,
+   "pages": 4
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Sözcük Yapısı)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 245,
+   "pages": 4
+  },
+  {
+   "label": "İkiz Sorular (Sözcük Yapısı)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 249,
+   "pages": 2
+  },
+  {
+   "label": "İsim (Ad)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 253,
+   "pages": 4
+  },
+  {
+   "label": "Sıfat (Ön Ad) / Niteleme Sıfatları, Adlaşmış Sıfat",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 257,
+   "pages": 2
+  },
+  {
+   "label": "Sıfat (Ön Ad) / Belirtme Sıfatları",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 259,
+   "pages": 2
+  },
+  {
+   "label": "Sıfat (Ön Ad) / Pekiştirme, Küçültme Sıfatları",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 261,
+   "pages": 2
+  },
+  {
+   "label": "Sıfat (Ön Ad) / Yapısına Göre Sıfatlar",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 263,
+   "pages": 2
+  },
+  {
+   "label": "Zamir (Adıl)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 265,
+   "pages": 4
+  },
+  {
+   "label": "Zamir - Sıfat Karşılaştırması",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 269,
+   "pages": 2
+  },
+  {
+   "label": "Zarf (Belirteç)",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 271,
+   "pages": 6
+  },
+  {
+   "label": "Zarf - Sıfat Karşılaştırması",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 277,
+   "pages": 2
+  },
+  {
+   "label": "Edat (İlgeç)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 279,
+   "pages": 4
+  },
+  {
+   "label": "Bağlaç",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 283,
+   "pages": 2
+  },
+  {
+   "label": "Edat - Bağlaç Karşılaştırması",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 285,
+   "pages": 2
+  },
+  {
+   "label": "Ünlem",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 287,
+   "pages": 2
+  },
+  {
+   "label": "Tamlamalar",
+   "test_count": 4,
+   "source": "icindekiler",
+   "page": 289,
+   "pages": 8
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Sözcük Türleri)",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 297,
+   "pages": 6
+  },
+  {
+   "label": "İkiz Sorular (Sözcük Türleri)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 303,
+   "pages": 4
+  },
+  {
+   "label": "Anlam Bakımından Fiiller - Kip ve Kişi",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 309,
+   "pages": 4
+  },
+  {
+   "label": "Basit ve Birleşik Çekimli Fiil - Kip (Anlam) Kayması",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 313,
+   "pages": 2
+  },
+  {
+   "label": "Ek-Fiil",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 315,
+   "pages": 2
+  },
+  {
+   "label": "Yapısı Bakımından Fiiller",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 317,
+   "pages": 4
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Fiiller (Eylemler))",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 321,
+   "pages": 2
+  },
+  {
+   "label": "Fiilimsiler (Eylemsiler)",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 325,
+   "pages": 6
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Fiilimsiler (Eylemsiler))",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 331,
+   "pages": 2
+  },
+  {
+   "label": "İkiz Sorular (Fiilimsiler (Eylemsiler))",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 333,
+   "pages": 2
+  },
+  {
+   "label": "Özne-Yüklem ve Nesne-Yüklem İlişkisine Göre Fiiller",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 337,
+   "pages": 6
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Fiil Çatısı)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 343,
+   "pages": 2
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 5,
+   "source": "icindekiler",
+   "page": 347,
+   "pages": 10
+  },
+  {
+   "label": "Cümlede Vurgu - Ara Söz",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 357,
+   "pages": 2
+  },
+  {
+   "label": "Sorulu Cümlelerde Ögeyi Bulma",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 359,
+   "pages": 2
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Cümlenin Ögeleri)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 361,
+   "pages": 4
+  },
+  {
+   "label": "İkiz Sorular (Cümlenin Ögeleri)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 365,
+   "pages": 2
+  },
+  {
+   "label": "Anlamına Göre Cümleler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 369,
+   "pages": 2
+  },
+  {
+   "label": "Yüklemin Yerine ve Türüne Göre Cümleler",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 371,
+   "pages": 2
+  },
+  {
+   "label": "Yapısına Göre Cümleler",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 373,
+   "pages": 4
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Cümle Türleri)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 377,
+   "pages": 2
+  },
+  {
+   "label": "İkiz Sorular (Cümle Türleri)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 379,
+   "pages": 4
+  },
+  {
+   "label": "Dil Bilgisi (Karma)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 383,
+   "pages": 4
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Karma Dil Bilgisi)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 387,
+   "pages": 2
+  },
+  {
+   "label": "İkiz Sorular (Karma Dil Bilgisi)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 389,
+   "pages": 2
+  },
+  {
+   "label": "Ünlü Uyumları - Ünlülerle İlgili Ses Olayları",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 393,
+   "pages": 2
+  },
+  {
+   "label": "Ünsüzlerle İlgili Ses Olayları",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 395,
+   "pages": 4
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Ses Bilgisi)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 399,
+   "pages": 4
+  },
+  {
+   "label": "İkiz Sorular (Ses Bilgisi)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 403,
+   "pages": 2
+  },
+  {
+   "label": "Özel Adların Yazımı",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 407,
+   "pages": 6
+  },
+  {
+   "label": "Yer-Yön Adlarının ve Kısaltmaların Yazımı",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 413,
+   "pages": 2
+  },
+  {
+   "label": "Tarihlerin, Sayıların ve Satır Sonuna Sığmayan Sözcüklerin Yazımı",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 415,
+   "pages": 2
+  },
+  {
+   "label": "Pekiştirmelerin ve İkilemelerin Yazımı",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 417,
+   "pages": 2
+  },
+  {
+   "label": "De, Ki, Mi'nin Yazımı",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 419,
+   "pages": 2
+  },
+  {
+   "label": "Birleşik Sözcüklerin Yazımı",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 421,
+   "pages": 6
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Yazım Kuralları)",
+   "test_count": 4,
+   "source": "icindekiler",
+   "page": 427,
+   "pages": 8
+  },
+  {
+   "label": "İkiz Sorular (Yazım Kuralları)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 435,
+   "pages": 2
+  },
+  {
+   "label": "Nokta, Virgül, Noktalı Virgül",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 439,
+   "pages": 4
+  },
+  {
+   "label": "İki Nokta, Üç Nokta, Soru İşareti",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 443,
+   "pages": 2
+  },
+  {
+   "label": "Ünlem; Kısa, Uzun, Eğik ve Ters Eğik Çizgi; Tırnak İşaretleri",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 445,
+   "pages": 2
+  },
+  {
+   "label": "Kesme İşareti, Düzeltme İşareti, Yay Ayraç, Köşeli Ayraç",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 447,
+   "pages": 2
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Noktalama İşaretleri)",
+   "test_count": 3,
+   "source": "icindekiler",
+   "page": 449,
+   "pages": 6
+  },
+  {
+   "label": "İkiz Sorular (Noktalama İşaretleri)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 455,
+   "pages": 2
+  },
+  {
+   "label": "Anlama Dayalı Yanlışlıklar",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 459,
+   "pages": 4
+  },
+  {
+   "label": "Dil Bilgisine Dayalı Yanlışlıklar",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 463,
+   "pages": 4
+  },
+  {
+   "label": "Sınavda Kesin Çıkar! (Anlatım Bozuklukları)",
+   "test_count": 1,
+   "source": "icindekiler",
+   "page": 467,
+   "pages": 2
+  },
+  {
+   "label": "İkiz Sorular (Anlatım Bozuklukları)",
+   "test_count": 2,
+   "source": "icindekiler",
+   "page": 469,
+   "pages": 4
+  }
+ ]
+}

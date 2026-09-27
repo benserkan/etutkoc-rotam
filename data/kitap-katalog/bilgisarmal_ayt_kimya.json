@@ -1,0 +1,621 @@
+{
+ "name": "Bilgi Sarmal AYT Kimya Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "AYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Dijital PDF (368 s, metin katmanlı): test bantları metinden deterministik (15pt 'Test N' + 17,5pt konu başlığı); 10 ünitenin konu-test zincirleri kopuksuz (11 · 11 · 11 · 7 · 8 · 23 · 17 · 6 · 35 · 2). Simülasyon ve Sarmal Test 1..12 metinden, ÖSYM Tipi sayfaları görüntü şeridinden.",
+  "'– I/II/III' ekli ardışık testler tek konu satırında birleştirildi."
+ ],
+ "sections": [
+  {
+   "label": "Orbital Türleri – Atom ve İyonlarda Elektron Dizilişi",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 8
+  },
+  {
+   "label": "Kuantum Sayıları",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 14
+  },
+  {
+   "label": "Periyodik Sistem ve Özellikleri",
+   "test_count": 4,
+   "source": "metin+serit",
+   "page": 18
+  },
+  {
+   "label": "Yükseltgenme Basamakları",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 26
+  },
+  {
+   "label": "Simülasyon Testleri (Modern Atom Teorisi)",
+   "test_count": 5,
+   "source": "metin+serit",
+   "page": 30
+  },
+  {
+   "label": "ÖSYM Tipi (Modern Atom Teorisi)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 40
+  },
+  {
+   "label": "Gazların Genel Özellikleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 43
+  },
+  {
+   "label": "Gaz Yasaları",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 45
+  },
+  {
+   "label": "İdeal Gaz Yasası",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 51
+  },
+  {
+   "label": "Gazlarda Kinetik Teori",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 53
+  },
+  {
+   "label": "Kısmi Basınç",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 55
+  },
+  {
+   "label": "Gaz Karışımları",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 57
+  },
+  {
+   "label": "Su Üzerinde Toplanan Gazlar",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 61
+  },
+  {
+   "label": "Gerçek Gazlar – Faz Diyagramları",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 63
+  },
+  {
+   "label": "Simülasyon Testleri (Gazlar)",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 65
+  },
+  {
+   "label": "ÖSYM Tipi (Gazlar)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 69
+  },
+  {
+   "label": "Sarmal Test (Gazlar)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 71
+  },
+  {
+   "label": "Çözücü ve Çözünen Etkileşimleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 74
+  },
+  {
+   "label": "Derişim Birimleri",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 76
+  },
+  {
+   "label": "Çözelti Derişimleri",
+   "test_count": 4,
+   "source": "metin+serit",
+   "page": 80
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 88
+  },
+  {
+   "label": "Çözünürlük",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 92
+  },
+  {
+   "label": "Simülasyon Testleri (Sıvı Çözeltiler ve Çözünürlük)",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 96
+  },
+  {
+   "label": "ÖSYM Tipi (Sıvı Çözeltiler ve Çözünürlük)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 100
+  },
+  {
+   "label": "Sarmal Test (Sıvı Çözeltiler ve Çözünürlük)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 102
+  },
+  {
+   "label": "Endotermik ve Ekzotermik Tepkimeler",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 105
+  },
+  {
+   "label": "ΔH Hesaplama Yöntemleri",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 109
+  },
+  {
+   "label": "Sistemlerde Entalpi Değişimi",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 115
+  },
+  {
+   "label": "Simülasyon Testleri (Kimya ve Enerji)",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 119
+  },
+  {
+   "label": "ÖSYM Tipi (Kimya ve Enerji)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 123
+  },
+  {
+   "label": "Sarmal Test (Kimya ve Enerji)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 125
+  },
+  {
+   "label": "Kimyasal Tepkime Hızları ve Takip Edilmesi",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 128
+  },
+  {
+   "label": "Çarpışma Teorisi ve Aktifleşme Enerjisi",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 130
+  },
+  {
+   "label": "Tek Basamaklı Tepkimelerde Hız",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 132
+  },
+  {
+   "label": "Çok Basamaklı Tepkimelerde Hız",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 134
+  },
+  {
+   "label": "Deneylerle Tepkimelerde Hız",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 136
+  },
+  {
+   "label": "Tepkime Hızına Etki Eden Faktörler",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 140
+  },
+  {
+   "label": "Simülasyon Testleri (Kimyasal Tepkimelerde Hız)",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 144
+  },
+  {
+   "label": "ÖSYM Tipi (Kimyasal Tepkimelerde Hız)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 148
+  },
+  {
+   "label": "Sarmal Test (Kimyasal Tepkimelerde Hız)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 150
+  },
+  {
+   "label": "Denge Tanımı",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 153
+  },
+  {
+   "label": "Denge Sabiti Hesaplamaları",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 155
+  },
+  {
+   "label": "Kısmi Basınçlar Cinsinden Denge Sabiti (Kp)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 161
+  },
+  {
+   "label": "Denge Kesri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 163
+  },
+  {
+   "label": "Kademeli Tepkimelerde Denge Hesabı",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 165
+  },
+  {
+   "label": "Dengeye Etki Eden Faktörler",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 167
+  },
+  {
+   "label": "Asit - Baz Tanımları",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 171
+  },
+  {
+   "label": "Suyun Otoiyonizasyonu ve pH – pOH Kavramı",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 173
+  },
+  {
+   "label": "Zayıf Asit – Baz Çözeltileri",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 177
+  },
+  {
+   "label": "Kuvvetli Asit – Baz Çözeltileri ve Nötralleşme",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 181
+  },
+  {
+   "label": "Kuvvetli Asit – Baz Titrasyonu",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 183
+  },
+  {
+   "label": "Tampon Çözeltiler ve Hidroliz Olayı",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 187
+  },
+  {
+   "label": "Sulu Çözeltilerde Asit – Baz Dengesi (Karma)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 189
+  },
+  {
+   "label": "Çözünürlük ve Çözünürlük Çarpımı",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 191
+  },
+  {
+   "label": "Çözünürlüğe Sıcaklık Etkisi",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 195
+  },
+  {
+   "label": "Çözünürlüğe Ortak İyon Etkisi",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 197
+  },
+  {
+   "label": "Simülasyon Testleri (Kimyasal Tepkimelerde Denge)",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 199
+  },
+  {
+   "label": "ÖSYM Tipi (Kimyasal Tepkimelerde Denge)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 203
+  },
+  {
+   "label": "Sarmal Test (Kimyasal Tepkimelerde Denge)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 205
+  },
+  {
+   "label": "İndirgenme – Yükseltgenme Tepkimeleri",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 208
+  },
+  {
+   "label": "Aktiflik",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 214
+  },
+  {
+   "label": "Elektrokimyasal Hücreler",
+   "test_count": 5,
+   "source": "metin+serit",
+   "page": 220
+  },
+  {
+   "label": "Derişim Hücreleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 230
+  },
+  {
+   "label": "Hücre Potansiyelini Etkileyen Faktörler",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 232
+  },
+  {
+   "label": "Elektroliz",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 236
+  },
+  {
+   "label": "Simülasyon Testleri (Kimya ve Elektrik)",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 242
+  },
+  {
+   "label": "ÖSYM Tipi (Kimya ve Elektrik)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 248
+  },
+  {
+   "label": "Sarmal Test (Kimya ve Elektrik)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 250
+  },
+  {
+   "label": "Anorganik ve Organik Bileşikler, Doğada Karbon ve Lewis Formülleri",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 253
+  },
+  {
+   "label": "Basit Formül – Molekül Formülü",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 257
+  },
+  {
+   "label": "Hibritleşme – Molekül Geometrileri",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 259
+  },
+  {
+   "label": "Simülasyon Testleri (Karbon Kimyasına Giriş)",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 265
+  },
+  {
+   "label": "ÖSYM Tipi (Karbon Kimyasına Giriş)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 269
+  },
+  {
+   "label": "Sarmal Test (Karbon Kimyasına Giriş)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 271
+  },
+  {
+   "label": "Alkanların Adlandırılması",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 274
+  },
+  {
+   "label": "Alkanlarda İzomerlik, Fiziksel ve Kimyasal Özellikler",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 280
+  },
+  {
+   "label": "Alkenlerin Adlandırılması",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 284
+  },
+  {
+   "label": "Alkenlerde İzomeri ve Elde Edilme Yöntemleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 288
+  },
+  {
+   "label": "Alkenlerin Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 290
+  },
+  {
+   "label": "Alkinlerin Adlandırılması",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 292
+  },
+  {
+   "label": "Alkinlerde İzomer, Elde Yöntemleri, Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 296
+  },
+  {
+   "label": "Aromatik Bileşiklerin Adlandırılması",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 300
+  },
+  {
+   "label": "Aromatik Bileşiklerde İzomer, Fiziksel ve Kimyasal Özellikler",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 304
+  },
+  {
+   "label": "Hidrokarbonlar (Karma)",
+   "test_count": 3,
+   "source": "metin+serit",
+   "page": 308
+  },
+  {
+   "label": "Fonksiyonel Gruplar",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 314
+  },
+  {
+   "label": "Alkollerin Adlandırılması",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 316
+  },
+  {
+   "label": "Alkollerin Sınıflandırılması ve Genel Elde Yöntemleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 320
+  },
+  {
+   "label": "Alkollerin Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 322
+  },
+  {
+   "label": "Eterlerin Adlandırılması",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 324
+  },
+  {
+   "label": "Eterlerin Fiziksel – Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 326
+  },
+  {
+   "label": "Karbonil Bileşiklerinin Adlandırılması",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 328
+  },
+  {
+   "label": "Karbonil Bileşiklerde İzomeri, Fiziksel ve Kimyasal Özellikler",
+   "test_count": 2,
+   "source": "metin+serit",
+   "page": 332
+  },
+  {
+   "label": "Karboksilik Asitlerin Adlandırılması",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 336
+  },
+  {
+   "label": "Karboksilik Asitlerin Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 338
+  },
+  {
+   "label": "Esterlerin Adlandırılması",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 340
+  },
+  {
+   "label": "İzomerlik",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 342
+  },
+  {
+   "label": "Simülasyon Testleri (Organik Bileşikler)",
+   "test_count": 4,
+   "source": "metin+serit",
+   "page": 344
+  },
+  {
+   "label": "ÖSYM Tipi (Organik Bileşikler)",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 351
+  },
+  {
+   "label": "Sarmal Test (Organik Bileşikler)",
+   "test_count": 5,
+   "source": "metin+serit",
+   "page": 354
+  },
+  {
+   "label": "Alternatif Enerji Kaynakları",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 365
+  },
+  {
+   "label": "Sürdürülebilirlik – Nanoteknoloji",
+   "test_count": 1,
+   "source": "metin+serit",
+   "page": 367
+  }
+ ]
+}

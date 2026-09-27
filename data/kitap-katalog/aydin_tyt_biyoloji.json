@@ -1,0 +1,189 @@
+{
+ "name": "Aydın TYT Biyoloji Soru Bankası",
+ "publisher": "Aydın Yayınları",
+ "subject": "TYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Taranmış PDF (200 s). Aydın deseni: her test 2 sayfa, konu içi TEST N + sağ üstte KÜRESEL numara 1..97. Yerel sayım (konu testleri + karma testler + ünite sonu Deneme 1..10) = 97 → küresel zincirle birebir.",
+  "Ünite sonu 'Deneme' testleri kitabın numaralı test dizisinin parçası (2 sayfa) — test olarak sayıldı, ayrı satır."
+ ],
+ "sections": [
+  {
+   "label": "Canlıların Ortak Özellikleri",
+   "test_count": 4,
+   "source": "serit",
+   "page": 7
+  },
+  {
+   "label": "Canlıların Yapısında Bulunan Temel Bileşenler",
+   "test_count": 4,
+   "source": "serit",
+   "page": 15
+  },
+  {
+   "label": "Karma Test (Canlıların Ortak Özellikleri ve Temel Bileşenler)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 23
+  },
+  {
+   "label": "Enzimler",
+   "test_count": 6,
+   "source": "serit",
+   "page": 27
+  },
+  {
+   "label": "ATP",
+   "test_count": 1,
+   "source": "serit",
+   "page": 39
+  },
+  {
+   "label": "Karma Test (Organik Moleküller)",
+   "test_count": 1,
+   "source": "serit",
+   "page": 41
+  },
+  {
+   "label": "Deneme 1-2",
+   "test_count": 2,
+   "source": "serit",
+   "page": 43
+  },
+  {
+   "label": "Hücre Zarı ve Madde Geçişleri",
+   "test_count": 5,
+   "source": "serit",
+   "page": 47
+  },
+  {
+   "label": "Hücre Organelleri",
+   "test_count": 3,
+   "source": "serit",
+   "page": 57
+  },
+  {
+   "label": "Karma Test (Hücre)",
+   "test_count": 3,
+   "source": "serit",
+   "page": 63
+  },
+  {
+   "label": "Deneme 3",
+   "test_count": 1,
+   "source": "serit",
+   "page": 69
+  },
+  {
+   "label": "Canlıların Sınıflandırılması",
+   "test_count": 3,
+   "source": "serit",
+   "page": 71
+  },
+  {
+   "label": "Bakteriler - Protistler",
+   "test_count": 5,
+   "source": "serit",
+   "page": 77
+  },
+  {
+   "label": "Bitkiler - Mantarlar",
+   "test_count": 2,
+   "source": "serit",
+   "page": 87
+  },
+  {
+   "label": "Hayvanlar",
+   "test_count": 3,
+   "source": "serit",
+   "page": 91
+  },
+  {
+   "label": "Karma Test (Sınıflandırma ve Canlıların Özellikleri)",
+   "test_count": 1,
+   "source": "serit",
+   "page": 97
+  },
+  {
+   "label": "Deneme 4-5",
+   "test_count": 2,
+   "source": "serit",
+   "page": 99
+  },
+  {
+   "label": "Nükleik Asitler ve Virüsler",
+   "test_count": 3,
+   "source": "serit",
+   "page": 103
+  },
+  {
+   "label": "Mitoz",
+   "test_count": 2,
+   "source": "serit",
+   "page": 109
+  },
+  {
+   "label": "Mayoz",
+   "test_count": 1,
+   "source": "serit",
+   "page": 113
+  },
+  {
+   "label": "Karma Test (Hücre Bölünmeleri)",
+   "test_count": 6,
+   "source": "serit",
+   "page": 115
+  },
+  {
+   "label": "Deneme 6-7",
+   "test_count": 2,
+   "source": "serit",
+   "page": 127
+  },
+  {
+   "label": "Eşeysiz ve Eşeyli Üreme",
+   "test_count": 5,
+   "source": "serit",
+   "page": 131
+  },
+  {
+   "label": "Otozomlara Bağlı Kalıtım",
+   "test_count": 9,
+   "source": "serit",
+   "page": 141
+  },
+  {
+   "label": "Eşeye Bağlı Kalıtım",
+   "test_count": 2,
+   "source": "serit",
+   "page": 159
+  },
+  {
+   "label": "Karma Test (Kalıtım)",
+   "test_count": 3,
+   "source": "serit",
+   "page": 163
+  },
+  {
+   "label": "Deneme 8-9",
+   "test_count": 2,
+   "source": "serit",
+   "page": 169
+  },
+  {
+   "label": "Ekosistem Ekolojisi ve Güncel Çevre Sorunları",
+   "test_count": 13,
+   "source": "serit",
+   "page": 173
+  },
+  {
+   "label": "Deneme 10",
+   "test_count": 1,
+   "source": "serit",
+   "page": 199
+  }
+ ]
+}

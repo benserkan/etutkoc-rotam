@@ -1,0 +1,141 @@
+{
+ "name": "Aydın TYT Biyoloji Ders İşleyiş Modülleri",
+ "publisher": "Aydın Yayınları",
+ "subject": "TYT Biyoloji",
+ "type": "konu_anlatimli",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Kaynak: yayınevinin fliphtml5 flipbook'u (fliphtml5.com/wrbmv/xrxg, 596 sayfa, 7 modül tek kitapta). Aydın deseni: konu anlatımı + araya serpiştirilmiş TEK SAYFALIK konu testleri (~10-12 soru) + 'Yeni Nesil Sorular' sayfaları + modül sonu Karma Testler. Her test/Yeni Nesil sayfası = 1 test.",
+  "Flipbook TYT ve AYT içeriğini birlikte veriyor; öğrencinin rafındaki basılı TYT / AYT Ders İşleyiş Modülleri'ne göre konular müfredata göre iki kayda ayrıldı. Basılı kitapların modül dağılımı farklıysa satırlar taşınmalı."
+ ],
+ "sections": [
+  {
+   "label": "Yaşam Bilimi Biyoloji (Canlıların Ortak Özellikleri ve Temel Bileşikler)",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 10
+  },
+  {
+   "label": "Yeni Nesil Sorular (Yaşam Bilimi Biyoloji)",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 45
+  },
+  {
+   "label": "Canlıların Temel Birimi Hücre",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 76
+  },
+  {
+   "label": "Yeni Nesil Sorular (Hücre)",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 78
+  },
+  {
+   "label": "Hücre Bölünmeleri ve Üreme",
+   "test_count": 4,
+   "source": "flipbook_serit",
+   "page": 102
+  },
+  {
+   "label": "Yeni Nesil Sorular (Hücre Bölünmeleri ve Üreme)",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 106
+  },
+  {
+   "label": "Karma Test (1. Modül)",
+   "test_count": 6,
+   "source": "flipbook_serit",
+   "page": 107
+  },
+  {
+   "label": "Mendel Genetiği ve Çaprazlamalar",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 165
+  },
+  {
+   "label": "Eş Baskınlık, Çok Alelli Kalıtım ve Kan Grupları",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 166
+  },
+  {
+   "label": "Eşeye Bağlı Kalıtım ve Kromozom Ayrılmamaları",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 175
+  },
+  {
+   "label": "Yeni Nesil Sorular (Kalıtım)",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 177
+  },
+  {
+   "label": "Canlıların Çeşitliliği ve Sınıflandırılması",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 202
+  },
+  {
+   "label": "Yeni Nesil Sorular (Sınıflandırma)",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 228
+  },
+  {
+   "label": "Karma Test (3. Modül)",
+   "test_count": 6,
+   "source": "flipbook_serit",
+   "page": 244
+  },
+  {
+   "label": "Ekolojik Kavramlar ve Beslenme İlişkileri",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 365
+  },
+  {
+   "label": "Besin Zinciri",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 369
+  },
+  {
+   "label": "Madde Döngüleri",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 374
+  },
+  {
+   "label": "Güncel Çevre Sorunları ve İnsan",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 381
+  },
+  {
+   "label": "Ekosistem Ekolojisi",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 398
+  },
+  {
+   "label": "Karma Test (Ekoloji)",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 399
+  },
+  {
+   "label": "Yeni Nesil Sorular (Ekoloji)",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 400
+  }
+ ]
+}

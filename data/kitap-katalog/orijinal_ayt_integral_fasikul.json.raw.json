@@ -1,0 +1,1616 @@
+{
+ "dividers": [
+  {
+   "pdf_idx": 74,
+   "bolum_no": 2,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "Riemann Toplamları",
+     "page": null
+    },
+    {
+     "label": "Belirli İntegral Alan Hesabı",
+     "page": null
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 122,
+   "bolum_no": 3,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "ÖSYM Tarzı Tarama Testleri",
+     "page": null
+    }
+   ],
+   "is_divider": true
+  }
+ ],
+ "scan1": {
+  "0": {
+   "h": "MATEMATİK",
+   "b": "AYT",
+   "n": null
+  },
+  "1": {
+   "h": "İNTEGRAL",
+   "b": null,
+   "n": null
+  },
+  "2": {
+   "h": "ÖN SÖZ",
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": "İNTEGRAL",
+   "b": "DİFERANSİYEL KAVRAMI",
+   "n": null
+  },
+  "5": {
+   "h": "İNTEGRAL",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "6": {
+   "h": "İNTEGRAL",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "7": {
+   "h": "İNTEGRAL",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "8": {
+   "h": "İNTEGRAL",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "9": {
+   "h": "İNTEGRAL",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "10": {
+   "h": "İNTEGRAL",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "11": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "12": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "13": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "14": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "15": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "16": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "17": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "18": {
+   "h": null,
+   "b": "İNTEGRAL ALMA KURALLARI",
+   "n": null
+  },
+  "19": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "20": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "21": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "22": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "23": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "24": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "25": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "26": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "27": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "28": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "29": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "30": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "31": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "32": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "33": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "34": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "35": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "36": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "37": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "38": {
+   "h": null,
+   "b": "SORU-6",
+   "n": 6
+  },
+  "39": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "40": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "41": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "42": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "43": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "44": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "45": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "46": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "47": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "48": {
+   "h": null,
+   "b": "SORU-7",
+   "n": 7
+  },
+  "49": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "50": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "51": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "52": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "53": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "54": {
+   "h": null,
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "55": {
+   "h": null,
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "56": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "57": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "58": {
+   "h": null,
+   "b": "BELİRLİ İNTEGRALDE DEĞİŞKEN DEĞİŞTİRME YÖNTEMİ",
+   "n": null
+  },
+  "59": {
+   "h": null,
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "60": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "61": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "62": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "63": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "64": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "65": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "66": {
+   "h": null,
+   "b": "PARÇALI VE MUTLAK DEĞERLİ FONKSİYONLARIN İNTEGRALI",
+   "n": null
+  },
+  "67": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "68": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "69": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "70": {
+   "h": null,
+   "b": "SORU-1",
+   "n": 1
+  },
+  "71": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "72": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "73": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "75": {
+   "h": null,
+   "b": "RİEMANN TOPLAMLARI",
+   "n": null
+  },
+  "76": {
+   "h": null,
+   "b": "RİEMANN ÜST TOPLAMI",
+   "n": null
+  },
+  "77": {
+   "h": null,
+   "b": "RİEMANN ORTA TOPLAMI (Riemann'ın Toplamı)",
+   "n": null
+  },
+  "78": {
+   "h": null,
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "79": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "80": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "81": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "82": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "83": {
+   "h": "BELİRLİ İNTEGRAL İLE ALAN HESABI",
+   "b": null,
+   "n": null
+  },
+  "84": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "85": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "86": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "87": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "88": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "89": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "90": {
+   "h": "Eğri grafiği ile y ekseni arasında kalan bölgenin alanını bulma:",
+   "b": null,
+   "n": null
+  },
+  "91": {
+   "h": null,
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "92": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "93": {
+   "h": null,
+   "b": "İKİ EĞRİ ARASINDA KALAN ALAN HESABI",
+   "n": null
+  },
+  "94": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "95": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "96": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "97": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "98": {
+   "h": null,
+   "b": "PRATİK KURAL",
+   "n": null
+  },
+  "99": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "100": {
+   "h": null,
+   "b": "ÇEMBER DENKLEMİNİN İNTEGRALDE ALAN HESABINDA KULLANILMASI",
+   "n": null
+  },
+  "101": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "102": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "103": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "104": {
+   "h": null,
+   "b": "İNTEGRALİN FİZİKSEL YORUMU",
+   "n": null
+  },
+  "105": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "106": {
+   "h": null,
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "107": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "108": {
+   "h": null,
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "109": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "110": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "111": {
+   "h": null,
+   "b": "SORU-1",
+   "n": 1
+  },
+  "112": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "113": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "114": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "115": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "116": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "117": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "118": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "119": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "120": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "121": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "123": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "124": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "125": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "126": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "127": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "128": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "129": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "130": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "131": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "132": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "133": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "134": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "135": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "136": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "137": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "138": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "139": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "140": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "141": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-10",
+   "n": 10
+  },
+  "142": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "143": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-11",
+   "n": 11
+  },
+  "144": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "145": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-12",
+   "n": 12
+  },
+  "146": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "147": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-13",
+   "n": 13
+  },
+  "148": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "149": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-14",
+   "n": 14
+  },
+  "150": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "151": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-15",
+   "n": 15
+  },
+  "152": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "153": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-16",
+   "n": 16
+  },
+  "154": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "155": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-17",
+   "n": 17
+  },
+  "156": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "157": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-18",
+   "n": 18
+  },
+  "158": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "159": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  },
+  "160": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  }
+ },
+ "scan2": {
+  "0": {
+   "h": null,
+   "b": "AYT",
+   "n": null
+  },
+  "1": {
+   "h": "İNTEGRAL",
+   "b": null,
+   "n": null
+  },
+  "2": {
+   "h": "ÖN SÖZ",
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": null,
+   "b": "DİFERANSİYEL KAVRAMI",
+   "n": null
+  },
+  "5": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "6": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "7": {
+   "h": null,
+   "b": "BELİRSİZ İNTEGRAL",
+   "n": null
+  },
+  "8": {
+   "h": null,
+   "b": "BELİRSİZ İNTEGRAL ÖZELLİKLERİ",
+   "n": null
+  },
+  "9": {
+   "h": null,
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "10": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "11": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "12": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "13": {
+   "h": null,
+   "b": "SORU-7",
+   "n": 7
+  },
+  "14": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "15": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "16": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "17": {
+   "h": null,
+   "b": "SORU-9",
+   "n": 9
+  },
+  "18": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "19": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "20": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "21": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "22": {
+   "h": null,
+   "b": "SORU-1",
+   "n": 1
+  },
+  "23": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "24": {
+   "h": null,
+   "b": "SORU-4",
+   "n": 4
+  },
+  "25": {
+   "h": null,
+   "b": "SORU-7",
+   "n": 7
+  },
+  "26": {
+   "h": null,
+   "b": "SORU-10",
+   "n": 10
+  },
+  "27": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "28": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "29": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "30": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "31": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "32": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "33": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "34": {
+   "h": null,
+   "b": "DEĞİŞKEN DEĞİŞTİRME YÖNTEMİ",
+   "n": null
+  },
+  "35": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "36": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "37": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "38": {
+   "h": null,
+   "b": "SORU-6",
+   "n": 6
+  },
+  "39": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "40": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "41": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "42": {
+   "h": "BELİRLİ İNTEGRAL",
+   "b": "ÖRNEK",
+   "n": 3
+  },
+  "43": {
+   "h": "BELİRLİ İNTEGRALİN ÖZELLİKLERİ",
+   "b": "ÖRNEK",
+   "n": 1
+  },
+  "44": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 3
+  },
+  "45": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "46": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "47": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "48": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "49": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": 1
+  },
+  "50": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": 1
+  },
+  "51": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "52": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "53": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "54": {
+   "h": null,
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "55": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "56": {
+   "h": null,
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "57": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "58": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "59": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "60": {
+   "h": null,
+   "b": "BELİRLİ İNTEGRALDE DEĞİŞKEN DEĞİŞTİRME YÖNTEMİ",
+   "n": null
+  },
+  "61": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "62": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "63": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "64": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "65": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "66": {
+   "h": null,
+   "b": "PARÇALI VE MUTLAK DEĞERLİ FONKSİYONLARIN İNTEGRALİ",
+   "n": null
+  },
+  "67": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "68": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "69": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "70": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "71": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "72": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "73": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "75": {
+   "h": null,
+   "b": "RİEMANN TOPLAMLARI",
+   "n": null
+  },
+  "76": {
+   "h": null,
+   "b": "RİEMANN ÜST TOPLAMI",
+   "n": null
+  },
+  "77": {
+   "h": null,
+   "b": "RİEMANN ORTA TOPLAMI (Riemanın Toplamı)",
+   "n": null
+  },
+  "78": {
+   "h": null,
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "79": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "80": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "81": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "82": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "83": {
+   "h": "BELİRLİ İNTEGRAL İLE ALAN HESABI",
+   "b": "Eğri grafiği ile x ekseni arasında kalan bölgenin alanını bulma :",
+   "n": null
+  },
+  "84": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "85": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "86": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "87": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 1",
+   "n": 1
+  },
+  "88": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "89": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER 2",
+   "n": 2
+  },
+  "90": {
+   "h": null,
+   "b": "Eğri grafiği ile y ekseni arasında kalan bölgenin alanını bulma:",
+   "n": null
+  },
+  "91": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "92": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "93": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "94": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "95": {
+   "h": null,
+   "b": "İKİ EĞRİ ARASINDA KALAN ALAN HESABI",
+   "n": null
+  },
+  "96": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "97": {
+   "h": null,
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "98": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "99": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "100": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "101": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "102": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "103": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "104": {
+   "h": null,
+   "b": "İNTEGRALİN FİZİKSEL YORUMU",
+   "n": null
+  },
+  "105": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "106": {
+   "h": null,
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "107": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "108": {
+   "h": null,
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "109": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "110": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "111": {
+   "h": null,
+   "b": "SORU-1",
+   "n": 1
+  },
+  "112": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "113": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "114": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "115": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "116": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "117": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "118": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "119": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "120": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "121": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "123": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "124": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "125": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "126": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "127": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "128": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "129": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "130": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "131": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "132": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "133": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "134": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "135": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "136": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "137": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "138": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "139": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "140": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "141": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-10",
+   "n": 10
+  },
+  "142": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "143": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-11",
+   "n": 11
+  },
+  "144": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "145": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-12",
+   "n": 12
+  },
+  "146": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "147": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-13",
+   "n": 13
+  },
+  "148": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "149": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-14",
+   "n": 14
+  },
+  "150": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "151": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-15",
+   "n": 15
+  },
+  "152": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "153": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-16",
+   "n": 16
+  },
+  "154": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "155": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-17",
+   "n": 17
+  },
+  "156": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "157": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-18",
+   "n": 18
+  },
+  "158": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "159": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  },
+  "160": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  }
+ }
+}

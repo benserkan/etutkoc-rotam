@@ -1,0 +1,1284 @@
+{
+ "dividers": [
+  {
+   "pdf_idx": 104,
+   "bolum_no": 3,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "ÖSYM TARZI TARAMA TESTLERİ",
+     "page": 105
+    },
+    {
+     "label": "ÇIKMIŞ SINAV SORULARI",
+     "page": 125
+    }
+   ],
+   "is_divider": true
+  }
+ ],
+ "scan1": {
+  "0": {
+   "h": "MATEMATİK",
+   "b": "AYT",
+   "n": null
+  },
+  "1": {
+   "h": "LİMİT VE SÜREKLİLİK",
+   "b": null,
+   "n": null
+  },
+  "2": {
+   "h": "ÖN SÖZ",
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": "LİMİT",
+   "b": "ZENON PARADOKSU",
+   "n": null
+  },
+  "5": {
+   "h": "LİMİT",
+   "b": "ÖRNEK",
+   "n": 1
+  },
+  "6": {
+   "h": "LİMİT",
+   "b": "ÖRNEK",
+   "n": 4
+  },
+  "7": {
+   "h": "LİMİT",
+   "b": "LİMİT KAVRAMI",
+   "n": null
+  },
+  "8": {
+   "h": "LİMİT",
+   "b": "ORİJİNAL BİLGİ NOTLARI",
+   "n": null
+  },
+  "9": {
+   "h": "LİMİT",
+   "b": "ÖRNEK",
+   "n": 2
+  },
+  "10": {
+   "h": "LİMİT",
+   "b": "ÖRNEK",
+   "n": 4
+  },
+  "11": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 8
+  },
+  "12": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 10
+  },
+  "13": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 12
+  },
+  "14": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 14
+  },
+  "15": {
+   "h": null,
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "16": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "17": {
+   "h": null,
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "18": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "19": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "20": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 1
+  },
+  "21": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "22": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "23": {
+   "h": null,
+   "b": "LİMİTİN ÖZELLİKLERİ VE TEOREMLER",
+   "n": null
+  },
+  "24": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "25": {
+   "h": null,
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "26": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "27": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "28": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "29": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "30": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "31": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "32": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "33": {
+   "h": null,
+   "b": "PARÇALI FONKSİYONLARIN LİMİTİ",
+   "n": null
+  },
+  "34": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "35": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "36": {
+   "h": null,
+   "b": "MUTLAK DEĞERLİ FONKSİYONLARIN LİMİTİ",
+   "n": null
+  },
+  "37": {
+   "h": null,
+   "b": "ORİJİNAL BİLGİ NOTLARI",
+   "n": null
+  },
+  "38": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "39": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "40": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "41": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "42": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "43": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "44": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "45": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "46": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "47": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "48": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "49": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "50": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "51": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "52": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "53": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "54": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "55": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "56": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "57": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "58": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "59": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "60": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "61": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "62": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "63": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "64": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "65": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "66": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "67": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "68": {
+   "h": "TRİGONOMETRİK FONKSİYONLARDA LİMİT",
+   "b": null,
+   "n": null
+  },
+  "69": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "70": {
+   "h": "TRİGONOMETRİK FONKSİYONLARDA BELİRSİZLİĞİ",
+   "b": "ÖRNEK",
+   "n": null
+  },
+  "71": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "72": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "73": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "74": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "75": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "76": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "77": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "78": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "79": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "80": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "81": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "82": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "83": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "85": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "86": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "87": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "88": {
+   "h": null,
+   "b": "SÜREKLİLİK",
+   "n": null
+  },
+  "89": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "90": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "91": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "92": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "93": {
+   "h": null,
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "94": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "95": {
+   "h": null,
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "96": {
+   "h": null,
+   "b": "KAZANIM TEST - 3",
+   "n": 3
+  },
+  "97": {
+   "h": null,
+   "b": "KAZANIM TEST - 3",
+   "n": 3
+  },
+  "98": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "99": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "100": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "101": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "102": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "103": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "105": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "106": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "107": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "108": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "109": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "110": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "111": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "112": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "113": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "114": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "115": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "116": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "117": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "118": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "119": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "120": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "121": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "122": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "123": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-10",
+   "n": 10
+  },
+  "124": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "125": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "126": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-10",
+   "n": 10
+  },
+  "127": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  },
+  "128": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  }
+ },
+ "scan2": {
+  "0": {
+   "h": "MATEMATİK",
+   "b": "AYT",
+   "n": null
+  },
+  "1": {
+   "h": "LİMİT VE SÜREKLİLİK",
+   "b": null,
+   "n": null
+  },
+  "2": {
+   "h": "AYT ORİJİNAL LİMİT VE SÜREKLİLİK FASİKÜLÜ",
+   "b": "ÖN SÖZ",
+   "n": null
+  },
+  "4": {
+   "h": "LİMİT",
+   "b": "ZENON PARADOKSU",
+   "n": null
+  },
+  "5": {
+   "h": "LİMİT",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "6": {
+   "h": "LİMİT",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "7": {
+   "h": "LİMİT",
+   "b": "LİMİT KAVRAMI",
+   "n": null
+  },
+  "8": {
+   "h": "LİMİT",
+   "b": "ORİJİNAL BİLGİ NOTLARI",
+   "n": null
+  },
+  "9": {
+   "h": "LİMİT",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "10": {
+   "h": "LİMİT",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "11": {
+   "h": "@FIC_PDF",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "12": {
+   "h": "@FIC_PDF",
+   "b": "ÖRNEK - 12",
+   "n": 12
+  },
+  "13": {
+   "h": "@FIC_PDF",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "14": {
+   "h": "@FIC_PDF",
+   "b": null,
+   "n": null
+  },
+  "15": {
+   "h": "@FIC_PDF",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "16": {
+   "h": "@FIC_PDF",
+   "b": null,
+   "n": null
+  },
+  "17": {
+   "h": "@FIC_PDF",
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "18": {
+   "h": "@FIC_PDF",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "19": {
+   "h": "@FIC_PDF",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "20": {
+   "h": "@FIC_PDF",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "21": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "22": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "23": {
+   "h": null,
+   "b": "LİMİTİN ÖZELLİKLERİ VE TEOREMLER",
+   "n": null
+  },
+  "24": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "25": {
+   "h": null,
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "26": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "27": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "28": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "29": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "30": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "31": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "32": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "33": {
+   "h": null,
+   "b": "PARÇALI FONKSİYONLARIN LİMİTİ",
+   "n": null
+  },
+  "34": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "35": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "36": {
+   "h": null,
+   "b": "MUTLAK DEĞERLİ FONKSİYONLARIN LİMİTİ",
+   "n": null
+  },
+  "37": {
+   "h": null,
+   "b": "ORİJİNAL BİLGİ NOTLARI",
+   "n": null
+  },
+  "38": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "39": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "40": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "41": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "42": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "43": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "44": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "45": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "46": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "47": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "48": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "49": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "50": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "51": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "52": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "53": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "54": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "55": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "56": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "57": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "58": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "59": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "60": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "61": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "62": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "63": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "64": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "65": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "66": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "67": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "68": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "69": {
+   "h": "TRİGONOMETRİK FONKSİYONLARDA LİMİT",
+   "b": "BİLGİ NOTU",
+   "n": null
+  },
+  "70": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "71": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "72": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "73": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "74": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "75": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "76": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "77": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "78": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "79": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "80": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "81": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "82": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "83": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "85": {
+   "h": "SÜREKLİLİK",
+   "b": null,
+   "n": null
+  },
+  "86": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "87": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "88": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "89": {
+   "h": null,
+   "b": "PARÇALI FONKSİYONLARDA SÜREKLİLİK",
+   "n": null
+  },
+  "90": {
+   "h": null,
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "91": {
+   "h": null,
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "92": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "93": {
+   "h": null,
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "94": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "95": {
+   "h": null,
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "96": {
+   "h": null,
+   "b": "KAZANIM TEST - 3",
+   "n": 3
+  },
+  "97": {
+   "h": null,
+   "b": "KAZANIM TEST - 3",
+   "n": 3
+  },
+  "98": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "99": {
+   "h": null,
+   "b": "ÖSYM TARZI ÖRNEKLER",
+   "n": null
+  },
+  "100": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "101": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "102": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "103": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "105": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "106": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "107": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "108": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "109": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "110": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "111": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "112": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "113": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "114": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "115": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "116": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "117": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "118": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "119": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "120": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "121": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "122": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "123": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-10",
+   "n": 10
+  },
+  "124": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "125": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-10",
+   "n": 10
+  },
+  "126": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  },
+  "127": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  },
+  "128": {
+   "h": null,
+   "b": "ÖSYM'DE ÇIKMIŞ SORULAR",
+   "n": null
+  }
+ }
+}

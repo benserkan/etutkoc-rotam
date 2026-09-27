@@ -1,0 +1,2068 @@
+{
+ "dividers": [
+  {
+   "pdf_idx": 3,
+   "bolum_no": 1,
+   "bolum_adi": "DİK KOORDİNAT DÜZLEMİ",
+   "items": [
+    {
+     "label": "DİK KOORDİNAT SİSTEMİ",
+     "page": 4
+    },
+    {
+     "label": "GEOMETRİK ŞEKİLLERİN ANALİTİK YORUMU",
+     "page": 7
+    },
+    {
+     "label": "İKİ NOKTA ARASINDAKİ UZAKLIK",
+     "page": 16
+    },
+    {
+     "label": "BİR DOĞRU PARÇASININ ORTA NOKTASININ KOORDİNATLARI",
+     "page": 17
+    },
+    {
+     "label": "BİR DOĞRU PARÇASINI BELİRLİ ORANDA BÖLEN NOKTANIN KOORDİNATLARI",
+     "page": 18
+    },
+    {
+     "label": "PARALELKENAR KURALI",
+     "page": 19
+    },
+    {
+     "label": "KÖŞE KOORDİNATLARI BİLİNEN ÜÇGENİN AĞIRLIK MERKEZİNİN KOORDİNATLARI",
+     "page": 20
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 33,
+   "bolum_no": 2,
+   "bolum_adi": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "items": [
+    {
+     "label": "BİR DOĞRUNUN EĞİM AÇISI - BİR DOĞRUNUN EĞİMİ",
+     "page": 34
+    },
+    {
+     "label": "DENKLEMİ VERİLEN DOĞRUNUN EĞİMİ",
+     "page": 35
+    },
+    {
+     "label": "İKİ NOKTANIN BİLİNEN DOĞRUNUN EĞİMİ",
+     "page": 36
+    },
+    {
+     "label": "EĞİMİ VE BİR NOKTASI BİLİNEN DOĞRUNUN DENKLEMİ - İKİ NOKTASI BİLİNEN DOĞRUNUN DENKLEMİ",
+     "page": 43
+    },
+    {
+     "label": "EKSENLERİ KESTİĞİ NOKTALARI BİLİNEN DOĞRUNUN DENKLEMİ - EKSENLERE PARALEL DOĞRULAR",
+     "page": 44
+    },
+    {
+     "label": "BAŞLANGIÇ NOKTASINDAN GEÇEN DOĞRULAR",
+     "page": 45
+    },
+    {
+     "label": "DOĞRU ÜZERİNDEKİ NOKTALAR - DOĞRULARIN KESİM NOKTASI",
+     "page": 46
+    },
+    {
+     "label": "BİRBİRİNE DİK DOĞRULAR",
+     "page": 47
+    },
+    {
+     "label": "BİRBİRİNE PARALEL DOĞRULAR",
+     "page": 48
+    },
+    {
+     "label": "DOĞRUNUN GRAFİĞİ",
+     "page": 49
+    },
+    {
+     "label": "İKİ DOĞRUNUN BİRBİRİNE GÖRE DURUMU",
+     "page": 50
+    },
+    {
+     "label": "BİR NOKTANIN BİR DOĞRUYA UZAKLIĞI",
+     "page": 51
+    },
+    {
+     "label": "EŞİTSİZLİK",
+     "page": 52
+    },
+    {
+     "label": "GEOMETRİK YER",
+     "page": 54
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 94,
+   "bolum_no": 3,
+   "bolum_adi": "DÖNÜŞÜMLER",
+   "items": [
+    {
+     "label": "ÖTELEME DÖNÜŞÜMÜ",
+     "page": 95
+    },
+    {
+     "label": "DÖNME DÖNÜŞÜMÜ",
+     "page": 104
+    },
+    {
+     "label": "KOORDİNAT DÜZLEMİNDE DÖNME DÖNÜŞÜMÜ",
+     "page": 105
+    },
+    {
+     "label": "YANSIMA (SİMETRİ) DÖNÜŞÜMÜ",
+     "page": 115
+    },
+    {
+     "label": "NOKTANIN NOKTAYA GÖRE SİMETRİSİ",
+     "page": 116
+    },
+    {
+     "label": "NOKTANIN EKSENLERE VE ORİJİNE GÖRE SİMETRİSİ",
+     "page": 118
+    },
+    {
+     "label": "NOKTANIN y = x VE y = -x DOĞRULARINA GÖRE SİMETRİSİ",
+     "page": 119
+    },
+    {
+     "label": "NOKTANIN x = k VE y = k DOĞRULARINA GÖRE SİMETRİSİ",
+     "page": 120
+    },
+    {
+     "label": "NOKTANIN DOĞRUYA GÖRE SİMETRİSİ",
+     "page": 121
+    },
+    {
+     "label": "BİR DOĞRUNUN BİR NOKTAYA GÖRE SİMETRİSİ",
+     "page": 123
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 150,
+   "bolum_no": 4,
+   "bolum_adi": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "items": [
+    {
+     "label": "ÇEMBERİN STANDART DENKLEMİ",
+     "page": 151
+    },
+    {
+     "label": "EKSENLERE TEĞET ÇEMBERLER",
+     "page": 152
+    },
+    {
+     "label": "ÇEMBERİN GENEL DENKLEMİ",
+     "page": 156
+    },
+    {
+     "label": "DOĞRU İLE ÇEMBERİN DURUMU",
+     "page": 163
+    },
+    {
+     "label": "İKİ ÇEMBERİN DURUMLARI",
+     "page": 165
+    },
+    {
+     "label": "GEOMETRİK YER KAVRAMI",
+     "page": 169
+    }
+   ],
+   "is_divider": true
+  }
+ ],
+ "scan1": {
+  "0": {
+   "h": null,
+   "b": "AYT",
+   "n": null
+  },
+  "1": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "2": {
+   "h": "ÖN SÖZ",
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK",
+   "n": 1
+  },
+  "5": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK",
+   "n": 2
+  },
+  "6": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK",
+   "n": 2
+  },
+  "7": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK",
+   "n": 2
+  },
+  "8": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST",
+   "n": 1
+  },
+  "9": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST",
+   "n": 1
+  },
+  "10": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST",
+   "n": 2
+  },
+  "11": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "12": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "13": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "14": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "15": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "16": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "17": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "18": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "19": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "20": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "21": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "22": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "23": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "24": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "25": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "26": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "27": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "28": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "29": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "30": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "31": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-7",
+   "n": 7
+  },
+  "32": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-7",
+   "n": 7
+  },
+  "34": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "35": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "36": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "37": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "38": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "39": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "40": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "41": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "42": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "43": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "44": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "45": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "46": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 1",
+   "n": 1
+  },
+  "47": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "48": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "49": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "50": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "51": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "52": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "53": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "54": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "55": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "56": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "57": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "58": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "59": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "60": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "61": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 4",
+   "n": 4
+  },
+  "62": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 4",
+   "n": 4
+  },
+  "63": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 5",
+   "n": 5
+  },
+  "64": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 5",
+   "n": 5
+  },
+  "65": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "66": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "67": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "68": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "69": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "70": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "71": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "72": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "73": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "74": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "75": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "76": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-7",
+   "n": 7
+  },
+  "77": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "78": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-8",
+   "n": 8
+  },
+  "79": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "80": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-9",
+   "n": 9
+  },
+  "81": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "82": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-10",
+   "n": 10
+  },
+  "83": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "84": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-11",
+   "n": 11
+  },
+  "85": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "86": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-12",
+   "n": 12
+  },
+  "87": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "88": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-13",
+   "n": 13
+  },
+  "89": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "90": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-14",
+   "n": 14
+  },
+  "91": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "92": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-15",
+   "n": 15
+  },
+  "93": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "95": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 1",
+   "n": 1
+  },
+  "96": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "97": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "98": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "99": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 7",
+   "n": 7
+  },
+  "100": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "101": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "102": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "103": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "104": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 1",
+   "n": 1
+  },
+  "105": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "106": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 4",
+   "n": 4
+  },
+  "107": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "108": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "109": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 13",
+   "n": 13
+  },
+  "110": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 15",
+   "n": 15
+  },
+  "111": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 19",
+   "n": 19
+  },
+  "112": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "113": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 4",
+   "n": 4
+  },
+  "114": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 4",
+   "n": 4
+  },
+  "115": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "116": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "117": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 6",
+   "n": 6
+  },
+  "118": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 8",
+   "n": 8
+  },
+  "119": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "120": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 16",
+   "n": 16
+  },
+  "121": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 20",
+   "n": 20
+  },
+  "122": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 23",
+   "n": 23
+  },
+  "123": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "124": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 30",
+   "n": 30
+  },
+  "125": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "126": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 32",
+   "n": 32
+  },
+  "127": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 34",
+   "n": 34
+  },
+  "128": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 36",
+   "n": 36
+  },
+  "129": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 5",
+   "n": 5
+  },
+  "130": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 5",
+   "n": 5
+  },
+  "131": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 6",
+   "n": 6
+  },
+  "132": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 6",
+   "n": 6
+  },
+  "133": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 8",
+   "n": 8
+  },
+  "134": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 9",
+   "n": 9
+  },
+  "135": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 9",
+   "n": 9
+  },
+  "136": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "137": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "138": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "139": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "140": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "141": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "142": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "143": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "144": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "145": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "146": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "147": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "148": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-7",
+   "n": 7
+  },
+  "149": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "151": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "152": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "153": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "154": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "155": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "156": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "157": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "158": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 4",
+   "n": 4
+  },
+  "159": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 7",
+   "n": 7
+  },
+  "160": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "161": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "162": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "163": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "164": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "165": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "166": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "167": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "168": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "169": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "170": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "171": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "172": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "173": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "174": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "175": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "177": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 1",
+   "n": 1
+  },
+  "178": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 2",
+   "n": 2
+  },
+  "179": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 3",
+   "n": 3
+  },
+  "180": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 4",
+   "n": 4
+  },
+  "181": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 5",
+   "n": 5
+  },
+  "182": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 6",
+   "n": 6
+  },
+  "183": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 7",
+   "n": 7
+  },
+  "184": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 8",
+   "n": 8
+  },
+  "185": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 9",
+   "n": 9
+  },
+  "186": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 10",
+   "n": 10
+  },
+  "187": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 11",
+   "n": 11
+  },
+  "188": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 12",
+   "n": 12
+  },
+  "189": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 13",
+   "n": 13
+  },
+  "190": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 14",
+   "n": 14
+  },
+  "191": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 15",
+   "n": 15
+  },
+  "192": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 16",
+   "n": 16
+  }
+ },
+ "scan2": {
+  "0": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "1": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "2": {
+   "h": "ÖN SÖZ",
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": "DİK KOORDİNAT DÜZLEMİ",
+   "b": "ÖRNEK",
+   "n": 1
+  },
+  "5": {
+   "h": "DİK KOORDİNAT DÜZLEMİ",
+   "b": "ÖRNEK",
+   "n": 2
+  },
+  "6": {
+   "h": "DİK KOORDİNAT DÜZLEMİ",
+   "b": "ÖRNEK",
+   "n": 2
+  },
+  "7": {
+   "h": "DİK KOORDİNAT DÜZLEMİ",
+   "b": "ÖRNEK",
+   "n": 2
+  },
+  "8": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST",
+   "n": 1
+  },
+  "9": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST",
+   "n": 1
+  },
+  "10": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST",
+   "n": 2
+  },
+  "11": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "12": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "13": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "14": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "15": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "16": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "17": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "18": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "19": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "20": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "21": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "22": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "23": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "24": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "25": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "26": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "27": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "28": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "29": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "30": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "31": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-7",
+   "n": 7
+  },
+  "32": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-7",
+   "n": 7
+  },
+  "34": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "35": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "36": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "37": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "38": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "39": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "40": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "41": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "42": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "43": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "44": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "45": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "46": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 1",
+   "n": 1
+  },
+  "47": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "48": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "49": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "50": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "51": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "52": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "53": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "54": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "55": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "56": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "57": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "58": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "59": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "60": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "61": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 4",
+   "n": 4
+  },
+  "62": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 4",
+   "n": 4
+  },
+  "63": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 5",
+   "n": 5
+  },
+  "64": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 5",
+   "n": 5
+  },
+  "65": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "66": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "67": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "68": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "69": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "70": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "71": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "72": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "73": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "74": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "75": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "76": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-7",
+   "n": 7
+  },
+  "77": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "78": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-8",
+   "n": 8
+  },
+  "79": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "80": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-9",
+   "n": 9
+  },
+  "81": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "82": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-10",
+   "n": 10
+  },
+  "83": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "84": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-11",
+   "n": 11
+  },
+  "85": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "86": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-12",
+   "n": 12
+  },
+  "87": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "88": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-13",
+   "n": 13
+  },
+  "89": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "Çıkmış Soru (2018 / MSÜ)",
+   "n": null
+  },
+  "90": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-14",
+   "n": 14
+  },
+  "91": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "92": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-15",
+   "n": 15
+  },
+  "93": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "95": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "96": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 1",
+   "n": 1
+  },
+  "97": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "98": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 5",
+   "n": 5
+  },
+  "99": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "100": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "101": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "102": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 5",
+   "n": 5
+  },
+  "103": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "104": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "105": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "106": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 4",
+   "n": 4
+  },
+  "107": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "108": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "109": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "110": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "111": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "112": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 3",
+   "n": 3
+  },
+  "113": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 4",
+   "n": 4
+  },
+  "114": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 4",
+   "n": 4
+  },
+  "115": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "116": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "117": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 6",
+   "n": 6
+  },
+  "118": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 8",
+   "n": 8
+  },
+  "119": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "120": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 16",
+   "n": 16
+  },
+  "121": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 20",
+   "n": 20
+  },
+  "122": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 23",
+   "n": 23
+  },
+  "123": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "124": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "125": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "126": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 30",
+   "n": 30
+  },
+  "127": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 32",
+   "n": 32
+  },
+  "128": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DÖNÜŞÜMLER",
+   "n": null
+  },
+  "129": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 34",
+   "n": 34
+  },
+  "130": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 36",
+   "n": 36
+  },
+  "131": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 5",
+   "n": 5
+  },
+  "132": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 5",
+   "n": 5
+  },
+  "133": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 8",
+   "n": 8
+  },
+  "134": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 9",
+   "n": 9
+  },
+  "135": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 9",
+   "n": 9
+  },
+  "136": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "137": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "138": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "139": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "140": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "141": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "142": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-4",
+   "n": 4
+  },
+  "143": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "144": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-5",
+   "n": 5
+  },
+  "145": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "146": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-6",
+   "n": 6
+  },
+  "147": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "148": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-7",
+   "n": 7
+  },
+  "149": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "151": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "152": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "153": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "154": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "155": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "156": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "157": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "158": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 4",
+   "n": 4
+  },
+  "159": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 7",
+   "n": 7
+  },
+  "160": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "161": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "162": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "163": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "164": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "165": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "n": null
+  },
+  "166": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 2",
+   "n": 2
+  },
+  "167": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "168": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 1",
+   "n": 1
+  },
+  "169": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖRNEK 3",
+   "n": 3
+  },
+  "170": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "171": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "KAZANIM TEST 2",
+   "n": 2
+  },
+  "172": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-2",
+   "n": 2
+  },
+  "173": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "174": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "ÖSYM TARZI TEST-3",
+   "n": 3
+  },
+  "175": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": null,
+   "n": null
+  },
+  "177": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 1",
+   "n": 1
+  },
+  "178": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 2",
+   "n": 2
+  },
+  "179": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 3",
+   "n": 3
+  },
+  "180": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 4",
+   "n": 4
+  },
+  "181": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 5",
+   "n": 5
+  },
+  "182": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 6",
+   "n": 6
+  },
+  "183": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 7",
+   "n": 7
+  },
+  "184": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 8",
+   "n": 8
+  },
+  "185": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 9",
+   "n": 9
+  },
+  "186": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 10",
+   "n": 10
+  },
+  "187": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 11",
+   "n": 11
+  },
+  "188": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 12",
+   "n": 12
+  },
+  "189": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 13",
+   "n": 13
+  },
+  "190": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 14",
+   "n": 14
+  },
+  "191": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 15",
+   "n": 15
+  },
+  "192": {
+   "h": "ANALİTİK GEOMETRİ",
+   "b": "DENEME 16",
+   "n": 16
+  }
+ }
+}

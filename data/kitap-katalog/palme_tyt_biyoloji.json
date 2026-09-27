@@ -1,0 +1,147 @@
+{
+ "name": "Palme TYT Biyoloji Soru Kitabı",
+ "publisher": "Palme Yayınevi",
+ "subject": "TYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Taranmış PDF (240 s). Palme deseni: ünite başına TEST 1..k (2 sayfa); 4 'Sarmal' ünitesi (5'er test) önceki konuları karıştırır; ünite sonu 'Ders Notları' test değil. Ünite içi numara zincirleri kopuksuz (6·10·10·5·8·8·5·10·5·5·10·18·5 = 105).",
+  "Ünite adıyla basılmış (alt konusuz) testler 'Karma (Ünite)' satırında toplandı."
+ ],
+ "sections": [
+  {
+   "label": "Canlıların Ortak Özellikleri ve Grafik Yorumlama",
+   "test_count": 6,
+   "source": "serit",
+   "page": 8
+  },
+  {
+   "label": "Canlıların Temel Bileşenleri",
+   "test_count": 2,
+   "source": "serit",
+   "page": 20
+  },
+  {
+   "label": "Proteinler",
+   "test_count": 1,
+   "source": "serit",
+   "page": 25
+  },
+  {
+   "label": "Enzimler",
+   "test_count": 1,
+   "source": "serit",
+   "page": 27
+  },
+  {
+   "label": "Karma (Canlıların Temel Bileşenleri)",
+   "test_count": 6,
+   "source": "serit",
+   "page": 29
+  },
+  {
+   "label": "Hücre Organelleri",
+   "test_count": 2,
+   "source": "serit",
+   "page": 42
+  },
+  {
+   "label": "Hücre Zarı ve Madde Geçişleri",
+   "test_count": 2,
+   "source": "serit",
+   "page": 46
+  },
+  {
+   "label": "Karma (Hücre)",
+   "test_count": 6,
+   "source": "serit",
+   "page": 51
+  },
+  {
+   "label": "Sarmal 1 (Canlıların Temel Bileşenleri - Hücre)",
+   "test_count": 5,
+   "source": "serit",
+   "page": 65
+  },
+  {
+   "label": "Ekosistem Ekolojisi ve Güncel Çevre Sorunları",
+   "test_count": 8,
+   "source": "serit",
+   "page": 76
+  },
+  {
+   "label": "Mikroorganizmalar (Bakteri, Arke ve Protista)",
+   "test_count": 8,
+   "source": "serit",
+   "page": 94
+  },
+  {
+   "label": "Sarmal 2 (Ekosistem Ekolojisi - Mikroorganizmalar)",
+   "test_count": 5,
+   "source": "serit",
+   "page": 113
+  },
+  {
+   "label": "Canlıların Çeşitliliği ve Sınıflandırılması",
+   "test_count": 10,
+   "source": "serit",
+   "page": 124
+  },
+  {
+   "label": "Mitoz Bölünme - Eşeysiz Üreme",
+   "test_count": 5,
+   "source": "serit",
+   "page": 146
+  },
+  {
+   "label": "Sarmal 3 (Sınıflandırma - Mitoz ve Eşeysiz Üreme)",
+   "test_count": 5,
+   "source": "serit",
+   "page": 158
+  },
+  {
+   "label": "Mayoz Bölünme - Eşeyli Üreme",
+   "test_count": 5,
+   "source": "serit",
+   "page": 170
+  },
+  {
+   "label": "Karma (Mayoz Bölünme - Eşeyli Üreme)",
+   "test_count": 5,
+   "source": "serit",
+   "page": 181
+  },
+  {
+   "label": "Mendel Genetiği ve Uzantıları",
+   "test_count": 4,
+   "source": "serit",
+   "page": 193
+  },
+  {
+   "label": "Kan Grupları",
+   "test_count": 4,
+   "source": "serit",
+   "page": 201
+  },
+  {
+   "label": "Eşeye Bağlı Kalıtım",
+   "test_count": 4,
+   "source": "serit",
+   "page": 209
+  },
+  {
+   "label": "Karma (Kalıtım)",
+   "test_count": 6,
+   "source": "serit",
+   "page": 217
+  },
+  {
+   "label": "Sarmal 4 (Mayoz - Eşeyli Üreme ve Kalıtım)",
+   "test_count": 5,
+   "source": "serit",
+   "page": 230
+  }
+ ]
+}

@@ -1,0 +1,386 @@
+{
+ "name": "Bilgi Sarmal TYT Kimya Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Taranmış PDF (303 s). Bilgi Sarmal deseni: ünite başına numaralı konu testleri (Test 1..k, her test 2 sayfa) + Simülasyon Testleri + ÖSYM Tipi + kitap geneli Sarmal Test 1..9 + kitap sonu ÖSYM Tipi Eğilim Kontrol 1..3.",
+  "6. ünitede Test 14 (Mol Kavramı – VI) sayfaları TARAMADA BOŞ (pdf s.174-175) — numara sırasına göre sayıldı (Mol Kavramı 6 test).",
+  "Sarmal Test 4 ve 5 'Doğa ve Kimya' ünitesinin sonunda arka arkaya."
+ ],
+ "sections": [
+  {
+   "label": "Simyadan Kimyaya",
+   "test_count": 1,
+   "source": "serit",
+   "page": 9
+  },
+  {
+   "label": "Kimyanın Alt Disiplinleri ve Uğraş Alanları",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Kimyanın Sembolik Dili",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Kimya Uygulamalarında İş Sağlığı ve Güvenliği",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Simülasyon Testleri (Kimya Bilimi)",
+   "test_count": 3,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi (Kimya Bilimi)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Atom Modelleri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 31
+  },
+  {
+   "label": "Atomu Oluşturan Temel Tanecikler",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Atom Türleri",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Atomun Yapısı (Karma)",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Periyodik Sistemin Genel Özellikleri ve Yer Bulma",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Periyodik Sistemde Değişen Özellikler",
+   "test_count": 3,
+   "source": "serit"
+  },
+  {
+   "label": "Simülasyon Testleri (Atom ve Periyodik Sistem)",
+   "test_count": 4,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi (Atom ve Periyodik Sistem)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sarmal Test (Atom ve Periyodik Sistem)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Kimyasal Türler Arası Etkileşimlerin Sınıflandırılması",
+   "test_count": 1,
+   "source": "serit",
+   "page": 69
+  },
+  {
+   "label": "Dublet-Oktet Kuralı ve Lewis Yapısı",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "İyonik Bağın Oluşumu",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "İyonik Bağlı Bileşiklerin Adlandırılması",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Kovalent Bağın Oluşumu",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Kovalent Bağlı Bileşiklerin Adlandırılması",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Metalik Bağ",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Zayıf Etkileşimler",
+   "test_count": 3,
+   "source": "serit"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Simülasyon Testleri (Kimyasal Türler Arası Etkileşimler)",
+   "test_count": 4,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi (Kimyasal Türler Arası Etkileşimler)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sarmal Test (Kimyasal Türler Arası Etkileşimler)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Maddenin Fiziksel Hâlleri",
+   "test_count": 1,
+   "source": "serit",
+   "page": 109
+  },
+  {
+   "label": "Katılar ve Özellikleri",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sıvılar ve Özellikleri",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Gazların Genel Özellikleri ve Plazma",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Hâl Değişim Grafikleri",
+   "test_count": 3,
+   "source": "serit"
+  },
+  {
+   "label": "Simülasyon Testleri (Maddenin Hâlleri)",
+   "test_count": 4,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi (Maddenin Hâlleri)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sarmal Test (Maddenin Hâlleri)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Su ve Hayat",
+   "test_count": 1,
+   "source": "serit",
+   "page": 139
+  },
+  {
+   "label": "Çevre Kimyası",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sarmal Test (Doğa ve Kimya)",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Kimyanın Temel Kanunları",
+   "test_count": 8,
+   "source": "serit",
+   "page": 149
+  },
+  {
+   "label": "Mol Kavramı",
+   "test_count": 6,
+   "source": "serit"
+  },
+  {
+   "label": "Tepkime Denklemleri",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Tepkime Türleri",
+   "test_count": 3,
+   "source": "serit"
+  },
+  {
+   "label": "Kimyasal Hesaplamalar",
+   "test_count": 5,
+   "source": "serit"
+  },
+  {
+   "label": "Simülasyon Testleri (Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar)",
+   "test_count": 4,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi (Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sarmal Test (Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Homojen ve Heterojen Karışımlar",
+   "test_count": 2,
+   "source": "serit",
+   "page": 211
+  },
+  {
+   "label": "Çözünme Olayı",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Kütlece / Hacimce Yüzde Derişimler",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Çözeltilerin Kaynama ve Donma Noktaları",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Karışımları Ayırma Yöntemleri",
+   "test_count": 3,
+   "source": "serit"
+  },
+  {
+   "label": "Simülasyon Testleri (Karışımlar)",
+   "test_count": 4,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi (Karışımlar)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sarmal Test (Karışımlar)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Asitlerin ve Bazların Genel Özellikleri",
+   "test_count": 4,
+   "source": "serit",
+   "page": 245
+  },
+  {
+   "label": "Asitlerin ve Bazların Tepkimeleri",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Asitlerin ve Bazların Metallerle Tepkimeleri",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Yaygın Asitler ve Kullanım Alanları",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Yaygın Bazlar ve Kullanım Alanları",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Asitlerin/Bazların Fayda ve Zararları",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Tuzlar",
+   "test_count": 2,
+   "source": "serit"
+  },
+  {
+   "label": "Simülasyon Testleri (Asitler, Bazlar ve Tuzlar)",
+   "test_count": 3,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi (Asitler, Bazlar ve Tuzlar)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sarmal Test (Asitler, Bazlar ve Tuzlar)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Temizlik Maddeleri",
+   "test_count": 2,
+   "source": "serit",
+   "page": 283
+  },
+  {
+   "label": "Yaygın Polimerler",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Kozmetikler ve İlaçlar",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Hazır Gıdalar ve Yağlar",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Simülasyon Testleri (Kimya Her Yerde)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi (Kimya Her Yerde)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "Sarmal Test (Kimya Her Yerde)",
+   "test_count": 1,
+   "source": "serit"
+  },
+  {
+   "label": "ÖSYM Tipi Eğilim Kontrol Testleri",
+   "test_count": 3,
+   "source": "serit",
+   "page": 299
+  }
+ ]
+}

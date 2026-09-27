@@ -1,0 +1,240 @@
+{
+ "name": "3D AYT Fizik Video Destekli Defter",
+ "publisher": "3D Yayınları",
+ "subject": "AYT Fizik",
+ "type": "konu_anlatimli",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Kitap soru bankası DEĞİL, konu anlatımlı 'video destekli defter' (Örnek / Uygulama / İrdele / Bire Bir ÖSYM / Beceri Temelli Soru blokları). Klasik 'TEST N' bandı YOK → yapı içindekilerden, test birimi gövde örneklemesinden kuruldu.",
+  "TEST BİRİMİ: 3D TYT VDD kabulüyle aynı — sayfa başına ~2,4 soru bloğu (bu kitaptaki örneklem 2,5-3,6 ölçtü), test_count = ceil(sayfa × 2,4 / 12). İstenirse --reset ile değiştirilir.",
+  "Tarama TAM: PDF 408 sayfa, pdf indeksi = basılı sayfa (s6=7 … s407=408). 32 bölüm içindekilerden."
+ ],
+ "sections": [
+  {
+   "label": "Vektörler",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 7,
+   "pages": 12
+  },
+  {
+   "label": "Bağıl ve Bileşke Hareket",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 19,
+   "pages": 14
+  },
+  {
+   "label": "Newton'ın Hareket Yasaları",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 33,
+   "pages": 14
+  },
+  {
+   "label": "Bir Boyutta Sabit İvmeli Hareket",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 47,
+   "pages": 12
+  },
+  {
+   "label": "Yeryüzünde Hareket",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 59,
+   "pages": 16
+  },
+  {
+   "label": "Hareket ve Enerji",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 75,
+   "pages": 12
+  },
+  {
+   "label": "İtme ve Momentum",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 87,
+   "pages": 18
+  },
+  {
+   "label": "Kesişen Kuvvetlerin Dengesi",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 105,
+   "pages": 8
+  },
+  {
+   "label": "Tork ve Denge",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 113,
+   "pages": 14
+  },
+  {
+   "label": "Kütle ve Ağırlık Merkezi",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 127,
+   "pages": 16
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 143,
+   "pages": 12
+  },
+  {
+   "label": "Elektriksel Kuvvet ve Elektriksel Alan",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 155,
+   "pages": 12
+  },
+  {
+   "label": "Elektriksel Potansiyel Enerji ve Elektriksel Potansiyel",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 167,
+   "pages": 12
+  },
+  {
+   "label": "Yüklü Paralel Levhalar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 179,
+   "pages": 10
+  },
+  {
+   "label": "Sığa ve Sığaçlar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 189,
+   "pages": 10
+  },
+  {
+   "label": "Manyetik Alan",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 199,
+   "pages": 10
+  },
+  {
+   "label": "Manyetik Kuvvet",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 209,
+   "pages": 10
+  },
+  {
+   "label": "Elektromanyetik İndüksiyon",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 219,
+   "pages": 14
+  },
+  {
+   "label": "Alternatif Akım",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 233,
+   "pages": 10
+  },
+  {
+   "label": "Transformatörler",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 243,
+   "pages": 8
+  },
+  {
+   "label": "Düzgün Çembersel Hareket",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 251,
+   "pages": 18
+  },
+  {
+   "label": "Açısal Momentum",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 269,
+   "pages": 12
+  },
+  {
+   "label": "Kütle Çekim Kuvveti ve Kepler Yasaları",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 281,
+   "pages": 10
+  },
+  {
+   "label": "Basit Harmonik Hareket",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 291,
+   "pages": 14
+  },
+  {
+   "label": "Dalga Mekaniği",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 305,
+   "pages": 14
+  },
+  {
+   "label": "Elektromanyetik Dalgalar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 319,
+   "pages": 10
+  },
+  {
+   "label": "Atom Fiziğine Giriş",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 329,
+   "pages": 18
+  },
+  {
+   "label": "Büyük Patlama Teorisi ve Atom Altı Parçacıklar",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 347,
+   "pages": 14
+  },
+  {
+   "label": "Radyoaktivite",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 361,
+   "pages": 8
+  },
+  {
+   "label": "Özel Görelilik Teorisi",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 369,
+   "pages": 8
+  },
+  {
+   "label": "Siyah Cisim Işıması - Fotoelektrik Olay - Compton Saçılması",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 377,
+   "pages": 20
+  },
+  {
+   "label": "Modern Fiziğin Teknolojideki Kullanım Alanları",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 397,
+   "pages": 12
+  }
+ ]
+}

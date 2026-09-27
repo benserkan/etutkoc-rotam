@@ -1,0 +1,260 @@
+{
+ "name": "Twins TYT Fizik Soru Bankası",
+ "publisher": "KR Akademi (Twins)",
+ "subject": "TYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Föy tarzı kitap (Twins TYT Biyoloji deseni): klasik TEST N numarası YOK; konu föyleri + ünite sonu turuncu değerlendirme blokları. Test birimi Twins Biyoloji kararıyla aynı: 2 sayfa ≈ 1 test (yukarı yuvarlama).",
+  "Sayfa başlıkları dağıtıcı filigranının altında; konu adları üst-şerit vision okumasından. Optik ünitesinin konu sırası kitaptaki gibi (Kırılma → Küresel Aynalar → … → Mercekler)."
+ ],
+ "sections": [
+  {
+   "label": "Fizik Bilimine Giriş",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 4,
+   "pages": 2
+  },
+  {
+   "label": "Fizik Bilimine Giriş Ünite Değerlendirme",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 6,
+   "pages": 2
+  },
+  {
+   "label": "Kütle, Hacim ve Özkütle",
+   "test_count": 4,
+   "source": "foy_sayfa",
+   "page": 8,
+   "pages": 7
+  },
+  {
+   "label": "Dayanıklılık, Yapışma ve Birbirini Tutma",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 15,
+   "pages": 2
+  },
+  {
+   "label": "Madde ve Özellikleri Ünite Değerlendirme",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 17,
+   "pages": 4
+  },
+  {
+   "label": "Hareket",
+   "test_count": 3,
+   "source": "foy_sayfa",
+   "page": 21,
+   "pages": 5
+  },
+  {
+   "label": "Sürtünme Kuvveti",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 26,
+   "pages": 3
+  },
+  {
+   "label": "Newton'ın Hareket Yasaları",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 29,
+   "pages": 3
+  },
+  {
+   "label": "Hareket ve Kuvvet Ünite Değerlendirme",
+   "test_count": 3,
+   "source": "foy_sayfa",
+   "page": 32,
+   "pages": 6
+  },
+  {
+   "label": "İş, Güç ve Enerji",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 38,
+   "pages": 1
+  },
+  {
+   "label": "Enerji Ünite Değerlendirme",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 39,
+   "pages": 3
+  },
+  {
+   "label": "Isı ve Sıcaklık",
+   "test_count": 3,
+   "source": "foy_sayfa",
+   "page": 42,
+   "pages": 5
+  },
+  {
+   "label": "Enerji İletim Yolları ve Enerji İletim Hızı",
+   "test_count": 3,
+   "source": "foy_sayfa",
+   "page": 47,
+   "pages": 5
+  },
+  {
+   "label": "Genleşme",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 52,
+   "pages": 1
+  },
+  {
+   "label": "Isı ve Sıcaklık Ünite Değerlendirme",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 53,
+   "pages": 3
+  },
+  {
+   "label": "Elektrik Yükleri",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 56,
+   "pages": 3
+  },
+  {
+   "label": "Elektrostatik Ünite Değerlendirme",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 59,
+   "pages": 3
+  },
+  {
+   "label": "Elektrik Devreleri",
+   "test_count": 6,
+   "source": "foy_sayfa",
+   "page": 62,
+   "pages": 12
+  },
+  {
+   "label": "Elektrik ve Manyetizma Ünite Değerlendirme",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 74,
+   "pages": 4
+  },
+  {
+   "label": "Basınç",
+   "test_count": 4,
+   "source": "foy_sayfa",
+   "page": 78,
+   "pages": 7
+  },
+  {
+   "label": "Kaldırma Kuvveti",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 85,
+   "pages": 3
+  },
+  {
+   "label": "Basınç ve Kaldırma Kuvveti Ünite Değerlendirme",
+   "test_count": 4,
+   "source": "foy_sayfa",
+   "page": 88,
+   "pages": 7
+  },
+  {
+   "label": "Yay Dalgaları",
+   "test_count": 3,
+   "source": "foy_sayfa",
+   "page": 95,
+   "pages": 5
+  },
+  {
+   "label": "Dalgalar (Temel Kavramlar)",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 100,
+   "pages": 4
+  },
+  {
+   "label": "Su Dalgaları",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 104,
+   "pages": 1
+  },
+  {
+   "label": "Ses Dalgaları",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 105,
+   "pages": 2
+  },
+  {
+   "label": "Dalgalar Ünite Değerlendirme",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 107,
+   "pages": 4
+  },
+  {
+   "label": "Kırılma",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 111,
+   "pages": 4
+  },
+  {
+   "label": "Küresel Aynalar",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 115,
+   "pages": 3
+  },
+  {
+   "label": "Yansıma",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 118,
+   "pages": 1
+  },
+  {
+   "label": "Aydınlanma",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 119,
+   "pages": 2
+  },
+  {
+   "label": "Düzlem Ayna",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 121,
+   "pages": 1
+  },
+  {
+   "label": "Renk",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 122,
+   "pages": 1
+  },
+  {
+   "label": "Mercekler",
+   "test_count": 1,
+   "source": "foy_sayfa",
+   "page": 123,
+   "pages": 2
+  },
+  {
+   "label": "Optik Ünite Değerlendirme",
+   "test_count": 2,
+   "source": "foy_sayfa",
+   "page": 125,
+   "pages": 3
+  }
+ ]
+}

@@ -1,0 +1,143 @@
+{
+ "name": "3D AYT Matematik Video Destekli Defter",
+ "publisher": "3D Yayınları",
+ "subject": "AYT Matematik",
+ "type": "konu_anlatimli",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Kitap soru bankası DEĞİL, konu anlatımlı 'video destekli defter' (Örnek / Uygulama / İrdele / Bire Bir ÖSYM / Beceri Temelli Soru blokları). Klasik 'TEST N' bandı YOK → yapı içindekilerden, test birimi gövde örneklemesinden kuruldu.",
+  "TEST BİRİMİ: 3D TYT VDD kabulüyle aynı — sayfa başına ~2,4 soru bloğu (bu kitaptaki örneklem 2,5-3,6 ölçtü), test_count = ceil(sayfa × 2,4 / 12). İstenirse --reset ile değiştirilir.",
+  "TARAMA EKSİK: PDF 313 sayfa, basılı numaralar 392'ye kadar ve aralarda atlama var (pdf s6=7, s22=25, s150=177, s312=392). Bölüm uzunlukları içindekilerin basılı sayfa numaralarından hesaplandı → eksiklikten ETKİLENMEZ.",
+  "Son bölüm (Sayma ve Olasılık, s.383) tarama s.392'de bittiği için 10 sayfa varsayıldı (2 test); kitabın gerçek uzunluğu daha fazlaysa artırılmalı."
+ ],
+ "sections": [
+  {
+   "label": "Polinomlar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 7,
+   "pages": 10
+  },
+  {
+   "label": "Polinomlarda Bölme",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 17,
+   "pages": 12
+  },
+  {
+   "label": "İkinci Dereceden Denklemler",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 29,
+   "pages": 18
+  },
+  {
+   "label": "Parabol",
+   "test_count": 5,
+   "source": "icindekiler+orneklem",
+   "page": 47,
+   "pages": 22
+  },
+  {
+   "label": "İkinci Dereceden Bir Bilinmeyenli Eşitsizlikler",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 69,
+   "pages": 20
+  },
+  {
+   "label": "Fonksiyon Uygulamaları",
+   "test_count": 5,
+   "source": "icindekiler+orneklem",
+   "page": 89,
+   "pages": 22
+  },
+  {
+   "label": "Trigonometri - 1",
+   "test_count": 5,
+   "source": "icindekiler+orneklem",
+   "page": 111,
+   "pages": 22
+  },
+  {
+   "label": "Trigonometri - 2",
+   "test_count": 5,
+   "source": "icindekiler+orneklem",
+   "page": 133,
+   "pages": 24
+  },
+  {
+   "label": "Trigonometri - 3",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 157,
+   "pages": 20
+  },
+  {
+   "label": "Logaritma",
+   "test_count": 6,
+   "source": "icindekiler+orneklem",
+   "page": 177,
+   "pages": 28
+  },
+  {
+   "label": "Diziler",
+   "test_count": 5,
+   "source": "icindekiler+orneklem",
+   "page": 205,
+   "pages": 22
+  },
+  {
+   "label": "Limit",
+   "test_count": 6,
+   "source": "icindekiler+orneklem",
+   "page": 227,
+   "pages": 28
+  },
+  {
+   "label": "Türev - 1",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 255,
+   "pages": 20
+  },
+  {
+   "label": "Türev - 2",
+   "test_count": 5,
+   "source": "icindekiler+orneklem",
+   "page": 275,
+   "pages": 24
+  },
+  {
+   "label": "Türev - 3",
+   "test_count": 5,
+   "source": "icindekiler+orneklem",
+   "page": 299,
+   "pages": 24
+  },
+  {
+   "label": "İntegral - 1",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 323,
+   "pages": 20
+  },
+  {
+   "label": "İntegral - 2",
+   "test_count": 8,
+   "source": "icindekiler+orneklem",
+   "page": 343,
+   "pages": 40
+  },
+  {
+   "label": "Sayma ve Olasılık",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 383,
+   "pages": 10
+  }
+ ]
+}

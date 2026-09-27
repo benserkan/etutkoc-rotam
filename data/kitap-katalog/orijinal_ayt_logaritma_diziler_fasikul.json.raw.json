@@ -1,0 +1,1562 @@
+{
+ "dividers": [
+  {
+   "pdf_idx": 3,
+   "bolum_no": 1,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "Üstel Fonksiyon",
+     "page": 4
+    },
+    {
+     "label": "Logaritmik Fonksiyon",
+     "page": 8
+    },
+    {
+     "label": "Logaritma Fonksiyonunun Tanım Kümesi",
+     "page": 9
+    },
+    {
+     "label": "Logaritma Fonksiyonunun Özellikleri",
+     "page": 10
+    },
+    {
+     "label": "Logaritma Fonksiyonunun Tersi/",
+     "page": 11
+    },
+    {
+     "label": "Taban Değiştirme Kuralı",
+     "page": 23
+    },
+    {
+     "label": "Üstel ve Logaritmik Fonksiyonların Grafikleri",
+     "page": 32
+    },
+    {
+     "label": "Üstel Denklemler",
+     "page": 38
+    },
+    {
+     "label": "Logaritmik Denklemler",
+     "page": 39
+    },
+    {
+     "label": "Üstel ve Logaritmik Eşitsizlikler",
+     "page": 50
+    },
+    {
+     "label": "Günlük Yaşamda Logaritma",
+     "page": 59
+    },
+    {
+     "label": "ÖSYM Tarzı Tarama Testleri",
+     "page": 61
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 87,
+   "bolum_no": 2,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "Diziler",
+     "page": 88
+    },
+    {
+     "label": "Sonlu Dizi",
+     "page": 91
+    },
+    {
+     "label": "Sabit Dizi",
+     "page": 92
+    },
+    {
+     "label": "Eşit Diziler",
+     "page": 93
+    },
+    {
+     "label": "Dizilerde İşlemler",
+     "page": 94
+    },
+    {
+     "label": "Dizilerin Grafiği",
+     "page": 94
+    },
+    {
+     "label": "İndirgemeli Dizi",
+     "page": 95
+    },
+    {
+     "label": "Bir Dizinin Kısmi Toplamı",
+     "page": 95
+    },
+    {
+     "label": "Aritmetik Dizi",
+     "page": 104
+    },
+    {
+     "label": "Aritmetik Dizinin Özellikleri",
+     "page": 105
+    },
+    {
+     "label": "Geometrik Dizi",
+     "page": 115
+    },
+    {
+     "label": "Geometrik Dizinin Özellikleri",
+     "page": 116
+    },
+    {
+     "label": "Özel Diziler",
+     "page": 118
+    },
+    {
+     "label": "Toplam Sembolü",
+     "page": 119
+    },
+    {
+     "label": "ÖSYM Tarzı Tarama Testleri",
+     "page": 127
+    }
+   ],
+   "is_divider": true
+  }
+ ],
+ "scan1": {
+  "0": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "1": {
+   "h": "LOGARİTMA-DİZİLER",
+   "b": "AYRAÇ",
+   "n": null
+  },
+  "2": {
+   "h": "LOGARİTMA – DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": "LOGARİTMA",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "5": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK",
+   "n": 4
+  },
+  "6": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK",
+   "n": 6
+  },
+  "7": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "8": {
+   "h": "LOGARİTMA",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "9": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK",
+   "n": 6
+  },
+  "10": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK",
+   "n": 7
+  },
+  "11": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 11",
+   "n": 11
+  },
+  "12": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "13": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 16",
+   "n": 16
+  },
+  "14": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 18",
+   "n": 18
+  },
+  "15": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "16": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "17": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "18": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "19": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST-3",
+   "n": 3
+  },
+  "20": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "21": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "22": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "23": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 2
+  },
+  "24": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 4
+  },
+  "25": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 9
+  },
+  "26": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": 1
+  },
+  "27": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "28": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": 2
+  },
+  "29": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "30": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "31": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "32": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "33": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "34": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "35": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "36": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "37": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "38": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "39": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "40": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "41": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 12",
+   "n": 12
+  },
+  "42": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "43": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "44": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "45": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "46": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "47": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "48": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "49": {
+   "h": "LOGARİTMA",
+   "b": "Çıkmış Soru (2020 / AYT)",
+   "n": null
+  },
+  "50": {
+   "h": "LOGARİTMA",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "51": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "52": {
+   "h": null,
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "53": {
+   "h": null,
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "54": {
+   "h": null,
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "55": {
+   "h": null,
+   "b": "ÖRNEK - 11",
+   "n": 11
+  },
+  "56": {
+   "h": null,
+   "b": "ÖRNEK - 12",
+   "n": 12
+  },
+  "57": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "58": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "59": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "60": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "61": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "62": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "63": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "64": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "65": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "66": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "67": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "68": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "69": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "70": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "71": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "72": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "73": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "74": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "75": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "76": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "77": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "78": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "79": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-10",
+   "n": 10
+  },
+  "80": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "81": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-11",
+   "n": 11
+  },
+  "82": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-11",
+   "n": 11
+  },
+  "83": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-12",
+   "n": 12
+  },
+  "84": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-12",
+   "n": 12
+  },
+  "85": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-13",
+   "n": 13
+  },
+  "86": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-13",
+   "n": 13
+  },
+  "88": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "89": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "90": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "91": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "92": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 18",
+   "n": 18
+  },
+  "93": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 21",
+   "n": 21
+  },
+  "94": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 26",
+   "n": 26
+  },
+  "95": {
+   "h": "DİZİLER",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "96": {
+   "h": "DİZİLER",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "97": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "98": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "99": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "100": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "101": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "102": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "103": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "104": {
+   "h": "DİZİLER",
+   "b": "ARİTMETİK DİZİ",
+   "n": null
+  },
+  "105": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "106": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "107": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "108": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "109": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "110": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "111": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "112": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "113": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "114": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "115": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "116": {
+   "h": "DİZİLER",
+   "b": "GEOMETRİK DİZİ",
+   "n": null
+  },
+  "117": {
+   "h": "DİZİLER",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "118": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "119": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "120": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "121": {
+   "h": "DİZİLER",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "122": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "123": {
+   "h": "DİZİLER",
+   "b": "ÇIKMIŞ SORU (2020 / AYT)",
+   "n": null
+  },
+  "124": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "125": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "126": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "127": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "128": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "129": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "130": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "131": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "132": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "133": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "134": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "135": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "136": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "137": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "138": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "139": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "140": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "141": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "142": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "143": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "144": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  }
+ },
+ "scan2": {
+  "0": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "1": {
+   "h": "LOGARİTMA-DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "2": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": "LOGARİTMA",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "5": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK",
+   "n": 4
+  },
+  "6": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK",
+   "n": 6
+  },
+  "7": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "8": {
+   "h": "LOGARİTMA",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "9": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK",
+   "n": 6
+  },
+  "10": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK",
+   "n": 7
+  },
+  "11": {
+   "h": null,
+   "b": "ÖRNEK - 11",
+   "n": 11
+  },
+  "12": {
+   "h": null,
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "13": {
+   "h": null,
+   "b": "ÖRNEK - 16",
+   "n": 16
+  },
+  "14": {
+   "h": null,
+   "b": "ÖRNEK - 18",
+   "n": 18
+  },
+  "15": {
+   "h": null,
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "16": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "17": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "18": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "19": {
+   "h": null,
+   "b": "KAZANIM TEST-3",
+   "n": 3
+  },
+  "20": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "21": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "22": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "23": {
+   "h": null,
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "24": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "25": {
+   "h": null,
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "26": {
+   "h": null,
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "27": {
+   "h": null,
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "28": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "29": {
+   "h": null,
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "30": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "31": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "32": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "33": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "34": {
+   "h": "LOGARİTMA",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "35": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "36": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TEST-1",
+   "n": 1
+  },
+  "37": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "38": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "39": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "40": {
+   "h": "LOGARİTMA",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "41": {
+   "h": null,
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "42": {
+   "h": null,
+   "b": "ÖRNEK - 12",
+   "n": 12
+  },
+  "43": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "44": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "45": {
+   "h": null,
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "46": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "47": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "48": {
+   "h": null,
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "49": {
+   "h": null,
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "50": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "51": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 4
+  },
+  "52": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 7
+  },
+  "53": {
+   "h": null,
+   "b": "ÖRNEK",
+   "n": 11
+  },
+  "54": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "55": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "56": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "57": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "58": {
+   "h": null,
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "59": {
+   "h": null,
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "60": {
+   "h": null,
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "61": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "62": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "63": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "64": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "65": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "66": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "67": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "68": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "69": {
+   "h": null,
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "70": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "71": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "72": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "73": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "74": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "75": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "76": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "77": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "78": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "79": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-10",
+   "n": 10
+  },
+  "80": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "81": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-11",
+   "n": 11
+  },
+  "82": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "83": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-12",
+   "n": 12
+  },
+  "84": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "85": {
+   "h": "LOGARİTMA",
+   "b": "ÖSYM TARZI TARAMA TEST-13",
+   "n": 13
+  },
+  "86": {
+   "h": "LOGARİTMA",
+   "b": null,
+   "n": null
+  },
+  "88": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "89": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "90": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "91": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 14",
+   "n": 14
+  },
+  "92": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 18",
+   "n": 18
+  },
+  "93": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 21",
+   "n": 21
+  },
+  "94": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 26",
+   "n": 26
+  },
+  "95": {
+   "h": "DİZİLER",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "96": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 32",
+   "n": 32
+  },
+  "97": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "98": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "99": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "100": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "101": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "102": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "103": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "104": {
+   "h": "DİZİLER",
+   "b": "ARİTMETİK DİZİ",
+   "n": null
+  },
+  "105": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "106": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "107": {
+   "h": "DİZİLER",
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "108": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "109": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "110": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "111": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "112": {
+   "h": null,
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "113": {
+   "h": null,
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "114": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "115": {
+   "h": null,
+   "b": "GEOMETRİK DİZİ",
+   "n": null
+  },
+  "116": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "117": {
+   "h": null,
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "118": {
+   "h": null,
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "119": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "120": {
+   "h": null,
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "121": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "122": {
+   "h": "DİZİLER",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "123": {
+   "h": "DİZİLER",
+   "b": "Çıkmış Soru (2020 / AYT)",
+   "n": null
+  },
+  "124": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "125": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "126": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "127": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "128": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "129": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "130": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "131": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "132": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "133": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "134": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "135": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "136": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "137": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "138": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "139": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "140": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "141": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "142": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  },
+  "143": {
+   "h": "DİZİLER",
+   "b": "ÖSYM TARZI TARAMA TEST-9",
+   "n": 9
+  },
+  "144": {
+   "h": "DİZİLER",
+   "b": null,
+   "n": null
+  }
+ }
+}

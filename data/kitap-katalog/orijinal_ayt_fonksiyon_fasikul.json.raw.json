@@ -1,0 +1,1522 @@
+{
+ "dividers": [
+  {
+   "pdf_idx": 3,
+   "bolum_no": 1,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "Fonksiyon Kavramı",
+     "page": null
+    },
+    {
+     "label": "Fonksiyonun Grafiği",
+     "page": null
+    },
+    {
+     "label": "Grafiği Verilen Fonksiyonun Tanımı ve Görüntü Kümesini Bulma",
+     "page": null
+    },
+    {
+     "label": "Fonksiyon Sayısı",
+     "page": null
+    },
+    {
+     "label": "Fonksiyonda Değer Bulma",
+     "page": null
+    },
+    {
+     "label": "Görüntü Kümesi Bulma",
+     "page": null
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 52,
+   "bolum_no": 2,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "Fonsiyonda Bileşke İşlemi",
+     "page": null
+    },
+    {
+     "label": "Bir Fonksiyonun Tersi",
+     "page": null
+    },
+    {
+     "label": "Fonsiyonda Grafik Okuma",
+     "page": null
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 78,
+   "bolum_no": 3,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "Bir Fonksiyonun En Geniş Tanım ve Görüntü Kümesini Bulma",
+     "page": null
+    },
+    {
+     "label": "Artan ve Azalan Fonksiyonlar",
+     "page": null
+    },
+    {
+     "label": "Fonksiyonun Pozitif ve Negatif Olduğu Aralıklar",
+     "page": null
+    },
+    {
+     "label": "Bir Fonksiyonun Maksimum ve Minimum Değerleri",
+     "page": null
+    },
+    {
+     "label": "Fonsiyondan Ortalama Değişim Hızı",
+     "page": null
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 94,
+   "bolum_no": 4,
+   "bolum_adi": "BÖLÜM",
+   "items": [
+    {
+     "label": "Fonksiyon Grafiğinin Çizimi",
+     "page": null
+    },
+    {
+     "label": "Fonksiyonların Dönüşümleri",
+     "page": null
+    },
+    {
+     "label": "Öteleme",
+     "page": null
+    },
+    {
+     "label": "Simetri",
+     "page": null
+    }
+   ],
+   "is_divider": true
+  }
+ ],
+ "scan1": {
+  "0": {
+   "h": null,
+   "b": "TYT-AYT",
+   "n": null
+  },
+  "1": {
+   "h": "FONKSİYONLAR",
+   "b": "DETAYLI KONU",
+   "n": null
+  },
+  "2": {
+   "h": "ÖN SÖZ",
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "5": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYON OLMA ŞARTI",
+   "n": null
+  },
+  "6": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "7": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "8": {
+   "h": "FONKSİYONLAR",
+   "b": "GRAFİĞİ VERİLEN FONKSİYONUN TANIM VE GÖRÜNTÜ KÜMESİNİ BULMA",
+   "n": null
+  },
+  "9": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "10": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "11": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYON SAYISI",
+   "n": null
+  },
+  "12": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "13": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "14": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "15": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "16": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "17": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYONDA DEĞER BULMA",
+   "n": null
+  },
+  "18": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "19": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "20": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "21": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "22": {
+   "h": "FONKSİYONLAR",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "23": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "24": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 14",
+   "n": 14
+  },
+  "25": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "26": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "27": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "28": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "29": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "30": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "31": {
+   "h": "FONKSİYONLAR",
+   "b": "Yatay Doğru Testi",
+   "n": null
+  },
+  "32": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRTEN FONKSİYON",
+   "n": null
+  },
+  "33": {
+   "h": "FONKSİYONLAR",
+   "b": "Yatay Doğru Testi",
+   "n": null
+  },
+  "34": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "35": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "36": {
+   "h": "FONKSİYONLAR",
+   "b": "TEK VE ÇİFT FONKSİYONLAR",
+   "n": null
+  },
+  "37": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "38": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "39": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "40": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "41": {
+   "h": "FONKSİYONLARDA DÖRT İŞLEM",
+   "b": null,
+   "n": null
+  },
+  "42": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "43": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "44": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "45": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "46": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "47": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "48": {
+   "h": "FONKSİYONLAR",
+   "b": "TARAMA TEST-1",
+   "n": 1
+  },
+  "49": {
+   "h": "FONKSİYONLAR",
+   "b": "TARAMA TEST-1",
+   "n": 1
+  },
+  "50": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "51": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "53": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYONLARDA BİLEŞKE İŞLEMİ",
+   "n": null
+  },
+  "54": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "55": {
+   "h": "FONKSİYONLAR",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "56": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "57": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "58": {
+   "h": "FONKSİYONLAR",
+   "b": "BİR FONKSİYONUN TERSİ",
+   "n": null
+  },
+  "59": {
+   "h": "FONKSİYONLAR",
+   "b": "Fonksiyonun Tersini Alma",
+   "n": null
+  },
+  "60": {
+   "h": "FONKSİYONLAR",
+   "b": "PRATİK",
+   "n": null
+  },
+  "61": {
+   "h": "FONKSİYONLAR",
+   "b": "Tanımlı olduğu aralıkta bire bir ve örten f(x) = a · x² + b · x + c fonksiyonunun tersi alınırken ifade tam kareye dönüştürülür.",
+   "n": null
+  },
+  "62": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "63": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "64": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYONDA GRAFİK OKUMA",
+   "n": null
+  },
+  "65": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "66": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "67": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "68": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "69": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "70": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "71": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "72": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "73": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "74": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 3",
+   "n": 3
+  },
+  "75": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 3",
+   "n": 3
+  },
+  "76": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 4",
+   "n": 4
+  },
+  "77": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 4",
+   "n": 4
+  },
+  "79": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "80": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "81": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "82": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "83": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "84": {
+   "h": "ARTAN VE AZALAN FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "85": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "86": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "87": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "88": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "89": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "90": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "91": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "92": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "93": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "95": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYONLARDA GRAFİK ÇİZİMİ",
+   "n": null
+  },
+  "96": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "97": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "98": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "99": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "100": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "101": {
+   "h": "FONKSİYONLAR",
+   "b": "PARÇALI FONKSİYONLARIN GRAFİĞİ",
+   "n": null
+  },
+  "102": {
+   "h": "FONKSİYONLAR",
+   "b": "MUTLAK DEĞER FONKSİYONUNUN GRAFİĞİ",
+   "n": null
+  },
+  "103": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "104": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "105": {
+   "h": "FONKSİYONLAR",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "106": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "107": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "108": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "109": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "110": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "111": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "112": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "113": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "114": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "115": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 3",
+   "n": 3
+  },
+  "116": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 3",
+   "n": 3
+  },
+  "117": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 4",
+   "n": 4
+  },
+  "118": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 4",
+   "n": 4
+  },
+  "119": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 5",
+   "n": 5
+  },
+  "120": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 5",
+   "n": 5
+  },
+  "121": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 6",
+   "n": 6
+  },
+  "122": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 6",
+   "n": 6
+  },
+  "123": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "124": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "125": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "126": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "127": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 3",
+   "n": 3
+  },
+  "128": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 3",
+   "n": 3
+  },
+  "129": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 4",
+   "n": 4
+  },
+  "130": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 4",
+   "n": 4
+  },
+  "131": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 5",
+   "n": 5
+  },
+  "132": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 5",
+   "n": 5
+  },
+  "133": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "134": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "135": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "136": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "137": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "138": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "139": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "140": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "141": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "142": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "143": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "144": {
+   "h": null,
+   "b": "ORİJİNAL ETKİNLİK SAYFASI",
+   "n": null
+  }
+ },
+ "scan2": {
+  "0": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "1": {
+   "h": "FONKSİYONLAR",
+   "b": "AYRAÇ",
+   "n": null
+  },
+  "2": {
+   "h": "FONKSİYON",
+   "b": null,
+   "n": null
+  },
+  "4": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYON KAVRAMI",
+   "n": null
+  },
+  "5": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYON OLMA ŞARTI",
+   "n": null
+  },
+  "6": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "7": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "8": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYON GRAFİĞİ",
+   "n": null
+  },
+  "9": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "10": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "11": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "12": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "13": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "14": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "15": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "16": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 11",
+   "n": 11
+  },
+  "17": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 15",
+   "n": 15
+  },
+  "18": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "19": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "20": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "21": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "22": {
+   "h": "FONKSİYONLAR",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "23": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "24": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 14",
+   "n": 14
+  },
+  "25": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "26": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "27": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "28": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "29": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "30": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "31": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "32": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "33": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "34": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "35": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "36": {
+   "h": "FONKSİYONLAR",
+   "b": "TEK VE ÇİFT FONKSİYONLAR",
+   "n": null
+  },
+  "37": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "38": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "39": {
+   "h": "FONKSİYONLAR",
+   "b": "PARÇALI FONKSİYON",
+   "n": null
+  },
+  "40": {
+   "h": "FONKSİYONLAR",
+   "b": "MUTLAK DEĞER FONKSİYONU",
+   "n": null
+  },
+  "41": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "42": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "43": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "44": {
+   "h": "FONKSİYONLAR",
+   "b": "TARAMA TEST-1",
+   "n": 1
+  },
+  "45": {
+   "h": "FONKSİYONLAR",
+   "b": "TARAMA TEST-1",
+   "n": 1
+  },
+  "46": {
+   "h": "FONKSİYONLAR",
+   "b": "TARAMA TEST-2",
+   "n": 2
+  },
+  "47": {
+   "h": "FONKSİYONLAR",
+   "b": "TARAMA TEST-2",
+   "n": 2
+  },
+  "48": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "49": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "50": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "51": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "53": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYONLARDA BİLEŞKE İŞLEMİ",
+   "n": null
+  },
+  "54": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "55": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "56": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "57": {
+   "h": "FONKSİYONLAR",
+   "b": "BİR FONKSİYONUN TERSİ",
+   "n": null
+  },
+  "58": {
+   "h": "FONKSİYONLAR",
+   "b": "PRATİK",
+   "n": null
+  },
+  "59": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "60": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 14",
+   "n": 14
+  },
+  "61": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "62": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "63": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "64": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "65": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "66": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "67": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "68": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "69": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "70": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "71": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "72": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "73": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "74": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 3",
+   "n": 3
+  },
+  "75": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 3",
+   "n": 3
+  },
+  "76": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 4",
+   "n": 4
+  },
+  "77": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 4",
+   "n": 4
+  },
+  "79": {
+   "h": "BİR FONKSİYONUN EN GENİŞ TANIM KÜMESİNİ BULMA",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "80": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "81": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "82": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "83": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "84": {
+   "h": "ARTAN VE AZALAN FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "85": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "86": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "87": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYONUN POZİTİF VE NEGATİF OLDUĞU ARALIKLAR",
+   "n": null
+  },
+  "88": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "89": {
+   "h": "FONKSİYONLAR",
+   "b": "BİR FONKSİYONUN MAKSİMUM VE MİNİMUM DEĞERLERİ",
+   "n": null
+  },
+  "90": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "91": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYONUN ORTALAMA DEĞİŞİM HIZI",
+   "n": null
+  },
+  "92": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "93": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "95": {
+   "h": "FONKSİYONLAR",
+   "b": "FONKSİYONLARDA GRAFİK ÇİZİMİ",
+   "n": null
+  },
+  "96": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "97": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "98": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "99": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "100": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "101": {
+   "h": "FONKSİYONLAR",
+   "b": "PARÇALI FONKSİYONLARIN GRAFİĞİ",
+   "n": null
+  },
+  "102": {
+   "h": "FONKSİYONLAR",
+   "b": "MUTLAK DEĞER FONKSİYONUNUN GRAFİĞİ",
+   "n": null
+  },
+  "103": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "104": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "105": {
+   "h": "FONKSİYONLAR",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "106": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "107": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 1",
+   "n": 1
+  },
+  "108": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "109": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "110": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "111": {
+   "h": "FONKSİYONLAR",
+   "b": null,
+   "n": null
+  },
+  "112": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 1",
+   "n": 1
+  },
+  "113": {
+   "h": null,
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "114": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 2",
+   "n": 2
+  },
+  "115": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 3",
+   "n": 3
+  },
+  "116": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 3",
+   "n": 3
+  },
+  "117": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 4",
+   "n": 4
+  },
+  "118": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 4",
+   "n": 4
+  },
+  "119": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 5",
+   "n": 5
+  },
+  "120": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 5",
+   "n": 5
+  },
+  "121": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 6",
+   "n": 6
+  },
+  "122": {
+   "h": "FONKSİYONLAR",
+   "b": "KAZANIM TEST - 6",
+   "n": 6
+  },
+  "123": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "124": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 1",
+   "n": 1
+  },
+  "125": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "126": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 2",
+   "n": 2
+  },
+  "127": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 3",
+   "n": 3
+  },
+  "128": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 3",
+   "n": 3
+  },
+  "129": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 4",
+   "n": 4
+  },
+  "130": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 4",
+   "n": 4
+  },
+  "131": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 5",
+   "n": 5
+  },
+  "132": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST - 5",
+   "n": 5
+  },
+  "133": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "134": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "135": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "136": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "137": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "138": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "139": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "140": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "141": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "142": {
+   "h": "FONKSİYONLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "143": {
+   "h": null,
+   "b": "ORİJİNAL ETKİNLİK SAYFASI",
+   "n": null
+  },
+  "144": {
+   "h": null,
+   "b": "ORİJİNAL ETKİNLİK SAYFASI",
+   "n": null
+  }
+ }
+}

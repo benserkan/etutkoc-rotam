@@ -1,0 +1,183 @@
+{
+ "name": "Aydın AYT Biyoloji Ders İşleyiş Modülleri",
+ "publisher": "Aydın Yayınları",
+ "subject": "AYT Biyoloji",
+ "type": "konu_anlatimli",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Kaynak: yayınevinin fliphtml5 flipbook'u (fliphtml5.com/wrbmv/xrxg, 596 sayfa, 7 modül tek kitapta). Aydın deseni: konu anlatımı + araya serpiştirilmiş TEK SAYFALIK konu testleri (~10-12 soru) + 'Yeni Nesil Sorular' sayfaları + modül sonu Karma Testler. Her test/Yeni Nesil sayfası = 1 test.",
+  "Flipbook TYT ve AYT içeriğini birlikte veriyor; öğrencinin rafındaki basılı TYT / AYT Ders İşleyiş Modülleri'ne göre konular müfredata göre iki kayda ayrıldı. Basılı kitapların modül dağılımı farklıysa satırlar taşınmalı."
+ ],
+ "sections": [
+  {
+   "label": "Nükleik Asitler",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 129
+  },
+  {
+   "label": "Genden Proteine",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 138
+  },
+  {
+   "label": "Genetik Mühendisliği ve Biyoteknoloji",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 149
+  },
+  {
+   "label": "Karma Test (2. Modül)",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 179
+  },
+  {
+   "label": "Canlılar ve Çevre / Evrim",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 242
+  },
+  {
+   "label": "Canlılarda Enerji Dönüşümleri (Fotosentez ve Kemosentez)",
+   "test_count": 5,
+   "source": "flipbook_serit",
+   "page": 269
+  },
+  {
+   "label": "Fermentasyon ve Hücresel Solunum",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 283
+  },
+  {
+   "label": "Karma Test (Canlılarda Enerji Dönüşümleri)",
+   "test_count": 4,
+   "source": "flipbook_serit",
+   "page": 285
+  },
+  {
+   "label": "Bitki Dokuları",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 302
+  },
+  {
+   "label": "Bitki Fizyolojisi (Madde Taşınması, Büyüme ve Hareket)",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 318
+  },
+  {
+   "label": "Bitkilerde Üreme",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 342
+  },
+  {
+   "label": "Karma Test (Bitki Biyolojisi)",
+   "test_count": 4,
+   "source": "flipbook_serit",
+   "page": 344
+  },
+  {
+   "label": "Yeni Nesil Sorular (Bitki Biyolojisi)",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 348
+  },
+  {
+   "label": "Popülasyon Ekolojisi",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 386
+  },
+  {
+   "label": "Komünite Ekolojisi",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 393
+  },
+  {
+   "label": "Sinir Sistemi (Sinir Doku, İmpuls Oluşumu ve İletimi)",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 423
+  },
+  {
+   "label": "Duyu Organları",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 436
+  },
+  {
+   "label": "İnsanda Endokrin Sistem",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 453
+  },
+  {
+   "label": "Destek ve Hareket Sistemleri",
+   "test_count": 4,
+   "source": "flipbook_serit",
+   "page": 466
+  },
+  {
+   "label": "İnsan Sindirim Sistemi",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 496
+  },
+  {
+   "label": "Yeni Nesil Sorular (6. Modül)",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 498
+  },
+  {
+   "label": "Karma Test (6. Modül)",
+   "test_count": 2,
+   "source": "flipbook_serit",
+   "page": 499
+  },
+  {
+   "label": "Dolaşım ve Bağışıklık Sistemleri",
+   "test_count": 5,
+   "source": "flipbook_serit",
+   "page": 529
+  },
+  {
+   "label": "İnsan Solunum Sistemi",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 547
+  },
+  {
+   "label": "Boşaltım Sistemi",
+   "test_count": 1,
+   "source": "flipbook_serit",
+   "page": 560
+  },
+  {
+   "label": "İnsan Üreme Sistemi ve Gelişme",
+   "test_count": 3,
+   "source": "flipbook_serit",
+   "page": 573
+  },
+  {
+   "label": "Karma Test (7. Modül)",
+   "test_count": 4,
+   "source": "flipbook_serit",
+   "page": 584
+  },
+  {
+   "label": "Yeni Nesil Sorular (7. Modül)",
+   "test_count": 3,
+   "source": "flipbook_serit",
+   "page": 588
+  }
+ ]
+}

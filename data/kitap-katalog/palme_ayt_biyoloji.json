@@ -1,0 +1,177 @@
+{
+ "name": "Palme AYT Biyoloji Soru Kitabı",
+ "publisher": "Palme Yayınevi",
+ "subject": "AYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Taranmış PDF (344 s). Palme deseni: ünite başına TEST 1..k, her test 2 sayfa; ünite sonu 'Ders Notları' sayfaları test değil. Ünite içinde alt konu bandı varsa (Komünite/Popülasyon, Nükleik Asitler/Genetik Şifre, Hücresel Solunum/Fermantasyon) ayrı satır.",
+  "Komünite ve Popülasyon Ekolojisi / karma: yerel numara eksik [1, 2, 3, 4, 5, 6, 7]"
+ ],
+ "sections": [
+  {
+   "label": "Nöronun Yapısı ve İmpuls İletimi",
+   "test_count": 2,
+   "source": "serit",
+   "page": 9
+  },
+  {
+   "label": "Karma (Sinir Sistemi)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 13
+  },
+  {
+   "label": "Sinir Sistemi",
+   "test_count": 5,
+   "source": "serit",
+   "page": 17
+  },
+  {
+   "label": "Endokrin Sistem",
+   "test_count": 10,
+   "source": "serit",
+   "page": 28
+  },
+  {
+   "label": "Duyu Organları",
+   "test_count": 6,
+   "source": "serit",
+   "page": 50
+  },
+  {
+   "label": "Destek ve Hareket Sistemi",
+   "test_count": 5,
+   "source": "serit",
+   "page": 65
+  },
+  {
+   "label": "Sindirim Sistemi",
+   "test_count": 10,
+   "source": "serit",
+   "page": 76
+  },
+  {
+   "label": "Dolaşım Sistemi",
+   "test_count": 11,
+   "source": "serit",
+   "page": 98
+  },
+  {
+   "label": "Vücudun Savunulması ve Bağışıklık",
+   "test_count": 4,
+   "source": "serit",
+   "page": 122
+  },
+  {
+   "label": "Solunum Sistemi",
+   "test_count": 10,
+   "source": "serit",
+   "page": 132
+  },
+  {
+   "label": "Boşaltım Sistemi",
+   "test_count": 9,
+   "source": "serit",
+   "page": 155
+  },
+  {
+   "label": "Üreme Sistemi ve Embriyonik Gelişim",
+   "test_count": 9,
+   "source": "serit",
+   "page": 174
+  },
+  {
+   "label": "Komünite Ekolojisi",
+   "test_count": 3,
+   "source": "serit",
+   "page": 194
+  },
+  {
+   "label": "Popülasyon Ekolojisi",
+   "test_count": 3,
+   "source": "serit",
+   "page": 201
+  },
+  {
+   "label": "Karma (Komünite ve Popülasyon Ekolojisi)",
+   "test_count": 2,
+   "source": "serit",
+   "page": 207
+  },
+  {
+   "label": "Nükleik Asitler",
+   "test_count": 3,
+   "source": "serit",
+   "page": 213
+  },
+  {
+   "label": "Genetik Şifre ve Protein Sentezi",
+   "test_count": 3,
+   "source": "serit",
+   "page": 219
+  },
+  {
+   "label": "Karma (Genden Proteine)",
+   "test_count": 4,
+   "source": "serit",
+   "page": 225
+  },
+  {
+   "label": "Biyoteknoloji ve Gen Mühendisliği",
+   "test_count": 4,
+   "source": "serit",
+   "page": 235
+  },
+  {
+   "label": "Hücresel Solunum",
+   "test_count": 3,
+   "source": "serit",
+   "page": 244
+  },
+  {
+   "label": "Fermantasyon",
+   "test_count": 2,
+   "source": "serit",
+   "page": 251
+  },
+  {
+   "label": "Karma (Canlılık ve Enerji: Hücresel Solunum)",
+   "test_count": 5,
+   "source": "serit",
+   "page": 255
+  },
+  {
+   "label": "Fotosentez",
+   "test_count": 10,
+   "source": "serit",
+   "page": 266
+  },
+  {
+   "label": "Bitkilerin Yapısı",
+   "test_count": 8,
+   "source": "serit",
+   "page": 289
+  },
+  {
+   "label": "Bitkilerde Büyüme ve Hareket",
+   "test_count": 6,
+   "source": "serit",
+   "page": 306
+  },
+  {
+   "label": "Bitkilerde Madde Taşınması",
+   "test_count": 5,
+   "source": "serit",
+   "page": 321
+  },
+  {
+   "label": "Bitkilerde Eşeyli Üreme",
+   "test_count": 6,
+   "source": "serit",
+   "page": 333
+  }
+ ]
+}
