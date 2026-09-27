@@ -38,6 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { BookSetApplyDialog } from "@/components/teacher/book-set-apply-dialog";
 import {
   TargetGradePicker,
   targetGradeBody,
@@ -296,6 +297,8 @@ export function BookSetDetailClient({ initial, allBooks, allSubjects }: Props) {
           )}
         </CardContent>
       </Card>
+
+      <BookSetApplyDialog setId={bs.id} setBookCount={bs.items.length} />
 
       <AssignedStudentsSection
         students={bs.assigned_students}

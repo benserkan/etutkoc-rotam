@@ -51,7 +51,15 @@ export const libraryKeys = {
   bookSets: () => ["teacher", "me", "library", "book-sets"] as const,
   bookSet: (id: number) =>
     ["teacher", "me", "library", "book-sets", String(id)] as const,
+  bookSetApplyCandidates: (id: number) =>
+    ["teacher", "me", "library", "book-sets", String(id), "apply-candidates"] as const,
 } as const;
+
+export function getBookSetApplyCandidates(
+  id: number,
+): Promise<import("@/lib/types/library").BookSetApplyCandidatesResponse> {
+  return api(`/api/v2/teacher/library/book-sets/${id}/apply-candidates`);
+}
 
 export interface LibraryBooksListParams {
   q?: string;

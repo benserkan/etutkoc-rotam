@@ -471,7 +471,21 @@ seçili öğrencilere kopyala → (4) şube kavramı (liste süzme + toplu işle
   "veli daveti gidecek" sayacı + akademik yıl seçici, sonuçta satır başına veli
   daveti durumu (metin kırpılmaz). Test YENİ `test_api_v2_csv_import_institution.py`
   **15/15** · academic_csv 14 · parent_invitation 17 · parent_wa_channel 14 ·
-  teacher_students 15 · tenant GREEN; tsc + eslint temiz.
+  teacher_students 15 · tenant GREEN; tsc + eslint temiz. CANLI (commit
+  `0c2ea22`, yedek `pre_csvgroup_20260927_1957.dump`, prod head `h9i2l5m6l00h`).
+- **2 — KİTAP SETİNİ ÇOK ÖĞRENCİYE UYGULA (migration YOK):** YENİ TEK MERKEZ
+  `app/services/book_assign.assign_books_to_student` (StudentBook + 0-baseline
+  SectionProgress; aktif atama "zaten var", arşivli atama arşivden çıkar) +
+  `grade_fits`; `/students/{id}/books/bulk` de bu servise bağlandı. Uçlar
+  (library): GET `/book-sets/{id}/apply-candidates` (koçun aktif öğrencileri +
+  şube + sınıf uygunluğu + setten zaten atalı sayısı) · POST `/book-sets/{id}/apply`
+  {student_ids ≤300} (idempotent; yabancı öğrenci skipped_invalid; yabancı set
+  404; sınıf uyumsuzluğu engel değil; invalidate öğrenci öneki). Web: set detay
+  sayfasında "Öğrencilere uygula" kartı → pencere şubeye göre gruplu, şube
+  seçici, "bu şubenin tümünü seç", sınıfa uyan + eksik kitabı olanlar ön-seçili,
+  uyumsuzlara dolgulu amber uyarı. Test YENİ `test_api_v2_book_set_apply_multi.py`
+  **12/12** · YENİ `live_book_set_apply.py` **8/8** (kırpma yok + koyu tema) ·
+  book_set_apply 12 · book_archive 14 · book_set_grade 10; tsc + eslint temiz.
 
 ---
 

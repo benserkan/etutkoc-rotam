@@ -377,3 +377,38 @@ export interface DeletedRef {
   deleted: boolean;
   id: number;
 }
+
+
+// Kitap setini birden çok öğrenciye uygula (2026-09-27)
+export interface BookSetApplyCandidate {
+  student_id: number;
+  full_name: string;
+  grade_label: string;
+  class_group: string | null;
+  fits_grade: boolean;
+  already_count: number;
+  set_book_count: number;
+}
+
+export interface BookSetApplyCandidatesResponse {
+  set_id: number;
+  set_name: string;
+  set_book_count: number;
+  grade_label: string | null;
+  students: BookSetApplyCandidate[];
+}
+
+export interface BookSetApplyStudentResult {
+  student_id: number;
+  full_name: string;
+  assigned_count: number;
+  unarchived_count: number;
+  already_count: number;
+}
+
+export interface BookSetApplyResult {
+  students: BookSetApplyStudentResult[];
+  assigned_total: number;
+  student_count: number;
+  skipped_invalid_ids: number[];
+}

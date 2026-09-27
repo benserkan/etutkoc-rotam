@@ -92,6 +92,11 @@ from app.routes.api_v2.schemas.library import (
     BookListResponse,
     BookPatchBody,
     BookSectionItem,
+    BookSetApplyBody,
+    BookSetApplyCandidate,
+    BookSetApplyCandidatesResponse,
+    BookSetApplyResult,
+    BookSetApplyStudentResult,
     BookSetAssignedStudent,
     BookSetCreateBody,
     BookSetDetailResponse,
@@ -2247,6 +2252,132 @@ def library_book_set_add_books_v2(
     return MutationResponse[AddBooksToSetResult](
         data=AddBooksToSetResult(added_count=added, skipped_existing_count=skipped),
         invalidate=_invalidate_set(user.id, bs.id),
+    )
+
+
+@router.get(
+    "/book-sets/{set_id}/apply-candidates",
+    response_model=BookSetApplyCandidatesResponse,
+)
+def library_book_set_apply_candidates_v2(
+    set_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Seti uygulama penceresi: koçun AKTİF öğrencileri + sınıf uygunluğu +
+    setten kaç kitabın zaten atalı olduğu (salt okuma)."""
+    from app.services.book_assign import grade_fits
+
+    bs = _get_owned_book_set(db, set_id, user.id)
+    book_ids = [it.book_id for it in (bs.items or [])]
+    students = (
+        db.query(User)
+        .filter(User.teacher_id == user.id, User.role == UserRole.STUDENT,
+                User.is_active.is_(True))
+        .order_by(User.class_group, User.full_name)
+        .all()
+    )
+    have: dict[int, int] = {}
+    if book_ids and students:
+        for sid, n in (
+            db.query(StudentBook.student_id, func.count(StudentBook.id))
+            .filter(StudentBook.book_id.in_(book_ids),
+                    StudentBook.student_id.in_([s.id for s in students]),
+                    StudentBook.archived_at.is_(None))
+            .group_by(StudentBook.student_id)
+        ):
+            have[sid] = int(n)
+    return BookSetApplyCandidatesResponse(
+        set_id=bs.id,
+        set_name=bs.name,
+        set_book_count=len(book_ids),
+        grade_label=_set_target_grade_label_tr(
+            bs.target_grade_min, bs.target_grade_max, bool(bs.target_graduate)),
+        students=[
+            BookSetApplyCandidate(
+                student_id=s.id,
+                full_name=s.full_name,
+                grade_label=_grade_label_tr(s.grade_level, bool(s.is_graduate)),
+                class_group=s.class_group,
+                fits_grade=grade_fits(s, bs.target_grade_min, bs.target_grade_max,
+                                      bool(bs.target_graduate)),
+                already_count=have.get(s.id, 0),
+                set_book_count=len(book_ids),
+            )
+            for s in students
+        ],
+    )
+
+
+@router.post(
+    "/book-sets/{set_id}/apply",
+    response_model=MutationResponse[BookSetApplyResult],
+)
+def library_book_set_apply_v2(
+    set_id: int,
+    body: BookSetApplyBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Setteki TÜM kitapları seçili öğrencilere ata (idempotent).
+
+    Zaten atalı kitap atlanır, arşivli olan arşivden çıkar. Koçun olmayan
+    öğrenci id'si `skipped_invalid_ids`e düşer. Sınıf uyumsuzluğu ENGEL DEĞİL
+    (pencere uyarır; set atama kuralıyla aynı).
+    """
+    from app.services.book_assign import assign_books_to_student
+
+    bs = _get_owned_book_set(db, set_id, user.id)
+    requested = list(dict.fromkeys(int(x) for x in (body.student_ids or [])))
+    if len(requested) > 300:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "too_many_students",
+                    "message": "Tek seferde en fazla 300 öğrenciye uygulanabilir."},
+        )
+    students = {
+        u.id: u for u in db.query(User).filter(
+            User.teacher_id == user.id, User.role == UserRole.STUDENT,
+            User.id.in_(requested or [0]),
+        )
+    }
+    invalid = [sid for sid in requested if sid not in students]
+    books = [it.book for it in (bs.items or []) if it.book is not None]
+    if books:
+        books = (
+            db.query(Book).options(joinedload(Book.sections))
+            .filter(Book.id.in_([b.id for b in books]), Book.teacher_id == user.id)
+            .all()
+        )
+    results: list[BookSetApplyStudentResult] = []
+    affected: list[int] = []
+    for sid in requested:
+        st = students.get(sid)
+        if st is None:
+            continue
+        out = assign_books_to_student(db, sid, books)
+        if out.created or out.unarchived_ids:
+            affected.append(sid)
+        results.append(BookSetApplyStudentResult(
+            student_id=sid, full_name=st.full_name,
+            assigned_count=len(out.created),
+            unarchived_count=len(out.unarchived_ids),
+            already_count=len(out.already_ids),
+        ))
+    db.commit()
+    keys = _invalidate_set(user.id, bs.id) + [f"teacher:{user.id}:library:books"]
+    for sid in affected:
+        # Kitap ata öğrencinin TÜM kapasite yüzeylerini değiştirir → önek.
+        keys += [f"teacher:{user.id}:students:{sid}",
+                 f"teacher:{user.id}:students:{sid}:books"]
+    return MutationResponse[BookSetApplyResult](
+        data=BookSetApplyResult(
+            students=results,
+            assigned_total=sum(r.assigned_count + r.unarchived_count for r in results),
+            student_count=len(results),
+            skipped_invalid_ids=invalid,
+        ),
+        invalidate=keys,
     )
 
 

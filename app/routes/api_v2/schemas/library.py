@@ -426,6 +426,44 @@ class AddBooksToSetResult(BaseModel):
     skipped_existing_count: int
 
 
+class BookSetApplyCandidate(BaseModel):
+    """Seti uygulama penceresindeki öğrenci satırı."""
+    student_id: int
+    full_name: str
+    grade_label: str
+    class_group: str | None = None
+    fits_grade: bool                 # sınıfı setin hedefine uyuyor mu
+    already_count: int               # setteki kitaplardan kaçı zaten atalı
+    set_book_count: int
+
+
+class BookSetApplyCandidatesResponse(BaseModel):
+    set_id: int
+    set_name: str
+    set_book_count: int
+    grade_label: str | None = None
+    students: list[BookSetApplyCandidate]
+
+
+class BookSetApplyBody(BaseModel):
+    student_ids: list[int]
+
+
+class BookSetApplyStudentResult(BaseModel):
+    student_id: int
+    full_name: str
+    assigned_count: int
+    unarchived_count: int
+    already_count: int
+
+
+class BookSetApplyResult(BaseModel):
+    students: list[BookSetApplyStudentResult]
+    assigned_total: int
+    student_count: int
+    skipped_invalid_ids: list[int]
+
+
 # =============================================================================
 # Kitap yapısı okuma (içindekiler foto/PDF) + Ortak Kitap Kataloğu
 # =============================================================================

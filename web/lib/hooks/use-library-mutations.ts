@@ -551,3 +551,28 @@ export function useRemoveBookFromSet(setId: number) {
     },
   });
 }
+
+
+export function useApplyBookSet(setId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<import("@/lib/types/library").BookSetApplyResult>,
+    ApiError,
+    { studentIds: number[] }
+  >({
+    mutationFn: ({ studentIds }) =>
+      api(`/api/v2/teacher/library/book-sets/${setId}/apply`, {
+        method: "POST",
+        body: JSON.stringify({ student_ids: studentIds }),
+      }),
+    onError: (err) => showError(err, "Set öğrencilere uygulanamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const r = res.data;
+      toast.success(
+        `${r.student_count} öğrenciye ${r.assigned_total} kitap atandı` +
+          (r.assigned_total === 0 ? " (hepsi zaten atalıydı)" : ""),
+      );
+    },
+  });
+}

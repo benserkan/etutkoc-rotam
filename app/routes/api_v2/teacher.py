@@ -7825,39 +7825,13 @@ def teacher_assign_books_bulk_v2(
     valid_by_id = {b.id: b for b in valid_books}
     invalid_ids = [bid for bid in requested if bid not in valid_by_id]
 
-    # P4: ARŞİVLİ atama "zaten var" sayılmaz — yeniden atanınca arşivden çıkar.
-    already = {
-        row.book_id
-        for row in db.query(StudentBook.book_id)
-        .filter(
-            StudentBook.student_id == student.id,
-            StudentBook.archived_at.is_(None),
-            StudentBook.book_id.in_(list(valid_by_id.keys())) if valid_by_id else False,
-        )
-        .all()
-    }
-    if valid_by_id:
-        book_archive.set_archived(
-            db, student.id, list(valid_by_id.keys()), archived=False
-        )
-    already_ids = [bid for bid in requested if bid in already]
-
-    created: list[StudentBook] = []
-    for bid in requested:
-        book = valid_by_id.get(bid)
-        if not book or bid in already:
-            continue
-        sb = StudentBook(student_id=student.id, book_id=book.id)
-        db.add(sb)
-        db.flush()
-        for section in book.sections:
-            db.add(SectionProgress(
-                student_book_id=sb.id,
-                book_section_id=section.id,
-                reserved_count=0,
-                completed_count=0,
-            ))
-        created.append(sb)
+    # Tek merkez: app/services/book_assign (arşivli atama arşivden çıkar,
+    # aktif atama "zaten var" sayılır, yeni atamada 0-baseline SectionProgress).
+    from app.services.book_assign import assign_books_to_student
+    ordered = [valid_by_id[bid] for bid in requested if bid in valid_by_id]
+    outcome = assign_books_to_student(db, student.id, ordered)
+    already_ids = [bid for bid in requested if bid in set(outcome.already_ids)]
+    created: list[StudentBook] = outcome.created
 
     db.commit()
     for sb in created:
