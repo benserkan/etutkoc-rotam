@@ -307,11 +307,12 @@ def delete_program(
             .all()
         )
         for t in tasks:
-            try:
-                release_task_items(db, t)
-            except Exception:
-                # Rezerv iadesi başarısız olsa bile devam et
-                logger.exception("release_task_items failed for task %s", t.id)
+            # 2026-09-27: eskiden `release_task_items(db, t)` (yanlış imza) +
+            # geniş `except` vardı → TypeError sessizce yutuluyor, görev
+            # rezervi İADE EDİLMEDEN siliniyordu (Zeynep #164: 22 bölümde 46
+            # sahipsiz rezerv, "sayaç uyumsuz"). İade başarısızsa silme de
+            # yapılmamalı — hata artık yukarı çıkar, işlem geri alınır.
+            release_task_items(db, t.student_id, list(t.book_items))
             db.delete(t)
             tasks_deleted += 1
 
