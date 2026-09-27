@@ -975,6 +975,15 @@ class CurriculumTopicItem(BaseModel):
     exam_accuracy_pct: int | None = None   # cevaplananlarda doğruluk % (boş hariç)
     exam_answered: int | None = None       # son 90g cevaplanmış soru sayısı
     exam_manual_heavy: bool = False        # işlenmişin çoğu elle/bağımsız girişten
+    # Kaynak kırılımı: tamamlanma kuralı (tek kaynak %98 · çok kaynak biri tam +
+    # ikincisi %90) hangi kitaptan geliyor
+    sources: list["CurriculumTopicSource"] = []
+
+
+class CurriculumTopicSource(BaseModel):
+    book_name: str
+    completed: int
+    total: int
 
 
 class CurriculumSubjectItem(BaseModel):
@@ -2931,3 +2940,4 @@ class ExamParentPreviewResponse(BaseModel):
     #: Koçun düzenleme sınırları (UI aynı sayıyı gösterir).
     max_lines: int = 12
     max_line_length: int = 500
+CurriculumTopicItem.model_rebuild()

@@ -371,6 +371,32 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
   Canlı: weekly_skeleton 14 · routine 11 · problems 14 (+koyu tema görüntüsü) ·
   topic_spread 7 · periods 6.
 
+- **MÜFREDAT SEKMESİ YENİ TASARIM + KAYNAK-BAZLI TAMAMLANMA + MEZUN FİLTRESİ — CANLI
+  (2026-09-27, migration YOK):**
+  - **Tamamlanma kuralı (koç, TEK MERKEZ `curriculum_progress.topic_sources_complete`):**
+    konu tek kaynakta → o kaynakta testlerin %98'i; birden çok kaynakta → biri
+    tamamen bitmiş + ikinci kaynaktan %90. Deneme kitapları kaynak sayılmaz; koçun
+    kapatma kararı üstün. `agg_complete` + `add_book_progress` → müfredat sekmesi,
+    hafta paneli Müfredat (`topic_board`) ve "sıradaki üniteler" aynı kuralı
+    kullanır. topic_board: sayaçta çözülmüş test (görev olmadan) da "devam".
+  - **Mezun filtresi (Emir #113):** mezunun müfredat modeli boş olduğundan okul
+    dersleri model filtresine takılmıyor, TYT/AYT karşılığı olmayan İngilizce /
+    İnkılap Tarihi "0/51" listeleniyordu → `_applicable_subjects` mezunda okul
+    dersini YALNIZ kaynağı varsa gösterir.
+  - API: konu satırına `sources[]` (kitap · çözülen · toplam) — additive.
+  - Web `curriculum-panel.tsx` yeniden yazıldı: özet kartı (halka + durum yığın
+    barı + kural açıklaması) + sınava yetişme kartı · solda ders kartları (yığın
+    bar, tamam/süren/konu, sıradaki), kaynaksız dersler tek katlanır grupta ·
+    sağda seçili ders: durum filtreleri + sınıf/ünite başlıkları + her konuda
+    kaynak kırılımı barları + dolgulu durum rozeti ("Koç kapattı").
+  - Test: YENİ `test_curriculum_completion_rule.py` **19/19** · YENİ
+    `live_curriculum_panel.py` **12/12** (açık/koyu/dar ekran görüntüsü) ·
+    curriculum_progress 22 · topic_board 18 · units 10 · grade9 5 · exam_taxonomy
+    20 · task_picker 11 · topic_closure 12 · book_archive 14 · suggestions 13 ·
+    self_study_phase3 13 · teacher_read 12 · weekly_plan 15 · skeleton 27 ·
+    weekly_report 21 · mapping_v2 13; tsc + eslint temiz. Mobil müfredat sekmesi
+    aynı uçtan beslenir → durum değişikliği OTA'sız yansır.
+
 ---
 
 ## VİDEO SEPETİ — oynatma listesi → konu grupları → ızgaraya sürükle (2026-09-25, Faz 1 KOD-TAMAM, migration `z1a4d7e8d22z`, DEPLOY BEKLİYOR)

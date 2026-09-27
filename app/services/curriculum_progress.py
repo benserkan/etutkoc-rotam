@@ -40,6 +40,7 @@ from app.models import (
     User,
 )
 from app.services import topic_closure
+from app.services.gorev_stats import DENEME_BOOK_TYPES
 
 
 @dataclass
@@ -60,6 +61,9 @@ class TopicProgress:
     closed_at: str | None = None
     # Kaynaksız (kitapsız ama konuya bağlı) görevlerden çözülen test sayısı
     sourceless_completed: int = 0
+    # Kaynak kırılımı (2026-09-27): [(kitap adı, çözülen, toplam)] — tamamlanma
+    # kuralının hangi kitaptan geldiği UI'da görünsün (deneme kitabı hariç).
+    sources: list = field(default_factory=list)
 
 
 @dataclass
@@ -109,6 +113,54 @@ class CurriculumProgress:
     projection: "CurriculumProjection | None" = None
 
 
+# KONU TAMAMLANMA KURALI (koç, 2026-09-27) — kaynak sayısına göre:
+#  * Konu TEK kaynakta → o kaynakta konunun testlerinin %98'i çözüldüyse tamam.
+#  * Konu BİRDEN FAZLA kaynakta → kaynaklardan biri tamamen bitmiş VE ikinci
+#    kaynaktan da o konunun testlerinin %90'ı çözülmüşse tamam.
+# Deneme kitapları (branş/genel) kaynak sayılmaz (DENEME≠TEST). Koçun kapatma
+# kararı her durumda üstündür (bkz. _status). TEK MERKEZ: müfredat sekmesi,
+# hafta panelindeki Müfredat bölümü ve "sıradaki üniteler" bunu kullanır.
+SINGLE_SOURCE_DONE_RATIO = 0.98
+PRIMARY_SOURCE_DONE_RATIO = 1.0
+SECOND_SOURCE_DONE_RATIO = 0.90
+
+
+def topic_sources_complete(per_book: dict) -> bool:
+    """`per_book`: kitap → (çözülen, toplam test). Konu kaynak sayacına göre
+    tamamlandı mı? Test sayısı olmayan kitap hesaba girmez."""
+    ratios = sorted(
+        (min(1.0, c / t) for c, t in per_book.values() if t and t > 0),
+        reverse=True,
+    )
+    if not ratios:
+        return False
+    if len(ratios) == 1:
+        return ratios[0] >= SINGLE_SOURCE_DONE_RATIO
+    return (
+        ratios[0] >= PRIMARY_SOURCE_DONE_RATIO
+        and ratios[1] >= SECOND_SOURCE_DONE_RATIO
+    )
+
+
+def add_book_progress(per_book: dict, book_id: int, book_type, completed, total) -> None:
+    """Bölüm satırını konunun kitap-bazlı toplamına ekler (deneme kitabı hariç)."""
+    if book_type in DENEME_BOOK_TYPES:
+        return
+    c, t = per_book.get(book_id, (0, 0))
+    per_book[book_id] = (c + int(completed or 0), t + int(total or 0))
+
+
+def agg_complete(agg: dict | None) -> bool | None:
+    """Konu agregatından tamamlanma: kitap bazlı kural; kaynak yalnız deneme
+    kitabıysa toplam üzerinden tek-kaynak eşiği."""
+    if not agg:
+        return None
+    if agg.get("books"):
+        return topic_sources_complete(agg["books"])
+    t = agg.get("test") or 0
+    return bool(t > 0 and agg.get("completed", 0) / t >= SINGLE_SOURCE_DONE_RATIO)
+
+
 def _status(
     has_resource: bool,
     completed: int,
@@ -118,6 +170,7 @@ def _status(
     closed: bool = False,
     sourceless_completed: int = 0,
     sourceless_planned: int = 0,
+    sources_complete: bool | None = None,
 ) -> str:
     """Konunun durumu.
 
@@ -140,9 +193,11 @@ def _status(
         if reserved > 0 or sourceless_planned > 0:
             return "planlandi"
         return "devam" if sourceless_completed > 0 else "baslanmadi"
-    if test_total > 0 and completed >= test_total:
-        return "tamamlandi"
-    return "devam"
+    done = (
+        sources_complete if sources_complete is not None
+        else (test_total > 0 and completed >= test_total)
+    )
+    return "tamamlandi" if done else "devam"
 
 
 def _compute_projection(
@@ -317,6 +372,13 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
     out: list[Subject] = []
     seen: set[str] = set()
     for s in candidates:
+        # MEZUN (saha 2026-09-27, Emir #113): mezunun okul müfredatı yok, yalnız
+        # YKS. Müfredat modeli boş olduğundan okul dersleri model filtresine
+        # takılmıyordu; TYT/AYT karşılığı olmayan İngilizce / İnkılap Tarihi gibi
+        # okul dersleri "0/51" diye listeleniyordu. Mezunda okul dersi YALNIZ
+        # koç o derse kaynak atadıysa görünür.
+        if student.is_graduate and not _is_exam_subject(s) and s.id not in resource_ids:
+            continue
         if early_yks:
             # 9-10 Maarif: okul dersi daima kalır, sınav dersi kaynak ister.
             if _is_exam_subject(s) and s.id not in resource_ids:
@@ -406,6 +468,8 @@ def compute_curriculum_progress(
             BookSection.label.label("label"),
             BookSection.test_count.label("test_count"),
             Book.subject_id.label("subject_id"),
+            Book.id.label("book_id"),
+            Book.type.label("book_type"),
             Book.name.label("book_name"),
             func.coalesce(SectionProgress.completed_count, 0).label("completed"),
             func.coalesce(SectionProgress.reserved_count, 0).label("reserved"),
@@ -457,12 +521,16 @@ def compute_curriculum_progress(
 
     # topic_id → agregat (test/completed/reserved)
     by_topic: dict[int, dict] = {}
+    book_names: dict[int, str] = {}
     extras: list[ExtraSection] = []
     subj_name_cache: dict[int, str] = {}
     for r in rows:
         if r.topic_id is not None:
             agg = by_topic.setdefault(
-                r.topic_id, {"test": 0, "completed": 0, "reserved": 0})
+                r.topic_id, {"test": 0, "completed": 0, "reserved": 0, "books": {}})
+            add_book_progress(agg["books"], r.book_id, r.book_type,
+                              r.completed, r.test_count)
+            book_names[r.book_id] = r.book_name
             agg["test"] += int(r.test_count or 0)
             agg["completed"] += int(r.completed or 0)
             agg["reserved"] += int(r.reserved or 0)
@@ -509,6 +577,7 @@ def compute_curriculum_progress(
                 closed=is_closed,
                 sourceless_completed=sl["completed"],
                 sourceless_planned=sl["planned"],
+                sources_complete=agg_complete(agg),
             )
             if is_closed:
                 pct = 100  # koç kapattı → konu bitti (kitapta test kalmış olabilir)
@@ -524,6 +593,14 @@ def compute_curriculum_progress(
                 closed=is_closed,
                 closed_at=(closure.closed_at.isoformat() if closure and closure.closed_at else None),
                 sourceless_completed=sl["completed"],
+                sources=sorted(
+                    (
+                        (book_names.get(bid, "—"), c, tt)
+                        for bid, (c, tt) in (agg["books"] if agg else {}).items()
+                        if tt > 0
+                    ),
+                    key=lambda x: (-(x[1] / x[2]), x[0]),
+                ),
             ))
             if not has_res:
                 no_res += 1
@@ -621,6 +698,7 @@ def next_units_for_assignment(
             BookSection.label.label("label"),
             BookSection.test_count.label("test_count"),
             Book.id.label("book_id"),
+            Book.type.label("book_type"),
             Book.name.label("book_name"),
             func.coalesce(SectionProgress.completed_count, 0).label("completed"),
             func.coalesce(SectionProgress.reserved_count, 0).label("reserved"),
@@ -645,7 +723,8 @@ def next_units_for_assignment(
     by_topic_agg: dict[int, dict] = {}
     for r in rows:
         by_topic_secs.setdefault(r.topic_id, []).append(r)
-        agg = by_topic_agg.setdefault(r.topic_id, {"test": 0, "completed": 0})
+        agg = by_topic_agg.setdefault(r.topic_id, {"test": 0, "completed": 0, "books": {}})
+        add_book_progress(agg["books"], r.book_id, r.book_type, r.completed, r.test_count)
         agg["test"] += int(r.test_count or 0)
         agg["completed"] += int(r.completed or 0)
 
@@ -679,8 +758,8 @@ def next_units_for_assignment(
                 continue  # kaynak yok → atla
             comp = agg["completed"]
             test_total = agg["test"]
-            if test_total > 0 and comp >= test_total:
-                continue  # tamamlanmış → atla
+            if agg_complete(agg):
+                continue  # tamamlanmış (kaynak kuralı) → atla
             # atanabilir section'lar (kalan kapasiteli)
             secs: list[AssignableSection] = []
             for r in by_topic_secs.get(t.id, []):

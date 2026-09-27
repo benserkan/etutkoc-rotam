@@ -236,6 +236,7 @@ from app.routes.api_v2.schemas.teacher import (
     CurriculumProjectionItem,
     CurriculumSubjectItem,
     CurriculumTopicItem,
+    CurriculumTopicSource,
     NextUnitItem,
     NextUnitSectionItem,
     NextUnitsResponse,
@@ -1266,6 +1267,10 @@ def teacher_student_curriculum_v2(
                         exam_accuracy_pct=_mm(t.topic_id).get("accuracy_pct"),
                         exam_answered=_mm(t.topic_id).get("answered"),
                         exam_manual_heavy=bool(_mm(t.topic_id).get("manual_heavy")),
+                        sources=[
+                            CurriculumTopicSource(book_name=bn, completed=c, total=tt)
+                            for bn, c, tt in t.sources
+                        ],
                     )
                     for t in s.topics
                 ],

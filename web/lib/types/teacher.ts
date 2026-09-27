@@ -1023,6 +1023,8 @@ export interface CurriculumTopicItem {
   exam_accuracy_pct: number | null;
   exam_answered: number | null;
   exam_manual_heavy: boolean;
+  /** Kaynak kırılımı — tamamlanma kuralı (tek kaynak %98 · çok kaynak biri tam + ikincisi %90) */
+  sources?: { book_name: string; completed: number; total: number }[];
 }
 
 export interface CurriculumSubjectItem {

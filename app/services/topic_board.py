@@ -46,6 +46,8 @@ from app.models import (
 from app.services import topic_closure
 from app.services.curriculum_progress import (
     _applicable_subjects,
+    add_book_progress,
+    agg_complete,
     leaf_topics_for_student,
 )
 from app.services.exam_parent_summary import _wilson_lower
@@ -274,6 +276,7 @@ def build_topic_board(
             BookSection.label,
             BookSection.test_count,
             Book.id.label("book_id"),
+            Book.type.label("book_type"),
             Book.name.label("book_name"),
             func.coalesce(SectionProgress.completed_count, 0).label("completed"),
             func.coalesce(SectionProgress.reserved_count, 0).label("reserved"),
@@ -296,7 +299,12 @@ def build_topic_board(
         .all()
     )
     sources: dict[int, list[BoardSource]] = {}
+    topic_aggs: dict[int, dict] = {}
     for r in src_rows:
+        agg = topic_aggs.setdefault(r.topic_id, {"test": 0, "completed": 0, "books": {}})
+        add_book_progress(agg["books"], r.book_id, r.book_type, r.completed, r.test_count)
+        agg["test"] += int(r.test_count or 0)
+        agg["completed"] += int(r.completed or 0)
         total = int(r.test_count or 0)
         rem = max(0, total - int(r.completed or 0) - int(r.reserved or 0))
         sources.setdefault(r.topic_id, []).append(
@@ -439,15 +447,14 @@ def build_topic_board(
             if is_closed:
                 status = "kapali"
                 closed_n += 1
-            elif (
-                secs
-                and sum(x.completed for x in secs) >= sum(x.total for x in secs) > 0
-            ):
-                # Sekmeyle AYNI kural (curriculum_progress._status:
-                # completed >= test_total → tamamlandi). Koç kararı değil,
-                # kaynağın sayacı; kapatma ayrı (P2).
+            elif secs and agg_complete(topic_aggs.get(t.id)):
+                # Sekmeyle AYNI kural (curriculum_progress.topic_sources_complete:
+                # tek kaynak %98 · çok kaynak biri tam + ikincisi %90). Koç
+                # kararı değil, kaynağın sayacı; kapatma ayrı (P2).
                 status = "tamamlandi"
-            elif tests > 0 or sl > 0:
+            elif tests > 0 or sl > 0 or any(x.completed > 0 for x in secs):
+                # Kaynak sayacında çözülmüş test (önceden çözülmüş / bağımsız
+                # çalışma) da konuyu "devam" yapar — sekmeyle aynı.
                 status = "devam"
             elif secs:
                 status = "baslanmadi"
