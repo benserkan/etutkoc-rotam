@@ -307,10 +307,57 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
     skeleton 27/27 · routine 17/17 · periods 10/10 · live_weekly_skeleton 14/14 ·
     live_skeleton_routine 11/11 · live_skeleton_periods 6/6 (rutin kutusu artık
     `aria-label="Rutin"` — satırda iki onay kutusu var) · tsc + eslint temiz.
-  - **SIRADA:** commit + deploy → koç Taha/Zeynep iskeletlerinde okul/dershane
-    derslerini "okul/dershane dersi" işaretler (ders programına bakarak) →
-    2-3 hafta sonra kabul raporu + `backtest_topic_spread.py` yeniden (çapa
-    payıyla).
+  - **CANLI (2026-09-26, commit `39832f0`):** prod head `e6f9i2j3i77e`, yedek
+    `pre_skelanchor_20260926_1931.dump`. SIRADA: koç Taha/Zeynep iskeletlerinde
+    okul/dershane derslerini işaretler → 2-3 hafta sonra kabul raporu +
+    `backtest_topic_spread.py` yeniden (çapa payıyla).
+- **F2-4 — PROBLEM RUTİNİ KAPSAMI + KAYNAK SIRASI + 2. KAYNAK (2026-09-27,
+  migration `f7g0j3k4j88f`):**
+  - **Tetikleyici (koç, Zeynep Ela #164):** TYT Mat problem rutini "Polinomlar 3"
+    öneriyordu. Kök neden: rutin kitaba bağlı "kaldığı yerden sırayla"; aynı
+    kitapta (Orijinal) konu hattı + problem hattı + Fonksiyon ipliği karışınca
+    kalınan yer konu hattından okunuyordu.
+  - **Koç kuralları (değişmez):** (1) rutin satırı YALNIZ PROBLEMLER olabilir
+    (Oran-Orantı + problem konuları + Problem Denemeleri; ÖSYM çıkmış blokları
+    hariç); kaynağın problemleri bitince sıradaki soru bankasının
+    problemlerinden baştan (Oran-Orantı); sıra = satırın kitabı → başlanmış →
+    başlanmamış. Rutinler yıl boyu sürer, kaynak bittikçe yenisi girer.
+    (2) Konu satırı İKİ ANA KAYNAKLA yürür (tüm kaynakları tüketmek hedef
+    değil); 1. kaynakta konu bitince sistem SEÇMEZ — koç "2. kaynaktan aynı
+    konu" ya da "1. kaynakta sıradaki konu" seçer. (3) **Video destekli defter /
+    konu anlatımlı kitap ≠ soru bankası** — ana kaynak, 2. kaynak ve problem
+    kaynak sırası YALNIZ `BookType.SORU_BANKASI`. (Zeynep: problemler
+    Orijinal'den; 3D TYT Mat soru bankası henüz yok, yüklü 3D kitap VDD.)
+  - Migration (additive): `weekly_skeleton_slots.routine_scope` ('book' |
+    'problems', NULL = book) + `second_book_id` (FK books SET NULL).
+  - Servis `skeleton_suggest`: `problem_section_ids` (blok = Oran-Orantı ile son
+    problem bölümü arası; blok içindeki konu bölümü [Birinci Dereceden
+    Denklemler] ve bloktan önceki 'problem' konulu bölüm [Özel Sayı Tanımlama]
+    hariç) · `problem_queue` · `routine_items(scope=)` → `_problem_routine_items`
+    (kalınan yer yalnız problem bölümlerinden; ileri → sıradaki kaynaklar →
+    atlanmış eski bölümler) · `build_chips(exclude=, second_book=)`: o derste
+    problem rutini varsa problem bölümleri konu satırına sızmaz; konu 1.
+    kaynakta bitince "second" çipi + `source_choice` · `_match_by_source`
+    problem satırı önce ve kaynak sırasındaki TÜM problem görevlerini alır ·
+    `slots_from_tasks` problem-yalnız görevleri ayrı kaynak sayar (≥4 gün →
+    rutin + kapsam 'problems') + konu satırına 2. kaynak (haftada kullanılan
+    diğer soru bankası).
+  - API: satırda `routine_scope` + `second_book_id` (+ad) · kitap seçeneklerinde
+    `is_bank` + `has_problems` · 422 `bad_routine_scope` / `second_not_bank` /
+    `second_same_book` · hayalette `routine_scope`, `second_book_name`,
+    `source_choice` · **kabul kalemleri birden çok kitaba yayılırsa kitap başına
+    AYRI görev** (`_accept` artık liste döner).
+  - Web: düzenleyicide rutin satırında "kitabın tamamı / yalnız problemler"
+    (yalnız problem bölümü olan soru bankasında), konu satırında "2. kaynak"
+    (yalnız soru bankaları) · hayalette "rutin · problemler" + amber "konu bitti ·
+    kaynak seç" + şeritte "X konusu Y kitabında bitti — seçim senin" + mor
+    "2. kaynak" çipi · kaynaklar arası rutin çipi kalemlerde kitap adı.
+  - Test: YENİ `test_api_v2_skeleton_problems.py` **21/21** · YENİ
+    `live_skeleton_problems.py` **14/14** · weekly_skeleton 27 · routine 17 ·
+    periods 10 · topic_spread 9 · live_weekly_skeleton 14 · live_skeleton_routine
+    11 · live_skeleton_periods 6 · live_topic_spread 7 · tsc + eslint temiz.
+    **DERS:** Türkçe metinli yamalar bash heredoc'ta bozuluyor → yama betiği
+    Write ile dosyaya; live testler sistem `python` ile (venv'de playwright yok).
 
 ---
 

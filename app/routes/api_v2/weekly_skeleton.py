@@ -16,7 +16,12 @@ from sqlalchemy.orm import Session
 
 from app.deps import get_db
 from app.models import Book, BookSection, StudentBook, Subject, User
-from app.models.weekly_skeleton import ROUTINE_MODES, SkeletonGhostAction, WeeklySkeletonSlot
+from app.models.weekly_skeleton import (
+    ROUTINE_MODES,
+    ROUTINE_SCOPES,
+    SkeletonGhostAction,
+    WeeklySkeletonSlot,
+)
 from app.routes.api_v2.dependencies import assert_active_coaching
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import TaskCreateBody, TaskItemBody
@@ -93,6 +98,35 @@ def _book_options(db: Session, student: User) -> list[Book]:
     return sorted((b for b in books if is_test_book(b)), key=lambda b: b.name)
 
 
+def _is_bank(b: Book) -> bool:
+    return getattr(b.type, "value", b.type) == sk.BANK_TYPE
+
+
+def _problem_book_ids(db: Session, books: list[Book]) -> set[int]:
+    """Problem bölümü olan SORU BANKALARI (problem rutininin kaynak adayları)."""
+    from app.models import Topic
+
+    banks = [b.id for b in books if _is_bank(b)]
+    if not banks:
+        return set()
+    rows = (
+        db.query(BookSection)
+        .filter(BookSection.book_id.in_(banks))
+        .order_by(BookSection.book_id, BookSection.order, BookSection.id)
+        .all()
+    )
+    tids = {r.topic_id for r in rows if r.topic_id}
+    names = {int(i): n for i, n in db.query(Topic.id, Topic.name).filter(Topic.id.in_(tids or {0}))}
+    by_book: dict[int, list] = {}
+    for r in rows:
+        by_book.setdefault(r.book_id, []).append(sk._Sec(
+            id=r.id, book_id=r.book_id, book_name="", subject_id=0, label=r.label or "",
+            order=r.order or 0, topic_id=r.topic_id, total=0, completed=0, reserved=0,
+        ))
+    prob = sk.problem_section_ids(by_book, names)
+    return {b for b, lst in by_book.items() if any(x.id in prob for x in lst)}
+
+
 def _iso(d: date | None) -> str | None:
     return d.isoformat() if d else None
 
@@ -117,7 +151,15 @@ def _build_response(
     options = _subject_options(db, student, coach_id)
     names = {s.id: s.name for s in options}
     book_opts = _book_options(db, student)
-    books = [SkeletonBookOption(id=b.id, name=b.name, subject_id=b.subject_id) for b in book_opts]
+    prob_books = _problem_book_ids(db, book_opts)
+    books = [
+        SkeletonBookOption(
+            id=b.id, name=b.name, subject_id=b.subject_id,
+            book_type=getattr(b.type, "value", None), is_bank=_is_bank(b),
+            has_problems=b.id in prob_books,
+        )
+        for b in book_opts
+    ]
     book_names = {b.id: b.name for b in book_opts}
     skels = sk.list_skeletons(db, student.id)
     skel = sk.get_skeleton(db, student.id, at=at, skeleton_id=skeleton_id)
@@ -128,7 +170,10 @@ def _build_response(
             books=books,
             periods=_periods(skels),
         )
-    missing_books = {s.book_id for s in skel.slots if s.book_id} - set(book_names)
+    missing_books = (
+        {s.book_id for s in skel.slots if s.book_id}
+        | {s.second_book_id for s in skel.slots if s.second_book_id}
+    ) - set(book_names)
     if missing_books:
         for b in db.query(Book).filter(Book.id.in_(missing_books)):
             book_names[b.id] = b.name
@@ -152,6 +197,8 @@ def _build_response(
                 is_routine=s.is_routine, default_count=s.default_count,
                 book_id=s.book_id, book_name=book_names.get(s.book_id) if s.book_id else None,
                 label=s.label, routine_mode=s.routine_mode, is_anchor=bool(s.is_anchor),
+                routine_scope=s.routine_scope, second_book_id=s.second_book_id,
+                second_book_name=book_names.get(s.second_book_id) if s.second_book_id else None,
             )
             for s in sorted(skel.slots, key=lambda x: (x.weekday, x.position, x.id))
         ],
@@ -162,7 +209,9 @@ def _build_response(
 
 def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[dict]:
     allowed = {s.id for s in _subject_options(db, student, coach_id)}
-    book_subj = {b.id: b.subject_id for b in _book_options(db, student)}
+    opts = _book_options(db, student)
+    book_subj = {b.id: b.subject_id for b in opts}
+    banks = {b.id for b in opts if _is_bank(b)}
     out = []
     for i, s in enumerate(slots):
         if s.subject_id not in allowed:
@@ -179,6 +228,24 @@ def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[d
             mode = None
         elif mode is None:
             mode = "sirali"
+        scope = s.routine_scope or None
+        if scope is not None and scope not in ROUTINE_SCOPES:
+            raise _err(422, "bad_routine_scope", "Rutin kapsamı 'book' ya da 'problems' olmalı.")
+        if not (s.is_routine and s.book_id) or scope == "book":
+            scope = None
+        second = s.second_book_id
+        if second is not None:
+            if second not in book_subj:
+                raise _err(422, "book_not_allowed", "2. kaynak öğrencinin kitaplığında değil.")
+            if second not in banks:
+                raise _err(422, "second_not_bank",
+                           "2. kaynak soru bankası olmalı (konu anlatımlı / video defter olamaz).")
+            if book_subj[second] != s.subject_id:
+                raise _err(422, "book_subject_mismatch", "2. kaynak satırın dersine ait değil.")
+            if second == s.book_id:
+                raise _err(422, "second_same_book", "2. kaynak satırın kitabıyla aynı olamaz.")
+            if s.is_routine:
+                second = None
         label = (s.label or "").strip()[:160] or None
         out.append({
             "weekday": s.weekday, "period": _validate_period(s.period),
@@ -186,6 +253,7 @@ def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[d
             "is_routine": s.is_routine, "default_count": s.default_count,
             "book_id": s.book_id, "label": None if s.book_id else label,
             "routine_mode": mode, "is_anchor": bool(s.is_anchor),
+            "routine_scope": scope, "second_book_id": second,
         })
     return out
 
@@ -376,7 +444,9 @@ def _accept(
     chip_count: int | None, warnings: list[str], as_activity: bool = False,
 ):
     """Hayaleti göreve çevir. items = [(section_id, adet)] (rutin çipi çok
-    kalemli olabilir); as_activity → kitapsız satırın etiketiyle ETKİNLİK."""
+    kalemli olabilir); as_activity → kitapsız satırın etiketiyle ETKİNLİK.
+    Kalemler birden çok kitaba yayılırsa (problem rutini kaynak değiştirirken)
+    kitap başına ayrı görev yazılır. Dönüş: görev listesi."""
     if as_activity:
         if not slot.label:
             raise _err(422, "no_label", "Bu satırın etkinlik adı yok.")
@@ -393,10 +463,10 @@ def _accept(
             action="accepted", chip_rank=chip_rank or 1, chip_kind="activity",
             chip_count=chip_count, task_id=task.id,
         ))
-        return task
+        return [task]
     if not items:
         raise _err(422, "no_items", "Görev için bölüm seçilmedi.")
-    body_items = []
+    per_book: dict[int, list[TaskItemBody]] = {}
     first_sec = None
     for section_id, count in items:
         sec = db.get(BookSection, section_id)
@@ -406,30 +476,33 @@ def _accept(
         if book is None or book.subject_id != slot.subject_id:
             raise _err(422, "subject_mismatch", "Bu bölüm iskeletteki derse ait değil.")
         first_sec = first_sec or sec
-        body_items.append(TaskItemBody(
+        per_book.setdefault(sec.book_id, []).append(TaskItemBody(
             book_id=sec.book_id, section_id=sec.id, planned_count=count,
             allow_over_capacity=True,
         ))
-    payload = TaskCreateBody(
-        date=d.isoformat(), type="test", title="Görev", period=slot.period, items=body_items,
-    )
-    task = _create_task_with_items(db, student=student, payload=payload, overflow_out=warnings)
-    if len(body_items) > 1:
-        # Çok kalemli görevde başlık kalemlerden türetilir ("Kitap — A: 1 test · B: 1 test")
-        from app.services.task_titles import refresh_auto_title
+    tasks = []
+    for body_items in per_book.values():
+        payload = TaskCreateBody(
+            date=d.isoformat(), type="test", title="Görev", period=slot.period, items=body_items,
+        )
+        task = _create_task_with_items(db, student=student, payload=payload, overflow_out=warnings)
+        if len(body_items) > 1:
+            # Çok kalemli görevde başlık kalemlerden türetilir ("Kitap — A: 1 test · B: 1 test")
+            from app.services.task_titles import refresh_auto_title
 
+            db.flush()
+            db.refresh(task)
+            task.title = "Görev"
+            refresh_auto_title(task)
         db.flush()
-        db.refresh(task)
-        task.title = "Görev"
-        refresh_auto_title(task)
-    db.flush()
+        tasks.append(task)
     db.add(SkeletonGhostAction(
         student_id=student.id, slot_id=slot.id, coach_id=user.id, date=d,
         action="accepted" if chip_rank else "other",
         chip_rank=chip_rank, chip_kind=chip_kind, chip_count=chip_count,
-        section_id=first_sec.id, topic_id=first_sec.topic_id, task_id=task.id,
+        section_id=first_sec.id, topic_id=first_sec.topic_id, task_id=tasks[0].id,
     ))
-    return task
+    return tasks
 
 
 @router.post("/students/{student_id}/skeleton/ghosts/accept",
@@ -453,7 +526,7 @@ def accept_ghost(
     else:
         items = []
     try:
-        task = _accept(
+        tasks = _accept(
             db, user=user, student=student, slot=slot, d=d, items=items,
             chip_rank=body.chip_rank, chip_kind=body.chip_kind,
             chip_count=body.chip_count, warnings=warnings, as_activity=body.as_activity,
@@ -465,9 +538,14 @@ def accept_ghost(
         db.rollback()
         raise
     db.commit()
+    inv: list[str] = []
+    for t in tasks:
+        for k in _invalidate_for_task(t, user.id):
+            if k not in inv:
+                inv.append(k)
     return MutationResponse[GhostAcceptResult](
-        data=GhostAcceptResult(task_ids=[task.id], created=1),
-        invalidate=_invalidate_for_task(task, user.id),
+        data=GhostAcceptResult(task_ids=[t.id for t in tasks], created=len(tasks)),
+        invalidate=inv,
         warnings=warnings,
     )
 
@@ -502,13 +580,13 @@ def accept_routine(
                         [(it["section_id"], it["count"]) for it in c["items"]]
                         if c.get("items") else [(c["section_id"], c["count"])]
                     )
-                    tasks.append(_accept(
+                    tasks.extend(_accept(
                         db, user=user, student=student, slot=slot, d=d, items=items,
                         chip_rank=1, chip_kind=c["kind"], chip_count=len(g["chips"]),
                         warnings=warnings,
                     ))
                 elif slot.label and not slot.book_id:
-                    tasks.append(_accept(
+                    tasks.extend(_accept(
                         db, user=user, student=student, slot=slot, d=d, items=[],
                         chip_rank=1, chip_kind="activity", chip_count=0,
                         warnings=warnings, as_activity=True,

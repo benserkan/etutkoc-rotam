@@ -18,12 +18,16 @@ class SkeletonSlotIn(BaseModel):
     routine_mode: str | None = None
     # F2-3 çapa: okulda/dershanede işlenen ders (sabit gün)
     is_anchor: bool = False
+    # F2-4: rutin kapsamı 'book' | 'problems' · konu satırının 2. ana kaynağı
+    routine_scope: str | None = None
+    second_book_id: int | None = None
 
 
 class SkeletonSlotOut(SkeletonSlotIn):
     id: int
     subject_name: str
     book_name: str | None = None
+    second_book_name: str | None = None
 
 
 class SkeletonSubjectOption(BaseModel):
@@ -35,6 +39,10 @@ class SkeletonBookOption(BaseModel):
     id: int
     name: str
     subject_id: int
+    # F2-4: yalnız soru bankası ana kaynak / 2. kaynak / problem kaynağı olabilir
+    book_type: str | None = None
+    is_bank: bool = False
+    has_problems: bool = False
 
 
 class SkeletonPeriodItem(BaseModel):
@@ -113,6 +121,8 @@ class ChipItem(BaseModel):
     section_id: int
     section_label: str
     count: int
+    book_id: int | None = None
+    book_name: str | None = None
 
 
 class GhostChip(BaseModel):
@@ -131,6 +141,8 @@ class GhostChip(BaseModel):
     badges: list[ChipBadge] = []
     # Kitaba bağlı rutin çipi birden çok bölümü kapsayabilir (karışık/sıralı taşma)
     items: list[ChipItem] | None = None
+    # F2-4: 1. kaynakta konu bitti — koçun seçmesi gereken çiplerden biri
+    source_choice: bool = False
 
 
 class GhostCell(BaseModel):
@@ -145,6 +157,10 @@ class GhostCell(BaseModel):
     book_name: str | None = None
     label: str | None = None
     routine_mode: str | None = None
+    routine_scope: str | None = None
+    second_book_id: int | None = None
+    second_book_name: str | None = None
+    source_choice: bool = False
     is_anchor: bool = False
     chips: list[GhostChip] = []
 

@@ -41,6 +41,12 @@ CHIP_KINDS = ("thread", "next", "new", "weak", "routine", "activity")
 #   sirali — günlük adet kitapta sırayla alınır, bölüm biterse sıradakine taşar
 #   karma  — her gün FARKLI bölümlerden birer test, bölümler arasında döner
 ROUTINE_MODES = ("sirali", "karma")
+# F2-4 rutinin kapsamı:
+#   book     — kitabın tamamı (paragraf, geometri rutini)
+#   problems — yalnız PROBLEM bölümleri (Oran-Orantı + problem konuları + Problem
+#              Denemeleri; ÖSYM çıkmış blokları hariç). Kaynağın problemleri
+#              bitince sıradaki soru bankasının problemlerinden baştan devam eder.
+ROUTINE_SCOPES = ("book", "problems")
 
 
 class WeeklySkeleton(Base):
@@ -108,6 +114,13 @@ class WeeklySkeletonSlot(Base):
     # F2-3 ÇAPA: okulda/dershanede İŞLENEN ders (sabit gün). Önerisi "bugün hangi
     # konu işlendi?" sorar; konu yayılırken çapa günlerinin payı önceden ayrılır.
     is_anchor: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # F2-4: rutinin kapsamı ('book' | 'problems'; NULL = 'book').
+    routine_scope: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # F2-4: konu satırının 2. ana kaynağı (SORU BANKASI). 1. kaynakta konu bitince
+    # koça "2. kaynaktan aynı konu / 1. kaynakta sıradaki konu" seçeneği sunulur.
+    second_book_id: Mapped[int | None] = mapped_column(
+        ForeignKey("books.id", ondelete="SET NULL"), nullable=True
+    )
 
     skeleton: Mapped["WeeklySkeleton"] = relationship("WeeklySkeleton", back_populates="slots")
 

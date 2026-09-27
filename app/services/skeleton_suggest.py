@@ -79,6 +79,7 @@ class _Sec:
     total: int
     completed: int
     reserved: int
+    book_type: str = ""
 
     @property
     def remaining(self) -> int:
@@ -109,17 +110,21 @@ class _Ctx:
     # F2-1: o günün görevleri KAYNAKLARIYLA (iskelet satırı eşleştirme + çıkarım):
     # tarih → [{task_id, subjects, period, book_ids, label, planned, sections}]
     day_items: dict[date, list[dict]] = field(default_factory=dict)
+    # F2-4: problem bölümleri (rutin 'problems' kapsamı) + soru bankası kitapları
+    problem_secs: set[int] = field(default_factory=set)
+    bank_books: set[int] = field(default_factory=set)
 
     def open_(self, s: _Sec) -> bool:
         return s.remaining > 0 and not (s.topic_id and s.topic_id in self.closed)
 
-    def advance(self, s: _Sec) -> tuple[_Sec | None, str]:
+    def advance(self, s: _Sec, exclude: set[int] | frozenset = frozenset()) -> tuple[_Sec | None, str]:
         """Bölümde test kaldıysa kendisi ('thread'); yoksa kitapta sıradaki açık
-        konulu bölüm ('next')."""
+        konulu bölüm ('next'). exclude: atlanacak bölümler (konu satırında
+        problem rutininin bölümleri)."""
         if self.open_(s):
             return s, "thread"
         for c in self.by_book.get(s.book_id, []):
-            if c.order > s.order and c.topic_id and self.open_(c):
+            if c.order > s.order and c.topic_id and self.open_(c) and c.id not in exclude:
                 return c, "next"
         return None, ""
 
@@ -156,7 +161,63 @@ def _load_sections(db: Session, student_id: int) -> dict[int, _Sec]:
             id=sid, book_id=bid, book_name=book.name, subject_id=book.subject_id,
             label=label or "", order=order or 0, topic_id=tid,
             total=int(tc or 0), completed=int(comp or 0), reserved=int(res or 0),
+            book_type=getattr(book.type, "value", str(book.type or "")),
         )
+    return out
+
+
+# ---------------------------------------------------------------- problem bölümleri (F2-4)
+
+BANK_TYPE = "soru_bankasi"
+
+
+def _tr_low(v: str | None) -> str:
+    return (v or "").replace("İ", "i").replace("I", "ı").lower()
+
+
+def _is_osym_block(label: str) -> bool:
+    low = _tr_low(label)
+    return "ösym" in low or "osym" in low
+
+
+def _problemish(sec: "_Sec", topic_names: dict[int, str]) -> bool:
+    """Bölüm problem konusu mu: etiketinde ya da konusunda 'problem' / 'orantı'."""
+    texts = [_tr_low(sec.label)]
+    if sec.topic_id:
+        texts.append(_tr_low(topic_names.get(sec.topic_id)))
+    return any("problem" in t or "orantı" in t or "oranti" in t for t in texts)
+
+
+def problem_section_ids(by_book: dict[int, list["_Sec"]], topic_names: dict[int, str]) -> set[int]:
+    """Kitapların PROBLEM bloğu (rutin 'problems' kapsamı).
+
+    Blok = kitapta Oran-Orantı (yoksa etiketinde 'problem' geçen ilk bölüm) ile son
+    problem bölümü arası. Blok içinde: problem konulu ya da konusu olmayan bölümler
+    (Problem Denemeleri); ÖSYM çıkmış blokları ve blok içine düşen konu bölümleri
+    (Birinci Dereceden Denklemler) hariç. Bloktan önceki 'problem' konulu bölüm
+    (Özel Sayı Tanımlama → Sayısal Yetenek) konu hattına aittir, alınmaz."""
+    out: set[int] = set()
+    for secs in by_book.values():
+        cand = [
+            i for i, x in enumerate(secs)
+            if not _is_osym_block(x.label) and _problemish(x, topic_names)
+        ]
+        if not cand:
+            continue
+        start = next(
+            (i for i in cand if "oran" in _tr_low(secs[i].label)
+             or (secs[i].topic_id and "oran" in _tr_low(topic_names.get(secs[i].topic_id)))),
+            None,
+        )
+        if start is None:
+            start = next((i for i in cand if "problem" in _tr_low(secs[i].label)), cand[0])
+        end = cand[-1]
+        for i in range(start, end + 1):
+            x = secs[i]
+            if _is_osym_block(x.label):
+                continue
+            if x.topic_id is None or _problemish(x, topic_names):
+                out.add(x.id)
     return out
 
 
@@ -315,7 +376,10 @@ def _load_ctx(db: Session, *, student: User, coach_id: int, start: date, end: da
     except Exception:  # noqa: BLE001
         log.warning("skeleton: konu performansı alınamadı", exc_info=True)
 
+    problem_secs = problem_section_ids(by_book, topic_names)
+    bank_books = {s.book_id for s in secs.values() if s.book_type == BANK_TYPE}
     return _Ctx(
+        problem_secs=problem_secs, bank_books=bank_books,
         student=student, coach_id=coach_id, secs=secs, by_book=dict(by_book),
         books_by_subject=dict(books_by_subject),
         closed=topic_closure.closed_topic_ids(db, student.id),
@@ -410,14 +474,20 @@ def _continuation_reason(d: date, last: date, rem: int) -> str:
 def build_chips(
     db: Session, ctx: _Ctx, *, subject_id: int, d: date, rotate: int = 0,
     default_count: int | None = None, prefer_book: int | None = None,
+    exclude: set[int] | frozenset = frozenset(), second_book: int | None = None,
 ) -> list[dict]:
-    """Bir hayalet hücrenin çipleri (sıra = ölçülen iplik modeli)."""
+    """Bir hayalet hücrenin çipleri (sıra = ölçülen iplik modeli).
+
+    exclude: bu satırda önerilmeyecek bölümler — o derste problem rutini varsa
+    problem bölümleri konu satırına sızmaz (F2-4).
+    second_book: satırın 2. ana kaynağı. 1. kaynakta konu biterse "2. kaynaktan
+    aynı konu" çipi de eklenir; sistem SEÇMEZ, koç seçer."""
     taken_secs = set(ctx.day_sections.get(d, {}).get(subject_id, set()))
     taken_topics = {ctx.secs[s].topic_id for s in taken_secs if s in ctx.secs and ctx.secs[s].topic_id}
 
     hist = [
         h for h in ctx.history.get(subject_id, [])
-        if 0 <= (d - h[0]).days <= THREAD_WINDOW_DAYS
+        if 0 <= (d - h[0]).days <= THREAD_WINDOW_DAYS and h[2] not in exclude
     ]
     hist.sort(key=lambda h: (h[0], h[1]), reverse=True)
     seen_threads: set[int] = set()
@@ -436,18 +506,45 @@ def build_chips(
         src = ctx.secs.get(sid)
         if src is None:
             continue
-        cur, kind = ctx.advance(src)
-        if cur is None or cur.id in used_secs or (cur.topic_id and cur.topic_id in used_topics):
-            continue
+        cur, kind = ctx.advance(src, exclude)
         q = default_count or last_count.get(sid) or fallback_q
+        # F2-4: konu 1. kaynakta bitti → 2. kaynaktan AYNI konu da seçenek.
+        alt = None
+        if (
+            second_book and kind != "thread" and src.topic_id
+            and src.book_id != second_book and src.topic_id not in used_topics
+        ):
+            alt = next(
+                (c for c in ctx.by_book.get(second_book, [])
+                 if c.topic_id == src.topic_id and ctx.open_(c)
+                 and c.id not in used_secs and c.id not in exclude),
+                None,
+            )
+        if alt is not None:
+            ch = _chip(
+                ctx, alt, "second",
+                f"{src.book_name}'da {src.label} bitti — 2. kaynaktan aynı konu", q,
+            )
+            ch["source_choice"] = True
+            thread_chips.append(ch)
+            used_secs.add(alt.id)
+        if cur is None or cur.id in used_secs or (cur.topic_id and cur.topic_id in used_topics):
+            if alt is not None:
+                used_topics.add(alt.topic_id)
+            continue
         if kind == "thread":
             reason = _continuation_reason(d, dd, cur.remaining)
         else:
             reason = f"kitapta sıradaki konu ({src.label} bitti)"
-        thread_chips.append(_chip(ctx, cur, kind, reason, q))
+        ch = _chip(ctx, cur, kind, reason, q)
+        if alt is not None:
+            ch["source_choice"] = True
+        thread_chips.append(ch)
         used_secs.add(cur.id)
         if cur.topic_id:
             used_topics.add(cur.topic_id)
+        if alt is not None:
+            used_topics.add(alt.topic_id)
 
     if rotate and len(thread_chips) > 1:
         k = rotate % len(thread_chips)
@@ -473,7 +570,7 @@ def build_chips(
             (
                 c for c in ctx.by_book.get(b, [])
                 if c.topic_id and c.completed == 0 and c.reserved == 0
-                and ctx.open_(c) and c.id not in used_secs
+                and ctx.open_(c) and c.id not in used_secs and c.id not in exclude
                 and c.topic_id not in used_topics
             ),
             None,
@@ -501,6 +598,7 @@ def build_chips(
         srcs = [
             s for s in ctx.secs.values()
             if s.topic_id == tid and s.subject_id == subject_id and s.remaining > 0
+            and s.id not in exclude
         ]
         if not srcs:
             continue
@@ -516,10 +614,10 @@ def build_chips(
     return chips
 
 
-def _last_used_in_book(ctx: _Ctx, book_id: int, d: date) -> _Sec | None:
-    """Rutin kitabında en son hangi bölümde kalındı (d günü dahil, iplik penceresi).
-    En yeni görevin o kitaptaki SON kalemi (kalem sırasıyla) — karışık rutin
-    başa sardığında (…4 · 5 · 1) doğru yer 1'dir, en büyük sıra numarası değil."""
+def _last_used(ctx: _Ctx, d: date, pred) -> _Sec | None:
+    """pred(bölüm) sağlayan bölümlerde en son nerede kalındı (d günü dahil).
+    En yeni görevin SON uygun kalemi (kalem sırasıyla) — karışık rutin başa
+    sardığında (…4 · 5 · 1) doğru yer 1'dir, en büyük sıra numarası değil."""
     best = None
     for dd, items in ctx.day_items.items():
         if dd > d:
@@ -528,15 +626,42 @@ def _last_used_in_book(ctx: _Ctx, book_id: int, d: date) -> _Sec | None:
             last = None
             for sid, _n in it["sections"]:
                 sec = ctx.secs.get(sid)
-                if sec is not None and sec.book_id == book_id:
+                if sec is not None and pred(sec):
                     last = sec
             if last is not None and (best is None or (dd, it["task_id"]) > best[0]):
                 best = ((dd, it["task_id"]), last)
     return best[1] if best else None
 
 
+def _last_used_in_book(ctx: _Ctx, book_id: int, d: date) -> _Sec | None:
+    return _last_used(ctx, d, lambda s: s.book_id == book_id)
+
+
+def problem_queue(ctx: _Ctx, *, subject_id: int, book_id: int | None) -> list[int]:
+    """Problem rutininin KAYNAK SIRASI: yalnız SORU BANKALARI (konu anlatımlı /
+    video destekli defter ana kaynak değildir). Satırın kitabı önde, sonra
+    problemlerine başlanmış olanlar, sonra başlanmamışlar (ada göre)."""
+    books = [
+        b for b in ctx.books_by_subject.get(subject_id, [])
+        if b in ctx.bank_books and any(x.id in ctx.problem_secs for x in ctx.by_book.get(b, []))
+    ]
+
+    def started(b: int) -> bool:
+        return any(
+            x.id in ctx.problem_secs and (x.completed or x.reserved)
+            for x in ctx.by_book.get(b, [])
+        )
+
+    books.sort(key=lambda b: (
+        b != book_id, not started(b),
+        ctx.by_book[b][0].book_name if ctx.by_book.get(b) else "",
+    ))
+    return books
+
+
 def routine_items(
     ctx: _Ctx, *, book_id: int, mode: str | None, count: int, d: date,
+    scope: str | None = None, subject_id: int | None = None,
 ) -> list[tuple[_Sec, int]]:
     """Kitaba bağlı rutinin o günkü kalemleri.
 
@@ -546,39 +671,41 @@ def routine_items(
             bölümler arasında döner (paragraf: Sözcükte Anlam 1 · Cümlede
             Anlam 1 · …). Kapatılmış konu ve testi bitmiş bölüm atlanır; o gün
             zaten verilmiş bölüm tekrar verilmez.
+    scope='problems' (F2-4): yalnız problem bölümleri. Kalınan kaynağın
+            problemleri bitince sıradaki SORU BANKASININ problemlerinden baştan
+            (Oran-Orantı) devam eder — konu hattına (Fonksiyon, Polinomlar)
+            asla kaymaz.
     """
     taken = {
         sid for subj in ctx.day_sections.get(d, {}).values() for sid in subj
     }
+    if count <= 0:
+        return []
+    if scope == "problems":
+        if subject_id is None and ctx.by_book.get(book_id):
+            subject_id = ctx.by_book[book_id][0].subject_id
+        return _problem_routine_items(
+            ctx, book_id=book_id, mode=mode, count=count, d=d, taken=taken,
+            subject_id=subject_id,
+        )
     book = ctx.by_book.get(book_id, [])
     opens = [s for s in book if ctx.open_(s) and s.id not in taken]
-    if not opens or count <= 0:
+    if not opens:
         return []
     last = _last_used_in_book(ctx, book_id, d)
     if mode == "karma":
-        start = 0
-        if last is not None:
-            start = next((i for i, s in enumerate(opens) if s.order > last.order), 0)
-        ring = opens[start:] + opens[:start]
-        left = {s.id: s.remaining for s in ring}
-        got: dict[int, int] = {}
-        need = count
-        while need > 0 and any(left[s.id] > 0 for s in ring):
-            for s in ring:
-                if need == 0:
-                    break
-                if left[s.id] > 0:
-                    got[s.id] = got.get(s.id, 0) + 1
-                    left[s.id] -= 1
-                    need -= 1
-        return [(s, got[s.id]) for s in ring if s.id in got]
+        return _karma(opens, last, count)
     # sirali
     start = 0
     if last is not None:
         start = next((i for i, s in enumerate(opens) if s.order >= last.order), 0)
+    return _fill(opens[start:] + opens[:start], count)
+
+
+def _fill(seq: list[_Sec], count: int) -> list[tuple[_Sec, int]]:
     out: list[tuple[_Sec, int]] = []
     need = count
-    for s in opens[start:] + opens[:start]:
+    for s in seq:
         if need == 0:
             break
         n = min(s.remaining, need)
@@ -588,26 +715,99 @@ def routine_items(
     return out
 
 
+def _karma(opens: list[_Sec], last: _Sec | None, count: int) -> list[tuple[_Sec, int]]:
+    start = 0
+    if last is not None and last.book_id == opens[0].book_id:
+        start = next((i for i, s in enumerate(opens) if s.order > last.order), 0)
+    ring = opens[start:] + opens[:start]
+    left = {s.id: s.remaining for s in ring}
+    got: dict[int, int] = {}
+    need = count
+    while need > 0 and any(left[s.id] > 0 for s in ring):
+        for s in ring:
+            if need == 0:
+                break
+            if left[s.id] > 0:
+                got[s.id] = got.get(s.id, 0) + 1
+                left[s.id] -= 1
+                need -= 1
+    return [(s, got[s.id]) for s in ring if s.id in got]
+
+
+def _problem_routine_items(
+    ctx: _Ctx, *, book_id: int, mode: str | None, count: int, d: date,
+    taken: set[int], subject_id: int | None,
+) -> list[tuple[_Sec, int]]:
+    queue = problem_queue(ctx, subject_id=subject_id, book_id=book_id) if subject_id else []
+    if not queue:
+        return []
+    last = _last_used(ctx, d, lambda s: s.id in ctx.problem_secs and s.book_id in queue)
+    cur = last.book_id if last is not None else queue[0]
+    k = queue.index(cur)
+    order = queue[k:] + queue[:k]
+
+    def opens_of(b: int) -> list[_Sec]:
+        return [
+            x for x in ctx.by_book.get(b, [])
+            if x.id in ctx.problem_secs and ctx.open_(x) and x.id not in taken
+        ]
+
+    if mode == "karma":
+        for b in order:
+            ops = opens_of(b)
+            if ops:
+                return _karma(ops, last if b == cur else None, count)
+        return []
+    # sirali: kalınan yerden ileri → sıradaki kaynakların problemleri baştan →
+    # en son kalınan kaynağın atlanmış (önceki) bölümleri.
+    first = opens_of(cur)
+    head, tail = first, []
+    if last is not None:
+        head = [x for x in first if x.order >= last.order]
+        tail = [x for x in first if x.order < last.order]
+    seq = head + [x for b in order[1:] for x in opens_of(b)] + tail
+    return _fill(seq, count)
+
+
+def _routine_reason(ctx: _Ctx, slot: WeeklySkeletonSlot, items: list[tuple[_Sec, int]]) -> str:
+    first = items[0][0]
+    scope = getattr(slot, "routine_scope", None)
+    if scope == "problems":
+        head = "rutin · problemler " + ("karışık" if slot.routine_mode == "karma" else "sırayla")
+        other = next((s for s, _n in items if s.book_id != first.book_id), None)
+        if first.book_id != slot.book_id and ctx.by_book.get(slot.book_id):
+            src_name = ctx.by_book[slot.book_id][0].book_name
+            return f"{head} · {src_name} problemleri bitti → {first.book_name} · {first.label}"
+        if other is not None:
+            return (f"{head} · {first.book_name} problemleri bu gün bitiyor → "
+                    f"{other.book_name} · {other.label}")
+        return f"{head} · {first.book_name}" + (
+            f" ({first.label} bitince {items[-1][0].label})" if len(items) > 1 else ""
+        )
+    if slot.routine_mode == "karma":
+        return f"rutin · karışık: {len(items)} farklı bölüm"
+    return "rutin · kitapta sırayla" + (
+        f" ({first.label} bitince {items[-1][0].label})" if len(items) > 1 else ""
+    )
+
+
 def _routine_chip(ctx: _Ctx, slot: WeeklySkeletonSlot, d: date, fallback_q: int) -> dict | None:
     items = routine_items(
         ctx, book_id=slot.book_id, mode=slot.routine_mode,
         count=slot.default_count or fallback_q, d=d,
+        scope=getattr(slot, "routine_scope", None), subject_id=slot.subject_id,
     )
     if not items:
         return None
     first = items[0][0]
     total = sum(n for _s, n in items)
-    reason = (
-        f"rutin · karışık: {len(items)} farklı bölüm"
-        if slot.routine_mode == "karma"
-        else "rutin · kitapta sırayla"
-        + (f" ({first.label} bitince {items[-1][0].label})" if len(items) > 1 else "")
-    )
-    chip = _chip(ctx, first, "routine", reason, total)
+    chip = _chip(ctx, first, "routine", _routine_reason(ctx, slot, items), total)
     chip["count"] = total
     chip["badges"] = []
     chip["items"] = [
-        {"section_id": s.id, "section_label": s.label, "count": n} for s, n in items
+        {"section_id": s.id, "section_label": s.label, "count": n,
+         "book_id": s.book_id, "book_name": s.book_name}
+        for s, n in items
     ]
     chip["rank"] = 1
     return chip
@@ -657,18 +857,46 @@ def get_skeleton(
     return skeleton_for_date(skels, at or date.today()) or skels[0]
 
 
+def _is_problems_slot(s: WeeklySkeletonSlot) -> bool:
+    return bool(s.is_routine and s.book_id and getattr(s, "routine_scope", None) == "problems")
+
+
 def _match_by_source(
     slots: list[WeeklySkeletonSlot], items: list[dict],
+    problem_secs: set[int] | frozenset = frozenset(),
+    problem_books: list[int] | None = None,
 ) -> tuple[list[WeeklySkeletonSlot], list[dict]]:
     """Kaynaklı satır (kitap/etiket) önce KENDİ kaynağının göreviyle eşleşir —
     aynı derste üç satırdan hangisinin dolu olduğu doğru bilinsin (rutin
-    problemler satırı, konu satırının göreviyle 'dolmuş' sayılmasın)."""
+    problemler satırı, konu satırının göreviyle 'dolmuş' sayılmasın).
+
+    F2-4: problem rutini satırı ÖNCE eşleşir ve yalnız problem bölümlü görevi
+    alır (kaynak sırasındaki herhangi bir soru bankasından — Orijinal bitince
+    sıradaki kaynak da onu doldurur). O derste problem rutini varsa kitaplı
+    konu satırı yalnız problem-dışı görevle dolar."""
     pool = list(items)
     rest: list[WeeklySkeletonSlot] = []
-    for s in slots:
+    has_prob = any(_is_problems_slot(s) for s in slots)
+
+    def only_problems(it: dict) -> bool:
+        return bool(it["sections"]) and all(sid in problem_secs for sid, _n in it["sections"])
+
+    ordered = sorted(slots, key=lambda s: not _is_problems_slot(s))
+    for s in ordered:
         hit = None
-        if s.book_id:
-            hit = next((it for it in pool if s.book_id in it["book_ids"]), None)
+        if _is_problems_slot(s):
+            books = set(problem_books or []) | {s.book_id}
+            hits = [it for it in pool if only_problems(it) and set(it["book_ids"]) & books]
+            # Kaynak değişen gün rutin kitap başına iki görev yazar — ikisi de bu satırın.
+            for it in hits[1:]:
+                pool.remove(it)
+            hit = hits[0] if hits else None
+        elif s.book_id:
+            hit = next(
+                (it for it in pool if s.book_id in it["book_ids"]
+                 and not (has_prob and only_problems(it))),
+                None,
+            )
         elif s.label:
             key = _norm_label(s.label)
             hit = next((it for it in pool if _norm_label(it["label"]) == key), None)
@@ -731,7 +959,9 @@ def build_ghosts(
         )
     }
 
-    slot_books = {s.book_id for x in skels for s in x.slots if s.book_id}
+    slot_books = {s.book_id for x in skels for s in x.slots if s.book_id} | {
+        s.second_book_id for x in skels for s in x.slots if getattr(s, "second_book_id", None)
+    }
     book_names = (
         {int(i): n for i, n in db.query(Book.id, Book.name).filter(Book.id.in_(slot_books))}
         if slot_books else {}
@@ -750,7 +980,14 @@ def build_ghosts(
             items = [it for it in ctx.day_items.get(d, []) if subj in it["subjects"]]
             # 1) kaynaklı satırlar kendi kaynağıyla; 2) kalan satırlar kalan
             #    görevlerle periyot kuralına göre (kaynaksız satırlar önce).
-            rest, pool = _match_by_source(slots, items)
+            prob_slots = [s for s in slots if _is_problems_slot(s)]
+            prob_books = (
+                problem_queue(ctx, subject_id=subj, book_id=prob_slots[0].book_id)
+                if prob_slots else []
+            )
+            # O derste problem rutini varsa problem bölümleri konu satırına önerilmez.
+            exclude = frozenset(ctx.problem_secs) if prob_slots else frozenset()
+            rest, pool = _match_by_source(slots, items, ctx.problem_secs, prob_books)
             rest.sort(key=lambda s: (bool(s.book_id or s.label), s.position, s.id))
             unfilled = [
                 s for s in _unfilled_slots(rest, [it["period"] for it in pool])
@@ -771,6 +1008,8 @@ def build_ghosts(
                     chips = build_chips(
                         db, ctx, subject_id=subj, d=d, rotate=0 if s.book_id else k,
                         default_count=s.default_count, prefer_book=s.book_id,
+                        exclude=exclude if not s.is_routine else frozenset(),
+                        second_book=getattr(s, "second_book_id", None),
                     )
                     if not s.book_id:
                         k += 1
@@ -792,6 +1031,13 @@ def build_ghosts(
                     "book_name": book_names.get(s.book_id) if s.book_id else None,
                     "label": s.label,
                     "routine_mode": s.routine_mode,
+                    "routine_scope": getattr(s, "routine_scope", None),
+                    "second_book_id": getattr(s, "second_book_id", None),
+                    "second_book_name": (
+                        book_names.get(s.second_book_id) if getattr(s, "second_book_id", None) else None
+                    ),
+                    # 1. kaynakta konu bitti: koç 2. kaynak / sıradaki konu arasında seçer
+                    "source_choice": any(c.get("source_choice") for c in chips),
                     "is_anchor": bool(s.is_anchor),
                     "chips": chips,
                 })
@@ -841,6 +1087,10 @@ def slots_from_tasks(
 
     def src(it: dict) -> tuple:
         if it["book_ids"]:
+            # F2-4: yalnız problem bölümlü görev ayrı kaynak sayılır — aynı kitabın
+            # konu hattıyla karışmasın (Orijinal Mat: konu satırı + problem rutini).
+            if all(sid in ctx.problem_secs for sid, _n in it["sections"]):
+                return ("p", it["book_ids"][0])
             return ("b", it["book_ids"][0])
         if it["label"]:
             return ("l", _norm_label(it["label"]))
@@ -857,11 +1107,24 @@ def slots_from_tasks(
                 days_of[key].add(d)
                 if it["planned"]:
                     counts[key][it["planned"]] += 1
-                if key[1][0] == "b":
+                if key[1][0] in ("b", "p"):
                     karma_votes[key].append(
                         len(it["sections"]) >= 2 and all(n == 1 for _s, n in it["sections"])
                     )
         d += timedelta(days=1)
+
+    # Konu satırının 2. kaynağı: aynı derste haftada kullanılan DİĞER soru bankası
+    # (problem dışı görevlerden; en sık kullanılan). Yalnız SORU BANKASI.
+    bank_use: dict[int, Counter] = defaultdict(Counter)
+    for (subj, key), days in days_of.items():
+        if key[0] == "b" and key[1] in ctx.bank_books:
+            bank_use[subj][key[1]] += len(days)
+
+    def second_for(subj: int, own: int | None) -> int | None:
+        for b, _n in bank_use.get(subj, Counter()).most_common():
+            if b != own:
+                return b
+        return None
 
     seen_weekdays: set[int] = set()
     out: list[dict] = []
@@ -876,6 +1139,7 @@ def slots_from_tasks(
                 for subj in it["subjects"]:
                     key = (subj, src(it))
                     routine = key[1][0] != "s" and len(days_of[key]) >= ROUTINE_MIN_DAYS
+                    scope = "problems" if (routine and key[1][0] == "p") else None
                     if routine and key[1][0] == "b" and not _is_drill_book(ctx, key[1][1]):
                         # Konu kitabı her gün kullanılsa da RUTİN değil, konu ipliğidir
                         # (Orijinal Mat: Temel Kavramlar → Oran-Orantı → …); rutin
@@ -888,13 +1152,18 @@ def slots_from_tasks(
                         votes = karma_votes[key]
                         mode = "karma" if votes and sum(votes) * 2 > len(votes) else "sirali"
                     dc = counts[key].most_common(1)[0][0] if routine and counts[key] else None
+                    second = (
+                        second_for(subj, book_id)
+                        if book_id and not routine and book_id in ctx.bank_books else None
+                    )
                     rows.append((
                         PERIOD_ORDER.get(it["period"], 3),
                         ctx.subject_names.get(subj, ""), it["task_id"],
                         {"weekday": wd, "period": it["period"], "subject_id": subj,
                          "is_routine": routine, "default_count": dc,
                          "book_id": book_id, "label": None if book_id else it["label"],
-                         "routine_mode": mode},
+                         "routine_mode": mode, "routine_scope": scope,
+                         "second_book_id": second},
                     ))
             for pos, (_po, _n, _t, row) in enumerate(sorted(rows, key=lambda r: r[:3])):
                 row["position"] = pos
@@ -933,6 +1202,7 @@ def create_period(
                 weekday=s.weekday, period=s.period, subject_id=s.subject_id, position=s.position,
                 is_routine=s.is_routine, default_count=s.default_count, book_id=s.book_id,
                 label=s.label, routine_mode=s.routine_mode, is_anchor=s.is_anchor,
+                routine_scope=s.routine_scope, second_book_id=s.second_book_id,
             ))
         db.flush()
     if copy_from is not None and copy_from.day_capacity:
@@ -980,6 +1250,7 @@ def replace_slots(
             is_routine=bool(s.get("is_routine")), default_count=s.get("default_count"),
             book_id=s.get("book_id"), label=(s.get("label") or None),
             routine_mode=s.get("routine_mode"), is_anchor=bool(s.get("is_anchor")),
+            routine_scope=s.get("routine_scope"), second_book_id=s.get("second_book_id"),
         ))
     db.flush()
     return sk

@@ -29,7 +29,13 @@ export interface SkeletonSlotIn {
   routine_mode?: RoutineMode | null;
   /** Okulda/dershanede işlenen ders (çapa) */
   is_anchor?: boolean;
+  /** Rutin kapsamı: kitabın tamamı ya da yalnız problemler (null = kitap) */
+  routine_scope?: RoutineScope | null;
+  /** Konu satırının 2. ana kaynağı (soru bankası) */
+  second_book_id?: number | null;
 }
+
+export type RoutineScope = "book" | "problems";
 
 export type RoutineMode = "sirali" | "karma";
 
@@ -42,6 +48,17 @@ export interface SkeletonSlot extends SkeletonSlotIn {
   id: number;
   subject_name: string;
   book_name: string | null;
+  second_book_name?: string | null;
+}
+
+export interface SkeletonBookOption {
+  id: number;
+  name: string;
+  subject_id: number;
+  book_type?: string | null;
+  /** Yalnız soru bankası ana / 2. kaynak / problem kaynağı olabilir */
+  is_bank?: boolean;
+  has_problems?: boolean;
 }
 
 export interface CapacityItem {
@@ -73,7 +90,7 @@ export interface SkeletonResponse {
   capacity: CapacityItem[];
   slots: SkeletonSlot[];
   subjects: { id: number; name: string }[];
-  books: { id: number; name: string; subject_id: number }[];
+  books: SkeletonBookOption[];
 }
 
 export interface ChipBadge {
@@ -82,7 +99,7 @@ export interface ChipBadge {
   tone: string; // rose | amber | violet | emerald | slate | cyan …
 }
 
-export type ChipKind = "thread" | "next" | "new" | "weak" | "routine";
+export type ChipKind = "thread" | "next" | "new" | "weak" | "routine" | "second";
 
 export interface GhostChip {
   rank: number;
@@ -99,7 +116,17 @@ export interface GhostChip {
   reason: string;
   badges: ChipBadge[];
   /** Rutin çipi birden çok bölümü kapsayabilir */
-  items?: { section_id: number; section_label: string; count: number }[] | null;
+  items?:
+    | {
+        section_id: number;
+        section_label: string;
+        count: number;
+        book_id?: number | null;
+        book_name?: string | null;
+      }[]
+    | null;
+  /** 1. kaynakta konu bitti — koçun seçeceği seçeneklerden biri */
+  source_choice?: boolean;
 }
 
 export interface GhostCell {
@@ -114,6 +141,11 @@ export interface GhostCell {
   book_name: string | null;
   label: string | null;
   routine_mode: RoutineMode | null;
+  routine_scope?: RoutineScope | null;
+  second_book_id?: number | null;
+  second_book_name?: string | null;
+  /** 1. kaynakta konu bitti: koç 2. kaynak / sıradaki konu arasında seçer */
+  source_choice?: boolean;
   is_anchor: boolean;
   chips: GhostChip[];
 }

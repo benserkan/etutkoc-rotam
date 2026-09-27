@@ -35,6 +35,7 @@ import {
   useUpdatePeriod,
   type GhostAcceptanceReport,
   type SkeletonPeriod,
+  type SkeletonBookOption,
   type SkeletonResponse,
   type SkeletonSlotIn,
   skeletonKeys,
@@ -62,6 +63,8 @@ function toRows(sk: SkeletonResponse | undefined): Row[] {
     label: s.label ?? null,
     routine_mode: s.routine_mode ?? null,
     is_anchor: !!s.is_anchor,
+    routine_scope: s.routine_scope ?? null,
+    second_book_id: s.second_book_id ?? null,
   }));
 }
 
@@ -145,6 +148,8 @@ export function SkeletonEditorDialog({
         label: null,
         routine_mode: null,
         is_anchor: false,
+        routine_scope: null,
+        second_book_id: null,
       },
     ]);
   }
@@ -161,6 +166,12 @@ export function SkeletonEditorDialog({
       label: r.book_id ? null : (r.label?.trim() || null),
       routine_mode: r.is_routine && r.book_id ? (r.routine_mode ?? "sirali") : null,
       is_anchor: !!r.is_anchor,
+      routine_scope:
+        r.is_routine && r.book_id && r.routine_scope === "problems" ? "problems" : null,
+      second_book_id:
+        !r.is_routine && r.book_id && r.second_book_id && r.second_book_id !== r.book_id
+          ? r.second_book_id
+          : null,
     }));
     const day_capacity: Record<string, number | null> = {};
     for (let wd = 0; wd < 7; wd++) {
@@ -478,9 +489,12 @@ function SourceLine({
   onChange,
 }: {
   row: Row;
-  books: { id: number; name: string }[];
+  books: SkeletonBookOption[];
   onChange: (patch: Partial<Row>) => void;
 }) {
+  const current = books.find((b) => b.id === row.book_id);
+  // 2. ana kaynak yalnız SORU BANKASI (video defter / konu anlatımlı ana kaynak değil)
+  const banks = books.filter((b) => b.is_bank && b.id !== row.book_id);
   return (
     <div className="flex flex-wrap items-center gap-2 pl-1 text-[12px] text-foreground">
       <span className="text-muted-foreground">Kaynak:</span>
@@ -524,6 +538,41 @@ function SourceLine({
             </option>
           ))}
         </select>
+      ) : null}
+      {row.is_routine && row.book_id && current?.has_problems ? (
+        <select
+          value={row.routine_scope ?? "book"}
+          onChange={(e) =>
+            onChange({ routine_scope: e.target.value === "problems" ? "problems" : null })
+          }
+          className="rounded border border-border bg-background px-2 py-1 text-[12.5px] text-foreground"
+          aria-label="Rutin kapsamı"
+          title="Yalnız problemler: Oran-Orantı, problem konuları ve Problem Denemeleri. Kitabın problemleri bitince sıradaki soru bankasının problemlerinden baştan devam eder."
+        >
+          <option value="book">kitabın tamamı</option>
+          <option value="problems">yalnız problemler — bitince sıradaki soru bankası</option>
+        </select>
+      ) : null}
+      {!row.is_routine && row.book_id && current?.is_bank ? (
+        <label className="flex min-w-56 flex-1 items-center gap-1.5">
+          <span className="whitespace-nowrap text-muted-foreground">2. kaynak:</span>
+          <select
+            value={row.second_book_id ?? ""}
+            onChange={(e) =>
+              onChange({ second_book_id: e.target.value ? Number(e.target.value) : null })
+            }
+            className="min-w-40 flex-1 rounded border border-border bg-background px-2 py-1 text-[12.5px] text-foreground"
+            aria-label="İkinci kaynak"
+            title="1. kaynakta konu bitince önerilerde bu kitaptan aynı konu da seçenek olarak çıkar; hangisiyle devam edileceğini sen seçersin."
+          >
+            <option value="">yok</option>
+            {banks.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </label>
       ) : null}
     </div>
   );

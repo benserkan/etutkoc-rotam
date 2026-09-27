@@ -53,10 +53,17 @@ const KIND_LABEL: Record<string, { label: string; cls: string }> = {
   new: { label: "yeni konu", cls: "bg-slate-600 text-white" },
   weak: { label: "tekrar", cls: "bg-rose-700 text-white" },
   routine: { label: "rutin", cls: "bg-emerald-700 text-white" },
+  second: { label: "2. kaynak", cls: "bg-violet-700 text-white" },
 };
 
+/** Rutin çipinin kalemleri birden çok kitaba yayılıyor mu (kaynak değişimi)? */
+function multiBook(c: GhostChip): boolean {
+  const ids = new Set((c.items ?? []).map((it) => it.book_id ?? c.book_id));
+  return ids.size > 1;
+}
+
 function chipTitle(c: GhostChip): string {
-  if (c.items && c.items.length > 1) return c.book_name;
+  if (c.items && c.items.length > 1) return multiBook(c) ? "Problemler" : c.book_name;
   return c.topic_name && c.topic_name !== c.section_label
     ? `${c.section_label}`
     : c.section_label || c.topic_name || c.book_name;
@@ -238,7 +245,16 @@ export function GhostRow({
           {ghost.is_routine ? (
             <span className="rounded bg-emerald-700 px-1.5 py-px text-[10px] font-semibold text-white">
               rutin
+              {ghost.routine_scope === "problems" ? " · problemler" : ""}
               {ghost.routine_mode ? ` · ${ROUTINE_MODE_LABELS[ghost.routine_mode]}` : ""}
+            </span>
+          ) : null}
+          {ghost.source_choice ? (
+            <span
+              className="rounded bg-amber-700 px-1.5 py-px text-[10px] font-semibold text-white"
+              data-testid="ghost-source-choice"
+            >
+              konu bitti · kaynak seç
             </span>
           ) : null}
           {preview ? (
@@ -272,6 +288,19 @@ export function GhostRow({
             <p className="text-[12.5px] font-medium text-foreground" data-testid="anchor-question">
               Bugün {ghost.subject_name} dersinde hangi konu işlendi? Seçtiğin konu bugüne
               yazılır, kalan testleri sonraki günlere yaymak için önizleme açılır.
+            </p>
+          ) : null}
+          {ghost.source_choice ? (
+            <p
+              className="rounded-md bg-amber-700 px-2.5 py-1.5 text-[12.5px] font-medium text-white"
+              data-testid="source-choice-note"
+            >
+              {ghost.chips.find((c) => c.kind === "second")?.topic_name ?? "Konu"}{" "}
+              {ghost.chips.some((c) => c.kind === "second" && c.topic_name) ? "konusu " : ""}
+              {ghost.book_name ?? "1. kaynakta"} kitabında bitti.{" "}
+              {ghost.second_book_name ?? "2. kaynaktan"} aynı konuyla mı, yoksa{" "}
+              {ghost.book_name ?? "aynı kaynakta"} sıradaki konuyla mı devam edilsin? Seçim
+              senin.
             </p>
           ) : null}
           {!routineChip && ghost.chips.length > 0 ? (
@@ -370,6 +399,7 @@ export function GhostRow({
                               key={it.section_id}
                               className="rounded border border-border px-1.5 py-px text-[11.5px] text-foreground"
                             >
+                              {multiBook(c) && it.book_name ? `${it.book_name} · ` : ""}
                               {it.section_label} · {it.count}
                             </li>
                           ))}
