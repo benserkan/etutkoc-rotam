@@ -35,6 +35,12 @@ from app.routes.api_v2.schemas.weekly_skeleton import (
     PeriodCreateBody,
     PeriodUpdateBody,
     SkeletonBookOption,
+    SkeletonCopyBody,
+    SkeletonCopyBookRef,
+    SkeletonCopyCandidate,
+    SkeletonCopyCandidatesResponse,
+    SkeletonCopyResult,
+    SkeletonCopyStudentResult,
     SkeletonDeleteBody,
     SkeletonPeriodItem,
     SkeletonFromWeekBody,
@@ -413,6 +419,105 @@ def update_period(
     return MutationResponse[SkeletonResponse](
         data=_build_response(db, student, user.id, skeleton_id=skel.id),
         invalidate=[_key(user.id, student.id)],
+    )
+
+
+# ------------------------------------------------ başka öğrencilere kopyala
+
+
+def _grade_label(u: User) -> str:
+    if u.is_graduate:
+        return "Mezun"
+    return f"{u.grade_level}. sınıf" if u.grade_level else "Sınıf yok"
+
+
+@router.get("/students/{student_id}/skeleton/copy-candidates",
+            response_model=SkeletonCopyCandidatesResponse)
+def skeleton_copy_candidates(
+    student_id: int, skeleton_id: int = Query(...),
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    """Kopyalama penceresi: kaynak dönem + koçun diğer AKTİF öğrencileri (şube,
+    mevcut dönemleri, kaynaktaki kitaplardan hangileri öğrencide yok). Salt okuma."""
+    from app.models import UserRole
+    from app.services import skeleton_copy as sc
+
+    student = _get_owned_student(db, student_id, user.id)
+    src = _owned_skeleton(db, student, skeleton_id)
+    targets = (
+        db.query(User)
+        .filter(User.teacher_id == user.id, User.role == UserRole.STUDENT,
+                User.is_active.is_(True), User.id != student.id)
+        .order_by(User.class_group, User.full_name)
+        .all()
+    )
+    plans = sc.plan_targets(db, source=src, targets=targets, mode="replace", valid_from=None)
+    book_ids = sc._source_book_ids(src)
+    names = {int(i): n for i, n in db.query(Book.id, Book.name).filter(Book.id.in_(book_ids or {0}))}
+    out = []
+    for p in plans:
+        skels = sk.list_skeletons(db, p.student.id)
+        out.append(SkeletonCopyCandidate(
+            student_id=p.student.id, full_name=p.student.full_name,
+            grade_label=_grade_label(p.student), class_group=p.student.class_group,
+            period_count=p.period_count,
+            period_starts=[x.valid_from.isoformat() if x.valid_from else None for x in skels],
+            current_period_name=p.replaced_name, current_slot_count=p.replaced_slot_count,
+            missing_books=[SkeletonCopyBookRef(id=b, name=names.get(b, "?")) for b in p.missing_book_ids],
+        ))
+    return SkeletonCopyCandidatesResponse(
+        source_skeleton_id=src.id, source_name=src.name,
+        source_valid_from=src.valid_from.isoformat() if src.valid_from else None,
+        source_slot_count=len(src.slots),
+        source_books=[SkeletonCopyBookRef(id=b, name=names.get(b, "?")) for b in sorted(book_ids)],
+        candidates=out,
+    )
+
+
+@router.post("/students/{student_id}/skeleton/copy",
+             response_model=MutationResponse[SkeletonCopyResult])
+def skeleton_copy(
+    student_id: int, body: SkeletonCopyBody,
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    """Kaynak dönemi seçili öğrencilere kopyala (bkz. services/skeleton_copy)."""
+    from app.models import UserRole
+    from app.services import skeleton_copy as sc
+
+    if body.mode not in sc.COPY_MODES:
+        raise _err(422, "bad_copy_mode", "Kopyalama biçimi 'new' ya da 'replace' olmalı.")
+    valid_from = _parse_iso_date(body.valid_from) if body.valid_from else None
+    if body.mode == "new" and valid_from is None:
+        raise _err(422, "valid_from_required", "Yeni dönem için başlangıç tarihi gerekli.")
+    student = _get_owned_student(db, student_id, user.id)
+    src = _owned_skeleton(db, student, body.skeleton_id)
+    requested = list(dict.fromkeys(int(x) for x in body.target_ids if int(x) != student.id))
+    found = {
+        u.id: u for u in db.query(User).filter(
+            User.teacher_id == user.id, User.role == UserRole.STUDENT,
+            User.id.in_(requested or [0]),
+        )
+    }
+    invalid = [i for i in requested if i not in found]
+    targets = [found[i] for i in requested if i in found]
+    plans = sc.plan_targets(db, source=src, targets=targets, mode=body.mode, valid_from=valid_from)
+    rows = sc.apply_copy(
+        db, source=src, coach_id=user.id, plans=plans, mode=body.mode, valid_from=valid_from,
+        name=body.name, assign_missing_books=body.assign_missing_books,
+    )
+    db.commit()
+    keys: list[str] = []
+    for r in rows:
+        keys.append(_key(user.id, r["student_id"]))
+        if r["books_assigned"]:
+            keys += [f"teacher:{user.id}:students:{r['student_id']}",
+                     f"teacher:{user.id}:library:books"]
+    return MutationResponse[SkeletonCopyResult](
+        data=SkeletonCopyResult(
+            students=[SkeletonCopyStudentResult(**r) for r in rows],
+            skipped_invalid_ids=invalid,
+        ),
+        invalidate=keys,
     )
 
 

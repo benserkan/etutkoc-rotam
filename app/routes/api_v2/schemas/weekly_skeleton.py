@@ -275,3 +275,56 @@ class SpreadApplyDay(BaseModel):
 
 class SpreadApplyBody(BaseModel):
     days: list[SpreadApplyDay] = Field(default_factory=list, max_length=14)
+
+
+
+# --- İskeleti başka öğrencilere kopyala (2026-09-27) ---------------------------
+
+
+class SkeletonCopyBookRef(BaseModel):
+    id: int
+    name: str
+
+
+class SkeletonCopyCandidate(BaseModel):
+    student_id: int
+    full_name: str
+    grade_label: str
+    class_group: str | None = None
+    period_count: int
+    period_starts: list[str | None]          # hedefin dönem başlangıçları (ISO)
+    current_period_name: str | None = None   # bugün geçerli dönem (replace modunda değişir)
+    current_slot_count: int = 0
+    missing_books: list[SkeletonCopyBookRef]  # kaynaktaki kitaplardan öğrencide olmayanlar
+
+
+class SkeletonCopyCandidatesResponse(BaseModel):
+    source_skeleton_id: int
+    source_name: str
+    source_valid_from: str | None = None
+    source_slot_count: int
+    source_books: list[SkeletonCopyBookRef]
+    candidates: list[SkeletonCopyCandidate]
+
+
+class SkeletonCopyBody(BaseModel):
+    skeleton_id: int
+    target_ids: list[int] = Field(min_length=1, max_length=200)
+    mode: str = "new"                        # new | replace
+    valid_from: str | None = None            # new modunda zorunlu
+    name: str | None = Field(default=None, max_length=120)
+    assign_missing_books: bool = True
+
+
+class SkeletonCopyStudentResult(BaseModel):
+    student_id: int
+    full_name: str
+    skeleton_id: int
+    slot_count: int
+    books_assigned: int
+    slots_without_book: int
+
+
+class SkeletonCopyResult(BaseModel):
+    students: list[SkeletonCopyStudentResult]
+    skipped_invalid_ids: list[int]

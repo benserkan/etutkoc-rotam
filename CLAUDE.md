@@ -486,6 +486,29 @@ seçili öğrencilere kopyala → (4) şube kavramı (liste süzme + toplu işle
   uyumsuzlara dolgulu amber uyarı. Test YENİ `test_api_v2_book_set_apply_multi.py`
   **12/12** · YENİ `live_book_set_apply.py` **8/8** (kırpma yok + koyu tema) ·
   book_set_apply 12 · book_archive 14 · book_set_grade 10; tsc + eslint temiz.
+  CANLI (commit `ec5c766`).
+- **3 — İSKELETİ SEÇİLİ ÖĞRENCİLERE KOPYALA (migration YOK):** YENİ
+  `app/services/skeleton_copy.py` (`plan_targets` + `apply_copy`). Kural: yalnız
+  aynı koçun öğrencileri · `day_capacity` KOPYALANMAZ (her öğrencinin kendi
+  geçmişinden öğrenilir) · satırın kitabı hedefte yoksa `assign_missing_books`
+  (varsayılan açık) → kitap `book_assign` ile atanır, kapalıysa satır KİTAPSIZ
+  kopyalanır (etiket = kitap adı, routine_mode/scope düşer) · mode `new` =
+  `valid_from`dan yeni dönem (aynı başlangıçlı dönem varsa onun satırları
+  değişir, ikinci dönem açılmaz) · mode `replace` = hedefin bugünkü döneminin
+  satırları (dönemi yoksa başlangıçsız dönem açılır). Uçlar: GET
+  `/students/{id}/skeleton/copy-candidates?skeleton_id=` (şube, dönem
+  başlangıçları, bugünkü dönem, eksik kitaplar) · POST `/students/{id}/skeleton/copy`
+  (422 bad_copy_mode / valid_from_required; yabancı öğrenci skipped_invalid;
+  yabancı dönem 404). Web: dönem şeridinde "Başka öğrencilere kopyala" paneli
+  (yeni dönem / bugünkü dönemin yerine · başlangıç + ad · eksik kitap ata
+  kutusu · şubeye göre gruplu liste + "bu şubenin tümünü seç" · öğrenci başına
+  ne olacağı + eksik kitap adları · kaydedilmemiş değişiklik uyarısı).
+  **Sağlamlaştırma:** `replace_slots` yüklenmemiş kalıntı satırları da siler
+  (dev SQLite id yeniden kullanımında yeni dönem yetim satırları devralıyordu;
+  canlı test ilk koşuda yakaladı). Test YENİ `test_api_v2_skeleton_copy.py`
+  **15/15** · YENİ `live_skeleton_copy.py` **9/9** · weekly_skeleton 27 ·
+  periods 10 · routine 17 · problems 21 · topic_spread 9 · live_skeleton_periods
+  6 · live_weekly_skeleton 14; tsc + eslint temiz.
 
 ---
 

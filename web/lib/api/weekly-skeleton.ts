@@ -489,3 +489,81 @@ export function addDays(iso: string, n: number): string {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${dd}`;
 }
+
+// --- İskeleti başka öğrencilere kopyala (2026-09-27) ---------------------------
+
+export interface SkeletonCopyBookRef {
+  id: number;
+  name: string;
+}
+
+export interface SkeletonCopyCandidate {
+  student_id: number;
+  full_name: string;
+  grade_label: string;
+  class_group: string | null;
+  period_count: number;
+  period_starts: (string | null)[];
+  current_period_name: string | null;
+  current_slot_count: number;
+  missing_books: SkeletonCopyBookRef[];
+}
+
+export interface SkeletonCopyCandidatesResponse {
+  source_skeleton_id: number;
+  source_name: string;
+  source_valid_from: string | null;
+  source_slot_count: number;
+  source_books: SkeletonCopyBookRef[];
+  candidates: SkeletonCopyCandidate[];
+}
+
+export interface SkeletonCopyResult {
+  students: {
+    student_id: number;
+    full_name: string;
+    skeleton_id: number;
+    slot_count: number;
+    books_assigned: number;
+    slots_without_book: number;
+  }[];
+  skipped_invalid_ids: number[];
+}
+
+export const skeletonCopyKey = (studentId: number, skeletonId: number) =>
+  ["teacher", "me", "students", String(studentId), "skeleton", "copy-candidates", skeletonId] as const;
+
+export function getSkeletonCopyCandidates(
+  studentId: number,
+  skeletonId: number,
+): Promise<SkeletonCopyCandidatesResponse> {
+  return api(`${base(studentId)}/copy-candidates?skeleton_id=${skeletonId}`);
+}
+
+export function useCopySkeleton(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<SkeletonCopyResult>,
+    ApiError,
+    {
+      skeleton_id: number;
+      target_ids: number[];
+      mode: "new" | "replace";
+      valid_from?: string | null;
+      name?: string | null;
+      assign_missing_books: boolean;
+    }
+  >({
+    mutationFn: (body) =>
+      api(`${base(studentId)}/copy`, { method: "POST", body: JSON.stringify(body) }),
+    onError: (e) => showErr(e, "İskelet kopyalanamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const n = res.data.students.length;
+      const books = res.data.students.reduce((a, s) => a + s.books_assigned, 0);
+      toast.success(`İskelet ${n} öğrenciye kopyalandı`, {
+        description: books > 0 ? `${books} eksik kitap öğrencilere atandı.` : undefined,
+      });
+    },
+  });
+}

@@ -1243,6 +1243,11 @@ def replace_slots(
     for s in list(sk.slots):
         sk.slots.remove(s)
     db.flush()
+    # Yüklenmemiş kalıntı satır bırakma (yeni oluşturulan dönemin koleksiyonu
+    # DB'den okunmaz; dev SQLite id yeniden kullanımında yetim satırlar gelirdi).
+    db.query(WeeklySkeletonSlot).filter(
+        WeeklySkeletonSlot.skeleton_id == sk.id
+    ).delete(synchronize_session=False)
     for i, s in enumerate(slots):
         sk.slots.append(WeeklySkeletonSlot(
             weekday=int(s["weekday"]), period=s.get("period"),

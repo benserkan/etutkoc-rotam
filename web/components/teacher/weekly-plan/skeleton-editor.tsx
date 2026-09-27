@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toneForKey } from "@/components/teacher/weekly-plan/week-grid";
+import { SkeletonCopyPanel } from "@/components/teacher/weekly-plan/skeleton-copy-panel";
 import {
   type RoutineMode,
   getSkeleton,
@@ -290,6 +291,7 @@ export function SkeletonEditorDialog({
               weekStart={weekStart}
               weekEnd={weekEnd}
               onSelect={setSelectedId}
+              dirty={dirty}
             />
           </div>
           <Button
@@ -1086,6 +1088,7 @@ function PeriodStrip({
   weekStart,
   weekEnd,
   onSelect,
+  dirty,
 }: {
   studentId: number;
   periods: SkeletonTerm[];
@@ -1093,8 +1096,9 @@ function PeriodStrip({
   weekStart: string;
   weekEnd: string;
   onSelect: (id: number | null) => void;
+  dirty: boolean;
 }) {
-  const [mode, setMode] = React.useState<null | "new" | "edit">(null);
+  const [mode, setMode] = React.useState<null | "new" | "edit" | "copy">(null);
   const active = periods.find((p) => p.id === activeId) ?? null;
 
   return (
@@ -1147,6 +1151,16 @@ function PeriodStrip({
               <Pencil className="size-3" aria-hidden /> Dönemi düzenle
             </button>
           ) : null}
+          {active && active.slot_count > 0 ? (
+            <button
+              type="button"
+              onClick={() => setMode(mode === "copy" ? null : "copy")}
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300"
+              data-testid="open-skeleton-copy"
+            >
+              <Copy className="size-3" aria-hidden /> Başka öğrencilere kopyala
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => setMode(mode === "new" ? null : "new")}
@@ -1166,6 +1180,17 @@ function PeriodStrip({
             setMode(null);
             onSelect(id);
           }}
+        />
+      ) : null}
+      {mode === "copy" && active ? (
+        <SkeletonCopyPanel
+          key={active.id}
+          studentId={studentId}
+          skeletonId={active.id}
+          sourceName={active.name}
+          defaultStart={weekStart}
+          dirty={dirty}
+          onDone={() => setMode(null)}
         />
       ) : null}
       {mode === "edit" && active ? (
