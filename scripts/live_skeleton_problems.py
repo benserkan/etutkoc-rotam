@@ -219,7 +219,9 @@ def main() -> int:
             dlg = pg.locator('[role="dialog"]')
             dlg.wait_for(timeout=10000)
             wd = date.today().weekday()
-            rows = dlg.locator('[data-testid="skeleton-day"]').nth(wd).locator('[data-testid="skeleton-row"]')
+            dlg.locator('[data-testid="skeleton-day-tab"]').nth(wd).click()
+            pg.wait_for_timeout(200)
+            rows = dlg.locator('[data-testid="skeleton-day"]').locator('[data-testid="skeleton-row"]')
             info = rows.evaluate_all("""els => els.map(li => ({
                 book: li.querySelector('select[aria-label="Kaynak kitap"]')?.value || '',
                 routine: li.querySelector('input[aria-label="Rutin"]')?.checked || false,
@@ -236,6 +238,11 @@ def main() -> int:
                 bool(tr and tr["second"] == str(s["fen"])
                      and not any("Video" in o for o in tr["secondOpts"])), str(tr))
             pg.screenshot(path=os.path.join(SHOT_DIR, "skeleton_problems_editor.png"))
+            pg.emulate_media(color_scheme="dark")
+            pg.wait_for_timeout(400)
+            pg.screenshot(path=os.path.join(SHOT_DIR, "skeleton_problems_editor_dark.png"))
+            pg.emulate_media(color_scheme="light")
+            pg.wait_for_timeout(300)
             dlg.get_by_role("button", name="Vazgeç").click()
             pg.wait_for_timeout(600)
 

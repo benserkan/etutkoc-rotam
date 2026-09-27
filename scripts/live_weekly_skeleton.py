@@ -208,9 +208,11 @@ def main() -> int:
             dlg = pg.locator('[role="dialog"]')
             dlg.wait_for(timeout=10000)
             chk("1. İskelet düzenleyicisi açıldı", dlg.count() == 1)
-            day_box = dlg.locator('[data-testid="skeleton-day"]').nth(wd)
+            dlg.locator('[data-testid="skeleton-day-tab"]').nth(wd).click()
+            pg.wait_for_timeout(200)
+            day_box = dlg.locator('[data-testid="skeleton-day"]')
             for _ in range(3):
-                day_box.get_by_role("button", name="Satır ekle").click()
+                day_box.locator('[data-testid="add-topic"]').click()
                 pg.wait_for_timeout(150)
             rows = day_box.locator('[data-testid="skeleton-row"]')
             rows.nth(0).locator('select[aria-label="Ders"]').select_option(str(s["mat"]))
@@ -324,7 +326,7 @@ def main() -> int:
                 print(pg.evaluate("() => fetch('/api/v2/teacher/skeleton/acceptance?days=30').then(r => r.status + ' ' + r.url).then(x=>x)"))
                 print(pg.evaluate("() => fetch('/api/v2/teacher/skeleton/acceptance?days=30').then(r => r.text())"))
                 raise
-            acc_txt = acc.inner_text()
+            acc_txt = acc.inner_text() + " | " + (acc.get_attribute("title") or "")
             chk("11. iskelet penceresinde kabul raporu (işlenen öneri + çipten kabul %)",
                 "öneri işlendi" in acc_txt and "çipten kabul" in acc_txt and "kaldırılan 1" in acc_txt,
                 acc_txt)

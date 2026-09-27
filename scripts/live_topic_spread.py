@@ -243,9 +243,14 @@ def main() -> int:
             pg.get_by_role("button", name="İskelet", exact=True).click()
             ed = pg.locator('[role="dialog"]')
             ed.wait_for(timeout=10000)
-            anchors = ed.locator('input[aria-label="Okul/dershane dersi"]').evaluate_all(
-                "els => els.map(e => e.checked)")
-            caps = ed.locator('[data-testid="capacity-input"]').evaluate_all("els => els.map(e => e.value)")
+            anchors, caps = [], []
+            for wdi in range(7):
+                ed.locator('[data-testid="skeleton-day-tab"]').nth(wdi).click()
+                pg.wait_for_timeout(150)
+                anchors += ed.locator('input[aria-label="Okul/dershane dersi"]').evaluate_all(
+                    "els => els.map(e => e.checked)")
+                caps += ed.locator('[data-testid="capacity-input"]').evaluate_all(
+                    "els => els.map(e => e.value)")
             chk("7. düzenleyicide çapa işaretleri + gün kapasiteleri",
                 anchors.count(True) == 3 and caps == ["10"] * 7, f"{anchors} {caps}")
             b.close()

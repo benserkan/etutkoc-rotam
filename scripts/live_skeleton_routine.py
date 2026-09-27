@@ -205,7 +205,9 @@ def main() -> int:
             dlg = pg.locator('[role="dialog"]')
             dlg.wait_for(timeout=10000)
             wd = date.today().weekday()
-            rows = dlg.locator('[data-testid="skeleton-day"]').nth(wd).locator('[data-testid="skeleton-row"]')
+            dlg.locator('[data-testid="skeleton-day-tab"]').nth(wd).click()
+            pg.wait_for_timeout(200)
+            rows = dlg.locator('[data-testid="skeleton-day"]').locator('[data-testid="skeleton-row"]')
             info = rows.evaluate_all("""els => els.map(li => ({
                 book: li.querySelector('select[aria-label="Kaynak kitap"]')?.value || '',
                 bookText: li.querySelector('select[aria-label="Kaynak kitap"]')?.selectedOptions[0]?.textContent || '',
