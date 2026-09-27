@@ -358,6 +358,18 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
     11 · live_skeleton_periods 6 · live_topic_spread 7 · tsc + eslint temiz.
     **DERS:** Türkçe metinli yamalar bash heredoc'ta bozuluyor → yama betiği
     Write ile dosyaya; live testler sistem `python` ile (venv'de playwright yok).
+- **İSKELET DÜZENLEYİCİSİ YENİDEN TASARIM — CANLI (2026-09-27, migration YOK):**
+  koç: "bütün günler birbirine girmiş, neyin ne olduğu belli değil". Pencere
+  max-w-6xl · solda 7 gün fihristi (`skeleton-day-tab`; ders + kaynak kitabı +
+  rutin/okul işareti) · sağda YALNIZ seçili gün (`skeleton-day`): kapasite +
+  "bu günü başka günlere kopyala" + üç bölüm (Okul/dershane · Konu · Rutin, her
+  birinde açıklama ve `add-anchor|topic|routine` düğmesi) · satır kartı: Ders ·
+  görünür tür radyosu (aria Konu/Rutin/Okul/dershane dersi) · Gün içinde ·
+  Test/gün · etiketli kaynak alanları · "bu satır ne yapar" cümlesi · 2. kaynağı
+  aynı ders+kitaptaki diğer satırlara uygula · kaydedilmemiş değişiklik rozeti.
+  Kayıtta konum = gün → tür → sıra. Öneri isabeti ayrıntısı artık title'da.
+  Canlı: weekly_skeleton 14 · routine 11 · problems 14 (+koyu tema görüntüsü) ·
+  topic_spread 7 · periods 6.
 
 ---
 
