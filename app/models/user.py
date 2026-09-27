@@ -82,6 +82,8 @@ class User(Base):
     institution_id: Mapped[int | None] = mapped_column(
         ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    # Şube / sınıf grubu ("10-A", "Mezun Sayısal") — koçun süzme + toplu işlem anahtarı.
+    class_group: Mapped[str | None] = mapped_column(String(60), nullable=True, index=True)
     academic_year_id: Mapped[int | None] = mapped_column(
         ForeignKey("academic_years.id", ondelete="SET NULL"), nullable=True, index=True
     )

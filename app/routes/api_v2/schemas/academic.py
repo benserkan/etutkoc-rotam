@@ -219,6 +219,12 @@ class CsvParsedRow(BaseModel):
     track: TrackLiteral | None
     is_graduate: bool
     graduate_mode: GraduateModeLiteral | None
+    phone: str | None = None             # E.164, doğrulanmamış
+    class_group: str | None = None
+    parent_name: str | None = None
+    parent_email: str | None = None
+    parent_phone: str | None = None
+    parent_relation: str | None = None
     is_valid: bool
     errors: list[str]
     warnings: list[str]
@@ -238,8 +244,12 @@ class CsvCommitBody(BaseModel):
 
     Server commit aşamasında YENİDEN parse + validate eder (tampered önler);
     sadece valid satırlar yaratılır.
+
+    academic_year_id (yalnız commit): tüm öğrencilere atanacak akademik yıl;
+    koçun sahibi olmalı (aksi 422 invalid_academic_year).
     """
     csv_text: str
+    academic_year_id: int | None = None
 
 
 class CsvCreatedStudent(BaseModel):
@@ -249,6 +259,11 @@ class CsvCreatedStudent(BaseModel):
     email: str
     grade_label: str
     temp_password: str               # Tek seferlik — UI gösterimi sonrası unutulur
+    class_group: str | None = None
+    # None (veli yok) · invited · skipped_other_role · failed (e-posta gitmedi;
+    # davet kaydı durur, Veliler sekmesinden yeniden gönderilebilir)
+    parent_status: str | None = None
+    parent_email: str | None = None
 
 
 class CsvCommitResult(BaseModel):
@@ -258,3 +273,5 @@ class CsvCommitResult(BaseModel):
     created_count: int
     skipped_count: int
     header_errors: list[str]         # fatal (kuota vs)
+    parents_invited: int = 0
+    parents_failed: int = 0

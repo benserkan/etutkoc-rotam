@@ -133,6 +133,9 @@ class ParentInvitation(Base):
         Enum(ParentRelation), nullable=False, default=ParentRelation.DIGER
     )
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # CSV toplu kayıttan gelen veli adı/telefonu — aktivasyon formu önceden dolu gelir.
+    invited_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    invited_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     consumed_at: Mapped[datetime | None] = mapped_column(

@@ -36,11 +36,22 @@ interface Props {
  * Hata kodları: name_required / password_too_short / password_mismatch /
  * kvkk_not_accepted / email_in_use_other_role.
  */
+function formatTrPhone(e164: string | null | undefined): string {
+  if (!e164) return "";
+  const d = e164.replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("90")) {
+    const n = d.slice(2);
+    return `0${n.slice(0, 3)} ${n.slice(3, 6)} ${n.slice(6, 8)} ${n.slice(8)}`;
+  }
+  return e164;
+}
+
 export function ParentInvitationClient({ invitation }: Props) {
   const router = useRouter();
   const mut = useAcceptParentInvitation(invitation.token);
-  const [fullName, setFullName] = React.useState("");
-  const [phone, setPhone] = React.useState(""); // P1 — zorunlu, SMS ile doğrulanır
+  const [fullName, setFullName] = React.useState(invitation.invited_name ?? "");
+  // P1 — zorunlu, SMS ile doğrulanır. CSV'den geldiyse 0XXX XXX XX XX biçiminde önceden dolu.
+  const [phone, setPhone] = React.useState(() => formatTrPhone(invitation.invited_phone));
   const [password, setPassword] = React.useState("");
   const [passwordConfirm, setPasswordConfirm] = React.useState("");
   const [kvkkAccept, setKvkkAccept] = React.useState(false);

@@ -470,6 +470,9 @@ class ParentInvitationInfo(BaseModel):
     relation_label: str
     is_primary: bool
     expires_at: datetime
+    # CSV toplu kayıttan gelen ön bilgi — aktivasyon formunu önceden doldurur
+    invited_name: str | None = None
+    invited_phone: str | None = None
 
 
 class ParentInvitationAcceptBody(BaseModel):

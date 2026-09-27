@@ -1,0 +1,46 @@
+PDF: _2025_Bilgi_Sarmal_Yayınları_AYT_Kimya_Soru_Bankası_@YildizlarLigi.pdf — 368 sayfa
+
+A) İçindekiler ÇİFT okunuyor…
+Traceback (most recent call last):
+  File "D:\LGS-Program\scripts\book_structure_pipeline.py", line 173, in read_toc_once
+    data = _gen(parts, timeout=120)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\LGS-Program\scripts\book_structure_pipeline.py", line 149, in _gen
+    return gemini.extract_json(raw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\LGS-Program\app\services\gemini.py", line 199, in extract_json
+    raise AIInvalidResponse("Gemini çıktısı JSON nesnesi değil")
+app.services.ai_book_template.AIInvalidResponse: Gemini çıktısı JSON nesnesi değil
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\LGS-Program\scripts\book_structure_pipeline.py", line 711, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "D:\LGS-Program\scripts\book_structure_pipeline.py", line 525, in main
+    toc, warnings = read_toc(doc, args.toc_pages)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\LGS-Program\scripts\book_structure_pipeline.py", line 218, in read_toc
+    raise err  # her iki okuma da çöktü
+    ^^^^^^^^^
+  File "D:\LGS-Program\scripts\book_structure_pipeline.py", line 214, in read_toc
+    r2 = f2.result()
+         ^^^^^^^^^^^
+  File "C:\Users\serkan\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\serkan\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\serkan\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\LGS-Program\scripts\book_structure_pipeline.py", line 175, in read_toc_once
+    data = _gen(parts, timeout=120)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\LGS-Program\scripts\book_structure_pipeline.py", line 149, in _gen
+    return gemini.extract_json(raw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\LGS-Program\app\services\gemini.py", line 199, in extract_json
+    raise AIInvalidResponse("Gemini çıktısı JSON nesnesi değil")
+app.services.ai_book_template.AIInvalidResponse: Gemini çıktısı JSON nesnesi değil

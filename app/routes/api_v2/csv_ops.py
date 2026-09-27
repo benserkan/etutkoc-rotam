@@ -81,6 +81,12 @@ def _adapt_parsed_row(p: ParsedStudent) -> CsvParsedRow:
         track=p.track.value if p.track else None,
         is_graduate=bool(p.is_graduate),
         graduate_mode=p.graduate_mode.value if p.graduate_mode else None,
+        phone=p.phone,
+        class_group=p.class_group,
+        parent_name=p.parent_name,
+        parent_email=p.parent_email,
+        parent_phone=p.parent_phone,
+        parent_relation=p.parent_relation if p.parent_email else None,
         is_valid=p.is_valid,
         errors=list(p.errors),
         warnings=list(p.warnings),
@@ -96,11 +102,15 @@ def _adapt_parsed_row(p: ParsedStudent) -> CsvParsedRow:
 @router.get("/import/students/template")
 def import_template(user: User = Depends(_require_teacher)) -> Response:
     sample = (
-        "full_name,email,grade_level,track,is_graduate,graduate_mode\n"
-        "Ali Veli,ali.veli@example.com,8,,,\n"
-        "Ayşe Yılmaz,ayse.yilmaz@example.com,11,sayisal,,\n"
-        "Mehmet Demir,mehmet@example.com,12,ea,,\n"
-        "Mezun Ogrenci,mezun@example.com,,sozel,evet,dershane\n"
+        "full_name,email,grade_level,track,is_graduate,graduate_mode,phone,"
+        "class_group,parent_name,parent_email,parent_phone,parent_relation\n"
+        "Ali Veli,ali.veli@example.com,8,,,,05321234567,8-A,"
+        "Ayşe Veli,ayse.veli@example.com,05331234567,anne\n"
+        "Zeynep Kaya,zeynep.kaya@example.com,10,,,,,10-A,"
+        "Murat Kaya,murat.kaya@example.com,05341234567,baba\n"
+        "Ayşe Yılmaz,ayse.yilmaz@example.com,11,sayisal,,,,11-B,,,,\n"
+        "Mehmet Demir,mehmet@example.com,12,ea,,,,12-A,,,,\n"
+        "Mezun Ogrenci,mezun@example.com,,sozel,evet,dershane,,Mezun,,,,\n"
     )
     body = "﻿" + sample
     return Response(
@@ -153,9 +163,53 @@ def import_commit(
         )
 
     valid_rows = [r for r in parse_result.rows if r.is_valid]
+    header_errors: list[str] = list(parse_result.header_errors)
+
+    def _blocked(msg: str) -> MutationResponse[CsvCommitResult]:
+        return MutationResponse[CsvCommitResult](
+            data=CsvCommitResult(
+                created=[],
+                skipped_existing_email=[],
+                skipped_invalid=[_adapt_parsed_row(r) for r in valid_rows],
+                created_count=0,
+                skipped_count=len(valid_rows),
+                header_errors=header_errors + [msg],
+            ),
+            invalidate=[f"teacher:{user.id}:students"],
+        )
+
+    # Akademik yıl — koçun sahibi olmalı
+    if body.academic_year_id is not None:
+        from app.models import AcademicYear
+        owned = (
+            db.query(AcademicYear.id)
+            .filter(AcademicYear.id == body.academic_year_id,
+                    AcademicYear.teacher_id == user.id)
+            .first()
+        )
+        if owned is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={"error": "validation", "code": "invalid_academic_year",
+                        "message": "Seçilen akademik yıl bulunamadı."},
+            )
+
+    # Ödeme duvarı + solo plan kotası (tekli öğrenci ekleme ile aynı kural)
+    if valid_rows:
+        from app.routes.api_v2.dependencies import assert_active_coaching
+        assert_active_coaching(db, user)
+    if user.institution_id is None and valid_rows:
+        from app.services.plans import check_solo_student_quota
+        q = check_solo_student_quota(db, teacher=user, extra_count=len(valid_rows))
+        if not q.ok:
+            room = max(0, q.limit - q.current)
+            return _blocked(
+                f"Paket sınırı: {q.plan_label} paketinde en fazla {q.limit} öğrenci "
+                f"olabilir (şu an {q.current}, eklenebilir {room}). Paketini yükselt "
+                f"ya da CSV'yi {room} satıra indir."
+            )
 
     # Kurum kuotası — Jinja akışıyla aynı
-    header_errors: list[str] = list(parse_result.header_errors)
     if user.institution_id is not None and user.institution is not None and valid_rows:
         from app.services.quotas import QuotaExceeded, check_quota_for_create
         try:
@@ -179,7 +233,12 @@ def import_commit(
 
     bulk_result = bulk_create_students(
         db, teacher=user, parsed_rows=valid_rows, request=request,
+        academic_year_id=body.academic_year_id,
     )
+    # Veli davet e-postaları — öğrenciler commit edildikten SONRA (dış çağrı
+    # açık DB işlemi içinde yapılmaz)
+    from app.services.csv_import import send_csv_parent_invitations
+    send_csv_parent_invitations(db, teacher=user, created=bulk_result.created)
 
     # bulk_create_students User'a id verir; eşleme için email→id ihtiyacımız var
     created_emails = {c.email for c in bulk_result.created}
@@ -200,6 +259,9 @@ def import_commit(
             email=c.email,
             grade_label=c.grade_label,
             temp_password=c.temp_password,
+            class_group=c.class_group,
+            parent_status=c.parent_status,
+            parent_email=c.parent_email,
         )
         for c in bulk_result.created
     ]
@@ -215,8 +277,11 @@ def import_commit(
             created_count=bulk_result.created_count,
             skipped_count=bulk_result.skipped_count,
             header_errors=header_errors,
+            parents_invited=sum(1 for c in bulk_result.created if c.parent_status == "invited"),
+            parents_failed=sum(1 for c in bulk_result.created
+                               if c.parent_status in ("failed", "skipped_other_role")),
         ),
-        invalidate=[f"teacher:{user.id}:students"],
+        invalidate=[f"teacher:{user.id}:students", f"teacher:{user.id}:badges"],
     )
 
 

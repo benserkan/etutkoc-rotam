@@ -1459,6 +1459,8 @@ def parent_invitation_info_v2(
         relation_label=PARENT_RELATION_LABELS.get(inv.relation, "—"),
         is_primary=inv.is_primary,
         expires_at=inv.expires_at,
+        invited_name=inv.invited_name,
+        invited_phone=inv.invited_phone,
     )
 
 

@@ -1,0 +1,58 @@
+PDF: AYT_Biyoloji_Soru_Kitabı_PALME_2026_M_G_@yildizlarLigi2027.pdf — 344 sayfa
+
+A) İçindekiler ÇİFT okunuyor…
+   28 konu — kitap: Biyoloji Soru Kitabı / PALME YAYINEVİ / Biyoloji
+   test sayısı içindekilerde: 0/28 konu
+
+B) Sayfa hizalama kalibre ediliyor…
+   ofset: 0 (pdf_idx = kitap_sayfası - 1 + 0)
+
+C) Gövde taraması: 337 sayfa × 2 bağımsız GÖRÜNTÜ geçişi…
+    …parça 8/34
+    …parça 16/34
+    …parça 24/34
+    …parça 32/34
+   1. geçiş tamam — 2. geçiş (doğrulama)…
+    …parça 8/34
+    …parça 16/34
+    …parça 24/34
+    …parça 32/34
+
+KONU                                         test  kaynak
+SİNİR SİSTEMİ                                  12  scan
+ENDOKRİN SİSTEM                                10  scan
+DUYU ORGANLARI                                  6  scan
+DESTEK VE HAREKET SİSTEMİ                       5  scan
+SİNDİRİM SİSTEMİ                               10  scan
+DOLAŞIM SİSTEMİ                                11  scan
+VÜCUDUN SAVUNULMASI VE BAĞIŞIKLIK               4  scan
+SOLUNUM SİSTEMİ                                10  scan
+BOŞALTIM SİSTEMİ                                9  scan
+ÜREME SİSTEMİ VE EMBRİYONİK GELİŞİM             9  scan
+KOMÜNİTE VE POPÜLASYON EKOLOJİSİ                ?  scan  ⚠ no_banner
+Komünite Ekolojisi                              3  scan
+Popülasyon                                      3  scan
+Karma (KOMÜNİTE VE POPÜLASYON EKOLOJİSİ)        2  scan
+GENDEN PROTEİNE                                 ?  scan  ⚠ no_banner
+Nükleik Asitler                                 3  scan
+Genetik Şifre ve Protein Sentezi                3  scan
+Karma (GENDEN PROTEİNE)                         4  scan
+BİYOTEKNOLOJİ VE GEN MÜHENDİSLİĞİ               4  scan
+SOLUNUM                                         ?  scan  ⚠ no_banner
+Hücresel Solunum                                3  scan
+Fermantasyon                                    2  scan
+Karma (SOLUNUM)                                 5  scan
+FOTOSENTEZ                                     10  scan
+BİTKİLERİN YAPISI                               8  scan
+BİTKİLERDE BÜYÜME VE HAREKET                    6  scan
+BİTKİLERDE MADDE TAŞINMASI                      5  scan
+BİTKİLERDE EŞEYLİ ÜREME                         6  scan
+
+TOPLAM: 28 konu · 153 test
+  UYARI: 'KOMÜNİTE VE POPÜLASYON EKOLOJİSİ': bant bulunamadı — elle doldurun.
+  UYARI: 'GENDEN PROTEİNE': bant bulunamadı — elle doldurun.
+  UYARI: 'SOLUNUM': bant bulunamadı — elle doldurun.
+  UYARI: 'SİNİR SİSTEMİ': test: [3, 4, 5] görülmedi (1..9)
+  UYARI: 'DUYU ORGANLARI': test: [4] görülmedi (1..6)
+
+JSON: D:\LGS-Program\data\kitap-katalog\palme_ayt_biyoloji.json  →  seed: PYTHONPATH=. python scripts/seed_book_catalog_json.py D:\LGS-Program\data\kitap-katalog\palme_ayt_biyoloji.json

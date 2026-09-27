@@ -1,0 +1,178 @@
+PDF: Aydın AYT Kimya Konu Özetli Soru Bankası.pdf — 416 sayfa
+
+A) İçindekiler ÇİFT okunuyor…
+   111 konu — kitap: Konu Özetli AYT Kimya Soru Bankası / Aydın Yayınları / Kimya
+   test sayısı içindekilerde: 11/111 konu
+
+B) Sayfa hizalama kalibre ediliyor…
+   ofset: 0 (pdf_idx = kitap_sayfası - 1 + 0)
+
+C) Gövde taraması: 405 sayfa × 2 bağımsız GÖRÜNTÜ geçişi…
+    …parça 8/41
+    …parça 16/41
+    …parça 24/41
+    …parça 32/41
+    …parça 40/41
+   1. geçiş tamam — 2. geçiş (doğrulama)…
+    …parça 8/41
+    …parça 16/41
+    …parça 24/41
+    …parça 32/41
+    …parça 40/41
+
+KONU                                         test  kaynak
+Modern Atom Teorisi Özet                        1  scan
+Atom Modelleri                                  ?  scan  ⚠ no_banner
+Atomun Kuantum Modeli                           4  scan
+Elektron Dizilimi                               3  scan
+Konu Tarama (MODERN ATOM TEORİSİ)               4  scan
+Periyodik Sistem Özet                           ?  scan  ⚠ no_banner
+Periyodik Cetvel Özellikleri ve Yer Bulma       1  scan
+Periyodik Özellikler                            6  scan
+Elementleri Tanıyalım                           2  scan
+Bileşik Adlandırma ve Yükseltgenme Basamağı     2  scan
+Konu Tarama (PERİYODİK CETVEL)                  2  scan
+Mol Özet                                        7  scan  ⚠ scan_mismatch
+Kimyasal Tepkime Türleri                        2  scan  ⚠ scan_mismatch
+Kimyasal Hesaplamalar                           9  scan
+Gazlar Özet                                     ?  scan  ⚠ no_banner
+Gazların Özellikleri ve İdeal Gaz Denklemi      1  scan
+Gaz Yasaları                                    3  scan
+Birleşik Kaplar                                 1  scan
+Kısmi Basınç                                    1  scan
+Gazların Yayılma Hızı                           1  scan
+Buhar Basıncı                                   1  scan
+Gerçek Gazlar                                   1  scan
+Konu Tarama (GAZLAR)                            4  scan
+Sıvı Çözeltiler Özet                            ?  scan  ⚠ no_banner
+Sıvı Ortamda Çözünme Olayı                      3  scan  ⚠ scan_mismatch
+Kütlece Yüzde (%) Derişim                       2  scan  ⚠ scan_mismatch
+Hacimce Yüzde (%) ve ppm Derişim                2  scan  ⚠ scan_mismatch
+Derişimle İlgili Hesaplamalar (molarite, molalite)    3  scan
+Koligatif Özellikler                            3  scan
+Çözünürlüğü Etkileyen Faktörler (SIVI ÇÖZELTİLER)    2  scan
+Çözünürlük Hesabı                               1  scan
+Heterojen Karışımlar                            1  scan
+Konu Tarama (SIVI ÇÖZELTİLER)                   3  scan
+Kimya ve Enerji Özet                            ?  scan  ⚠ no_banner
+Sistemlerde Entalpi Değişimi                    2  scan
+Oluşum Entalpisi ve Tepkime Entalpisi Hesabı    1  scan
+Hess Yasası                                     1  scan
+Bağ Enerjisinden Tepkime Isısı Hesabı           1  scan
+Konu Tarama (KİMYA VE ENERJİ)                   3  scan
+Kimyasal Tepkimelerde Hız Özet                  ?  scan  ⚠ no_banner
+Tepkime Hızının Ölçülmesi                       2  scan
+Aktifleşme Enerjisinin Bulunması                1  scan
+Tepkime Hızının Bağlı Olduğu Faktörler          3  scan
+Tepkime Hız Denkleminin Yazılması               2  scan
+Konu Tarama (KİMYASAL TEPKİMELERDE HIZ)         2  scan
+Kimyasal Tepkimelerde Denge Özet                ?  scan  ⚠ no_banner
+Kimyasal Tepkimelerde Denge ve Denge İfadeleri    2  scan
+Denge Sabiti ve Tepkime İle İlişkisi            3  scan
+Dengeyi Etkileyen Faktörler                     4  scan
+Denge İle İlgili Hesaplamalar                   2  scan
+Konu Tarama (KİMYASAL TEPKİMELERDE DENGE)       1  scan
+Asit ve Bazlar Özet                             ?  scan  ⚠ no_banner
+Asit ve Bazların Özellikleri                    2  scan
+Asit - Baz Çözeltilerinde pH Hesabı             2  scan
+Nötralleşme Tepkimeleri                         2  scan
+Zayıf Asit ve Bazlar                            2  scan
+Tampon Çözeltiler ve Hidroliz                   1  scan
+Titrasyon                                       1  scan
+Konu Tarama (SULU ÇÖZELTİLERDE DENGE (ASİT VE BAZLAR))    2  scan
+Çözünürlük Dengesi Özet                         ?  scan  ⚠ no_banner
+Sulu Ortamda Çözünme                            2  scan
+Çözünürlük Denklemi ve Hesapları                2  scan
+Çözünürlük Hesapları                            2  scan
+Çözünürlüğe Ortak İyon Etkisi                   2  scan  ⚠ scan_mismatch
+Çözünürlüğü Etkileyen Faktörler (SULU ÇÖZELTİLERDE DENGE (ÇÖZÜNÜRLÜK DENGESİ))    2  scan  ⚠ scan_mismatch
+Konu Tarama (SULU ÇÖZELTİLERDE DENGE (ÇÖZÜNÜRLÜK DENGESİ))    8  scan
+Elektrokimya Özet                               ?  scan  ⚠ no_banner
+İndirgenme - Yükseltgenme Tepkimeleri           3  scan
+Aktiflik                                        1  scan
+Piller                                          4  scan  ⚠ scan_mismatch
+Pil Gerilimi Etkileyen Faktörler                2  scan
+Derişim Pilleri                                 1  scan  ⚠ scan_mismatch
+Elektroliz                                      2  scan  ⚠ scan_mismatch
+Konu Tarama (ELEKTROKİMYA)                      6  scan
+Organik Kimya Özet                              ?  scan  ⚠ no_banner
+Molekül - Basit Formül Bulma                    1  scan
+Organik, Anorganik Maddeler ve Doğada Karbon    1  scan
+Karbon Kimyasına Giriş                          7  scan  ⚠ scan_mismatch
+Alkanların Adlandırılması                       4  scan
+Alkanlarda İzomeri                              1  scan  ⚠ scan_mismatch
+Alkanların Özellikleri ve Reaksiyonları         ?  scan  ⚠ no_banner
+Alkenlerin Adlandırılması                       1  scan
+Geometrik İzomeri                               1  scan
+Alkenlerin Eldesi ve Reaksiyonları              1  scan
+Alkinlerin Adlandırılması                       1  scan
+Alkinlerde İzomeri, Eldesi ve Reaksiyonları     1  scan
+Alkinlerin Eldesi ve Reaksiyonları              2  scan
+Aromatik Bileşikler                             2  scan
+Fonksiyonel Gruplar                             1  scan
+Alkollerin Adlandırılması                       4  scan  ⚠ scan_mismatch
+Alkollerde İzomeri ve Eldesi                    1  scan
+Alkollerin Eldesi ve Reaksiyonları              2  scan  ⚠ scan_mismatch
+Eterlerin ve Aminlerin Adlandırılması ve İzomeri    1  scan
+Eterlerin Eldesi, Özellikleri ve İzomeri        1  scan
+Eterlerin Eldesi ve Reaksiyonları               1  scan
+Aldehitlerin Adlandırılması                     1  scan
+Ketonların Adlandırılması                       1  scan
+Aldehit ve Ketonlarda İzomeri ve Eldesi         2  scan
+Aldehit ve Ketonların Eldesi ve Reaksiyonları    1  scan
+Karboksilik Asitlerin Adlandırılması            2  scan
+Karboksilik Asitlerin Eldesi, Özellikleri ve Reaksiyonları    2  scan
+Esterlerin Adlandırılması                       1  scan
+Esterlerin Adlandırılması ve İzomeri            1  scan
+Esterlerin Eldesi ve Reaksiyonları              1  scan
+İzomerlik                                       1  scan
+Enerji Kaynakları ve Bilimsel Gelişmeler Özet    ?  scan  ⚠ no_banner
+Fosil Yakıtlar                                  1  scan
+Alternatif Enerji Kaynakları                    1  scan
+Sürdürülebilirlik                               1  scan
+Nanoteknoloji                                   1  scan
+Konu Tarama (ENERJİ KAYNAKLARI VE BİLİMSEL GELİŞMELER)    1  scan
+
+TOPLAM: 111 konu · 207 test
+  UYARI: 'Kimyasal Tepkimelerde Denge Özet': sayfa uyuşmazlığı (198/188)
+  UYARI: İçindekiler test sayısı yalnız 11/111 satırda — azınlık sayı model çıkarımı olabilir, o konular da gövde taramasıyla sayıldı.
+  UYARI: 'Atom Modelleri': bant bulunamadı — elle doldurun.
+  UYARI: 'Periyodik Sistem Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Mol Özet': iki tarama uyuşmadı (7/4) — büyük olan alındı, kontrol edin.
+  UYARI: 'Kimyasal Tepkime Türleri': iki tarama uyuşmadı (2/1) — büyük olan alındı, kontrol edin.
+  UYARI: 'Gazlar Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Sıvı Çözeltiler Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Sıvı Ortamda Çözünme Olayı': iki tarama uyuşmadı (2/3) — büyük olan alındı, kontrol edin.
+  UYARI: 'Kütlece Yüzde (%) Derişim': iki tarama uyuşmadı (1/2) — büyük olan alındı, kontrol edin.
+  UYARI: 'Hacimce Yüzde (%) ve ppm Derişim': iki tarama uyuşmadı (1/2) — büyük olan alındı, kontrol edin.
+  UYARI: 'Kimya ve Enerji Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Kimyasal Tepkimelerde Hız Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Kimyasal Tepkimelerde Denge Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Asit ve Bazlar Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Çözünürlük Dengesi Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Çözünürlüğe Ortak İyon Etkisi': iki tarama uyuşmadı (2/None) — büyük olan alındı, kontrol edin.
+  UYARI: 'Çözünürlüğü Etkileyen Faktörler (SULU ÇÖZELTİLERDE DENGE (ÇÖZÜNÜRLÜK DENGESİ))': iki tarama uyuşmadı (2/None) — büyük olan alındı, kontrol edin.
+  UYARI: 'Elektrokimya Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Piller': iki tarama uyuşmadı (2/4) — büyük olan alındı, kontrol edin.
+  UYARI: 'Derişim Pilleri': iki tarama uyuşmadı (1/None) — büyük olan alındı, kontrol edin.
+  UYARI: 'Elektroliz': iki tarama uyuşmadı (2/1) — büyük olan alındı, kontrol edin.
+  UYARI: 'Organik Kimya Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Karbon Kimyasına Giriş': iki tarama uyuşmadı (6/7) — büyük olan alındı, kontrol edin.
+  UYARI: 'Alkanlarda İzomeri': iki tarama uyuşmadı (1/None) — büyük olan alındı, kontrol edin.
+  UYARI: 'Alkanların Özellikleri ve Reaksiyonları': bant bulunamadı — elle doldurun.
+  UYARI: 'Alkollerin Adlandırılması': iki tarama uyuşmadı (2/4) — büyük olan alındı, kontrol edin.
+  UYARI: 'Alkollerin Eldesi ve Reaksiyonları': iki tarama uyuşmadı (2/None) — büyük olan alındı, kontrol edin.
+  UYARI: 'Enerji Kaynakları ve Bilimsel Gelişmeler Özet': bant bulunamadı — elle doldurun.
+  UYARI: 'Konu Tarama (MODERN ATOM TEORİSİ)': içindekiler 1 demişti, tarama 4 buldu — tarama esas alındı.
+  UYARI: 'Konu Tarama (PERİYODİK CETVEL)': içindekiler 1 demişti, tarama 2 buldu — tarama esas alındı.
+  UYARI: 'Konu Tarama (GAZLAR)': içindekiler 1 demişti, tarama 4 buldu — tarama esas alındı.
+  UYARI: 'Konu Tarama (SIVI ÇÖZELTİLER)': içindekiler 1 demişti, tarama 3 buldu — tarama esas alındı.
+  UYARI: 'Konu Tarama (KİMYA VE ENERJİ)': içindekiler 1 demişti, tarama 3 buldu — tarama esas alındı.
+  UYARI: 'Konu Tarama (KİMYASAL TEPKİMELERDE HIZ)': içindekiler 1 demişti, tarama 2 buldu — tarama esas alındı.
+  UYARI: 'Konu Tarama (SULU ÇÖZELTİLERDE DENGE (ASİT VE BAZLAR))': içindekiler 1 demişti, tarama 2 buldu — tarama esas alındı.
+  UYARI: 'Konu Tarama (SULU ÇÖZELTİLERDE DENGE (ÇÖZÜNÜRLÜK DENGESİ))': içindekiler 1 demişti, tarama 8 buldu — tarama esas alındı.
+  UYARI: 'Konu Tarama (ELEKTROKİMYA)': içindekiler 1 demişti, tarama 6 buldu — tarama esas alındı.
+  UYARI: 'Kimyasal Hesaplamalar': test: [2, 3, 4, 5, 6, 7] görülmedi (1..8)
+  UYARI: 'Konu Tarama (SULU ÇÖZELTİLERDE DENGE (ÇÖZÜNÜRLÜK DENGESİ))': test: [2, 3, 4, 5, 6, 7] görülmedi (1..8)
+
+JSON: D:\LGS-Program\data\kitap-katalog\aydin_ayt_kimya.json  →  seed: PYTHONPATH=. python scripts/seed_book_catalog_json.py D:\LGS-Program\data\kitap-katalog\aydin_ayt_kimya.json

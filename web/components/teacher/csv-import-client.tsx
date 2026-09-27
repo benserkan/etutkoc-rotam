@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, Download, Loader2, Upload } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle2, Download, Loader2, Upload, Users } from "lucide-react";
+
+import { academicKeys, getAcademicYears } from "@/lib/api/academic";
 
 import {
   useCsvImportCommit,
@@ -25,6 +28,9 @@ export function CsvImportClient() {
   const [csvText, setCsvText] = React.useState("");
   const [preview, setPreview] = React.useState<CsvPreviewResponse | null>(null);
   const [result, setResult] = React.useState<CsvCommitResult | null>(null);
+  const [yearId, setYearId] = React.useState<number | null>(null);
+  const yearsQ = useQuery({ queryKey: academicKeys.years(), queryFn: getAcademicYears });
+  const years = yearsQ.data?.items ?? [];
 
   const previewMut = useCsvImportPreview();
   const commitMut = useCsvImportCommit();
@@ -51,7 +57,7 @@ export function CsvImportClient() {
 
   function onCommit() {
     commitMut.mutate(
-      { body: { csv_text: csvText } },
+      { body: { csv_text: csvText, academic_year_id: yearId } },
       {
         onSuccess: (res) => {
           setResult(res.data);
@@ -81,7 +87,8 @@ export function CsvImportClient() {
         </h1>
         <p className="text-sm text-muted-foreground">
           1. CSV yükle/yapıştır → 2. Önizleme → 3. Onayla. Her başarılı satır
-          için bir öğrenci hesabı oluşturulur ve geçici şifre döner.
+          için bir öğrenci hesabı oluşturulur ve geçici şifre döner. Satırda
+          veli e-postası varsa veliye davet bağlantısı otomatik gönderilir.
         </p>
       </header>
 
@@ -100,6 +107,9 @@ export function CsvImportClient() {
       {step === "preview" && preview ? (
         <PreviewStep
           preview={preview}
+          years={years}
+          yearId={yearId}
+          setYearId={setYearId}
           onBack={() => setStep("input")}
           onCommit={onCommit}
           isPending={commitMut.isPending}
@@ -174,10 +184,25 @@ function InputStep({
               <Download className="size-3.5" aria-hidden />
               Örnek şablon indir
             </a>
-            <span className="text-xs text-muted-foreground">
-              · Zorunlu sütunlar: full_name, email · isteğe bağlı: grade_level,
-              track, is_graduate, graduate_mode
-            </span>
+          </div>
+          <div className="rounded-md border border-border p-3 text-xs text-muted-foreground space-y-1">
+            <p>
+              <span className="font-medium text-foreground">Zorunlu:</span>{" "}
+              full_name (ad soyad), email
+            </p>
+            <p>
+              <span className="font-medium text-foreground">Öğrenci:</span>{" "}
+              grade_level (5-12 ya da &quot;mezun&quot;), track (11. sınıf ve
+              mezun için sayisal/ea/sozel/dil), graduate_mode (mezun için
+              full_time/dershane), phone, class_group (şube, örn. 10-A)
+            </p>
+            <p>
+              <span className="font-medium text-foreground">Veli:</span>{" "}
+              parent_name, parent_email, parent_phone, parent_relation
+              (anne/baba/vasi/diğer). Veli e-postası verilirse davet otomatik
+              gider; ad ve telefon velinin kayıt formunda dolu gelir.
+            </p>
+            <p>Türkçe başlıklar da tanınır: ad soyad, e-posta, sınıf, alan, şube, telefon, veli adı, veli e-posta, veli telefonu, yakınlık.</p>
           </div>
           <div className="space-y-1">
             <Label htmlFor="csv-file">Dosyadan yükle</Label>
@@ -201,7 +226,7 @@ function InputStep({
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               )}
               placeholder={
-                "full_name,email,grade_level,track,is_graduate,graduate_mode\nAli Veli,ali@x.com,8,,,\n"
+                "full_name,email,grade_level,track,class_group,parent_name,parent_email\nAli Veli,ali@x.com,8,,8-A,Ayşe Veli,ayse@x.com\n"
               }
             />
           </div>
@@ -223,16 +248,26 @@ function InputStep({
 
 function PreviewStep({
   preview,
+  years,
+  yearId,
+  setYearId,
   onBack,
   onCommit,
   isPending,
 }: {
   preview: CsvPreviewResponse;
+  years: { id: number; name: string; exam_label: string }[];
+  yearId: number | null;
+  setYearId: (v: number | null) => void;
   onBack: () => void;
   onCommit: () => void;
   isPending: boolean;
 }) {
   const fatal = preview.header_errors.length > 0;
+  const withParent = preview.rows.filter((r) => r.is_valid && r.parent_email).length;
+  const groups = Array.from(
+    new Set(preview.rows.filter((r) => r.is_valid && r.class_group).map((r) => r.class_group as string)),
+  ).sort((a, b) => a.localeCompare(b, "tr"));
   return (
     <div className="space-y-3">
       {fatal ? (
@@ -248,7 +283,7 @@ function PreviewStep({
         </Card>
       ) : null}
       <Card>
-        <CardContent className="p-4 grid grid-cols-3 gap-3 text-sm">
+        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
           <Stat label="Toplam satır" value={preview.total_rows} />
           <Stat
             label="Geçerli"
@@ -260,6 +295,37 @@ function PreviewStep({
             value={preview.invalid_count}
             tone={preview.invalid_count > 0 ? "warn" : undefined}
           />
+          <Stat label="Veli daveti gidecek" value={withParent} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="p-4 space-y-3 text-sm">
+          {groups.length > 0 ? (
+            <p className="text-muted-foreground">
+              <span className="font-medium text-foreground">Şubeler:</span>{" "}
+              {groups.join(" · ")}
+            </p>
+          ) : null}
+          <div className="space-y-1">
+            <Label htmlFor="csv-year">Akademik yıl (isteğe bağlı)</Label>
+            <select
+              id="csv-year"
+              value={yearId ?? ""}
+              onChange={(e) => setYearId(e.target.value ? Number(e.target.value) : null)}
+              className="w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">Seçme — sonra öğrenci profilinden atanır</option>
+              {years.map((y) => (
+                <option key={y.id} value={y.id}>
+                  {y.name} · {y.exam_label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Seçilen yıl bu dosyadaki tüm öğrencilere atanır (sınav tarihi ve
+              dönem takvimi buradan gelir).
+            </p>
+          </div>
         </CardContent>
       </Card>
       <Card>
@@ -275,7 +341,7 @@ function PreviewStep({
             <ul className="divide-y divide-border text-sm">
               {preview.rows.map((r) => (
                 <li key={r.row_num} className="px-4 py-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <span
                       className={cn(
                         "text-xs font-mono",
@@ -286,10 +352,10 @@ function PreviewStep({
                     >
                       {r.is_valid ? "✓" : "✗"} #{r.row_num}
                     </span>
-                    <span className="font-medium truncate">
+                    <span className="font-medium break-words">
                       {r.full_name ?? "—"}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate">
+                    <span className="text-xs text-muted-foreground break-all">
                       {r.email ?? "—"}
                       {r.grade_level !== null
                         ? ` · ${r.grade_level}. sınıf`
@@ -297,8 +363,23 @@ function PreviewStep({
                           ? " · mezun"
                           : ""}
                       {r.track ? ` · ${r.track}` : ""}
+                      {r.phone ? ` · tel ${r.phone}` : ""}
                     </span>
+                    {r.class_group ? (
+                      <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[11px] font-medium text-white">
+                        {r.class_group}
+                      </span>
+                    ) : null}
                   </div>
+                  {r.parent_email ? (
+                    <p className="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground break-words">
+                      <Users className="mt-0.5 size-3 shrink-0" aria-hidden />
+                      Veli: {r.parent_name ? `${r.parent_name} · ` : ""}
+                      {r.parent_email}
+                      {r.parent_phone ? ` · ${r.parent_phone}` : ""}
+                      {r.parent_relation && r.parent_relation !== "diger" ? ` · ${r.parent_relation}` : ""}
+                    </p>
+                  ) : null}
                   {r.errors.length > 0 ? (
                     <p className="text-xs text-rose-600 mt-0.5">
                       {r.errors.join(" · ")}
@@ -358,7 +439,7 @@ function ResultStep({
       ) : null}
 
       <Card>
-        <CardContent className="p-4 grid grid-cols-2 gap-3 text-sm">
+        <CardContent className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
           <Stat
             label="Oluşturuldu"
             value={result.created_count}
@@ -369,8 +450,22 @@ function ResultStep({
             value={result.skipped_count}
             tone={result.skipped_count > 0 ? "warn" : undefined}
           />
+          <Stat label="Veli daveti gönderildi" value={result.parents_invited ?? 0} tone="success" />
+          <Stat
+            label="Veli daveti gitmedi"
+            value={result.parents_failed ?? 0}
+            tone={(result.parents_failed ?? 0) > 0 ? "warn" : undefined}
+          />
         </CardContent>
       </Card>
+
+      {(result.parents_failed ?? 0) > 0 ? (
+        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          Bazı velilere davet gitmedi. Öğrencinin Veliler sekmesinden daveti
+          yeniden gönderebilirsin (e-posta başka rolde kayıtlıysa farklı bir
+          e-posta gerekir).
+        </p>
+      ) : null}
 
       {result.created.length > 0 ? (
         <Card>
@@ -392,12 +487,27 @@ function ResultStep({
                   className="px-4 py-2 flex items-center gap-3"
                 >
                   <span className="flex-1 min-w-0">
-                    <span className="font-medium truncate block">
+                    <span className="font-medium break-words block">
                       {c.full_name}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate block">
+                    <span className="text-xs text-muted-foreground break-all block">
                       {c.email} · {c.grade_label}
+                      {c.class_group ? ` · ${c.class_group}` : ""}
                     </span>
+                    {c.parent_status ? (
+                      <span
+                        className={cn(
+                          "mt-0.5 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium text-white",
+                          c.parent_status === "invited" ? "bg-emerald-700" : "bg-amber-700",
+                        )}
+                      >
+                        {c.parent_status === "invited"
+                          ? `Veli daveti gönderildi · ${c.parent_email}`
+                          : c.parent_status === "skipped_other_role"
+                            ? `Veli e-postası başka rolde kayıtlı · ${c.parent_email}`
+                            : `Veli daveti gitmedi · ${c.parent_email}`}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="font-mono text-xs bg-muted px-2 py-1 rounded select-all">
                     {c.temp_password}

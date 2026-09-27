@@ -182,6 +182,13 @@ export interface CsvParsedRow {
   track: Track | null;
   is_graduate: boolean;
   graduate_mode: GraduateMode | null;
+  /** E.164 (905XXXXXXXXX), doğrulanmamış. */
+  phone?: string | null;
+  class_group?: string | null;
+  parent_name?: string | null;
+  parent_email?: string | null;
+  parent_phone?: string | null;
+  parent_relation?: string | null;
   is_valid: boolean;
   errors: string[];
   warnings: string[];
@@ -198,6 +205,8 @@ export interface CsvPreviewResponse {
 
 export interface CsvCommitBody {
   csv_text: string;
+  /** Yalnız commit: tüm öğrencilere atanacak akademik yıl. */
+  academic_year_id?: number | null;
 }
 
 export interface CsvCreatedStudent {
@@ -207,6 +216,10 @@ export interface CsvCreatedStudent {
   email: string;
   grade_label: string;
   temp_password: string;
+  class_group?: string | null;
+  /** null (veli yok) · invited · skipped_other_role · failed */
+  parent_status?: "invited" | "skipped_other_role" | "failed" | null;
+  parent_email?: string | null;
 }
 
 export interface CsvCommitResult {
@@ -216,4 +229,6 @@ export interface CsvCommitResult {
   created_count: number;
   skipped_count: number;
   header_errors: string[];
+  parents_invited?: number;
+  parents_failed?: number;
 }

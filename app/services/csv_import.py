@@ -13,11 +13,15 @@ Tasarım:
 - E-posta normalize (lowercase + strip)
 - Strict column ordering YOK — header'a göre çözer
 
-CSV format (örnek):
-    full_name,email,grade_level,track,is_graduate,graduate_mode
-    Ali Veli,ali@x.com,8,,,
-    Ayşe Yılmaz,ayse@x.com,11,sayisal,,
-    Ahmet Demir,ahmet@x.com,,sozel,yes,full_time
+CSV format (örnek; yalnız full_name + email zorunlu):
+    full_name,email,grade_level,track,is_graduate,graduate_mode,phone,class_group,parent_name,parent_email,parent_phone,parent_relation
+    Ali Veli,ali@x.com,8,,,,05321234567,8-A,Ayşe Veli,ayse@x.com,05331234567,anne
+    Ayşe Yılmaz,ayse@x.com,11,sayisal,,,,11-B,,,,
+    Ahmet Demir,ahmet@x.com,,sozel,yes,full_time,,Mezun,,,,
+
+2026-09-27 genişlemesi: öğrenci telefonu (doğrulanmamış kaydedilir), şube
+(`class_group`) ve veli bilgisi — veli e-postası verilirse commit sonrası
+otomatik veli daveti gönderilir (ad/telefon davet formunu önceden doldurur).
 """
 
 from __future__ import annotations
@@ -31,6 +35,7 @@ from datetime import datetime, timezone
 from typing import Iterable, TYPE_CHECKING
 
 from app.models.user import GraduateMode, Track
+from app.services.phone_service import normalize_e164_tr
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -68,12 +73,54 @@ HEADER_ALIASES = {
     "çalışma şekli": "graduate_mode",
     "calisma sekli": "graduate_mode",
     "mezun_modu": "graduate_mode",
+    # 2026-09-27 — telefon / şube / veli
+    "phone": "phone",
+    "telefon": "phone",
+    "tel": "phone",
+    "cep": "phone",
+    "ogrenci_telefon": "phone",
+    "öğrenci telefonu": "phone",
+    "class_group": "class_group",
+    "sube": "class_group",
+    "şube": "class_group",
+    "grup": "class_group",
+    "sinif_grubu": "class_group",
+    "parent_name": "parent_name",
+    "veli_ad": "parent_name",
+    "veli_adi": "parent_name",
+    "veli adı": "parent_name",
+    "veli ad soyad": "parent_name",
+    "veli_ad_soyad": "parent_name",
+    "parent_email": "parent_email",
+    "veli_eposta": "parent_email",
+    "veli_email": "parent_email",
+    "veli e-posta": "parent_email",
+    "veli_mail": "parent_email",
+    "parent_phone": "parent_phone",
+    "veli_telefon": "parent_phone",
+    "veli telefonu": "parent_phone",
+    "veli_tel": "parent_phone",
+    "parent_relation": "parent_relation",
+    "yakinlik": "parent_relation",
+    "yakınlık": "parent_relation",
+    "veli_yakinlik": "parent_relation",
 }
 
 REQUIRED_COLS = {"full_name", "email"}
 KNOWN_COLS = {
     "full_name", "email", "grade_level", "track",
     "is_graduate", "graduate_mode",
+    "phone", "class_group", "parent_name", "parent_email", "parent_phone",
+    "parent_relation",
+}
+
+CLASS_GROUP_MAX = 60
+
+PARENT_RELATION_ALIASES = {
+    "anne": "anne", "mother": "anne",
+    "baba": "baba", "father": "baba",
+    "vasi": "vasi", "vasî": "vasi",
+    "diger": "diger", "diğer": "diger", "other": "diger",
 }
 
 # Track CSV value normalizasyonu
@@ -121,6 +168,12 @@ class ParsedStudent:
     track: Track | None = None
     is_graduate: bool = False
     graduate_mode: GraduateMode | None = None
+    phone: str | None = None              # E.164 (905XXXXXXXXX), doğrulanmamış
+    class_group: str | None = None
+    parent_name: str | None = None
+    parent_email: str | None = None
+    parent_phone: str | None = None
+    parent_relation: str = "diger"
     raw: dict = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -332,6 +385,51 @@ def parse_students_csv(text: str) -> ParseResult:
             _get("graduate_mode"), parsed.errors
         )
 
+        # Öğrenci telefonu — geçersizse UYARI (kayıt durmaz, telefon boş kalır)
+        raw_phone = _get("phone")
+        if raw_phone:
+            norm = normalize_e164_tr(raw_phone)
+            if norm:
+                parsed.phone = norm
+            else:
+                parsed.warnings.append(f"öğrenci telefonu '{raw_phone}' tanınmadı — kaydedilmeyecek")
+
+        # Şube
+        cg = " ".join(_get("class_group").split())
+        if cg:
+            if len(cg) > CLASS_GROUP_MAX:
+                parsed.errors.append(f"şube en fazla {CLASS_GROUP_MAX} karakter olabilir")
+            else:
+                parsed.class_group = cg
+
+        # Veli
+        p_email = _get("parent_email").lower()
+        p_name = " ".join(_get("parent_name").split()) or None
+        p_phone_raw = _get("parent_phone")
+        if p_email:
+            if not EMAIL_RE.match(p_email):
+                parsed.errors.append(f"veli e-postası formatı geçersiz: {p_email}")
+            elif parsed.email and p_email == parsed.email:
+                parsed.errors.append("veli e-postası öğrenci e-postasıyla aynı olamaz")
+            else:
+                parsed.parent_email = p_email
+        elif p_name or p_phone_raw:
+            parsed.warnings.append("veli e-postası yok — veli daveti gönderilmeyecek")
+        if p_name:
+            parsed.parent_name = p_name[:120]
+        if p_phone_raw:
+            norm = normalize_e164_tr(p_phone_raw)
+            if norm:
+                parsed.parent_phone = norm
+            else:
+                parsed.warnings.append(f"veli telefonu '{p_phone_raw}' tanınmadı — kaydedilmeyecek")
+        rel = _get("parent_relation").lower()
+        if rel:
+            if rel in PARENT_RELATION_ALIASES:
+                parsed.parent_relation = PARENT_RELATION_ALIASES[rel]
+            else:
+                parsed.warnings.append(f"yakınlık '{rel}' tanınmadı (anne/baba/vasi/diğer) — 'diğer' sayıldı")
+
         # Combination validation
         _validate_combination(parsed)
 
@@ -351,6 +449,13 @@ class CreatedStudent:
     email: str
     grade_label: str
     temp_password: str
+    student_id: int = 0
+    class_group: str | None = None
+    # Veli daveti durumu: None (veli yok) · "invited" · "linked" (mevcut veli
+    # hesabına bağlandı) · "skipped_other_role" · "failed"
+    parent_status: str | None = None
+    parent_email: str | None = None
+    invitation_id: int | None = None
 
 
 @dataclass
@@ -376,6 +481,7 @@ def bulk_create_students(
     teacher: "User",
     parsed_rows: Iterable[ParsedStudent],
     request=None,
+    academic_year_id: int | None = None,
 ) -> BulkCreateResult:
     """ParsedStudent listesindeki valid satırları User olarak oluşturur.
 
@@ -391,6 +497,13 @@ def bulk_create_students(
       teacher: Kuran öğretmen (institution_id inherit eder)
       parsed_rows: parse_students_csv'den gelen liste (genelde valid_count > 0)
       request: Audit log için (IP/UA çıkarımı)
+      academic_year_id: Tüm satırlara atanacak akademik yıl (çağıran sahipliği
+        doğrular).
+
+    Veli e-postası olan satırda davet kaydı AYNI transaction'da açılır (öğrenci
+    oluşup davet oluşmama yarım durumu yok); davet e-postası GÖNDERİLMEZ —
+    çağıran commit sonrası `send_csv_parent_invitations` ile gönderir (dış
+    çağrı açık DB işleminin içinde yapılmaz).
     """
     from app.models import AuditAction, User, UserRole
     from app.services.audit import log_action
@@ -425,6 +538,9 @@ def bulk_create_students(
                 track=parsed.track,
                 is_graduate=parsed.is_graduate,
                 graduate_mode=parsed.graduate_mode,
+                phone=parsed.phone,
+                class_group=parsed.class_group,
+                academic_year_id=academic_year_id,
                 is_active=True,
                 password_changed_at=datetime.now(timezone.utc),
                 must_change_password=True,
@@ -445,9 +561,14 @@ def bulk_create_students(
                     "row_num": parsed.row_num,
                     "institution_id": teacher.institution_id,
                     "temp_password_issued": True,
+                    "class_group": parsed.class_group,
+                    "parent_email": parsed.parent_email,
                 },
                 autocommit=False,
             )
+            parent_status, invitation_id = (None, None)
+            if parsed.parent_email:
+                parent_status, invitation_id = _prepare_parent(db, teacher, student, parsed)
             db.commit()
 
             # Grade label
@@ -464,6 +585,11 @@ def bulk_create_students(
                 email=parsed.email,
                 grade_label=grade_label,
                 temp_password=temp_pw,
+                student_id=student.id,
+                class_group=parsed.class_group,
+                parent_status=parent_status,
+                parent_email=parsed.parent_email,
+                invitation_id=invitation_id,
             ))
         except Exception as e:
             db.rollback()
@@ -472,3 +598,83 @@ def bulk_create_students(
             out.skipped_invalid.append(parsed)
 
     return out
+
+
+# ---------------------------- Veli daveti ----------------------------
+
+
+def _prepare_parent(db, teacher, student, parsed: ParsedStudent) -> tuple[str, int | None]:
+    """Veli e-postası için bağ/davet hazırlar (commit ETMEZ, e-posta GÖNDERMEZ).
+
+    - E-posta başka rolde (koç/öğrenci) → 'skipped_other_role'
+    - Mevcut veli hesabı → yine davet açılır (veli linke tıklayınca mevcut
+      hesabına bu çocuk eklenir — teacher_invite_parent_v2 ile aynı akış)
+    """
+    from app.models import ParentRelation
+    from app.services.parent_invitation import can_register_parent_email, create_invitation
+
+    ok, _role = can_register_parent_email(db, parsed.parent_email)
+    if not ok:
+        parsed.warnings.append("veli e-postası başka bir rolde kullanılıyor — davet gönderilmedi")
+        return "skipped_other_role", None
+    inv = create_invitation(
+        db,
+        invited_email=parsed.parent_email,
+        student_id=student.id,
+        invited_by_id=teacher.id,
+        relation=ParentRelation(parsed.parent_relation),
+        is_primary=True,
+    )
+    inv.invited_name = parsed.parent_name
+    inv.invited_phone = parsed.parent_phone
+    return "invited", inv.id
+
+
+def send_csv_parent_invitations(db, *, teacher, created: list[CreatedStudent]) -> None:
+    """Commit sonrası davet e-postalarını gönderir; sonucu `parent_status`a yazar.
+
+    Gönderim başarısızsa davet kaydı durur ('failed' → koç öğrencinin Veliler
+    sekmesinden yeniden gönderebilir). NotificationLog izi teacher_invite_parent_v2
+    ile aynı biçimde yazılır.
+    """
+    from app.models import (
+        NotificationChannel, NotificationKind, NotificationLog, NotificationStatus,
+        ParentInvitation,
+    )
+    from app.models.parent import PARENT_RELATION_LABELS
+    from app.services.email_service import notify_parent_invitation
+
+    for c in created:
+        if c.parent_status != "invited" or not c.invitation_id:
+            continue
+        inv = db.get(ParentInvitation, c.invitation_id)
+        if inv is None:
+            c.parent_status = "failed"
+            continue
+        student = inv.student
+        sent_ok = False
+        try:
+            sent_ok = notify_parent_invitation(
+                inv, teacher=teacher, student=student,
+                relation_label=PARENT_RELATION_LABELS.get(inv.relation, "Veli"),
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("CSV veli daveti e-postası gönderilemedi (inv %s)", inv.id)
+        if not sent_ok:
+            c.parent_status = "failed"
+        try:
+            db.add(NotificationLog(
+                parent_id=teacher.id,
+                student_id=inv.student_id,
+                kind=NotificationKind.INVITATION,
+                channel=NotificationChannel.EMAIL,
+                status=NotificationStatus.SENT if sent_ok else NotificationStatus.QUEUED,
+                subject=f"Veli daveti: {student.full_name if student else ''}",
+                payload_json=None,
+                external_id=None,
+                sent_at=datetime.now(timezone.utc) if sent_ok else None,
+            ))
+            db.commit()
+        except Exception:  # noqa: BLE001
+            db.rollback()
+            logger.exception("CSV veli daveti log kaydı yazılamadı")

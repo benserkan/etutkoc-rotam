@@ -445,6 +445,36 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
 
 ---
 
+## KURUM TOPLU KURULUM — 4 madde (2026-09-27, kurum anlaşması ~25 öğrenci)
+
+**Tetikleyici (kullanıcı):** yeni kurum — 8. sınıf 3, 10-11. sınıf ~20, 12 +
+mezun; toplu CSV kaydı, toplu kitap atama, iskeletin aynı sınıftaki
+öğrencilere kopyası, sınıf yönetimi altyapı analizi. Onaylı sıra:
+(1) CSV genişletme → (2) kitap setini çok öğrenciye uygula → (3) iskeleti
+seçili öğrencilere kopyala → (4) şube kavramı (liste süzme + toplu işlem).
+
+- **1 — CSV GENİŞLETME (migration `h9i2l5m6l00h`):** `users.class_group`
+  (VARCHAR 60, index — 4. maddeyi de besler) + `parent_invitations.invited_name`
+  /`invited_phone`. Yeni sütunlar (Türkçe başlık eşanlamlarıyla): phone ·
+  class_group (şube) · parent_name · parent_email · parent_phone ·
+  parent_relation (anne/baba/vasi/diğer). Tanınmayan telefon UYARI (satır
+  geçerli, telefon boş); veli e-postası = öğrenci e-postası HATA; veli adı var
+  e-posta yok → uyarı. Commit: öğrenciye phone (doğrulanmamış) + class_group +
+  `academic_year_id` (body, koçun sahibi olmalı → 422 invalid_academic_year);
+  veli e-postası varsa davet AYNI transaction'da açılır, e-posta commit SONRASI
+  (`send_csv_parent_invitations`, dış çağrı işlem dışında); başka rolde kayıtlı
+  veli e-postası → `skipped_other_role` (öğrenci yine oluşur). Veli aktivasyon
+  formu ad + telefonla önceden dolu gelir. **Yakalanan açık:** CSV commit solo
+  paket kotasını + ödeme duvarını atlıyordu → artık tekli eklemeyle aynı kural
+  (fazlası varsa hiçbiri oluşmaz, "Paket sınırı … eklenebilir N"). Web: şablon
+  yeni sütunlarla, açıklama kutusu, önizlemede şube rozeti + veli satırı +
+  "veli daveti gidecek" sayacı + akademik yıl seçici, sonuçta satır başına veli
+  daveti durumu (metin kırpılmaz). Test YENİ `test_api_v2_csv_import_institution.py`
+  **15/15** · academic_csv 14 · parent_invitation 17 · parent_wa_channel 14 ·
+  teacher_students 15 · tenant GREEN; tsc + eslint temiz.
+
+---
+
 ## VİDEO SEPETİ — oynatma listesi → konu grupları → ızgaraya sürükle (2026-09-25, Faz 1 KOD-TAMAM, migration `z1a4d7e8d22z`, DEPLOY BEKLİYOR)
 
 **Tetikleyici (koç):** video görevlerini tek tek link kopyalayıp girmek çok

@@ -421,6 +421,9 @@ export interface ParentInvitationInfo {
   relation_label: string;
   is_primary: boolean;
   expires_at: string;
+  /** CSV toplu kayıttan gelen ön bilgi — form önceden dolu gelir. */
+  invited_name?: string | null;
+  invited_phone?: string | null;
 }
 
 export interface ParentInvitationAcceptBody {
