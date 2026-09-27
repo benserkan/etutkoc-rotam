@@ -430,6 +430,19 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
     teacher_library 25 · book_catalog 28 · book_archive 14 · self_study 25 ·
     teacher_read 12 · student_read 11 · book_set_apply 12 · tenant 29; tsc+eslint temiz.
 
+- **SAYAÇ UYUMSUZLUĞU — PROGRAM SİLME REZERVİ İADE ETMİYORDU (2026-09-27,
+  commit `8996c5f`, migration YOK, CANLI):** Zeynep Ela #164 "sayaç uyumsuz".
+  Sistem geneli tarama (`scripts/diagnose_counter_drift.py`, salt okuma): TEK
+  öğrenci, 22 bölüm, 46 fazla rezerv, hepsi görev kalemi OLMAYAN sahipsiz rezerv
+  (Paraf karma rutin 9 · Orijinal TYT Mat 7 · 3D 3 · Orijinal Geometri 3).
+  Kök neden: `weekly_program_service.delete_program(delete_tasks=True)`
+  `release_task_items(db, t)` YANLIŞ İMZAYLA çağırıyor, TypeError geniş
+  `except`te yutuluyordu → görevler rezervsiz siliniyordu (silinen program
+  #72 = 164'ün 01-07 Ekim programı, hemen #74 ile yeniden açılmış). Düzeltme:
+  doğru imza + sessiz yutma kaldırıldı. YENİ `test_program_delete_releases_reserve`
+  6/6 (eski kodda 3/6). Prod'da 164 onarıldı → sistemde sapma 0.
+  **KURAL: rezerv iadesini geniş except ile yutma — iade başarısızsa silme de olmaz.**
+
 ---
 
 ## VİDEO SEPETİ — oynatma listesi → konu grupları → ızgaraya sürükle (2026-09-25, Faz 1 KOD-TAMAM, migration `z1a4d7e8d22z`, DEPLOY BEKLİYOR)
