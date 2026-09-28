@@ -3,7 +3,7 @@ Subject: {{ app_name }} — {{ institution_name }} kurumsal hesabınız hazır
   <h2 style="font-size: 20px; margin: 0 0 12px;">Hoş geldiniz, {{ full_name }}</h2>
   <p style="font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
     <strong>{{ institution_name }}</strong> kurumsal hesabınız oluşturuldu. Aşağıda
-    giriş bilgileriniz ve seçtiğiniz pakete ait ödeme bağlantınız yer alıyor.
+    giriş bilgileriniz{% if payment_url %} ve seçtiğiniz pakete ait ödeme bağlantınız{% endif %} yer alıyor.
   </p>
 
   <!-- Giriş bilgileri -->
@@ -32,7 +32,7 @@ Subject: {{ app_name }} — {{ institution_name }} kurumsal hesabınız hazır
   <!-- Ödeme linki -->
   <div style="background: #ecfeff; border: 2px solid #0e7490; border-radius: 8px; padding: 16px; margin: 0 0 20px;">
     <p style="margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #155e75;">
-      📦 Seçilen paket: {{ plan_label }} — {{ amount_formatted }} ({{ cycle_label }})
+      Seçilen paket: {{ plan_label }} — {{ amount_formatted }} ({{ cycle_label }})
     </p>
     {% if description %}
     <p style="margin: 0 0 12px; font-size: 13px; color: #155e75;">{{ description }}</p>

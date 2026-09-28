@@ -462,6 +462,25 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
 
 ---
 
+## YENİ KURUM PENCERESİ — yönetici hesabı + logo (2026-09-28, migration YOK)
+
+- `POST /admin/institutions` (additive): `admin_full_name` + `admin_email`
+  verilirse aynı işlemde INSTITUTION_ADMIN açılır (geçici şifre, must_change,
+  email_verified; çakışan e-posta 409 `email_taken` → kurum AÇILMAZ);
+  `send_credentials` → `institution_onboarding` e-postası commit SONRASI
+  (ödeme linksiz sürüm; şablonda ödeme cümlesi koşullu + emoji kaldırıldı).
+  Yanıt `temp_password` + `credentials_emailed`. Aktivasyon/kod YOK — ilk girişte
+  zorunlu şifre değişimi.
+- Web pencere 3 bölüm (Kurum · Kurum sorumlusu [hesap aç + e-posta gönder
+  kutuları] · önizlemeli logo) + sonuç ekranı (geçici şifre + kopyala + kurum
+  sayfası). Logo oluşturma sonrası mevcut logo ucuna yüklenir.
+- `InstitutionBrand` logoyu GERÇEK ORANINDA gösterir (eski 16×16 kare yatay
+  logoyu okunmaz yapıyordu) + ad kırpılmaz; üst çubukta `compact`.
+- Test YENİ `scripts/live_institution_create.py` **10/10** (logo yolu argüman) ·
+  admin_institutions · institution_logo 12 · admin GREEN.
+
+---
+
 ## ÖĞRENCİ LİSTESİ YENİDEN TASARIM (/teacher/students) — 2026-09-28, migration YOK
 
 - API (additive): `TeacherStudentListResponse.summary` (critical · warning

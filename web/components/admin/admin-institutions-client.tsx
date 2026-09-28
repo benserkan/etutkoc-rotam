@@ -9,8 +9,10 @@ import {
   Building2,
   CheckCircle2,
   ChevronDown,
+  ImageIcon,
   Loader2,
   Plus,
+  Upload,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -25,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { adminKeys, getAdminInstitutions } from "@/lib/api/admin";
+import { adminKeys, getAdminInstitutions, uploadInstitutionLogo } from "@/lib/api/admin";
 import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import { useCreateInstitution } from "@/lib/hooks/use-admin-mutations";
 import { buildInstitutionPlanOptions, institutionPlanLabel } from "@/lib/institution-plans";
@@ -33,6 +35,7 @@ import type {
   InstitutionFilterLevel,
   InstitutionListItem,
   InstitutionListResponse,
+  InstitutionMutationResult,
   InstitutionSort,
 } from "@/lib/types/admin";
 import type { PricingCatalog } from "@/lib/types/pricing";
@@ -434,6 +437,9 @@ function ScoreBadge({ score, color }: { score: number; color: string }) {
   );
 }
 
+const LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
+const LOGO_MAX = 2 * 1024 * 1024;
+
 function CreateInstitutionDialog({
   open,
   onOpenChange,
@@ -453,14 +459,59 @@ function CreateInstitutionDialog({
   const [slug, setSlug] = React.useState("");
   const [contactEmail, setContactEmail] = React.useState("");
   const [plan, setPlan] = React.useState("institution_free");
+  const [adminName, setAdminName] = React.useState("");
+  const [createAdmin, setCreateAdmin] = React.useState(true);
+  const [sendCreds, setSendCreds] = React.useState(true);
+  const [logoFile, setLogoFile] = React.useState<File | null>(null);
+  const [logoUrl, setLogoUrl] = React.useState<string | null>(null);
+  const [logoError, setLogoError] = React.useState<string | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const [done, setDone] = React.useState<{
+    res: InstitutionMutationResult;
+    logo: "none" | "ok" | "failed";
+  } | null>(null);
+  const [copied, setCopied] = React.useState(false);
   const selectedPlan = planOptions.find((p) => p.value === plan) ?? planOptions[0];
+
+  function pickLogo(f: File | null) {
+    if (logoUrl) URL.revokeObjectURL(logoUrl);
+    setLogoError(null);
+    if (!f) {
+      setLogoFile(null);
+      setLogoUrl(null);
+      return;
+    }
+    if (!LOGO_TYPES.includes(f.type)) {
+      setLogoFile(null);
+      setLogoUrl(null);
+      setLogoError("Yalnız PNG, JPEG veya WebP yükleyebilirsin.");
+      return;
+    }
+    if (f.size > LOGO_MAX) {
+      setLogoFile(null);
+      setLogoUrl(null);
+      setLogoError("Logo en fazla 2 MB olabilir.");
+      return;
+    }
+    setLogoFile(f);
+    setLogoUrl(URL.createObjectURL(f));
+  }
 
   function reset() {
     setName("");
     setSlug("");
     setContactEmail("");
     setPlan("institution_free");
+    setAdminName("");
+    setCreateAdmin(true);
+    setSendCreds(true);
+    pickLogo(null);
+    setDone(null);
+    setCopied(false);
   }
+
+  const adminReady =
+    !createAdmin || (adminName.trim().length >= 3 && contactEmail.trim().length > 3);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -470,115 +521,304 @@ function CreateInstitutionDialog({
         slug: slug.trim() || null,
         contact_email: contactEmail.trim() || null,
         plan,
+        admin_full_name: createAdmin ? adminName.trim() : null,
+        admin_email: createAdmin ? contactEmail.trim() : null,
+        send_credentials: createAdmin && sendCreds,
       },
       {
-        onSuccess: () => {
-          onOpenChange(false);
-          reset();
+        onSuccess: async (res) => {
+          let logo: "none" | "ok" | "failed" = "none";
+          const instId = res.data.institution?.id;
+          if (logoFile && instId) {
+            setUploading(true);
+            try {
+              await uploadInstitutionLogo(instId, logoFile);
+              logo = "ok";
+            } catch {
+              logo = "failed";
+            } finally {
+              setUploading(false);
+            }
+          }
+          setDone({ res: res.data, logo });
           router.refresh();
         },
       },
     );
   }
 
+  const busy = mut.isPending || uploading;
+
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
+        if (busy) return;
         if (!v) reset();
         onOpenChange(v);
       }}
     >
-      <DialogContent>
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Yeni Kurum</DialogTitle>
+          <DialogTitle>{done ? "Kurum hazır" : "Yeni Kurum"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-3">
-          <div>
-            <Label htmlFor="name">
-              Kurum Adı <span className="text-rose-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              autoFocus
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="slug">
-              Slug{" "}
-              <span className="text-muted-foreground text-xs">
-                (boş = ad&apos;dan üretilir)
-              </span>
-            </Label>
-            <Input
-              id="slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="ankara-koc-akademi"
-              className="mt-1 font-mono"
-            />
-            <p className="text-[11px] text-muted-foreground mt-1">
-              URL/handle. Sadece a-z, 0-9, -
+
+        {done ? (
+          <div className="space-y-4 text-sm" data-testid="institution-created">
+            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+              {done.res.message}
             </p>
-          </div>
-          <div>
-            <Label htmlFor="contact_email">İletişim E-posta</Label>
-            <Input
-              id="contact_email"
-              type="email"
-              value={contactEmail}
-              onChange={(e) => setContactEmail(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="plan">Plan</Label>
-            <select
-              id="plan"
-              value={plan}
-              onChange={(e) => setPlan(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-input rounded-md text-sm bg-card"
-            >
-              {planOptions.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label} — {p.coaches}
-                </option>
-              ))}
-            </select>
-            {selectedPlan ? (
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">{selectedPlan.coaches}.</span>{" "}
-                {selectedPlan.desc}
+            {done.logo === "ok" ? (
+              <p className="text-muted-foreground">
+                Logo yüklendi; kurum yöneticisi ve koçların panelinde görünecek.
+              </p>
+            ) : done.logo === "failed" ? (
+              <p className="text-rose-700 dark:text-rose-300">
+                Logo yüklenemedi. Kurum sayfasındaki logo kartından tekrar deneyebilirsin.
               </p>
             ) : null}
+            {done.res.temp_password ? (
+              <div className="space-y-2 rounded-md border border-border p-3">
+                <p className="font-medium">Kurum yöneticisinin giriş bilgileri</p>
+                <p className="break-all">
+                  <span className="text-muted-foreground">E-posta:</span> {done.res.admin_email}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-muted-foreground">Geçici şifre:</span>
+                  <code
+                    className="rounded bg-amber-100 px-2 py-1 font-mono font-semibold text-amber-900"
+                    data-testid="admin-temp-password"
+                  >
+                    {done.res.temp_password}
+                  </code>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(done.res.temp_password ?? "");
+                        setCopied(true);
+                      } catch {
+                        setCopied(false);
+                      }
+                    }}
+                  >
+                    {copied ? "Kopyalandı" : "Kopyala"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {done.res.credentials_emailed
+                    ? "Giriş bilgileri yöneticiye e-postayla gönderildi."
+                    : done.res.credentials_emailed === false
+                      ? "E-posta gönderilemedi — bilgileri yöneticiye kendin ilet."
+                      : "E-posta gönderilmedi — bilgileri yöneticiye kendin ilet."}{" "}
+                  Şifre bu pencere kapanınca tekrar gösterilmez; ilk girişte yönetici kendi
+                  şifresini belirler.
+                </p>
+              </div>
+            ) : null}
+            <DialogFooter className="gap-2">
+              {done.res.institution ? (
+                <Button asChild variant="outline">
+                  <Link href={`/admin/institutions/${done.res.institution.id}`}>
+                    Kurum sayfasına git
+                  </Link>
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                onClick={() => {
+                  reset();
+                  onOpenChange(false);
+                }}
+              >
+                Kapat
+              </Button>
+            </DialogFooter>
           </div>
-          <DialogFooter className="gap-2 pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              disabled={mut.isPending}
-            >
-              İptal
-            </Button>
-            <Button
-              type="submit"
-              disabled={mut.isPending || name.trim().length === 0}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              {mut.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <CheckCircle2 className="size-4" aria-hidden />
-              )}
-              Oluştur
-            </Button>
-          </DialogFooter>
-        </form>
+        ) : (
+          <form onSubmit={onSubmit} className="space-y-5">
+            <fieldset className="space-y-3">
+              <legend className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Kurum
+              </legend>
+              <div>
+                <Label htmlFor="name">
+                  Kurum Adı <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  autoFocus
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="plan">Paket</Label>
+                <select
+                  id="plan"
+                  value={plan}
+                  onChange={(e) => setPlan(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-input rounded-md text-sm bg-card"
+                >
+                  {planOptions.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label} — {p.coaches}
+                    </option>
+                  ))}
+                </select>
+                {selectedPlan ? (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">{selectedPlan.coaches}.</span>{" "}
+                    {selectedPlan.desc}
+                  </p>
+                ) : null}
+              </div>
+              <details className="text-sm">
+                <summary className="cursor-pointer text-xs text-muted-foreground">
+                  Gelişmiş: kısa ad (slug)
+                </summary>
+                <Input
+                  id="slug"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder="boş bırakırsan kurum adından üretilir"
+                  className="mt-2 font-mono"
+                />
+              </details>
+            </fieldset>
+
+            <fieldset className="space-y-3">
+              <legend className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Kurum sorumlusu
+              </legend>
+              <div>
+                <Label htmlFor="admin_name">
+                  Ad Soyad {createAdmin ? <span className="text-rose-500">*</span> : null}
+                </Label>
+                <Input
+                  id="admin_name"
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
+                  placeholder="Kurumu yönetecek kişi"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="contact_email">
+                  E-posta {createAdmin ? <span className="text-rose-500">*</span> : null}
+                </Label>
+                <Input
+                  id="contact_email"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4"
+                  checked={createAdmin}
+                  onChange={(e) => setCreateAdmin(e.target.checked)}
+                />
+                <span>
+                  Kurum yöneticisi hesabını şimdi oluştur
+                  <span className="block text-xs text-muted-foreground">
+                    Geçici şifre üretilir; ilk girişte yönetici kendi şifresini belirler.
+                  </span>
+                </span>
+              </label>
+              {createAdmin ? (
+                <label className="flex items-start gap-2 pl-6 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-4"
+                    checked={sendCreds}
+                    onChange={(e) => setSendCreds(e.target.checked)}
+                  />
+                  <span>Giriş bilgilerini yöneticiye e-postayla gönder</span>
+                </label>
+              ) : null}
+            </fieldset>
+
+            <fieldset className="space-y-2">
+              <legend className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Logo <span className="normal-case font-normal">(isteğe bağlı)</span>
+              </legend>
+              <div className="flex flex-wrap items-center gap-3">
+                <div
+                  className="grid h-20 w-40 place-items-center overflow-hidden rounded-md border border-dashed border-border bg-muted/40"
+                  data-testid="logo-preview"
+                >
+                  {logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- yerel önizleme (blob URL)
+                    <img
+                      src={logoUrl}
+                      alt="Logo önizleme"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <ImageIcon className="size-6 text-muted-foreground" aria-hidden />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted">
+                    <Upload className="size-4" aria-hidden />
+                    {logoFile ? "Değiştir" : "Logo seç"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="sr-only"
+                      data-testid="logo-input"
+                      onChange={(e) => pickLogo(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  {logoFile ? (
+                    <button
+                      type="button"
+                      onClick={() => pickLogo(null)}
+                      className="block text-xs text-muted-foreground underline-offset-2 hover:underline"
+                    >
+                      Kaldır
+                    </button>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    PNG, JPEG veya WebP · en fazla 2 MB
+                  </p>
+                  {logoError ? <p className="text-xs text-rose-600">{logoError}</p> : null}
+                </div>
+              </div>
+            </fieldset>
+
+            <DialogFooter className="gap-2 pt-1">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                disabled={busy}
+              >
+                İptal
+              </Button>
+              <Button
+                type="submit"
+                disabled={busy || name.trim().length === 0 || !adminReady}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                {busy ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <CheckCircle2 className="size-4" aria-hidden />
+                )}
+                {uploading ? "Logo yükleniyor…" : "Oluştur"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

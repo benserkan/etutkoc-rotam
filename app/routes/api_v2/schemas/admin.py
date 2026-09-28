@@ -220,11 +220,20 @@ class InstitutionListResponse(BaseModel):
 
 
 class InstitutionCreateBody(BaseModel):
-    """POST /api/v2/admin/institutions body."""
+    """POST /api/v2/admin/institutions body.
+
+    `admin_full_name` + `admin_email` verilirse aynı işlemde kurum yöneticisi
+    hesabı açılır (geçici şifre + ilk girişte değiştirme zorunlu). E-posta
+    boşsa `contact_email` kullanılır. `send_credentials` → giriş bilgileri
+    yöneticiye e-postayla gider (commit SONRASI).
+    """
     name: str
     slug: str | None = None
     contact_email: str | None = None
     plan: str = "free"
+    admin_full_name: str | None = None
+    admin_email: str | None = None
+    send_credentials: bool = False
 
 
 class InstitutionEditBody(BaseModel):
@@ -281,6 +290,12 @@ class InstitutionMutationResult(BaseModel):
     institution: InstitutionDetailBrief | None = None
     message: str
     affected_users: int = 0  # delete için
+    # Oluşturmada yönetici hesabı da açıldıysa (geçici şifre YALNIZ bu yanıtta)
+    admin_user_id: int | None = None
+    admin_email: str | None = None
+    admin_full_name: str | None = None
+    temp_password: str | None = None
+    credentials_emailed: bool | None = None
 
 
 # =============================================================================

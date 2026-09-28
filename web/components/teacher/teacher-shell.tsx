@@ -142,7 +142,8 @@ export function TeacherShell({ user, institution, children }: Props) {
           {institution ? (
             <InstitutionBrand
               institution={institution}
-              className="hidden sm:inline-flex max-w-[180px]"
+              compact
+              className="hidden sm:block max-w-[180px]"
             />
           ) : null}
           <div className="flex-1" />

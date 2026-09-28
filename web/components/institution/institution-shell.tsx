@@ -244,7 +244,8 @@ export function InstitutionShell({ user, institution, children }: Props) {
           {institution ? (
             <InstitutionBrand
               institution={institution}
-              className="hidden sm:inline-flex max-w-[200px]"
+              compact
+              className="hidden sm:block max-w-[200px]"
             />
           ) : null}
           <div className="flex-1" />

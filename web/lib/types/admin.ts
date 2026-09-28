@@ -168,6 +168,10 @@ export interface InstitutionCreateBody {
   slug?: string | null;
   contact_email?: string | null;
   plan?: string;
+  /** Verilirse aynı işlemde kurum yöneticisi hesabı açılır. */
+  admin_full_name?: string | null;
+  admin_email?: string | null;
+  send_credentials?: boolean;
 }
 
 export interface InstitutionEditBody {
@@ -218,6 +222,12 @@ export interface InstitutionMutationResult {
   institution: InstitutionDetailBrief | null;
   message: string;
   affected_users: number;
+  /** Oluşturmada yönetici hesabı açıldıysa — geçici şifre YALNIZ bu yanıtta. */
+  admin_user_id?: number | null;
+  admin_email?: string | null;
+  admin_full_name?: string | null;
+  temp_password?: string | null;
+  credentials_emailed?: boolean | null;
 }
 
 // =============================================================================

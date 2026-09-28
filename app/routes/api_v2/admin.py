@@ -909,10 +909,29 @@ def admin_create_institution_v2(
             },
         )
     plan = (body.plan or "free").strip() or "free"
+    contact_email = (body.contact_email or "").strip().lower() or None
+
+    # Yönetici hesabı (opsiyonel) — önce doğrula, sonra kurumla AYNI işlemde aç
+    admin_name = (body.admin_full_name or "").strip()
+    admin_email = ((body.admin_email or "").strip().lower() or contact_email) if admin_name else None
+    if admin_name:
+        if len(admin_name) < 3:
+            raise HTTPException(status_code=400, detail={
+                "error": "invalid", "code": "admin_name_required",
+                "message": "Kurum yöneticisinin adı en az 3 karakter olmalı."})
+        if not admin_email or not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", admin_email):
+            raise HTTPException(status_code=400, detail={
+                "error": "invalid", "code": "admin_email_invalid",
+                "message": "Kurum yöneticisi için geçerli bir e-posta girin."})
+        if db.query(User.id).filter(User.email == admin_email).first():
+            raise HTTPException(status_code=409, detail={
+                "error": "conflict", "code": "email_taken",
+                "message": f"{admin_email} adresiyle kayıtlı bir kullanıcı zaten var."})
+
     inst = Institution(
         name=name_clean,
         slug=slug_clean,
-        contact_email=(body.contact_email or "").strip().lower() or None,
+        contact_email=contact_email or admin_email,
         plan=plan,
         is_active=True,
     )
@@ -928,12 +947,70 @@ def admin_create_institution_v2(
         details={"name": name_clean, "slug": slug_clean, "plan": inst.plan},
         autocommit=False,
     )
+
+    admin_user = None
+    pwd = None
+    if admin_name:
+        from app.services.auth_security import generate_strong_password
+        from app.services.security import hash_password as _hash
+        pwd = generate_strong_password(UserRole.INSTITUTION_ADMIN)
+        admin_user = User(
+            email=admin_email,
+            password_hash=_hash(pwd),
+            full_name=admin_name,
+            role=UserRole.INSTITUTION_ADMIN,
+            institution_id=inst.id,
+            is_active=True,
+            password_changed_at=datetime.now(timezone.utc),
+            must_change_password=True,
+            email_verified_at=datetime.now(timezone.utc),  # süper admin açtı → onaylı
+        )
+        db.add(admin_user)
+        db.flush()
+        log_action(
+            db, action=AuditAction.USER_CREATE, actor_id=user.id,
+            target_type="user", target_id=admin_user.id, request=request,
+            details={"email": admin_email, "role": "institution_admin",
+                     "institution_id": inst.id, "via": "institution_create",
+                     "temp_password_issued": True},
+            autocommit=False,
+        )
     db.commit()
 
+    # Giriş bilgileri e-postası — dış çağrı işlem DIŞINDA (commit sonrası)
+    emailed: bool | None = None
+    if admin_user is not None and body.send_credentials:
+        from app.config import settings
+        from app.services.email_service import send_email
+        try:
+            emailed = bool(send_email(
+                to=admin_user.email,
+                template="institution_onboarding",
+                ctx={
+                    "full_name": admin_user.full_name,
+                    "email": admin_user.email,
+                    "temp_password": pwd,
+                    "login_url": f"{settings.app_base_url.rstrip('/')}/login",
+                    "institution_name": inst.name,
+                    "payment_url": None,
+                },
+            ))
+        except Exception:
+            logger.exception("institution credentials email fail user=%s", admin_user.id)
+            emailed = False
+
+    msg = f"'{name_clean}' kurumu oluşturuldu."
+    if admin_user is not None:
+        msg += f" Yönetici hesabı açıldı: {admin_user.email}."
     return MutationResponse[InstitutionMutationResult](
         data=InstitutionMutationResult(
             institution=_institution_to_detail_brief(inst),
-            message=f"'{name_clean}' kurumu oluşturuldu.",
+            message=msg,
+            admin_user_id=admin_user.id if admin_user else None,
+            admin_email=admin_user.email if admin_user else None,
+            admin_full_name=admin_user.full_name if admin_user else None,
+            temp_password=pwd,
+            credentials_emailed=emailed,
         ),
         invalidate=_admin_invalidate(),
     )
