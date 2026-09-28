@@ -2,15 +2,29 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
+  AlertOctagon,
+  AlertTriangle,
+  CalendarRange,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Download,
+  FileSpreadsheet,
+  Inbox,
   KeyRound,
   Loader2,
+  MessageSquareMore,
   MoreHorizontal,
   PauseCircle,
   PlayCircle,
-  Copy,
-  Check,
+  UserRound,
+  Users,
+  X,
 } from "lucide-react";
 
 import { useTeacherStudents } from "@/lib/hooks/use-teacher-queries";
@@ -22,14 +36,12 @@ import {
   useSetStudentsClassGroup,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
+  StudentListSummary,
   StudentResetPasswordResult,
   TeacherStudentListItem,
   TeacherStudentListResponse,
-  WarningLevel,
 } from "@/lib/types/teacher";
-import { WARNING_LABELS_TR } from "@/lib/types/teacher";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -39,7 +51,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
   StudentsFilterBar,
+  useApplyParam,
   type FilterValues,
 } from "@/components/teacher/students-filter-bar";
 import { StudentCreateButton } from "@/components/teacher/student-create-modal";
@@ -51,6 +72,10 @@ interface Props {
   initialPage: number;
 }
 
+// Masaüstü tablo kolonları — başlık satırı ile satırlar AYNI şablonu kullanır.
+const COLS =
+  "md:grid md:grid-cols-[minmax(0,2.6fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_9.5rem] md:items-center md:gap-4";
+
 export function StudentsListClient({ initial, initialFilters, initialPage }: Props) {
   const searchParams = useSearchParams();
 
@@ -60,9 +85,7 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
   const params: TeacherStudentsListParams = React.useMemo(
     () => ({
       q: filters.q || undefined,
-      grade_level: filters.grade_level
-        ? Number(filters.grade_level)
-        : undefined,
+      grade_level: filters.grade_level ? Number(filters.grade_level) : undefined,
       risk: filters.risk,
       status: filters.status,
       class_group: filters.class_group || undefined,
@@ -81,6 +104,7 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
   const [selected, setSelected] = React.useState<Set<number>>(new Set());
   const pageIds = (data?.items ?? []).map((s) => s.id);
   const allOnPage = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const someOnPage = pageIds.some((id) => selected.has(id));
   const groupNames = (data?.class_groups ?? [])
     .map((g) => g.class_group)
     .filter((g): g is string => !!g);
@@ -92,43 +116,138 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
     setSelected(next);
   }
 
+  function toggleAll(on: boolean) {
+    const next = new Set(selected);
+    for (const id of pageIds) {
+      if (on) next.add(id);
+      else next.delete(id);
+    }
+    setSelected(next);
+  }
+
+  const total = data?.total ?? 0;
+
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight font-display">
-            Öğrenciler
-          </h1>
-          <p className="text-sm text-muted-foreground" aria-live="polite">
+    <div className={cn("space-y-5", selected.size > 0 && "pb-24")}>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight font-display">Öğrenciler</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground" aria-live="polite">
             {isLoading
               ? "Yükleniyor…"
-              : `Toplam ${data?.total ?? 0} sonuç · sayfa ${data?.page ?? page}`}
+              : `${total} öğrenci ${statusWord(filters.status)}`}
             {q.isFetching && !isLoading ? (
-              <span className="ml-2 text-xs text-muted-foreground/70">
-                · güncelleniyor…
-              </span>
+              <Loader2 className="ml-2 inline size-3.5 animate-spin align-[-2px]" aria-label="güncelleniyor" />
             ) : null}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <a
-            href="/api/v2/teacher/csv/export/students"
-            className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted inline-flex items-center gap-1.5"
-            aria-label="Öğrencileri CSV olarak dışa aktar"
-          >
-            CSV indir
-          </a>
-          <Link
-            href="/teacher/students/import"
-            className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted inline-flex items-center gap-1.5"
-          >
-            CSV ile ekle
-          </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <FileSpreadsheet className="size-4" aria-hidden />
+                Toplu işlemler
+                <ChevronDown className="size-4 opacity-60" aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem asChild>
+                <Link href="/teacher/students/import" className="flex items-start gap-2">
+                  <Users className="mt-0.5" aria-hidden />
+                  <span>
+                    <span className="block font-medium">Listeden toplu ekle</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Excel/CSV dosyasıyla çok sayıda öğrenci
+                    </span>
+                  </span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="/api/v2/teacher/csv/export/students" className="flex items-start gap-2">
+                  <Download className="mt-0.5" aria-hidden />
+                  <span>
+                    <span className="block font-medium">Öğrenci listesini indir</span>
+                    <span className="block text-xs text-muted-foreground">Excel&apos;de açılır (CSV)</span>
+                  </span>
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <StudentCreateButton />
         </div>
       </header>
 
+      {filters.status !== "pasif" && data?.summary ? (
+        <StatusTiles summary={data.summary} risk={filters.risk} />
+      ) : null}
+
       <StudentsFilterBar initial={filters} classGroups={data?.class_groups ?? []} />
+
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        {isLoading ? (
+          <SkeletonRows />
+        ) : !data || data.items.length === 0 ? (
+          <EmptyState status={filters.status} filtered={hasFilter(filters)} />
+        ) : (
+          <>
+            <div
+              className={cn(
+                "hidden border-b border-border bg-muted/50 px-4 py-2.5 text-xs font-medium text-muted-foreground",
+                COLS,
+                "md:grid",
+              )}
+            >
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-cyan-700"
+                  checked={allOnPage}
+                  ref={(el) => {
+                    if (el) el.indeterminate = !allOnPage && someOnPage;
+                  }}
+                  onChange={(e) => toggleAll(e.target.checked)}
+                  aria-label="Bu sayfadaki tüm öğrencileri seç"
+                />
+                Öğrenci
+              </label>
+              <span>Sınıf · Şube</span>
+              <span title="Bugün tamamlanan / toplam görev (etkinlik dahil)">Bugün</span>
+              <span title="Son 7 günde (bugün dahil) tamamlanan görev oranı">Son 7 gün</span>
+              <span>Son giriş</span>
+              <span className="sr-only">İşlemler</span>
+            </div>
+            <label className="flex items-center gap-3 border-b border-border px-4 py-2 text-xs text-muted-foreground md:hidden">
+              <input
+                type="checkbox"
+                className="size-4 accent-cyan-700"
+                checked={allOnPage}
+                onChange={(e) => toggleAll(e.target.checked)}
+                aria-label="Bu sayfadaki tüm öğrencileri seç"
+              />
+              Tümünü seç
+            </label>
+            <ul className="divide-y divide-border">
+              {data.items.map((s) => (
+                <StudentRow
+                  key={s.id}
+                  s={s}
+                  checked={selected.has(s.id)}
+                  onCheck={(on) => toggle(s.id, on)}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+
+      {data && data.items.length > 0 ? (
+        <Pager
+          page={data.page}
+          pageSize={filters.page_size}
+          total={data.total}
+          hasNext={data.has_next}
+        />
+      ) : null}
 
       {selected.size > 0 ? (
         <ClassGroupBar
@@ -137,63 +256,119 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
           onDone={() => setSelected(new Set())}
         />
       ) : null}
-
-      <p className="text-xs text-muted-foreground -mt-1">
-        <strong>Bugün</strong> = bugün tamamlanan/toplam görev (etkinlik dahil) ·{" "}
-        <strong>Hafta</strong> = son 7 günün görev tamamlama yüzdesi. Renkli satır
-        = en kötü uyarı seviyesi.
-      </p>
-
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <p className="p-6 text-sm text-muted-foreground">Yükleniyor…</p>
-          ) : !data || data.items.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground">
-              {filters.status === "aktif"
-                ? "Aktif öğrenci yok. Koçluğu sonlandırılmış kayıtlar için üstteki durum filtresinden “Pasifler”i seçebilirsin."
-                : "Sonuç yok. Filtreyi gevşetmeyi deneyebilirsin."}
-            </p>
-          ) : (
-            <>
-              <label className="flex items-center gap-2 border-b border-border px-4 py-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={allOnPage}
-                  onChange={(e) => {
-                    const next = new Set(selected);
-                    for (const id of pageIds) {
-                      if (e.target.checked) next.add(id);
-                      else next.delete(id);
-                    }
-                    setSelected(next);
-                  }}
-                  aria-label="Bu sayfadaki tüm öğrencileri seç"
-                />
-                Bu sayfadakilerin tümünü seç (şube atamak için)
-              </label>
-              <ul className="divide-y divide-border">
-                {data.items.map((s) => (
-                  <StudentRow
-                    key={s.id}
-                    s={s}
-                    checked={selected.has(s.id)}
-                    onCheck={(on) => toggle(s.id, on)}
-                  />
-                ))}
-              </ul>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Pager
-        page={data?.page ?? page}
-        hasNext={data?.has_next ?? false}
-      />
     </div>
   );
 }
+
+// ---------------------------------------------------------------- Özet kutuları
+
+function StatusTiles({
+  summary,
+  risk,
+}: {
+  summary: StudentListSummary;
+  risk: FilterValues["risk"];
+}) {
+  const { apply } = useApplyParam();
+  const setRisk = (v: FilterValues["risk"]) =>
+    apply((sp) => {
+      if (v === "all" || v === risk) sp.delete("risk");
+      else sp.set("risk", v);
+    });
+
+  const tiles: Array<{
+    key: "critical" | "medium" | "ok";
+    count: number;
+    title: string;
+    hint: string;
+    icon: React.ComponentType<{ className?: string }>;
+    tone: string;
+    active: string;
+  }> = [
+    {
+      key: "critical",
+      count: summary.critical,
+      title: "Kritik",
+      hint: "Hemen ilgilen",
+      icon: AlertOctagon,
+      tone: "text-rose-700 dark:text-rose-300",
+      active: "border-rose-500 ring-2 ring-rose-500/30 bg-rose-50 dark:bg-rose-500/10",
+    },
+    {
+      key: "medium",
+      count: summary.warning,
+      title: "Uyarı",
+      hint: "Yakından takip et",
+      icon: AlertTriangle,
+      tone: "text-amber-700 dark:text-amber-300",
+      active: "border-amber-500 ring-2 ring-amber-500/30 bg-amber-50 dark:bg-amber-500/10",
+    },
+    {
+      key: "ok",
+      count: summary.ok,
+      title: "Yolunda",
+      hint: summary.paused > 0 ? `${summary.paused} öğrenci molada` : "Programı yürüyor",
+      icon: CheckCircle2,
+      tone: "text-emerald-700 dark:text-emerald-300",
+      active: "border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="status-tiles">
+      {tiles.map((t) => {
+        const on = risk === t.key || (t.key === "medium" && risk === "high");
+        const Icon = t.icon;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setRisk(t.key)}
+            aria-pressed={on}
+            data-testid={`status-tile-${t.key}`}
+            className={cn(
+              "group rounded-xl border bg-card p-3.5 text-left transition-colors hover:border-foreground/30",
+              on ? t.active : "border-border",
+            )}
+          >
+            <span className={cn("flex items-center gap-1.5 text-sm font-medium", t.tone)}>
+              <Icon className="size-4" aria-hidden />
+              {t.title}
+            </span>
+            <span className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-2xl font-semibold tabular-nums text-foreground">{t.count}</span>
+              <span className="text-xs text-muted-foreground">öğrenci</span>
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              {on ? "Süzgeç açık · kaldırmak için tıkla" : t.hint}
+            </span>
+          </button>
+        );
+      })}
+      <Link
+        href="/teacher/requests"
+        data-testid="status-tile-requests"
+        className="rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-foreground/30"
+      >
+        <span className="flex items-center gap-1.5 text-sm font-medium text-cyan-700 dark:text-cyan-300">
+          <MessageSquareMore className="size-4" aria-hidden />
+          Bekleyen talep
+        </span>
+        <span className="mt-1 flex items-baseline gap-1.5">
+          <span className="text-2xl font-semibold tabular-nums text-foreground">
+            {summary.pending_requests}
+          </span>
+          <span className="text-xs text-muted-foreground">öğrenci</span>
+        </span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          {summary.pending_requests > 0 ? "Yanıtlamak için aç" : "Yanıt bekleyen yok"}
+        </span>
+      </Link>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- Satır
 
 function StudentRow({
   s,
@@ -204,208 +379,296 @@ function StudentRow({
   checked: boolean;
   onCheck: (on: boolean) => void;
 }) {
-  const weekPct = Math.round((s.week_pct ?? 0) * 100);
+  const wTot = s.week_gorev_total ?? 0;
+  const wDone = s.week_gorev_done ?? 0;
+  const weekPct = wTot > 0 ? Math.round((wDone / wTot) * 100) : null;
   const dim = !s.is_active;
+  const risk = s.risk_level ?? null;
+  const done = s.today_gorev_done ?? 0;
+  const tot = s.today_gorev_total ?? 0;
+  const showReason =
+    s.is_active && !s.is_paused && s.worst_warning_level !== "green" && !!s.worst_warning_title;
+
   return (
-    <li className="group flex items-stretch">
-      <label className="flex shrink-0 items-center pl-4" aria-label={`${s.full_name} seç`}>
+    <li
+      className={cn(
+        "group relative px-4 py-3 transition-colors hover:bg-muted/50",
+        checked && "bg-cyan-50/60 dark:bg-cyan-500/10",
+        COLS,
+      )}
+      data-risk={risk ?? "inactive"}
+    >
+      {/* Risk şeridi — kutular ve süzgeçle AYNI seviye */}
+      {risk === "critical" || risk === "warning" ? (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute inset-y-0 left-0 w-1",
+            risk === "critical" ? "bg-rose-500" : "bg-amber-500",
+          )}
+        />
+      ) : null}
+
+      {/* Öğrenci */}
+      <div className="flex min-w-0 items-start gap-3">
         <input
           type="checkbox"
+          className="mt-2.5 size-4 shrink-0 accent-cyan-700"
           checked={checked}
           onChange={(e) => onCheck(e.target.checked)}
+          aria-label={`${s.full_name} seç`}
           data-testid="student-select"
         />
-      </label>
-      <div
-        className={cn(
-          "grid min-w-0 flex-1 grid-cols-12 items-center gap-3 px-4 py-3 hover:bg-muted transition-colors",
-          !dim && levelRowClass(s.worst_warning_level),
-        )}
-      >
-        {/* Pasif satır soluklaştırması İÇERİK hücrelerine uygulanır — satırın
-            tamamına opacity verilirse içinde açılan ⋯ menüsü de yarı saydam
-            oluyordu (2026-08-11 saha bulgusu: menü okunmuyor sanılıyordu). */}
-        <Link
-          href={`/teacher/students/${s.id}`}
-          className={cn(
-            "col-span-12 sm:col-span-4 min-w-0 hover:underline",
-            dim && "opacity-60",
-          )}
-        >
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <WarningDot level={s.worst_warning_level} />
-            <span className="font-medium break-words">{s.full_name}</span>
+        <Avatar name={s.full_name} risk={risk} dim={dim} />
+        <div className={cn("min-w-0 flex-1", dim && "opacity-60")}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <Link
+              href={`/teacher/students/${s.id}`}
+              className="font-medium text-foreground break-words hover:underline"
+            >
+              {s.full_name}
+            </Link>
             {!s.is_active ? (
-              <span className="text-[10px] uppercase tracking-wide rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
-                pasif
-              </span>
+              <Badge className="bg-slate-500">pasif</Badge>
             ) : s.is_paused ? (
-              <span className="text-[10px] uppercase tracking-wide rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5">
-                molada
-              </span>
+              <Badge className="bg-amber-700">molada</Badge>
             ) : null}
             {s.has_pending_request ? (
-              <span className="text-[10px] uppercase tracking-wide rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5">
-                talep
-              </span>
+              <Link href={`/teacher/requests?student_id=${s.id}`}>
+                <Badge className="bg-cyan-700 hover:bg-cyan-800">talep bekliyor</Badge>
+              </Link>
             ) : null}
-          </span>
-          <span className="block text-xs text-muted-foreground break-all">
-            {s.email}
-          </span>
-          {s.is_active && s.worst_warning_level !== "green" && s.worst_warning_title ? (
-            <span
+          </div>
+          <p className="text-xs text-muted-foreground break-all">{s.email}</p>
+          {showReason ? (
+            <p
               className={cn(
-                "block text-[11px] mt-0.5 break-words font-medium",
+                "mt-0.5 text-xs font-medium break-words",
                 s.worst_warning_level === "red"
-                  ? "text-rose-600 dark:text-rose-400"
-                  : "text-amber-600 dark:text-amber-400",
+                  ? "text-rose-700 dark:text-rose-300"
+                  : "text-amber-700 dark:text-amber-300",
               )}
               title={s.worst_warning_detail ?? undefined}
             >
               {s.worst_warning_title}
-            </span>
+            </p>
           ) : null}
-        </Link>
-        <span className={cn("hidden sm:flex sm:col-span-2 flex-wrap items-center gap-1.5 text-sm text-muted-foreground", dim && "opacity-60")}>
-          {s.grade_level !== null ? `${s.grade_level}. sınıf` : "Mezun"}
-          {s.class_group ? (
-            <span
-              className="rounded bg-slate-700 px-1.5 py-0.5 text-[11px] font-medium text-white"
-              data-testid="class-group-badge"
-            >
-              {s.class_group}
-            </span>
-          ) : null}
-        </span>
-        <span className={cn("hidden sm:block sm:col-span-2 text-sm tabular-nums", dim && "opacity-60")}>
-          Bugün: {s.today_gorev_done ?? 0}/{s.today_gorev_total ?? 0} görev
-        </span>
-        <span className={cn("hidden sm:block sm:col-span-1 text-sm tabular-nums", dim && "opacity-60")}>
-          Hafta: %{weekPct}
-        </span>
-        <span className="col-span-12 sm:col-span-3 flex items-center justify-end gap-2 text-xs">
-          <Link
-            href={`/teacher/students/${s.id}/day`}
-            className="rounded-md border border-border px-2 py-1 hover:bg-background whitespace-nowrap"
+        </div>
+      </div>
+
+      {/* Sınıf · Şube */}
+      <div
+        className={cn(
+          "mt-2 flex flex-wrap items-center gap-1.5 pl-[4.25rem] text-sm text-muted-foreground md:mt-0 md:pl-0",
+          dim && "opacity-60",
+        )}
+      >
+        <span>{s.grade_level !== null ? `${s.grade_level}. sınıf` : "Mezun"}</span>
+        {s.class_group ? (
+          <span
+            className="rounded-md bg-slate-700 px-1.5 py-0.5 text-[11px] font-medium text-white"
+            data-testid="class-group-badge"
           >
-            Haftalık Program
+            {s.class_group}
+          </span>
+        ) : null}
+      </div>
+
+      {/* Bugün + Son 7 gün + son giriş: mobilde tek satırda mini istatistik */}
+      <div className={cn("mt-2 grid grid-cols-3 gap-3 pl-[4.25rem] md:contents", dim && "opacity-60")}>
+        <Metric label="Bugün">
+          {tot > 0 ? (
+            <>
+              <span className="text-sm tabular-nums text-foreground">
+                {done}/{tot} <span className="text-muted-foreground">görev</span>
+              </span>
+              <Bar pct={Math.round((done / tot) * 100)} />
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground">Görev yok</span>
+          )}
+        </Metric>
+        <Metric label="Son 7 gün">
+          {weekPct !== null ? (
+            <>
+              <span className="text-sm tabular-nums text-foreground" title={`${wDone}/${wTot} görev tamamlandı`}>
+                %{weekPct}{" "}
+                <span className="hidden text-muted-foreground md:inline">
+                  · {wDone}/{wTot}<span className="hidden lg:inline"> görev</span>
+                </span>
+              </span>
+              <Bar pct={weekPct} />
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground">Program yok</span>
+          )}
+        </Metric>
+        <Metric label="Son giriş">
+          <span className="text-sm text-foreground" title={s.last_login_at ?? undefined}>
+            {lastLoginLabel(s.last_login_at)}
+          </span>
+        </Metric>
+      </div>
+
+      {/* İşlemler */}
+      <div className="mt-3 flex items-center justify-end gap-2 md:mt-0">
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/teacher/students/${s.id}/day`}>
+            <CalendarRange className="size-4" aria-hidden />
+            Program
           </Link>
-          <Link
-            href={`/teacher/requests?student_id=${s.id}`}
-            className="rounded-md border border-border px-2 py-1 hover:bg-background"
-          >
-            Talep
-          </Link>
-          <StudentRowActions student={s} />
-        </span>
+        </Button>
+        <StudentRowActions student={s} />
       </div>
     </li>
   );
 }
 
+function Metric({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <span className="block text-[11px] text-muted-foreground md:hidden">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function Bar({ pct }: { pct: number }) {
+  const w = Math.max(0, Math.min(100, pct));
+  const tone = w >= 70 ? "bg-emerald-500" : w >= 40 ? "bg-amber-500" : "bg-rose-500";
+  return (
+    <span className="mt-1 block h-1.5 w-full max-w-[8rem] overflow-hidden rounded-full bg-muted">
+      <span className={cn("block h-full rounded-full", tone)} style={{ width: `${w}%` }} />
+    </span>
+  );
+}
+
+function Badge({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <span
+      className={cn(
+        "inline-block rounded-full px-2 py-0.5 text-[11px] font-medium leading-4 text-white",
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Avatar({
+  name,
+  risk,
+  dim,
+}: {
+  name: string;
+  risk: "critical" | "warning" | "ok" | null;
+  dim: boolean;
+}) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toLocaleUpperCase("tr-TR"))
+    .join("");
+  const ring =
+    risk === "critical"
+      ? "ring-rose-500"
+      : risk === "warning"
+        ? "ring-amber-500"
+        : risk === "ok"
+          ? "ring-emerald-500"
+          : "ring-slate-300 dark:ring-slate-600";
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "grid size-9 shrink-0 place-items-center rounded-full bg-slate-700 text-xs font-semibold text-white ring-2 ring-offset-2 ring-offset-card",
+        ring,
+        dim && "opacity-60",
+      )}
+    >
+      {initials || "?"}
+    </span>
+  );
+}
+
 function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
-  const [menuOpen, setMenuOpen] = React.useState(false);
   const [resetOpen, setResetOpen] = React.useState(false);
   const [resetResult, setResetResult] = React.useState<StudentResetPasswordResult | null>(null);
   const [endOpen, setEndOpen] = React.useState(false);
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    if (!menuOpen) return;
-    function onClick(e: MouseEvent) {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(e.target as Node)) setMenuOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setMenuOpen(false);
-    }
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
 
   const deactivate = useDeactivateStudent(student.id);
   const reactivate = useReactivateStudent(student.id);
   const resetPwd = useResetStudentPassword(student.id);
 
-  function onToggleActive() {
-    setMenuOpen(false);
-    if (student.is_active) setEndOpen(true);  // onaylı "Koçluğu sonlandır" akışı
-    else reactivate.mutate();                 // yeniden başlatma benign → direkt
-  }
-
   function confirmEnd() {
     deactivate.mutate(undefined, { onSuccess: () => setEndOpen(false) });
   }
 
-  function onResetPassword() {
-    setMenuOpen(false);
-    setResetOpen(true);
-    setResetResult(null);
-  }
-
   function confirmReset() {
-    resetPwd.mutate(
-      {},
-      {
-        onSuccess: (res) => setResetResult(res.data),
-      },
-    );
+    resetPwd.mutate({}, { onSuccess: (res) => setResetResult(res.data) });
   }
 
   return (
     <>
-      <div ref={containerRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          aria-label="Öğrenci eylemleri"
-          className="rounded-md border border-border px-2 py-1 hover:bg-background inline-flex items-center"
-        >
-          <MoreHorizontal className="size-3.5" aria-hidden />
-        </button>
-        {menuOpen ? (
-          <div
-            role="menu"
-            className="absolute right-0 z-20 mt-1 w-48 rounded-md border border-border bg-popover text-popover-foreground shadow-md py-1 text-sm"
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" aria-label="Öğrenci eylemleri" className="px-2">
+            <MoreHorizontal className="size-4" aria-hidden />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem asChild>
+            <Link href={`/teacher/students/${student.id}`}>
+              <UserRound aria-hidden />
+              Profili aç
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/teacher/students/${student.id}/day`}>
+              <CalendarRange aria-hidden />
+              Haftalık program
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/teacher/requests?student_id=${student.id}`}>
+              <Inbox aria-hidden />
+              Talepleri
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
+              setResetResult(null);
+              setResetOpen(true);
+            }}
           >
-            <button
-              type="button"
-              role="menuitem"
-              onClick={onToggleActive}
-              disabled={deactivate.isPending || reactivate.isPending}
-              className="w-full text-left px-3 py-2 hover:bg-muted inline-flex items-center gap-2 disabled:opacity-60"
-            >
-              {student.is_active ? (
-                <>
-                  <PauseCircle className="size-4 text-amber-500" aria-hidden />
-                  Koçluğu sonlandır
-                </>
-              ) : (
-                <>
-                  <PlayCircle className="size-4 text-emerald-500" aria-hidden />
-                  Koçluğu yeniden başlat
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={onResetPassword}
-              className="w-full text-left px-3 py-2 hover:bg-muted inline-flex items-center gap-2"
-            >
-              <KeyRound className="size-4 text-indigo-500" aria-hidden />
-              Şifre sıfırla
-            </button>
-          </div>
-        ) : null}
-      </div>
+            <KeyRound className="text-indigo-500" aria-hidden />
+            Şifre sıfırla
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={deactivate.isPending || reactivate.isPending}
+            onSelect={() => {
+              if (student.is_active) setEndOpen(true); // onaylı "Koçluğu sonlandır"
+              else reactivate.mutate(); // yeniden başlatma benign → direkt
+            }}
+          >
+            {student.is_active ? (
+              <>
+                <PauseCircle className="text-amber-500" aria-hidden />
+                Koçluğu sonlandır
+              </>
+            ) : (
+              <>
+                <PlayCircle className="text-emerald-500" aria-hidden />
+                Koçluğu yeniden başlat
+              </>
+            )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Dialog
         open={resetOpen}
@@ -417,16 +680,13 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {resetResult ? "Geçici şifre oluşturuldu" : "Şifreyi sıfırla"}
-            </DialogTitle>
+            <DialogTitle>{resetResult ? "Geçici şifre oluşturuldu" : "Şifreyi sıfırla"}</DialogTitle>
             <DialogDescription>
               {resetResult
                 ? "Bu şifre yalnızca bu kez gösterilir — öğrenciye güvenli bir kanaldan iletin."
                 : `${student.full_name} için yeni bir geçici şifre üretilecek. Öğrencinin mevcut şifresi geçersiz olur ve ilk girişte değişiklik istenir.`}
             </DialogDescription>
           </DialogHeader>
-
           {resetResult ? (
             <TempPasswordPanel
               result={resetResult}
@@ -437,11 +697,7 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
             />
           ) : (
             <DialogFooter>
-              <Button
-                variant="ghost"
-                onClick={() => setResetOpen(false)}
-                disabled={resetPwd.isPending}
-              >
+              <Button variant="ghost" onClick={() => setResetOpen(false)} disabled={resetPwd.isPending}>
                 Vazgeç
               </Button>
               <Button onClick={confirmReset} disabled={resetPwd.isPending}>
@@ -512,24 +768,13 @@ function TempPasswordPanel({
         <code className="flex-1 rounded-md border border-border bg-muted px-3 py-2 font-mono text-sm break-all">
           {result.temp_password}
         </code>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onCopy}
-          aria-label="Şifreyi kopyala"
-        >
-          {copied ? (
-            <Check className="size-4 text-emerald-500" aria-hidden />
-          ) : (
-            <Copy className="size-4" aria-hidden />
-          )}
+        <Button type="button" variant="outline" size="sm" onClick={onCopy} aria-label="Şifreyi kopyala">
+          {copied ? <Check className="size-4 text-emerald-500" aria-hidden /> : <Copy className="size-4" aria-hidden />}
           {copied ? "Kopyalandı" : "Kopyala"}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">
-        E-posta: {result.email} · Öğrenci ilk girişte parolasını değiştirmek
-        zorunda kalacak.
+        E-posta: {result.email} · Öğrenci ilk girişte parolasını değiştirmek zorunda kalacak.
       </p>
       <div className="flex items-center justify-end pt-2">
         <Button onClick={onDone}>Tamam</Button>
@@ -538,76 +783,128 @@ function TempPasswordPanel({
   );
 }
 
-// Satır zemini — en kötü uyarı seviyesine göre (kırmızı=acil, turuncu=dikkat
-// öne çıksın; yeşil temiz kalır → liste gürültüsüz). Koyu temada saydam ton.
-function levelRowClass(level: WarningLevel): string {
-  if (level === "red") return "bg-rose-500/10 border-l-4 border-l-rose-500";
-  if (level === "amber") return "bg-amber-500/10 border-l-4 border-l-amber-500";
-  return "";
-}
+// ---------------------------------------------------------------- Boş/yükleme
 
-function WarningDot({ level }: { level: WarningLevel }) {
-  const cls =
-    level === "red"
-      ? "bg-rose-500"
-      : level === "amber"
-        ? "bg-amber-500"
-        : "bg-emerald-500";
+function SkeletonRows() {
   return (
-    <span
-      className={"inline-block size-2 rounded-full " + cls}
-      aria-label={WARNING_LABELS_TR[level]}
-    />
+    <ul className="divide-y divide-border" aria-label="Yükleniyor">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <li key={i} className="flex items-center gap-3 px-4 py-4">
+          <span className="size-9 animate-pulse rounded-full bg-muted" />
+          <span className="flex-1 space-y-2">
+            <span className="block h-3 w-40 animate-pulse rounded bg-muted" />
+            <span className="block h-2.5 w-56 animate-pulse rounded bg-muted" />
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
-function Pager({ page, hasNext }: { page: number; hasNext: boolean }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [, startTransition] = React.useTransition();
+function EmptyState({ status, filtered }: { status: FilterValues["status"]; filtered: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+      <span className="grid size-12 place-items-center rounded-full bg-muted">
+        <Users className="size-6 text-muted-foreground" aria-hidden />
+      </span>
+      {filtered ? (
+        <>
+          <p className="font-medium">Bu süzgeçlere uyan öğrenci yok</p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Süzgeçleri gevşetmeyi ya da üstteki “Tümünü temizle” bağlantısını dene.
+          </p>
+        </>
+      ) : status === "aktif" ? (
+        <>
+          <p className="font-medium">Henüz aktif öğrencin yok</p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            “Yeni öğrenci” ile tek tek ekleyebilir ya da “Toplu işlemler → Listeden toplu ekle”
+            ile bir sınıfı tek seferde kaydedebilirsin. Koçluğu sonlandırılmış öğrenciler
+            “Pasif” sekmesinde.
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">Bu durumda öğrenci yok.</p>
+      )}
+    </div>
+  );
+}
 
-  function withPage(p: number): string {
-    const sp = new URLSearchParams(searchParams.toString());
-    if (p <= 1) sp.delete("page");
-    else sp.set("page", String(p));
-    const qs = sp.toString();
-    return qs ? `${pathname}?${qs}` : pathname;
-  }
+// ---------------------------------------------------------------- Sayfalama
 
-  function go(p: number) {
-    startTransition(() => {
-      router.replace(withPage(p), { scroll: false });
-    });
-  }
+function Pager({
+  page,
+  pageSize,
+  total,
+  hasNext,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  hasNext: boolean;
+}) {
+  const { apply } = useApplyParam();
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(total, page * pageSize);
+
+  const go = (p: number) =>
+    apply((sp) => {
+      if (p <= 1) sp.delete("page");
+      else sp.set("page", String(p));
+    }, false);
 
   return (
     <nav
-      className="flex items-center justify-end gap-2 text-sm"
+      className="flex flex-wrap items-center justify-between gap-3 text-sm"
       aria-label="Sayfalama"
     >
-      {page > 1 ? (
-        <button
+      <span className="text-muted-foreground tabular-nums">
+        {from}–{to} / {total} öğrenci
+      </span>
+      <div className="flex items-center gap-2">
+        <Select
+          value={String(pageSize)}
+          onChange={(v) =>
+            apply((sp) => {
+              if (v === "25") sp.delete("page_size");
+              else sp.set("page_size", v);
+            })
+          }
+          options={[
+            { value: "25", label: "25 / sayfa" },
+            { value: "50", label: "50 / sayfa" },
+            { value: "100", label: "100 / sayfa" },
+          ]}
+          ariaLabel="Sayfa boyutu"
+          className="h-9"
+        />
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
+          disabled={page <= 1}
           onClick={() => go(page - 1)}
-          className="rounded-md border border-border px-3 py-1.5 hover:bg-muted"
+          aria-label="Önceki sayfa"
         >
-          ← Önceki
-        </button>
-      ) : null}
-      <span className="text-muted-foreground">Sayfa {page}</span>
-      {hasNext ? (
-        <button
+          <ChevronLeft className="size-4" aria-hidden />
+        </Button>
+        <span className="tabular-nums text-muted-foreground">Sayfa {page}</span>
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
+          disabled={!hasNext}
           onClick={() => go(page + 1)}
-          className="rounded-md border border-border px-3 py-1.5 hover:bg-muted"
+          aria-label="Sonraki sayfa"
         >
-          Sonraki →
-        </button>
-      ) : null}
+          <ChevronRight className="size-4" aria-hidden />
+        </Button>
+      </div>
     </nav>
   );
 }
+
+// ---------------------------------------------------------------- Toplu şube
 
 function ClassGroupBar({
   selectedIds,
@@ -625,54 +922,84 @@ function ClassGroupBar({
     mut.mutate({ studentIds: selectedIds, classGroup: v }, { onSuccess: () => onDone() });
   }
   return (
-    <div
-      className="flex flex-wrap items-center gap-2 rounded-md border border-cyan-700 bg-cyan-50 px-3 py-2 text-sm text-cyan-950 dark:bg-cyan-500/10 dark:text-cyan-100"
-      data-testid="class-group-bar"
-    >
-      <span className="font-medium">{selectedIds.length} öğrenci seçili</span>
-      <span className="text-cyan-900/80 dark:text-cyan-200/80">· şubeye al:</span>
-      <input
-        list={listId}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="örn. 10-A"
-        maxLength={60}
-        className="h-8 w-36 rounded-md border border-input bg-background px-2 text-sm text-foreground"
-        aria-label="Şube adı"
-      />
-      <datalist id={listId}>
-        {groupNames.map((g) => (
-          <option key={g} value={g} />
-        ))}
-      </datalist>
-      <Button
-        type="button"
-        size="sm"
-        disabled={!value.trim() || mut.isPending}
-        onClick={() => apply(value)}
-        data-testid="class-group-apply"
+    <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+      <div
+        className="flex w-full max-w-3xl flex-wrap items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl ring-1 ring-black/10"
+        data-testid="class-group-bar"
       >
-        {mut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
-        Şubeye al
-      </Button>
-      <Button type="button" size="sm" variant="ghost" disabled={mut.isPending} onClick={() => apply("")}>
-        Şubeyi kaldır
-      </Button>
-      <button
-        type="button"
-        onClick={onDone}
-        className="ml-auto text-xs underline-offset-2 hover:underline"
-      >
-        Seçimi temizle
-      </button>
+        <span className="font-medium">{selectedIds.length} öğrenci seçili</span>
+        <span className="text-slate-300">· şubeye al:</span>
+        <input
+          list={listId}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="örn. 10-A"
+          maxLength={60}
+          className="h-9 w-36 rounded-md border border-slate-600 bg-slate-800 px-2 text-sm text-white placeholder:text-slate-400"
+          aria-label="Şube adı"
+        />
+        <datalist id={listId}>
+          {groupNames.map((g) => (
+            <option key={g} value={g} />
+          ))}
+        </datalist>
+        <button
+          type="button"
+          disabled={!value.trim() || mut.isPending}
+          onClick={() => apply(value)}
+          data-testid="class-group-apply"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-cyan-600 px-3 font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
+        >
+          {mut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
+          Şubeye al
+        </button>
+        <button
+          type="button"
+          disabled={mut.isPending}
+          onClick={() => apply("")}
+          className="h-9 rounded-md px-3 text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+        >
+          Şubeyi kaldır
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          className="ml-auto inline-flex h-9 items-center gap-1 rounded-md px-2 text-slate-300 hover:bg-slate-800 hover:text-white"
+          aria-label="Seçimi temizle"
+        >
+          <X className="size-4" aria-hidden />
+          Seçimi temizle
+        </button>
+      </div>
     </div>
   );
 }
 
-function readFilters(
-  sp: URLSearchParams,
-  fallback: FilterValues,
-): FilterValues {
+// ---------------------------------------------------------------- Yardımcılar
+
+function statusWord(s: FilterValues["status"]): string {
+  return s === "aktif" ? "· aktif" : s === "pasif" ? "· koçluğu sonlandırılmış" : "· tüm durumlar";
+}
+
+function hasFilter(f: FilterValues): boolean {
+  return !!f.q || !!f.grade_level || !!f.class_group || f.risk !== "all";
+}
+
+function lastLoginLabel(iso: string | null): string {
+  if (!iso) return "Hiç girmedi";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const now = new Date();
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOf(now) - startOf(d)) / 86_400_000);
+  if (days <= 0) return "Bugün";
+  if (days === 1) return "Dün";
+  if (days < 7) return `${days} gün önce`;
+  if (days < 30) return `${Math.floor(days / 7)} hafta önce`;
+  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+}
+
+function readFilters(sp: URLSearchParams, fallback: FilterValues): FilterValues {
   const q = sp.get("q") ?? "";
   const grade = sp.get("grade_level") ?? "";
   const risk = (sp.get("risk") ?? "all") as FilterValues["risk"];

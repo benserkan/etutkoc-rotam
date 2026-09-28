@@ -154,7 +154,22 @@ export interface TeacherStudentListItem {
   today_gorev_total?: number;
   today_gorev_done?: number;
   week_pct: number;
+  /** Son 7 gün (bugün dahil) GÖREV tamamlama — etkinlik görevleri dahil. */
+  week_gorev_total?: number;
+  week_gorev_done?: number;
   has_pending_request: boolean;
+  /** risk_analysis seviyesi (özet kutuları + risk süzgeci ile aynı). Pasifte null. */
+  risk_level?: "critical" | "warning" | "ok" | null;
+}
+
+/** Liste üstü durum özeti — risk süzgeci hariç diğer süzgeçlere uyar. */
+export interface StudentListSummary {
+  critical: number;
+  warning: number;
+  ok: number;
+  paused: number;
+  inactive: number;
+  pending_requests: number;
 }
 
 export interface TeacherStudentListResponse {
@@ -165,6 +180,7 @@ export interface TeacherStudentListResponse {
   has_next: boolean;
   /** Şube seçicisi: durum süzgecine uyan öğrencilerde şubeler (null = şubesiz). */
   class_groups?: { class_group: string | null; count: number }[];
+  summary?: StudentListSummary;
 }
 
 export interface StudentClassGroupResult {

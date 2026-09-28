@@ -462,6 +462,33 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
 
 ---
 
+## ÖĞRENCİ LİSTESİ YENİDEN TASARIM (/teacher/students) — 2026-09-28, migration YOK
+
+- API (additive): `TeacherStudentListResponse.summary` (critical · warning
+  [medium+high] · ok · paused · inactive · pending_requests — risk süzgecinden
+  ÖNCE, diğer süzgeçlere uyar → kutudaki sayı = tıklanınca açılan liste; koç
+  panosu "Öğrencilerin durumu" ile AYNI risk_analysis) · satırda `risk_level` +
+  `week_gorev_total/done` (son 7 gün GÖREV bazlı — eski `week_pct` TEST hacmiydi,
+  kitapsız etkinlik görevlerinde hep %0 gösteriyordu; geriye uyum için duruyor) ·
+  bekleyen talep tek sorgu (satır başı sorgu kalktı). risk artık her yüklemede
+  hesaplanır (pano da öyle).
+- Web: başlık (Yeni öğrenci + "Toplu işlemler" menüsü: listeden toplu ekle /
+  listeyi indir) · 4 durum kutusu (Kritik/Uyarı/Yolunda tıkla-süz + Bekleyen talep
+  → /teacher/requests) · araç çubuğu (ikonlu arama · sınıf · şube [aria "Şube
+  filtresi"] · Aktif/Pasif/Tümü segmenti · etkin süzgeç çipleri) · masaüstü tablo
+  başlıklı (son sütun SABİT 9.5rem — `auto` başlık/satır arasında farklı genişlik
+  verip hizayı bozuyordu) · satır: risk şeridi + risk halkalı baş harf avatarı +
+  rozetler + neden satırı + Bugün/Son 7 gün barları + son giriş ("3 gün önce") +
+  "Program" + Radix ⋯ menü (profil/program/talepler/şifre/sonlandır; `modal={false}`)
+  · mobil kart düzeni · alttan yüzen toplu şube çubuğu · iskelet yükleme · boş
+  durum · sayfalama "1–25 / 43" + sayfa boyutu. `useApplyParam` + `Select`
+  filter-bar'dan export.
+- Test YENİ `scripts/live_students_list.py` **27/27** (+ `.shots/students_list_*`) ·
+  live_student_class_group 12 · teacher_students 15 · teacher_read 12 ·
+  student_class_group 15 · 5c 19.
+
+---
+
 ## TOPLU KAYIT — GİRİŞ KARTLARI (2026-09-28, frontend-only, migration YOK)
 
 - Tetikleyici: Açı Koleji 15 öğrencilik liste (e-postalar eksik — kurumdan

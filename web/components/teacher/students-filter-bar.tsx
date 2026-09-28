@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Search, X } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export interface FilterValues {
@@ -24,17 +24,9 @@ interface Props {
 }
 
 const STATUS_OPTIONS: Array<{ value: FilterValues["status"]; label: string }> = [
-  { value: "aktif", label: "Aktif öğrenciler" },
-  { value: "pasif", label: "Pasifler (koçluk sonlandırılmış)" },
+  { value: "aktif", label: "Aktif" },
+  { value: "pasif", label: "Pasif" },
   { value: "tum", label: "Tümü" },
-];
-
-const RISK_OPTIONS: Array<{ value: FilterValues["risk"]; label: string }> = [
-  { value: "all", label: "Tüm risk seviyeleri" },
-  { value: "ok", label: "Yolunda" },
-  { value: "medium", label: "Orta" },
-  { value: "high", label: "Yüksek" },
-  { value: "critical", label: "Kritik" },
 ];
 
 const GRADE_OPTIONS: Array<{ value: string; label: string }> = [
@@ -49,46 +41,23 @@ const GRADE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "12", label: "12. sınıf" },
 ];
 
-const PAGE_SIZE_OPTIONS: Array<{ value: 25 | 50 | 100; label: string }> = [
-  { value: 25, label: "25 / sayfa" },
-  { value: 50, label: "50 / sayfa" },
-  { value: 100, label: "100 / sayfa" },
-];
+const RISK_CHIP: Record<Exclude<FilterValues["risk"], "all">, string> = {
+  critical: "Kritik",
+  medium: "Uyarı",
+  high: "Yüksek risk",
+  ok: "Yolunda",
+};
 
 /**
- * Öğrenci listesi filtre çubuğu — URL search params ile senkron.
- *
- * Arama metni `useTransition` ile yumuşatılır: tetiklenen `router.replace`
- * non-urgent transition içinde — kullanıcı yazarken input bloklamaz.
- * `useDeferredValue` 300ms debounce için uygun değil; `setTimeout` ile
- * gerçek debounce uygulanır, transition input responsiveness'i korur.
- *
- * Filtre değişimleri `page` paramını silmez — `students-list-client`
- * sayfayı 1'e döndürmek için kendi mantığını kullanır (queryKey değişimi
- * pagination yi 1 yapar; client'ta `page` querystring'i temizleyenmiyoruz
- * çünkü kullanıcı geri tuşunda eski sayfaya dönebilsin).
+ * URL search param güncelleyici — filtre çubuğu, durum kutuları ve sayfalama
+ * aynı yolu kullanır. Filtre değişince sayfa 1'e döner.
  */
-export function StudentsFilterBar({ initial, classGroups = [] }: Props) {
+export function useApplyParam() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const urlQ = searchParams.get("q") ?? "";
-  const [qInput, setQInput] = React.useState(initial.q);
-  const [lastSyncedUrlQ, setLastSyncedUrlQ] = React.useState(initial.q);
-  const [, startTransition] = React.useTransition();
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // URL → input yeniden sync (geri/ileri tuşu). React 19 önerisi: "adjust
-  // state during rendering" — effect içinde setState yasak (R19 lint rule
-  // `react-hooks/set-state-in-effect`). Önceki URL değerini bir state'te
-  // tutuyoruz; sadece gerçekten değiştiğinde setQInput tetiklenir.
-  if (urlQ !== lastSyncedUrlQ) {
-    setLastSyncedUrlQ(urlQ);
-    setQInput(urlQ);
-  }
-
-  const applyParam = React.useCallback(
+  const [pending, startTransition] = React.useTransition();
+  const apply = React.useCallback(
     (mutate: (sp: URLSearchParams) => void, resetPage = true) => {
       const sp = new URLSearchParams(searchParams.toString());
       mutate(sp);
@@ -100,22 +69,41 @@ export function StudentsFilterBar({ initial, classGroups = [] }: Props) {
     },
     [pathname, router, searchParams],
   );
+  return { apply, pending };
+}
 
-  // Arama input — debounced (300ms) + transition
-  const onChangeQ = React.useCallback(
-    (v: string) => {
-      setQInput(v);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        applyParam((sp) => {
-          const trimmed = v.trim();
-          if (trimmed) sp.set("q", trimmed);
-          else sp.delete("q");
-        });
-      }, 300);
-    },
-    [applyParam],
-  );
+/**
+ * Öğrenci listesi araç çubuğu — URL search params ile senkron.
+ * Arama 300ms debounce + transition (yazarken input bloklanmaz).
+ * Risk süzgeci üstteki durum kutularındadır; burada yalnız etkin çip görünür.
+ */
+export function StudentsFilterBar({ initial, classGroups = [] }: Props) {
+  const searchParams = useSearchParams();
+  const { apply } = useApplyParam();
+
+  const urlQ = searchParams.get("q") ?? "";
+  const [qInput, setQInput] = React.useState(initial.q);
+  const [lastSyncedUrlQ, setLastSyncedUrlQ] = React.useState(initial.q);
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // URL → input yeniden sync (geri/ileri). Effect içinde setState yerine
+  // "render sırasında ayarla" deseni (react-hooks/set-state-in-effect).
+  if (urlQ !== lastSyncedUrlQ) {
+    setLastSyncedUrlQ(urlQ);
+    setQInput(urlQ);
+  }
+
+  function onChangeQ(v: string) {
+    setQInput(v);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      apply((sp) => {
+        const trimmed = v.trim();
+        if (trimmed) sp.set("q", trimmed);
+        else sp.delete("q");
+      });
+    }, 300);
+  }
 
   React.useEffect(() => {
     return () => {
@@ -123,46 +111,17 @@ export function StudentsFilterBar({ initial, classGroups = [] }: Props) {
     };
   }, []);
 
-  function onChangeGrade(v: string) {
-    applyParam((sp) => {
-      if (v) sp.set("grade_level", v);
-      else sp.delete("grade_level");
+  const setParam = (key: string, v: string, def = "") =>
+    apply((sp) => {
+      if (v && v !== def) sp.set(key, v);
+      else sp.delete(key);
     });
-  }
-
-  function onChangeGroup(v: string) {
-    applyParam((sp) => {
-      if (v) sp.set("class_group", v);
-      else sp.delete("class_group");
-    });
-  }
-
-  function onChangeRisk(v: FilterValues["risk"]) {
-    applyParam((sp) => {
-      if (v && v !== "all") sp.set("risk", v);
-      else sp.delete("risk");
-    });
-  }
-
-  function onChangeStatus(v: FilterValues["status"]) {
-    applyParam((sp) => {
-      if (v && v !== "aktif") sp.set("status", v);
-      else sp.delete("status");
-    });
-  }
-
-  function onChangePageSize(v: number) {
-    applyParam((sp) => {
-      if (v === 25) sp.delete("page_size");
-      else sp.set("page_size", String(v));
-    });
-  }
 
   function onClear() {
     setQInput("");
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    startTransition(() => {
-      router.replace(pathname, { scroll: false });
+    apply((sp) => {
+      for (const k of ["q", "grade_level", "class_group", "risk", "status", "page_size"]) sp.delete(k);
     });
   }
 
@@ -171,84 +130,150 @@ export function StudentsFilterBar({ initial, classGroups = [] }: Props) {
     !!initial.grade_level ||
     !!initial.class_group ||
     initial.risk !== "all" ||
-    initial.status !== "aktif" ||
-    initial.page_size !== 25;
+    initial.status !== "aktif";
+
+  const showGroups = classGroups.some((g) => g.class_group) || !!initial.class_group;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <Input
-        type="search"
-        placeholder="Ad veya e-posta…"
-        value={qInput}
-        onChange={(e) => onChangeQ(e.target.value)}
-        className="w-full sm:w-64"
-        aria-label="Öğrenci ara"
-      />
-      <Select
-        value={initial.status}
-        onChange={(v) => onChangeStatus(v as FilterValues["status"])}
-        options={STATUS_OPTIONS as Array<{ value: string; label: string }>}
-        ariaLabel="Durum filtresi"
-      />
-      <Select
-        value={initial.grade_level}
-        onChange={onChangeGrade}
-        options={GRADE_OPTIONS}
-        ariaLabel="Sınıf filtresi"
-      />
-      {classGroups.some((g) => g.class_group) || initial.class_group ? (
-        <Select
-          value={initial.class_group}
-          onChange={onChangeGroup}
-          options={[
-            { value: "", label: "Tüm şubeler" },
-            ...classGroups.map((g) => ({
-              value: g.class_group ?? "__none__",
-              label: `${g.class_group ?? "Şubesiz"} (${g.count})`,
-            })),
-            ...(initial.class_group &&
-            !classGroups.some((g) => (g.class_group ?? "__none__") === initial.class_group)
-              ? [{ value: initial.class_group, label: initial.class_group === "__none__" ? "Şubesiz" : initial.class_group }]
-              : []),
-          ]}
-          ariaLabel="Şube filtresi"
-        />
-      ) : null}
-      <Select
-        value={initial.risk}
-        onChange={(v) => onChangeRisk(v as FilterValues["risk"])}
-        options={RISK_OPTIONS as Array<{ value: string; label: string }>}
-        ariaLabel="Risk filtresi"
-      />
-      <Select
-        value={String(initial.page_size)}
-        onChange={(v) => onChangePageSize(Number(v))}
-        options={PAGE_SIZE_OPTIONS.map((o) => ({ value: String(o.value), label: o.label }))}
-        ariaLabel="Sayfa boyutu"
-      />
+    <div className="space-y-2">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <div className="relative lg:w-80">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            type="search"
+            placeholder="Ad veya e-posta ile ara"
+            value={qInput}
+            onChange={(e) => onChangeQ(e.target.value)}
+            aria-label="Öğrenci ara"
+            className={cn(
+              "h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm",
+              "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            )}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={initial.grade_level}
+            onChange={(v) => setParam("grade_level", v)}
+            options={GRADE_OPTIONS}
+            ariaLabel="Sınıf filtresi"
+          />
+          {showGroups ? (
+            <Select
+              value={initial.class_group}
+              onChange={(v) => setParam("class_group", v)}
+              options={[
+                { value: "", label: "Tüm şubeler" },
+                ...classGroups.map((g) => ({
+                  value: g.class_group ?? "__none__",
+                  label: `${g.class_group ?? "Şubesiz"} (${g.count})`,
+                })),
+                ...(initial.class_group &&
+                !classGroups.some((g) => (g.class_group ?? "__none__") === initial.class_group)
+                  ? [{ value: initial.class_group, label: initial.class_group === "__none__" ? "Şubesiz" : initial.class_group }]
+                  : []),
+              ]}
+              ariaLabel="Şube filtresi"
+            />
+          ) : null}
+          <div
+            role="radiogroup"
+            aria-label="Durum filtresi"
+            className="inline-flex h-10 items-center rounded-lg border border-input bg-muted/60 p-1"
+          >
+            {STATUS_OPTIONS.map((o) => {
+              const on = initial.status === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setParam("status", o.value, "aktif")}
+                  className={cn(
+                    "h-8 rounded-md px-3 text-sm transition-colors",
+                    on
+                      ? "bg-background font-medium text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {hasAnyFilter ? (
-        <button
-          type="button"
-          onClick={onClear}
-          className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
-        >
-          Filtreleri temizle
-        </button>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Etkin süzgeçler:</span>
+          {initial.q ? <Chip label={`“${initial.q}”`} onRemove={() => { setQInput(""); setParam("q", ""); }} /> : null}
+          {initial.grade_level ? (
+            <Chip
+              label={GRADE_OPTIONS.find((g) => g.value === initial.grade_level)?.label ?? initial.grade_level}
+              onRemove={() => setParam("grade_level", "")}
+            />
+          ) : null}
+          {initial.class_group ? (
+            <Chip
+              label={`Şube: ${initial.class_group === "__none__" ? "Şubesiz" : initial.class_group}`}
+              onRemove={() => setParam("class_group", "")}
+            />
+          ) : null}
+          {initial.risk !== "all" ? (
+            <Chip label={RISK_CHIP[initial.risk]} onRemove={() => setParam("risk", "")} />
+          ) : null}
+          {initial.status !== "aktif" ? (
+            <Chip
+              label={initial.status === "pasif" ? "Pasifler" : "Tüm durumlar"}
+              onRemove={() => setParam("status", "")}
+            />
+          ) : null}
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Tümünü temizle
+          </button>
+        </div>
       ) : null}
     </div>
   );
 }
 
-function Select({
+function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-slate-700 py-0.5 pl-2.5 pr-1 font-medium text-white">
+      {label}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`${label} süzgecini kaldır`}
+        className="rounded-full p-0.5 hover:bg-white/20"
+      >
+        <X className="size-3" aria-hidden />
+      </button>
+    </span>
+  );
+}
+
+export function Select({
   value,
   onChange,
   options,
   ariaLabel,
+  className,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: Array<{ value: string; label: string }>;
   ariaLabel: string;
+  className?: string;
 }) {
   return (
     <select
@@ -256,8 +281,9 @@ function Select({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={cn(
-        "h-9 rounded-md border border-input bg-background px-2 text-sm",
+        "h-10 rounded-lg border border-input bg-background px-3 text-sm",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        className,
       )}
     >
       {options.map((o) => (

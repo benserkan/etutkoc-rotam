@@ -117,9 +117,27 @@ class TeacherStudentListItem(BaseModel):
     today_completed: int
     today_gorev_total: int = 0          # bugünkü GÖREV sayısı (etkinlik dahil)
     today_gorev_done: int = 0
-    week_pct: float                     # 0..1
+    week_pct: float                     # 0..1 (TEST hacmi — geriye uyum)
+    # Son 7 gün (bugün dahil) GÖREV tamamlama — etkinlik görevleri dahil.
+    week_gorev_total: int = 0
+    week_gorev_done: int = 0
 
     has_pending_request: bool
+    # risk_analysis seviyesi — özet kutuları + risk filtresi + koç panosundaki
+    # "Öğrencilerin durumu" kartıyla AYNI sistem (critical | warning | ok).
+    # Pasif öğrencide None. Mola/sessize alınmış → ok.
+    risk_level: str | None = None
+
+
+class StudentListSummary(BaseModel):
+    """Liste üstü durum özeti — risk filtresi HARİÇ diğer süzgeçlere uyar
+    (kutuya tıklayınca açılan liste = kutudaki sayı)."""
+    critical: int = 0          # risk=critical
+    warning: int = 0           # risk=medium+high
+    ok: int = 0                # risk=ok (mola dahil)
+    paused: int = 0            # mola modundaki aktif öğrenci
+    inactive: int = 0          # koçluğu sonlandırılmış
+    pending_requests: int = 0  # bekleyen görev talebi olan öğrenci
 
 
 class ClassGroupCount(BaseModel):
@@ -137,6 +155,7 @@ class TeacherStudentListResponse(BaseModel):
     # Şube seçicisi: durum süzgecine uyan öğrencilerde şubeler + sayılar
     # (şube/sınıf/arama süzgecinden BAĞIMSIZ — seçici daralmasın).
     class_groups: list[ClassGroupCount] = []
+    summary: StudentListSummary = StudentListSummary()
 
 
 class StudentClassGroupBody(BaseModel):

@@ -318,6 +318,7 @@ from app.routes.api_v2.schemas.teacher import (
     TeacherStudentDetailResponse,
     TeacherStudentListItem,
     TeacherStudentListResponse,
+    StudentListSummary,
     ClassGroupCount,
     StudentClassGroupBody,
     StudentClassGroupResult,
@@ -747,10 +748,11 @@ def teacher_students_v2(
     students = base_q.order_by(User.full_name).all()
     today = date.today()
 
-    # Risk filtresi: snapshot/risk hesabı gerek
+    # Risk seviyesi: özet kutuları + risk filtresi + satır işareti için HER
+    # zaman hesaplanır (koç panosu da her açılışta aynı hesabı yapar).
     risk_levels_by_id: dict[int, str] = {}
-    if risk_norm != "all":
-        actives = [s for s in students if s.is_active]
+    actives = [s for s in students if s.is_active]
+    if actives:
         muted_ids = get_active_mutes(db, user.id)
         # bulk_risk_assessment yalnız aktiflere çalışır; pasifler "ok" sayılır
         assessments = bulk_risk_assessment(db, students=actives, today=today)
@@ -760,6 +762,30 @@ def teacher_students_v2(
                 risk_levels_by_id[a.student.id] = "ok"
             else:
                 risk_levels_by_id[a.student.id] = a.level
+
+    # Bekleyen talebi olan öğrenciler — tek sorgu (satır başına sorgu yerine)
+    _all_ids = [s.id for s in students]
+    pending_ids: set[int] = set()
+    if _all_ids:
+        pending_ids = {
+            sid for (sid,) in db.query(TaskRequest.student_id)
+            .filter(TaskRequest.student_id.in_(_all_ids),
+                    TaskRequest.status == RequestStatus.PENDING)
+            .distinct()
+            .all()
+        }
+
+    # Özet — risk filtresinden ÖNCE (kutudaki sayı = tıklanınca açılan liste)
+    summary = StudentListSummary(
+        critical=sum(1 for s in actives if risk_levels_by_id.get(s.id, "ok") == "critical"),
+        warning=sum(1 for s in actives if risk_levels_by_id.get(s.id, "ok") in ("medium", "high")),
+        ok=sum(1 for s in actives if risk_levels_by_id.get(s.id, "ok") == "ok"),
+        paused=sum(1 for s in actives if s.is_paused),
+        inactive=sum(1 for s in students if not s.is_active),
+        pending_requests=sum(1 for s in students if s.id in pending_ids),
+    )
+
+    if risk_norm != "all":
         # pasif olanlar zaten 'ok' kabul. "Uyarı" kartı (fleet_amber) medium+high
         # sayıyor → ?risk=medium drilldown'u da high'ı kapsamalı (kart=liste).
         _match = {"medium", "high"} if risk_norm == "medium" else {risk_norm}
@@ -783,15 +809,22 @@ def teacher_students_v2(
     from app.services import gorev_stats
     _page_ids = [s.id for s in page_students]
     _today_by_student: dict[int, list] = {}
+    # Son 7 gün (bugün dahil) — görev-bazlı tamamlama (etkinlik görevi dahil;
+    # test hacmi olan week_pct kitapsız görevleri hiç saymıyordu).
+    _week_by_student: dict[int, list] = {}
     if _page_ids:
-        _all_today = (
+        _all_week = (
             db.query(Task)
             .options(joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject))
-            .filter(Task.student_id.in_(_page_ids), Task.date == today, Task.is_draft.is_(False))
+            .filter(Task.student_id.in_(_page_ids),
+                    Task.date >= today - timedelta(days=6), Task.date <= today,
+                    Task.is_draft.is_(False))
             .all()
         )
-        for _t in _all_today:
-            _today_by_student.setdefault(_t.student_id, []).append(_t)
+        for _t in _all_week:
+            _week_by_student.setdefault(_t.student_id, []).append(_t)
+            if _t.date == today:
+                _today_by_student.setdefault(_t.student_id, []).append(_t)
 
     _wrank = {"red": 0, "amber": 1, "green": 2}
     items: list[TeacherStudentListItem] = []
@@ -807,6 +840,7 @@ def teacher_students_v2(
             ww = min(sn.warnings, key=lambda x: _wrank.get(x.level, 9))
             ww_title, ww_detail = ww.title, ww.detail
         _g = gorev_stats.summarize(_today_by_student.get(s.id, []))
+        _gw = gorev_stats.summarize(_week_by_student.get(s.id, []))
         items.append(TeacherStudentListItem(
             id=s.id,
             full_name=s.full_name,
@@ -824,7 +858,14 @@ def teacher_students_v2(
             today_gorev_total=_g.gorev_total,
             today_gorev_done=_g.gorev_done,
             week_pct=week_pct,
-            has_pending_request=_has_pending_request_for_student(db, s.id),
+            week_gorev_total=_gw.gorev_total,
+            week_gorev_done=_gw.gorev_done,
+            has_pending_request=s.id in pending_ids,
+            risk_level=(
+                None if not s.is_active else
+                {"critical": "critical", "medium": "warning", "high": "warning"}.get(
+                    risk_levels_by_id.get(s.id, "ok"), "ok")
+            ),
         ))
 
     return TeacherStudentListResponse(
@@ -834,6 +875,7 @@ def teacher_students_v2(
         page_size=page_size,
         has_next=end < total,
         class_groups=group_counts,
+        summary=summary,
     )
 
 
