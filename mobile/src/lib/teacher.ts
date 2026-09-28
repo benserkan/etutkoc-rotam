@@ -12,6 +12,8 @@ export interface TeacherStudentListItem {
   grade_level: number | null;
   is_active: boolean;
   last_login_at: string | null;
+  /** Şube ("10-A") */
+  class_group?: string | null;
   worst_warning_level: WarningLevel;
   worst_warning_title: string | null;
   worst_warning_detail: string | null;

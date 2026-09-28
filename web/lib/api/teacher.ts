@@ -97,6 +97,7 @@ export const teacherKeys = {
       // gösterip "filtre çalışmıyor" görünüyordu (2026-08-11 saha bulgusu)
       params.status ?? "tum",
       params.grade_level ?? "",
+      params.class_group ?? "",
       String(params.page ?? 1),
       String(params.page_size ?? 25),
     ] as const,
@@ -276,6 +277,8 @@ export interface TeacherStudentsListParams {
   risk?: "all" | "ok" | "medium" | "high" | "critical";
   /** aktif / pasif / tum — verilmezse backend "tum" (geriye uyum). */
   status?: "aktif" | "pasif" | "tum";
+  /** Şube; "__none__" = şubesiz öğrenciler */
+  class_group?: string;
   page?: number;
   page_size?: number;
 }
@@ -445,6 +448,7 @@ export function getTeacherStudents(
     grade_level: params.grade_level,
     risk: params.risk,
     status: params.status,
+    class_group: params.class_group,
     page: params.page,
     page_size: params.page_size,
   });

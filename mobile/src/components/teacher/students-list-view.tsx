@@ -16,7 +16,9 @@ const WARN: Record<WarningLevel, { border: string; dot: string }> = {
 function StudentRow({ s, onPress }: { s: TeacherStudentListItem; onPress: () => void }) {
   const w = WARN[s.worst_warning_level];
   const pct = Math.round((s.week_pct ?? 0) * 100);
-  const grade = s.grade_level != null ? `${s.grade_level}. sınıf` : "";
+  const grade = [s.grade_level != null ? `${s.grade_level}. sınıf` : "", s.class_group ? `Şube ${s.class_group}` : ""]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <Pressable
       onPress={onPress}

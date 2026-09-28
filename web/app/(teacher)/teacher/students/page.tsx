@@ -53,11 +53,13 @@ export default async function TeacherStudentsPage({ searchParams }: PageProps) {
   const status: FilterValues["status"] =
     statusRaw === "pasif" || statusRaw === "tum" ? statusRaw : "aktif";
 
+  const classGroup = (firstStr(sp.class_group) ?? "").slice(0, 60);
   const initialFilters: FilterValues = {
     q,
     grade_level: grade,
     risk,
     status,
+    class_group: classGroup,
     page_size: pageSize,
   };
 
@@ -65,6 +67,7 @@ export default async function TeacherStudentsPage({ searchParams }: PageProps) {
   if (q) qs.set("q", q);
   if (risk !== "all") qs.set("risk", risk);
   qs.set("status", status);
+  if (classGroup) qs.set("class_group", classGroup);
   const gradeNum = toInt(grade);
   if (gradeNum !== undefined) qs.set("grade_level", String(gradeNum));
   if (page > 1) qs.set("page", String(page));

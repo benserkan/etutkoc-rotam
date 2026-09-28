@@ -144,6 +144,8 @@ export interface TeacherStudentListItem {
   is_active: boolean;
   is_paused?: boolean;        // mola modu (takip duraklatıldı)
   last_login_at: string | null;
+  /** Şube ("10-A") — süzme + toplu işlem anahtarı. */
+  class_group?: string | null;
   worst_warning_level: WarningLevel;
   worst_warning_title: string | null;
   worst_warning_detail: string | null;
@@ -161,6 +163,14 @@ export interface TeacherStudentListResponse {
   page: number;
   page_size: number;
   has_next: boolean;
+  /** Şube seçicisi: durum süzgecine uyan öğrencilerde şubeler (null = şubesiz). */
+  class_groups?: { class_group: string | null; count: number }[];
+}
+
+export interface StudentClassGroupResult {
+  updated_count: number;
+  class_group: string | null;
+  skipped_invalid_ids: number[];
 }
 
 export interface StudentBriefProfile {
@@ -171,6 +181,7 @@ export interface StudentBriefProfile {
   is_active: boolean;
   is_paused?: boolean;        // mola modu (takip duraklatıldı — yaz molası)
   is_graduate: boolean;
+  class_group?: string | null;
   institution_id: number | null;
   teacher_id: number | null;
   last_login_at: string | null;
@@ -1254,6 +1265,7 @@ export interface StudentCreateBody {
   track?: Track | null;
   graduate_mode?: GraduateMode | null;
   academic_year_id?: number | null;
+  class_group?: string | null;
 }
 
 export interface StudentPatchBody {
@@ -1264,6 +1276,8 @@ export interface StudentPatchBody {
   track?: Track | null;
   graduate_mode?: GraduateMode | null;
   academic_year_id?: number | null;
+  /** "" = şubeyi kaldır · alan yok = değişmez */
+  class_group?: string | null;
 }
 
 export interface StudentCreateResult {

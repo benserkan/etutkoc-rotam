@@ -509,6 +509,24 @@ seçili öğrencilere kopyala → (4) şube kavramı (liste süzme + toplu işle
   **15/15** · YENİ `live_skeleton_copy.py` **9/9** · weekly_skeleton 27 ·
   periods 10 · routine 17 · problems 21 · topic_spread 9 · live_skeleton_periods
   6 · live_weekly_skeleton 14; tsc + eslint temiz.
+- **4 — ŞUBE KAVRAMI: LİSTE SÜZME + TOPLU ATAMA (migration YOK — kolon 1. maddede
+  eklendi):** GET `/teacher/students` +`class_group` süzgeci ('__none__' = şubesiz)
+  + yanıtta `class_groups[]` (şube + sayı; durum süzgecine uyar ama şube/sınıf/
+  arama süzgecinden BAĞIMSIZ → seçici daralmaz; sıra 9-A < 10-A < 10-B < şubesiz) ·
+  satırda `class_group` · YENİ POST `/teacher/students/class-group` {student_ids ≤500,
+  class_group; "" = kaldır; yabancı öğrenci skipped_invalid} · `normalize_class_group`
+  (boşluk tekilleşir, 60 karakter) · öğrenci oluştur + PATCH `class_group` (PATCH'te
+  alan yoksa değişmez) · profil yanıtında şube. Web: filtre çubuğunda "Şube
+  filtresi" (URL `?class_group=`), satır başı onay kutusu + "bu sayfadakilerin
+  tümünü seç", seçim varken şube çubuğu (datalist önerili "Şubeye al" / "Şubeyi
+  kaldır"), satırda dolgulu şube rozeti, ad/e-posta artık KIRPILMAZ (sarar),
+  Profili Düzenle + Yeni öğrenci penceresinde "Şube / grup" alanı, başlıkta
+  "Şube X". Mobil öğrenci listesinde sınıf satırına "Şube X" (JS-only → OTA).
+  Kitap seti uygula + iskelet kopyala pencereleri zaten şubeye göre gruplu.
+  Test YENİ `test_api_v2_student_class_group.py` **15/15** · YENİ
+  `live_student_class_group.py` **12/12** (kontrast + 390px) · teacher_students 15 ·
+  teacher_read 12 · academic_csv 14 · csv_import_institution 15 · skeleton_copy 15;
+  tsc + eslint temiz. **4 MADDE TAMAMLANDI.**
 
 ---
 

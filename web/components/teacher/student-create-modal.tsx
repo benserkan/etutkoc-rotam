@@ -128,6 +128,7 @@ function CreateForm({
   const [isGraduate, setIsGraduate] = React.useState(false);
   const [track, setTrack] = React.useState<Track | "">("");
   const [graduateMode, setGraduateMode] = React.useState<GraduateMode | "">("");
+  const [classGroup, setClassGroup] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
 
   const trackRequired = isGraduate || Number(grade) >= 11;
@@ -165,6 +166,7 @@ function CreateForm({
       is_graduate: isGraduate,
       track: track || null,
       graduate_mode: isGraduate ? graduateMode || null : null,
+      class_group: classGroup.trim() || null,
     });
   }
 
@@ -177,6 +179,16 @@ function CreateForm({
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="cs-group">Şube / grup (isteğe bağlı)</Label>
+        <Input
+          id="cs-group"
+          value={classGroup}
+          maxLength={60}
+          onChange={(e) => setClassGroup(e.target.value)}
+          placeholder="örn. 10-A"
         />
       </div>
       <div className="space-y-1">

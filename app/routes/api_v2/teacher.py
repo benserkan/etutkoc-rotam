@@ -318,6 +318,9 @@ from app.routes.api_v2.schemas.teacher import (
     TeacherStudentDetailResponse,
     TeacherStudentListItem,
     TeacherStudentListResponse,
+    ClassGroupCount,
+    StudentClassGroupBody,
+    StudentClassGroupResult,
     TeacherActivePhase,
     TeacherDaySubjectSummary,
     TeacherStudentWeekDay,
@@ -481,6 +484,7 @@ def _build_brief_profile(student: User) -> StudentBriefProfile:
         is_active=bool(student.is_active),
         is_paused=bool(getattr(student, "is_paused", False)),
         is_graduate=bool(getattr(student, "is_graduate", False)),
+        class_group=student.class_group,
         institution_id=student.institution_id,
         teacher_id=student.teacher_id,
         last_login_at=student.last_login_at,
@@ -677,6 +681,9 @@ def teacher_students_v2(
         None, alias="status", pattern="^(aktif|pasif|tum)$",
         description="aktif / pasif / tum (verilmezse tum — geriye uyum)",
     ),
+    class_group: str | None = Query(
+        None, max_length=60, description="Şube; '__none__' = şubesiz öğrenciler",
+    ),
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100),
     user: User = Depends(_require_teacher),
@@ -711,6 +718,20 @@ def teacher_students_v2(
         base_q = base_q.filter(User.is_active.is_(True))
     elif status_filter == "pasif":
         base_q = base_q.filter(User.is_active.is_(False))
+    # Şube seçicisi sayımı — şube/sınıf/arama süzgecinden ÖNCE (seçici daralmasın)
+    group_counts = [
+        ClassGroupCount(class_group=g, count=int(n))
+        for g, n in (
+            base_q.with_entities(User.class_group, func.count(User.id))
+            .group_by(User.class_group)
+            .all()
+        )
+    ]
+    group_counts.sort(key=lambda x: (x.class_group is None, _group_sort_key(x.class_group)))
+    if class_group == "__none__":
+        base_q = base_q.filter(User.class_group.is_(None))
+    elif class_group:
+        base_q = base_q.filter(User.class_group == normalize_class_group(class_group))
     if grade_level is not None:
         base_q = base_q.filter(User.grade_level == grade_level)
     if q:
@@ -794,6 +815,7 @@ def teacher_students_v2(
             is_active=bool(s.is_active),
             is_paused=bool(s.is_paused),
             last_login_at=s.last_login_at,
+            class_group=s.class_group,
             worst_warning_level=(sn.worst_warning_level if sn else "green"),
             worst_warning_title=ww_title,
             worst_warning_detail=ww_detail,
@@ -811,6 +833,58 @@ def teacher_students_v2(
         page=page,
         page_size=page_size,
         has_next=end < total,
+        class_groups=group_counts,
+    )
+
+
+def normalize_class_group(v: str | None) -> str | None:
+    """Şube adını sadeleştirir: boşluklar tekilleşir, en fazla 60 karakter;
+    boş → None."""
+    s = " ".join((v or "").split())[:60]
+    return s or None
+
+
+def _group_sort_key(v: str | None) -> tuple:
+    """'9-A' < '10-A' < '10-B' < 'Mezun' — sayı önekini sayı olarak sırala."""
+    import re as _re
+
+    s = v or ""
+    m = _re.match(r"^(\d+)(.*)$", s)
+    return (0, int(m.group(1)), m.group(2).lower()) if m else (1, 0, s.lower())
+
+
+@router.post(
+    "/students/class-group",
+    response_model=MutationResponse[StudentClassGroupResult],
+)
+def teacher_students_class_group_v2(
+    body: StudentClassGroupBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Seçili öğrencileri bir şubeye ata (boş = şubeyi kaldır). Yalnız koçun
+    kendi öğrencileri; diğerleri skipped_invalid_ids."""
+    ids = list(dict.fromkeys(int(x) for x in (body.student_ids or [])))
+    if len(ids) > 500:
+        raise _validation_error("too_many_students", "Tek seferde en fazla 500 öğrenci.")
+    grp = normalize_class_group(body.class_group)
+    rows = (
+        db.query(User)
+        .filter(User.teacher_id == user.id, User.role == UserRole.STUDENT,
+                User.id.in_(ids or [0]))
+        .all()
+    )
+    found = {u.id for u in rows}
+    for u in rows:
+        u.class_group = grp
+    db.commit()
+    keys = [f"teacher:{user.id}:students"]
+    return MutationResponse[StudentClassGroupResult](
+        data=StudentClassGroupResult(
+            updated_count=len(rows), class_group=grp,
+            skipped_invalid_ids=[i for i in ids if i not in found],
+        ),
+        invalidate=keys,
     )
 
 
@@ -6712,6 +6786,7 @@ def teacher_create_student_v2(
         is_graduate=is_graduate,
         track=track_enum,
         graduate_mode=grad_mode_enum,
+        class_group=normalize_class_group(body.class_group),
         must_change_password=True,  # ilk girişte geçici parolayı değiştirmek ZORUNLU
     )
     db.add(student)
@@ -6857,6 +6932,8 @@ def teacher_patch_student_v2(
     student.track = new_track
     student.graduate_mode = new_grad_mode if new_is_graduate else None
     student.academic_year_id = new_year_id
+    if body.class_group is not None:
+        student.class_group = normalize_class_group(body.class_group)
 
     # Dönem damgası (P2) — profil düzeltmesi YENİ DÖNEM AÇMAZ: burada sınıf
     # değişimi "yanlış girilmiş bilgiyi düzeltme" demektir. Yeni öğretim yılına

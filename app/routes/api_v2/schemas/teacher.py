@@ -107,6 +107,7 @@ class TeacherStudentListItem(BaseModel):
     is_active: bool
     is_paused: bool = False             # mola modu (takip duraklatıldı — uyarı susar)
     last_login_at: datetime | None
+    class_group: str | None = None      # şube ("10-A") — süzme + toplu işlem anahtarı
 
     # Hızlı durum göstergeleri (StudentSnapshot'tan üretilir)
     worst_warning_level: WarningLevelLiteral
@@ -121,6 +122,11 @@ class TeacherStudentListItem(BaseModel):
     has_pending_request: bool
 
 
+class ClassGroupCount(BaseModel):
+    class_group: str | None             # None = şubesiz
+    count: int
+
+
 class TeacherStudentListResponse(BaseModel):
     """GET /api/v2/teacher/students"""
     items: list[TeacherStudentListItem]
@@ -128,6 +134,22 @@ class TeacherStudentListResponse(BaseModel):
     page: int
     page_size: int
     has_next: bool
+    # Şube seçicisi: durum süzgecine uyan öğrencilerde şubeler + sayılar
+    # (şube/sınıf/arama süzgecinden BAĞIMSIZ — seçici daralmasın).
+    class_groups: list[ClassGroupCount] = []
+
+
+class StudentClassGroupBody(BaseModel):
+    """POST /teacher/students/class-group — seçili öğrencileri şubeye ata.
+    Boş string şubeyi kaldırır."""
+    student_ids: list[int]
+    class_group: str
+
+
+class StudentClassGroupResult(BaseModel):
+    updated_count: int
+    class_group: str | None
+    skipped_invalid_ids: list[int]
 
 
 # =============================================================================
@@ -143,6 +165,7 @@ class StudentBriefProfile(BaseModel):
     is_active: bool
     is_paused: bool = False             # mola modu (takip duraklatıldı — uyarı susar)
     is_graduate: bool
+    class_group: str | None = None
     institution_id: int | None
     teacher_id: int | None
     last_login_at: datetime | None
@@ -1336,6 +1359,7 @@ class StudentCreateBody(BaseModel):
     track: TrackLiteral | None = None
     graduate_mode: GraduateModeLiteral | None = None
     academic_year_id: int | None = None
+    class_group: str | None = None
 
 
 class StudentPatchBody(BaseModel):
@@ -1347,6 +1371,7 @@ class StudentPatchBody(BaseModel):
     track: TrackLiteral | None = None
     graduate_mode: GraduateModeLiteral | None = None
     academic_year_id: int | None = None
+    class_group: str | None = None   # None = değişmez · "" = şubeyi kaldır
 
 
 class StudentCreateResult(BaseModel):

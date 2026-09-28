@@ -13,11 +13,14 @@ export interface FilterValues {
   /** Varsayılan "aktif" — pasifler (pratik/eski kayıtlar) listeyi
    *  kalabalıklaştırmasın; filtreyle açılır (2026-08-11 saha isteği). */
   status: "aktif" | "pasif" | "tum";
+  /** "" = tüm şubeler · "__none__" = şubesiz · diğer = şube adı */
+  class_group: string;
   page_size: 25 | 50 | 100;
 }
 
 interface Props {
   initial: FilterValues;
+  classGroups?: { class_group: string | null; count: number }[];
 }
 
 const STATUS_OPTIONS: Array<{ value: FilterValues["status"]; label: string }> = [
@@ -65,7 +68,7 @@ const PAGE_SIZE_OPTIONS: Array<{ value: 25 | 50 | 100; label: string }> = [
  * pagination yi 1 yapar; client'ta `page` querystring'i temizleyenmiyoruz
  * çünkü kullanıcı geri tuşunda eski sayfaya dönebilsin).
  */
-export function StudentsFilterBar({ initial }: Props) {
+export function StudentsFilterBar({ initial, classGroups = [] }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -127,6 +130,13 @@ export function StudentsFilterBar({ initial }: Props) {
     });
   }
 
+  function onChangeGroup(v: string) {
+    applyParam((sp) => {
+      if (v) sp.set("class_group", v);
+      else sp.delete("class_group");
+    });
+  }
+
   function onChangeRisk(v: FilterValues["risk"]) {
     applyParam((sp) => {
       if (v && v !== "all") sp.set("risk", v);
@@ -159,6 +169,7 @@ export function StudentsFilterBar({ initial }: Props) {
   const hasAnyFilter =
     !!initial.q ||
     !!initial.grade_level ||
+    !!initial.class_group ||
     initial.risk !== "all" ||
     initial.status !== "aktif" ||
     initial.page_size !== 25;
@@ -185,6 +196,24 @@ export function StudentsFilterBar({ initial }: Props) {
         options={GRADE_OPTIONS}
         ariaLabel="Sınıf filtresi"
       />
+      {classGroups.some((g) => g.class_group) || initial.class_group ? (
+        <Select
+          value={initial.class_group}
+          onChange={onChangeGroup}
+          options={[
+            { value: "", label: "Tüm şubeler" },
+            ...classGroups.map((g) => ({
+              value: g.class_group ?? "__none__",
+              label: `${g.class_group ?? "Şubesiz"} (${g.count})`,
+            })),
+            ...(initial.class_group &&
+            !classGroups.some((g) => (g.class_group ?? "__none__") === initial.class_group)
+              ? [{ value: initial.class_group, label: initial.class_group === "__none__" ? "Şubesiz" : initial.class_group }]
+              : []),
+          ]}
+          ariaLabel="Şube filtresi"
+        />
+      ) : null}
       <Select
         value={initial.risk}
         onChange={(v) => onChangeRisk(v as FilterValues["risk"])}

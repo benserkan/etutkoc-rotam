@@ -532,6 +532,11 @@ function BadgeRow({
           <span>{profile.display_grade_label}</span>
         </>
       ) : null}
+      {profile.class_group ? (
+        <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[11px] font-medium text-white">
+          Şube {profile.class_group}
+        </span>
+      ) : null}
 
       {profile.track_label ? (
         <Pill tone="indigo">{profile.track_label}</Pill>
@@ -1405,6 +1410,7 @@ function EditStudentProfileDialogInner({
   const [gradMode, setGradMode] = React.useState<string>(
     profile.graduate_mode ?? "",
   );
+  const [classGroup, setClassGroup] = React.useState(profile.class_group ?? "");
   const mut = usePatchStudent(studentId);
 
   const isGraduate = gradeValue === "mezun";
@@ -1427,6 +1433,8 @@ function EditStudentProfileDialogInner({
       body.track = track as Track;
     if (isGraduate && gradMode && gradMode !== (profile.graduate_mode ?? ""))
       body.graduate_mode = gradMode as GraduateMode;
+    if (classGroup.trim() !== (profile.class_group ?? ""))
+      body.class_group = classGroup.trim();
     if (Object.keys(body).length === 0) {
       onClose();
       return;
@@ -1535,6 +1543,23 @@ function EditStudentProfileDialogInner({
                 </select>
               </div>
             ) : null}
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1.5">
+              Şube / grup
+            </label>
+            <input
+              type="text"
+              value={classGroup}
+              maxLength={60}
+              onChange={(e) => setClassGroup(e.target.value)}
+              placeholder="örn. 10-A (boş bırakılabilir)"
+              className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              Öğrenci listesinde şubeye göre süzmek ve kitap seti / iskelet
+              kopyalarken şubeyi topluca seçmek için.
+            </p>
           </div>
           {gradeValue !== initialGradeValue ? (
             <p className="text-[11px] text-amber-700 dark:text-amber-300">

@@ -333,7 +333,7 @@ def export_students(
 
     rows: list[list[str]] = [[
         "id", "full_name", "email", "grade_level", "is_graduate",
-        "track", "graduate_mode", "academic_year",
+        "track", "graduate_mode", "academic_year", "class_group", "phone",
     ]]
     for s in students:
         rows.append([
@@ -345,6 +345,8 @@ def export_students(
             s.track.value if s.track else "",
             s.graduate_mode.value if s.graduate_mode else "",
             s.academic_year.name if s.academic_year else "",
+            s.class_group or "",
+            s.phone or "",
         ])
     return _csv_response(rows, "ogrenciler.csv")
 

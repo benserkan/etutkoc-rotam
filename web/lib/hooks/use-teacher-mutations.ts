@@ -2336,3 +2336,30 @@ export function useNotifyParentsExam(studentId: number) {
     },
   });
 }
+
+
+/** Seçili öğrencileri bir şubeye ata ("" = şubeyi kaldır). */
+export function useSetStudentsClassGroup() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<import("@/lib/types/teacher").StudentClassGroupResult>,
+    ApiError,
+    { studentIds: number[]; classGroup: string }
+  >({
+    mutationFn: ({ studentIds, classGroup }) =>
+      api("/api/v2/teacher/students/class-group", {
+        method: "POST",
+        body: JSON.stringify({ student_ids: studentIds, class_group: classGroup }),
+      }),
+    onError: (e) => toast.error("Şube atanamadı", { description: e.message }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const r = res.data;
+      toast.success(
+        r.class_group
+          ? `${r.updated_count} öğrenci “${r.class_group}” şubesine alındı`
+          : `${r.updated_count} öğrencinin şubesi kaldırıldı`,
+      );
+    },
+  });
+}

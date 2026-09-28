@@ -19,6 +19,7 @@ import {
   useDeactivateStudent,
   useReactivateStudent,
   useResetStudentPassword,
+  useSetStudentsClassGroup,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
   StudentResetPasswordResult,
@@ -64,10 +65,11 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
         : undefined,
       risk: filters.risk,
       status: filters.status,
+      class_group: filters.class_group || undefined,
       page,
       page_size: filters.page_size,
     }),
-    [filters.q, filters.grade_level, filters.risk, filters.status, filters.page_size, page],
+    [filters.q, filters.grade_level, filters.risk, filters.status, filters.class_group, filters.page_size, page],
   );
 
   const q = useTeacherStudents(
@@ -76,6 +78,19 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
   );
   const data = q.data;
   const isLoading = q.isLoading && !data;
+  const [selected, setSelected] = React.useState<Set<number>>(new Set());
+  const pageIds = (data?.items ?? []).map((s) => s.id);
+  const allOnPage = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const groupNames = (data?.class_groups ?? [])
+    .map((g) => g.class_group)
+    .filter((g): g is string => !!g);
+
+  function toggle(id: number, on: boolean) {
+    const next = new Set(selected);
+    if (on) next.add(id);
+    else next.delete(id);
+    setSelected(next);
+  }
 
   return (
     <div className="space-y-6">
@@ -113,7 +128,15 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
         </div>
       </header>
 
-      <StudentsFilterBar initial={filters} />
+      <StudentsFilterBar initial={filters} classGroups={data?.class_groups ?? []} />
+
+      {selected.size > 0 ? (
+        <ClassGroupBar
+          selectedIds={Array.from(selected)}
+          groupNames={groupNames}
+          onDone={() => setSelected(new Set())}
+        />
+      ) : null}
 
       <p className="text-xs text-muted-foreground -mt-1">
         <strong>Bugün</strong> = bugün tamamlanan/toplam görev (etkinlik dahil) ·{" "}
@@ -132,11 +155,34 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
                 : "Sonuç yok. Filtreyi gevşetmeyi deneyebilirsin."}
             </p>
           ) : (
-            <ul className="divide-y divide-border">
-              {data.items.map((s) => (
-                <StudentRow key={s.id} s={s} />
-              ))}
-            </ul>
+            <>
+              <label className="flex items-center gap-2 border-b border-border px-4 py-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={allOnPage}
+                  onChange={(e) => {
+                    const next = new Set(selected);
+                    for (const id of pageIds) {
+                      if (e.target.checked) next.add(id);
+                      else next.delete(id);
+                    }
+                    setSelected(next);
+                  }}
+                  aria-label="Bu sayfadaki tüm öğrencileri seç"
+                />
+                Bu sayfadakilerin tümünü seç (şube atamak için)
+              </label>
+              <ul className="divide-y divide-border">
+                {data.items.map((s) => (
+                  <StudentRow
+                    key={s.id}
+                    s={s}
+                    checked={selected.has(s.id)}
+                    onCheck={(on) => toggle(s.id, on)}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </CardContent>
       </Card>
@@ -149,14 +195,30 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
   );
 }
 
-function StudentRow({ s }: { s: TeacherStudentListItem }) {
+function StudentRow({
+  s,
+  checked,
+  onCheck,
+}: {
+  s: TeacherStudentListItem;
+  checked: boolean;
+  onCheck: (on: boolean) => void;
+}) {
   const weekPct = Math.round((s.week_pct ?? 0) * 100);
   const dim = !s.is_active;
   return (
-    <li className="group">
+    <li className="group flex items-stretch">
+      <label className="flex shrink-0 items-center pl-4" aria-label={`${s.full_name} seç`}>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onCheck(e.target.checked)}
+          data-testid="student-select"
+        />
+      </label>
       <div
         className={cn(
-          "grid grid-cols-12 items-center gap-3 px-4 py-3 hover:bg-muted transition-colors",
+          "grid min-w-0 flex-1 grid-cols-12 items-center gap-3 px-4 py-3 hover:bg-muted transition-colors",
           !dim && levelRowClass(s.worst_warning_level),
         )}
       >
@@ -170,9 +232,9 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
             dim && "opacity-60",
           )}
         >
-          <span className="flex items-center gap-2">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <WarningDot level={s.worst_warning_level} />
-            <span className="font-medium truncate">{s.full_name}</span>
+            <span className="font-medium break-words">{s.full_name}</span>
             {!s.is_active ? (
               <span className="text-[10px] uppercase tracking-wide rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
                 pasif
@@ -188,13 +250,13 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
               </span>
             ) : null}
           </span>
-          <span className="block text-xs text-muted-foreground truncate">
+          <span className="block text-xs text-muted-foreground break-all">
             {s.email}
           </span>
           {s.is_active && s.worst_warning_level !== "green" && s.worst_warning_title ? (
             <span
               className={cn(
-                "block text-[11px] mt-0.5 truncate font-medium",
+                "block text-[11px] mt-0.5 break-words font-medium",
                 s.worst_warning_level === "red"
                   ? "text-rose-600 dark:text-rose-400"
                   : "text-amber-600 dark:text-amber-400",
@@ -205,8 +267,16 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
             </span>
           ) : null}
         </Link>
-        <span className={cn("hidden sm:block sm:col-span-2 text-sm text-muted-foreground", dim && "opacity-60")}>
+        <span className={cn("hidden sm:flex sm:col-span-2 flex-wrap items-center gap-1.5 text-sm text-muted-foreground", dim && "opacity-60")}>
           {s.grade_level !== null ? `${s.grade_level}. sınıf` : "Mezun"}
+          {s.class_group ? (
+            <span
+              className="rounded bg-slate-700 px-1.5 py-0.5 text-[11px] font-medium text-white"
+              data-testid="class-group-badge"
+            >
+              {s.class_group}
+            </span>
+          ) : null}
         </span>
         <span className={cn("hidden sm:block sm:col-span-2 text-sm tabular-nums", dim && "opacity-60")}>
           Bugün: {s.today_gorev_done ?? 0}/{s.today_gorev_total ?? 0} görev
@@ -539,6 +609,66 @@ function Pager({ page, hasNext }: { page: number; hasNext: boolean }) {
   );
 }
 
+function ClassGroupBar({
+  selectedIds,
+  groupNames,
+  onDone,
+}: {
+  selectedIds: number[];
+  groupNames: string[];
+  onDone: () => void;
+}) {
+  const [value, setValue] = React.useState("");
+  const mut = useSetStudentsClassGroup();
+  const listId = "class-group-options";
+  function apply(v: string) {
+    mut.mutate({ studentIds: selectedIds, classGroup: v }, { onSuccess: () => onDone() });
+  }
+  return (
+    <div
+      className="flex flex-wrap items-center gap-2 rounded-md border border-cyan-700 bg-cyan-50 px-3 py-2 text-sm text-cyan-950 dark:bg-cyan-500/10 dark:text-cyan-100"
+      data-testid="class-group-bar"
+    >
+      <span className="font-medium">{selectedIds.length} öğrenci seçili</span>
+      <span className="text-cyan-900/80 dark:text-cyan-200/80">· şubeye al:</span>
+      <input
+        list={listId}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="örn. 10-A"
+        maxLength={60}
+        className="h-8 w-36 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+        aria-label="Şube adı"
+      />
+      <datalist id={listId}>
+        {groupNames.map((g) => (
+          <option key={g} value={g} />
+        ))}
+      </datalist>
+      <Button
+        type="button"
+        size="sm"
+        disabled={!value.trim() || mut.isPending}
+        onClick={() => apply(value)}
+        data-testid="class-group-apply"
+      >
+        {mut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
+        Şubeye al
+      </Button>
+      <Button type="button" size="sm" variant="ghost" disabled={mut.isPending} onClick={() => apply("")}>
+        Şubeyi kaldır
+      </Button>
+      <button
+        type="button"
+        onClick={onDone}
+        className="ml-auto text-xs underline-offset-2 hover:underline"
+      >
+        Seçimi temizle
+      </button>
+    </div>
+  );
+}
+
 function readFilters(
   sp: URLSearchParams,
   fallback: FilterValues,
@@ -552,7 +682,8 @@ function readFilters(
   ) as FilterValues["status"];
   const ps = Number(sp.get("page_size") ?? fallback.page_size);
   const pageSize = (ps === 50 || ps === 100 ? ps : 25) as 25 | 50 | 100;
-  return { q, grade_level: grade, risk, status, page_size: pageSize };
+  const classGroup = (sp.get("class_group") ?? "").slice(0, 60);
+  return { q, grade_level: grade, risk, status, class_group: classGroup, page_size: pageSize };
 }
 
 function readPage(sp: URLSearchParams, fallback: number): number {
@@ -571,6 +702,7 @@ function isSameAsInitial(
     filters.grade_level === initialFilters.grade_level &&
     filters.risk === initialFilters.risk &&
     filters.status === initialFilters.status &&
+    filters.class_group === initialFilters.class_group &&
     filters.page_size === initialFilters.page_size &&
     page === initialPage
   );
