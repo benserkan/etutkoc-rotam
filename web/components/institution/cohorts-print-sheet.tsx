@@ -64,7 +64,7 @@ export function CohortsPrintSheet({ institution, wow, sections }: Props) {
         <PrintHeader
           institution={institution.name}
           subtitle="Kohort Karşılaştırma Raporu"
-          today={`${today} · son 7 gün · test + deneme soruları (taslak dahil) · değişim yüzde puan`}
+          today={`${today} · son 7 gün · yalnız yayınlanmış soru bankası testleri · değişim yüzde puan`}
         />
 
         {/* WoW özet */}

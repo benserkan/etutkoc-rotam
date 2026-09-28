@@ -5,15 +5,21 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
-  ArrowRight,
+  AlertTriangle,
   BookOpen,
+  CheckCircle2,
   FileStack,
   GraduationCap,
+  LayoutGrid,
   LayoutTemplate,
   Library as LibraryIcon,
+  ListChecks,
   Plus,
+  Rows3,
+  Search,
   SearchX,
   Users,
+  X,
 } from "lucide-react";
 
 import {
@@ -36,79 +42,58 @@ import {
   LIBRARY_BOOK_TYPE_LABELS_TR,
 } from "@/lib/types/library";
 import { isExamSubject } from "@/lib/utils/subjects";
-
-// Sınav (TYT/AYT) kanonik dersleri model-bağımsız (curriculum_model=null +
-// exam_section) → kütüphane müfredat filtresinde "Diğer" yerine kendi kategorisi.
-const EXAM_CURRICULUM_KEY = "exam";
-const EXAM_CURRICULUM_LABEL = "Sınav Müfredatı (TYT / AYT)";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { cn } from "@/lib/utils";
 
+// Sınav (TYT/AYT) kanonik dersleri model-bağımsız (curriculum_model=null +
+// exam_section) → müfredat filtresinde kendi kategorisi.
+const EXAM_CURRICULUM_KEY = "exam";
+const EXAM_CURRICULUM_LABEL = "Sınav (TYT / AYT)";
+
 // =============================================================================
-// Görsel sabit haritalar
+// Görsel sabitler (purge-safe statik sınıflar)
 // =============================================================================
 
-/**
- * Kitap tipi → kart sol şeridi + ince badge tonları.
- *
- * Jinja'daki TYPE_COLOR ile aynı semantik (indigo/emerald/amber/rose/violet),
- * shadcn-flavored — açık background değil `ring-1 ring-inset {tone}/10` koyu mod
- * uyumlu.
- */
-const TYPE_TONE: Record<
-  LibraryBookType,
-  {
-    border: string;
-    ring: string;
-    dot: string;
-    badge: string;
-  }
-> = {
+const TYPE_TONE: Record<LibraryBookType, { bar: string; dot: string; badge: string }> = {
   soru_bankasi: {
-    border: "border-l-indigo-500",
-    ring: "ring-indigo-500/10",
+    bar: "bg-indigo-500",
     dot: "bg-indigo-500",
-    badge: "text-indigo-700 dark:text-indigo-300 ring-indigo-500/30",
+    badge: "bg-indigo-600 text-white",
   },
   fasikul: {
-    border: "border-l-emerald-500",
-    ring: "ring-emerald-500/10",
+    bar: "bg-emerald-500",
     dot: "bg-emerald-500",
-    badge: "text-emerald-700 dark:text-emerald-300 ring-emerald-500/30",
+    badge: "bg-emerald-600 text-white",
   },
   konu_anlatimli: {
-    border: "border-l-amber-500",
-    ring: "ring-amber-500/10",
+    bar: "bg-amber-500",
     dot: "bg-amber-500",
-    badge: "text-amber-700 dark:text-amber-300 ring-amber-500/30",
+    badge: "bg-amber-600 text-white",
   },
   brans_denemesi: {
-    border: "border-l-rose-500",
-    ring: "ring-rose-500/10",
+    bar: "bg-rose-500",
     dot: "bg-rose-500",
-    badge: "text-rose-700 dark:text-rose-300 ring-rose-500/30",
+    badge: "bg-rose-600 text-white",
   },
   genel_deneme: {
-    border: "border-l-violet-500",
-    ring: "ring-violet-500/10",
+    bar: "bg-violet-500",
     dot: "bg-violet-500",
-    badge: "text-violet-700 dark:text-violet-300 ring-violet-500/30",
+    badge: "bg-violet-600 text-white",
   },
 };
 
 const SUBJECT_TONES: Array<{ dot: string; text: string }> = [
-  { dot: "bg-indigo-500",  text: "text-indigo-600 dark:text-indigo-400" },
-  { dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
-  { dot: "bg-amber-500",   text: "text-amber-600 dark:text-amber-400" },
-  { dot: "bg-rose-500",    text: "text-rose-600 dark:text-rose-400" },
-  { dot: "bg-violet-500",  text: "text-violet-600 dark:text-violet-400" },
-  { dot: "bg-cyan-500",    text: "text-cyan-600 dark:text-cyan-400" },
-  { dot: "bg-fuchsia-500", text: "text-fuchsia-600 dark:text-fuchsia-400" },
-  { dot: "bg-sky-500",     text: "text-sky-600 dark:text-sky-400" },
+  { dot: "bg-indigo-500", text: "text-indigo-700 dark:text-indigo-300" },
+  { dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-300" },
+  { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-300" },
+  { dot: "bg-rose-500", text: "text-rose-700 dark:text-rose-300" },
+  { dot: "bg-violet-500", text: "text-violet-700 dark:text-violet-300" },
+  { dot: "bg-cyan-500", text: "text-cyan-700 dark:text-cyan-300" },
+  { dot: "bg-fuchsia-500", text: "text-fuchsia-700 dark:text-fuchsia-300" },
+  { dot: "bg-sky-500", text: "text-sky-700 dark:text-sky-300" },
 ];
 
 function subjectTone(subjectId: number) {
@@ -123,10 +108,26 @@ const BOOK_TYPES: LibraryBookType[] = [
   "genel_deneme",
 ];
 
+const DENEME_TYPES = new Set<LibraryBookType>(["brans_denemesi", "genel_deneme"]);
+
 const GRADE_LEVELS: number[] = [5, 6, 7, 8, 9, 10, 11, 12];
 
+type SortKey = "name" | "recent" | "students";
+const SORT_LABELS: Record<SortKey, string> = {
+  name: "Ada göre (A–Z)",
+  recent: "Son eklenen önce",
+  students: "En çok öğrencide",
+};
+
+type StateKey = "" | "attention" | "unassigned" | "assigned";
+const STATE_LABELS: Record<Exclude<StateKey, "">, string> = {
+  attention: "Eksiği olanlar",
+  unassigned: "Öğrenciye atanmamış",
+  assigned: "Öğrencide kullanılan",
+};
+
 // =============================================================================
-// Tipler
+// Tipler + yardımcılar
 // =============================================================================
 
 interface InitialFilters {
@@ -147,29 +148,61 @@ interface SubjectGroup {
   items: LibraryBookListItem[];
   total_sections: number;
   total_tests: number;
+  total_denemes: number;
 }
 
-// =============================================================================
-// Yardımcılar
-// =============================================================================
+function activeStudents(b: LibraryBookListItem): number {
+  return b.active_student_count ?? b.assigned_student_count;
+}
+
+/** Kitabın eksikleri — sade dille, koçun ne yapacağını söyler. */
+function bookIssues(b: LibraryBookListItem): string[] {
+  const out: string[] = [];
+  if (b.section_count === 0) {
+    out.push("Ünite eklenmemiş — göreve verilemez");
+    return out;
+  }
+  const mapped = b.mapped_section_count;
+  if (mapped !== undefined && !DENEME_TYPES.has(b.type) && mapped < b.section_count) {
+    out.push(
+      `${b.section_count - mapped} ünite müfredata bağlı değil — konu analizlerinde sayılmaz`,
+    );
+  }
+  return out;
+}
+
+function sortItems(items: LibraryBookListItem[], sort: SortKey): LibraryBookListItem[] {
+  const arr = [...items];
+  if (sort === "recent") {
+    arr.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  } else if (sort === "students") {
+    arr.sort(
+      (a, b) =>
+        activeStudents(b) - activeStudents(a) || a.name.localeCompare(b.name, "tr"),
+    );
+  } else {
+    arr.sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  }
+  return arr;
+}
 
 function groupBySubject(items: LibraryBookListItem[]): SubjectGroup[] {
   const map = new Map<number, SubjectGroup>();
   for (const it of items) {
-    const sid = it.subject_id;
-    const sname = it.subject_name ?? "Diğer";
-    const g = map.get(sid);
+    const g = map.get(it.subject_id);
     if (g) {
       g.items.push(it);
       g.total_sections += it.section_count;
-      g.total_tests += it.total_tests;
+      if (DENEME_TYPES.has(it.type)) g.total_denemes += it.total_tests;
+      else g.total_tests += it.total_tests;
     } else {
-      map.set(sid, {
-        subject_id: sid,
-        subject_name: sname,
+      map.set(it.subject_id, {
+        subject_id: it.subject_id,
+        subject_name: it.subject_name ?? "Diğer",
         items: [it],
         total_sections: it.section_count,
-        total_tests: it.total_tests,
+        total_tests: DENEME_TYPES.has(it.type) ? 0 : it.total_tests,
+        total_denemes: DENEME_TYPES.has(it.type) ? it.total_tests : 0,
       });
     }
   }
@@ -183,27 +216,38 @@ function gradeLabel(b: LibraryBookListItem): string | null {
   if (lo === null && hi === null && !grad) return null;
   const parts: string[] = [];
   if (lo !== null && hi !== null) {
-    parts.push(lo === hi ? `${lo}. sınıf` : `${lo}–${hi}`);
+    parts.push(lo === hi ? `${lo}. sınıf` : `${lo}–${hi}. sınıf`);
   } else if (lo !== null) {
-    parts.push(`${lo}+`);
+    parts.push(`${lo}. sınıf ve üstü`);
   } else if (hi !== null) {
-    parts.push(`≤${hi}`);
+    parts.push(`${hi}. sınıfa kadar`);
   }
   if (grad) parts.push("Mezun");
   return parts.join(" · ");
 }
 
-/** Bir kitap belirli bir sınıf seviyesini kapsıyor mu? */
 function bookCoversGrade(b: LibraryBookListItem, grade: number): boolean {
   const { target_grade_min: lo, target_grade_max: hi, target_graduate: grad } = b;
-  if (lo === null && hi === null && !grad) return true; // belirtilmemiş → tüm seviyeler
+  if (lo === null && hi === null && !grad) return true;
   const min = lo ?? 5;
   const max = hi ?? 12;
   return grade >= min && grade <= max;
 }
 
+function fmtDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("tr-TR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
 // =============================================================================
-// Ana component
+// Ana bileşen
 // =============================================================================
 
 export function LibraryListClient({ initial, initialFilters }: Props) {
@@ -216,6 +260,11 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
   const urlSubject = sp.get("subject_id") ?? "";
   const urlGrade = sp.get("grade_level") ?? "";
   const urlCurriculum = sp.get("curriculum") ?? "";
+  const urlSort = (sp.get("sort") as SortKey | null) ?? "name";
+  const sort: SortKey = urlSort in SORT_LABELS ? urlSort : "name";
+  const urlState = (sp.get("durum") ?? "") as StateKey;
+  const state: StateKey = urlState in STATE_LABELS ? urlState : "";
+  const view: "grid" | "list" = sp.get("view") === "list" ? "list" : "grid";
 
   const [qInput, setQInput] = React.useState(initialFilters.q);
   const [lastSyncedQ, setLastSyncedQ] = React.useState(initialFilters.q);
@@ -227,21 +276,23 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchRef = React.useRef<HTMLInputElement>(null);
 
+  // Sınıf filtresi backend'de yalnız sayısal (5-12); "Mezun" frontend'de süzülür.
+  const backendGrade = urlGrade && urlGrade !== "graduate" ? Number(urlGrade) : undefined;
   const params: LibraryBooksListParams = React.useMemo(
     () => ({
       q: urlQ || undefined,
       type: urlType || undefined,
       subject_id: urlSubject ? Number(urlSubject) : undefined,
-      grade_level: urlGrade ? Number(urlGrade) : undefined,
+      grade_level: backendGrade,
     }),
-    [urlQ, urlType, urlSubject, urlGrade],
+    [urlQ, urlType, urlSubject, backendGrade],
   );
 
   const isSameAsInitial =
     urlQ === initialFilters.q &&
     urlType === initialFilters.type &&
     Number(urlSubject || 0) === (initialFilters.subject_id ?? 0) &&
-    Number(urlGrade || 0) === (initialFilters.grade_level ?? 0);
+    (backendGrade ?? 0) === (initialFilters.grade_level ?? 0);
 
   const booksQ = useQuery<LibraryBookListResponse>({
     queryKey: libraryKeys.books(params),
@@ -256,101 +307,126 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
     staleTime: 60_000 * 5,
   });
 
-  // Backend filter'i (q/type/subject_id/grade_level) zaten uygulanmış kitaplar.
-  // Müfredat filtresi backend'de yok — frontend'de subject.curriculum_model
-  // üzerinden hard-filter uygulanır.
   const data = booksQ.data;
   const apiItems = React.useMemo(() => data?.items ?? [], [data]);
-
-  const allSubjects = React.useMemo(
-    () => subjectsQ.data?.items ?? [],
-    [subjectsQ.data],
-  );
+  const allSubjects = React.useMemo(() => subjectsQ.data?.items ?? [], [subjectsQ.data]);
   const subjectById = React.useMemo(() => {
     const m = new Map<number, SubjectRef>();
     for (const s of allSubjects) m.set(s.id, s);
     return m;
   }, [allSubjects]);
 
-  // Bir ders/kitabın müfredat kategorisi: sınav dersi → "exam", okul dersi →
-  // curriculum_model, hiçbiri → "other".
-  function subjectCurriculumKey(s: SubjectRef | undefined): string {
-    if (!s) return "other";
-    if (isExamSubject(s)) return EXAM_CURRICULUM_KEY;
-    return (s.curriculum_model as CurriculumModel | null) ?? "other";
-  }
-  function bookCurriculum(b: LibraryBookListItem): string {
-    return subjectCurriculumKey(subjectById.get(b.subject_id));
-  }
+  const curriculumOf = React.useCallback(
+    (s: SubjectRef | undefined): string => {
+      if (!s) return "other";
+      if (isExamSubject(s)) return EXAM_CURRICULUM_KEY;
+      return (s.curriculum_model as CurriculumModel | null) ?? "other";
+    },
+    [],
+  );
+  const bookCurriculum = React.useCallback(
+    (b: LibraryBookListItem) => curriculumOf(subjectById.get(b.subject_id)),
+    [curriculumOf, subjectById],
+  );
 
-  // Müfredat sayımları: KİTAP sayısı (subject sayısı değil) — kullanıcı
-  // "Maarif'te kaç kitabım var" diye düşünür, "kaç ders" değil.
-  // Backend filter'i sonrası kalan kitaplardan hesaplanır.
   const curriculumCounts = React.useMemo(() => {
     const c: Record<string, number> = {};
-    for (const cm of CURRICULUM_MODEL_ORDER) c[cm] = 0;
-    c[EXAM_CURRICULUM_KEY] = 0;
-    c.other = 0;
     for (const b of apiItems) {
       const k = bookCurriculum(b);
       c[k] = (c[k] ?? 0) + 1;
     }
     return c;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiItems, subjectById]);
+  }, [apiItems, bookCurriculum]);
 
-  // Default müfredat: URL'de yoksa, en dolu olan ilk müfredat
-  // (LGS → Maarif → Klasik → Sınav → Diğer sırasında ilk count>0).
+  const curriculumOptions = React.useMemo(() => {
+    const opts: Array<{ key: string; label: string }> = [];
+    for (const cm of CURRICULUM_MODEL_ORDER) {
+      opts.push({ key: cm, label: CURRICULUM_MODEL_LABELS_TR[cm] });
+    }
+    opts.push({ key: EXAM_CURRICULUM_KEY, label: EXAM_CURRICULUM_LABEL });
+    opts.push({ key: "other", label: "Diğer" });
+    return opts;
+  }, []);
+
   const effectiveCurriculum: string = React.useMemo(() => {
     if (urlCurriculum) return urlCurriculum;
-    for (const cm of CURRICULUM_MODEL_ORDER) {
-      if ((curriculumCounts[cm] ?? 0) > 0) return cm;
+    for (const o of curriculumOptions) {
+      if ((curriculumCounts[o.key] ?? 0) > 0) return o.key;
     }
-    if ((curriculumCounts[EXAM_CURRICULUM_KEY] ?? 0) > 0) return EXAM_CURRICULUM_KEY;
-    if ((curriculumCounts.other ?? 0) > 0) return "other";
-    return CURRICULUM_MODEL_ORDER[0]; // LGS — tüm sayımlar 0 ise
-  }, [urlCurriculum, curriculumCounts]);
+    return CURRICULUM_MODEL_ORDER[0];
+  }, [urlCurriculum, curriculumCounts, curriculumOptions]);
 
-  // Müfredat hard-filter — kitap subject'inin curriculum_model'i aktif
-  // müfredatla eşleşmeli. Bu bug fix: 8. sınıf LGS kitabı Maarif filtresinde
-  // görünmemeli.
+  // Müfredat + mezun süzgeci (öncesi: durum kartları bunun üstünden sayar)
+  const curriculumItems = React.useMemo(
+    () =>
+      apiItems.filter(
+        (b) =>
+          bookCurriculum(b) === effectiveCurriculum &&
+          (urlGrade !== "graduate" || b.target_graduate),
+      ),
+    [apiItems, bookCurriculum, effectiveCurriculum, urlGrade],
+  );
+
+  const stats = React.useMemo(() => {
+    let sections = 0;
+    let tests = 0;
+    let denemes = 0;
+    let assigned = 0;
+    let attention = 0;
+    for (const b of curriculumItems) {
+      sections += b.section_count;
+      if (DENEME_TYPES.has(b.type)) denemes += b.total_tests;
+      else tests += b.total_tests;
+      if (activeStudents(b) > 0) assigned += 1;
+      if (bookIssues(b).length > 0) attention += 1;
+    }
+    return {
+      books: curriculumItems.length,
+      sections,
+      tests,
+      denemes,
+      assigned,
+      unassigned: curriculumItems.length - assigned,
+      attention,
+    };
+  }, [curriculumItems]);
+
   const items = React.useMemo(() => {
-    return apiItems.filter((b) => bookCurriculum(b) === effectiveCurriculum);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiItems, effectiveCurriculum, subjectById]);
+    const filtered = curriculumItems.filter((b) => {
+      if (state === "attention") return bookIssues(b).length > 0;
+      if (state === "unassigned") return activeStudents(b) === 0;
+      if (state === "assigned") return activeStudents(b) > 0;
+      return true;
+    });
+    return sortItems(filtered, sort);
+  }, [curriculumItems, state, sort]);
 
   const groups = React.useMemo(() => groupBySubject(items), [items]);
 
-  const overall = React.useMemo(() => {
-    let sections = 0;
-    let tests = 0;
-    for (const it of items) {
-      sections += it.section_count;
-      tests += it.total_tests;
-    }
-    return { books: items.length, sections, tests };
-  }, [items]);
-
-  // Tip + Sınıf sayımları aktif müfredat içinde
   const typeCounts = React.useMemo(() => {
     const c: Record<string, number> = {};
-    for (const t of BOOK_TYPES) c[t] = 0;
-    for (const it of items) c[it.type] = (c[it.type] ?? 0) + 1;
+    for (const it of curriculumItems) c[it.type] = (c[it.type] ?? 0) + 1;
     return c;
-  }, [items]);
+  }, [curriculumItems]);
 
   const gradeCounts = React.useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const g of GRADE_LEVELS) c[String(g)] = 0;
-    c.graduate = 0;
-    for (const it of items) {
+    const c: Record<string, number> = { graduate: 0 };
+    for (const it of curriculumItems) {
       if (it.target_graduate) c.graduate += 1;
       for (const g of GRADE_LEVELS) {
-        if (bookCoversGrade(it, g)) c[String(g)] += 1;
+        if (bookCoversGrade(it, g)) c[String(g)] = (c[String(g)] ?? 0) + 1;
       }
     }
     return c;
-  }, [items]);
+  }, [curriculumItems]);
+
+  const visibleSubjects = React.useMemo(
+    () =>
+      allSubjects
+        .filter((s) => curriculumOf(s) === effectiveCurriculum)
+        .sort((a, b) => a.name.localeCompare(b.name, "tr")),
+    [allSubjects, curriculumOf, effectiveCurriculum],
+  );
 
   function applyParams(mutate: (p: URLSearchParams) => void) {
     const next = new URLSearchParams(sp.toString());
@@ -358,6 +434,13 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
     const qs = next.toString();
     startTransition(() => {
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    });
+  }
+
+  function setParam(key: string, value: string) {
+    applyParams((p) => {
+      if (value) p.set(key, value);
+      else p.delete(key);
     });
   }
 
@@ -373,78 +456,84 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
     }, 300);
   }
 
+  function clearChip(param: string) {
+    if (param === "q") onChangeQ("");
+    else setParam(param, "");
+  }
+
   function resetFilters() {
     setQInput("");
     applyParams((p) => {
-      p.delete("q");
-      p.delete("type");
-      p.delete("subject_id");
-      p.delete("grade_level");
-      p.delete("curriculum");
+      for (const k of ["q", "type", "subject_id", "grade_level", "durum"]) p.delete(k);
     });
   }
 
-  // Klavye: `/` ile arama focus, Esc ile temizle / blur
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      const tag = target?.tagName ?? "";
+      const tag = (e.target as HTMLElement | null)?.tagName ?? "";
       if (e.key === "/" && tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
         e.preventDefault();
         searchRef.current?.focus();
-      } else if (
-        e.key === "Escape" &&
-        document.activeElement === searchRef.current
-      ) {
-        if (qInput) {
-          onChangeQ("");
-        } else {
-          searchRef.current?.blur();
-        }
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qInput]);
-
-  React.useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
   }, []);
 
-  // "Aktif filtre" göstergesi: müfredat default ise sayılmaz (her zaman seçili)
-  const hasActiveFilter = Boolean(urlQ || urlType || urlSubject || urlGrade);
+  React.useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    },
+    [],
+  );
 
-  // Aktif müfredata göre subject chip-bar filtresi
-  const visibleSubjects: SubjectRef[] = React.useMemo(() => {
-    return allSubjects.filter(
-      (s) => subjectCurriculumKey(s) === effectiveCurriculum,
-    );
-  }, [allSubjects, effectiveCurriculum]);
+  const activeChips: Array<{ key: string; label: string; param: string }> = [];
+  if (urlQ) {
+    activeChips.push({ key: "q", label: `“${urlQ}”`, param: "q" });
+  }
+  if (urlSubject) {
+    const s = subjectById.get(Number(urlSubject));
+    activeChips.push({
+      key: "subject",
+      label: s?.name ?? "Ders",
+      param: "subject_id",
+    });
+  }
+  if (urlType) {
+    activeChips.push({
+      key: "type",
+      label: LIBRARY_BOOK_TYPE_LABELS_TR[urlType as LibraryBookType] ?? urlType,
+      param: "type",
+    });
+  }
+  if (urlGrade) {
+    activeChips.push({
+      key: "grade",
+      label: urlGrade === "graduate" ? "Mezun" : `${urlGrade}. sınıf`,
+      param: "grade_level",
+    });
+  }
+  if (state) {
+    activeChips.push({
+      key: "state",
+      label: STATE_LABELS[state],
+      param: "durum",
+    });
+  }
+
+  const shownCurriculum = curriculumOptions.filter(
+    (o) => (curriculumCounts[o.key] ?? 0) > 0 || o.key === effectiveCurriculum,
+  );
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight font-display">
-            Kütüphane
-          </h1>
-          <p
-            className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1"
-            aria-live="polite"
-          >
-            <KpiSpan label="kitap" value={overall.books} />
-            <span className="text-muted-foreground/40" aria-hidden>·</span>
-            <KpiSpan label="ünite" value={overall.sections} />
-            <span className="text-muted-foreground/40" aria-hidden>·</span>
-            <KpiSpan label="test" value={overall.tests} />
-            {booksQ.isFetching && !booksQ.isLoading ? (
-              <span className="text-xs text-muted-foreground/70">
-                · güncelleniyor…
-              </span>
-            ) : null}
+    <div className="space-y-5">
+      {/* ---------------------------------------------------------- başlık */}
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight font-display">Kütüphane</h1>
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            Öğrencilerine görev verdiğin kitaplar burada. Bir kitabın üniteleri ve test
+            sayıları ne kadar doğruysa programdaki “kalan test” de o kadar doğru olur.
           </p>
           <DemoHint contextKey="library" role="teacher" />
         </div>
@@ -456,67 +545,235 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
         </Button>
       </header>
 
-      <LibraryNav />
+      <LibraryTabs />
 
-      <FilterBar
-        searchRef={searchRef}
-        qInput={qInput}
-        onChangeQ={onChangeQ}
-        urlSubject={urlSubject}
-        urlType={urlType}
-        urlGrade={urlGrade}
-        effectiveCurriculum={effectiveCurriculum}
-        subjects={visibleSubjects}
-        curriculumCounts={curriculumCounts}
-        typeCounts={typeCounts}
-        gradeCounts={gradeCounts}
-        totalBooks={overall.books}
-        onSubject={(v) =>
-          applyParams((p) => {
-            if (v) p.set("subject_id", v);
-            else p.delete("subject_id");
-          })
-        }
-        onType={(v) =>
-          applyParams((p) => {
-            if (v) p.set("type", v);
-            else p.delete("type");
-          })
-        }
-        onGrade={(v) =>
-          applyParams((p) => {
-            if (v) p.set("grade_level", v);
-            else p.delete("grade_level");
-          })
-        }
-        onCurriculum={(v) =>
-          applyParams((p) => {
-            p.set("curriculum", v);
-            // Müfredat değişince seçili ders artık görünmüyorsa onu da düşür
-            const sid = p.get("subject_id");
-            if (sid) {
-              const s = allSubjects.find((x) => String(x.id) === sid);
-              if (!s || subjectCurriculumKey(s) !== v) {
-                p.delete("subject_id");
-              }
-            }
-          })
-        }
-        onReset={resetFilters}
-        hasActiveFilter={hasActiveFilter}
-      />
+      {/* ------------------------------------------------------ durum kartları */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="library-stats">
+        <StatTile
+          icon={<BookOpen className="size-4" aria-hidden />}
+          tone="slate"
+          value={stats.books}
+          unit="kitap"
+          caption={`${stats.sections} ünite · ${stats.tests} test${stats.denemes ? ` · ${stats.denemes} deneme` : ""}`}
+          hint="Seçili müfredattaki kitap sayısı ile bu kitaplardaki toplam ünite ve test. Deneme kitaplarındaki denemeler teste katılmaz, ayrı yazılır."
+          active={state === ""}
+          onClick={() => setParam("durum", "")}
+        />
+        <StatTile
+          icon={<Users className="size-4" aria-hidden />}
+          tone="emerald"
+          value={stats.assigned}
+          unit="kitap"
+          caption="en az bir öğrencide kullanılıyor"
+          hint="En az bir aktif öğrenciye atanmış kitaplar. Tıkla: yalnız bunları göster."
+          active={state === "assigned"}
+          onClick={() => setParam("durum", state === "assigned" ? "" : "assigned")}
+        />
+        <StatTile
+          icon={<ListChecks className="size-4" aria-hidden />}
+          tone="sky"
+          value={stats.unassigned}
+          unit="kitap"
+          caption="henüz öğrenciye atanmamış"
+          hint="Kütüphanende duran ama hiçbir aktif öğrencine atanmamış kitaplar. Tıkla: yalnız bunları göster."
+          active={state === "unassigned"}
+          onClick={() => setParam("durum", state === "unassigned" ? "" : "unassigned")}
+        />
+        <StatTile
+          icon={<AlertTriangle className="size-4" aria-hidden />}
+          tone={stats.attention > 0 ? "amber" : "slate"}
+          value={stats.attention}
+          unit="kitap"
+          caption={stats.attention > 0 ? "eksiği var — tamamla" : "eksik yok"}
+          hint="Ünitesi eklenmemiş ya da bazı üniteleri müfredat konusuna bağlanmamış kitaplar. Tıkla: yalnız bunları göster."
+          active={state === "attention"}
+          onClick={() => setParam("durum", state === "attention" ? "" : "attention")}
+          testId="stat-attention"
+        />
+      </div>
 
+      {/* ---------------------------------------------------------- araç çubuğu */}
+      <Card>
+        <CardContent className="space-y-3 p-3 sm:p-4">
+          {shownCurriculum.length > 1 ? (
+            <div
+              role="radiogroup"
+              aria-label="Müfredat"
+              className="flex flex-wrap gap-1 rounded-lg bg-muted p-1"
+            >
+              {shownCurriculum.map((o) => {
+                const on = o.key === effectiveCurriculum;
+                return (
+                  <button
+                    key={o.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    data-testid={`curriculum-${o.key}`}
+                    onClick={() =>
+                      applyParams((p) => {
+                        p.set("curriculum", o.key);
+                        const sid = p.get("subject_id");
+                        if (sid) {
+                          const s = subjectById.get(Number(sid));
+                          if (!s || curriculumOf(s) !== o.key) p.delete("subject_id");
+                        }
+                      })
+                    }
+                    className={cn(
+                      "flex-1 rounded-md px-3 py-1.5 text-sm transition-colors sm:flex-none",
+                      on
+                        ? "bg-background font-medium text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {o.label}
+                    <span className="ml-1.5 tabular-nums text-xs opacity-70">
+                      {curriculumCounts[o.key] ?? 0}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))_auto]">
+            <label className="relative sm:col-span-2 lg:col-span-1">
+              <span className="sr-only">Kitap ara</span>
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <input
+                ref={searchRef}
+                type="search"
+                value={qInput}
+                onChange={(e) => onChangeQ(e.target.value)}
+                placeholder="Kitap veya yayınevi ara…"
+                className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-10 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                data-testid="library-search"
+              />
+              <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-border px-1.5 text-[10px] text-muted-foreground sm:inline">
+                /
+              </kbd>
+            </label>
+            <ToolbarSelect
+              label="Ders"
+              value={urlSubject}
+              onChange={(v) => setParam("subject_id", v)}
+              testId="filter-subject"
+            >
+              <option value="">Tüm dersler</option>
+              {visibleSubjects.map((s) => (
+                <option key={s.id} value={String(s.id)}>
+                  {s.name}
+                </option>
+              ))}
+            </ToolbarSelect>
+            <ToolbarSelect
+              label="Kitap türü"
+              value={urlType}
+              onChange={(v) => setParam("type", v)}
+              testId="filter-type"
+            >
+              <option value="">Tüm türler</option>
+              {BOOK_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {LIBRARY_BOOK_TYPE_LABELS_TR[t]} ({typeCounts[t] ?? 0})
+                </option>
+              ))}
+            </ToolbarSelect>
+            <ToolbarSelect
+              label="Sınıf"
+              value={urlGrade}
+              onChange={(v) => setParam("grade_level", v)}
+              testId="filter-grade"
+            >
+              <option value="">Tüm sınıflar</option>
+              {GRADE_LEVELS.map((g) => (
+                <option key={g} value={String(g)}>
+                  {g}. sınıf ({gradeCounts[String(g)] ?? 0})
+                </option>
+              ))}
+              <option value="graduate">Mezun ({gradeCounts.graduate ?? 0})</option>
+            </ToolbarSelect>
+            <ToolbarSelect
+              label="Sıralama"
+              value={sort === "name" ? "" : sort}
+              onChange={(v) => setParam("sort", v)}
+              testId="filter-sort"
+            >
+              {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+                <option key={k} value={k === "name" ? "" : k}>
+                  {SORT_LABELS[k]}
+                </option>
+              ))}
+            </ToolbarSelect>
+            <div
+              role="radiogroup"
+              aria-label="Görünüm"
+              className="flex h-9 items-center gap-0.5 rounded-md border border-input p-0.5"
+            >
+              <ViewButton
+                on={view === "grid"}
+                label="Kart görünümü"
+                onClick={() => setParam("view", "")}
+              >
+                <LayoutGrid className="size-4" aria-hidden />
+              </ViewButton>
+              <ViewButton
+                on={view === "list"}
+                label="Liste görünümü"
+                onClick={() => setParam("view", "list")}
+                testId="view-list"
+              >
+                <Rows3 className="size-4" aria-hidden />
+              </ViewButton>
+            </div>
+          </div>
+
+          {activeChips.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+              <span className="text-xs text-muted-foreground">
+                <span className="font-medium tabular-nums text-foreground">{items.length}</span>{" "}
+                kitap gösteriliyor ·
+              </span>
+              {activeChips.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => clearChip(c.param)}
+                  className="inline-flex items-center gap-1 rounded-full bg-foreground px-2.5 py-1 text-xs text-background hover:opacity-90"
+                  aria-label={`${c.label} filtresini kaldır`}
+                >
+                  {c.label}
+                  <X className="size-3" aria-hidden />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                Tümünü temizle
+              </button>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      {/* ---------------------------------------------------------- içerik */}
       {booksQ.isLoading && !data ? (
         <EmptyShell
           icon={<LibraryIcon className="size-8 text-muted-foreground/60" aria-hidden />}
           title="Yükleniyor…"
         />
       ) : items.length === 0 ? (
-        hasActiveFilter ? (
+        activeChips.length > 0 ? (
           <EmptyShell
             icon={<SearchX className="size-8 text-muted-foreground/60" aria-hidden />}
             title="Eşleşen kitap yok"
-            description="Filtreyi gevşetmeyi veya başka bir kelime aramayı deneyebilirsin."
+            description="Filtreleri gevşetmeyi ya da başka bir kelime aramayı deneyebilirsin."
             action={
               <Button size="sm" variant="outline" onClick={resetFilters}>
                 Filtreleri temizle
@@ -527,7 +784,7 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
           <EmptyShell
             icon={<LibraryIcon className="size-8 text-muted-foreground/60" aria-hidden />}
             title="Henüz kitap eklenmedi"
-            description="Üstteki Yeni Kitap butonuyla kütüphaneni oluşturmaya başla."
+            description="Yeni kitap ekle: adını yaz, ortak katalogda varsa üniteleri ve test sayıları tek tıkla gelir."
             action={
               <Button size="sm" asChild>
                 <Link href="/teacher/library/new">
@@ -538,8 +795,10 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
             }
           />
         )
+      ) : view === "list" ? (
+        <BookTable items={items} />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-7">
           {groups.map((g) => (
             <SubjectSection key={g.subject_id} group={g} />
           ))}
@@ -549,12 +808,138 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
   );
 }
 
-function KpiSpan({ label, value }: { label: string; value: number }) {
+// =============================================================================
+// Parçalar
+// =============================================================================
+
+const STAT_TONE = {
+  slate: {
+    icon: "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-200",
+    ring: "ring-slate-400/60",
+  },
+  emerald: {
+    icon: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200",
+    ring: "ring-emerald-500/70",
+  },
+  sky: {
+    icon: "bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-200",
+    ring: "ring-sky-500/70",
+  },
+  amber: {
+    icon: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200",
+    ring: "ring-amber-500/70",
+  },
+} as const;
+
+function StatTile({
+  icon,
+  tone,
+  value,
+  unit,
+  caption,
+  hint,
+  active,
+  onClick,
+  testId,
+}: {
+  icon: React.ReactNode;
+  tone: keyof typeof STAT_TONE;
+  value: number;
+  unit: string;
+  caption: string;
+  hint: string;
+  active: boolean;
+  onClick: () => void;
+  testId?: string;
+}) {
+  const t = STAT_TONE[tone];
   return (
-    <span>
-      <span className="font-medium text-foreground tabular-nums">{value}</span>{" "}
-      {label}
-    </span>
+    <button
+      type="button"
+      onClick={onClick}
+      title={hint}
+      aria-pressed={active}
+      data-testid={testId}
+      className={cn(
+        "flex items-start gap-3 rounded-xl border border-border bg-card p-3 text-left transition-shadow hover:shadow-sm",
+        active && `ring-2 ${t.ring}`,
+      )}
+    >
+      <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", t.icon)}>
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block">
+          <span className="text-xl font-semibold tabular-nums">{value}</span>{" "}
+          <span className="text-sm text-muted-foreground">{unit}</span>
+        </span>
+        <span className="block text-xs text-muted-foreground">{caption}</span>
+      </span>
+    </button>
+  );
+}
+
+function ToolbarSelect({
+  label,
+  value,
+  onChange,
+  children,
+  testId,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+  testId?: string;
+}) {
+  return (
+    <label className="block min-w-0">
+      <span className="sr-only">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        data-testid={testId}
+        className={cn(
+          "h-9 w-full rounded-md border border-input bg-background px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          value ? "font-medium text-foreground" : "text-muted-foreground",
+        )}
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
+function ViewButton({
+  on,
+  label,
+  onClick,
+  children,
+  testId,
+}: {
+  on: boolean;
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  testId?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={on}
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      data-testid={testId}
+      className={cn(
+        "grid h-full flex-1 place-items-center rounded px-2 transition-colors",
+        on ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -571,13 +956,11 @@ function EmptyShell({
 }) {
   return (
     <Card>
-      <CardContent className="p-10 text-center space-y-2">
+      <CardContent className="space-y-2 p-10 text-center">
         <div className="flex justify-center">{icon}</div>
         <p className="text-sm font-medium">{title}</p>
         {description ? (
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            {description}
-          </p>
+          <p className="mx-auto max-w-md text-sm text-muted-foreground">{description}</p>
         ) : null}
         {action ? <div className="pt-2">{action}</div> : null}
       </CardContent>
@@ -585,292 +968,28 @@ function EmptyShell({
   );
 }
 
-// =============================================================================
-// Filter bar
-// =============================================================================
-
-interface SubjectRefLike {
-  id: number;
-  name: string;
-}
-
-function FilterBar({
-  searchRef,
-  qInput,
-  onChangeQ,
-  urlSubject,
-  urlType,
-  urlGrade,
-  effectiveCurriculum,
-  subjects,
-  curriculumCounts,
-  typeCounts,
-  gradeCounts,
-  totalBooks,
-  onSubject,
-  onType,
-  onGrade,
-  onCurriculum,
-  onReset,
-  hasActiveFilter,
-}: {
-  searchRef: React.RefObject<HTMLInputElement | null>;
-  qInput: string;
-  onChangeQ: (v: string) => void;
-  urlSubject: string;
-  urlType: string;
-  urlGrade: string;
-  effectiveCurriculum: string;
-  subjects: SubjectRefLike[];
-  curriculumCounts: Record<string, number>;
-  typeCounts: Record<string, number>;
-  gradeCounts: Record<string, number>;
-  totalBooks: number;
-  onSubject: (v: string) => void;
-  onType: (v: string) => void;
-  onGrade: (v: string) => void;
-  onCurriculum: (v: string) => void;
-  onReset: () => void;
-  hasActiveFilter: boolean;
-}) {
-  return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="px-4 py-3 border-b border-border">
-          <div className="relative">
-            <Input
-              ref={searchRef}
-              type="search"
-              placeholder="Kitap, yayınevi veya ünite ara…  (/  ile odakla)"
-              value={qInput}
-              onChange={(e) => onChangeQ(e.target.value)}
-              aria-label="Kitap ara"
-              className="w-full"
-            />
-          </div>
-        </div>
-
-        <ChipRow label="Müfredat">
-          {CURRICULUM_MODEL_ORDER.map((cm) => {
-            const count = curriculumCounts[cm] ?? 0;
-            if (count === 0 && effectiveCurriculum !== cm) return null;
-            return (
-              <FilterChip
-                key={cm}
-                active={effectiveCurriculum === cm}
-                onClick={() => onCurriculum(cm)}
-                label={CURRICULUM_MODEL_LABELS_TR[cm]}
-                count={count}
-              />
-            );
-          })}
-          {(curriculumCounts[EXAM_CURRICULUM_KEY] ?? 0) > 0 ||
-          effectiveCurriculum === EXAM_CURRICULUM_KEY ? (
-            <FilterChip
-              active={effectiveCurriculum === EXAM_CURRICULUM_KEY}
-              onClick={() => onCurriculum(EXAM_CURRICULUM_KEY)}
-              label={EXAM_CURRICULUM_LABEL}
-              count={curriculumCounts[EXAM_CURRICULUM_KEY] ?? 0}
-            />
-          ) : null}
-          {(curriculumCounts.other ?? 0) > 0 || effectiveCurriculum === "other" ? (
-            <FilterChip
-              active={effectiveCurriculum === "other"}
-              onClick={() => onCurriculum("other")}
-              label="Diğer"
-              count={curriculumCounts.other ?? 0}
-            />
-          ) : null}
-        </ChipRow>
-
-        <ChipRow label="Ders">
-          <FilterChip
-            active={!urlSubject}
-            onClick={() => onSubject("")}
-            label="Tümü"
-            count={totalBooks}
-          />
-          {subjects.map((s) => {
-            const tone = subjectTone(s.id);
-            return (
-              <FilterChip
-                key={s.id}
-                active={urlSubject === String(s.id)}
-                onClick={() => onSubject(String(s.id))}
-                label={s.name}
-                dotClassName={tone.dot}
-              />
-            );
-          })}
-        </ChipRow>
-
-        <ChipRow label="Tip">
-          <FilterChip
-            active={!urlType}
-            onClick={() => onType("")}
-            label="Tümü"
-          />
-          {BOOK_TYPES.map((t) => {
-            const count = typeCounts[t] ?? 0;
-            if (count === 0 && urlType !== t) return null;
-            const tone = TYPE_TONE[t];
-            return (
-              <FilterChip
-                key={t}
-                active={urlType === t}
-                onClick={() => onType(t)}
-                label={LIBRARY_BOOK_TYPE_LABELS_TR[t]}
-                dotClassName={tone.dot}
-                count={count}
-              />
-            );
-          })}
-        </ChipRow>
-
-        <ChipRow label="Sınıf" trailing={hasActiveFilter ? (
-          <button
-            type="button"
-            onClick={onReset}
-            className="ml-auto text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-          >
-            Filtreleri temizle
-          </button>
-        ) : null}>
-          <FilterChip
-            active={!urlGrade}
-            onClick={() => onGrade("")}
-            label="Tümü"
-          />
-          {GRADE_LEVELS.map((g) => {
-            const count = gradeCounts[String(g)] ?? 0;
-            if (count === 0 && urlGrade !== String(g)) return null;
-            return (
-              <FilterChip
-                key={g}
-                active={urlGrade === String(g)}
-                onClick={() => onGrade(String(g))}
-                label={`${g}. sınıf`}
-                count={count}
-              />
-            );
-          })}
-          {gradeCounts.graduate > 0 || urlGrade === "graduate" ? (
-            <FilterChip
-              active={urlGrade === "graduate"}
-              onClick={() => onGrade("graduate")}
-              label="Mezun"
-              icon={<GraduationCap className="size-3" aria-hidden />}
-              count={gradeCounts.graduate}
-            />
-          ) : null}
-        </ChipRow>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ChipRow({
-  label,
-  children,
-  trailing,
-}: {
-  label: string;
-  children: React.ReactNode;
-  trailing?: React.ReactNode;
-}) {
-  return (
-    <div className="px-4 py-2.5 border-b border-border last:border-b-0 flex items-center gap-2 flex-wrap">
-      <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mr-1 shrink-0">
-        {label}
-      </span>
-      {children}
-      {trailing}
-    </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  label,
-  dotClassName,
-  count,
-  icon,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  dotClassName?: string;
-  count?: number;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 border text-xs transition-colors",
-        active
-          ? "border-foreground bg-foreground text-background"
-          : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
-      )}
-    >
-      {dotClassName ? (
-        <span
-          className={cn("inline-block size-1.5 rounded-full", dotClassName)}
-          aria-hidden
-        />
-      ) : null}
-      {icon}
-      <span>{label}</span>
-      {count !== undefined ? (
-        <span className={cn("tabular-nums", active ? "opacity-70" : "opacity-60")}>
-          {count}
-        </span>
-      ) : null}
-    </button>
-  );
-}
-
-// =============================================================================
-// Ders bölümü + kart
-// =============================================================================
-
 function SubjectSection({ group }: { group: SubjectGroup }) {
   const tone = subjectTone(group.subject_id);
   return (
-    <section className="space-y-3">
-      <header className="flex items-baseline gap-2">
-        <span
-          className={cn("inline-block size-2 rounded-full", tone.dot)}
-          aria-hidden
-        />
-        <h2
-          className={cn(
-            "text-sm font-semibold uppercase tracking-wider",
-            tone.text,
-          )}
-        >
-          {group.subject_name}
-        </h2>
+    <section className="space-y-3" data-testid="subject-section">
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border pb-2">
+        <span className="flex items-center gap-2">
+          <span className={cn("inline-block size-2.5 rounded-full", tone.dot)} aria-hidden />
+          <h2 className={cn("text-base font-semibold", tone.text)}>{group.subject_name}</h2>
+        </span>
         <span className="text-xs text-muted-foreground">
-          <span className="tabular-nums font-medium text-foreground">
-            {group.items.length}
-          </span>{" "}
-          kitap
-          <span className="text-muted-foreground/40 mx-1.5" aria-hidden>·</span>
-          <span className="tabular-nums font-medium text-foreground">
-            {group.total_sections}
-          </span>{" "}
-          ünite
-          <span className="text-muted-foreground/40 mx-1.5" aria-hidden>·</span>
-          <span className="tabular-nums font-medium text-foreground">
-            {group.total_tests}
-          </span>{" "}
-          test
+          <b className="font-medium tabular-nums text-foreground">{group.items.length}</b> kitap ·{" "}
+          <b className="font-medium tabular-nums text-foreground">{group.total_sections}</b> ünite ·{" "}
+          <b className="font-medium tabular-nums text-foreground">{group.total_tests}</b> test
+          {group.total_denemes > 0 ? (
+            <>
+              {" · "}
+              <b className="font-medium tabular-nums text-foreground">{group.total_denemes}</b> deneme
+            </>
+          ) : null}
         </span>
       </header>
-      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {group.items.map((b) => (
           <li key={b.id}>
             <BookCard book={b} />
@@ -881,192 +1000,289 @@ function SubjectSection({ group }: { group: SubjectGroup }) {
   );
 }
 
+function MappingBar({ book }: { book: LibraryBookListItem }) {
+  const mapped = book.mapped_section_count;
+  if (mapped === undefined || book.section_count === 0 || DENEME_TYPES.has(book.type)) {
+    return null;
+  }
+  const pct = Math.round((100 * mapped) / book.section_count);
+  const full = mapped >= book.section_count;
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-muted-foreground">Müfredata bağlı ünite</span>
+        <span
+          className={cn(
+            "tabular-nums font-medium",
+            full ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300",
+          )}
+        >
+          {mapped}/{book.section_count}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn("h-full rounded-full", full ? "bg-emerald-500" : "bg-amber-500")}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function BookCard({ book }: { book: LibraryBookListItem }) {
   const tone = TYPE_TONE[book.type];
   const grade = gradeLabel(book);
+  const issues = bookIssues(book);
+  const students = activeStudents(book);
 
   return (
     <Link
       href={`/teacher/library/books/${book.id}`}
-      className="group block h-full"
+      className="group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      data-testid="book-card"
     >
-      <Card
-        className={cn(
-          "h-full border-l-4 ring-1 ring-inset transition-colors hover:border-foreground/30",
-          tone.border,
-          tone.ring,
-        )}
-      >
-        <CardContent className="p-4 flex flex-col h-full gap-2">
-          <div className="flex items-start justify-between gap-2">
-            <p className="font-medium leading-snug line-clamp-2 group-hover:underline">
-              {book.name}
-            </p>
-            {grade ? (
-              <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
-                {grade}
-              </span>
-            ) : null}
-          </div>
-          <p className="text-xs text-muted-foreground truncate">
-            {book.publisher ?? (
-              <span className="italic text-muted-foreground/70">
-                Yayınevi belirtilmemiş
-              </span>
-            )}
-          </p>
-          <div className="mt-auto pt-2 border-t border-border flex items-center justify-between gap-2">
+      <article className="relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all group-hover:-translate-y-0.5 group-hover:shadow-md">
+        <span className={cn("absolute inset-y-0 left-0 w-1", tone.bar)} aria-hidden />
+        <div className="flex flex-1 flex-col gap-3 p-4 pl-5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <span
               className={cn(
-                "text-[10px] font-medium px-2 py-0.5 rounded-full ring-1 ring-inset inline-flex items-center gap-1",
+                "rounded-full px-2 py-0.5 text-[11px] font-medium",
                 tone.badge,
               )}
             >
-              <span
-                className={cn("inline-block size-1.5 rounded-full", tone.dot)}
-                aria-hidden
-              />
               {LIBRARY_BOOK_TYPE_LABELS_TR[book.type]}
             </span>
-            <span className="text-[11px] text-muted-foreground">
-              <span className="tabular-nums font-medium text-foreground">
-                {book.section_count}
-              </span>{" "}
-              ünite
-              <span className="text-muted-foreground/40 mx-1" aria-hidden>·</span>
-              <span className="tabular-nums font-medium text-foreground">
-                {book.total_tests}
-              </span>{" "}
-              test
-            </span>
+            {grade ? (
+              <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[11px] font-medium text-white dark:bg-slate-600">
+                {grade}
+              </span>
+            ) : null}
+            {book.source_kind === "catalog" ? (
+              <span
+                className="rounded-full bg-cyan-700 px-2 py-0.5 text-[11px] font-medium text-white"
+                title="Ünite ve test sayıları ortak katalogdan birebir geldi."
+              >
+                Katalogdan
+              </span>
+            ) : null}
           </div>
-          {book.assigned_student_count > 0 ? (
-            <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-              <Users className="size-3" aria-hidden />
-              <span className="tabular-nums font-medium text-foreground">
-                {book.assigned_student_count}
-              </span>{" "}
-              öğrenciye atalı
+
+          <div className="space-y-0.5">
+            <h3 className="font-semibold leading-snug break-words group-hover:underline">
+              {book.name}
+            </h3>
+            <p className="text-xs text-muted-foreground break-words">
+              {book.publisher ?? "Yayınevi belirtilmemiş"}
             </p>
+          </div>
+
+          <dl className="grid grid-cols-2 gap-2 text-center">
+            <div className="rounded-lg bg-muted/60 px-2 py-1.5">
+              <dt className="text-[11px] text-muted-foreground">Ünite</dt>
+              <dd className="text-sm font-semibold tabular-nums">{book.section_count}</dd>
+            </div>
+            <div className="rounded-lg bg-muted/60 px-2 py-1.5">
+              <dt className="text-[11px] text-muted-foreground">
+                {DENEME_TYPES.has(book.type) ? "Deneme" : "Test"}
+              </dt>
+              <dd className="text-sm font-semibold tabular-nums">{book.total_tests}</dd>
+            </div>
+          </dl>
+
+          <MappingBar book={book} />
+
+          {issues.length > 0 ? (
+            <ul className="space-y-1 rounded-lg bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+              {issues.map((m) => (
+                <li key={m} className="flex gap-1.5">
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  <span>{m}</span>
+                </li>
+              ))}
+            </ul>
           ) : null}
-        </CardContent>
-      </Card>
+
+          <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-2 text-xs">
+            {students > 0 ? (
+              <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
+                <Users className="size-3.5" aria-hidden />
+                <b className="tabular-nums">{students}</b> öğrencide kullanılıyor
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Users className="size-3.5" aria-hidden />
+                Henüz öğrenciye atanmadı
+              </span>
+            )}
+            <span className="text-muted-foreground">{fmtDate(book.created_at)}</span>
+          </div>
+        </div>
+      </article>
     </Link>
   );
 }
 
+function BookTable({ items }: { items: LibraryBookListItem[] }) {
+  return (
+    <Card>
+      <div className="relative overflow-x-auto" data-testid="book-table">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead className="bg-muted/50 text-xs text-muted-foreground">
+            <tr>
+              <th className="px-4 py-2 text-left font-medium">Kitap</th>
+              <th className="px-3 py-2 text-left font-medium">Ders</th>
+              <th className="px-3 py-2 text-left font-medium">Tür</th>
+              <th className="px-3 py-2 text-left font-medium">
+                <ColumnHint label="Sınıf" hint="Kitabın hedeflediği sınıf aralığı. Boşsa tüm sınıflara uygundur." />
+              </th>
+              <th className="px-3 py-2 text-right font-medium">
+                <ColumnHint label="Ünite" hint="Kitaptaki ünite (bölüm) sayısı. Görevler ünite bazında verilir." />
+              </th>
+              <th className="px-3 py-2 text-right font-medium">
+                <ColumnHint label="Test" hint="Tüm ünitelerdeki test sayılarının toplamı. Deneme kitaplarında deneme sayısı." />
+              </th>
+              <th className="px-3 py-2 text-right font-medium">
+                <ColumnHint
+                  label="Müfredata bağlı"
+                  hint="Resmi müfredat konusuna bağlı ünite sayısı. Bağlı olmayan ünite konu analizlerinde ve müfredat ilerlemesinde sayılmaz."
+                />
+              </th>
+              <th className="px-3 py-2 text-right font-medium">
+                <ColumnHint label="Öğrenci" hint="Bu kitabın atandığı aktif öğrenci sayısı." />
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {items.map((b) => {
+              const tone = TYPE_TONE[b.type];
+              const mapped = b.mapped_section_count;
+              const deneme = DENEME_TYPES.has(b.type);
+              const students = activeStudents(b);
+              return (
+                <tr key={b.id} className="hover:bg-muted/40" data-testid="book-row">
+                  <td className="px-4 py-2.5">
+                    <Link
+                      href={`/teacher/library/books/${b.id}`}
+                      className="font-medium break-words hover:underline"
+                    >
+                      {b.name}
+                    </Link>
+                    <div className="text-xs text-muted-foreground break-words">
+                      {b.publisher ?? "Yayınevi belirtilmemiş"}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5">{b.subject_name ?? "—"}</td>
+                  <td className="px-3 py-2.5">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className={cn("size-2 rounded-full", tone.dot)} aria-hidden />
+                      {LIBRARY_BOOK_TYPE_LABELS_TR[b.type]}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-muted-foreground">{gradeLabel(b) ?? "Tümü"}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">
+                    {b.section_count === 0 ? (
+                      <span className="font-medium text-amber-700 dark:text-amber-300">0 — ekle</span>
+                    ) : (
+                      b.section_count
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{b.total_tests}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">
+                    {deneme || mapped === undefined || b.section_count === 0 ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : mapped >= b.section_count ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
+                        <CheckCircle2 className="size-3.5" aria-hidden />
+                        {mapped}/{b.section_count}
+                      </span>
+                    ) : (
+                      <span className="font-medium text-amber-700 dark:text-amber-300">
+                        {mapped}/{b.section_count}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">
+                    {students > 0 ? students : <span className="text-muted-foreground">—</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
 // =============================================================================
-// LibraryNav (Kitaplar / Setler / Şablonlar üst kartları — 3.5d.2)
+// Kütüphane sekmeleri (Kitaplar / Setler / Kitap şablonları / Görev şablonları)
 // =============================================================================
 
-const NAV_ITEMS: Array<{
+const TABS: Array<{
   href: string;
   title: string;
-  description: string;
+  hint: string;
   icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  tone: "indigo" | "amber" | "emerald";
 }> = [
   {
     href: "/teacher/library",
     title: "Kitaplar",
-    description:
-      "Tüm kitapları, fasikül ve denemeleri tek listede ara, filtrele ve yeni ekle.",
+    hint: "Tüm kitapların — ara, süz, yeni ekle.",
     icon: BookOpen,
-    tone: "indigo",
   },
   {
     href: "/teacher/library/book-sets",
     title: "Kitap setleri",
-    description:
-      "Sınıf/alan bazlı hazır paketler — tek atamayla bir öğrenciye birkaç kitabı bir arada ver.",
+    hint: "Birkaç kitabı paket yap, öğrencilere tek seferde ata.",
     icon: FileStack,
-    tone: "amber",
   },
   {
     href: "/teacher/library/templates",
     title: "Kitap şablonları",
-    description:
-      "Bir kitabın ünite/bölüm yapısını kaydet, başka kitaplara tek tıkla uygula.",
+    hint: "Bir kitabın ünite yapısını kaydet, başka kitaba uygula.",
     icon: LayoutTemplate,
-    tone: "emerald",
   },
   {
     href: "/teacher/library/task-templates",
     title: "Görev şablonları",
-    description:
-      "Sık kullandığın görev kalıpları (kitap+bölüm+test sayısı). Plana eklerken tek tıkla aynı görevi uygula.",
-    icon: LayoutTemplate,
-    tone: "indigo",
+    hint: "Sık verdiğin görevleri kaydet, programa tek tıkla ekle.",
+    icon: GraduationCap,
   },
 ];
 
-const NAV_TONE_CLASSES: Record<
-  "indigo" | "amber" | "emerald",
-  { border: string; ring: string; icon: string; accent: string }
-> = {
-  indigo: {
-    border: "border-l-indigo-500",
-    ring: "ring-indigo-500/10",
-    icon: "text-indigo-500",
-    accent: "group-hover:text-indigo-500",
-  },
-  amber: {
-    border: "border-l-amber-500",
-    ring: "ring-amber-500/10",
-    icon: "text-amber-500",
-    accent: "group-hover:text-amber-500",
-  },
-  emerald: {
-    border: "border-l-emerald-500",
-    ring: "ring-emerald-500/10",
-    icon: "text-emerald-500",
-    accent: "group-hover:text-emerald-500",
-  },
-};
-
-function LibraryNav() {
+export function LibraryTabs() {
+  const pathname = usePathname();
   return (
-    <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {NAV_ITEMS.map((item) => {
-        const Icon = item.icon;
-        const t = NAV_TONE_CLASSES[item.tone];
-        return (
-          <li key={item.href}>
-            <Link href={item.href} className="group block">
-              <Card
+    <nav aria-label="Kütüphane bölümleri">
+      <ul className="grid grid-cols-2 gap-1 border-b border-border sm:flex sm:flex-wrap">
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const active =
+            t.href === "/teacher/library"
+              ? pathname === "/teacher/library"
+              : pathname.startsWith(t.href);
+          return (
+            <li key={t.href}>
+              <Link
+                href={t.href}
+                title={t.hint}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "border-l-4 ring-1 ring-inset h-full transition-colors hover:border-foreground/30",
-                  t.border,
-                  t.ring,
+                  "-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm transition-colors",
+                  active
+                    ? "border-foreground font-medium text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Icon className={cn("size-5", t.icon)} aria-hidden />
-                      <p
-                        className={cn(
-                          "font-medium leading-tight transition-colors",
-                          t.accent,
-                        )}
-                      >
-                        {item.title}
-                      </p>
-                    </div>
-                    <ArrowRight
-                      className="size-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                      aria-hidden
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {item.description}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+                <Icon className="size-4" aria-hidden />
+                {t.title}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }

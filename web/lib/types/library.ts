@@ -119,6 +119,12 @@ export interface LibraryBookListItem {
   section_count: number;
   total_tests: number;
   assigned_student_count: number;
+  /** Arşivlenmemiş atama sayısı. */
+  active_student_count?: number;
+  /** Müfredat konusuna bağlı ünite sayısı. */
+  mapped_section_count?: number;
+  source_kind?: "catalog" | "template" | "manual" | null;
+  source_label?: string | null;
   created_at: string;
 }
 

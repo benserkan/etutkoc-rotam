@@ -101,11 +101,12 @@ export function ComplianceClient({ initial }: Props) {
           Program Uyumu
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-          Öğrenciler koçlarının verdiği programı ne kadar uyguluyor? Bu sayfa
-          takvim haftasına göre çalışır (Pazartesi–Pazar); bu hafta{" "}
-          {weekShort(s.week_start)}–{weekShort(s.week_end)} ve oranlar bugüne kadar
-          vadesi gelen görevlere göre hesaplanır. Yalnız soru bankası testleri
-          sayılır; denemeler ve etkinlik görevleri bu oranlara girmez.
+          Öğrenciler koçlarının verdiği programı ne kadar uyguluyor? Tamamlama
+          ve doğruluk son 7 gün ({weekShort(s.week_start)}–{weekShort(s.week_end)},
+          bugün dahil) üzerinden hesaplanır; yalnız yayınlanmış soru bankası
+          testleri sayılır, denemeler ve etkinlik görevleri girmez. Panel ve tüm
+          sayfalarda aynı ölçü. &ldquo;Programı yok&rdquo; ise takvim haftasına
+          (Pazartesi–Pazar) bakar.
         </p>
         <DemoHint contextKey="analysis" role="institution_admin" className="mt-2" />
       </header>
@@ -115,7 +116,7 @@ export function ComplianceClient({ initial }: Props) {
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase text-muted-foreground">
-              <ColumnHint label="Tamamlama" hint="Bu hafta bugüne kadar planlanan testlerden çözülenlerin oranı. Sağ üstteki sayı geçen haftaya göre değişim, yüzde PUAN olarak (ör. +5 = %60'tan %65'e)." />
+              <ColumnHint label="Tamamlama" hint="Son 7 günde (bugün dahil) planlanan testlerden çözülenlerin oranı. Panel ve tüm sayfalarda aynı ölçü. Sağ üstteki sayı önceki 7 güne göre değişim, yüzde PUAN olarak (ör. +5 = %60'tan %65'e)." />
             </span>
             {s.delta != null ? (
               <span className={cn("inline-flex items-center gap-0.5 text-[11px] font-medium",
@@ -126,7 +127,7 @@ export function ComplianceClient({ initial }: Props) {
             ) : null}
           </div>
           <BigPct v={s.rate} className={rateText(s.rate_color)} />
-          <div className="text-[11px] text-muted-foreground">geçen hafta {pct(s.last_week_rate)}</div>
+          <div className="text-[11px] text-muted-foreground">önceki 7 gün {pct(s.last_week_rate)}</div>
         </Card>
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
@@ -142,7 +143,7 @@ export function ComplianceClient({ initial }: Props) {
         </Card>
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase text-muted-foreground">
-            <ColumnHint label="Çözülen / planlanan test" hint="Bu hafta bugüne kadar çözülen test sayısı / planlanan test sayısı (tüm aktif öğrenciler toplamı)." />
+            <ColumnHint label="Çözülen / planlanan test" hint="Son 7 günde çözülen test sayısı / planlanan test sayısı (tüm aktif öğrenciler toplamı)." />
           </div>
           <div className="mt-1 text-2xl font-bold tabular-nums">{s.completed.toLocaleString("tr-TR")}<span className="text-base text-muted-foreground"> / {s.planned.toLocaleString("tr-TR")}</span></div>
           <div className="text-[11px] text-muted-foreground">{s.student_count} öğrencinin toplamı (koçluğu süren)</div>
@@ -192,7 +193,7 @@ export function ComplianceClient({ initial }: Props) {
                 <tr>
                   <th className="px-3 py-1.5 text-left">Koç</th>
                   <th className="px-3 py-1.5 text-right"><ColumnHint label="Öğrenci" hint="Bu koça bağlı, koçluğu süren öğrenci sayısı." /></th>
-                  <th className="px-3 py-1.5 text-left"><ColumnHint label="Tamamlama" hint="Bu hafta bugüne kadar planlanan testlerden çözülenlerin oranı (koçun tüm öğrencileri)." /></th>
+                  <th className="px-3 py-1.5 text-left"><ColumnHint label="Tamamlama" hint="Son 7 günde planlanan testlerden çözülenlerin oranı (koçun tüm öğrencileri)." /></th>
                   <th className="px-3 py-1.5 text-right"><ColumnHint label="Doğruluk" hint="Çözülen sorularda doğru ÷ (doğru + yanlış)." /></th>
                   <th className="px-3 py-1.5 text-right"><ColumnHint label="Programı yok" hint="Bu takvim haftasında hiç görevi olmayan öğrenci sayısı (yeni hesaplar dahil)." /></th>
                 </tr>

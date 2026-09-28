@@ -108,14 +108,14 @@ export function CohortsClient({ initial, tab }: Props) {
                     </th>
                     <th className="text-right px-4 py-2 font-medium">
                       <ColumnHint
-                        label="Planlanan soru"
-                        hint="Son 7 günde (bugün dahil) gruptaki öğrencilere programa konan test ve deneme SORU toplamı. Henüz yayınlanmamış (taslak) görevler de dahil."
+                        label="Planlanan test"
+                        hint="Son 7 günde (bugün dahil) gruptaki öğrencilere yayınlanan soru bankası testlerinin toplamı. Denemeler, etkinlik görevleri ve taslaklar sayılmaz."
                       />
                     </th>
                     <th className="text-right px-4 py-2 font-medium">
                       <ColumnHint
-                        label="Çözülen soru"
-                        hint="Aynı 7 günde bu sorulardan öğrencilerin çözüp işaretlediği."
+                        label="Çözülen test"
+                        hint="Aynı 7 günde bu testlerden öğrencilerin çözüp işaretlediği."
                       />
                     </th>
                     <th className="text-right px-4 py-2 font-medium">
@@ -154,11 +154,9 @@ function PrivacyNote() {
         <strong>Gizlilik:</strong> Bu sayfa sadece{" "}
         <strong>kohort agregaları</strong> gösterir — bireysel öğrenci adı veya
         programı YOKTUR.{" "}
-        <strong>Tamamlama oranı:</strong> son 7 günde (bugün dahil) programa
-        konan test ve deneme sorularından yüzde kaçının çözüldüğü. Bu sayfadaki
-        oranlara denemeler ve henüz yayınlanmamış (taslak) görevler de girer;
-        bu yüzden Panel&apos;deki &ldquo;Test tamamlama&rdquo; oranından biraz
-        farklı çıkabilir.{" "}
+        <strong>Tamamlama oranı:</strong> son 7 günde (bugün dahil) yayınlanan
+        soru bankası testlerinden yüzde kaçının çözüldüğü; denemeler ve
+        etkinlik görevleri girmez. Panel ve tüm sayfalarda aynı ölçü.{" "}
         <strong>Risk yüzdesi:</strong> gruptaki öğrencilerden &ldquo;Dikkat /
         Risk / Kritik&rdquo; seviyesinde olanların oranı (5+ gün giriş yapmamak,
         düşük tamamlama, üst üste boş günler gibi sinyallere göre).
@@ -174,8 +172,8 @@ function WoWGrid({ wow }: { wow: WeekOverWeekInfo }) {
         <CardContent className="p-4">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <ColumnHint
-              label="Bu hafta"
-              hint="Son 7 günde (bugün dahil) kurumdaki tüm aktif öğrencilere programa konan test + deneme sorularından çözülenlerin oranı. Taslak görevler de sayılır."
+              label="Son 7 gün"
+              hint="Son 7 günde (bugün dahil) kurumdaki tüm aktif öğrencilere yayınlanan soru bankası testlerinden çözülenlerin oranı. Denemeler ve etkinlik görevleri girmez. Panel ve tüm sayfalarda aynı ölçü."
             />
           </div>
           <div
@@ -197,7 +195,7 @@ function WoWGrid({ wow }: { wow: WeekOverWeekInfo }) {
         <CardContent className="p-4">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <ColumnHint
-              label="Geçen hafta"
+              label="Önceki 7 gün"
               hint="Ondan önceki 7 günün (8–14 gün önce) aynı hesapla oranı — kıyas için."
             />
           </div>
@@ -214,7 +212,7 @@ function WoWGrid({ wow }: { wow: WeekOverWeekInfo }) {
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <ColumnHint
               label="Değişim"
-              hint="Bu haftanın oranı eksi geçen haftanın oranı, YÜZDE PUAN olarak (örn. %60 → %65 = +5 puan). ±2 puandan küçük değişim “stabil” sayılır."
+              hint="Son 7 günün oranı eksi önceki 7 günün oranı, YÜZDE PUAN olarak (örn. %60 → %65 = +5 puan). ±2 puandan küçük değişim “stabil” sayılır."
             />
           </div>
           <DeltaValue wow={wow} />

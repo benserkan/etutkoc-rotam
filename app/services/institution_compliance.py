@@ -20,6 +20,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models import Book, Task, TaskBookItem, User, UserRole
+from app.services import completion
 from app.services.gorev_stats import DENEME_BOOK_TYPES
 
 # Yeni öğrenci (hesap < bu gün) henüz programsızsa "boş program" sayılmaz —
@@ -60,52 +61,17 @@ def _student_totals_for_week(
     db: Session, *, student_ids: list[int], ws: date, we: date,
     today: date | None = None,
 ) -> dict[int, dict]:
-    """Öğrenci başına haftalık planlı/yapılan/doğru/yanlış (yayınlanmış görevler).
-
-    Hafta-ortası mantığı (2026-05-26): `we` BUGÜNDEN İLERİYSE bugüne cap'lenir.
-    Aksi halde "henüz vakti gelmemiş günlerin planları" bölene katılır → hafta-
-    ortası rate yapay olarak düşük görünür ("düşük uyum" false alarm). Geçmiş
-    haftalar için (we <= today) hesap değişmez.
-
-    Örnek: bugün Salı, hafta Pzt-Pzr aralığı. Yiğit Pzt+Sal planının %100'ünü
-    yapmış ama Çar-Pzr planları henüz vakti gelmemiş. ESKİ hesap %34 (yapay
-    düşük); YENİ hesap %100 (bugüne kadar tam).
-    """
-    if not student_ids:
-        return {}
+    """Öğrenci başına planlı/çözülen test + doğru/yanlış — TEK TANIM
+    (`app.services.completion`). `we` bugünden ilerideyse bugüne kesilir
+    (vakti gelmemiş günlerin planı bölene girmesin)."""
     if today is None:
         today = date.today()
     effective_we = min(we, today)
-    if effective_we < ws:
-        # Hafta henüz başlamamış (gelecek hafta sorgusu) — boş dön
-        return {}
-    rows = (
-        db.query(
-            Task.student_id.label("sid"),
-            func.coalesce(func.sum(TaskBookItem.planned_count), 0).label("p"),
-            func.coalesce(func.sum(TaskBookItem.completed_count), 0).label("c"),
-            func.coalesce(func.sum(TaskBookItem.correct_count), 0).label("ok"),
-            func.coalesce(func.sum(TaskBookItem.wrong_count), 0).label("no"),
-        )
-        .join(TaskBookItem, TaskBookItem.task_id == Task.id)
-        # TEST-only (GÖREV/TEST/DENEME standardı): Book INNER JOIN kitapsız
-        # tam-deneme kalemlerini (book_id NULL) otomatik eler; deneme kitabı
-        # tipleri filtreyle dışlanır → "test"e deneme soruları girmez.
-        .join(Book, Book.id == TaskBookItem.book_id)
-        .filter(
-            Task.student_id.in_(student_ids),
-            Task.is_draft.is_(False),
-            Task.date >= ws,
-            Task.date <= effective_we,
-            Book.type.notin_(list(DENEME_BOOK_TYPES)),
-        )
-        .group_by(Task.student_id)
-        .all()
-    )
+    tot = completion.student_totals(db, student_ids, ws, effective_we)
     return {
-        int(r.sid): {"planned": int(r.p), "completed": int(r.c),
-                     "correct": int(r.ok), "wrong": int(r.no)}
-        for r in rows
+        sid: {"planned": t.planned, "completed": t.completed,
+              "correct": t.correct, "wrong": t.wrong}
+        for sid, t in tot.items()
     }
 
 
@@ -125,8 +91,11 @@ def _summarize(totals: dict[int, dict]) -> dict:
 def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> dict:
     """Program uyum panosu verisi — kurum özeti + trend + öğretmen/öğrenci kırılımı."""
     today = date.today()
-    this_ws, this_we = _week_bounds(today, 0)
-    last_ws, last_we = _week_bounds(today, 1)
+    # Tamamlama: kayan 7 gün (TEK TANIM) — bu 7 gün vs önceki 7 gün
+    this_ws, this_we = completion.window(today)
+    last_ws, last_we = completion.window(today - timedelta(days=7))
+    # "Programı var mı" ise takvim haftasına bakar (Pzt–Paz, ileri günler dahil)
+    cal_ws, cal_we = _week_bounds(today, 0)
 
     # Aktif öğrenciler + koç eşlemesi
     students = (
@@ -168,7 +137,7 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
         has_program = {
             int(sid) for (sid,) in db.query(Task.student_id)
             .filter(Task.student_id.in_(student_ids), Task.is_draft.is_(False),
-                    Task.date >= this_ws, Task.date <= this_we)
+                    Task.date >= cal_ws, Task.date <= cal_we)
             .distinct()
             .all()
         }
@@ -279,7 +248,7 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
     # ---- Haftalık trend (son N hafta kurum tamamlama) ----
     trend = []
     for wb in range(weeks - 1, -1, -1):
-        ws, we = _week_bounds(today, wb)
+        ws, we = completion.window(today - timedelta(days=7 * wb))
         wt = _student_totals_for_week(db, student_ids=student_ids, ws=ws, we=we)
         s = _summarize(wt)
         trend.append({

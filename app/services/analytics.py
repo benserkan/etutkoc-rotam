@@ -258,13 +258,15 @@ def week_stats_for(
         # completed_count kullanılır — etkinlik görevlerinin "çözülen soru"su (solved_count)
         # test hacmine EKLENMEZ → tamamlama oranı ≤ %100 (kurum panosu için temiz;
         # gorev_stats.summarize.test_completed solved_count'u da ekleyip oranı bozuyordu).
+        # TEK TANIM (app/services/completion.py): soru bankası + kaynaksız test
+        from app.services.completion import item_counts
         planned = sum(
             it.planned_count for t in tasks for it in t.book_items
-            if gorev_stats.item_is_test(it)
+            if item_counts(it)
         )
         completed = sum(
             it.completed_count for t in tasks for it in t.book_items
-            if gorev_stats.item_is_test(it)
+            if item_counts(it)
         )
         return DailyStats(
             planned=planned,
@@ -324,13 +326,14 @@ def week_test_deneme_for(db: Session, student_id: int, end_date: date) -> WeekTe
         )
         .all()
     )
+    from app.services.completion import item_counts
     res = WeekTestDeneme()
     for t in tasks:
+        # Test hacmi TEK TANIMDAN (kalem bazlı) — Program Uyumu, Kohort, Risk ile aynı
+        res.test_planned += sum(it.planned_count for it in t.book_items if item_counts(it))
+        res.test_completed += sum(it.completed_count for it in t.book_items if item_counts(it))
         cat = gorev_stats.classify_gorev(t)
-        if cat == "test":
-            res.test_planned += sum(it.planned_count for it in t.book_items)
-            res.test_completed += sum(it.completed_count for it in t.book_items)
-        elif cat in ("deneme", "tam_deneme"):
+        if cat in ("deneme", "tam_deneme"):
             # DENEME = ADET (soru hacmi DEĞİL): kaç deneme planlandı / tamamlandı.
             res.deneme_planned += 1
             if gorev_stats.gorev_done(t):

@@ -656,6 +656,44 @@ seçili öğrencilere kopyala → (4) şube kavramı (liste süzme + toplu işle
 
 ---
 
+## TAMAMLAMA TEK TANIM + "boş gün" düzeltmesi + Kütüphane yeni tasarım (2026-09-28, migration YOK)
+
+- **Tek tanım `app/services/completion.py`** (kullanıcı: "evet, tek tanımda birleştir"):
+  TAMAMLAMA = çözülen test ÷ planlanan test · son 7 gün bugün dahil (`window`) ·
+  yalnız yayınlanmış görev · yalnız TEST kalemi (soru bankası kitabı ya da
+  kaynaksız-konuya bağlı kalem; deneme + etkinlik GİRMEZ) → `item_counts` (Python)
+  / `test_item_filter()` (SQL, Book OUTER JOIN şart) / `student_totals`.
+  Bağlananlar: `analytics.week_stats_for(tests_only)` + `week_test_deneme_for` ·
+  Program Uyumu (`this`/`last` = kayan 7 gün; "programı var mı" takvim haftası +
+  her görev türü) · Öğretmen Karnesi (kayan `weeks×7`) · Müdahale Merkezi
+  ("son 7 günde") · Kohort (Book join + test filtresi) · Risk (`tests_only=True`,
+  consecutive_empty kapısı `tasks_total>0`) · 60g garanti. Metinler sade.
+  **KURAL: kurumda "tamamlama/uyum" yazan yeni yüzey `completion`'dan beslenir.**
+- **"Boş gün" yanlış-pozitifi (tek tanımın açığa çıkardığı):** `risk_analysis.
+  _consecutive_empty_days` programsız günleri de "boş" sayıyordu → yalnız bugüne
+  video verilen öğrenci "14 gün üst üste boş". Artık yalnız YAYINLANMIŞ görevi
+  olan günler sayılır (programsız gün seriyi ne artırır ne bozar), bugün sayılmaz
+  (bugün tik varsa 0). Başlık "programlı N gün üst üste boş".
+- Test düzeltmeleri: action_center/scorecard/compliance testleri `Book(type="test")`
+  (geçersiz enum) → `BookType.SORU_BANKASI`; risk_grace + simulate_action_center
+  seed'leri programlı geçmiş günlere taşındı. Yeşil: action_center 8 · scorecard 7 ·
+  compliance 10 · simulate 11 · alert 9 · risk_grace 6 · card_consistency 23 ·
+  p2 19 · academic 13 · parent_trust 9 · teacher_read 12 · students 15 · library 25 ·
+  run_gorev_checks 82/82 · live_institution_panel_clarity 23/23.
+  (`test_stage4_admin_digest` eski Jinja testi — TestClient ile asılı kalıyor, bilinen.)
+- **Kütüphane (/teacher/library) yeniden tasarım:** 4 büyük gezinme kartı → sekme
+  şeridi (`LibraryTabs`, mobilde 2×2) · 4 tıklanabilir durum kartı (kitap+ünite+
+  test **· deneme ayrı** / öğrencide kullanılan / atanmamış / eksiği olan) ·
+  müfredat segmentli seçici + arama + Ders/Tür/Sınıf/Sıralama native select +
+  kart/liste görünümü (URL `view`, `sort`, `durum`) + kaldırılabilir filtre çipleri ·
+  kart: tür/sınıf/"Katalogdan" dolgulu rozet, ad KIRPILMAZ, ünite/test kutuları,
+  "müfredata bağlı ünite" barı, eksik uyarısı (ünitesiz · bağlanmamış ünite) ·
+  liste görünümü sütun açıklamalı (`ColumnHint`). Backend `BookListItem`
+  +`active_student_count` (arşivsiz) +`mapped_section_count` +`source_kind/label`
+  (additive). YENİ `scripts/live_library_list.py` **21/21** (koyu tema + 390px).
+
+---
+
 ## VİDEO SEPETİ — oynatma listesi → konu grupları → ızgaraya sürükle (2026-09-25, Faz 1 KOD-TAMAM, migration `z1a4d7e8d22z`, DEPLOY BEKLİYOR)
 
 **Tetikleyici (koç):** video görevlerini tek tek link kopyalayıp girmek çok

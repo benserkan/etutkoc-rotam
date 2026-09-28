@@ -50,11 +50,13 @@ def _score_label(score: int) -> str:
 
 def compute_teacher_scorecard(db: Session, *, institution_id: int, weeks: int = 4) -> dict:
     """Öğretmen başına etkililik karnesi (son N hafta)."""
-    from datetime import date
+    from datetime import date, timedelta
 
     today = date.today()
-    ws = _week_bounds(today, weeks - 1)[0]
-    we = _week_bounds(today, 0)[1]
+    # Kayan pencere: son `weeks` × 7 gün, bugün dahil (TEK TANIM ile aynı ölçü;
+    # yarım takvim haftası artık "disiplin"i düşürmez)
+    ws = today - timedelta(days=7 * weeks - 1)
+    we = today
 
     teachers = (
         db.query(User.id, User.full_name, User.email)

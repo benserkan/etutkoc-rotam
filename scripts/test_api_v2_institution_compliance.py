@@ -28,6 +28,7 @@ from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
 from app.main import app
+from app.models import BookType
 from app.models import (
     AuditLog,
     Book,
@@ -97,7 +98,7 @@ def _seed() -> dict:
         # Kitap (TaskBookItem.book_id zorunlu)
         subj = Subject(name=f"{PFX} Matematik", teacher_id=teacher.id)
         db.add(subj); db.flush()
-        book = Book(teacher_id=teacher.id, subject_id=subj.id, name=f"{PFX} Test Kitabı", type="test")
+        book = Book(teacher_id=teacher.id, subject_id=subj.id, name=f"{PFX} Test Kitabı", type=BookType.SORU_BANKASI)
         db.add(book); db.flush()
         section = BookSection(book_id=book.id, label=f"{PFX} Ünite 1")
         db.add(section); db.flush()

@@ -130,6 +130,10 @@ class BookListItem(BaseModel):
     section_count: int
     total_tests: int          # sum(test_count) — UI başlığı
     assigned_student_count: int
+    active_student_count: int = 0      # arşivlenmemiş atama sayısı
+    mapped_section_count: int = 0      # müfredat konusuna bağlı ünite sayısı
+    source_kind: str | None = None     # catalog | template | manual
+    source_label: str | None = None
     created_at: datetime
 
 

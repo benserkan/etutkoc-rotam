@@ -184,7 +184,8 @@ def main() -> int:
             # 6) RİSKLİ (high) — eski hesap + HİÇ giriş yok (25) + düşük tamamlama (30)
             # + 3 gün üst üste boş (20) = skor ~75 → "Risk" (high) → at_risk fire eder.
             sid = make_student(db, tid, iid, age_days=25, last_login_days=None, suffix="risk")
-            for off in (0, 1, 2):
+            # Bugün sayılmaz (gün bitmedi) → dünden geriye 3 programlı boş gün
+            for off in (1, 2, 3):
                 add_program(db, sid, planned=20, completed=0, d=today - timedelta(days=off))
             db.commit()
             r = summary(db, iid)
@@ -199,9 +200,9 @@ def main() -> int:
             # son 3 gün boş → consecutive_empty (20) = medium. Eskiden high eşiğine
             # düşmediği için GÖRÜNMÜYORDU; artık inactive_program UYARI fire eder.
             sid = make_student(db, tid, iid, age_days=30, last_login_days=0, suffix="inactive_med")
-            for off in (6, 5, 4, 3):  # aktif günler (completed>0)
+            for off in (6, 5, 4):     # aktif günler (completed>0)
                 add_program(db, sid, planned=10, completed=10, d=today - timedelta(days=off))
-            for off in (2, 1, 0):     # son 3 gün boş
+            for off in (3, 2, 1):     # dünden geriye 3 programlı gün boş (bugün sayılmaz)
                 add_program(db, sid, planned=10, completed=0, d=today - timedelta(days=off))
             db.commit()
             r = summary(db, iid)

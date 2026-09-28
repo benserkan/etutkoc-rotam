@@ -25,6 +25,7 @@ from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
 from app.main import app
+from app.models import BookType
 from app.models import (
     AuditLog, Book, BookSection, Institution, Subject, Task, TaskBookItem,
     TaskType, User, UserRole,
@@ -76,7 +77,7 @@ def _seed():
                   role=UserRole.STUDENT, institution_id=inst.id, teacher_id=t_bad.id, is_active=True)
         db.add_all([sg, sb]); db.flush()
         subj = Subject(name=f"{PFX} Mat", teacher_id=t_good.id); db.add(subj); db.flush()
-        book = Book(teacher_id=t_good.id, subject_id=subj.id, name=f"{PFX} K", type="test")
+        book = Book(teacher_id=t_good.id, subject_id=subj.id, name=f"{PFX} K", type=BookType.SORU_BANKASI)
         db.add(book); db.flush()
         sec = BookSection(book_id=book.id, label=f"{PFX} Ü1"); db.add(sec); db.flush()
         # İyi koç öğrencisi: planned 100 completed 95 correct 90 wrong 5 → yüksek

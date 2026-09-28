@@ -33,6 +33,7 @@ from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from app.models import (
+    Book,
     CURRICULUM_MODEL_LABELS,
     CurriculumModel,
     EXAM_TARGET_LABELS,
@@ -42,6 +43,7 @@ from app.models import (
     User,
     UserRole,
 )
+from app.services import completion
 from app.models.user import GRADUATE_MODE_LABELS, TRACK_LABELS, GraduateMode, Track
 from app.services.risk_analysis import bulk_risk_assessment, filter_at_risk
 
@@ -144,6 +146,8 @@ def _aggregate_completion_by_group(
         .select_from(User)
         .join(Task, Task.student_id == User.id)
         .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+            .outerjoin(Book, Book.id == TaskBookItem.book_id)
+            .filter(Task.is_draft.is_(False), completion.test_item_filter())
         .filter(
             User.role == UserRole.STUDENT,
             User.institution_id == institution_id,
@@ -398,6 +402,8 @@ def cohort_by_curriculum(
             )
             .select_from(Task)
             .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+            .outerjoin(Book, Book.id == TaskBookItem.book_id)
+            .filter(Task.is_draft.is_(False), completion.test_item_filter())
             .filter(
                 Task.student_id.in_(sids),
                 Task.date >= week_start,
@@ -456,6 +462,8 @@ def cohort_by_exam_target(
             )
             .select_from(Task)
             .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+            .outerjoin(Book, Book.id == TaskBookItem.book_id)
+            .filter(Task.is_draft.is_(False), completion.test_item_filter())
             .filter(
                 Task.student_id.in_(sids),
                 Task.date >= week_start,
@@ -499,6 +507,8 @@ def institution_week_over_week(
             .select_from(User)
             .join(Task, Task.student_id == User.id)
             .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+            .outerjoin(Book, Book.id == TaskBookItem.book_id)
+            .filter(Task.is_draft.is_(False), completion.test_item_filter())
             .filter(
                 User.role == UserRole.STUDENT,
                 User.institution_id == institution_id,

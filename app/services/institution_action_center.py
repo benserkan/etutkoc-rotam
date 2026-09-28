@@ -17,8 +17,6 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from datetime import date
-
 from app.models import User, UserRole
 from app.services.institution_compliance import compute_compliance
 from app.services.risk_analysis import bulk_risk_assessment, filter_at_risk
@@ -58,16 +56,11 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
             "suggestion": "Koça bu hafta için program girmesini hatırlatın.",
         })
 
-    # 2) Düşük uyum koç — haftanın ilk iki gününde (Pzt/Sal) bu haftanın verisi
-    #    henüz çok az olduğundan GEÇEN HAFTANIN tam verisine bakılır.
-    early_week = date.today().weekday() <= 1
+    # 2) Düşük tamamlama koç — TEK TANIM: son 7 gün (bugün dahil), yalnız test
     for t in comp["teachers"]:
         if t["student_count"] == 0:
             continue
-        if early_week and t.get("last_rate") is not None:
-            rate, acc, period = t["last_rate"], t.get("last_accuracy"), "geçen hafta"
-        else:
-            rate, acc, period = t["rate"], t["accuracy"], "bu hafta (Pazartesi'den bugüne)"
+        rate, acc, period = t["rate"], t["accuracy"], "son 7 günde"
         if rate is None or rate >= LOW_RATE_THRESHOLD:
             continue
         sev = "critical" if rate < LOW_RATE_CRITICAL else "warn"

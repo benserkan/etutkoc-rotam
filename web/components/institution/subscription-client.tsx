@@ -791,7 +791,7 @@ function GuaranteeDetails({
         </div>
         <div>
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            <ColumnHint label="Şu anki tamamlama" hint="Değerlendirme döneminde (kurumun açılışından ya da son 60 günden hangisi daha yakınsa, bugüne kadar) aktif öğrencilere yayınlanan görevlerdeki tüm soru ve denemelerin çözülen oranı. Taslak görevler hariç." />
+            <ColumnHint label="Şu anki tamamlama" hint="Değerlendirme döneminde (kurumun açılışından ya da son 60 günden hangisi daha yakınsa, bugüne kadar) aktif öğrencilere yayınlanan soru bankası testlerinin çözülen oranı; deneme ve etkinlik görevleri hariç. Panel ile aynı kural, yalnız dönem daha uzun." />
           </div>
           <div
             className={cn(
@@ -821,9 +821,9 @@ function GuaranteeDetails({
         <div className="font-medium text-foreground">Hesap nasıl yapıldı?</div>
         <div className="text-muted-foreground">
           Değerlendirme döneminde (en fazla son 60 gün) yayınlanmış görevlerin{" "}
-          <b>soru bazında</b> çözülme oranı. Denemeler de dahildir; bu yüzden
-          yalnız soru bankası testlerini sayan Program Uyumu panosundaki orandan
-          farklı çıkabilir:
+          <b>test bazında</b> çözülme oranı. Panel ve tüm sayfalardaki tamamlama
+          ile aynı kural (yalnız yayınlanmış soru bankası testleri; deneme ve
+          etkinlik görevleri hariç); yalnız dönem daha uzun:
         </div>
         <div className="grid grid-cols-3 gap-2 pt-1">
           <span><b className="tabular-nums">{evaluation.student_count}</b> aktif öğrenci</span>

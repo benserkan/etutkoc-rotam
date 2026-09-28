@@ -55,7 +55,7 @@ interface Props {
  */
 
 const RATE_HINT =
-  "Özetin kapsadığı 7 günde öğrencilere planlanan tüm soru ve denemelerin çözülen oranı (taslak görevler de dahil). Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı.";
+  "Özetin kapsadığı 7 günde planlanan testlerden çözülenlerin oranı; yalnız yayınlanmış soru bankası testleri, deneme ve etkinlik görevleri hariç. Panel ve tüm sayfalarda aynı ölçü. Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı.";
 
 export function AdminDigestDetailClient({ initial, digestId }: Props) {
   const q = useQuery<AdminDigestDetailResponse>({
@@ -248,7 +248,7 @@ function CompletionKpi({
               </>
             )}
             <span className="ml-1 text-muted-foreground">
-              (geçen haftaya göre)
+              (önceki 7 güne göre)
             </span>
           </div>
         )}

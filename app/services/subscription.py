@@ -489,25 +489,16 @@ def evaluate_guarantee(
             total_completed_questions=0, is_provisional=is_provisional,
         )
 
-    # Pencere: garanti periyodu içindeki tüm yayınlanmış görevler (planned)
-    # vs tamamlananları (completed). Compliance panosuyla AYNI metrik.
+    # Pencere: garanti periyodu (en fazla 60 gün). Sayım kuralı TAMAMLAMA TEK
+    # TANIMI ile aynı (app/services/completion.py): yayınlanmış görevlerin test
+    # kalemleri; deneme ve etkinlik görevleri hariç. Yalnız pencere uzun.
+    from app.services import completion
     cutoff = max(period_start, now - timedelta(days=period_total))
-    totals = (
-        db.query(
-            func.coalesce(func.sum(TaskBookItem.planned_count), 0).label("p"),
-            func.coalesce(func.sum(TaskBookItem.completed_count), 0).label("c"),
-        )
-        .join(Task, TaskBookItem.task_id == Task.id)
-        .filter(
-            Task.student_id.in_(student_ids),
-            Task.is_draft.is_(False),
-            Task.date >= cutoff.date(),
-            Task.date <= now.date(),
-        )
-        .first()
+    agg = completion.sum_totals(
+        completion.student_totals(db, list(student_ids), cutoff.date(), now.date()).values()
     )
-    planned = int(totals.p) if totals else 0
-    completed = int(totals.c) if totals else 0
+    planned = agg.planned
+    completed = agg.completed
     rate = (completed / planned) if planned > 0 else None
 
     # Tetiklenme + uzatma hakkı

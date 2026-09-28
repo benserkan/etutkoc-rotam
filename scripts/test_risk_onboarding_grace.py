@@ -22,7 +22,7 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
-from app.models import Task, TaskBookItem, TaskStatus, TaskType, User, UserRole
+from app.models import Topic, Task, TaskBookItem, TaskStatus, TaskType, User, UserRole
 from app.services.risk_analysis import compute_risk_score
 
 PFX = f"riskgrace_{_secrets.token_hex(3)}"
@@ -49,18 +49,23 @@ def _mk_student(db, *, email: str, teacher_id: int, created_at: datetime) -> int
     )
     db.add(s)
     db.flush()
-    t = Task(
-        student_id=s.id, date=date.today(), type=TaskType.OTHER,
-        title="Deneme", status=TaskStatus.PENDING, is_draft=False,
-    )
-    db.add(t)
-    db.flush()
-    # id-reuse orphan temizliği — yeni task id'sine yapışmış eski kalemleri at
-    db.execute(sa_delete(TaskBookItem).where(TaskBookItem.task_id == t.id))
-    db.add(TaskBookItem(
-        task_id=t.id, book_id=None, book_section_id=None,
-        label="Deneme", planned_count=15, completed_count=0,
-    ))
+    # Son 14 günün her birine yayınlanmış (yapılmamış) program: "boş gün" artık
+    # yalnız programlı günleri sayar → hesap-yaşı sınırı bununla sınanır.
+    topic_id = db.query(Topic.id).order_by(Topic.id).first()[0]
+    for off in range(14):
+        t = Task(
+            student_id=s.id, date=date.today() - timedelta(days=off), type=TaskType.OTHER,
+            title="Konu testi", status=TaskStatus.PENDING, is_draft=False,
+        )
+        db.add(t)
+        db.flush()
+        # id-reuse orphan temizliği — yeni task id'sine yapışmış eski kalemleri at
+        db.execute(sa_delete(TaskBookItem).where(TaskBookItem.task_id == t.id))
+        # Kaynaksız ama konuya bağlı kalem = TEST (tek tanım, completion.py).
+        db.add(TaskBookItem(
+            task_id=t.id, book_id=None, book_section_id=None,
+            label="Konu testi", planned_count=15, completed_count=0, topic_id=topic_id,
+        ))
     return s.id
 
 

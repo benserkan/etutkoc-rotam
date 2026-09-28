@@ -72,7 +72,7 @@ export function TeacherScorecardClient({ initial }: Props) {
           <div className="text-[11px] font-semibold uppercase text-muted-foreground">
             <ColumnHint
               label="Ortalama skor"
-              hint="Tablodaki koçların etkililik skorlarının ortalaması (0–100). Skor = %40 tamamlama + %25 doğruluk + %20 program disiplini + %15 düşük risk; son birkaç takvim haftası üzerinden hesaplanır."
+              hint="Tablodaki koçların etkililik skorlarının ortalaması (0–100). Skor = %40 tamamlama + %25 doğruluk + %20 program disiplini + %15 düşük risk; son 4 hafta (son 28 gün, bugün dahil) üzerinden hesaplanır."
             />
           </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.avg_score}</div>
@@ -123,7 +123,7 @@ export function TeacherScorecardClient({ initial }: Props) {
                   <th className="px-3 py-1.5 text-right">
                     <ColumnHint
                       label="Tamamlama"
-                      hint="Son 4 takvim haftasında (içinde bulunulan hafta bugüne kadar) çözülen test ÷ planlanan test. Yalnız soru bankası testleri; deneme ve etkinlik görevleri hariç."
+                      hint="Son 28 günde (bugün dahil) çözülen test ÷ planlanan test. Yalnız yayınlanmış soru bankası testleri; deneme ve etkinlik görevleri hariç. Panel ve tüm sayfalarda aynı ölçü."
                     />
                   </th>
                   <th className="px-3 py-1.5 text-right">
@@ -135,7 +135,7 @@ export function TeacherScorecardClient({ initial }: Props) {
                   <th className="px-3 py-1.5 text-right">
                     <ColumnHint
                       label="Program disiplini"
-                      hint="Öğrenci başına haftada planlanan test sayısı = son 4 haftada planlanan test ÷ öğrenci sayısı ÷ 4. İçinde bulunulan hafta henüz bitmediği halde 4'e bölündüğü için hafta başlarında biraz düşük görünür. Skora 50 test/hafta tavan kabul edilerek katılır."
+                      hint="Öğrenci başına haftada planlanan test sayısı = son 28 günde planlanan test ÷ öğrenci sayısı ÷ 4. Skora 50 test/hafta tavan kabul edilerek katılır."
                     />
                   </th>
                   <th className="px-3 py-1.5 text-right">

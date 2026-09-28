@@ -28,7 +28,7 @@ from typing import Any, Iterable, Literal
 
 from sqlalchemy.orm import Session
 
-from app.models import User, UserRole
+from app.models import Task, User, UserRole
 from app.services.analytics import (
     daily_activity_flag_series,
     week_stats_for,
@@ -124,18 +124,32 @@ def _days_since(dt: datetime | None, now: datetime) -> int | None:
 
 
 def _consecutive_empty_days(db: Session, student_id: int, today: date) -> int:
-    """Bugünden geriye üst üste kaç gün hiç görev tiklenmedi (etkinlik dahil).
+    """Program verilmiş kaç gün üst üste hiç görev tiklenmedi (etkinlik dahil).
 
-    "Boş gün" = o gün hiçbir görev tamamlanmadı. İtemless etkinlik görevi
-    (Diğer/Video/...) tamamlaması da gün'ü dolu yapar → soru sayısı 0 olsa bile.
+    Yalnız o gün YAYINLANMIŞ görevi olan günler sayılır — programsız gün ne
+    "boş" sayılır ne de seriyi bozar (2026-09-28: yalnız bugüne bir video görevi
+    verilen öğrenci "14 gün üst üste boş" görünüyordu). Bugün henüz bitmediği
+    için sayılmaz; ama bugün bir görev tiklendiyse seri sıfırdır. İtemless
+    etkinlik (Diğer/Video) tamamlaması da günü dolu yapar.
     """
-    flags = daily_activity_flag_series(db, student_id, today, 14)
+    flags = daily_activity_flag_series(db, student_id, today, 15)
+    if flags.get(today, False):
+        return 0
+    start = today - timedelta(days=14)
+    planned_days = {
+        d for (d,) in db.query(Task.date)
+        .filter(Task.student_id == student_id, Task.is_draft.is_(False),
+                Task.date >= start, Task.date < today)
+        .distinct()
+        .all()
+    }
     count = 0
-    d = today
+    d = today - timedelta(days=1)
     for _ in range(14):
         if flags.get(d, False):
             break
-        count += 1
+        if d in planned_days:
+            count += 1
         d -= timedelta(days=1)
     return count
 
@@ -174,7 +188,9 @@ def compute_risk_score(
         )
 
     # Haftalık özet
-    week = week_stats_for(db, student.id, today)
+    # TEK TANIM (completion.py): test hacmi, yayınlanmış görevler, son 7 gün.
+    # tasks_total = yayınlanmış görev SAYISI ("programı var mı" bununla ölçülür).
+    week = week_stats_for(db, student.id, today, tests_only=True)
     rate_pct: int | None = None
     if week.planned > 0:
         rate_pct = int(round(100 * week.completed / week.planned))
@@ -206,7 +222,7 @@ def compute_risk_score(
         indicators.append(RiskIndicator(
             code="low_completion",
             title="Düşük haftalık tamamlama",
-            detail=f"Son 7 günde planlanan {week.planned} görevin sadece %{rate_pct}'i tamamlandı",
+            detail=f"Son 7 günde planlanan {week.planned} testin %{rate_pct}'i çözüldü",
             weight=WEIGHTS["low_completion"],
         ))
         score += WEIGHTS["low_completion"]
@@ -214,7 +230,7 @@ def compute_risk_score(
     # 3) Üst üste 3+ gün boş — SADECE plan varsa anlamlı.
     # (Programsız öğrenciye "boş geçti" demek false-positive üretir; bu zaten
     # 'no_program' göstergesi tarafından kapsanıyor.)
-    if week.planned > 0:
+    if week.tasks_total > 0:
         empty_days = _consecutive_empty_days(db, student.id, today)
         # Hesap yaşından fazla "boş gün" olamaz — dün eklenen öğrenci için 14 gün
         # öncesini saymak yanlış-pozitif. account_age ile sınırla; bu aynı zamanda
@@ -225,15 +241,15 @@ def compute_risk_score(
         if empty_days >= 3:
             indicators.append(RiskIndicator(
                 code="consecutive_empty",
-                title=f"{empty_days} gün üst üste boş",
-                detail=f"Son {empty_days} günde hiç görev tamamlaması yok",
+                title=f"programlı {empty_days} gün üst üste boş",
+                detail=f"Görev verilen son {empty_days} günün hiçbirinde görev tamamlanmadı",
                 weight=WEIGHTS["consecutive_empty"],
             ))
             score += WEIGHTS["consecutive_empty"]
 
     # 4) Bu hafta vs geçen hafta %30+ düşüş
     prev_week_end = today - timedelta(days=7)
-    prev_week = week_stats_for(db, student.id, prev_week_end)
+    prev_week = week_stats_for(db, student.id, prev_week_end, tests_only=True)
     prev_rate = (
         int(round(100 * prev_week.completed / prev_week.planned))
         if prev_week.planned > 0 else None

@@ -110,7 +110,7 @@ export function AtRiskClient({ initial }: Props) {
                   <th className="text-left px-4 py-2 font-medium">
                     <ColumnHint
                       label="Öğrenci"
-                      hint="Adın altındaki “çözülen/planlanan (%)”: son 7 günde (bugün dahil) programa konan test ve deneme sorularından çözülenler. “plan yok” = son 7 günde hiç soru verilmemiş."
+                      hint="Adın altındaki “çözülen/planlanan (%)”: son 7 günde (bugün dahil) yayınlanan soru bankası testlerinden çözülenler (deneme ve etkinlik görevleri hariç). “plan yok” = son 7 günde hiç test verilmemiş."
                     />
                   </th>
                   <th className="text-left px-4 py-2 font-medium">Öğretmen</th>
@@ -123,7 +123,7 @@ export function AtRiskClient({ initial }: Props) {
                   <th className="text-right px-4 py-2 font-medium">
                     <ColumnHint
                       label="Risk puanı"
-                      hint="0–100; yüksek puan = öğrenci daha çok ilgi istiyor. Sinyallerin toplamı: 5+ gündür giriş yok (25), son 7 günde tamamlama %40 altı (30), 3+ gün üst üste hiçbir şey yapılmamış (20), önceki 7 güne göre %30+ düşüş (15), bu hafta hiç görev verilmemiş (10). Tamamlamaya denemeler ve taslak görevler de girer. Yeni öğrencide ilk 3 gün sinyal üretilmez."
+                      hint="0–100; yüksek puan = öğrenci daha çok ilgi istiyor. Sinyallerin toplamı: 5+ gündür giriş yok (25), son 7 günde tamamlama %40 altı (30), 3+ gün üst üste hiçbir şey yapılmamış (20), önceki 7 güne göre %30+ düşüş (15), bu hafta hiç görev verilmemiş (10). Tamamlama yalnız yayınlanmış soru bankası testlerinden hesaplanır (deneme ve etkinlik görevleri hariç); “görev verilmemiş” ise her görev türüne bakar. Yeni öğrencide ilk 3 gün sinyal üretilmez."
                     />
                   </th>
                   <th className="text-left px-4 py-2 font-medium">
@@ -287,7 +287,7 @@ function AtRiskRow({
           {row.weekly_planned > 0 ? (
             <>
               {row.grade_level ? " · " : null}
-              {row.weekly_completed}/{row.weekly_planned} soru çözüldü (%
+              {row.weekly_completed}/{row.weekly_planned} test çözüldü (%
               {row.weekly_rate_pct ?? 0})
             </>
           ) : (

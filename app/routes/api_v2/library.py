@@ -256,6 +256,7 @@ def _build_section_item(db: Session, sec: BookSection) -> BookSectionItem:
 
 
 def _build_book_list_item(book: Book) -> BookListItem:
+    from app.models.book import BOOK_SOURCE_LABELS
     sections = book.sections or []
     return BookListItem(
         id=book.id,
@@ -271,6 +272,13 @@ def _build_book_list_item(book: Book) -> BookListItem:
         section_count=len(sections),
         total_tests=sum(s.test_count for s in sections),
         assigned_student_count=len(book.student_books or []),
+        active_student_count=sum(
+            1 for sb in (book.student_books or [])
+            if getattr(sb, "archived_at", None) is None
+        ),
+        mapped_section_count=sum(1 for s in sections if s.topic_id is not None),
+        source_kind=book.source_kind,
+        source_label=BOOK_SOURCE_LABELS.get(book.source_kind) if book.source_kind else None,
         created_at=book.created_at,
     )
 
