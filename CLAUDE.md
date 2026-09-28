@@ -445,6 +445,44 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
 
 ---
 
+## GOOGLE PLAY RET — "Misleading Claims" (veli özellikleri) — 2026-09-28, YENİDEN İNCELEMEDE
+
+- Ret: açıklamadaki VELİ maddeleri (haftalık çalışma, tamamlama, deneme neti,
+  haftalık rapor/bildirim) inceleyici tarafından görülemedi. Kök neden: Play
+  Console "Uygulama erişimi"nde yalnız koç + öğrenci demo hesabı vardı; veli
+  demo hesabı (`demo-9d11ccce-veli@etutkoc.com` / `Demo123!@`, id 50 → öğrenci
+  49 Ayşe) verilmemişti + Ayşe'nin verisi Haziran'da kalmıştı.
+- Çözüm: `scripts/seed_play_review_parent_demo.py` (bugüne GÖRELİ; 3 haftalık
+  program, 39 görev/21 tamam, 3 LGS deneme, koç notu; idempotent işaret
+  `[play-review-demo]`) prod'da koşuldu (yedek `pre_playdemo_20260928_0949.dump`).
+  Kullanıcı veli hesabını Uygulama erişimine ekledi + açıklamayı yumuşattı +
+  incelemeye gönderdi (1.0.0 (16) + 35 ülke ile birlikte).
+- **Veri bugüne göre** — inceleme ~1-2 haftayı aşar ya da yeni ret gelirse betik
+  yeni tarihe göre (işaretli programlar silinip) yeniden koşulmalı.
+
+---
+
+## TOPLU KAYIT — GİRİŞ KARTLARI (2026-09-28, frontend-only, migration YOK)
+
+- Tetikleyici: Açı Koleji 15 öğrencilik liste (e-postalar eksik — kurumdan
+  istenecek; uydurma e-posta ÖNERİLMEZ: haftalık öğrenci maili geri döner,
+  ZeptoMail itibarı + şifremi unuttum bozulur). Geçici şifreler sunucuda
+  saklanmaz, yalnız CSV commit yanıtında bir kez döner; öğrenciye giriş maili
+  GİTMEZ → dağıtım kurum/koçta.
+- `web/components/teacher/login-cards.tsx` `LoginCardsActions`: CSV içe aktarma
+  sonuç ekranında "Giriş kartlarını yazdır" (gizli iframe + print; A4'e 8
+  kesilebilir kart: ad · sınıf/şube · rotam.etutkoc.com · e-posta · geçici şifre
+  + /login QR [qrcode.react, ekranda gizli render → outerHTML]) + "Excel'e indir"
+  (BOM'lu `;` CSV). Tamamen tarayıcıda. Sonuç ekranında beforeunload + "Yeni
+  içe aktarma"/"Öğrenci listesine git" onayı (şifre kaybı koruması).
+- Test YENİ `scripts/live_login_cards.py` **16/16** (+ `.shots/login_cards.png/pdf`).
+- **DEV DERSİ (tekrar):** Pazartesi dev backend cron telafisi SQLite'ı kilitler →
+  `cron_schedules.last_run_at=now` yapıp yeniden başlat. Sunucuları başlatmak
+  için scratchpad'e `.cmd` yazıp `Start-Process -FilePath x.cmd` (ArgumentList
+  string'i sessizce başarısız oluyordu).
+
+---
+
 ## KURUM TOPLU KURULUM — 4 madde (2026-09-27, kurum anlaşması ~25 öğrenci)
 
 **Tetikleyici (kullanıcı):** yeni kurum — 8. sınıf 3, 10-11. sınıf ~20, 12 +

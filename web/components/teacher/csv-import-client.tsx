@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { LoginCardsActions } from "@/components/teacher/login-cards";
 
 type Step = "input" | "preview" | "result";
 
@@ -423,6 +424,27 @@ function ResultStep({
   result: CsvCommitResult;
   onReset: () => void;
 }) {
+  const hasPasswords = result.created.length > 0;
+  // Geçici şifreler yalnız bu ekranda var — sekme kapanırken/ yenilenirken uyar.
+  React.useEffect(() => {
+    if (!hasPasswords) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [hasPasswords]);
+
+  function confirmLeave(e?: React.MouseEvent): boolean {
+    if (!hasPasswords) return true;
+    const ok = window.confirm(
+      "Geçici şifreler bu sayfadan ayrılınca bir daha gösterilemez. Giriş kartlarını yazdırdın ya da Excel'e indirdin mi?",
+    );
+    if (!ok) e?.preventDefault();
+    return ok;
+  }
+
   return (
     <div className="space-y-3">
       {result.header_errors.length > 0 ? (
@@ -469,16 +491,18 @@ function ResultStep({
 
       {result.created.length > 0 ? (
         <Card>
-          <CardHeader>
+          <CardHeader className="space-y-3">
             <CardTitle className="text-base">
               Geçici şifreler ({result.created.length})
             </CardTitle>
+            <LoginCardsActions students={result.created} />
           </CardHeader>
           <CardContent className="p-0">
-            <p className="text-xs text-muted-foreground px-4 pt-3">
-              Şifreler tek seferlik gösterilir. Bu sayfadan ayrıldığınızda
-              tekrar görüntülenemez — gerekirse not alın veya öğrencilere
-              güvenli yoldan iletin.
+            <p className="mx-4 mt-1 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              Şifreler yalnız bu ekranda görünür; sayfadan ayrılınca tekrar
+              gösterilemez. Önce <b>giriş kartlarını yazdır</b> (A4&apos;e 8 kesilebilir
+              kart: ad, e-posta, geçici şifre, giriş adresi ve QR) ya da{" "}
+              <b>Excel&apos;e indir</b>. Öğrenci ilk girişte kendi şifresini belirler.
             </p>
             <ul className="divide-y divide-border text-sm mt-2">
               {result.created.map((c) => (
@@ -563,11 +587,12 @@ function ResultStep({
       <div className="flex items-center justify-end gap-2">
         <Link
           href="/teacher/students"
+          onClick={(e) => confirmLeave(e)}
           className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
         >
           Öğrenci listesine git
         </Link>
-        <Button onClick={onReset}>Yeni içe aktarma</Button>
+        <Button onClick={() => { if (confirmLeave()) onReset(); }}>Yeni içe aktarma</Button>
       </div>
     </div>
   );
