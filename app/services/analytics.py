@@ -906,20 +906,32 @@ def generate_warnings(
                 # (rate_per_day > 0) ama tempoca geride → 'dikkat' (amber), acil
                 # hareketsizlik (red) ile aynı şiddette değil. Tamamen durmuş
                 # öğrenci için ayrı 'projection_zero_rate' (red) var.
+                # Tahmin, koçun programındaki tempodan (planlanan × tutturma)
+                # üretilir. Öğrenci gereken hızda çözüyorsa açığın sebebi PROGRAM
+                # yoğunluğudur (koç aksiyonu) — "mevcut hızla" demek yanlıştı
+                # (Zeynep Ela: 15.8 test/gün çözüyor, program ~10/gün).
+                _eff = max(1, projection.effective_days)
+                _plan_rate = projection.projected_completable / _eff
+                _plan_short = projection.rate_per_day >= projection.required_rate
                 out.append(Warning(
                     level="amber",
                     code="projection_shortfall",
-                    title="Sınava yetişmeyecek",
+                    title="Program temposu sınava yetmiyor" if _plan_short else "Sınava yetişmeyecek",
                     detail=(
-                        f"Mevcut hızla ({projection.rate_per_day:.1f} test/gün) "
-                        f"{abs(projection.gap)} test eksik kalacak. "
-                        f"Gerekli hız: {projection.required_rate:.1f} test/gün."
+                        (f"Öğrenci günde {projection.rate_per_day:.1f} test çözüyor ama programdaki "
+                         f"tempo günde ~{_plan_rate:.1f} test; bu tempoyla {abs(projection.gap)} test "
+                         f"eksik kalır. Gereken: günde {projection.required_rate:.1f} test.")
+                        if _plan_short else
+                        (f"Mevcut tempoyla (günde ~{_plan_rate:.1f} test) {abs(projection.gap)} test "
+                         f"eksik kalacak. Gereken: günde {projection.required_rate:.1f} test.")
                     ),
                     evidence=[
                         ("Sınav tarihi", _d(projection.exam_date) if projection.exam_date else "girilmemiş"),
-                        ("Kalan gün", f"{projection.days_left} gün"),
+                        ("Kalan gün", f"{projection.days_left} gün (son {projection.buffer_days} gün tampon)"),
                         ("Kalan test", f"{projection.total_tests - projection.completed} test (toplam {projection.total_tests})"),
-                        ("Mevcut hız", f"{projection.rate_per_day:.1f} test/gün (son {projection.window_days} gün)"),
+                        ("Çözme hızı", f"{projection.rate_per_day:.1f} test/gün (son {projection.window_days} gün)"),
+                        ("Programdaki tempo", f"~{_plan_rate:.1f} test/gün (planlanan × tutturma)"),
+                        ("Tahmini çözülecek", f"{projection.projected_completable} test"),
                         ("Gereken hız", f"{projection.required_rate:.1f} test/gün"),
                     ],
                 ))
