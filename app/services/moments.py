@@ -265,7 +265,7 @@ def silent_moment_report(
             User.institution_id.is_(None),
             User.is_active.is_(True),
         )
-        .order_by(User.last_login_at.desc().nullslast())
+        .order_by(User.last_active_at.desc().nullslast())
         .limit(SCAN_CAP + 1)
         .all()
     )

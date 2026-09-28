@@ -10,7 +10,7 @@ Metrikler (kurum aktif öğrencileri üzerinden):
   • Bildirim teslimatı — velilere giden NotificationLog başarı oranı + kanal kırılımı
 
 Veri yapısı: ParentStudentLink + ParentInvitation + NotificationLog (student_id
-kurum filtreli) + User.last_login_at. Migration YOK.
+kurum filtreli) + User.last_active_at. Migration YOK.
 """
 
 from __future__ import annotations
@@ -84,7 +84,7 @@ def compute_parent_trust(db: Session, *, institution_id: int, days: int = 30) ->
             db.query(func.count(User.id)).filter(
                 User.id.in_(parent_ids),
                 User.role == UserRole.PARENT,
-                User.last_login_at >= cutoff,
+                User.last_active_at >= cutoff,
             ).scalar() or 0
         )
 

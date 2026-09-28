@@ -281,13 +281,13 @@ def _never_logged_in_owners(
             )
             if not admins:
                 continue
-            if all(getattr(a, "last_login_at", None) is None for a in admins):
+            if all(getattr(a, "last_active_at", None) is None for a in admins):
                 out.append(o)
         else:
             u = db.get(User, o.owner_id)
             if u is None:
                 continue
-            if getattr(u, "last_login_at", None) is None:
+            if getattr(u, "last_active_at", None) is None:
                 out.append(o)
     return out
 

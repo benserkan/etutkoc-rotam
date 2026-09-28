@@ -313,10 +313,12 @@ def main() -> int:
         items = body.get("items", [])
         pending_count = body.get("pending_count", -1)
         # Pending talepler: r_change + r_remove + r_cap + r_reject + r_question = 5
+        # pending_count = ONAY bekleyen (soru/not hariç) = 4 · open_question = 1
         all_pending = all(i.get("status") == "pending" for i in items)
         ok = (
             r.status_code == 200
-            and pending_count == 5
+            and pending_count == 4
+            and body.get("open_question_count") == 1
             and len(items) == 5
             and all_pending
             # cross-tenant r_other listede olmamalı
@@ -615,11 +617,40 @@ def main() -> int:
             f"status={r.status_code} code={body.get('detail', {}).get('code')}",
         )
 
+
+        # ===== 15. POST /acknowledge (soru "Gördüm") → RESOLVED, cevapsız =====
+        with SessionLocal() as db:
+            r_ack = TaskRequest(
+                student_id=seed["student_id"], teacher_id=seed["teacher_id"],
+                task_id=seed["task1_id"], type=RequestType.QUESTION,
+                status=RequestStatus.PENDING,
+                message="Hocam yarının videolarını da izlemek istiyorum",
+            )
+            db.add(r_ack); db.commit()
+            r_ack_id = r_ack.id
+        b0 = client.get("/api/v2/teacher/badges").json()
+        r = client.post(f"/api/v2/teacher/requests/{r_ack_id}/acknowledge")
+        with SessionLocal() as db:
+            rq = db.get(TaskRequest, r_ack_id)
+            st, resp = rq.status, rq.teacher_response
+        b1 = client.get("/api/v2/teacher/badges").json()
+        check("15. acknowledge → resolved, cevap yok, rozet 1 düşer",
+              r.status_code == 200 and st == RequestStatus.RESOLVED and resp is None
+              and b1["pending_request_count"] == b0["pending_request_count"] - 1,
+              f"{r.status_code} {st} {b0.get('pending_request_count')}->{b1.get('pending_request_count')}")
+        r = client.post(f"/api/v2/teacher/requests/{r_ack_id}/acknowledge")
+        check("16. acknowledge ikinci kez → 409", r.status_code == 409, str(r.status_code))
+        r = client.post(f"/api/v2/teacher/requests/{seed['r_already_rejected_id']}/acknowledge")
+        check("17. acknowledge soru dışı → 422", r.status_code == 422, str(r.status_code))
+        d = client.get("/api/v2/teacher/dashboard").json()
+        check("18. pano: onay bekleyen soru saymaz",
+              d["pending_requests_count"] >= 0 and "open_question_count" in d,
+              str({k: d.get(k) for k in ("pending_requests_count", "open_question_count")}))
     finally:
         _cleanup(seed)
         print("\n  cleanup OK\n")
 
-    print(f"\n=== SONUÇ: {passed}/14 PASS ===\n")
+    print(f"\n=== SONUÇ: {passed}/18 PASS ===\n")
     if failed:
         for f in failed:
             print(f"  - {f}")

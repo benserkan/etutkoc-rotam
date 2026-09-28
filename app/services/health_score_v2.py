@@ -165,7 +165,7 @@ def _component_active_teacher(
             User.institution_id == institution_id,
             User.role == UserRole.TEACHER,
             User.is_active.is_(True),
-            User.last_login_at >= cutoff_7d,
+            User.last_active_at >= cutoff_7d,
         )
         .scalar() or 0
     )
@@ -206,7 +206,7 @@ def _component_active_student(
             User.institution_id == institution_id,
             User.role == UserRole.STUDENT,
             User.is_active.is_(True),
-            User.last_login_at >= cutoff_7d,
+            User.last_active_at >= cutoff_7d,
         )
         .scalar() or 0
     )
@@ -389,7 +389,7 @@ def _component_active_student_for_user(
             User.teacher_id == teacher_user_id,
             User.role == UserRole.STUDENT,
             User.is_active.is_(True),
-            User.last_login_at >= cutoff_7d,
+            User.last_active_at >= cutoff_7d,
         )
         .scalar() or 0
     )
@@ -620,7 +620,7 @@ def compute_health_score_v2(
             User.institution_id == institution.id,
             User.role == UserRole.TEACHER,
             User.is_active.is_(True),
-            User.last_login_at >= cutoff_7d,
+            User.last_active_at >= cutoff_7d,
         )
         .scalar() or 0
     )
@@ -630,7 +630,7 @@ def compute_health_score_v2(
             User.institution_id == institution.id,
             User.role == UserRole.STUDENT,
             User.is_active.is_(True),
-            User.last_login_at >= cutoff_7d,
+            User.last_active_at >= cutoff_7d,
         )
         .scalar() or 0
     )
@@ -689,7 +689,7 @@ def compute_health_score_v2_for_user(
             User.teacher_id == user_obj.id,
             User.role == UserRole.STUDENT,
             User.is_active.is_(True),
-            User.last_login_at >= cutoff_7d,
+            User.last_active_at >= cutoff_7d,
         )
         .scalar() or 0
     )

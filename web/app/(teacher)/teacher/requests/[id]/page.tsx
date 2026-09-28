@@ -132,6 +132,17 @@ export default async function TeacherRequestDetailPage({ params }: PageProps) {
           </CardContent>
         </Card>
 
+        {req.type === "question" ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Bu bir soru / not</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Programda değişiklik istemiyor, onay beklemez. Cevap yazabilir ya
+              da yalnız &quot;Gördüm&quot; diyerek kapatabilirsin.
+            </CardContent>
+          </Card>
+        ) : (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Önerilen değişiklik</CardTitle>
@@ -154,6 +165,7 @@ export default async function TeacherRequestDetailPage({ params }: PageProps) {
             <ProposedRow label="Önerilen tarih" value={req.proposed_date} />
           </CardContent>
         </Card>
+        )}
       </section>
 
       {req.teacher_response ? (

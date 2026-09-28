@@ -69,6 +69,7 @@ class TeacherDashboardResponse(BaseModel):
     at_risk_critical: int
 
     pending_requests_count: int
+    open_question_count: int = 0          # görülmemiş soru/not (onay beklemez)
 
     today_planned: int
     today_completed: int
@@ -163,6 +164,9 @@ class StudentClassGroupBody(BaseModel):
     Boş string şubeyi kaldırır."""
     student_ids: list[int]
     class_group: str
+    # Şube adındaki sınıf öğrencinin sınıfıyla uyuşmazsa 409 grade_mismatch;
+    # koç bilerek karma grup kuruyorsa force=True ile geçer.
+    force: bool = False
 
 
 class StudentClassGroupResult(BaseModel):
@@ -287,6 +291,12 @@ class StudentActivePhase(BaseModel):
     end_date: str
 
 
+class WarningEvidence(BaseModel):
+    """Uyarının kanıt satırı: 'Verilen görev' → '21 görev · 7 gün'."""
+    label: str
+    value: str
+
+
 class WarningItem(BaseModel):
     """Durum özeti uyarısı — yapısal + kanıt sayfasına link."""
     level: str                          # red | amber | green
@@ -295,6 +305,7 @@ class WarningItem(BaseModel):
     detail: str
     link: str                           # /teacher/students/{id}/<sayfa>
     link_label: str                     # "Haftalık planı incele" vb.
+    evidence: list[WarningEvidence] = []
 
 
 class TeacherStudentDetailResponse(BaseModel):
@@ -1300,7 +1311,8 @@ class TeacherRequestListResponse(BaseModel):
     page: int
     page_size: int
     has_next: bool
-    pending_count: int                     # öğretmenin tüm bekleyen talepleri
+    pending_count: int                     # ONAY bekleyen (soru/not hariç)
+    open_question_count: int = 0           # görülmemiş soru/not mesajı
 
 
 class TeacherRequestDetail(BaseModel):
@@ -2084,6 +2096,9 @@ class DashboardWarningRow(BaseModel):
     age_days: int                   # kaç gündür sürüyor (tazelik)
     snoozed: bool                   # ertelenmiş mi (aktif akışta gizli)
     snooze_until: datetime | None
+    evidence: list[WarningEvidence] = []   # neden üretildi (veri)
+    link: str | None = None                # kanıt sayfası
+    link_label: str | None = None
 
 
 class DashboardWarningsFeedResponse(BaseModel):

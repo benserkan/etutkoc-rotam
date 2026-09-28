@@ -126,7 +126,7 @@ def collect(db: Session, student: User, week_start: date, week_end: date) -> dic
             "study_mode": getattr(student, "study_mode", None),
             "curriculum_model": student.effective_curriculum_model,
             "is_paused": getattr(student, "is_paused", None),
-            "created_at": student.created_at, "last_login_at": student.last_login_at,
+            "created_at": student.created_at, "last_login_at": student.last_active_at,
             "coach": {"id": coach.id, "full_name": coach.full_name} if coach else None,
         }
     _safe(out, "student", profil)

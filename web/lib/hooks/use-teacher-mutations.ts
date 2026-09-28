@@ -910,6 +910,23 @@ export function useRespondRequest(requestId: number) {
   });
 }
 
+/** Soru/not mesajını cevap yazmadan "Gördüm" ile kapatır. */
+export function useAcknowledgeRequest(requestId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<TeacherRequestDetail>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<TeacherRequestDetail>>(
+        `/api/v2/teacher/requests/${requestId}/acknowledge`,
+        { method: "POST" },
+      ),
+    onError: (err) => showError(err, "Mesaj kapatılamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Mesaj görüldü olarak kapatıldı");
+    },
+  });
+}
+
 // =============================================================================
 // STUDENT CRUD
 // =============================================================================
@@ -2344,14 +2361,22 @@ export function useSetStudentsClassGroup() {
   return useMutation<
     MutationResponse<import("@/lib/types/teacher").StudentClassGroupResult>,
     ApiError,
-    { studentIds: number[]; classGroup: string }
+    { studentIds: number[]; classGroup: string; force?: boolean }
   >({
-    mutationFn: ({ studentIds, classGroup }) =>
+    mutationFn: ({ studentIds, classGroup, force }) =>
       api("/api/v2/teacher/students/class-group", {
         method: "POST",
-        body: JSON.stringify({ student_ids: studentIds, class_group: classGroup }),
+        body: JSON.stringify({
+          student_ids: studentIds,
+          class_group: classGroup,
+          force: !!force,
+        }),
       }),
-    onError: (e) => toast.error("Şube atanamadı", { description: e.message }),
+    onError: (e) => {
+      // Sınıf uyuşmazlığı çubuğun kendisinde ayrıntılı gösterilir.
+      if (e.detail?.code === "grade_mismatch") return;
+      toast.error("Şube atanamadı", { description: e.message });
+    },
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       const r = res.data;

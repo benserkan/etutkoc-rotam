@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import {
+  useAcknowledgeRequest,
   useApproveRequest,
   useRejectRequest,
   useRespondRequest,
@@ -40,6 +41,7 @@ export function RequestActionBar({ req }: Props) {
   const approveMut = useApproveRequest(req.id);
   const rejectMut = useRejectRequest(req.id);
   const respondMut = useRespondRequest(req.id);
+  const ackMut = useAcknowledgeRequest(req.id);
 
   if (req.status !== "pending") {
     return (
@@ -60,6 +62,20 @@ export function RequestActionBar({ req }: Props) {
             <Loader2 className="size-4 animate-spin" aria-hidden />
           ) : null}
           Onayla
+        </Button>
+      ) : null}
+
+      {req.type === "question" ? (
+        <Button
+          variant="outline"
+          onClick={() => ackMut.mutate(undefined, { onSuccess: () => router.refresh() })}
+          disabled={ackMut.isPending}
+          title="Cevap yazmadan kapat — onay beklemeyen bilgi mesajı"
+        >
+          {ackMut.isPending ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : null}
+          Gördüm
         </Button>
       ) : null}
 

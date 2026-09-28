@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export interface FilterValues {
   q: string;
   grade_level: string; // "" | "5" .. "12" | "graduate"
-  risk: "all" | "ok" | "medium" | "high" | "critical";
+  risk: "all" | "ok" | "medium" | "high" | "critical" | "at_risk";
   /** Varsayılan "aktif" — pasifler (pratik/eski kayıtlar) listeyi
    *  kalabalıklaştırmasın; filtreyle açılır (2026-08-11 saha isteği). */
   status: "aktif" | "pasif" | "tum";
@@ -45,6 +45,7 @@ const RISK_CHIP: Record<Exclude<FilterValues["risk"], "all">, string> = {
   critical: "Kritik",
   medium: "Uyarı",
   high: "Yüksek risk",
+  at_risk: "Risk altı (uyarı + kritik)",
   ok: "Yolunda",
 };
 

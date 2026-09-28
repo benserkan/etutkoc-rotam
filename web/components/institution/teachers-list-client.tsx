@@ -142,8 +142,8 @@ export function TeachersListClient({ initial, invitations, tab }: Props) {
                   </th>
                   <th className="text-right px-4 py-2 font-medium">
                     <ColumnHint
-                      label="Son giriş"
-                      hint="Koçun sisteme en son giriş yaptığı zaman."
+                      label="Son görülme"
+                      hint="Koçun web panelini ya da mobil uygulamayı en son açtığı zaman."
                     />
                   </th>
                   <th className="text-right px-4 py-2 font-medium">

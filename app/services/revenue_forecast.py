@@ -162,7 +162,7 @@ def risk_at_mrr(db: Session, *, include_independent_teachers: bool = True) -> di
             if price == 0:
                 continue
             # Heuristik: 30g'dir login yoksa "critical", 14-30g arası "risk"
-            last = _aware(getattr(u, "last_login_at", None))
+            last = _aware(getattr(u, "last_active_at", None))
             if last is None:
                 severity = "critical"
                 critical_mrr += price

@@ -97,8 +97,8 @@ def get_last_activity_signal(db: Session, user: User) -> datetime | None:
     Hiç sinyal yoksa None döner.
     """
     signals: list[datetime] = []
-    if user.last_login_at:
-        signals.append(_as_utc(user.last_login_at))
+    if user.last_active_at:
+        signals.append(_as_utc(user.last_active_at))
 
     if user.role == UserRole.STUDENT:
         latest = (

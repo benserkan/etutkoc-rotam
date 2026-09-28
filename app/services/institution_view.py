@@ -86,7 +86,7 @@ def teacher_summaries(
             planned=total_planned,
             completed=total_completed,
             rate_pct=rate,
-            last_login_days=_days_since(t.last_login_at, now),
+            last_login_days=_days_since(t.last_active_at, now),
             deneme_planned=deneme_p,
             deneme_completed=deneme_c,
         ))

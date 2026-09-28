@@ -110,6 +110,7 @@ def register_successful_login(
     user.failed_login_count = 0
     user.locked_until = None
     user.last_login_at = now
+    user.last_seen_at = now
     user.last_login_ip = (ip or "")[:64] or None
 
 

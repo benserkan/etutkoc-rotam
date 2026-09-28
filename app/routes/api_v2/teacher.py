@@ -337,6 +337,9 @@ from app.services.request_service import (
     RequestError,
     approve_request as svc_approve_request,
     pending_count_for_teacher,
+    open_question_count_for_teacher,
+    acknowledge_question as svc_acknowledge_question,
+    notify_question_seen as svc_notify_question_seen,
     notify_request_resolved as svc_notify_request_resolved,
     reject_request as svc_reject_request,
     respond_question as svc_respond_question,
@@ -488,7 +491,7 @@ def _build_brief_profile(student: User) -> StudentBriefProfile:
         class_group=student.class_group,
         institution_id=student.institution_id,
         teacher_id=student.teacher_id,
-        last_login_at=student.last_login_at,
+        last_login_at=student.last_active_at,
         created_at=student.created_at,
         display_grade_label=student.display_grade_label,
         track=track_value,
@@ -621,7 +624,9 @@ def teacher_dashboard_v2(
             TaskRequest.teacher_id == user.id,
             TaskRequest.status == RequestStatus.PENDING,
         )
-        .order_by(TaskRequest.created_at.desc())
+        # Onay bekleyenler önce, soru/not mesajları sonra (onay beklemez)
+        .order_by((TaskRequest.type == RequestType.QUESTION).asc(),
+                  TaskRequest.created_at.desc())
         .limit(5)
         .all()
     )
@@ -638,6 +643,7 @@ def teacher_dashboard_v2(
         for r in pending
     ]
     pending_total = pending_count_for_teacher(db, user.id)
+    open_questions = open_question_count_for_teacher(db, user.id)
 
     return TeacherDashboardResponse(
         student_count=len(students),
@@ -645,6 +651,7 @@ def teacher_dashboard_v2(
         at_risk_count=at_risk_count,
         at_risk_critical=at_risk_critical,
         pending_requests_count=pending_total,
+        open_question_count=open_questions,
         today_planned=today_planned,
         today_completed=today_completed,
         week_planned=week_planned,
@@ -670,14 +677,14 @@ def teacher_dashboard_v2(
 # =============================================================================
 
 
-_RiskFilter = Literal["all", "ok", "medium", "high", "critical"]
+_RiskFilter = Literal["all", "ok", "medium", "high", "critical", "at_risk"]
 
 
 @router.get("/students", response_model=TeacherStudentListResponse)
 def teacher_students_v2(
     q: str | None = Query(None, max_length=120, description="Ad/email arama"),
     grade_level: int | None = Query(None, ge=5, le=13),
-    risk: str | None = Query(None, description="all / ok / medium / high / critical"),
+    risk: str | None = Query(None, description="all / ok / medium / high / critical / at_risk"),
     status_filter: str | None = Query(
         None, alias="status", pattern="^(aktif|pasif|tum)$",
         description="aktif / pasif / tum (verilmezse tum — geriye uyum)",
@@ -699,7 +706,7 @@ def teacher_students_v2(
     """
     # Risk filtresi parametre normalizasyonu
     risk_norm: _RiskFilter = "all"
-    if risk in ("ok", "medium", "high", "critical"):
+    if risk in ("ok", "medium", "high", "critical", "at_risk"):
         risk_norm = risk  # type: ignore[assignment]
 
     # Temel sorgu
@@ -788,7 +795,12 @@ def teacher_students_v2(
     if risk_norm != "all":
         # pasif olanlar zaten 'ok' kabul. "Uyarı" kartı (fleet_amber) medium+high
         # sayıyor → ?risk=medium drilldown'u da high'ı kapsamalı (kart=liste).
-        _match = {"medium", "high"} if risk_norm == "medium" else {risk_norm}
+        # at_risk = panonun "Risk altı" kartı (medium+high+critical) — kart=liste.
+        _match = (
+            {"medium", "high"} if risk_norm == "medium"
+            else {"medium", "high", "critical"} if risk_norm == "at_risk"
+            else {risk_norm}
+        )
         students = [
             s for s in students
             if risk_levels_by_id.get(s.id, "ok") in _match
@@ -848,7 +860,7 @@ def teacher_students_v2(
             grade_level=s.grade_level,
             is_active=bool(s.is_active),
             is_paused=bool(s.is_paused),
-            last_login_at=s.last_login_at,
+            last_login_at=s.last_active_at,
             class_group=s.class_group,
             worst_warning_level=(sn.worst_warning_level if sn else "green"),
             worst_warning_title=ww_title,
@@ -879,11 +891,52 @@ def teacher_students_v2(
     )
 
 
+_WARN_LINK = {
+    "today_no_tick": ("day", "Bugünü incele"),
+    "yesterday_no_tick": ("day", "Günü incele"),
+    "inactive_3d": ("week", "Haftalık planı incele"),
+    "weekly_miss": ("week", "Haftalık planı incele"),
+    "weekly_zero": ("week", "Haftalık planı incele"),
+    "projection_shortfall": ("dna", "Çalışma analizini gör"),
+    "projection_tight": ("dna", "Çalışma analizini gör"),
+    "projection_zero_rate": ("dna", "Çalışma analizini gör"),
+    "subjects_unprogrammed": ("week", "Programa ekle"),
+}
+
+
+def warning_link(student_id: int, code: str) -> tuple[str, str]:
+    """Uyarı kodu → kanıt sayfası (tek merkez: durum özeti + uyarı akışı)."""
+    suffix, label = _WARN_LINK.get(code, ("week", "Programı incele"))
+    return f"/teacher/students/{student_id}/{suffix}", label
+
+
+def warning_evidence(w) -> list:
+    from app.routes.api_v2.schemas.teacher import WarningEvidence
+    return [WarningEvidence(label=a, value=b) for a, b in (getattr(w, "evidence", None) or [])]
+
+
 def normalize_class_group(v: str | None) -> str | None:
     """Şube adını sadeleştirir: boşluklar tekilleşir, en fazla 60 karakter;
     boş → None."""
     s = " ".join((v or "").split())[:60]
     return s or None
+
+
+def class_group_grade(v: str | None) -> int | str | None:
+    """Şube adının işaret ettiği sınıf: '12-A' / '12 Sayısal' / '9A' → 12/9;
+    'Mezun ...' → 'mezun'; sınıf taşımayan ad ('Hafta sonu') → None.
+    Yalnız 5-12 aralığı sınıf sayılır (başka sayılar grup numarasıdır)."""
+    import re as _re
+
+    s = " ".join((v or "").split()).lower()
+    if not s:
+        return None
+    if s.startswith("mezun"):
+        return "mezun"
+    m = _re.match(r"^(\d{1,2})(?!\d)", s)
+    if m and 5 <= int(m.group(1)) <= 12:
+        return int(m.group(1))
+    return None
 
 
 def _group_sort_key(v: str | None) -> tuple:
@@ -917,6 +970,24 @@ def teacher_students_class_group_v2(
         .all()
     )
     found = {u.id for u in rows}
+    target = class_group_grade(grp)
+    if target is not None and not body.force:
+        mism = []
+        for u in rows:
+            ok = u.is_graduate if target == "mezun" else (
+                not u.is_graduate and u.grade_level == target)
+            if not ok:
+                mism.append({"id": u.id, "name": u.full_name,
+                             "grade_label": u.display_grade_label})
+        if mism:
+            tl = "mezun" if target == "mezun" else f"{target}. sınıf"
+            raise HTTPException(status_code=409, detail={
+                "error": "conflict", "code": "grade_mismatch",
+                "message": (f"“{grp}” adı {tl} şubesi gibi görünüyor ama seçtiğin "
+                            f"{len(mism)} öğrenci {tl} değil. Şube yalnız bir etikettir; "
+                            "öğrencinin sınıfını değiştirmez."),
+                "details": {"group_grade_label": tl, "students": mism},
+            })
     for u in rows:
         u.class_group = grp
     db.commit()
@@ -1042,20 +1113,12 @@ def teacher_student_detail_v2(
 
     # Uyarı kodu → kanıt sayfası (koç tek tıkla detaya gitsin)
     from app.routes.api_v2.schemas.teacher import WarningItem
-    _WARN_LINK = {
-        "today_no_tick": ("day", "Bugünü incele"),
-        "yesterday_no_tick": ("day", "Günü incele"),
-        "inactive_3d": ("week", "Haftalık planı incele"),
-        "weekly_miss": ("week", "Haftalık planı incele"),
-        "weekly_zero": ("week", "Haftalık planı incele"),
-        "projection_shortfall": ("dna", "Çalışma analizini gör"),
-    }
     warning_items: list[WarningItem] = []
     for w in sn.warnings:
-        suffix, label = _WARN_LINK.get(w.code, ("week", "Programı incele"))
+        link, label = warning_link(student.id, w.code)
         warning_items.append(WarningItem(
             level=w.level, code=w.code, title=w.title, detail=w.detail,
-            link=f"/teacher/students/{student.id}/{suffix}", link_label=label,
+            link=link, link_label=label, evidence=warning_evidence(w),
         ))
 
     # Paket 3.5b — anchor durumu + aktif dönem rozeti
@@ -3503,7 +3566,10 @@ def teacher_badges_v2(
     )
     from app.services.support_request_service import pending_count_teacher
     return TeacherBadgesResponse(
-        pending_request_count=pending_count_for_teacher(db, user.id),
+        # Rozet = ilgilenilmesi gereken her şey: onay bekleyen + görülmemiş
+        # soru/not ("Gördüm" / cevap ile düşer).
+        pending_request_count=pending_count_for_teacher(
+            db, user.id, include_questions=True),
         at_risk_count=at_risk,
         support_answered_count=support_answered,
         support_inbox_pending=pending_count_teacher(db, user),
@@ -6382,6 +6448,7 @@ def teacher_list_requests_v2(
     )
     items = [_build_request_list_item(r) for r in rows]
     pending = pending_count_for_teacher(db, user.id)
+    open_q = open_question_count_for_teacher(db, user.id)
     end = page * page_size
     return TeacherRequestListResponse(
         items=items,
@@ -6390,6 +6457,7 @@ def teacher_list_requests_v2(
         page_size=page_size,
         has_next=end < total,
         pending_count=pending,
+        open_question_count=open_q,
     )
 
 
@@ -6572,6 +6640,46 @@ def teacher_respond_request_v2(
         raise _request_error_to_http(e)
     db.refresh(req)
     svc_notify_request_resolved(db, req, "answered")
+    return MutationResponse[TeacherRequestDetail](
+        data=_build_request_detail(db, req),
+        invalidate=_invalidate_for_request(req, user.id),
+    )
+
+
+# ---------------------- POST /requests/{id}/acknowledge ----------------------
+
+
+@router.post(
+    "/requests/{request_id}/acknowledge",
+    response_model=MutationResponse[TeacherRequestDetail],
+)
+def teacher_acknowledge_request_v2(
+    request_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Soru/not mesajını cevap yazmadan "Gördüm" ile kapat (RESOLVED)."""
+    req = _get_owned_request(db, request_id, user.id)
+    if req.type != RequestType.QUESTION:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "acknowledge_only_for_question",
+                    "message": "Yalnız soru/not mesajları 'Gördüm' ile kapatılır."},
+        )
+    if req.status != RequestStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "conflict", "code": "already_answered",
+                    "message": "Bu mesaj zaten kapatılmış."},
+        )
+    try:
+        svc_acknowledge_question(db, teacher=user, req=req)
+        db.commit()
+    except RequestError as e:
+        db.rollback()
+        raise _request_error_to_http(e)
+    db.refresh(req)
+    svc_notify_question_seen(db, req)
     return MutationResponse[TeacherRequestDetail](
         data=_build_request_detail(db, req),
         invalidate=_invalidate_for_request(req, user.id),
@@ -9924,17 +10032,19 @@ def teacher_dashboard_warnings_feed_v2(
         age_days = max(0, (now - _aw(st.first_seen_at)).days)
         snz = _aw(st.snooze_until)
         is_snoozed = bool(snz and snz > now)
+        link, label = warning_link(s.id, w.code)
         row = DashboardWarningRow(
             student_id=s.id, student_name=s.full_name, level=w.level, code=w.code,
             title=w.title, detail=w.detail, is_paused=bool(s.is_paused),
             age_days=age_days, snoozed=is_snoozed, snooze_until=st.snooze_until,
+            evidence=warning_evidence(w), link=link, link_label=label,
         )
         (snoozed if is_snoozed else active).append(row)
 
     active.sort(key=lambda r: (level_rank.get(r.level, 9), r.student_name.lower()))
     snoozed.sort(key=lambda r: (level_rank.get(r.level, 9), r.student_name.lower()))
     return DashboardWarningsFeedResponse(
-        rows=active[:30], snoozed_rows=snoozed[:30],
+        rows=active[:200], snoozed_rows=snoozed[:100],
         total=len(active), snoozed_count=len(snoozed),
     )
 

@@ -49,7 +49,7 @@ export const REQUEST_TYPE_LABELS_TR: Record<RequestType, string> = {
   change: "Sayı değiştir",
   replace: "Kaynağı değiştir",
   remove: "Çıkar",
-  question: "Soru",
+  question: "Soru / not",
   add: "Ekle",
 };
 
@@ -108,6 +108,8 @@ export interface TeacherDashboardResponse {
   at_risk_critical: number;
 
   pending_requests_count: number;
+  /** Görülmemiş soru/not mesajı — onay beklemez. */
+  open_question_count?: number;
 
   today_planned: number;
   today_completed: number;
@@ -292,6 +294,13 @@ export interface WarningItem {
   detail: string;
   link: string;           // /teacher/students/{id}/<sayfa>
   link_label: string;
+  evidence?: WarningEvidence[];
+}
+
+/** Uyarının kanıt satırı (neden üretildi): etiket → değer. */
+export interface WarningEvidence {
+  label: string;
+  value: string;
 }
 
 export interface TeacherStudentDetailResponse {
@@ -1229,6 +1238,8 @@ export interface TeacherRequestListResponse {
   page_size: number;
   has_next: boolean;
   pending_count: number;
+  /** Görülmemiş soru/not mesajı — onay beklemez. */
+  open_question_count?: number;
 }
 
 export interface TeacherRequestDetail {
@@ -1961,6 +1972,9 @@ export interface DashboardWarningRow {
   age_days: number;
   snoozed: boolean;
   snooze_until: string | null;
+  evidence?: WarningEvidence[];
+  link?: string | null;
+  link_label?: string | null;
 }
 
 export interface DashboardWarningsFeedResponse {

@@ -197,17 +197,17 @@ def compute_risk_score(
 
     # 1) Son giriş 5+ gün önce. Hiç giriş yapmamışsa, "kaç gündür giriş yok" =
     # hesap yaşı kadar sayılır → yeni öğrenci (hesap < 5 gün) işaretlenmez.
-    last_login_days = _days_since(student.last_login_at, now)
+    last_login_days = _days_since(student.last_active_at, now)
     effective_no_login = (
         last_login_days if last_login_days is not None else account_age_days
     )
     if effective_no_login is not None and effective_no_login >= 5:
         indicators.append(RiskIndicator(
             code="no_login_5d",
-            title="5+ gündür giriş yok",
+            title="5+ gündür görülmedi",
             detail=(
                 "Öğrenci hiç giriş yapmamış" if last_login_days is None
-                else f"Son giriş: {last_login_days} gün önce"
+                else f"Son görülme: {last_login_days} gün önce"
             ),
             weight=WEIGHTS["no_login_5d"],
         ))

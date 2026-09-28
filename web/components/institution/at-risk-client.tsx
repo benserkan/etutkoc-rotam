@@ -123,7 +123,7 @@ export function AtRiskClient({ initial }: Props) {
                   <th className="text-right px-4 py-2 font-medium">
                     <ColumnHint
                       label="Risk puanı"
-                      hint="0–100; yüksek puan = öğrenci daha çok ilgi istiyor. Sinyallerin toplamı: 5+ gündür giriş yok (25), son 7 günde tamamlama %40 altı (30), 3+ gün üst üste hiçbir şey yapılmamış (20), önceki 7 güne göre %30+ düşüş (15), bu hafta hiç görev verilmemiş (10). Tamamlama yalnız yayınlanmış soru bankası testlerinden hesaplanır (deneme ve etkinlik görevleri hariç); “görev verilmemiş” ise her görev türüne bakar. Yeni öğrencide ilk 3 gün sinyal üretilmez."
+                      hint="0–100; yüksek puan = öğrenci daha çok ilgi istiyor. Sinyallerin toplamı: 5+ gündür görülmedi — web ya da mobilde hiç açmadı (25), son 7 günde tamamlama %40 altı (30), 3+ gün üst üste hiçbir şey yapılmamış (20), önceki 7 güne göre %30+ düşüş (15), bu hafta hiç görev verilmemiş (10). Tamamlama yalnız yayınlanmış soru bankası testlerinden hesaplanır (deneme ve etkinlik görevleri hariç); “görev verilmemiş” ise her görev türüne bakar. Yeni öğrencide ilk 3 gün sinyal üretilmez."
                     />
                   </th>
                   <th className="text-left px-4 py-2 font-medium">

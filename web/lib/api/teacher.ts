@@ -274,7 +274,7 @@ export const teacherKeys = {
 export interface TeacherStudentsListParams {
   q?: string;
   grade_level?: number;
-  risk?: "all" | "ok" | "medium" | "high" | "critical";
+  risk?: "all" | "ok" | "medium" | "high" | "critical" | "at_risk";
   /** aktif / pasif / tum — verilmezse backend "tum" (geriye uyum). */
   status?: "aktif" | "pasif" | "tum";
   /** Şube; "__none__" = şubesiz öğrenciler */

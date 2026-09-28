@@ -348,7 +348,7 @@ def _teacher_summary_to_item(s: TeacherSummary) -> TeacherSummaryItem:
         weekly_rate_pct=s.rate_pct,
         weekly_deneme_planned=s.deneme_planned,
         weekly_deneme_completed=s.deneme_completed,
-        last_login_at=t.last_login_at,
+        last_login_at=t.last_active_at,
         last_login_days=s.last_login_days,
     )
 
@@ -395,8 +395,8 @@ def _teacher_to_summary_item(teacher: User, *, today: date | None = None) -> Tea
         weekly_planned=total_planned,
         weekly_completed=total_completed,
         weekly_rate_pct=rate,
-        last_login_at=teacher.last_login_at,
-        last_login_days=_days_since(teacher.last_login_at),
+        last_login_at=teacher.last_active_at,
+        last_login_days=_days_since(teacher.last_active_at),
     )
 
 

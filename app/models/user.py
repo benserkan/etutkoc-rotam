@@ -5,6 +5,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func, text
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -157,6 +158,13 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
     last_login_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Son görülme — kimliği doğrulanmış HER istekte (web çerezi, mobil Bearer)
+    # en çok 10 dakikada bir güncellenir. Mobil 30 günlük oturumla açık kaldığı
+    # için "son giriş" (last_login_at) aktiflik ölçüsü OLAMAZ; aktiflik için
+    # daima `last_active_at` (property) kullanılır.
+    last_seen_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # Şifre değişimi zaman damgası — diğer aktif oturumları geçersiz kılmak
     # için (session.password_stamp ile karşılaştırma yapılır).
     password_changed_at: Mapped[datetime | None] = mapped_column(
@@ -216,6 +224,23 @@ class User(Base):
     ai_parent_disabled_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+    @hybrid_property
+    def last_active_at(self) -> datetime | None:
+        """Son aktiflik = son görülme (her kanal) ya da son şifreli giriş.
+        Aktiflik ölçen HER yüzey bunu kullanır; last_login_at yalnız güvenlik
+        (giriş kaydı) içindir."""
+        vals = [v for v in (self.last_seen_at, self.last_login_at) if v is not None]
+        if not vals:
+            return None
+        from datetime import timezone as _tz
+        return max(v if v.tzinfo else v.replace(tzinfo=_tz.utc) for v in vals)
+
+    @last_active_at.inplace.expression
+    @classmethod
+    def _last_active_at_expr(cls):
+        # last_seen_at girişte de damgalanır → her zaman >= last_login_at
+        return func.coalesce(cls.last_seen_at, cls.last_login_at)
 
     @property
     def two_factor_enabled(self) -> bool:

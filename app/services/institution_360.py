@@ -83,8 +83,8 @@ def usage_metrics(
     )
     total_teacher = teacher_q.count()
     active_teacher = teacher_q.filter(
-        User.last_login_at.isnot(None),
-        User.last_login_at >= cutoff,
+        User.last_active_at.isnot(None),
+        User.last_active_at >= cutoff,
     ).count()
 
     # Student sayıları: institution_id öğrenci tablosunda mevcut (Sprint 6+)
@@ -94,8 +94,8 @@ def usage_metrics(
     )
     total_student = student_q.count()
     active_student = student_q.filter(
-        User.last_login_at.isnot(None),
-        User.last_login_at >= cutoff,
+        User.last_active_at.isnot(None),
+        User.last_active_at >= cutoff,
     ).count()
 
     # Notification: bu kurumdaki parent'lara gönderilen bildirimler

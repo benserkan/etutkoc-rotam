@@ -106,10 +106,23 @@ def main() -> int:
         r = c.get(L, params={"status": "aktif", "class_group": "__none__", "page_size": 100}).json()
         check("3. şubesizler", {x["id"] for x in r["items"]} == {d["n1"]})
 
+        r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"], d["b1"]],
+                                              "class_group": "11 A"})
+        det = r.json().get("detail", {}) if r.status_code == 409 else {}
+        check("5a. 10. sınıfı '11 A' şubesine → 409 grade_mismatch",
+              r.status_code == 409 and det.get("code") == "grade_mismatch"
+              and len(det.get("details", {}).get("students", [])) == 2, r.text[:200])
+        check("5a2. uyuşmazlıkta hiçbir şey yazılmadı", grp(d["n1"]) is None)
+        r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"]], "class_group": "Mezun grubu"})
+        check("5a3. mezun olmayana 'Mezun…' → 409", r.status_code == 409, str(r.status_code))
+        r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"]], "class_group": "Hafta sonu"})
+        check("5a4. sınıfsız ad serbest", r.status_code == 200 and grp(d["n1"]) == "Hafta sonu")
+        r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"]], "class_group": "10-D"})
+        check("5a5. aynı sınıf serbest", r.status_code == 200 and grp(d["n1"]) == "10-D")
         r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"], d["b1"], d["x"]],
-                                              "class_group": "  11   A "})
+                                              "class_group": "  11   A ", "force": True})
         body = r.json()["data"] if r.status_code == 200 else {}
-        check("5. toplu atama", r.status_code == 200 and body.get("updated_count") == 2
+        check("5. toplu atama (force)", r.status_code == 200 and body.get("updated_count") == 2
               and body.get("skipped_invalid_ids") == [d["x"]], r.text[:200])
         check("6. normalize '11 A'", grp(d["n1"]) == "11 A" and grp(d["b1"]) == "11 A")
         check("5b. yabancı öğrenci dokunulmadı", grp(d["x"]) is None)

@@ -1,24 +1,18 @@
 import Link from "next/link";
 
 import { apiServer } from "@/lib/api-server";
-import type {
-  TeacherRequestListItem,
-  TeacherRequestListResponse,
-} from "@/lib/types/teacher";
-import {
-  REQUEST_STATUS_LABELS_TR,
-  REQUEST_TYPE_LABELS_TR,
-} from "@/lib/types/teacher";
-import { Card, CardContent } from "@/components/ui/card";
+import type { TeacherRequestListResponse } from "@/lib/types/teacher";
+import { RequestsInbox } from "@/components/teacher/requests-inbox-client";
 import { DemoHint } from "@/components/demos/demo-hint";
 
 /**
- * /teacher/requests — talep listesi (Paket 5: read-only).
+ * /teacher/requests — talep gelen kutusu.
+ *
+ * Bekleyen görünümünde iki bölüm: onay isteyen değişiklik talepleri ve
+ * onay beklemeyen soru/not mesajları (Gördüm / Cevapla satır içinde).
  *
  * Filtreler URL search params üzerinden:
  *   ?status=pending&type=change&student_id=...&page=2
- *
- * Onaylama/Reddetme/Cevaplama akışları Paket 7'de eklenir.
  */
 export const dynamic = "force-dynamic";
 
@@ -74,8 +68,9 @@ export default async function TeacherRequestsPage({ searchParams }: PageProps) {
           Talepler
         </h1>
         <p className="text-sm text-muted-foreground">
-          {data.pending_count} bekleyen · sayfada {data.items.length} · toplam{" "}
-          {data.total}
+          {data.pending_count} talep onayını bekliyor ·{" "}
+          {data.open_question_count ?? 0} yeni mesaj
+          {status !== "pending" ? <> · bu filtrede {data.total} kayıt</> : null}
         </p>
         <DemoHint contextKey="requests" role="teacher" />
       </header>
@@ -108,21 +103,7 @@ export default async function TeacherRequestsPage({ searchParams }: PageProps) {
         })}
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {data.items.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground">
-              Bu filtrede talep yok.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {data.items.map((r) => (
-                <RequestRow key={r.id} r={r} />
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      <RequestsInbox items={data.items} status={status} />
 
       <Pager
         page={data.page}
@@ -130,33 +111,6 @@ export default async function TeacherRequestsPage({ searchParams }: PageProps) {
         baseQueryString={qs.toString()}
       />
     </div>
-  );
-}
-
-function RequestRow({ r }: { r: TeacherRequestListItem }) {
-  return (
-    <li>
-      <Link
-        href={`/teacher/requests/${r.id}`}
-        className="grid grid-cols-12 items-center gap-3 px-4 py-3 hover:bg-muted transition-colors"
-      >
-        <span className="col-span-12 sm:col-span-3 text-sm font-medium truncate">
-          {r.student_name}
-        </span>
-        <span className="col-span-6 sm:col-span-2 text-xs uppercase tracking-wide text-muted-foreground">
-          {REQUEST_TYPE_LABELS_TR[r.type]}
-        </span>
-        <span className="col-span-6 sm:col-span-4 text-xs text-muted-foreground truncate">
-          {r.task_title ?? "—"}
-        </span>
-        <span className="hidden sm:block sm:col-span-2 text-xs">
-          {REQUEST_STATUS_LABELS_TR[r.status]}
-        </span>
-        <span className="hidden sm:block sm:col-span-1 text-[11px] text-muted-foreground tabular-nums text-right">
-          {r.created_at.slice(0, 10)}
-        </span>
-      </Link>
-    </li>
   );
 }
 

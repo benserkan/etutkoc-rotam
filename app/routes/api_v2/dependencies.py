@@ -113,12 +113,20 @@ def _resolve_from_cookie(request: Request, db: Session) -> User | None:
 
 
 def _resolve_from_bearer(
-    creds: HTTPAuthorizationCredentials | None, db: Session
+    creds: HTTPAuthorizationCredentials | None, db: Session,
+    request: Request | None = None,
 ) -> User | None:
     """Authorization: Bearer header'dan user çöz (mobile + dev/curl)."""
     if creds is None or not creds.credentials:
         return None
-    return _decode_access_token(creds.credentials, db, source="bearer")
+    user = _decode_access_token(creds.credentials, db, source="bearer")
+    if user is not None and request is not None:
+        try:
+            if decode_token(creds.credentials.strip()).impersonator_id:
+                request.state.impersonator_id = True
+        except TokenError:
+            pass
+    return user
 
 
 def _resolve_from_session(request: Request, db: Session) -> User | None:
@@ -158,12 +166,39 @@ def _resolve_user_v2(
     """
     user = _resolve_from_cookie(request, db)
     if user is None:
-        user = _resolve_from_bearer(creds, db)
+        user = _resolve_from_bearer(creds, db, request)
     if user is None:
         user = _resolve_from_session(request, db)
     if user is None:
         raise _auth_error("Giriş yapmanız gerekiyor", "missing_credentials")
+    _touch_last_seen(db, user, request)
     return user
+
+
+_LAST_SEEN_THROTTLE_SEC = 600
+
+
+def _touch_last_seen(db: Session, user: User, request: Request) -> None:
+    """Son görülme damgası (10 dk throttle). Sahte oturumda (impersonation)
+    yazılmaz — admin'in bakması öğrenciyi 'aktif' göstermesin. Best-effort:
+    hata isteği asla düşürmez."""
+    if getattr(request.state, "impersonator_id", None):
+        return
+    try:
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        last = user.last_seen_at
+        if last is not None and last.tzinfo is None:
+            last = last.replace(tzinfo=timezone.utc)
+        if last is not None and (now - last).total_seconds() < _LAST_SEEN_THROTTLE_SEC:
+            return
+        db.query(User).filter(User.id == user.id).update(
+            {User.last_seen_at: now}, synchronize_session=False
+        )
+        db.commit()
+        user.last_seen_at = now
+    except Exception:
+        db.rollback()
 
 
 def get_current_user_v2(

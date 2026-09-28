@@ -213,7 +213,7 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
               <span>Sınıf · Şube</span>
               <span title="Bugün tamamlanan / toplam görev (etkinlik dahil)">Bugün</span>
               <span title="Son 7 günde (bugün dahil) tamamlanan görev oranı">Son 7 gün</span>
-              <span>Son giriş</span>
+              <span>Son görülme</span>
               <span className="sr-only">İşlemler</span>
             </div>
             <label className="flex items-center gap-3 border-b border-border px-4 py-2 text-xs text-muted-foreground md:hidden">
@@ -317,7 +317,10 @@ function StatusTiles({
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="status-tiles">
       {tiles.map((t) => {
-        const on = risk === t.key || (t.key === "medium" && risk === "high");
+        const on =
+          risk === t.key ||
+          (t.key === "medium" && (risk === "high" || risk === "at_risk")) ||
+          (t.key === "critical" && risk === "at_risk");
         const Icon = t.icon;
         return (
           <button
@@ -503,7 +506,7 @@ function StudentRow({
             <span className="text-sm text-muted-foreground">Program yok</span>
           )}
         </Metric>
-        <Metric label="Son giriş">
+        <Metric label="Son görülme">
           <span className="text-sm text-foreground" title={s.last_login_at ?? undefined}>
             {lastLoginLabel(s.last_login_at)}
           </span>
@@ -916,60 +919,130 @@ function ClassGroupBar({
   onDone: () => void;
 }) {
   const [value, setValue] = React.useState("");
+  const [mismatch, setMismatch] = React.useState<{
+    message: string;
+    students: { id: number; name: string; grade_label: string | null }[];
+  } | null>(null);
   const mut = useSetStudentsClassGroup();
   const listId = "class-group-options";
-  function apply(v: string) {
-    mut.mutate({ studentIds: selectedIds, classGroup: v }, { onSuccess: () => onDone() });
+  function apply(v: string, force = false) {
+    mut.mutate(
+      { studentIds: selectedIds, classGroup: v, force },
+      {
+        onSuccess: () => {
+          setMismatch(null);
+          onDone();
+        },
+        onError: (e) => {
+          if (e.detail?.code === "grade_mismatch") {
+            const det = (e.detail as { details?: { students?: { id: number; name: string; grade_label: string | null }[] } }).details;
+            setMismatch({ message: e.message, students: det?.students ?? [] });
+          }
+        },
+      },
+    );
   }
   return (
     <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
       <div
-        className="flex w-full max-w-3xl flex-wrap items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl ring-1 ring-black/10"
+        className="w-full max-w-3xl space-y-2 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl ring-1 ring-black/10"
         data-testid="class-group-bar"
       >
-        <span className="font-medium">{selectedIds.length} öğrenci seçili</span>
-        <span className="text-slate-300">· şubeye al:</span>
-        <input
-          list={listId}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="örn. 10-A"
-          maxLength={60}
-          className="h-9 w-36 rounded-md border border-slate-600 bg-slate-800 px-2 text-sm text-white placeholder:text-slate-400"
-          aria-label="Şube adı"
-        />
-        <datalist id={listId}>
-          {groupNames.map((g) => (
-            <option key={g} value={g} />
-          ))}
-        </datalist>
-        <button
-          type="button"
-          disabled={!value.trim() || mut.isPending}
-          onClick={() => apply(value)}
-          data-testid="class-group-apply"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-cyan-600 px-3 font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
-        >
-          {mut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
-          Şubeye al
-        </button>
-        <button
-          type="button"
-          disabled={mut.isPending}
-          onClick={() => apply("")}
-          className="h-9 rounded-md px-3 text-slate-200 hover:bg-slate-800 disabled:opacity-50"
-        >
-          Şubeyi kaldır
-        </button>
-        <button
-          type="button"
-          onClick={onDone}
-          className="ml-auto inline-flex h-9 items-center gap-1 rounded-md px-2 text-slate-300 hover:bg-slate-800 hover:text-white"
-          aria-label="Seçimi temizle"
-        >
-          <X className="size-4" aria-hidden />
-          Seçimi temizle
-        </button>
+        {mismatch ? (
+          <div
+            className="rounded-lg bg-amber-500 px-3 py-2 text-slate-950"
+            role="alert"
+            data-testid="class-group-mismatch"
+          >
+            <p className="font-semibold">Sınıf uyuşmuyor</p>
+            <p className="mt-0.5">{mismatch.message}</p>
+            {mismatch.students.length > 0 ? (
+              <ul className="mt-1 list-disc pl-5">
+                {mismatch.students.map((st) => (
+                  <li key={st.id}>
+                    {st.name} — {st.grade_label ?? "sınıf girilmemiş"}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <p className="mt-1">
+              Öğrencinin sınıfını değiştirmek istiyorsan profilinden ya da Sınıf
+              Yükseltme sayfasından yap. Bilerek karma bir grup kuruyorsan yine de atayabilirsin.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => apply(value, true)}
+                disabled={mut.isPending}
+                data-testid="class-group-force"
+                className="h-8 rounded-md bg-slate-900 px-3 font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+              >
+                Yine de bu şubeye al
+              </button>
+              <button
+                type="button"
+                onClick={() => setMismatch(null)}
+                className="h-8 rounded-md px-3 font-medium text-slate-950 hover:bg-amber-400"
+              >
+                Vazgeç, adı düzelteyim
+              </button>
+            </div>
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-medium">{selectedIds.length} öğrenci seçili</span>
+          <span className="text-slate-300">· şubeye al:</span>
+          <input
+            list={listId}
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setMismatch(null);
+            }}
+            placeholder="örn. 10-A"
+            maxLength={60}
+            className="h-9 w-40 rounded-md border border-slate-600 bg-slate-800 px-2 text-sm text-white placeholder:text-slate-400"
+            aria-label="Şube adı"
+          />
+          <datalist id={listId}>
+            {groupNames.map((g) => (
+              <option key={g} value={g} />
+            ))}
+          </datalist>
+          <button
+            type="button"
+            disabled={!value.trim() || mut.isPending}
+            onClick={() => apply(value)}
+            data-testid="class-group-apply"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-cyan-600 px-3 font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
+          >
+            {mut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
+            Şubeye al
+          </button>
+          <button
+            type="button"
+            disabled={mut.isPending}
+            onClick={() => apply("")}
+            className="h-9 rounded-md px-3 text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+          >
+            Şubeyi kaldır
+          </button>
+          <button
+            type="button"
+            onClick={onDone}
+            className="ml-auto inline-flex h-9 items-center gap-1 rounded-md px-2 text-slate-300 hover:bg-slate-800 hover:text-white"
+            aria-label="Seçimi temizle"
+          >
+            <X className="size-4" aria-hidden />
+            Seçimi temizle
+          </button>
+        </div>
+        <p className="text-xs text-slate-300" data-testid="class-group-help">
+          Şube, öğrencileri gruplamak için kullandığın bir etikettir (örnek: 10-A,
+          12 Sayısal, Hafta sonu grubu). Öğrencinin sınıfını değiştirmez. Ad bir
+          sınıfla başlıyorsa (12-A gibi) sistem, seçili öğrencilerin o sınıfta olup
+          olmadığını kontrol eder.
+        </p>
       </div>
     </div>
   );

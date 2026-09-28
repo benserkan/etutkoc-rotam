@@ -277,20 +277,20 @@ def compute_health_score(
     teacher_stats = (
         db.query(
             func.count(User.id).label("recent"),
-            func.max(User.last_login_at).label("last"),
+            func.max(User.last_active_at).label("last"),
         )
         .filter(
             User.institution_id == institution.id,
             User.role == UserRole.TEACHER,
             User.is_active.is_(True),
-            User.last_login_at >= cutoff_7d,
+            User.last_active_at >= cutoff_7d,
         )
         .first()
     )
     active_teacher_count_7d = int(teacher_stats.recent or 0) if teacher_stats else 0
 
     last_teacher_login_row = (
-        db.query(func.max(User.last_login_at))
+        db.query(func.max(User.last_active_at))
         .filter(
             User.institution_id == institution.id,
             User.role == UserRole.TEACHER,
@@ -308,14 +308,14 @@ def compute_health_score(
             User.institution_id == institution.id,
             User.role == UserRole.STUDENT,
             User.is_active.is_(True),
-            User.last_login_at >= cutoff_7d,
+            User.last_active_at >= cutoff_7d,
         )
         .first()
     )
     active_student_count_7d = int(student_stats.recent or 0) if student_stats else 0
 
     last_student_login_row = (
-        db.query(func.max(User.last_login_at))
+        db.query(func.max(User.last_active_at))
         .filter(
             User.institution_id == institution.id,
             User.role == UserRole.STUDENT,

@@ -493,7 +493,7 @@ def _independent_teacher_activity_payload(
     summary_counts = {"healthy": 0, "watch": 0, "risk": 0, "critical": 0}
     rows: list[IndependentTeacherRiskRow] = []
     for t in indep_teachers:
-        last = t.last_login_at
+        last = t.last_active_at
         if last is None:
             days: int | None = None
             band = "critical"
@@ -520,7 +520,7 @@ def _independent_teacher_activity_payload(
                 band=band,  # type: ignore[arg-type]
                 days_since_login=days,
                 label=label,
-                last_login_at=t.last_login_at,
+                last_login_at=t.last_active_at,
             )
         )
     # Dikkat çeken üstte (critical → risk → watch → healthy)
@@ -5947,7 +5947,7 @@ def admin_revenue_user_360_v2(
     band_order = {"critical": 0, "risk": 1, "watch": 2, "healthy": 3}
     tmp_rows = []
     for s in all_students:
-        last = s.last_login_at
+        last = s.last_active_at
         if last is None:
             band, days, label = "critical", None, "hiç giriş yok"
         else:
@@ -5988,7 +5988,7 @@ def admin_revenue_user_360_v2(
     tasks_draft = sum(1 for r in task_rows if r[0])
     completion_pct = round(100 * tasks_completed / tasks_planned) if tasks_planned > 0 else 0
 
-    teacher_last = u.last_login_at
+    teacher_last = u.last_active_at
     if teacher_last is None:
         teacher_band, teacher_label = "critical", "hiç giriş yok"
     else:

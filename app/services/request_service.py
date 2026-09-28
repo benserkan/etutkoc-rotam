@@ -409,6 +409,34 @@ def respond_question(
         _notify_resolved_safe(db, req, "answered")
 
 
+def acknowledge_question(
+    db: Session, *, teacher: User, req: TaskRequest,
+) -> None:
+    """Soru/not tipindeki mesajı "Gördüm" ile kapatır — cevap yazmak ZORUNLU
+    DEĞİL (2026-09-28 koç kararı: "yarının videolarını da izlemek istiyorum"
+    gibi bilgi mesajları onay beklemez; koç görünce kapanır)."""
+    if req.teacher_id != teacher.id:
+        raise RequestError("Bu talep size ait değil.")
+    if req.status != RequestStatus.PENDING:
+        raise RequestError("Bu talep zaten yanıtlanmış.")
+    if req.type != RequestType.QUESTION:
+        raise RequestError("Yalnız soru/not mesajları 'Gördüm' ile kapatılır.")
+    req.status = RequestStatus.RESOLVED
+    req.responded_at = datetime.now(timezone.utc)
+
+
+def notify_question_seen(db: Session, req: TaskRequest) -> None:
+    """Öğrenciye kısa push: koç mesajını gördü (e-posta YOK — bilgi mesajı)."""
+    try:
+        from app.services.push_notifications import safe_push
+        safe_push(db, user_id=req.student_id, title="Koçun mesajını gördü",
+                  body="Mesajın okundu.",
+                  data={"type": "student", "screen": "requests"})
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception("notify_question_seen failed")
+
+
 def approve_request(
     db: Session, *, teacher: User, req: TaskRequest, response: str | None = None,
     notify: bool = True,
@@ -725,12 +753,29 @@ def _apply_add(db: Session, req: TaskRequest) -> Task:
 # ---------------------------- Sayım yardımcıları ----------------------------
 
 
-def pending_count_for_teacher(db: Session, teacher_id: int) -> int:
+def pending_count_for_teacher(
+    db: Session, teacher_id: int, *, include_questions: bool = False,
+) -> int:
+    """Koçun ONAY bekleyen talepleri. Soru/not mesajları (QUESTION) onay
+    beklemez — varsayılan olarak sayılmaz; `open_question_count_for_teacher`
+    ayrı verir (2026-09-28)."""
+    q = db.query(TaskRequest).filter(
+        TaskRequest.teacher_id == teacher_id,
+        TaskRequest.status == RequestStatus.PENDING,
+    )
+    if not include_questions:
+        q = q.filter(TaskRequest.type != RequestType.QUESTION)
+    return q.count()
+
+
+def open_question_count_for_teacher(db: Session, teacher_id: int) -> int:
+    """Koçun henüz görmediği (açık) soru/not mesajları."""
     return (
         db.query(TaskRequest)
         .filter(
             TaskRequest.teacher_id == teacher_id,
             TaskRequest.status == RequestStatus.PENDING,
+            TaskRequest.type == RequestType.QUESTION,
         )
         .count()
     )

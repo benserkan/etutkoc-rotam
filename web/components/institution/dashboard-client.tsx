@@ -336,7 +336,7 @@ function TeachersTable({
                   <ColumnHint label="Tamamlama" hint="Çözülen test ÷ planlanan test (son 7 gün). Satır rengi de buna göre: kırmızı %40 altı, sarı %40–69, yeşil %70 ve üstü." />
                 </th>
                 <th className="text-right px-4 py-2 font-medium">
-                  <ColumnHint label="Son giriş" hint="Koçun sisteme en son giriş yaptığı zaman." />
+                  <ColumnHint label="Son görülme" hint="Koçun web panelini ya da mobil uygulamayı en son açtığı zaman." />
                 </th>
               </tr>
             </thead>

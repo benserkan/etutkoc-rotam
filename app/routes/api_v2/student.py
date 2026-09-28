@@ -36,6 +36,7 @@ from app.models import (
     GoalStatus,
     PomodoroSession,
     RequestStatus,
+    RequestType,
     ReviewCard,
     StudentBook,
     StudentGoal,
@@ -244,6 +245,9 @@ def _has_pending_request_for_task(db: Session, task_id: int, student_id: int) ->
             TaskRequest.task_id == task_id,
             TaskRequest.student_id == student_id,
             TaskRequest.status == RequestStatus.PENDING,
+            # Soru/not mesajı görevi KİLİTLEMEZ — sayı/kaynak/çıkar talebi
+            # açılabilir (onay beklemeyen bilgi mesajı).
+            TaskRequest.type != RequestType.QUESTION,
         )
         .first()
         is not None

@@ -53,7 +53,7 @@ const CAT_HINT: Record<string, string> = {
   low_compliance:
     "Koçun öğrencilerinin son 7 günde (bugün dahil) planlanan testlerden çözdüğü oran; yalnız yayınlanmış soru bankası testleri, deneme ve etkinlik görevleri hariç. Panel ve tüm sayfalarda aynı ölçü. %40 altı uyarı, %25 altı kritik. Doğruluk = çözülen sorularda doğru ÷ (doğru + yanlış).",
   at_risk:
-    "Risk puanı 0–100: 5+ gündür giriş yok (25) · haftalık tamamlama %40 altı (30) · 3+ gün üst üste hiçbir şey yapılmamış (20) · önceki haftaya göre %30+ düşüş (15) · bu hafta hiç görev yok (10). 60 ve üstü Risk, 80 ve üstü Kritik.",
+    "Risk puanı 0–100: 5+ gündür görülmedi — web ya da mobilde hiç açmadı (25) · haftalık tamamlama %40 altı (30) · 3+ gün üst üste hiçbir şey yapılmamış (20) · önceki haftaya göre %30+ düşüş (15) · bu hafta hiç görev yok (10). 60 ve üstü Risk, 80 ve üstü Kritik.",
   inactive_program:
     "Programı olduğu hâlde 3 veya daha fazla gündür üst üste hiçbir görevi tamamlamayan öğrenci.",
 };

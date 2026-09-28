@@ -788,6 +788,7 @@ interface SummaryRow {
   link: string;
   linkLabel: string;
   good?: boolean;
+  evidence?: { label: string; value: string }[];
 }
 
 function StatusSummary({
@@ -840,6 +841,7 @@ function StatusSummary({
   const warnings: SummaryRow[] = items.map((w) => ({
     tone: (w.level === "red" ? "red" : w.level === "amber" ? "amber" : "green"),
     title: w.title, detail: w.detail, link: w.link, linkLabel: w.link_label,
+    evidence: w.evidence ?? [],
   }));
 
   const verdict = {
@@ -922,6 +924,16 @@ function SummaryCard({ row }: { row: SummaryRow }) {
         <div className="min-w-0">
           <p className={cn("text-sm font-semibold", t.title)}>{row.title}</p>
           <p className={cn("mt-0.5 text-xs", t.text)}>{row.detail}</p>
+          {row.evidence && row.evidence.length > 0 ? (
+            <dl className={cn("mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[11px]", t.text)}>
+              {row.evidence.map((e) => (
+                <React.Fragment key={e.label}>
+                  <dt className="font-medium">{e.label}</dt>
+                  <dd className="break-words">{e.value}</dd>
+                </React.Fragment>
+              ))}
+            </dl>
+          ) : null}
           <p className={cn("mt-1.5 text-xs font-medium", t.title)}>{row.linkLabel} →</p>
         </div>
       </div>

@@ -97,7 +97,20 @@ def main() -> int:
                 if "Ceren" in t or "Deniz" in t:
                     rows.nth(i).locator('[data-testid="student-select"]').check()
             chk("4. toplu çubuk görünür", pg.locator('[data-testid="class-group-bar"]').count() == 1)
+            chk("4a. çubukta açıklama var",
+                "Öğrencinin sınıfını değiştirmez" in pg.locator('[data-testid="class-group-help"]').inner_text())
+            # 10. sınıf öğrencilerini 12-A'ya almaya çalış → uyuşmazlık uyarısı
+            pg.locator('[data-testid="class-group-bar"] input[aria-label="Şube adı"]').fill("12-A")
+            pg.click('[data-testid="class-group-apply"]')
+            pg.wait_for_timeout(2000)
+            mm = pg.locator('[data-testid="class-group-mismatch"]')
+            chk("4b. 12-A → sınıf uyuşmuyor uyarısı", mm.count() == 1 and "10. sınıf" in mm.inner_text(),
+                mm.inner_text() if mm.count() else "")
+            with SessionLocal() as db:
+                g12 = [u.class_group for u in db.query(User).filter(User.id.in_(d["ids"]))]
+            chk("4c. uyuşmazlıkta hiçbir şey yazılmadı", "12-A" not in g12, str(g12))
             pg.locator('[data-testid="class-group-bar"] input[aria-label="Şube adı"]').fill("10-B")
+            chk("4d. ad değişince uyarı kalkar", mm.count() == 0)
             pg.click('[data-testid="class-group-apply"]')
             pg.wait_for_timeout(2500)
             chk("5. rozet sayısı 4 (yenilemesiz)",

@@ -79,6 +79,9 @@ class Warning:
     code: str
     title: str
     detail: str
+    # Kanıt: uyarının neden üretildiğini gösteren (etiket, değer) satırları —
+    # koç "bu doğru mu?" sorusunu veriye bakarak yanıtlayabilsin.
+    evidence: list[tuple[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -103,6 +106,19 @@ def _daterange(start: date, end_inclusive: date) -> Iterable[date]:
     while d <= end_inclusive:
         yield d
         d += timedelta(days=1)
+
+
+_TR_MONTHS = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"]
+
+
+def _d(d: date) -> str:
+    """Kısa tarih: '28 Eyl'."""
+    return f"{d.day} {_TR_MONTHS[d.month - 1]}"
+
+
+def _tr_now() -> datetime:
+    """Türkiye saati (UTC+3, yaz saati yok) — sunucu UTC çalışsa da doğru saat."""
+    return datetime.now(timezone.utc) + timedelta(hours=3)
 
 
 def _as_local_date(dt: datetime | None) -> date | None:
@@ -762,13 +778,19 @@ def generate_warnings(
     _today_gorev_done = sum(1 for t in _today_tasks if gorev_stats.gorev_done(t))
     if _today_gorev > 0 and _today_gorev_done == 0:
         # Saat geç mi? Akşam geçmiş ama hiç tik yok — kırmızı; gün hâlâ devam ediyorsa sarı
-        hour = datetime.now().hour
-        level = "red" if hour >= 20 else "amber"
+        _now_tr = _tr_now()
+        level = "red" if _now_tr.hour >= 20 else "amber"
         out.append(Warning(
             level=level,
             code="today_no_tick",
             title="Bugün hiç tik yapmadı",
             detail=f"Bugüne planlanmış {_today_gorev} görev var, henüz hiçbiri yapılmadı.",
+            evidence=[
+                ("Bugün", _d(today)),
+                ("Yayınlanmış görev", f"{_today_gorev} görev"),
+                ("Tamamlanan", "0 görev"),
+                ("Kontrol saati", f"{_now_tr:%H:%M} (20:00'den sonra kırmızıya döner)"),
+            ],
         ))
 
     # 2) Dün de tik yoksa — ciddileştir (etkinlik görevi de tik sayılır)
@@ -784,6 +806,12 @@ def generate_warnings(
             code="yesterday_no_tick",
             title="Dün hiç ilerleme yok",
             detail=f"Dün {yesterday_stats.planned} test planlı idi, tamamlanmadı.",
+            evidence=[
+                ("Gün", _d(yesterday)),
+                ("Planlanan", f"{yesterday_stats.planned} test"),
+                ("Çözülen", "0 test"),
+                ("Tamamlanan görev", "0"),
+            ],
         ))
 
     # 3) Son 3 günde hiç tik yok mu — SADECE programı olan (planlı görevi bulunan)
@@ -809,25 +837,52 @@ def generate_warnings(
             level="red",
             code="inactive_3d",
             title="3 gündür hareket yok",
-            detail="Son 3 günde öğrencinin hiç test tamamlaması yok.",
+            detail="Son 3 günde öğrencinin hiç test ya da görev tamamlaması yok.",
+            evidence=[
+                (_d(today - timedelta(days=2)), f"{dby_stats.planned} test planlı · 0 çözüldü"),
+                (_d(yesterday), f"{yesterday_stats.planned} test planlı · 0 çözüldü"),
+                (_d(today), f"{today_stats.planned} test planlı · 0 çözüldü"),
+                ("Tamamlanan görev (3 gün)", "0"),
+            ],
         ))
 
-    # 4) Haftalık hedef tutturma oranı düşük
-    hit = hit_rate(db, student.id, today, 7)
-    if hit > 0 and hit < 0.5:
-        out.append(Warning(
-            level="amber",
-            code="weekly_miss",
-            title="Haftalık tempo düşük",
-            detail=f"Son 7 günde planlanan görevlerin sadece %{int(hit*100)}'i tamamlanmış.",
-        ))
-    elif hit == 0 and projection.days_left and projection.days_left > 0:
-        # Tamamen durmuş
+    # 4) Haftalık tempo — son 7 TAMAMLANMIŞ gün (bugün hariç: gün sürüyor),
+    # yalnız YAYINLANMIŞ görevler (taslağı öğrenci görmez), GÖREV bazlı
+    # (etkinlik dahil). Eskiden test hacmiyle ölçülüp "görevlerin %X'i"
+    # yazıyordu ve taslakları da sayıyordu.
+    _w_end = today - timedelta(days=1)
+    _w_start = today - timedelta(days=7)
+    _w_tasks = (
+        db.query(Task)
+        .options(joinedload(Task.book_items).joinedload(TaskBookItem.book))
+        .filter(Task.student_id == student.id, Task.date >= _w_start,
+                Task.date <= _w_end, Task.is_draft.is_(False))
+        .all()
+    )
+    _wg = gorev_stats.summarize(_w_tasks)
+    _w_days_prog = len({t.date for t in _w_tasks})
+    _w_ev = [
+        ("Dönem", f"{_d(_w_start)} – {_d(_w_end)} (son 7 gün, bugün hariç)"),
+        ("Verilen görev", f"{_wg.gorev_total} görev · {_w_days_prog} gün"),
+        ("Tamamlanan görev", f"{_wg.gorev_done} görev (%{_wg.gorev_pct})"),
+        ("Test", f"{_wg.test_completed}/{_wg.test_planned} çözüldü"),
+    ]
+    if _wg.gorev_total >= 3 and _wg.gorev_done == 0:
         out.append(Warning(
             level="red",
             code="weekly_zero",
             title="Haftalık ilerleme sıfır",
-            detail="Son 7 günde hiç test tamamlanmamış.",
+            detail=f"Son 7 günde verilen {_wg.gorev_total} görevin hiçbiri tamamlanmadı.",
+            evidence=_w_ev,
+        ))
+    elif _wg.gorev_total >= 3 and _wg.gorev_pct < 50:
+        out.append(Warning(
+            level="amber",
+            code="weekly_miss",
+            title="Haftalık tempo düşük",
+            detail=(f"Son 7 günde verilen {_wg.gorev_total} görevin "
+                    f"{_wg.gorev_done} tanesi tamamlandı (%{_wg.gorev_pct})."),
+            evidence=_w_ev,
         ))
 
     # 5) Projeksiyon açığı
@@ -848,6 +903,13 @@ def generate_warnings(
                         f"{abs(projection.gap)} test eksik kalacak. "
                         f"Gerekli hız: {projection.required_rate:.1f} test/gün."
                     ),
+                    evidence=[
+                        ("Sınav tarihi", _d(projection.exam_date) if projection.exam_date else "girilmemiş"),
+                        ("Kalan gün", f"{projection.days_left} gün"),
+                        ("Kalan test", f"{projection.total_tests - projection.completed} test (toplam {projection.total_tests})"),
+                        ("Mevcut hız", f"{projection.rate_per_day:.1f} test/gün (son {projection.window_days} gün)"),
+                        ("Gereken hız", f"{projection.required_rate:.1f} test/gün"),
+                    ],
                 ))
             elif projection.gap < remaining_overall * 0.1:
                 # Sınırda
@@ -859,6 +921,13 @@ def generate_warnings(
                         f"Mevcut hızla hedefi çok az farkla tutturuyor "
                         f"(±{projection.gap} test). Hız düşerse gecikir."
                     ),
+                    evidence=[
+                        ("Sınav tarihi", _d(projection.exam_date) if projection.exam_date else "girilmemiş"),
+                        ("Kalan gün", f"{projection.days_left} gün"),
+                        ("Kalan test", f"{projection.total_tests - projection.completed} test (toplam {projection.total_tests})"),
+                        ("Mevcut hız", f"{projection.rate_per_day:.1f} test/gün (son {projection.window_days} gün)"),
+                        ("Gereken hız", f"{projection.required_rate:.1f} test/gün"),
+                    ],
                 ))
         elif projection.rate_per_day == 0 and remaining_overall > 0:
             out.append(Warning(
@@ -866,62 +935,130 @@ def generate_warnings(
                 code="projection_zero_rate",
                 title="Hız sıfır — projeksiyon imkansız",
                 detail=f"Son 7 günde tik yok; {remaining_overall} test tamamlanmayı bekliyor.",
+                evidence=[
+                    ("Sınav tarihi", _d(projection.exam_date) if projection.exam_date else "girilmemiş"),
+                    ("Kalan gün", f"{projection.days_left} gün"),
+                    ("Kalan test", f"{projection.total_tests - projection.completed} test (toplam {projection.total_tests})"),
+                    ("Mevcut hız", f"{projection.rate_per_day:.1f} test/gün (son {projection.window_days} gün)"),
+                    ("Gereken hız", f"{projection.required_rate:.1f} test/gün"),
+                ],
             ))
 
-    # 6) Bir dersten 7+ gün uzak
-    # "Henüz başlanmadı" sadece VADESİ GEÇMİŞ ders için anlamlı. Rezerv, görev
-    # gelecek/bugün tarihli olsa bile açılır → yalnız gelecek (veya yalnız bugün)
-    # görevi olan ders "başlanmadı" damgalanmamalı: gelecek henüz gelmedi, BUGÜN
-    # hâlâ sürüyor (zaten 'today_no_tick' kapsar). Bu yüzden yalnız GEÇMİŞ
-    # (date < today) görevi olan ders kümesinde tetiklenir.
-    # DENEME≠TEST + taslak koruması: "henüz başlanmadı / durgunluk" yalnız TEST
-    # (soru bankası vb.) kitaplarına dayanır — bir DENEME atanması (branş/genel
-    # deneme) "test başlanmadı" saydırmaz. Ayrıca yalnız YAYINLANMIŞ (taslak değil)
-    # GEÇMİŞ test görevi "vadesi gelmiş" kabul edilir.
-    from app.models import Task as _T, TaskBookItem as _TI, Book as _B
-    due_subject_ids = {
-        r[0] for r in (
-            db.query(_B.subject_id)
+    # 6) Ders bazlı — yalnız VERİLMİŞ ama YAPILMAMIŞ iş (2026-09-29 düzeltmesi).
+    # Eskiden atanmış kitabı olan her ders "7+ gündür tamamlama yok" diyordu;
+    # koçun o hafta bilerek programlamadığı ders öğrencinin kusuru gibi
+    # görünüyordu (Taha: aktif çalışırken 6 "durgunluk"). Tersine rezervi iade
+    # edilmiş, verilip hiç yapılmamış ders (Boran AYT Kimya 0/4) kaçıyordu.
+    # Kural: son 14 günde yayınlanmış TEST görevi olan derste yapılmamış test
+    # varsa VE o dersten son çözüm 7+ gün önceyse (ya da hiç yoksa) uyarı.
+    # DENEME≠TEST: deneme kitapları girmez.
+    from app.models import Task as _T, TaskBookItem as _TI, Book as _B, Subject as _S
+    if account_age_days is None or account_age_days >= 7:
+        _s_start = today - timedelta(days=14)
+        _rows = (
+            db.query(_B.subject_id, _S.name, func.count(func.distinct(_T.id)),
+                     func.coalesce(func.sum(_TI.planned_count), 0),
+                     func.coalesce(func.sum(_TI.completed_count), 0))
             .join(_TI, _TI.book_id == _B.id)
             .join(_T, _T.id == _TI.task_id)
-            .filter(
-                _T.student_id == student.id,
-                _T.date < today,
-                _T.is_draft.is_(False),
-                _B.subject_id.isnot(None),
-                _B.type.notin_(gorev_stats.DENEME_BOOK_TYPES),
-            )
-            .distinct()
+            .join(_S, _S.id == _B.subject_id)
+            .filter(_T.student_id == student.id, _T.date >= _s_start, _T.date < today,
+                    _T.is_draft.is_(False), _B.type.notin_(gorev_stats.DENEME_BOOK_TYPES))
+            .group_by(_B.subject_id, _S.name)
             .all()
         )
-    }
-    breakdown = subject_breakdown(db, student.id, tests_only=True)
-    for s in breakdown:
-        if s["total"] > 0 and s["last_completed_at"]:
-            last = _as_local_date(s["last_completed_at"])
-            days_gap = (today - last).days if last else 999
-            if days_gap >= 7 and s["percent_done"] < 100:
+        _last = dict(
+            db.query(_B.subject_id, func.max(_T.date))
+            .join(_TI, _TI.book_id == _B.id)
+            .join(_T, _T.id == _TI.task_id)
+            .filter(_T.student_id == student.id, _TI.completed_count > 0,
+                    _B.type.notin_(gorev_stats.DENEME_BOOK_TYPES))
+            .group_by(_B.subject_id)
+            .all()
+        )
+        _programmed = {r[0] for r in _rows}
+        # Kayıt dışı önceden çözülmüş (baseline) test varsa ders "başlanmadı"
+        # sayılmaz — yalnız görevsiz çözüm tarihi bilinmez.
+        _bd = subject_breakdown(db, student.id, tests_only=True) if _rows else []
+        _has_solved = {sb["subject_id"] for sb in _bd if sb["completed"] > 0}
+        for sid, sname, n_tasks, planned, completed in _rows:
+            undone = int(planned) - int(completed)
+            last = _last.get(sid)
+            gap = (today - last).days if last else None
+            if undone <= 0 or (gap is not None and gap < 7):
+                continue
+            ev = [
+                ("Dönem", f"{_d(_s_start)} – {_d(today - timedelta(days=1))} (son 14 gün)"),
+                ("Verilen", f"{n_tasks} görev · {int(planned)} test"),
+                ("Çözülen", f"{int(completed)} test"),
+                ("Son çözüm", f"{_d(last)} ({gap} gün önce)" if last else (
+                    "görevle çözüm yok (kitapta önceden çözülmüş test var)"
+                    if sid in _has_solved else "hiç yok")),
+            ]
+            if last is None and sid not in _has_solved:
                 out.append(Warning(
-                    level="amber",
-                    code=f"subject_stale_{s['subject_id']}",
-                    title=f"{s['name']} dersinde durgunluk",
-                    detail=f"Son {days_gap} gündür bu derste tamamlama yok (%{s['percent_done']} bitmiş).",
+                    level="amber", code=f"subject_untouched_{sid}",
+                    title=f"{sname} henüz başlanmadı",
+                    detail=f"Son 14 günde verilen {int(planned)} testin hiçbiri çözülmedi.",
+                    evidence=ev,
                 ))
-        elif (
-            s["total"] > 0
-            and s["completed"] == 0
-            and s["last_completed_at"] is None
-            and s["reserved"] > 0
-            and s["subject_id"] in due_subject_ids
-        ):
-            # Hiç çözülmemiş ama VADESİ GELMİŞ (yayınlanmış, geçmiş) TEST rezervi var
-            out.append(Warning(
-                level="amber",
-                code=f"subject_untouched_{s['subject_id']}",
-                title=f"{s['name']} henüz başlanmadı",
-                detail=f"Rezerv açılmış ama hiçbir test tamamlanmamış.",
-            ))
+            else:
+                out.append(Warning(
+                    level="amber", code=f"subject_stale_{sid}",
+                    title=f"{sname} dersinde durgunluk",
+                    detail=(f"Son 14 günde verilen {int(planned)} testin {undone} tanesi yapılmadı; "
+                            + (f"bu dersten son çözüm {gap} gün önce." if last
+                               else "bu derste görevle yapılmış çözüm yok.")),
+                    evidence=ev,
+                ))
 
+        # Programda olmayan dersler — öğrenci kusuru DEĞİL, koç planlama
+        # hatırlatması; öğrenci başına TEK satır (liste uzamasın). Yalnız
+        # program yürüyen öğrencide (son 14 günde yayınlanmış görev var).
+        _has_recent = db.query(_T.id).filter(
+            _T.student_id == student.id, _T.date >= _s_start, _T.is_draft.is_(False),
+        ).first() is not None
+        if _has_recent and (account_age_days is None or account_age_days >= 14):
+            _upcoming = {
+                r[0] for r in (
+                    db.query(_B.subject_id)
+                    .join(_TI, _TI.book_id == _B.id)
+                    .join(_T, _T.id == _TI.task_id)
+                    .filter(_T.student_id == student.id, _T.date >= today,
+                            _T.is_draft.is_(False))
+                    .distinct().all()
+                )
+            }
+            idle = [
+                sb for sb in subject_breakdown(db, student.id, tests_only=True)
+                if sb["total"] > 0 and sb["percent_done"] < 100
+                and sb["subject_id"] not in _programmed and sb["subject_id"] not in _upcoming
+            ]
+            if idle:
+                names = [sb["name"] for sb in idle]
+                out.append(Warning(
+                    level="amber", code="subjects_unprogrammed",
+                    title=f"{len(idle)} ders programda yok",
+                    detail=(f"{', '.join(names)}: atanmış kitabı var ama son 14 günde ve "
+                            "ileriye dönük hiç görev verilmemiş."),
+                    evidence=[
+                        (sb["name"], f"kitapta %{sb['percent_done']} bitmiş · " + (
+                            f"son çözüm {_d(_as_local_date(sb['last_completed_at']))}"
+                            if sb["last_completed_at"] else "hiç çözülmedi"))
+                        for sb in idle
+                    ],
+                ))
+
+    # Aynı olgunun kademeleri tek uyarıda birleşir (liste uzamasın): haftalık
+    # sıfır > 3 gündür hareket yok > dün ilerleme yok. En güçlüsü kalır.
+    _codes = {w.code for w in out}
+    _drop: set[str] = set()
+    if "weekly_zero" in _codes:
+        _drop |= {"inactive_3d", "yesterday_no_tick"}
+    elif "inactive_3d" in _codes:
+        _drop.add("yesterday_no_tick")
+    if _drop:
+        out = [w for w in out if w.code not in _drop]
     return out
 
 
