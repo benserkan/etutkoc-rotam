@@ -52,7 +52,7 @@ from __future__ import annotations
 
 import logging
 import secrets
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy import func
@@ -149,6 +149,7 @@ from app.routes.api_v2.schemas.institution import (
     TeacherAiToggleResult,
     TeacherCardResponse,
     TeacherCardStudentRow,
+    TeacherCardDay,
     TeacherCreateBody,
     TeacherCreateResult,
     TeacherHeatmapRow,
@@ -837,9 +838,37 @@ def institution_teacher_card_v2(
     students = (
         db.query(User)
         .filter(User.role == UserRole.STUDENT, User.teacher_id == teacher.id)
+        # KVKK ile silinmiş (anonimleştirilmiş) hesaplar listelenmez
+        .filter(~User.email.like("anonymized-%@kvkk.local"))
         .order_by(User.full_name)
         .all()
     )
+    # Program zamanı + son 7 gün gün gün görev tamamlaması — tek sorgu
+    from app.models import Task, TaskStatus
+    from app.services import gorev_stats
+    sids = [s.id for s in students]
+    week_start = today - timedelta(days=6)
+    last_pub: dict[int, datetime] = {}
+    until: dict[int, date] = {}
+    by_day: dict[tuple[int, date], list] = {}
+    if sids:
+        for sid, lp, mx in (
+            db.query(Task.student_id, func.max(Task.published_at), func.max(Task.date))
+            .filter(Task.student_id.in_(sids), Task.is_draft.is_(False))
+            .group_by(Task.student_id)
+            .all()
+        ):
+            if lp:
+                last_pub[sid] = lp
+            if mx:
+                until[sid] = mx
+        for t in (
+            db.query(Task)
+            .filter(Task.student_id.in_(sids), Task.is_draft.is_(False),
+                    Task.date >= week_start, Task.date <= today)
+            .all()
+        ):
+            by_day.setdefault((t.student_id, t.date), []).append(t)
     rows: list[TeacherCardStudentRow] = []
     total_planned = 0
     total_completed = 0
@@ -847,6 +876,11 @@ def institution_teacher_card_v2(
     total_deneme_completed = 0
     for s in students:
         td = week_test_deneme_for(db, s.id, today)  # test + deneme AYRI
+        days: list[TeacherCardDay] = []
+        for i in range(7):
+            d = week_start + timedelta(days=i)
+            g = gorev_stats.summarize(by_day.get((s.id, d), []))
+            days.append(TeacherCardDay(date=d.isoformat(), total=g.gorev_total, done=g.gorev_done))
         rate: int | None = None
         if td.test_planned > 0:
             rate = int(round(100 * td.test_completed / td.test_planned))
@@ -865,6 +899,11 @@ def institution_teacher_card_v2(
             weekly_rate_pct=rate,
             weekly_deneme_planned=td.deneme_planned,
             weekly_deneme_completed=td.deneme_completed,
+            last_published_at=last_pub[s.id].isoformat() if s.id in last_pub else None,
+            program_until=until[s.id].isoformat() if s.id in until else None,
+            days=days,
+            week_gorev_total=sum(d.total for d in days),
+            week_gorev_done=sum(d.done for d in days),
         ))
     overall_rate: int | None = None
     if total_planned > 0:

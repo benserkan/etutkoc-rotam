@@ -344,12 +344,8 @@ def fetch_activity(
             user_id=owner_user_id,
         ))
 
-    # ---- Filter + sort + limit ----
-    if type_filter and type_filter != "all":
-        items = [i for i in items if i["category"] == type_filter]
-    items.sort(key=lambda x: x["occurred_at"], reverse=True)
-
-    # KPI sayım — tüm liste (limit'ten önce)
+    # KPI sayım — tür süzgecinden ÖNCE (süzgeç seçilince diğer kartlar 0'a
+    # düşmesin; kart = o türün dönemdeki toplamı) ve limit'ten önce.
     counts = {
         "total": len(items),
         "signup": sum(1 for i in items if i["category"] == "signup"),
@@ -359,5 +355,16 @@ def fetch_activity(
     }
     # Highlight ayrı sayım — paket satın alma
     counts["purchases"] = sum(1 for i in items if i["type"] == "plan_upgrade")
+    # Yeni kayıt kırılımı — kartın alt satırı "kim kaydoldu" desin
+    counts["signup_students"] = sum(1 for i in items if i["type"] == "create_student")
+    counts["signup_teachers"] = sum(
+        1 for i in items if i["type"] in ("signup_teacher_solo", "signup_teacher_institution"))
+    counts["signup_parents"] = sum(1 for i in items if i["type"] == "signup_parent")
+    counts["signup_admins"] = sum(1 for i in items if i["type"] == "signup_institution_admin")
+
+    # ---- Filter + sort + limit ----
+    if type_filter and type_filter != "all":
+        items = [i for i in items if i["category"] == type_filter]
+    items.sort(key=lambda x: x["occurred_at"], reverse=True)
 
     return items[:limit], counts

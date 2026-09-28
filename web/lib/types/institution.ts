@@ -99,6 +99,14 @@ export interface TeacherCardStudentRow {
   weekly_rate_pct: number | null;
   weekly_deneme_planned: number;
   weekly_deneme_completed: number;
+  /** Koçun bu öğrenciye en son görev yayınladığı an (ISO) */
+  last_published_at?: string | null;
+  /** Programın uzandığı son gün (YYYY-MM-DD) */
+  program_until?: string | null;
+  /** Son 7 gün (bugün dahil) gün gün görev tamamlama */
+  days?: { date: string; total: number; done: number }[];
+  week_gorev_total?: number;
+  week_gorev_done?: number;
 }
 
 export interface TeacherCardResponse {

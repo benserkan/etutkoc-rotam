@@ -64,7 +64,7 @@ export function CohortsPrintSheet({ institution, wow, sections }: Props) {
         <PrintHeader
           institution={institution.name}
           subtitle="Kohort Karşılaştırma Raporu"
-          today={`${today} · son 7 gün`}
+          today={`${today} · son 7 gün · test + deneme soruları (taslak dahil) · değişim yüzde puan`}
         />
 
         {/* WoW özet */}
@@ -108,12 +108,12 @@ export function CohortsPrintSheet({ institution, wow, sections }: Props) {
                 <table className="cohort-table">
                   <thead>
                     <tr>
-                      <th>Kohort</th>
-                      <th className="text-right">N</th>
-                      <th className="text-right">Plan</th>
-                      <th className="text-right">Tam.</th>
-                      <th className="text-right">Oran</th>
-                      <th className="text-right">Risk</th>
+                      <th>Grup</th>
+                      <th className="text-right">Öğrenci</th>
+                      <th className="text-right">Planlanan soru</th>
+                      <th className="text-right">Çözülen</th>
+                      <th className="text-right">Tamamlama</th>
+                      <th className="text-right">Riskli</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -142,7 +142,7 @@ export function CohortsPrintSheet({ institution, wow, sections }: Props) {
                               %{c.at_risk_pct}
                             </span>
                           ) : (
-                            <span className="text-emerald-700">✓</span>
+                            <span className="text-emerald-700">0</span>
                           )}
                         </td>
                       </tr>

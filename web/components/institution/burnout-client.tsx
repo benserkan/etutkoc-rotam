@@ -8,6 +8,7 @@ import { Activity, Lock, PartyPopper, Send, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ColumnHint } from "@/components/ui/column-hint";
 import {
   buildInterventionMap,
   getInstitutionBurnout,
@@ -71,7 +72,11 @@ export function BurnoutClient({ initial }: Props) {
           Kurum Tükenmişlik Panosu
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Kurumun risk altındaki öğrencileri, aktif sinyalleri ve sorumlu koçları.
+          Aşırı yüklenme ve yorgunluk belirtisi gösteren öğrenciler (gece geç
+          saatte çalışma, hafta sonu hiç ara vermeme, ani yük artışı, tamamlamada
+          düşüş, seri kopması). Bu puan Risk Paneli&apos;ndeki risk puanından
+          ayrıdır: orada &ldquo;çalışmıyor mu?&rdquo;, burada &ldquo;fazla mı
+          yükleniyor?&rdquo; sorusuna bakılır.
         </p>
       </header>
 
@@ -79,15 +84,30 @@ export function BurnoutClient({ initial }: Props) {
         <EmptyState />
       ) : (
         <Card>
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs">
                 <tr>
                   <th className="text-left px-4 py-2.5 font-medium">Öğrenci</th>
                   <th className="text-left px-4 py-2.5 font-medium">Sorumlu koç</th>
-                  <th className="text-right px-4 py-2.5 font-medium w-28">Risk</th>
-                  <th className="text-center px-4 py-2.5 font-medium w-32">Seviye</th>
-                  <th className="text-right px-4 py-2.5 font-medium w-24">Sinyal</th>
+                  <th className="text-right px-4 py-2.5 font-medium w-28">
+                    <ColumnHint
+                      label="Tükenmişlik puanı"
+                      hint="0–100. Her yorgunluk sinyaline bir şiddet verilir (hafif 25, orta 50, güçlü 80); puan, en güçlü 3 sinyalin ortalamasıdır. Sinyaller: gece geç saatte çalışma (son 14 gün), hafta sonu hiç ara vermeme (son 21 gün), ani yük artışı, tamamlamada düşüş, çalışma serisinin kopması."
+                    />
+                  </th>
+                  <th className="text-center px-4 py-2.5 font-medium w-32">
+                    <ColumnHint
+                      label="Seviye"
+                      hint="Tükenmişlik puanına göre: 75 ve üstü Kritik, 50–74 Uyarı, 25–49 Dikkat."
+                    />
+                  </th>
+                  <th className="text-right px-4 py-2.5 font-medium w-24">
+                    <ColumnHint
+                      label="Uyarı sinyali"
+                      hint="Bu öğrencide şu an tetiklenmiş yorgunluk sinyali sayısı (en fazla 5)."
+                    />
+                  </th>
                   <th className="text-right px-4 py-2.5 font-medium w-32">Müdahale</th>
                 </tr>
               </thead>
@@ -168,7 +188,7 @@ function BurnoutRow({
         <BurnoutLevelBadge level={row.risk_level} />
       </td>
       <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
-        {row.signal_count} aktif
+        {row.signal_count} sinyal
       </td>
       <td className="px-4 py-2.5 text-right">
         {row.teacher_id ? (
@@ -193,7 +213,7 @@ function EmptyState() {
           aria-hidden
         />
         <p className="text-sm text-muted-foreground">
-          Şu an kurumda burnout sinyali olan öğrenci yok.
+          Şu an kurumda yorgunluk (tükenmişlik) sinyali gösteren öğrenci yok.
         </p>
       </CardContent>
     </Card>

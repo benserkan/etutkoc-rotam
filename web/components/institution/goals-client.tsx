@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Info } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { ColumnHint } from "@/components/ui/column-hint";
 import {
   getInstitutionGoals,
   institutionKeys,
@@ -57,7 +58,7 @@ export function GoalsClient({ initial }: Props) {
           Hedef Analizi
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
-          Kurumdaki tüm öğrencilerin hedef ağaçlarının agregat özeti. Detaylı
+          Kurumdaki tüm öğrencilerin hedeflerinin toplu özeti. Öğrenci bazlı
           öğrenci-bazlı görünüm gizlilik kuralı gereği yalnızca öğretmen
           panelinde görünür.
         </p>
@@ -65,34 +66,37 @@ export function GoalsClient({ initial }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <KpiCard
-          label="Hedefli Öğrenci"
+          label="Hedefi olan öğrenci"
+          hint="En az bir hedefi tanımlanmış aktif öğrenci sayısı (hedefin durumu ne olursa olsun)."
           value={students_with_goals}
-          sub={`Toplam ${totalStudents} öğrenciden`}
+          sub={`${totalStudents} aktif öğrenciden`}
         />
         <KpiCard
-          label="Toplam Hedef"
+          label="Toplam hedef"
+          hint="Kurumdaki öğrencilerin tüm hedefleri: süren, başarılan ve vazgeçilenler dahil."
           value={total_goals}
-          sub={`${active_goals} aktif · ${achieved_goals} tamam`}
+          sub={`${active_goals} süren · ${achieved_goals} başarılan`}
         />
         <KpiCard
-          label="Ortalama İlerleme"
+          label="Ortalama ilerleme"
+          hint="Her öğrencinin ana hedeflerinin ortalama ilerleme yüzdesi hesaplanır; bu kart, hedefi olan öğrencilerin bu yüzdelerinin ortalamasıdır."
           value={avg_overall_pct == null ? "—" : `%${avg_overall_pct}`}
-          sub="Tüm hedefli öğrencilerin ortalaması"
+          sub="hedefi olan öğrencilerin ortalaması"
           accent
         />
       </div>
 
       {students_without_goals > 0 && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3 dark:border-amber-500/30 dark:bg-amber-500/10">
           <AlertTriangle
             className="size-6 shrink-0 text-amber-600 mt-0.5"
             aria-hidden
           />
           <div>
-            <h3 className="font-semibold text-amber-900">
+            <h3 className="font-semibold text-amber-900 dark:text-amber-200">
               {students_without_goals} öğrenci hedefsiz
             </h3>
-            <p className="text-sm text-amber-800 mt-1">
+            <p className="text-sm text-amber-800 mt-1 dark:text-amber-200/90">
               Hedef koymak motivasyonu artırır ve ilerlemeyi ölçülebilir
               kılar. Öğretmenlerinize öğrencilerinin hedef ağacını
               tanımlamasını öneriniz.
@@ -113,9 +117,7 @@ export function GoalsClient({ initial }: Props) {
               <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                 Bu sayfada öğrenci-bazlı detay görünmez (gizlilik kuralı).
                 Detaylı hedef yönetimi için öğretmen, öğrenci profil sayfası →
-                &ldquo;Hedef Ağacı&rdquo; sekmesinden işlem yapar. İleride bir
-                sürümde &ldquo;en geride kalan top-3 öğrenci&rdquo; gibi
-                öncelikli müdahale kartları eklenecek.
+                &ldquo;Hedef Ağacı&rdquo; sekmesinden işlem yapar.
               </p>
             </div>
           </div>
@@ -127,11 +129,13 @@ export function GoalsClient({ initial }: Props) {
 
 function KpiCard({
   label,
+  hint,
   value,
   sub,
   accent,
 }: {
   label: string;
+  hint: string;
   value: number | string;
   sub?: string;
   accent?: boolean;
@@ -142,15 +146,15 @@ function KpiCard({
         <div
           className={
             "text-[11px] uppercase tracking-wider " +
-            (accent ? "text-emerald-700" : "text-muted-foreground")
+            (accent ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground")
           }
         >
-          {label}
+          <ColumnHint label={label} hint={hint} />
         </div>
         <div
           className={
             "text-3xl font-semibold mt-1 tabular-nums " +
-            (accent ? "text-emerald-800" : "")
+            (accent ? "text-emerald-800 dark:text-emerald-300" : "")
           }
         >
           {value}

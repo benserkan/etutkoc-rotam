@@ -19,7 +19,6 @@ import {
   Gauge,
   Inbox,
   LayoutDashboard,
-  LifeBuoy,
   LineChart,
   LogOut,
   Mail,
@@ -51,10 +50,11 @@ type BadgeKey = "support_inbox_pending" | "support_answered";
 
 function badgeValue(
   badges: InstitutionBadgesResponse | undefined,
-  key: BadgeKey | undefined,
+  key: BadgeKey | BadgeKey[] | undefined,
 ): number {
   if (!key || !badges) return 0;
-  return badges[key] ?? 0;
+  const keys = Array.isArray(key) ? key : [key];
+  return keys.reduce((n, k) => n + (badges[k] ?? 0), 0);
 }
 
 interface NavLink {
@@ -66,7 +66,7 @@ interface NavLink {
    * sidebar iskeletini erkenden gösterir, kullanıcı "yakında" sezer.
    */
   disabled?: boolean;
-  badgeKey?: BadgeKey;
+  badgeKey?: BadgeKey | BadgeKey[];
 }
 
 interface NavSection {
@@ -91,16 +91,19 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Kişiler",
     links: [
       { href: "/institution/teachers", label: "Öğretmenler", icon: Users },
-      { href: "/institution/invitations", label: "Davet", icon: Mail },
-      { href: "/institution/roster", label: "Roster", icon: ScrollText },
+      { href: "/institution/roster", label: "Tüm Öğrenciler", icon: ScrollText },
       { href: "/institution/bulk-wa", label: "Toplu WhatsApp", icon: MessageSquare },
     ],
   },
   {
-    title: "Talepler",
+    title: "İletişim",
     links: [
-      { href: "/institution/support-inbox", label: "Gelen Talepler", icon: Inbox, badgeKey: "support_inbox_pending" },
-      { href: "/institution/support", label: "Taleplerim", icon: LifeBuoy, badgeKey: "support_answered" },
+      {
+        href: "/institution/support-inbox",
+        label: "Talepler",
+        icon: Inbox,
+        badgeKey: ["support_inbox_pending", "support_answered"],
+      },
     ],
   },
   {

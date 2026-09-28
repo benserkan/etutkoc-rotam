@@ -462,6 +462,48 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
 
 ---
 
+## KURUM PANELİ ANLAŞILIRLIK TURU (2026-09-28, migration YOK)
+
+- Tetikleyici (kullanıcı, Açı Kurs'a sahte oturumla bakınca): "ifadeler sistemi
+  uzun süredir kullanan için yazılmış" · Öğretmen ekle vs Davet aynı mı · Roster
+  ne · iki talep menüsü · sütunlarda açıklama yok · koç detayında program zamanı
+  ve gün gün tamamlama isteği.
+- **Ortak `web/components/ui/column-hint.tsx` (`ColumnHint`)**: başlık/kart
+  etiketi + noktalı altçizgi + (i); hover/odakta Radix tooltip, DOKUNUNCA da
+  açılır (mobil). Kurum panelinin ~18 sayfasında tüm sayı sütunları/kartları.
+  **KURAL: kurum/admin panelinde yeni sayı sütunu/kartı ColumnHint'siz eklenmez;
+  açıklama birim + dönem + neyin sayıldığını (test/görev/deneme, taslak dahil mi)
+  söyler.**
+- Menü: "Davet" kalktı → Öğretmenler sayfasında sekme (`?tab=davet`, eski
+  `/institution/invitations` yönlenir; iki yolun farkı sayfada yazılı) · "Roster"
+  → "Tüm Öğrenciler" · "Gelen Talepler"+"Taleplerim" → tek "Talepler"
+  (`/institution/support-inbox`, sekmeler Öğretmenlerden gelen / Sistem
+  yöneticisiyle; `/institution/support` yönlenir; rozet toplam).
+- Koç detayı API: satırda `last_published_at` + `program_until` + `days[7]`
+  (gün gün GÖREV tamamlama) + `week_gorev_*`; KVKK anonim hesaplar gizli. Web:
+  Program sütunu + 7 kare şerit (hover/dokun: "Pzt 28 Eyl: 3/4 görev") + Görev %.
+- **"Programı yok" DÜZELTMESİ (institution_compliance):** eskiden bugüne kesilmiş
+  TEST hacmine bakıyordu → Pazartesi, ileri günde programı olan ya da yalnız
+  etkinlik/deneme görevi olan öğrenci "programsız" çıkıyordu (Boran vakası).
+  Artık takvim haftasının TAMAMI (Pzt–Paz) + her görev türü. Müdahale Merkezi
+  "düşük uyum" Pzt/Sal'da geçen haftanın tam verisine bakar (varsa); kart
+  metinleri sadeleşti. `simulate_action_center` soru bankası kalemine çekildi
+  (kitapsız kalem uyum hesabına hiç girmiyordu) → 11/11.
+- Aktivite Akışı: sayaçlar tür süzgecinden ÖNCE (süzgeç seçilince diğer kartlar
+  0'a düşüyordu) + "Yeni hesap" kırılımı (öğrenci/koç/veli/yönetici).
+- **Tablo taşma dersi:** `overflow-x-auto` kutusu `relative` değilse içindeki
+  `sr-only` (absolute) başlık kutudan kaçıp sayfayı yatay kaydırıyor → kurum
+  panelindeki tüm tablo kutuları `relative overflow-x-auto`.
+- **BİLİNEN (karar bekliyor):** "Tamamlama" dört farklı hesapla üretiliyor
+  (Panel/Öğretmen: son 7 gün test · Tüm Öğrenciler: kalem bazlı · Kohort/Risk/
+  Özet: deneme+taslak dahil · Program Uyumu/Karne: takvim haftası). Açıklamalar
+  artık her birini doğru anlatıyor; tek tanıma birleştirme ayrı iş.
+- Test YENİ `scripts/live_institution_panel_clarity.py` **23/23** · institution
+  18 · p2 19 · p3 18 · compliance 10 · action_center 8 · simulate 11 · scorecard
+  7 · academic 13 · parent_trust 9 · notify_coach 15 · support 54.
+
+---
+
 ## YENİ KURUM PENCERESİ — yönetici hesabı + logo (2026-09-28, migration YOK)
 
 - `POST /admin/institutions` (additive): `admin_full_name` + `admin_email`

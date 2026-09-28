@@ -1,19 +1,10 @@
-import { apiServer } from "@/lib/api-server";
-import type { InvitationListResponse } from "@/lib/types/institution";
-import { InvitationsClient } from "@/components/institution/invitations-client";
+import { redirect } from "next/navigation";
 
 /**
- * /institution/invitations — Öğretmen davetiye yönetimi.
- *
- * Jinja kaynağı: app/templates/institution/invitations.html
+ * /institution/invitations — Davet bağlantıları artık Öğretmenler sayfasının
+ * bir sekmesi (2026-09-28: "Öğretmen ekle" ile "Davet" aynı şey mi? karışıklığı).
+ * Eski bağlantılar kırılmasın diye yönlendirir.
  */
-export const dynamic = "force-dynamic";
-
-export const metadata = { title: "Davetiyeler" };
-
-export default async function InstitutionInvitationsPage() {
-  const data = await apiServer<InvitationListResponse>(
-    "/api/v2/institution/invitations",
-  );
-  return <InvitationsClient initial={data} />;
+export default function InstitutionInvitationsPage() {
+  redirect("/institution/teachers?tab=davet");
 }

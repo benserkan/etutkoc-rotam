@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { Card } from "@/components/ui/card";
 import { DemoHint } from "@/components/demos/demo-hint";
 import type { DemoRole } from "@/lib/demos";
@@ -123,31 +124,41 @@ export function ActivityStreamPage({
       {/* KPI kartları */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <KpiCard
-          icon={<ShoppingCart className="size-4 text-emerald-700" aria-hidden />}
+          icon={<ShoppingCart className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden />}
           label="Paket satın alma"
+          hint="Seçilen dönemde paketini yükselten (ücretli pakete geçen) hesap sayısı."
           value={counts.purchases ?? 0}
+          sub={`son ${days} gün`}
           highlight
         />
         <KpiCard
-          icon={<ListPlus className="size-4 text-emerald-700" aria-hidden />}
-          label="Ticari (toplam)"
+          icon={<ListPlus className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden />}
+          label="Ticari hareket"
+          hint="Paket yükseltme, abonelik talebi, iletişim formu ve plan değişikliklerinin toplamı — yani para ya da paketle ilgili tüm hareketler."
           value={counts.commercial ?? 0}
+          sub="paket · abonelik · talep"
           highlight
         />
         <KpiCard
-          icon={<Sparkles className="size-4 text-sky-700" aria-hidden />}
-          label="Yeni kayıt"
+          icon={<Sparkles className="size-4 text-sky-700 dark:text-sky-300" aria-hidden />}
+          label="Yeni hesap"
+          hint="Seçilen dönemde sisteme eklenen hesaplar: koçların oluşturduğu öğrenciler, eklenen/kaydolan koçlar, kaydolan veliler ve kurum yöneticileri."
           value={counts.signup ?? 0}
+          sub={signupBreakdown(counts)}
         />
         <KpiCard
-          icon={<Mail className="size-4 text-violet-700" aria-hidden />}
-          label="Davetler"
+          icon={<Mail className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />}
+          label="Davet"
+          hint="Gönderilen davet bağlantıları: kurumun koçlara gönderdiği davetler ve koçların velilere gönderdiği davetler (kabul edilmiş ya da bekleyen)."
           value={counts.invitation ?? 0}
+          sub="koç ve veli davetleri"
         />
         <KpiCard
           icon={<Activity className="size-4 text-foreground" aria-hidden />}
-          label="Toplam olay"
+          label="Toplam hareket"
+          hint="Aşağıdaki akıştaki tüm kayıtların sayısı (seçilen dönemde)."
           value={counts.total ?? 0}
+          sub={`son ${days} gün`}
         />
       </section>
 
@@ -278,28 +289,40 @@ export function ActivityStreamPage({
   );
 }
 
+function signupBreakdown(counts: Record<string, number | undefined>): string {
+  const parts: string[] = [];
+  if (counts.signup_students) parts.push(`${counts.signup_students} öğrenci`);
+  if (counts.signup_teachers) parts.push(`${counts.signup_teachers} koç`);
+  if (counts.signup_parents) parts.push(`${counts.signup_parents} veli`);
+  if (counts.signup_admins) parts.push(`${counts.signup_admins} yönetici`);
+  return parts.length ? parts.join(" · ") : "yeni hesap yok";
+}
+
 function KpiCard({
-  icon, label, value, highlight = false,
+  icon, label, hint, value, sub, highlight = false,
 }: {
   icon: React.ReactNode;
   label: string;
+  hint?: string;
   value: number;
+  sub?: string;
   highlight?: boolean;
 }) {
   return (
     <Card className={cn(
       "p-3",
-      highlight && "border-emerald-300 bg-emerald-50/30",
+      highlight && "border-emerald-300 bg-emerald-50/30 dark:border-emerald-500/30 dark:bg-emerald-500/10",
     )}>
       <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-        {icon} {label}
+        {icon} {hint ? <ColumnHint label={label} hint={hint} /> : label}
       </div>
       <div className={cn(
         "mt-1 text-3xl font-bold tabular-nums",
-        highlight && "text-emerald-700",
+        highlight && "text-emerald-700 dark:text-emerald-300",
       )}>
         {value}
       </div>
+      {sub ? <div className="mt-0.5 text-[11px] text-muted-foreground">{sub}</div> : null}
     </Card>
   );
 }

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Award, GraduationCap, Trophy } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { Card } from "@/components/ui/card";
 import { institutionKeys, getInstitutionTeacherScorecard } from "@/lib/api/institution";
@@ -68,13 +69,19 @@ export function TeacherScorecardClient({ initial }: Props) {
       {/* Özet */}
       <section className="grid grid-cols-3 gap-3">
         <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase text-muted-foreground">Ortalama skor</div>
+          <div className="text-[11px] font-semibold uppercase text-muted-foreground">
+            <ColumnHint
+              label="Ortalama skor"
+              hint="Tablodaki koçların etkililik skorlarının ortalaması (0–100). Skor = %40 tamamlama + %25 doğruluk + %20 program disiplini + %15 düşük risk; son birkaç takvim haftası üzerinden hesaplanır."
+            />
+          </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.avg_score}</div>
           <div className="text-[11px] text-muted-foreground">{s.teacher_count} öğretmen</div>
         </Card>
         <Card className="p-4 sm:col-span-2 border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-emerald-700">
-            <Trophy className="size-3.5" aria-hidden /> En etkili koç
+            <Trophy className="size-3.5" aria-hidden />
+            <ColumnHint label="En etkili koç" hint="Etkililik skoru en yüksek olan koç ve skoru (0–100)." />
           </div>
           {s.top_name ? (
             <div className="mt-1 flex items-baseline gap-2">
@@ -91,22 +98,52 @@ export function TeacherScorecardClient({ initial }: Props) {
       <Card className="overflow-hidden">
         <div className="border-b border-border px-4 py-2.5">
           <h2 className="text-sm font-semibold">Karne (skora göre sıralı)</h2>
-          <p className="text-xs text-muted-foreground">Disiplin = öğrenci başına haftalık planlanan soru.</p>
+          <p className="text-xs text-muted-foreground">
+            Program disiplini = koçun öğrenci başına haftada planladığı test sayısı.
+            Sütun başlıklarının üzerine gel ya da dokun: ne ölçtüğü açılır.
+          </p>
         </div>
         {d.teachers.length === 0 ? (
           <p className="p-6 text-center text-sm text-muted-foreground">Öğretmen verisi yok.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-3 py-1.5 text-left">Koç</th>
-                  <th className="px-3 py-1.5 text-left">Skor</th>
-                  <th className="px-3 py-1.5 text-right">Öğrenci</th>
-                  <th className="px-3 py-1.5 text-right">Tamamlama</th>
-                  <th className="px-3 py-1.5 text-right">Doğruluk</th>
-                  <th className="px-3 py-1.5 text-right">Disiplin</th>
-                  <th className="px-3 py-1.5 text-right">Risk</th>
+                  <th className="px-3 py-1.5 text-left">
+                    <ColumnHint
+                      label="Skor"
+                      hint="Etkililik skoru (0–100) = %40 tamamlama + %25 doğruluk + %20 program disiplini + %15 düşük risk. Etiket: 75 ve üstü Örnek, 50–74 İyi, 30–49 Gelişmeli, 30 altı Dikkat. Doğruluk verisi yoksa 50, tamamlama yoksa 0 sayılır."
+                    />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Öğrenci" hint="Bu koça bağlı aktif öğrenci sayısı." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint
+                      label="Tamamlama"
+                      hint="Son 4 takvim haftasında (içinde bulunulan hafta bugüne kadar) çözülen test ÷ planlanan test. Yalnız soru bankası testleri; deneme ve etkinlik görevleri hariç."
+                    />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint
+                      label="Doğruluk"
+                      hint="Öğrencilerin girdiği doğru ÷ (doğru + yanlış), aynı 4 hafta. Doğru/yanlış girilmemiş testler hesaba girmez; boşlar sayılmaz."
+                    />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint
+                      label="Program disiplini"
+                      hint="Öğrenci başına haftada planlanan test sayısı = son 4 haftada planlanan test ÷ öğrenci sayısı ÷ 4. İçinde bulunulan hafta henüz bitmediği halde 4'e bölündüğü için hafta başlarında biraz düşük görünür. Skora 50 test/hafta tavan kabul edilerek katılır."
+                    />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint
+                      label="Riskli öğrenci"
+                      hint="Risk puanı 60 ve üstü (Risk veya Kritik seviyesi) olan öğrenci sayısı. Risk puanı; 5+ gün giriş yapmama, düşük haftalık tamamlama, üst üste boş günler, önceki haftaya göre düşüş ve programsızlıktan oluşur."
+                    />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -130,7 +167,7 @@ export function TeacherScorecardClient({ initial }: Props) {
                     <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{t.student_count}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{pct(t.completion_rate)}</td>
                     <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{pct(t.accuracy)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-muted-foreground" title="Öğrenci başına haftalık planlanan soru">{t.discipline_per_student_week} soru</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-muted-foreground" title="Öğrenci başına haftada planlanan test">{t.discipline_per_student_week} test/hafta</td>
                     <td className="px-3 py-2 text-right">
                       {t.risk_students > 0 ? (
                         <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">{t.risk_students}</span>

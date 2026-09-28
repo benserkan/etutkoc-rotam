@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { Card } from "@/components/ui/card";
 import { institutionKeys, getInstitutionCompliance } from "@/lib/api/institution";
@@ -100,9 +101,11 @@ export function ComplianceClient({ initial }: Props) {
           Program Uyumu
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-          Öğretmenlerin hazırladığı programlara öğrenci uyumu. Tamamlama = yapılan ÷
-          planlanan soru; doğruluk = doğru ÷ (doğru+yanlış). Bu hafta:{" "}
-          {weekShort(s.week_start)}–{weekShort(s.week_end)}.
+          Öğrenciler koçlarının verdiği programı ne kadar uyguluyor? Bu sayfa
+          takvim haftasına göre çalışır (Pazartesi–Pazar); bu hafta{" "}
+          {weekShort(s.week_start)}–{weekShort(s.week_end)} ve oranlar bugüne kadar
+          vadesi gelen görevlere göre hesaplanır. Yalnız soru bankası testleri
+          sayılır; denemeler ve etkinlik görevleri bu oranlara girmez.
         </p>
         <DemoHint contextKey="analysis" role="institution_admin" className="mt-2" />
       </header>
@@ -111,7 +114,9 @@ export function ComplianceClient({ initial }: Props) {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card className="p-4">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase text-muted-foreground">Tamamlama</span>
+            <span className="text-[11px] font-semibold uppercase text-muted-foreground">
+              <ColumnHint label="Tamamlama" hint="Bu hafta bugüne kadar planlanan testlerden çözülenlerin oranı. Sağ üstteki sayı geçen haftaya göre değişim, yüzde PUAN olarak (ör. +5 = %60'tan %65'e)." />
+            </span>
             {s.delta != null ? (
               <span className={cn("inline-flex items-center gap-0.5 text-[11px] font-medium",
                 s.delta > 0 ? "text-emerald-600" : s.delta < 0 ? "text-rose-600" : "text-muted-foreground")}>
@@ -125,26 +130,30 @@ export function ComplianceClient({ initial }: Props) {
         </Card>
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <Target className="size-3.5" aria-hidden /> Doğruluk
+            <Target className="size-3.5" aria-hidden />{" "}
+            <ColumnHint label="Doğruluk" hint="Öğrencilerin çözdüğü sorularda doğru ÷ (doğru + yanlış). Yalnız doğru/yanlış sayısı girilmiş görevler hesaba girer; boş bırakılan sorular sayılmaz." />
           </div>
           <BigPct v={s.accuracy} />
           <div className="text-[11px] text-muted-foreground">
             {s.accuracy == null
               ? "henüz doğru/yanlış girilmemiş"
-              : "yapılan soruların doğruluğu"}
+              : "çözülen sorularda doğru oranı"}
           </div>
         </Card>
         <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase text-muted-foreground">Soru (yapılan/planlanan)</div>
+          <div className="text-[11px] font-semibold uppercase text-muted-foreground">
+            <ColumnHint label="Çözülen / planlanan test" hint="Bu hafta bugüne kadar çözülen test sayısı / planlanan test sayısı (tüm aktif öğrenciler toplamı)." />
+          </div>
           <div className="mt-1 text-2xl font-bold tabular-nums">{s.completed.toLocaleString("tr-TR")}<span className="text-base text-muted-foreground"> / {s.planned.toLocaleString("tr-TR")}</span></div>
-          <div className="text-[11px] text-muted-foreground">{s.student_count} aktif öğrenci</div>
+          <div className="text-[11px] text-muted-foreground">{s.student_count} öğrencinin toplamı (koçluğu süren)</div>
         </Card>
         <Card className={cn("p-4", s.empty_count > 0 && "border-amber-300 bg-amber-50/40")}>
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <AlertTriangle className="size-3.5" aria-hidden /> Boş Program
+            <AlertTriangle className="size-3.5" aria-hidden />{" "}
+            <ColumnHint label="Programı yok" hint="Bu takvim haftasında (Pazartesi–Pazar, ileri günler dahil) hiç yayınlanmış görevi olmayan, koçluğu süren öğrenci. 3 günden yeni hesaplar sayılmaz; koçluğu sonlandırılmış öğrenciler hiç sayılmaz." />
           </div>
           <div className={cn("mt-1 text-3xl font-bold tabular-nums", s.empty_count > 0 ? "text-amber-700" : "text-emerald-700")}>{s.empty_count}</div>
-          <div className="text-[11px] text-muted-foreground">bu hafta program girilmemiş öğrenci</div>
+          <div className="text-[11px] text-muted-foreground">bu hafta hiç görevi olmayan öğrenci</div>
         </Card>
       </section>
 
@@ -172,15 +181,21 @@ export function ComplianceClient({ initial }: Props) {
           <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
             <Users className="size-4 text-indigo-600" aria-hidden /> Öğretmen kırılımı
           </h2>
-          <p className="text-xs text-muted-foreground">En düşük tamamlama üstte. &quot;Boş&quot; = bu hafta program girilmemiş öğrenci.</p>
+          <p className="text-xs text-muted-foreground">En düşük tamamlama üstte. Sütun başlığına gelince ne ölçtüğü açılır.</p>
         </div>
         {d.teachers.length === 0 ? (
           <p className="p-6 text-center text-sm text-muted-foreground">Veri yok.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
-                <tr><th className="px-3 py-1.5 text-left">Koç</th><th className="px-3 py-1.5 text-right">Öğrenci</th><th className="px-3 py-1.5 text-left">Tamamlama</th><th className="px-3 py-1.5 text-right">Doğruluk</th><th className="px-3 py-1.5 text-right">Boş</th></tr>
+                <tr>
+                  <th className="px-3 py-1.5 text-left">Koç</th>
+                  <th className="px-3 py-1.5 text-right"><ColumnHint label="Öğrenci" hint="Bu koça bağlı, koçluğu süren öğrenci sayısı." /></th>
+                  <th className="px-3 py-1.5 text-left"><ColumnHint label="Tamamlama" hint="Bu hafta bugüne kadar planlanan testlerden çözülenlerin oranı (koçun tüm öğrencileri)." /></th>
+                  <th className="px-3 py-1.5 text-right"><ColumnHint label="Doğruluk" hint="Çözülen sorularda doğru ÷ (doğru + yanlış)." /></th>
+                  <th className="px-3 py-1.5 text-right"><ColumnHint label="Programı yok" hint="Bu takvim haftasında hiç görevi olmayan öğrenci sayısı (yeni hesaplar dahil)." /></th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {d.teachers.map((t: ComplianceTeacherRow, i) => (
@@ -191,7 +206,7 @@ export function ComplianceClient({ initial }: Props) {
                     <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{pct(t.accuracy)}</td>
                     <td className="px-3 py-1.5 text-right">
                       {t.empty_students > 0 ? (
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">{t.empty_students}</span>
+                        <span className="rounded-full bg-amber-600 px-2 py-0.5 text-[11px] font-medium text-white">{t.empty_students}</span>
                       ) : (
                         <span className="text-[11px] text-emerald-600">0</span>
                       )}

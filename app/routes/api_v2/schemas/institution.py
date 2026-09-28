@@ -138,6 +138,23 @@ class TeacherCardStudentRow(BaseModel):
     weekly_rate_pct: int | None = None
     weekly_deneme_planned: int = 0
     weekly_deneme_completed: int = 0
+    # Program zamanı (görev içeriği değil — yalnız zaman): koçun bu öğrenciye
+    # en son görev YAYINLADIĞI an + programın uzandığı son gün.
+    last_published_at: str | None = None
+    program_until: str | None = None
+    # Son 7 gün (bugün dahil) gün gün GÖREV tamamlama — etkinlik görevi dahil
+    days: list["TeacherCardDay"] = []
+    week_gorev_total: int = 0
+    week_gorev_done: int = 0
+
+
+class TeacherCardDay(BaseModel):
+    date: str          # YYYY-MM-DD
+    total: int         # o günün yayınlanmış görev sayısı
+    done: int          # tamamlanan görev
+
+
+TeacherCardStudentRow.model_rebuild()
 
 
 class TeacherCardResponse(BaseModel):

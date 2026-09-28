@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { useTeacherAiToggle } from "@/lib/hooks/use-institution-mutations";
 import {
   getInstitutionTeacherCard,
@@ -95,10 +96,10 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
       <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
         <Lock className="size-4 shrink-0 mt-0.5" aria-hidden />
         <div>
-          Bu sayfada öğretmenin programını, veli notlarını veya öğrenci görev
-          detaylarını görme yetkin yok. Yalnızca <strong>roster</strong> ve{" "}
-          <strong>haftalık tamamlama yüzdesi</strong> görünür. Ayrıntı için
-          doğrudan iletişime geç.
+          Görev içeriklerini, veli notlarını ve öğrenci ayrıntılarını görme yetkin
+          yok. Burada yalnız <strong>programın ne zaman hazırlandığı</strong> ve
+          öğrencinin <strong>gün gün görev tamamlama oranı</strong> görünür.
+          Ayrıntı için koçla doğrudan iletişime geç.
         </div>
       </div>
 
@@ -106,44 +107,42 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
       <AiAccessCard teacherId={teacherId} enabled={data.ai_enabled} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KpiCard label="Öğrenci" value={students.length} sub="bu koça bağlı" />
+        <KpiCard
+          label="Öğrenci"
+          hint="Bu koça bağlı öğrenci sayısı (pasifler dahil)."
+          value={students.length}
+          sub="bu koça bağlı"
+        />
         <KpiCard
           label="Planlanan test"
+          hint="Son 7 günde (bugün dahil) bu koçun öğrencilerine soru bankalarından atadığı test sayısı. Denemeler ve etkinlik görevleri (video, özet vb.) bu sayıya girmez."
           value={total_planned}
-          unit="soru"
+          unit="test"
           sub={`${total_completed} çözüldü · soru bankası · son 7 gün`}
         />
         <KpiCard
           label="Planlanan deneme"
+          hint="Son 7 günde programa konan deneme sayısı (branş ya da genel deneme). Soru sayısı değil, deneme ADEDİ."
           value={total_deneme_planned}
           unit="adet"
           sub={`${total_deneme_completed} tamamlandı · deneme adedi · son 7 gün`}
         />
         <KpiCard
           label="Test tamamlama"
+          hint="Çözülen test ÷ planlanan test (son 7 gün). Yalnız soru bankası testleri; deneme ve etkinlik görevleri hariç."
           value={overall_rate_pct == null ? "—" : `%${overall_rate_pct}`}
           valueClassName={rateColorClass(overall_rate_pct)}
           sub="çözülen ÷ planlanan · yalnız test"
         />
       </div>
 
-      {/* Kart sayılarının ne anlama geldiğini her zaman görünür biçimde açıkla
-          (admin/kurum panelinde açıklamasız sayı yasak — jargon kuralı). */}
-      <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed">
-        Yukarıdaki ve aşağıdaki sayılar <strong>son 7 günde</strong> planlanan ve
-        çözülen <strong>test (soru) adedini</strong> gösterir.{" "}
-        <strong>Plan</strong> = koçun bu öğrenciye 7 günde atadığı test sayısı ·{" "}
-        <strong>Tamamlanan</strong> = öğrencinin çözüp işaretlediği test ·{" "}
-        <strong>Oran</strong> = çözülen ÷ planlanan. (Aylık/kümülatif değil — kayan
-        son 7 gün.)
-      </div>
-
       <Card>
         <div className="px-4 py-3 border-b border-border">
           <h2 className="font-medium">Öğrenciler</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Son 7 gün — planlanan ve çözülen <strong>test adedi</strong> (öğrenci
-            başına)
+            Programın ne zaman hazırlandığı ve son 7 günün gün gün görev
+            tamamlaması. Sütun başlığının üzerine gel ya da dokun: ne ölçtüğü
+            açılır.
           </p>
         </div>
         {students.length === 0 ? (
@@ -151,23 +150,40 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
             Bu öğretmenin henüz öğrencisi yok.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs">
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Öğrenci</th>
-                  <th className="text-left px-4 py-2 font-medium">Sınıf</th>
-                  <th className="text-right px-4 py-2 font-medium">
-                    Planlanan test
+                  <th className="text-left px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Program"
+                      hint="Koçun bu öğrenciye EN SON görev yayınladığı gün ve programın hangi güne kadar uzandığı. Uzun süredir yeni program yoksa öğrenci programsız kalıyor olabilir."
+                    />
+                  </th>
+                  <th className="text-left px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Son 7 gün"
+                      hint="Her kare bir gün (soldan sağa 6 gün önceden bugüne). Renk o günün görev tamamlama oranı: yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı, gri o gün görev yok. Kareye gelince ya da dokununca sayılar görünür. Video, özet gibi etkinlik görevleri dahil."
+                    />
                   </th>
                   <th className="text-right px-4 py-2 font-medium">
-                    Çözülen test
+                    <ColumnHint
+                      label="Görev %"
+                      hint="Son 7 günde tamamlanan görev ÷ verilen görev. Her görev bir sayılır (test, deneme, video, özet…)."
+                    />
                   </th>
                   <th className="text-right px-4 py-2 font-medium">
-                    Deneme (tam/plan)
+                    <ColumnHint
+                      label="Test"
+                      hint="Son 7 günde çözülen / planlanan test sayısı. Yalnız soru bankası testleri; denemeler ayrı sütunda."
+                    />
                   </th>
                   <th className="text-right px-4 py-2 font-medium">
-                    Test&nbsp;%
+                    <ColumnHint
+                      label="Deneme"
+                      hint="Son 7 günde tamamlanan / programa konan deneme sayısı (branş ya da genel deneme)."
+                    />
                   </th>
                 </tr>
               </thead>
@@ -184,55 +200,136 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
   );
 }
 
+const TR_DAY = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+const TR_DAY2 = ["Pz", "Pt", "Sa", "Ça", "Pe", "Cu", "Ct"];
+
+function fmtDay(iso: string): string {
+  const d = new Date(`${iso}T12:00:00`);
+  return `${TR_DAY[d.getDay()]} ${d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}`;
+}
+
+function relDays(iso: string): string {
+  const d = new Date(iso);
+  const start = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const n = Math.round((start(new Date()) - start(d)) / 86_400_000);
+  if (n <= 0) return "bugün";
+  if (n === 1) return "dün";
+  return `${n} gün önce`;
+}
+
 function StudentRow({ student }: { student: TeacherCardStudentRow }) {
+  const days = student.days ?? [];
+  const wt = student.week_gorev_total ?? 0;
+  const wd = student.week_gorev_done ?? 0;
+  const gorevPct = wt > 0 ? Math.round((wd / wt) * 100) : null;
   return (
     <tr
       className={cn(!student.is_active && "bg-muted/30 text-muted-foreground")}
+      data-testid="teacher-card-student"
     >
-      <td className="px-4 py-2">
-        {student.full_name}
+      <td className="px-4 py-2.5 align-top">
+        <span className="break-words">{student.full_name}</span>
         {!student.is_active && (
-          <span className="ml-1.5 text-[10px] text-muted-foreground">
-            (pasif)
-          </span>
+          <span className="ml-1.5 text-[10px] text-muted-foreground">(pasif)</span>
+        )}
+        <span className="block text-xs text-muted-foreground">
+          {student.display_grade_label ?? "—"}
+        </span>
+      </td>
+      <td className="px-4 py-2.5 align-top text-xs">
+        {student.last_published_at ? (
+          <>
+            <span className="block text-sm text-foreground">
+              {relDays(student.last_published_at)}
+            </span>
+            <span className="block text-muted-foreground">
+              yayınlandı{student.program_until ? ` · son gün ${fmtDay(student.program_until)}` : ""}
+            </span>
+          </>
+        ) : (
+          <span className="text-muted-foreground">Henüz program yok</span>
         )}
       </td>
-      <td className="px-4 py-2 text-muted-foreground">
-        {student.display_grade_label ?? "—"}
-      </td>
-      <td className="px-4 py-2 text-right tabular-nums">
-        {student.weekly_planned}
-      </td>
-      <td className="px-4 py-2 text-right tabular-nums">
-        {student.weekly_completed}
-      </td>
-      <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
-        {student.weekly_deneme_planned > 0
-          ? `${student.weekly_deneme_completed}/${student.weekly_deneme_planned}`
-          : "—"}
+      <td className="px-4 py-2.5 align-top">
+        <div className="flex items-end gap-1" data-testid="day-strip">
+          {days.map((d) => (
+            <DaySquare key={d.date} day={d} />
+          ))}
+        </div>
       </td>
       <td
         className={cn(
-          "px-4 py-2 text-right tabular-nums font-semibold",
-          rateColorClass(student.weekly_rate_pct),
+          "px-4 py-2.5 text-right tabular-nums align-top font-semibold",
+          rateColorClass(gorevPct),
         )}
       >
-        {student.weekly_rate_pct == null
-          ? "—"
-          : `%${student.weekly_rate_pct}`}
+        {gorevPct == null ? "—" : `%${gorevPct}`}
+        {wt > 0 ? (
+          <span className="block text-[11px] font-normal text-muted-foreground">
+            {wd}/{wt} görev
+          </span>
+        ) : null}
+      </td>
+      <td className="px-4 py-2.5 text-right tabular-nums align-top">
+        {student.weekly_planned > 0 ? (
+          <>
+            {student.weekly_completed}/{student.weekly_planned}
+            <span
+              className={cn("block text-[11px]", rateColorClass(student.weekly_rate_pct))}
+            >
+              {student.weekly_rate_pct == null ? "" : `%${student.weekly_rate_pct}`}
+            </span>
+          </>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </td>
+      <td className="px-4 py-2.5 text-right tabular-nums align-top text-muted-foreground">
+        {student.weekly_deneme_planned > 0
+          ? `${student.weekly_deneme_completed}/${student.weekly_deneme_planned}`
+          : "—"}
       </td>
     </tr>
   );
 }
 
+function DaySquare({ day }: { day: { date: string; total: number; done: number } }) {
+  const pct = day.total > 0 ? Math.round((day.done / day.total) * 100) : null;
+  const tone =
+    pct == null
+      ? "bg-muted border border-border"
+      : pct >= 70
+        ? "bg-emerald-500"
+        : pct >= 40
+          ? "bg-amber-500"
+          : "bg-rose-500";
+  const label = fmtDay(day.date);
+  const text =
+    pct == null ? `${label}: görev yok` : `${label}: ${day.done}/${day.total} görev (%${pct})`;
+  return (
+    <span className="flex flex-col items-center gap-0.5">
+      <ColumnHint
+        label={<span className={cn("block size-4 rounded-[4px]", tone)} aria-label={text} />}
+        hint={text}
+        className="no-underline [&>svg]:hidden"
+      />
+      <span className="text-[9px] leading-none text-muted-foreground">
+        {TR_DAY2[new Date(`${day.date}T12:00:00`).getDay()]}
+      </span>
+    </span>
+  );
+}
+
 function KpiCard({
   label,
+  hint,
   value,
   valueClassName,
   unit,
   sub,
 }: {
   label: string;
+  hint?: string;
   value: number | string;
   valueClassName?: string;
   unit?: string;
@@ -242,7 +339,7 @@ function KpiCard({
     <Card>
       <CardContent className="p-4">
         <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          {label}
+          {hint ? <ColumnHint label={label} hint={hint} /> : label}
         </div>
         <div
           className={cn(
@@ -267,9 +364,9 @@ function KpiCard({
 
 function rateColorClass(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700";
-  if (pct >= 40) return "text-amber-700";
-  return "text-rose-700";
+  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
+  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
+  return "text-rose-700 dark:text-rose-400";
 }
 
 /**
@@ -312,7 +409,7 @@ function AiAccessCard({ teacherId, enabled }: { teacherId: number; enabled: bool
             size="sm"
             onClick={() => setConfirmOpen(true)}
             disabled={mut.isPending}
-            className="text-rose-700 hover:text-rose-800"
+            className="text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200"
           >
             Kapat
           </Button>

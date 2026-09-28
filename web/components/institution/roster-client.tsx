@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { Label } from "@/components/ui/label";
+import { ColumnHint } from "@/components/ui/column-hint";
 import {
   getInstitutionRoster,
   institutionKeys,
@@ -80,10 +81,11 @@ export function RosterClient({ initial, params }: Props) {
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1">
-          Roster
+          Tüm Öğrenciler
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Tüm öğrenciler ve haftalık tamamlama yüzdeleri
+          Kurumdaki tüm öğrenciler ve son 7 günün test tamamlama durumu.
+          Sütun başlığının üzerine gel ya da dokun: ne ölçtüğü açılır.
         </p>
         <DemoHint contextKey="roster" role="institution_admin" className="mt-2" />
       </header>
@@ -150,7 +152,7 @@ export function RosterClient({ initial, params }: Props) {
             </Button>
           </div>
           <div className="ml-auto text-sm text-muted-foreground">
-            {items.length} kayıt
+            {items.length} öğrenci
           </div>
         </form>
       </Card>
@@ -163,18 +165,31 @@ export function RosterClient({ initial, params }: Props) {
         </Card>
       ) : (
         <Card>
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs">
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Öğrenci</th>
                   <th className="text-left px-4 py-2 font-medium">Sınıf</th>
                   <th className="text-left px-4 py-2 font-medium">Öğretmen</th>
-                  <th className="text-right px-4 py-2 font-medium">Plan</th>
                   <th className="text-right px-4 py-2 font-medium">
-                    Tamamlanan
+                    <ColumnHint
+                      label="Planlanan test"
+                      hint="Son 7 günde (bugün dahil) bu öğrenciye soru bankalarından atanan test sayısı. Denemeler, video/özet gibi etkinlik görevleri ve henüz yayınlanmamış (taslak) görevler bu sayıya girmez."
+                    />
                   </th>
-                  <th className="text-right px-4 py-2 font-medium">Oran</th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Çözülen test"
+                      hint="Aynı 7 günde öğrencinin çözüp işaretlediği test sayısı."
+                    />
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Tamamlama"
+                      hint="Çözülen test ÷ planlanan test (son 7 gün). Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı. O hafta test planlanmamışsa “—”. Soluk satırlar koçluğu sonlandırılmış (pasif) öğrencilerdir."
+                    />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -220,7 +235,7 @@ function RosterRow({ row }: { row: RosterRowItem }) {
 
 function rateColorClass(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700";
-  if (pct >= 40) return "text-amber-700";
-  return "text-rose-700";
+  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
+  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
+  return "text-rose-700 dark:text-rose-400";
 }

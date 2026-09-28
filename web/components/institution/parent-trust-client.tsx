@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { HeartHandshake, List, Mail, MailWarning, UserCheck, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { Card } from "@/components/ui/card";
 import { DemoHint } from "@/components/demos/demo-hint";
 import {
@@ -59,28 +60,32 @@ export function ParentTrustClient({ initial }: Props) {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <Users className="size-3.5" aria-hidden /> Veli kapsaması
+            <Users className="size-3.5" aria-hidden />
+            <ColumnHint label="Veli kapsaması" hint="Aktif öğrencilerden en az bir velisi sisteme bağlı olanların oranı. Öğrenci başına bir kez sayılır; iki velisi olan öğrenci yine 1'dir." />
           </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{pct(s.coverage_pct)}</div>
           <div className="text-[11px] text-muted-foreground">{s.covered_students}/{s.total_students} öğrencinin velisi bağlı</div>
         </Card>
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <UserCheck className="size-3.5" aria-hidden /> Aktif veli
+            <UserCheck className="size-3.5" aria-hidden />
+            <ColumnHint label="Aktif veli" hint={`Sisteme bağlı velilerden son ${s.days} günde en az bir kez giriş yapanların sayısı. E-posta ile rapor alıp hiç giriş yapmayan veli burada sayılmaz.`} />
           </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.active_parents}</div>
           <div className="text-[11px] text-muted-foreground">{s.parent_count} bağlı veliden son {s.days}g giriş</div>
         </Card>
-        <Card className={cn("p-4", s.pending_invites > 0 && "border-amber-300 bg-amber-50/40")}>
+        <Card className={cn("p-4", s.pending_invites > 0 && "border-amber-300 bg-amber-50/40 dark:border-amber-500/30 dark:bg-amber-500/10")}>
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <Mail className="size-3.5" aria-hidden /> Bekleyen davet
+            <Mail className="size-3.5" aria-hidden />
+            <ColumnHint label="Bekleyen davet" hint="Koçların velilere gönderdiği, henüz kabul edilmemiş ve süresi dolmamış davet sayısı." />
           </div>
           <div className={cn("mt-1 text-3xl font-bold tabular-nums", s.pending_invites > 0 ? "text-amber-700" : "")}>{s.pending_invites}</div>
           <div className="text-[11px] text-muted-foreground">kabul bekleyen veli daveti</div>
         </Card>
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <MailWarning className="size-3.5" aria-hidden /> Bildirim başarısı
+            <MailWarning className="size-3.5" aria-hidden />
+            <ColumnHint label="Bildirim başarısı" hint={`Son ${s.days} günde velilere giden bildirimlerden ulaşanların oranı: ulaştı ÷ (ulaştı + başarısız). Veli tercihi ya da sessiz saat yüzünden hiç gönderilmeyen (engellenen) ve sırada bekleyen bildirimler hesaba girmez. Yeşil %95 ve üstü, sarı %80–94, kırmızı %80 altı.`} />
           </div>
           <div className={cn("mt-1 text-3xl font-bold tabular-nums", successColor(s.notif_success_pct))}>{pct(s.notif_success_pct)}</div>
           <div className="text-[11px] text-muted-foreground">{s.notif_sent} ulaştı · {s.notif_failed} başarısız</div>
@@ -96,10 +101,26 @@ export function ParentTrustClient({ initial }: Props) {
         {d.channels.length === 0 ? (
           <p className="p-6 text-center text-sm text-muted-foreground">Bu dönemde velilere bildirim gönderilmemiş.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
-                <tr><th className="px-3 py-1.5 text-left">Kanal</th><th className="px-3 py-1.5 text-right">Ulaştı</th><th className="px-3 py-1.5 text-right">Başarısız</th><th className="px-3 py-1.5 text-right">Engellendi</th><th className="px-3 py-1.5 text-right">Başarı</th></tr>
+                <tr>
+                  <th className="px-3 py-1.5 text-left">
+                    <ColumnHint label="Kanal" hint="Bildirimin gittiği yol: e-posta, WhatsApp ya da SMS." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Ulaştı" hint="Sağlayıcının kabul ettiği (gönderilen) bildirim sayısı." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Başarısız" hint="Gönderilmeye çalışılıp hata alan bildirim sayısı (adres hatalı, sağlayıcı reddetti vb.)." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Engellendi" hint="Kasıtlı olarak gönderilmeyen bildirim sayısı: veli bu türü kapatmış, abonelikten çıkmış, sessiz saat ya da doğrulanmamış telefon. Başarı oranına girmez." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Başarı" hint="Ulaştı ÷ (ulaştı + başarısız). Yeşil %95 ve üstü, sarı %80–94, kırmızı %80 altı." />
+                  </th>
+                </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {d.channels.map((c) => (
@@ -118,7 +139,7 @@ export function ParentTrustClient({ initial }: Props) {
       </Card>
 
       {s.coverage_pct != null && s.coverage_pct < 60 ? (
-        <Card className="border-amber-300 bg-amber-50/40 p-4 text-sm text-amber-900">
+        <Card className="border-amber-300 bg-amber-50/40 p-4 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
           Veli kapsaması düşük (%{s.coverage_pct}). Öğretmenleri velileri sisteme davet etmeye
           teşvik edin — veli iletişimi kayıt yenilemeyi ve memnuniyeti güçlendirir.
         </Card>

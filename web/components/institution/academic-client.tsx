@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { Card } from "@/components/ui/card";
 import { institutionKeys, getInstitutionAcademic } from "@/lib/api/institution";
@@ -52,6 +53,10 @@ function formatTRDate(iso: string | null): string {
   return `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}.${y}`;
 }
 
+
+const NET_HINT =
+  "Net = doğru − yanlış ÷ 3 (LGS) ya da ÷ 4 (TYT/AYT). Net başarı = net ÷ sınavdaki soru sayısı; farklı sınav türlerini kıyaslanabilir kılar. Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı.";
+
 export function AcademicClient({ initial }: Props) {
   const q = useQuery<InstitutionAcademicResponse>({
     queryKey: institutionKeys.academic(8),
@@ -79,7 +84,7 @@ export function AcademicClient({ initial }: Props) {
 
       {/* Sade dil notu — net başarı oranı nedir */}
       <Card className="border-sky-200 bg-sky-50/50 p-3 dark:bg-sky-500/10 dark:border-sky-500/30">
-        <div className="flex items-start gap-2 text-sm text-sky-900">
+        <div className="flex items-start gap-2 text-sm text-sky-900 dark:text-sky-200">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
             <b>Net başarı oranı</b> = öğrencinin çıkardığı net ÷ sınavdaki soru
@@ -94,7 +99,8 @@ export function AcademicClient({ initial }: Props) {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <Users className="size-3.5" aria-hidden /> Deneme kapsaması
+            <Users className="size-3.5" aria-hidden />
+            <ColumnHint label="Deneme kapsaması" hint="Aktif öğrencilerden sisteme en az bir deneme sonucu girilmiş olanların oranı (tüm zamanlar)." />
           </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{pct(s.coverage_pct)}</div>
           <div className="text-[11px] text-muted-foreground">
@@ -103,7 +109,8 @@ export function AcademicClient({ initial }: Props) {
         </Card>
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <ClipboardList className="size-3.5" aria-hidden /> Ortalama net başarı
+            <ClipboardList className="size-3.5" aria-hidden />
+            <ColumnHint label="Ortalama net başarı" hint={"Girilen tüm deneme sonuçlarının (tüm zamanlar) net başarı oranlarının ortalaması. " + NET_HINT} />
           </div>
           <div className={cn("mt-1 text-3xl font-bold tabular-nums", PCT_TEXT[s.net_pct_color])}>
             {pct(s.avg_net_pct)}
@@ -112,14 +119,15 @@ export function AcademicClient({ initial }: Props) {
         </Card>
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            <ClipboardList className="size-3.5" aria-hidden /> Toplam deneme
+            <ClipboardList className="size-3.5" aria-hidden />
+            <ColumnHint label="Toplam deneme" hint="Aktif öğrencilere girilmiş deneme sonucu sayısı (tüm zamanlar). Alt satır: son 30 günde eklenenler." />
           </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.total_exams}</div>
           <div className="text-[11px] text-muted-foreground">son 30 günde {s.recent_exams} yeni</div>
         </Card>
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
-            Gidişat
+            <ColumnHint label="Gidişat" hint={`Son ${s.weeks} takvim haftasında deneme girilen son haftanın ortalama net başarısı eksi ilk haftanınki, yüzde PUAN olarak. Artı = yükseliş, eksi = düşüş.`} />
           </div>
           <DeltaValue delta={s.delta} />
           <div className="text-[11px] text-muted-foreground">son {s.weeks} hafta net başarı eğilimi</div>
@@ -179,15 +187,23 @@ export function AcademicClient({ initial }: Props) {
             Henüz deneme sonucu girilmemiş.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-3 py-1.5 text-left">Sınav türü</th>
-                  <th className="px-3 py-1.5 text-right">Deneme</th>
-                  <th className="px-3 py-1.5 text-right">Öğrenci</th>
-                  <th className="px-3 py-1.5 text-right">Ort. net</th>
-                  <th className="px-3 py-1.5 text-right">Net başarı</th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Deneme" hint="Bu türde girilmiş deneme sonucu sayısı (tüm zamanlar)." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Öğrenci" hint="Bu türde en az bir deneme sonucu olan farklı öğrenci sayısı." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Ortalama net" hint="Bu türdeki denemelerin ham net ortalaması. Net = doğru − yanlış ÷ 3 (LGS) ya da ÷ 4 (TYT/AYT). Yalnız aynı tür içinde kıyaslanır." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Net başarı" hint={NET_HINT} />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -217,15 +233,23 @@ export function AcademicClient({ initial }: Props) {
               Deneme girilen öğrencilerin koç bazında net başarısı. En yüksek üstte.
             </p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-3 py-1.5 text-left">Koç</th>
-                  <th className="px-3 py-1.5 text-right">Öğrenci</th>
-                  <th className="px-3 py-1.5 text-right">Deneme</th>
-                  <th className="px-3 py-1.5 text-right">Net başarı</th>
-                  <th className="px-3 py-1.5 text-right">Son deneme</th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Öğrenci" hint="Bu koçun deneme sonucu girilmiş aktif öğrenci sayısı." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Deneme" hint="Bu koçun öğrencilerine girilmiş deneme sonucu sayısı (tüm zamanlar)." />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Net başarı" hint={"Bu koçun öğrencilerinin denemelerindeki ortalama net başarı. " + NET_HINT} />
+                  </th>
+                  <th className="px-3 py-1.5 text-right">
+                    <ColumnHint label="Son deneme" hint="Bu koçun öğrencilerine girilen en son deneme sonucunun sınav tarihi." />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -270,10 +294,10 @@ export function AcademicClient({ initial }: Props) {
       {d.no_exam_program.length > 0 ? (
         <Card className="overflow-hidden border-amber-300">
           <div className="border-b border-amber-200 bg-amber-50/50 px-4 py-2.5 dark:bg-amber-500/10 dark:border-amber-500/30">
-            <h2 className="text-sm font-semibold text-amber-900">
+            <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               Deneme girilmeyen öğrenciler ({s.no_exam_count})
             </h2>
-            <p className="text-xs text-amber-800">
+            <p className="text-xs text-amber-800 dark:text-amber-300">
               Koçları bu öğrencilerin deneme sonuçlarını girmeye teşvik edin —
               akademik gidişat ancak ölçülürse yönetilebilir.
             </p>
@@ -283,7 +307,7 @@ export function AcademicClient({ initial }: Props) {
               <li key={`${r.teacher_id}-${r.teacher_name}`} className="px-4 py-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium">{r.teacher_name}</span>
-                  <span className="shrink-0 tabular-nums text-amber-700">{r.count} öğrenci</span>
+                  <span className="shrink-0 tabular-nums text-amber-700 dark:text-amber-300">{r.count} öğrenci</span>
                 </div>
                 {r.sample_students.length > 0 ? (
                   <p className="mt-0.5 text-xs text-muted-foreground">

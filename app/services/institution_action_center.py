@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
+from datetime import date
+
 from app.models import User, UserRole
 from app.services.institution_compliance import compute_compliance
 from app.services.risk_analysis import bulk_risk_assessment, filter_at_risk
@@ -36,37 +38,53 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
 
     comp = compute_compliance(db, institution_id=institution_id, weeks=2)
 
-    # 1) Boş program — koç başına
+    # 1) Programı olmayan öğrenciler — koç başına (takvim haftasının tamamı,
+    #    her görev türü; pasif öğrenciler ve 3 günden yeni hesaplar sayılmaz)
     for e in comp["empty_program"]:
         sev = "critical" if e["count"] >= EMPTY_CRITICAL else "warn"
         names = ", ".join(e["sample_students"][:5])
         items.append({
             "severity": sev,
             "category": "empty_program",
-            "title": f"{e['teacher_name']} — {e['count']} öğrenciye program girilmemiş",
-            "description": f"Bu hafta program bekleyen öğrenciler: {names}"
-                           + (" …" if e["count"] > len(e["sample_students"][:5]) else ""),
+            "title": f"{e['teacher_name']}: {e['count']} öğrencinin bu hafta programı yok",
+            "description": (
+                "Bu takvim haftasında (Pazartesi–Pazar) hiç görevi olmayan aktif "
+                f"öğrenciler: {names}"
+                + (" …" if e["count"] > len(e["sample_students"][:5]) else "")
+                + ". Koçluğu sonlandırılmış öğrenciler sayılmaz."
+            ),
             "teacher_name": e["teacher_name"],
             "count": e["count"],
             "suggestion": "Koça bu hafta için program girmesini hatırlatın.",
         })
 
-    # 2) Düşük uyum koç
+    # 2) Düşük uyum koç — haftanın ilk iki gününde (Pzt/Sal) bu haftanın verisi
+    #    henüz çok az olduğundan GEÇEN HAFTANIN tam verisine bakılır.
+    early_week = date.today().weekday() <= 1
     for t in comp["teachers"]:
-        if t["rate"] is None or t["student_count"] == 0:
+        if t["student_count"] == 0:
             continue
-        if t["rate"] >= LOW_RATE_THRESHOLD:
+        if early_week and t.get("last_rate") is not None:
+            rate, acc, period = t["last_rate"], t.get("last_accuracy"), "geçen hafta"
+        else:
+            rate, acc, period = t["rate"], t["accuracy"], "bu hafta (Pazartesi'den bugüne)"
+        if rate is None or rate >= LOW_RATE_THRESHOLD:
             continue
-        sev = "critical" if t["rate"] < LOW_RATE_CRITICAL else "warn"
+        sev = "critical" if rate < LOW_RATE_CRITICAL else "warn"
+        desc = f"{t['student_count']} aktif öğrenci."
+        if acc is not None:
+            desc += f" Çözdükleri soruların %{acc}'ini doğru yaptılar."
+            if acc >= 80:
+                desc += (" Doğru oranı yüksek: sorun bilgi eksikliğinden çok programın "
+                         "yüküne ya da çalışmaya ayrılan zamana işaret ediyor olabilir.")
         items.append({
             "severity": sev,
             "category": "low_compliance",
-            "title": f"{t['teacher_name']} sınıfı %{t['rate']} tamamlama",
-            "description": f"{t['student_count']} öğrenci · doğruluk "
-                           + (f"%{t['accuracy']}" if t["accuracy"] is not None else "—"),
+            "title": f"{t['teacher_name']}: öğrencileri {period} planlanan testlerin %{rate}'ini çözdü",
+            "description": desc,
             "teacher_name": t["teacher_name"],
             "count": t["student_count"],
-            "suggestion": "Koçla görüşüp düşük uyum nedenini değerlendirin "
+            "suggestion": "Koçla görüşüp düşük tamamlamanın nedenini değerlendirin "
                           "(programlar fazla mı, öğrenci motivasyonu mu?).",
         })
 
@@ -101,8 +119,8 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
             items.append({
                 "severity": sev,
                 "category": "at_risk",
-                "title": f"{a.student.full_name or a.student.email} — {a.level_label} (risk skoru {a.score})",
-                "description": (f"Koç: {tname}" + (f" · {ind}" if ind else "")),
+                "title": f"{a.student.full_name or a.student.email} — {a.level_label} risk (puan {a.score}/100)",
+                "description": (f"Koç: {tname}" + (f" · Nedenleri: {ind}" if ind else "")),
                 "teacher_name": tname,
                 "count": 1,
                 "suggestion": "Koçtan öğrenciyle birebir görüşmesini isteyin.",

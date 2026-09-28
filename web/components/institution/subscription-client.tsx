@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -296,6 +297,7 @@ function CurrentStatusCard({
         <dl className="grid grid-cols-2 gap-4 pt-3 border-t border-border text-sm">
           <DefinitionItem
             label="Dönem sonu"
+            info="Ödenmiş abonelik döneminin bittiği gün. Bu tarihten sonra yenileme gerekir."
             value={
               status.period_end ? (
                 <>
@@ -314,7 +316,8 @@ function CurrentStatusCard({
             }
           />
           <DefinitionItem
-            label="Pause dönüş"
+            label="Yaz molası dönüşü"
+            info="Abonelik yaz için duraklatıldıysa hesabın yeniden aktifleşeceği gün. Duraklatma yoksa boş kalır."
             value={
               status.pause_until ? (
                 <span className="font-medium">
@@ -326,7 +329,8 @@ function CurrentStatusCard({
             }
           />
           <DefinitionItem
-            label="60 Gün Garanti"
+            label="60 gün garanti"
+            info="Açıksa: ilk 60 günde öğrencilerin program tamamlama oranı eşiğin altında kalırsa abonelik bir kez 1 ay ücretsiz uzatılır."
             value={
               status.performance_guarantee ? (
                 <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
@@ -340,9 +344,10 @@ function CurrentStatusCard({
           />
           <DefinitionItem
             label="Garanti uzatma"
+            info="Garanti koşulu oluştuğu için ücretsiz uzatmanın uygulandığı gün. Tek seferlik bir haktır."
             value={
               status.guarantee_extended_at ? (
-                <span className="text-amber-700 font-medium">
+                <span className="text-amber-700 dark:text-amber-300 font-medium">
                   {formatDateOnly(status.guarantee_extended_at)} (uzatıldı)
                 </span>
               ) : (
@@ -386,15 +391,17 @@ function KindBadge({ kind }: { kind: SubscriptionStatusInfo["kind"] }) {
 
 function DefinitionItem({
   label,
+  info,
   value,
 }: {
   label: string;
+  info?: string;
   value: React.ReactNode;
 }) {
   return (
     <div>
       <dt className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">
-        {label}
+        {info ? <ColumnHint label={label} hint={info} /> : label}
       </dt>
       <dd className="text-sm">{value}</dd>
     </div>
@@ -775,7 +782,7 @@ function GuaranteeDetails({
       <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-background p-3">
         <div>
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Eşik (tetik altı)
+            <ColumnHint label="Eşik" hint="Garantinin devreye girdiği tamamlama oranı. Değerlendirme döneminin sonunda oran bunun altındaysa abonelik 1 ay ücretsiz uzatılır." />
           </div>
           <div className="mt-0.5 text-2xl font-bold tabular-nums">%{thresholdPct}</div>
           <div className="text-[11px] text-muted-foreground">
@@ -784,7 +791,7 @@ function GuaranteeDetails({
         </div>
         <div>
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Şu anki tamamlama
+            <ColumnHint label="Şu anki tamamlama" hint="Değerlendirme döneminde (kurumun açılışından ya da son 60 günden hangisi daha yakınsa, bugüne kadar) aktif öğrencilere yayınlanan görevlerdeki tüm soru ve denemelerin çözülen oranı. Taslak görevler hariç." />
           </div>
           <div
             className={cn(
@@ -813,8 +820,10 @@ function GuaranteeDetails({
       <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs space-y-1">
         <div className="font-medium text-foreground">Hesap nasıl yapıldı?</div>
         <div className="text-muted-foreground">
-          Periyot içinde yayınlanmış tüm görevlerin <b>soru bazında</b> oranı
-          (Program Uyum Panosu ile aynı metrik):
+          Değerlendirme döneminde (en fazla son 60 gün) yayınlanmış görevlerin{" "}
+          <b>soru bazında</b> çözülme oranı. Denemeler de dahildir; bu yüzden
+          yalnız soru bankası testlerini sayan Program Uyumu panosundaki orandan
+          farklı çıkabilir:
         </div>
         <div className="grid grid-cols-3 gap-2 pt-1">
           <span><b className="tabular-nums">{evaluation.student_count}</b> aktif öğrenci</span>

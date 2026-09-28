@@ -159,6 +159,20 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
     this_totals = _student_totals_for_week(db, student_ids=student_ids, ws=this_ws, we=this_we)
     last_totals = _student_totals_for_week(db, student_ids=student_ids, ws=last_ws, we=last_we)
 
+    # "Programı var mı?" — takvim haftasının TAMAMI (gelecek günler dahil) ve
+    # her görev türü. Eskiden bugüne kesilmiş TEST hacmine bakılıyordu → Pazartesi
+    # günü, programı Salı'dan / Perşembe'den başlayan ya da yalnız etkinlik/deneme
+    # görevi olan öğrenci "programsız" görünüyordu (2026-09-28 saha bulgusu).
+    has_program: set[int] = set()
+    if student_ids:
+        has_program = {
+            int(sid) for (sid,) in db.query(Task.student_id)
+            .filter(Task.student_id.in_(student_ids), Task.is_draft.is_(False),
+                    Task.date >= this_ws, Task.date <= this_we)
+            .distinct()
+            .all()
+        }
+
     summary = _summarize(this_totals)
     last_summary = _summarize(last_totals)
     delta = None
@@ -172,16 +186,24 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
         b = by_teacher.setdefault(tid, {
             "planned": 0, "completed": 0, "correct": 0, "wrong": 0,
             "student_count": 0, "empty_students": 0,
+            "last_planned": 0, "last_completed": 0,
+            "last_correct": 0, "last_wrong": 0,
         })
         b["student_count"] += 1
         t = this_totals.get(sid)
-        if not t or t["planned"] == 0:
+        if sid not in has_program:
             b["empty_students"] += 1
         if t:
             b["planned"] += t["planned"]
             b["completed"] += t["completed"]
             b["correct"] += t["correct"]
             b["wrong"] += t["wrong"]
+        lt = last_totals.get(sid)
+        if lt:
+            b["last_planned"] += lt["planned"]
+            b["last_completed"] += lt["completed"]
+            b["last_correct"] += lt["correct"]
+            b["last_wrong"] += lt["wrong"]
 
     teacher_rows = []
     for tid, b in by_teacher.items():
@@ -196,6 +218,10 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
             "rate": rate,
             "rate_color": _rate_color(rate),
             "accuracy": _accuracy(b["correct"], b["wrong"]),
+            # Geçen takvim haftası (tam hafta) — hafta başında karar için
+            "last_rate": _rate(b["last_planned"], b["last_completed"]),
+            "last_accuracy": _accuracy(b["last_correct"], b["last_wrong"]),
+            "last_planned": b["last_planned"],
         })
     # En düşük tamamlama üstte (dikkat); None (hiç plan) en sona
     teacher_rows.sort(key=lambda r: (r["rate"] is not None, r["rate"] if r["rate"] is not None else 999))
@@ -226,8 +252,7 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
     empty_by_teacher: dict[int | None, dict] = {}
     empty_total = 0
     for sid in student_ids:
-        t = this_totals.get(sid)
-        if t and t["planned"] > 0:
+        if sid in has_program:
             continue
         created = student_meta[sid].get("created_at")
         if created is not None:

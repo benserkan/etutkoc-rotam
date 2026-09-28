@@ -35,6 +35,8 @@ import type {
 
 interface Props {
   initial: InvitationListResponse;
+  /** Öğretmenler sayfasının sekmesi olarak gömülü (başlık/geri linki yok). */
+  embedded?: boolean;
 }
 
 /**
@@ -47,7 +49,7 @@ interface Props {
  *   - Pending olmayan satırlar silikleştirilir
  *   - 7 gün geçerlilik notu modal'da ve header'da
  */
-export function InvitationsClient({ initial }: Props) {
+export function InvitationsClient({ initial, embedded = false }: Props) {
   const q = useQuery<InvitationListResponse>({
     queryKey: institutionKeys.invitations(),
     queryFn: () => getInstitutionInvitations(),
@@ -65,24 +67,30 @@ export function InvitationsClient({ initial }: Props) {
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <Link
-            href="/institution"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Panel
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight font-display mt-1">
-            Davetiyeler
-          </h1>
+          {embedded ? null : (
+            <Link
+              href="/institution"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              ← Panel
+            </Link>
+          )}
+          {embedded ? (
+            <h2 className="text-lg font-semibold">Davet bağlantıları</h2>
+          ) : (
+            <h1 className="text-2xl font-semibold tracking-tight font-display mt-1">
+              Davetiyeler
+            </h1>
+          )}
           <p className="text-sm text-muted-foreground mt-1">
-            {institution.name} — kurumuna öğretmen davet et. Link{" "}
+            {institution.name} — kurumuna öğretmen davet et. Bağlantı{" "}
             <strong>7 gün</strong> geçerli ve tek seferlik.
           </p>
           <DemoHint contextKey="invitations" role="institution_admin" className="mt-2" />
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" aria-hidden />
-          Yeni Davetiye
+          Yeni davet bağlantısı
         </Button>
       </header>
 
@@ -96,7 +104,7 @@ export function InvitationsClient({ initial }: Props) {
         </Card>
       ) : (
         <Card>
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs">
                 <tr>

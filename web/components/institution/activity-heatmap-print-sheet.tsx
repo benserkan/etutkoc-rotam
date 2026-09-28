@@ -129,7 +129,7 @@ export function ActivityHeatmapPrintSheet({ data, weeks }: Props) {
                       <b>{t.total_logins}</b> giriş
                     </div>
                     <div className="text-slate-500">
-                      {t.total_tasks} task · {t.total_notes} not
+                      {t.total_tasks} görev · {t.total_notes} veli notu
                     </div>
                   </td>
                 </tr>

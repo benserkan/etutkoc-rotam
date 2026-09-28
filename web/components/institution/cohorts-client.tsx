@@ -26,6 +26,7 @@ import type {
   WeekOverWeekInfo,
 } from "@/lib/types/institution";
 import { CohortBarChart } from "@/components/institution/cohort-bar-chart";
+import { ColumnHint } from "@/components/ui/column-hint";
 
 interface Props {
   initial: CohortsResponse;
@@ -59,11 +60,11 @@ export function CohortsClient({ initial, tab }: Props) {
             ← Panel
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight font-display mt-1">
-            Kohort Karşılaştırma
+            Grup Karşılaştırma (Kohort)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {institution.name} — öğrencileri farklı kategorilerde gruplayıp
-            performansını kıyasla.
+            {institution.name} — aktif öğrencileri sınıfa, alana, müfredata ya da
+            hedef sınava göre gruplayıp grupların son 7 günlük çalışmasını kıyasla.
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
@@ -87,27 +88,48 @@ export function CohortsClient({ initial, tab }: Props) {
           <Card>
             <CardContent className="p-4">
               <h3 className="text-sm font-medium mb-3">
-                Tamamlama oranı (% son 7 gün)
+                Gruplara göre tamamlama oranı (son 7 gün, test + deneme)
               </h3>
               <CohortBarChart cohorts={cohorts} />
             </CardContent>
           </Card>
 
           <Card>
-            <div className="overflow-x-auto">
+            <div className="relative overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-muted-foreground text-xs">
                   <tr>
-                    <th className="text-left px-4 py-2 font-medium">Kohort</th>
+                    <th className="text-left px-4 py-2 font-medium">Grup</th>
                     <th className="text-right px-4 py-2 font-medium">
-                      Öğrenci
+                      <ColumnHint
+                        label="Öğrenci"
+                        hint="Bu gruptaki AKTİF öğrenci sayısı."
+                      />
                     </th>
-                    <th className="text-right px-4 py-2 font-medium">Plan</th>
                     <th className="text-right px-4 py-2 font-medium">
-                      Tamamlanan
+                      <ColumnHint
+                        label="Planlanan soru"
+                        hint="Son 7 günde (bugün dahil) gruptaki öğrencilere programa konan test ve deneme SORU toplamı. Henüz yayınlanmamış (taslak) görevler de dahil."
+                      />
                     </th>
-                    <th className="text-right px-4 py-2 font-medium">Oran</th>
-                    <th className="text-right px-4 py-2 font-medium">Risk</th>
+                    <th className="text-right px-4 py-2 font-medium">
+                      <ColumnHint
+                        label="Çözülen soru"
+                        hint="Aynı 7 günde bu sorulardan öğrencilerin çözüp işaretlediği."
+                      />
+                    </th>
+                    <th className="text-right px-4 py-2 font-medium">
+                      <ColumnHint
+                        label="Tamamlama"
+                        hint="Çözülen ÷ planlanan (son 7 gün). Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı."
+                      />
+                    </th>
+                    <th className="text-right px-4 py-2 font-medium">
+                      <ColumnHint
+                        label="Riskli öğrenci"
+                        hint="Gruptaki öğrencilerden risk puanı 30 ve üstü (Dikkat, Risk ya da Kritik) olanların oranı; parantez içinde öğrenci sayısı. Risk puanı: 5+ gün giriş yok, düşük tamamlama, üst üste boş günler, önceki haftaya göre düşüş, programsız hafta sinyallerinden toplanır."
+                      />
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -132,12 +154,14 @@ function PrivacyNote() {
         <strong>Gizlilik:</strong> Bu sayfa sadece{" "}
         <strong>kohort agregaları</strong> gösterir — bireysel öğrenci adı veya
         programı YOKTUR.{" "}
-        <strong>Tamamlama oranı:</strong> Bu hafta planlanmış görevlerin yüzde
-        kaçı yapıldı.{" "}
-        <strong>Risk yüzdesi:</strong> Bu sınıfta &ldquo;Dikkat / Risk /
-        Kritik&rdquo; seviyede uyarı alan öğrencilerin oranı (giriş yapmamak,
-        eksik tamamlama, üst üste boş günler gibi göstergelere göre
-        hesaplanır).
+        <strong>Tamamlama oranı:</strong> son 7 günde (bugün dahil) programa
+        konan test ve deneme sorularından yüzde kaçının çözüldüğü. Bu sayfadaki
+        oranlara denemeler ve henüz yayınlanmamış (taslak) görevler de girer;
+        bu yüzden Panel&apos;deki &ldquo;Test tamamlama&rdquo; oranından biraz
+        farklı çıkabilir.{" "}
+        <strong>Risk yüzdesi:</strong> gruptaki öğrencilerden &ldquo;Dikkat /
+        Risk / Kritik&rdquo; seviyesinde olanların oranı (5+ gün giriş yapmamak,
+        düşük tamamlama, üst üste boş günler gibi sinyallere göre).
       </div>
     </div>
   );
@@ -149,7 +173,10 @@ function WoWGrid({ wow }: { wow: WeekOverWeekInfo }) {
       <Card>
         <CardContent className="p-4">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Bu hafta
+            <ColumnHint
+              label="Bu hafta"
+              hint="Son 7 günde (bugün dahil) kurumdaki tüm aktif öğrencilere programa konan test + deneme sorularından çözülenlerin oranı. Taslak görevler de sayılır."
+            />
           </div>
           <div
             className={cn(
@@ -169,7 +196,10 @@ function WoWGrid({ wow }: { wow: WeekOverWeekInfo }) {
       <Card>
         <CardContent className="p-4">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Geçen hafta
+            <ColumnHint
+              label="Geçen hafta"
+              hint="Ondan önceki 7 günün (8–14 gün önce) aynı hesapla oranı — kıyas için."
+            />
           </div>
           <div className="text-3xl font-semibold mt-1 tabular-nums">
             {wow.last_week_rate == null ? "—" : `%${wow.last_week_rate}`}
@@ -182,7 +212,10 @@ function WoWGrid({ wow }: { wow: WeekOverWeekInfo }) {
       <Card>
         <CardContent className="p-4">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Değişim
+            <ColumnHint
+              label="Değişim"
+              hint="Bu haftanın oranı eksi geçen haftanın oranı, YÜZDE PUAN olarak (örn. %60 → %65 = +5 puan). ±2 puandan küçük değişim “stabil” sayılır."
+            />
           </div>
           <DeltaValue wow={wow} />
           <div className="text-[11px] text-muted-foreground mt-1">
@@ -202,14 +235,14 @@ function DeltaValue({ wow }: { wow: WeekOverWeekInfo }) {
   }
   if (wow.direction === "up") {
     return (
-      <div className="text-3xl font-semibold mt-1 text-emerald-700 inline-flex items-center gap-1 tabular-nums">
+      <div className="text-3xl font-semibold mt-1 text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 tabular-nums">
         <ArrowUpRight className="size-6" aria-hidden />+{wow.delta_pct}
       </div>
     );
   }
   if (wow.direction === "down") {
     return (
-      <div className="text-3xl font-semibold mt-1 text-rose-700 inline-flex items-center gap-1 tabular-nums">
+      <div className="text-3xl font-semibold mt-1 text-rose-700 dark:text-rose-400 inline-flex items-center gap-1 tabular-nums">
         <ArrowDownRight className="size-6" aria-hidden />
         {wow.delta_pct}
       </div>
@@ -225,9 +258,9 @@ function DeltaValue({ wow }: { wow: WeekOverWeekInfo }) {
 function directionLabel(d: WeekOverWeekInfo["direction"]): string {
   switch (d) {
     case "up":
-      return "iyileşme yönünde 👍";
+      return "yüzde puan · iyileşme yönünde";
     case "down":
-      return "düşüş — dikkat 👀";
+      return "yüzde puan · düşüş, dikkat";
     case "flat":
       return "stabil";
     default:
@@ -289,7 +322,7 @@ function CohortRow({ cohort }: { cohort: CohortStatsItem }) {
       <td className="px-4 py-2 text-right">
         {cohort.at_risk_pct != null && cohort.at_risk_pct > 0 ? (
           <>
-            <span className="text-rose-700 font-medium tabular-nums">
+            <span className="text-rose-700 dark:text-rose-400 font-medium tabular-nums">
               %{cohort.at_risk_pct}
             </span>{" "}
             <span className="text-xs text-muted-foreground">
@@ -297,7 +330,7 @@ function CohortRow({ cohort }: { cohort: CohortStatsItem }) {
             </span>
           </>
         ) : (
-          <span className="text-emerald-700">✓ 0</span>
+          <span className="text-emerald-700 dark:text-emerald-400">0</span>
         )}
       </td>
     </tr>
@@ -328,19 +361,19 @@ function EmptyState({ tab }: { tab: CohortTab }) {
 }
 
 function rateColorClass(pct: number): string {
-  if (pct >= 70) return "text-emerald-700";
-  if (pct >= 40) return "text-amber-700";
-  return "text-rose-700";
+  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
+  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
+  return "text-rose-700 dark:text-rose-400";
 }
 
 function rateColorByColor(color: string): string {
   switch (color) {
     case "green":
-      return "text-emerald-700";
+      return "text-emerald-700 dark:text-emerald-400";
     case "amber":
-      return "text-amber-700";
+      return "text-amber-700 dark:text-amber-400";
     case "red":
-      return "text-rose-700";
+      return "text-rose-700 dark:text-rose-400";
     default:
       return "text-muted-foreground";
   }

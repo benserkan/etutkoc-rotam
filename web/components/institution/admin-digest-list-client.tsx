@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -113,13 +114,17 @@ function AutoSendNote() {
 function DigestTable({ items }: { items: AdminDigestSummary[] }) {
   return (
     <Card>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground text-xs">
             <tr>
               <th className="text-left px-4 py-2 font-medium">Hafta</th>
-              <th className="text-left px-4 py-2 font-medium">Durum</th>
-              <th className="text-right px-4 py-2 font-medium">Alıcı</th>
+              <th className="text-left px-4 py-2 font-medium">
+                <ColumnHint label="Durum" hint="Gönderildi = e-posta yöneticilere gitti. Sadece kayıt = e-posta servisi kapalıyken özet oluşturuldu ama gönderilmedi. Yönetici tanımsız = kurumda aktif yönetici bulunamadı. Gönderilemedi = gönderim hata aldı." />
+              </th>
+              <th className="text-right px-4 py-2 font-medium">
+                <ColumnHint label="Alıcı" hint="Özetin gönderildiği kurum yöneticisi sayısı." />
+              </th>
               <th className="text-left px-4 py-2 font-medium">
                 Gönderim Zamanı
               </th>

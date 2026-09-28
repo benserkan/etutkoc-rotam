@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ColumnHint } from "@/components/ui/column-hint";
 import {
   buildInterventionMap,
   getInstitutionAtRisk,
@@ -80,9 +81,9 @@ export function AtRiskClient({ initial }: Props) {
             Risk altındaki öğrenciler
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {institution.name} — kurum genelinde {at_risk.length}/
-            {total_students} öğrenci risk altında, {healthy_count} tanesi
-            sağlıklı.
+            {institution.name} — {total_students} aktif öğrenciden{" "}
+            {at_risk.length} tanesinin risk puanı 30 ve üstü (Dikkat, Risk ya da
+            Kritik); {healthy_count} öğrencide belirgin risk sinyali yok.
           </p>
           <DemoHint contextKey="analysis" role="institution_admin" className="mt-2" />
         </div>
@@ -102,21 +103,34 @@ export function AtRiskClient({ initial }: Props) {
         <EmptyState />
       ) : (
         <Card>
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs">
                 <tr>
-                  <th className="text-left px-4 py-2 font-medium">Öğrenci</th>
+                  <th className="text-left px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Öğrenci"
+                      hint="Adın altındaki “çözülen/planlanan (%)”: son 7 günde (bugün dahil) programa konan test ve deneme sorularından çözülenler. “plan yok” = son 7 günde hiç soru verilmemiş."
+                    />
+                  </th>
                   <th className="text-left px-4 py-2 font-medium">Öğretmen</th>
-                  <th className="text-left px-4 py-2 font-medium">Seviye</th>
-                  <th
-                    className="text-right px-4 py-2 font-medium"
-                    title="Risk puanı 0-100. Yüksek puan = öğrenci daha çok ilgi istiyor demek. Hesaplama: 5+ gün giriş yok, düşük tamamlama, üst üste boş günler, performans düşüşü, programsız kalma gibi belirtilerin toplamı."
-                  >
-                    Risk Puanı
+                  <th className="text-left px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Seviye"
+                      hint="Risk puanına göre: 80 ve üstü Kritik, 60–79 Risk, 30–59 Dikkat."
+                    />
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Risk puanı"
+                      hint="0–100; yüksek puan = öğrenci daha çok ilgi istiyor. Sinyallerin toplamı: 5+ gündür giriş yok (25), son 7 günde tamamlama %40 altı (30), 3+ gün üst üste hiçbir şey yapılmamış (20), önceki 7 güne göre %30+ düşüş (15), bu hafta hiç görev verilmemiş (10). Tamamlamaya denemeler ve taslak görevler de girer. Yeni öğrencide ilk 3 gün sinyal üretilmez."
+                    />
                   </th>
                   <th className="text-left px-4 py-2 font-medium">
-                    Niye risk altında
+                    <ColumnHint
+                      label="Neden risk altında"
+                      hint="Öğrencide tetiklenen sinyaller. Sinyalin üzerine gelince ayrıntısı görünür."
+                    />
                   </th>
                   <th className="text-right px-4 py-2 font-medium w-32">
                     Müdahale
@@ -169,25 +183,31 @@ function CountCards({ counts }: { counts: AtRiskCountsInfo }) {
   return (
     <div className="grid grid-cols-3 gap-3">
       <CountCard
-        label="🔴 Kritik"
+        label="Kritik"
+        dot="bg-rose-500"
+        hint="Risk puanı 80 ve üstü öğrenci sayısı. Birden çok sinyal aynı anda var; hemen koçla konuşulmalı."
         value={counts.critical}
-        sub="acil müdahale önerilir"
-        cardClass="border-rose-200"
-        valueClass="text-rose-700"
+        sub="öğrenci · acil müdahale önerilir"
+        cardClass="border-rose-200 dark:border-rose-500/30"
+        valueClass="text-rose-700 dark:text-rose-400"
       />
       <CountCard
-        label="🟠 Risk"
+        label="Risk"
+        dot="bg-orange-500"
+        hint="Risk puanı 60–79 öğrenci sayısı. Koçun yakından takip etmesi gerekir."
         value={counts.high}
-        sub="öğretmen takip ediyor olmalı"
-        cardClass="border-orange-200"
-        valueClass="text-orange-700"
+        sub="öğrenci · koç takip etmeli"
+        cardClass="border-orange-200 dark:border-orange-500/30"
+        valueClass="text-orange-700 dark:text-orange-400"
       />
       <CountCard
-        label="🟡 Dikkat"
+        label="Dikkat"
+        dot="bg-amber-500"
+        hint="Risk puanı 30–59 öğrenci sayısı. Erken sinyal; henüz ciddi değil ama izlenmeli."
         value={counts.medium}
-        sub="erken sinyal — izlemde"
-        cardClass="border-amber-200"
-        valueClass="text-amber-700"
+        sub="öğrenci · erken sinyal"
+        cardClass="border-amber-200 dark:border-amber-500/30"
+        valueClass="text-amber-700 dark:text-amber-400"
       />
     </div>
   );
@@ -195,12 +215,16 @@ function CountCards({ counts }: { counts: AtRiskCountsInfo }) {
 
 function CountCard({
   label,
+  dot,
+  hint,
   value,
   sub,
   cardClass,
   valueClass,
 }: {
   label: string;
+  dot: string;
+  hint: string;
   value: number;
   sub: string;
   cardClass?: string;
@@ -209,8 +233,9 @@ function CountCard({
   return (
     <Card className={cardClass}>
       <CardContent className="p-4">
-        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          {label}
+        <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+          <span className={cn("inline-block size-2 rounded-full", dot)} aria-hidden />
+          <ColumnHint label={label} hint={hint} />
         </div>
         <div
           className={cn(
@@ -231,7 +256,7 @@ export function InterventionBadge({ it }: { it: CoachInterventionItem }) {
   const dt = `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, "0")}`;
   return (
     <span
-      className="mt-1 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700"
+      className="mt-1 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
       title={`${dt} tarihinde ${it.coach_name ?? "koça"} iletildi — ${it.status_label}`}
     >
       <CheckCircle2 className="size-3" aria-hidden />
@@ -262,7 +287,7 @@ function AtRiskRow({
           {row.weekly_planned > 0 ? (
             <>
               {row.grade_level ? " · " : null}
-              {row.weekly_completed}/{row.weekly_planned} (%
+              {row.weekly_completed}/{row.weekly_planned} soru çözüldü (%
               {row.weekly_rate_pct ?? 0})
             </>
           ) : (
@@ -278,7 +303,7 @@ function AtRiskRow({
             <div className="text-sm">{row.teacher_name}</div>
             {row.is_muted && (
               <div className="text-[10px] text-muted-foreground mt-0.5">
-                🔕 öğretmen susturmuş
+                öğretmen uyarıları susturmuş
               </div>
             )}
           </>

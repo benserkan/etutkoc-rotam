@@ -24,6 +24,7 @@ import {
 } from "recharts";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   getInstitutionAdminDigestDetail,
@@ -52,6 +53,10 @@ interface Props {
  * Payload yapısı `build_weekly_digest_payload` çıktısıyla aynı (totals,
  * completion, at_risk, highlight, inactive_teachers, grade_cohorts).
  */
+
+const RATE_HINT =
+  "Özetin kapsadığı 7 günde öğrencilere planlanan tüm soru ve denemelerin çözülen oranı (taslak görevler de dahil). Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı.";
+
 export function AdminDigestDetailClient({ initial, digestId }: Props) {
   const q = useQuery<AdminDigestDetailResponse>({
     queryKey: institutionKeys.adminDigest(digestId),
@@ -126,17 +131,19 @@ function TotalsGrid({ payload }: { payload: AdminDigestPayload }) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <KpiCard
         label="Öğretmen"
+        info="Özetin hazırlandığı anda kuruma bağlı öğretmen sayısı. Pasif = 7 günden uzun süredir giriş, görev girme ya da veli notu gibi hiçbir hareketi olmayan öğretmen."
         value={payload.totals.teacher_count}
         warn={
           payload.totals.inactive_teacher_count > 0
-            ? `⚠️ ${payload.totals.inactive_teacher_count} pasif`
+            ? `${payload.totals.inactive_teacher_count} öğretmen 7+ gündür hareketsiz`
             : undefined
         }
       />
       <KpiCard
         label="Öğrenci"
+        info="Özetin hazırlandığı anda kurumdaki aktif öğrenci sayısı (koçluğu sonlandırılanlar hariç)."
         value={payload.totals.student_count}
-        sub="aktif"
+        sub="aktif öğrenci"
       />
       <CompletionKpi completion={payload.completion} />
       <RiskKpi atRisk={payload.at_risk} />
@@ -146,12 +153,14 @@ function TotalsGrid({ payload }: { payload: AdminDigestPayload }) {
 
 function KpiCard({
   label,
+  info,
   value,
   sub,
   warn,
   valueClassName,
 }: {
   label: string;
+  info?: string;
   value: number | string;
   sub?: string;
   warn?: string;
@@ -161,7 +170,7 @@ function KpiCard({
     <Card>
       <CardContent className="p-4">
         <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          {label}
+          {info ? <ColumnHint label={label} hint={info} /> : label}
         </div>
         <div
           className={cn(
@@ -172,7 +181,7 @@ function KpiCard({
           {value}
         </div>
         {warn ? (
-          <div className="text-[11px] text-amber-700 mt-1">{warn}</div>
+          <div className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">{warn}</div>
         ) : null}
         {sub ? (
           <div className="text-[11px] text-muted-foreground mt-1">{sub}</div>
@@ -192,7 +201,7 @@ function CompletionKpi({
     <Card>
       <CardContent className="p-4">
         <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          Tamamlama
+          <ColumnHint label="Tamamlama" hint={`${RATE_HINT} Alt satırdaki fark yüzde PUANdır (örneğin %50'den %60'a çıkış +10 puan).`} />
         </div>
         <div
           className={cn(
@@ -222,13 +231,13 @@ function CompletionKpi({
             {completion.direction === "up" && (
               <>
                 <ArrowUpRight className="size-3.5" aria-hidden />+
-                {completion.delta_pct}
+                {Math.abs(completion.delta_pct)} puan
               </>
             )}
             {completion.direction === "down" && (
               <>
-                <ArrowDownRight className="size-3.5" aria-hidden />
-                {completion.delta_pct}
+                <ArrowDownRight className="size-3.5" aria-hidden />−
+                {Math.abs(completion.delta_pct)} puan
               </>
             )}
             {(completion.direction === "flat" ||
@@ -257,7 +266,7 @@ function RiskKpi({
     <Card>
       <CardContent className="p-4">
         <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          Risk
+          <ColumnHint label="Riskli öğrenci" hint="Risk puanı 30 ve üstü (Dikkat, Risk veya Kritik) olan öğrenci sayısı. Risk puanı; 5+ gün giriş yapmama, düşük haftalık tamamlama, üst üste boş günler, önceki haftaya göre düşüş ve programsızlıktan oluşur (0–100). Kritik = 80 ve üstü." />
         </div>
         <div
           className={cn(
@@ -269,7 +278,7 @@ function RiskKpi({
         </div>
         {atRisk.critical > 0 ? (
           <div className="text-[11px] text-rose-700 mt-1 inline-flex items-center gap-1">
-            <span aria-hidden>🔴</span> {atRisk.critical} kritik
+            {atRisk.critical} kritik
           </div>
         ) : null}
       </CardContent>
@@ -378,8 +387,8 @@ function CompletionCompareChart({ payload }: { payload: AdminDigestPayload }) {
         </ResponsiveContainer>
         {c.delta_pct != null ? (
           <p className="mt-1 text-center text-xs text-muted-foreground">
-            {c.direction === "up" ? `Geçen haftaya göre +%${c.delta_pct} yükseldi` :
-             c.direction === "down" ? `Geçen haftaya göre -%${c.delta_pct} düştü` : "Geçen haftayla aynı seviyede"}
+            {c.direction === "up" ? `Geçen haftaya göre ${Math.abs(c.delta_pct)} puan yükseldi` :
+             c.direction === "down" ? `Geçen haftaya göre ${Math.abs(c.delta_pct)} puan düştü` : "Geçen haftayla aynı seviyede"}
           </p>
         ) : null}
       </CardContent>
@@ -429,13 +438,17 @@ function GradeCohortTable({
           Sınıf bazlı dağılım
         </h3>
       </div>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/30 text-muted-foreground text-xs">
             <tr>
-              <th className="text-left px-4 py-2 font-medium">Kohort</th>
-              <th className="text-right px-4 py-2 font-medium">Öğrenci</th>
-              <th className="text-right px-4 py-2 font-medium">Oran</th>
+              <th className="text-left px-4 py-2 font-medium">Sınıf</th>
+              <th className="text-right px-4 py-2 font-medium">
+                <ColumnHint label="Öğrenci" hint="Bu sınıf düzeyindeki aktif öğrenci sayısı." />
+              </th>
+              <th className="text-right px-4 py-2 font-medium">
+                <ColumnHint label="Tamamlama" hint={RATE_HINT} />
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">

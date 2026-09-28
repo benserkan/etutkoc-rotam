@@ -9,7 +9,7 @@ import { RosterClient } from "@/components/institution/roster-client";
  */
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Roster" };
+export const metadata = { title: "Tüm Öğrenciler" };
 
 interface PageProps {
   searchParams: Promise<{

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
 import { ShareExperiencePrompt } from "@/components/testimonials/share-experience-prompt";
 import { Card, CardContent } from "@/components/ui/card";
@@ -125,11 +126,11 @@ function RiskCallout({
             <div className="text-xs text-rose-700 mt-0.5">
               {critical > 0 && (
                 <>
-                  <span className="inline-block mr-1">🔴</span>
-                  {critical} kritik ·{" "}
+                  <span className="mr-1 inline-block size-2 rounded-full bg-rose-600 align-middle" aria-hidden />
+                  {critical} tanesi kritik ·{" "}
                 </>
               )}
-              detayları görmek için tıkla
+              giriş, program ve tamamlama sinyallerine göre · ayrıntı için tıkla
             </div>
           </div>
         </div>
@@ -160,10 +161,10 @@ function InactiveCallout({
           <Moon className="size-7 shrink-0 text-amber-600" aria-hidden />
           <div className="min-w-0">
             <div className="font-semibold text-amber-900">
-              {count} öğretmen 7+ gündür pasif
+              {count} öğretmen 7+ gündür sistemde hareketsiz
             </div>
-            <div className="text-xs text-amber-700 mt-0.5 truncate">
-              {names.join(" · ")}
+            <div className="text-xs text-amber-700 mt-0.5 break-words">
+              Giriş, görev ya da veli notu yok: {names.join(" · ")}
               {remaining > 0 ? ` +${remaining} daha` : ""}
             </div>
           </div>
@@ -186,32 +187,37 @@ function KpiGrid({
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       <KpiCard
         label="Öğretmen"
+        hint="Kurumdaki öğretmen hesabı sayısı (koçluğu durdurulmuş hesaplar dahil). Alt satır: bunlardan son 7 günde sisteme en az bir kez giriş yapanlar."
         value={aggregate.teacher_count}
-        sub={`${aggregate.active_teacher_count} son 7 günde aktif (giriş yapan)`}
+        sub={`${aggregate.active_teacher_count} tanesi son 7 günde giriş yaptı`}
       />
       <KpiCard
         label="Öğrenci"
+        hint="Kurumun öğretmenlerine bağlı ve koçluğu süren öğrenci sayısı. Koçluğu sonlandırılmış (pasif) öğrenciler sayılmaz."
         value={aggregate.student_count}
-        sub="aktif kayıt"
+        sub="koçluğu süren öğrenci"
       />
       <KpiCard
         label="Planlanan test"
+        hint="Son 7 günde (bugün dahil) öğrencilere soru bankalarından verilen test sayısı. Denemeler ve video/özet gibi etkinlik görevleri ayrı; taslak (yayınlanmamış) görevler sayılmaz."
         value={aggregate.weekly_planned}
-        sub={`${aggregate.weekly_completed} çözüldü · soru bankası · son 7 gün`}
+        sub={`${aggregate.weekly_completed} tanesi çözüldü · son 7 gün`}
       />
       <KpiCard
         label="Planlanan deneme"
+        hint="Son 7 günde programa konan deneme sayısı (branş ya da genel deneme). Soru sayısı değil, deneme adedi."
         value={aggregate.weekly_deneme_planned}
-        sub={`${aggregate.weekly_deneme_completed} tamamlandı · deneme adedi · son 7 gün`}
+        sub={`${aggregate.weekly_deneme_completed} tanesi tamamlandı · son 7 gün`}
       />
       <KpiCard
         label="Test tamamlama"
+        hint="Çözülen test ÷ planlanan test, son 7 gün. Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı. Denemeler bu orana girmez."
         value={
           aggregate.weekly_rate_pct == null
             ? "—"
             : `%${aggregate.weekly_rate_pct}`
         }
-        sub="son 7 gün · yalnız test"
+        sub="çözülen test ÷ planlanan test"
         valueClassName={rateColorClass(aggregate.weekly_rate_pct)}
       />
     </div>
@@ -220,11 +226,13 @@ function KpiGrid({
 
 function KpiCard({
   label,
+  hint,
   value,
   sub,
   valueClassName,
 }: {
   label: string;
+  hint?: string;
   value: number | string;
   sub?: string;
   valueClassName?: string;
@@ -233,7 +241,7 @@ function KpiCard({
     <Card>
       <CardContent className="p-4">
         <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          {label}
+          {hint ? <ColumnHint label={label} hint={hint} /> : label}
         </div>
         <div
           className={cn(
@@ -253,9 +261,9 @@ function KpiCard({
 
 function rateColorClass(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700";
-  if (pct >= 40) return "text-amber-700";
-  return "text-rose-700";
+  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
+  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
+  return "text-rose-700 dark:text-rose-400";
 }
 
 // Satır zemini — orana göre (koyu temada da okunur: saydam ton + sol şerit).
@@ -276,7 +284,7 @@ function TeachersTable({
     <Card>
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-border">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 className="font-medium">Öğretmenler — Bu Haftaki Performans</h2>
+          <h2 className="font-medium">Öğretmenler — Son 7 Günün Performansı</h2>
           <span className="inline-flex items-center gap-2 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <span className="size-2.5 rounded-sm bg-rose-500" aria-hidden /> &lt;%40 acil
@@ -307,19 +315,29 @@ function TeachersTable({
           </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-muted-foreground text-xs">
               <tr>
                 <th className="text-left px-4 py-2 font-medium">Öğretmen</th>
-                <th className="text-right px-4 py-2 font-medium">Öğrenci</th>
-                <th className="text-right px-4 py-2 font-medium">Test plan</th>
                 <th className="text-right px-4 py-2 font-medium">
-                  Test çöz.
+                  <ColumnHint label="Öğrenci" hint="Bu koça bağlı, koçluğu süren öğrenci sayısı." />
                 </th>
-                <th className="text-right px-4 py-2 font-medium">Deneme (tam/plan)</th>
-                <th className="text-right px-4 py-2 font-medium">Test oranı</th>
-                <th className="text-right px-4 py-2 font-medium">Son Giriş</th>
+                <th className="text-right px-4 py-2 font-medium">
+                  <ColumnHint label="Planlanan test" hint="Son 7 günde bu koçun öğrencilerine soru bankalarından verilen test sayısı (deneme ve etkinlik görevleri hariç)." />
+                </th>
+                <th className="text-right px-4 py-2 font-medium">
+                  <ColumnHint label="Çözülen test" hint="Aynı 7 günde öğrencilerin çözüp işaretlediği test sayısı." />
+                </th>
+                <th className="text-right px-4 py-2 font-medium">
+                  <ColumnHint label="Deneme" hint="Son 7 günde tamamlanan / programa konan deneme sayısı. Hiç deneme verilmediyse “—”." />
+                </th>
+                <th className="text-right px-4 py-2 font-medium">
+                  <ColumnHint label="Tamamlama" hint="Çözülen test ÷ planlanan test (son 7 gün). Satır rengi de buna göre: kırmızı %40 altı, sarı %40–69, yeşil %70 ve üstü." />
+                </th>
+                <th className="text-right px-4 py-2 font-medium">
+                  <ColumnHint label="Son giriş" hint="Koçun sisteme en son giriş yaptığı zaman." />
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">

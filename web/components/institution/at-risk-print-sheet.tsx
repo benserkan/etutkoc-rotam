@@ -29,9 +29,9 @@ export function AtRiskPrintSheet({ data }: Props) {
         <PrintHeader institution={institution.name} subtitle="Risk Altındaki Öğrenciler" today={today} />
 
         <div className="grid grid-cols-3 gap-3 mb-4">
-          <CountCell label="🔴 Kritik" value={counts.critical} border="rose" />
-          <CountCell label="🟠 Risk" value={counts.high} border="orange" />
-          <CountCell label="🟡 Dikkat" value={counts.medium} border="amber" />
+          <CountCell label="Kritik (80+)" value={counts.critical} border="rose" />
+          <CountCell label="Risk (60–79)" value={counts.high} border="orange" />
+          <CountCell label="Dikkat (30–59)" value={counts.medium} border="amber" />
         </div>
 
         {at_risk.length === 0 ? (
@@ -50,8 +50,8 @@ export function AtRiskPrintSheet({ data }: Props) {
               <tr>
                 <th style={{ width: "35%" }}>Öğrenci / Öğretmen</th>
                 <th>Seviye</th>
-                <th className="text-right">Skor</th>
-                <th style={{ width: "45%" }}>Niye</th>
+                <th className="text-right">Risk puanı</th>
+                <th style={{ width: "45%" }}>Neden risk altında</th>
               </tr>
             </thead>
             <tbody>

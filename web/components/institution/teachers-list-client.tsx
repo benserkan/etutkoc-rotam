@@ -19,9 +19,14 @@ import type {
 import { formatLastLogin } from "@/components/institution/dashboard-client";
 import { NewTeacherDialog } from "@/components/institution/new-teacher-dialog";
 import { TeacherRowActions } from "@/components/institution/teacher-row-actions";
+import { InvitationsClient } from "@/components/institution/invitations-client";
+import { ColumnHint } from "@/components/ui/column-hint";
+import type { InvitationListResponse } from "@/lib/types/institution";
 
 interface Props {
   initial: InstitutionTeacherListResponse;
+  invitations: InvitationListResponse;
+  tab: "liste" | "davet";
 }
 
 /**
@@ -31,7 +36,7 @@ interface Props {
  *   - 2 eylem grubu (pause/resume + activate/deactivate)
  *   - Onay metinleri Jinja ile aynı
  */
-export function TeachersListClient({ initial }: Props) {
+export function TeachersListClient({ initial, invitations, tab }: Props) {
   const q = useQuery<InstitutionTeacherListResponse>({
     queryKey: institutionKeys.teachers(),
     queryFn: () => getInstitutionTeachers(),
@@ -42,6 +47,7 @@ export function TeachersListClient({ initial }: Props) {
   const data = q.data ?? initial;
   const { institution, items } = data;
   const [createOpen, setCreateOpen] = React.useState(false);
+  const pendingInv = invitations.items.filter((i) => i.status === "pending").length;
 
   return (
     <div className="space-y-6">
@@ -60,13 +66,44 @@ export function TeachersListClient({ initial }: Props) {
             {institution.name} — {items.length} öğretmen
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" aria-hidden />
-          Öğretmen Ekle
-        </Button>
+        {tab === "liste" ? (
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" aria-hidden />
+            Öğretmen Ekle
+          </Button>
+        ) : null}
       </header>
 
-      {items.length === 0 ? (
+      <nav className="flex flex-wrap gap-2 border-b border-border" aria-label="Öğretmen sekmeleri">
+        <TabLink href="/institution/teachers" active={tab === "liste"}>
+          Öğretmenler ({items.length})
+        </TabLink>
+        <TabLink href="/institution/teachers?tab=davet" active={tab === "davet"}>
+          Davet bağlantıları
+          {pendingInv > 0 ? ` (${pendingInv} bekliyor)` : ""}
+        </TabLink>
+      </nav>
+
+      <div className="grid gap-3 text-sm sm:grid-cols-2">
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="font-medium">Öğretmen ekle — hesabı sen açarsın</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Ad ve e-posta girersin, sistem geçici şifre üretir; bilgileri öğretmene
+            sen iletirsin. Öğretmen hemen giriş yapabilir.
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="font-medium">Davet bağlantısı — öğretmen kendisi kaydolur</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Tek kullanımlık bir bağlantı oluşturursun (7 gün geçerli); öğretmen
+            bağlantıyı açıp kendi şifresini belirleyerek kaydolur.
+          </p>
+        </div>
+      </div>
+
+      {tab === "davet" ? (
+        <InvitationsClient initial={invitations} embedded />
+      ) : items.length === 0 ? (
         <Card>
           <div className="p-12 text-center text-sm text-muted-foreground">
             Henüz öğretmen yok. Sağ üstten ekle.
@@ -74,19 +111,40 @@ export function TeachersListClient({ initial }: Props) {
         </Card>
       ) : (
         <Card>
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs">
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Öğretmen</th>
-                  <th className="text-right px-4 py-2 font-medium">Öğrenci</th>
-                  <th className="text-right px-4 py-2 font-medium">Plan</th>
                   <th className="text-right px-4 py-2 font-medium">
-                    Tamamlanan
+                    <ColumnHint
+                      label="Öğrenci"
+                      hint="Bu koça bağlı AKTİF öğrenci sayısı (koçluğu sonlandırılanlar hariç)."
+                    />
                   </th>
-                  <th className="text-right px-4 py-2 font-medium">Oran</th>
                   <th className="text-right px-4 py-2 font-medium">
-                    Son Giriş
+                    <ColumnHint
+                      label="Planlanan test"
+                      hint="Son 7 günde (bugün dahil) koçun aktif öğrencilerine soru bankalarından atadığı toplam test sayısı. Denemeler ve video/özet gibi etkinlik görevleri bu sayıya girmez."
+                    />
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Çözülen test"
+                      hint="Aynı 7 günde öğrencilerin çözüp işaretlediği test sayısı."
+                    />
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Tamamlama"
+                      hint="Çözülen test ÷ planlanan test (son 7 gün). Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı. Planlanan test yoksa “—”."
+                    />
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    <ColumnHint
+                      label="Son giriş"
+                      hint="Koçun sisteme en son giriş yaptığı zaman."
+                    />
                   </th>
                   <th className="text-right px-4 py-2 font-medium">
                     <span className="sr-only">Eylemler</span>
@@ -160,6 +218,31 @@ function TeacherRow({ teacher }: { teacher: TeacherSummaryItem }) {
   );
 }
 
+function TabLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "-mb-px inline-flex items-center border-b-2 px-3 py-2 text-sm",
+        active
+          ? "border-foreground font-medium text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
 function PauseBadge({ reason }: { reason: string | null }) {
   if (reason && reason.startsWith("auto")) {
     return (
@@ -183,7 +266,7 @@ function PauseBadge({ reason }: { reason: string | null }) {
 
 function rateColorClass(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700";
-  if (pct >= 40) return "text-amber-700";
-  return "text-rose-700";
+  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
+  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
+  return "text-rose-700 dark:text-rose-400";
 }

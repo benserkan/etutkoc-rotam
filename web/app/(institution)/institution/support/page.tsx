@@ -1,22 +1,9 @@
-import { apiServer } from "@/lib/api-server";
-import type { SupportListResponse } from "@/lib/types/support";
-import { SupportCenter } from "@/components/support/support-center";
+import { redirect } from "next/navigation";
 
 /**
- * /institution/support — Taleplerim (Kurum Yöneticisi → Süper Yönetici).
+ * /institution/support — "Taleplerim" artık birleşik Talepler sayfasının
+ * "Sistem yöneticisiyle" sekmesi (2026-09-28). Eski bağlantılar yönlenir.
  */
-export const dynamic = "force-dynamic";
-export const metadata = { title: "Taleplerim" };
-
-export default async function InstitutionSupportPage() {
-  const initial = await apiServer<SupportListResponse>("/api/v2/support/requests");
-  return (
-    <SupportCenter
-      view="mine"
-      initial={initial}
-      canCreate
-      title="Taleplerim"
-      description="Süper yöneticiye ilettiğiniz talepler ve yanıtları."
-    />
-  );
+export default function InstitutionSupportPage() {
+  redirect("/institution/support-inbox?tab=sistem");
 }

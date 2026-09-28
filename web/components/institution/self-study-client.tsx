@@ -15,6 +15,7 @@ import type {
   SelfStudyReportEntryRow,
 } from "@/lib/types/institution";
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 
 /**
  * Bağımsız Çalışma Girişleri raporu — kurum yöneticisi görünürlük yüzeyi.
@@ -121,23 +122,27 @@ export function InstitutionSelfStudyClient({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Kpi
           label="İşlenen test"
+          info={`Son ${days} günde program DIŞINDA (bağımsız çalışma olarak) kitaplara işlenen ve onaylanmış test sayısı. Programdaki görevlerle çözülen testler burada yok. Alt satır: bu dönemdeki tüm giriş kayıtları (onay bekleyen ve reddedilenler dahil).`}
           value={s.applied_tests_total}
           hint={`${s.entries_total} giriş kaydı`}
         />
         <Kpi
           label="Öğrenci beyanıyla"
+          info="Öğrencinin kendisinin bildirip koçun onayladığı testler. İki taraflı olduğu için en güvenilir kayıttır."
           value={s.student_declared_tests}
           hint="koç onayından geçti"
           tone="emerald"
         />
         <Kpi
           label="Koç tek taraflı"
+          info="Öğrenci beyanı olmadan koçun doğrudan işlediği testler. Tatil dönüşü toplu güncelleme gibi meşru nedenleri olabilir."
           value={s.coach_direct_tests}
           hint="beyansız giriş"
           tone="amber"
         />
         <Kpi
           label="Dikkat işareti"
+          info="İki tür işaretin toplamı: (1) dönemde 200+ test ve girişlerinin %80+'ı tek taraflı olan koç; (2) elle işlenmiş görünen ama öğrencinin son 90 gündeki denemelerinde doğruluğu %40'ın altında kalan konu. Suçlama değil, konuşma daveti."
           value={s.attention_count + s.mismatch_count}
           hint={`${s.attention_count} beyansız yüklü giriş · ${s.mismatch_count} deneme çaprazı`}
           tone={s.attention_count + s.mismatch_count > 0 ? "rose" : undefined}
@@ -163,8 +168,12 @@ export function InstitutionSelfStudyClient({
                   <th className="px-3 py-2 font-medium">Öğrenci</th>
                   <th className="px-3 py-2 font-medium">Koç</th>
                   <th className="px-3 py-2 font-medium">Konu</th>
-                  <th className="px-3 py-2 font-medium text-right">İşlenmiş (elle)</th>
-                  <th className="px-3 py-2 font-medium text-right">Deneme doğruluğu</th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="İşlenmiş (elle)" hint="Bu konuda çözüldü olarak işlenmiş test sayısı ve bunun ne kadarının elle (bağımsız çalışma olarak) girildiği." />
+                  </th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="Deneme doğruluğu" hint="Öğrencinin son 90 günde girilen denemelerinde bu konudaki soruların doğru oranı (boşlar hariç, en az 3 cevaplanmış soru). %40'ın altındaysa listelenir." />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -191,12 +200,24 @@ export function InstitutionSelfStudyClient({
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Koç</th>
-                  <th className="px-3 py-2 font-medium text-right">İşlenen test</th>
-                  <th className="px-3 py-2 font-medium text-right">Öğrenci beyanı</th>
-                  <th className="px-3 py-2 font-medium text-right">Koç girişi</th>
-                  <th className="px-3 py-2 font-medium text-right">Tek taraflı payı</th>
-                  <th className="px-3 py-2 font-medium text-right">Öğrenci</th>
-                  <th className="px-3 py-2 font-medium text-right">Bekleyen</th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="İşlenen test" hint="Bu koçun öğrencilerine seçilen dönemde bağımsız çalışma olarak işlenen, onaylı test sayısı." />
+                  </th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="Öğrenci beyanı" hint="Bunların öğrencinin bildirip koçun onayladığı kısmı (test)." />
+                  </th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="Koç girişi" hint="Bunların öğrenci beyanı olmadan koçun doğrudan girdiği kısmı (test)." />
+                  </th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="Tek taraflı payı" hint="Koç girişi ÷ işlenen test. 200+ testte %80 ve üstü dikkat işareti alır." />
+                  </th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="Öğrenci" hint="Bu dönemde bağımsız çalışma girişi olan farklı öğrenci sayısı." />
+                  </th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="Bekleyen" hint="Öğrencinin bildirdiği ama koçun henüz onaylamadığı giriş sayısı." />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -224,8 +245,12 @@ export function InstitutionSelfStudyClient({
                   <th className="px-3 py-2 font-medium">Koç</th>
                   <th className="px-3 py-2 font-medium">Öğrenci</th>
                   <th className="px-3 py-2 font-medium">Kitap · Bölüm</th>
-                  <th className="px-3 py-2 font-medium text-right">Test</th>
-                  <th className="px-3 py-2 font-medium">Kaynak</th>
+                  <th className="px-3 py-2 font-medium text-right">
+                    <ColumnHint label="Test" hint="Onaylıysa kitaba işlenen test sayısı; bekleyen ya da reddedilen girişte bildirilen sayı." />
+                  </th>
+                  <th className="px-3 py-2 font-medium">
+                    <ColumnHint label="Kaynak" hint="Girişi kimin yaptığı: öğrenci beyanı mı, koçun doğrudan girişi mi." />
+                  </th>
                   <th className="px-3 py-2 font-medium">Durum</th>
                 </tr>
               </thead>
@@ -246,11 +271,13 @@ function Kpi({
   label,
   value,
   hint,
+  info,
   tone,
 }: {
   label: string;
   value: number;
   hint: string;
+  info?: string;
   tone?: "emerald" | "amber" | "rose";
 }) {
   const toneCls =
@@ -263,7 +290,9 @@ function Kpi({
           : "text-foreground";
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">
+        {info ? <ColumnHint label={label} hint={info} /> : label}
+      </p>
       <p className={cn("mt-1 text-2xl font-bold tabular-nums", toneCls)}>{value}</p>
       <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>
     </div>

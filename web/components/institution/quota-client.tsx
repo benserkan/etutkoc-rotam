@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { institutionPlanLabel } from "@/lib/institution-plans";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -109,7 +110,12 @@ function QuotaCard({ item }: { item: QuotaInfoItem }) {
     <Card className={cn("transition-shadow", borderClass)}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
-          <h3 className="text-sm font-medium text-foreground">{item.label}</h3>
+          <h3 className="text-sm font-medium text-foreground">
+            <ColumnHint
+              label={item.label}
+              hint={`Sol sayı: kurumda şu an kayıtlı AKTİF ${item.label.toLocaleLowerCase("tr-TR")} sayısı (pasife alınanlar sayılmaz). Sağ sayı: paketinin izin verdiği üst sınır. %80'e gelince uyarı görünür; sınır dolunca yeni eklenemez, pasife alınan biri yer açar.`}
+            />
+          </h3>
           {item.has_override && (
             <span
               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200"
@@ -142,13 +148,13 @@ function QuotaCard({ item }: { item: QuotaInfoItem }) {
             <div className="text-[11px] text-muted-foreground mt-1 flex flex-wrap items-center gap-1">
               <span className="tabular-nums">%{item.pct} dolu</span>
               {item.is_at_limit && (
-                <span className="text-rose-700 font-medium inline-flex items-center gap-1">
+                <span className="text-rose-700 dark:text-rose-300 font-medium inline-flex items-center gap-1">
                   <AlertTriangle className="size-3" aria-hidden />
                   Limit doldu, yeni ekleyemezsin
                 </span>
               )}
               {item.is_warn && !item.is_at_limit && (
-                <span className="text-amber-700 font-medium inline-flex items-center gap-1">
+                <span className="text-amber-700 dark:text-amber-300 font-medium inline-flex items-center gap-1">
                   <AlertTriangle className="size-3" aria-hidden />
                   limite yaklaşıyor
                 </span>
@@ -158,7 +164,7 @@ function QuotaCard({ item }: { item: QuotaInfoItem }) {
         )}
 
         {item.is_unlimited && (
-          <div className="text-[11px] text-emerald-700 mt-3 inline-flex items-center gap-1">
+          <div className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-3 inline-flex items-center gap-1">
             <CheckCircle2 className="size-3" aria-hidden />
             Sınırsız — bu kuotada yer sıkıntısı yok
           </div>
@@ -197,14 +203,17 @@ function PlanComparison({
           Planlara göre standart limitler
         </h3>
       </div>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/30 text-muted-foreground text-xs">
             <tr>
               <th className="text-left px-4 py-2 font-medium">Plan</th>
               {summary.map((s) => (
                 <th key={s.key} className="text-right px-4 py-2 font-medium">
-                  {s.label}
+                  <ColumnHint
+                    label={s.label}
+                    hint={`Bu pakette aynı anda kayıtlı olabilecek en fazla aktif ${s.label.toLocaleLowerCase("tr-TR")} sayısı. ∞ = sınırsız, — = bu pakette yok.`}
+                  />
                 </th>
               ))}
             </tr>

@@ -25,7 +25,7 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
-from app.models import Institution, Task, TaskBookItem, TaskStatus, TaskType, User, UserRole
+from app.models import Book, BookType, Institution, Subject, Task, TaskBookItem, TaskStatus, TaskType, User, UserRole
 from app.models.audit_log import AuditLog
 from app.services.institution_action_center import compute_action_center
 
@@ -62,12 +62,17 @@ def make_student(db, tid, iid, *, age_days: int, last_login_days, suffix: str) -
     return s.id
 
 
+SIM_BOOK: dict = {}
+
+
 def add_program(db, sid, *, planned: int, completed: int, d: date | None = None):
-    """Yayınlanmış görev + kitapsız kalem (planned/completed). d verilmezse bugün."""
-    t = Task(student_id=sid, date=d or today, type=TaskType.OTHER, title="Sim Program",
+    """Yayınlanmış TEST görevi (soru bankası kalemi) — Program Uyumu yalnız soru
+    bankası testlerini sayar (2026-06-02 görev/test/deneme standardı; eskiden
+    kitapsız kalem kullanılıyordu → uyum hesabına hiç girmiyordu)."""
+    t = Task(student_id=sid, date=d or today, type=TaskType.TEST, title="Sim Program",
              status=TaskStatus.PENDING, order=0, is_draft=False, published_at=now)
     db.add(t); db.flush()
-    db.add(TaskBookItem(task_id=t.id, book_id=None, book_section_id=None,
+    db.add(TaskBookItem(task_id=t.id, book_id=SIM_BOOK["id"], book_section_id=None,
                         label="Sim", planned_count=planned, completed_count=completed))
     db.flush()
 
@@ -103,8 +108,13 @@ def main() -> int:
         coach = User(email=f"{PFX}_c@t.invalid", password_hash="x", full_name="Koc Ali",
                      role=UserRole.TEACHER, institution_id=iid, is_active=True,
                      password_changed_at=now, must_change_password=False)
-        db.add(coach); db.commit()
+        db.add(coach); db.flush()
+        subj = db.query(Subject).first()
+        book = Book(teacher_id=coach.id, subject_id=subj.id, name=f"{PFX} SB",
+                    type=BookType.SORU_BANKASI)
+        db.add(book); db.commit()
         tid = coach.id
+        SIM_BOOK["id"] = book.id
 
     try:
         with SessionLocal() as db:
@@ -217,6 +227,7 @@ def main() -> int:
                 db.execute(sa_delete(Task).where(Task.student_id.in_(sids)))
                 db.execute(sa_delete(AuditLog).where(AuditLog.actor_id.in_(sids)))
                 db.execute(sa_delete(User).where(User.id.in_(sids)))
+            db.execute(sa_delete(Book).where(Book.name == f"{PFX} SB"))
             db.execute(sa_delete(Institution).where(Institution.slug == PFX))
             db.commit()
 

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { institutionPlanLabel } from "@/lib/institution-plans";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -258,7 +259,10 @@ function MainBalanceCard({
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Bu Ay Kullanılan
+              <ColumnHint
+                label="Bu ay kullanılan"
+                hint="Bu takvim ayında kurum havuzundan harcanan kredi / aylık kredi hakkı (paketin aylık kredisi + varsa hediye kredi). Kurumdaki koç, öğrenci ve velilerin tetiklediği işlemlerin hepsi bu havuzdan düşer. Ayın ilk günü sıfırlanır."
+              />
             </div>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-4xl font-bold tabular-nums">{used}</span>
@@ -274,7 +278,7 @@ function MainBalanceCard({
           </div>
           <div className="text-right">
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Kalan
+              <ColumnHint label="Kalan" hint="Bu ay için kalan kredi = aylık hak − kullanılan. Eksiye düşebilir (sert kilit kapalıyken işlemler durdurulmaz)." side="left" />
             </div>
             <div
               className={cn("text-3xl font-bold mt-1 tabular-nums", remainingTone)}
@@ -307,7 +311,7 @@ function MainBalanceCard({
             <div className="tabular-nums font-medium">{lastAt ? formatEventTime(lastAt) : "—"}</div>
           </div>
           <div>
-            <div className="text-muted-foreground">Bu ay toplam olay</div>
+            <div className="text-muted-foreground">Bu ay yapılan işlem</div>
             <div className="tabular-nums font-medium">{totalEvents} işlem</div>
           </div>
         </div>
@@ -347,6 +351,10 @@ function KindBreakdownCard({
           <CircleDashed className="size-4 text-muted-foreground" aria-hidden />
           Hangi İşlem Ne Kadar Kullanıldı?
         </h3>
+        <p className="-mt-2 mb-3 text-xs text-muted-foreground">
+          Her satır bu ayki bir işlem türünün harcadığı kredi ve bunun aylık
+          kredi hakkının yüzde kaçı olduğu.
+        </p>
         {breakdown.length === 0 ? (
           <p className="text-sm text-muted-foreground italic">
             Bu ay henüz kredi tüketen işlem yapılmadı.
@@ -403,21 +411,26 @@ function PersonBreakdownCard({ rows }: { rows: UsagePersonRow[] }) {
         </h3>
         <p className="text-xs text-muted-foreground mb-3">
           Koç, öğrenci ve veli tetiklemeleri dahil — her satır bir kişinin bu
-          aydaki toplam yapay zekâ harcamasıdır.
+          ay kredi harcayan tüm işlemlerinin toplamıdır (yapay zekâ özellikleri
+          ve varsa e-posta/WhatsApp gibi ücretli gönderimler).
         </p>
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground italic">
             Bu ay henüz kredi tüketen işlem yapılmadı.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs">
                 <tr>
                   <th className="text-left px-3 py-2 font-medium">Kişi</th>
                   <th className="text-left px-3 py-2 font-medium">Rol</th>
-                  <th className="text-right px-3 py-2 font-medium">İşlem</th>
-                  <th className="text-right px-3 py-2 font-medium">Kredi</th>
+                  <th className="text-right px-3 py-2 font-medium">
+                    <ColumnHint label="İşlem" hint="Bu kişinin bu ay tetiklediği ve kredi düşen işlem sayısı." />
+                  </th>
+                  <th className="text-right px-3 py-2 font-medium">
+                    <ColumnHint label="Kredi" hint="Bu işlemlerin bu ay kurum havuzundan düştüğü toplam kredi." side="left" />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -501,17 +514,19 @@ function PlanInfoBlock({
     <Card>
       <CardContent className="p-5 space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Stat label="Plan" value={institutionPlanLabel(plan)} />
+          <Stat label="Paket" value={institutionPlanLabel(plan)} />
           <Stat
-            label="Aylık Limit"
+            label="Aylık kredi"
+            info="Paketinin her ay kurum havuzuna verdiği kredi. Ayın ilk günü yenilenir; kullanılmayan kredi sonraki aya devretmez."
             value={`${allocated} kredi`}
           />
           <Stat
-            label="Hediye Kredi"
+            label="Hediye kredi"
+            info="ETÜTKOÇ ekibinin bu ay için ek olarak tanımladığı kredi."
             value={`+${bonus}`}
-            valueClassName={bonus > 0 ? "text-violet-700" : undefined}
+            valueClassName={bonus > 0 ? "text-violet-700 dark:text-violet-300" : undefined}
           />
-          <Stat label="Bu Ay" value={period} mono />
+          <Stat label="Dönem" info="Rakamların ait olduğu takvim ayı (yıl-ay)." value={period} mono />
         </div>
 
         <div className="pt-3 border-t border-border">
@@ -537,12 +552,14 @@ function PlanInfoBlock({
 
 function Stat({
   label,
+  info,
   value,
   mono,
   uppercase,
   valueClassName,
 }: {
   label: string;
+  info?: string;
   value: string;
   mono?: boolean;
   uppercase?: boolean;
@@ -551,7 +568,7 @@ function Stat({
   return (
     <div>
       <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-        {label}
+        {info ? <ColumnHint label={label} hint={info} /> : label}
       </div>
       <div
         className={cn(
@@ -585,17 +602,17 @@ function EventsTable({ events }: { events: UsageEventItem[] }) {
           Henüz kayıt yok.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-muted/30 text-muted-foreground">
               <tr>
                 <th className="text-left px-4 py-2 font-medium">Ne Zaman</th>
                 <th className="text-left px-4 py-2 font-medium">Ne Yapıldı</th>
                 <th className="text-right px-4 py-2 font-medium">
-                  Tüketilen Kredi
+                  <ColumnHint label="Tüketilen kredi" hint="Bu işlemin kurum havuzundan düştüğü kredi." />
                 </th>
                 <th className="text-right px-4 py-2 font-medium">
-                  Sonra Kalan
+                  <ColumnHint label="Sonra kalan" hint="Bu işlemden hemen sonra bu ay için kalan kredi. Eksi değer, aylık hakkın aşıldığını gösterir." side="left" />
                 </th>
                 <th className="text-left px-4 py-2 font-medium">Kim Yaptı</th>
               </tr>

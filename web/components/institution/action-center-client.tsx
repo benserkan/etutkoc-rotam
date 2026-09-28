@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { Card } from "@/components/ui/card";
 import { institutionKeys, getInstitutionActionCenter } from "@/lib/api/institution";
@@ -39,10 +40,22 @@ const CAT_ICON: Record<string, LucideIcon> = {
   inactive_program: CalendarClock,
 };
 const CAT_LABEL: Record<string, string> = {
-  empty_program: "Boş program",
-  low_compliance: "Düşük uyum",
+  empty_program: "Programı yok",
+  low_compliance: "Düşük tamamlama",
   at_risk: "Riskli öğrenci",
   inactive_program: "Programı var, yapmıyor",
+};
+
+// Kart türü rozetinin üzerine gelince açılan açıklama — neye bakılarak üretildiği
+const CAT_HINT: Record<string, string> = {
+  empty_program:
+    "Bu takvim haftasında (Pazartesi–Pazar, ileri günler dahil) hiç yayınlanmış görevi olmayan aktif öğrenciler. Koçluğu sonlandırılmış öğrenciler ve 3 günden yeni hesaplar sayılmaz. Bir koçta 3 ve üstü öğrenci varsa kritik.",
+  low_compliance:
+    "Koçun öğrencilerinin planlanan soru bankası testlerinden çözdüğü oran. Pazartesi ve Salı henüz veri az olduğundan geçen haftanın tam verisine bakılır. %40 altı uyarı, %25 altı kritik. Doğruluk = çözülen sorularda doğru ÷ (doğru + yanlış).",
+  at_risk:
+    "Risk puanı 0–100: 5+ gündür giriş yok (25) · haftalık tamamlama %40 altı (30) · 3+ gün üst üste hiçbir şey yapılmamış (20) · önceki haftaya göre %30+ düşüş (15) · bu hafta hiç görev yok (10). 60 ve üstü Risk, 80 ve üstü Kritik.",
+  inactive_program:
+    "Programı olduğu hâlde 3 veya daha fazla gündür üst üste hiçbir görevi tamamlamayan öğrenci.",
 };
 
 export function ActionCenterClient({ initial }: Props) {
@@ -63,8 +76,9 @@ export function ActionCenterClient({ initial }: Props) {
           Müdahale Merkezi
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-          Bugün acil ilgi gerektiren durumlar tek listede, öncelik sırasıyla. Boş
-          program, düşük uyum ve riskli öğrenci sinyalleri burada birleşir.
+          Bugün ilgi gerektiren durumlar tek listede, önem sırasıyla: programı
+          olmayan öğrenciler, testlerin az çözüldüğü koçlar ve riskli öğrenciler.
+          Kartın türüne (sol üstteki etiket) gelince neye bakılarak üretildiği açılır.
         </p>
         <DemoHint contextKey="analysis" role="institution_admin" className="mt-2" />
       </header>
@@ -72,19 +86,25 @@ export function ActionCenterClient({ initial }: Props) {
       {/* Özet */}
       <section className="grid grid-cols-3 gap-3">
         <Card className={cn("p-4", s.critical > 0 && "border-rose-300 bg-rose-50/40")}>
-          <div className="text-[11px] font-semibold uppercase text-rose-700">Kritik</div>
+          <div className="text-[11px] font-semibold uppercase text-rose-700 dark:text-rose-300">
+            <ColumnHint label="Kritik" hint="Hemen ilgilenilmesi gereken kart sayısı (öğrenci sayısı değil; bir kart bir koçun birden çok öğrencisini kapsayabilir)." />
+          </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.critical}</div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">acil müdahale sinyali</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">acil ilgi gereken durum</div>
         </Card>
         <Card className={cn("p-4", s.warn > 0 && "border-amber-300 bg-amber-50/40")}>
-          <div className="text-[11px] font-semibold uppercase text-amber-700">Uyarı</div>
+          <div className="text-[11px] font-semibold uppercase text-amber-700 dark:text-amber-300">
+            <ColumnHint label="Uyarı" hint="Yakından takip edilmesi gereken kart sayısı; acil değil ama büyümeden konuşulmalı." />
+          </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.warn}</div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">dikkat sinyali</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">takip edilmesi gereken durum</div>
         </Card>
         <Card className="p-4">
-          <div className="text-[11px] font-semibold uppercase text-muted-foreground">Toplam</div>
+          <div className="text-[11px] font-semibold uppercase text-muted-foreground">
+            <ColumnHint label="Toplam" hint="Şu an listelenen tüm kartlar (kritik + uyarı). Sayfa her açılışta güncel veriden yeniden hesaplanır." />
+          </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.total}</div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">aksiyon kartı (şu an)</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">şu an listelenen kart</div>
         </Card>
       </section>
 
@@ -105,12 +125,19 @@ export function ActionCenterClient({ initial }: Props) {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        {CAT_LABEL[it.category] ?? it.category}
+                        {CAT_HINT[it.category] ? (
+                          <ColumnHint
+                            label={CAT_LABEL[it.category] ?? it.category}
+                            hint={CAT_HINT[it.category]}
+                          />
+                        ) : (
+                          CAT_LABEL[it.category] ?? it.category
+                        )}
                       </span>
                       <h3 className="text-sm font-semibold">{it.title}</h3>
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">{it.description}</p>
-                    <p className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-indigo-700">
+                    <p className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
                       → {it.suggestion}
                     </p>
                   </div>
