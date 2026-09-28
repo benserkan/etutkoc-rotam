@@ -115,9 +115,12 @@ try:
     check("7. projection.completed = 30 (deneme tamamlamasi girmez)", proj.completed == 30, f"got {proj.completed}")
     remaining = proj.total_tests - proj.completed
     check("8. kalan is = 70 (yalniz test)", remaining == 70, f"got {remaining}")
-    # rate_per_day DOW-agirlikli test-only ortalama. Deneme uniform +%20 ekleseydi
-    # rate de ×1.2 olurdu. Test-only ~5.0 < deneme-dahil ~6.0 → izolasyon kaniti.
-    check("9. projection.rate_per_day test-only (<5.5; deneme dahil ~6.0 olurdu)", 0 < proj.rate_per_day < 5.5, f"got {proj.rate_per_day}")
+    # rate_per_day test-only; pencere ilk görevden başlar (2026-09-29: 14 günlük
+    # geçmiş 28 güne bölünmez). 14 gün × 10 test / 15 gün (bugün dahil) = 9.33;
+    # deneme dahil olsaydı 14 × 12 / 15 = 11.2 → izolasyon kanıtı.
+    check("9. projection.rate_per_day test-only = 140/15 (deneme dahil 11.2 olurdu)",
+          abs(proj.rate_per_day - 140 / 15) < 0.05, f"got {proj.rate_per_day}")
+    check("9b. pencere ilk görevden: window_days=15", proj.window_days == 15, f"got {proj.window_days}")
 
     print(f"\n  Özet: envanter test={tot_t}/all={tot_all} · hız test={rate_t}/all={rate_all} · "
           f"proj total={proj.total_tests} completed={proj.completed} rate={proj.rate_per_day:.1f}")

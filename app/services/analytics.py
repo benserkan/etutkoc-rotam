@@ -453,6 +453,18 @@ def compute_projection(
     # hepsi tests_only — deneme soruları projeksiyona girmez (izole edilmiş hesap).
     # Tarihçe — günlük tamamlama (sadece geçmiş)
     series = daily_completed_series(db, student.id, today, window_days, tests_only=True)
+    # Geçmiş penceresi öğrencinin İLK yayınlanmış görevinden başlar: 1 haftalık
+    # öğrencinin hızı 28 güne bölünüp 4 kat küçük çıkıyordu (Zeynep Ela: gerçek
+    # ~11 test/gün, projeksiyon 2.8). Başlamadan önceki boş günler haftagünü
+    # ortalamalarını da sulandırıyordu.
+    _first_task = (
+        db.query(func.min(Task.date))
+        .filter(Task.student_id == student.id, Task.is_draft.is_(False))
+        .scalar()
+    )
+    if _first_task is not None and _first_task > today - timedelta(days=window_days - 1):
+        series = {d: v for d, v in series.items() if d >= _first_task}
+        window_days = max(1, (today - _first_task).days + 1)
     overall_rate = (sum(series.values()) / window_days) if window_days > 0 else 0.0
 
     # Planlama serisi — geçmiş + gelecek (öğretmenin tüm planını yansıtır)
