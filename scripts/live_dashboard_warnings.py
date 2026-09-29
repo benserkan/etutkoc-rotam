@@ -93,7 +93,13 @@ def seed():
             db.flush()
             db.add(TaskBookItem(task_id=t.id, book_id=b.id, book_section_id=sec.id,
                                 planned_count=2, completed_count=0))
-        # Yolunda: her gün yaptı
+        # Yolunda: her gün yaptı + yarın görevi var (programı sürüyor)
+        t = Task(student_id=studs["y"], date=today + timedelta(days=1), type=TaskType.TEST,
+                 title="Kimya", is_draft=False, published_at=now, status=TaskStatus.PENDING)
+        db.add(t)
+        db.flush()
+        db.add(TaskBookItem(task_id=t.id, book_id=b.id, book_section_id=sec.id,
+                            planned_count=2, completed_count=0))
         for k in (1, 2, 3):
             t = Task(student_id=studs["y"], date=today - timedelta(days=k), type=TaskType.TEST,
                      title="Kimya", is_draft=False, published_at=now,
@@ -153,15 +159,15 @@ def main() -> int:
             chk("3 uzun öğrenci adı kırpılmadan", "Uzunsoyadlı Öğrenci" in g.inner_text())
             codes = [g.locator('[data-testid="warning-item"]').nth(i).get_attribute("data-code")
                      for i in range(g.locator('[data-testid="warning-item"]').count())]
-            chk("4 verilip yapılmayan ders + haftalık sıfır yakalandı",
-                any(c.startswith("subject_untouched") for c in codes) and "weekly_zero" in codes, str(codes))
+            chk("4 kök neden kırmızı: programı yok + boş gün serisi",
+                "program_none" in codes and "empty_streak" in codes, str(codes))
             chk("5 açıklama: haftalık sıfırlanmaz", "haftalık sıfırlanmaz" in sec.inner_text())
-            item = g.locator('[data-testid="warning-item"][data-code^="subject_untouched"]')
+            item = g.locator('[data-testid="warning-item"][data-code="empty_streak"]')
             item.locator('[data-testid="warning-why"]').click()
             pg.wait_for_timeout(300)
             ev = item.locator('[data-testid="warning-evidence"]')
             evt = ev.inner_text() if ev.count() else ""
-            chk("6 Neden? kanıtı açılır (verilen 5 görev · 10 test)", "5 görev · 10 test" in evt, evt)
+            chk("6 Neden? kanıtı açılır (5 görev · 0 tamamlandı)", "5 görev · 0 tamamlandı" in evt, evt)
             chk("7 yatay taşma yok", not pg.evaluate(
                 "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1"))
             ell = pg.evaluate("""() => [...document.querySelectorAll('[data-section="dashboard:warnings"] *')]
@@ -176,6 +182,15 @@ def main() -> int:
             after = sec.locator('[data-testid="warning-item"]').count()
             chk("9 Gördüm → uyarı akıştan çıktı", after == before - 1, f"{before}->{after}")
             chk("10 gizlenenler bölümü", "Gizlediğin uyarılar (1)" in sec.inner_text())
+
+            pg.goto(f"{BASE}/teacher/students/{ids['b']}", wait_until="networkidle")
+            pg.wait_for_timeout(2500)
+            hl = pg.locator('[data-testid="status-headline"]')
+            chk("13 Durum Özeti başlığı kök nedenle", hl.count() == 1 and hl.inner_text().startswith("Programı yok"),
+                hl.inner_text() if hl.count() else "")
+            chk("14 'Bugün programı yok' (0/0 değil)", "Bugün programı yok" in pg.locator("main").inner_text())
+            ex = pg.locator('[data-testid="status-extras"]')
+            chk("15 ek sinyaller bölümü var", ex.count() == 1 and "Ek sinyaller" in ex.inner_text())
 
             dctx = br.new_context(viewport={"width": 390, "height": 900}, color_scheme="dark",
                                   storage_state=ctx.storage_state())

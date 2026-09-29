@@ -472,6 +472,8 @@ function WarningsFeedSection() {
 
 function StudentWarningGroup({ group }: { group: StudentGroup }) {
   const meta = LEVEL_META[group.worst];
+  const [more, setMore] = React.useState(false);
+  const shown = more ? group.rows : group.rows.slice(0, 3);
   return (
     <li
       className={cn(
@@ -497,10 +499,19 @@ function StudentWarningGroup({ group }: { group: StudentGroup }) {
         <span className="text-xs text-muted-foreground">{group.rows.length} uyarı</span>
       </div>
       <ul className="divide-y divide-border border-t border-border">
-        {group.rows.map((w) => (
+        {shown.map((w) => (
           <WarningItemRow key={w.code} row={w} />
         ))}
       </ul>
+      {group.rows.length > 3 ? (
+        <button
+          type="button"
+          onClick={() => setMore((v) => !v)}
+          className="w-full border-t border-border px-3 py-2 text-left text-xs font-medium text-indigo-600 hover:bg-muted/60 dark:text-indigo-400"
+        >
+          {more ? "Daha az göster" : `${group.rows.length - 3} uyarı daha`}
+        </button>
+      ) : null}
     </li>
   );
 }

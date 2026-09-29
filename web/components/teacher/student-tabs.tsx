@@ -53,6 +53,7 @@ import type {
   StudentBriefProfile,
   StudentPatchBody,
   TeacherStudentDetailResponse,
+  WarningItem,
   Track,
 } from "@/lib/types/teacher";
 import {
@@ -824,25 +825,21 @@ function StatusSummary({
       detail: `${todayDone}/${todayTotal} görev (%${todayPct})`,
       link: `${base}/day`, linkLabel: "Günü gör", good: true });
   }
-  if (weekTotal > 0 && (weekPct ?? 0) >= 70) {
-    positives.push({ tone: "green", title: `Haftalık tempo iyi (%${weekPct})`,
-      detail: `${weekDone}/${weekTotal} görev tamamlandı`,
-      link: `${base}/week`, linkLabel: "Haftalık planı gör", good: true });
+  // İyi gidenler artık bayrak motorundan (tek kaynak: student_flags G katmanı).
+  for (const g of data.good_items ?? []) {
+    positives.push({ tone: "green", title: g.title, detail: g.detail, link: g.link,
+      linkLabel: g.link_label, good: true, evidence: g.evidence ?? [] });
   }
-  if (consistency >= 80) {
-    positives.push({ tone: "green", title: `Tutarlı çalışıyor (%${consistency})`,
-      detail: "Son 7 günün çoğunda aktif", link: `${base}/dna`, linkLabel: "Analizi gör", good: true });
-  }
-  if (hitRate >= 80) {
-    positives.push({ tone: "green", title: `Hedefleri tutturuyor (%${hitRate})`,
-      detail: "Planlanan görevlerin büyük kısmı tamamlanıyor", link: `${base}/week`, linkLabel: "Planı gör", good: true });
-  }
+  void hitRate;
 
-  const warnings: SummaryRow[] = items.map((w) => ({
+  const toRow = (w: WarningItem): SummaryRow => ({
     tone: (w.level === "red" ? "red" : w.level === "amber" ? "amber" : "green"),
     title: w.title, detail: w.detail, link: w.link, linkLabel: w.link_label,
     evidence: w.evidence ?? [],
-  }));
+  });
+  // En çok 3 ana kart; fazlası + motorun ek sinyalleri açılır bölümde.
+  const warnings: SummaryRow[] = items.slice(0, 3).map(toRow);
+  const extras: SummaryRow[] = [...items.slice(3), ...(data.extra_items ?? [])].map(toRow);
 
   const verdict = {
     red: { cls: "border-rose-300 bg-rose-50 text-rose-900", title: "Acil müdahale gerekiyor" },
@@ -868,10 +865,18 @@ function StatusSummary({
           </div>
         ) : (
           <div className={cn("rounded-lg border p-3", verdict.cls)}>
-            <p className="font-semibold">{verdict.title}</p>
+            <p className="font-semibold" data-testid="status-headline">
+              {data.headline || verdict.title}
+            </p>
             <p className="mt-0.5 text-sm opacity-90">
-              Bugün <strong>{todayDone}/{todayTotal}</strong> görev
-              {todayPct != null ? ` (%${todayPct})` : ""} ·{" "}
+              {todayTotal > 0 ? (
+                <>
+                  Bugün <strong>{todayDone}/{todayTotal}</strong> görev
+                  {todayPct != null ? ` (%${todayPct})` : ""}
+                </>
+              ) : (
+                <>Bugün programı yok</>
+              )}{" "}·{" "}
               Son 7 gün <strong>{weekDone}/{weekTotal}</strong> görev
               {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
               Tutarlılık %{consistency}
@@ -900,6 +905,17 @@ function StatusSummary({
               {warnings.map((w, i) => <SummaryCard key={`w-${i}`} row={w} />)}
             </div>
           </div>
+        ) : null}
+
+        {!paused && extras.length > 0 ? (
+          <details className="rounded-lg border border-border px-3 py-2" data-testid="status-extras">
+            <summary className="cursor-pointer text-sm font-medium">
+              Ek sinyaller ({extras.length}) — ana kartlara bağlı belirtiler ve bilgiler
+            </summary>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {extras.map((w, i) => <SummaryCard key={`x-${i}`} row={w} />)}
+            </div>
+          </details>
         ) : null}
 
         {!paused && positives.length > 0 ? (

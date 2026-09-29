@@ -169,7 +169,7 @@ def list_parent_students(db: Session, parent: User) -> list[dict[str, Any]]:
                 if snap.hit_rate_7d is not None else None
             ),
             "consistency_7d": round(snap.consistency_7d * 100) if snap.consistency_7d is not None else None,
-            "warning_level": snap.worst_warning_level,
+            "warning_level": snap.parent_level,
         })
     return out
 
@@ -299,7 +299,7 @@ def student_overview(db: Session, parent: User, student_id: int) -> dict[str, An
         ),
         "rate_30d_pct": round(snap.rate_30d * 100) if snap.rate_30d is not None else None,
         "consistency_7d_pct": round(snap.consistency_7d * 100) if snap.consistency_7d is not None else None,
-        "warning_level": snap.worst_warning_level,
+        "warning_level": snap.parent_level,
         "subjects": subjects,
         "trend": trend,
         "projection": projection_view,

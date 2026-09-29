@@ -115,7 +115,9 @@ def warns(sid):
     with SessionLocal() as db:
         s = db.get(User, sid)
         proj = analytics.compute_projection(db, s, today, window_days=28, buffer_days=5)
-        return {w.code: w for w in analytics.generate_warnings(db, s, today, proj)}
+        from app.services.student_flags import evaluate_flags
+        _r = evaluate_flags(db, s, today, proj)
+        return {w.code: w for w in (_r.primary + _r.secondary + _r.good)}
 
 
 def cleanup():
@@ -172,14 +174,14 @@ def main() -> int:
         for k in (2, 4, 6, 8):
             task(boran, today - timedelta(days=k), k_b, k_s, 2, 0)
         w = warns(boran)
-        ut = w.get(f"subject_untouched_{k_sub}")
-        chk("4 verilip hiç yapılmayan ders yakalanır (rezerv iadeli)", ut is not None, str(list(w)))
-        chk("4b kanıt: verilen 4 görev · 8 test, çözülen 0",
-            ut is not None and ("Verilen", "4 görev · 8 test") in ut.evidence
-            and ("Çözülen", "0 test") in ut.evidence, str(ut.evidence if ut else None))
+        ut = w.get(f"subject_avoid_{k_sub}")
+        chk("4 verilip hiç yapılmayan ders yakalanır (rezerv iadeli) — kaçınma bayrağı", ut is not None, str(list(w)))
+        chk("4b kanıt: 0/4 görev (%0)",
+            ut is not None and any(v == "0/4 görev (%0)" for _, v in ut.evidence), str(ut.evidence if ut else None))
 
-        chk("4c aynı olgu tek uyarı: haftalık sıfır varken 3-gün/dün uyarısı yok",
-            "weekly_zero" in w and "inactive_3d" not in w and "yesterday_no_tick" not in w, str(list(w)))
+        chk("4c aynı olgu tek uyarı: boş gün serisi kırmızı, tamamlama ek sinyale iner",
+            "empty_streak" in w and w["empty_streak"].level == "red"
+            and "inactive_3d" not in w and "weekly_zero" not in w, str(list(w)))
 
         # Kısmen yapılmış, son çözüm 3 gün önce → uyarı yok
         s5 = mk_student("recent")
@@ -212,7 +214,7 @@ def main() -> int:
             task(s7, today - timedelta(days=k), d_b, d_s, 2, 0, draft=True)
         w = warns(s7)
         chk("7 taslaklar haftalık tempoyu düşürmez",
-            "weekly_miss" not in w and "weekly_zero" not in w, str(list(w)))
+            "completion_low" not in w and "empty_streak" not in w, str(list(w)))
 
         # Haftalık tempo düşük + kanıt
         s8 = mk_student("weekly")
@@ -222,7 +224,7 @@ def main() -> int:
         for k in (2, 3, 4, 5):
             task(s8, today - timedelta(days=k), e_b, e_s, 2, 0)
         w = warns(s8)
-        wm = w.get("weekly_miss")
+        wm = w.get("completion_low")
         chk("8 haftalık tempo: 5 görevin 1'i", wm is not None and "5 görevin 1 tanesi" in wm.detail,
             wm.detail if wm else str(list(w)))
         all_w = [x for sid in (taha, boran, s6, s8) for x in warns(sid).values()]

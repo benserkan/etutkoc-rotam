@@ -314,7 +314,10 @@ class TeacherStudentDetailResponse(BaseModel):
     program_summary: StudentProgramSummary
     worst_warning_level: WarningLevelLiteral
     warnings: list[str]                 # (geriye uyum) detail/title metinleri
-    warning_items: list[WarningItem] = []   # yapısal + linkli durum özeti
+    warning_items: list[WarningItem] = []   # yapısal + linkli durum özeti (ana kartlar)
+    extra_items: list[WarningItem] = []     # ek sinyaller (bastırılan belirtiler + bilgi)
+    good_items: list[WarningItem] = []      # iyi gidenler
+    headline: str = ""                      # tek cümle durum özeti
     pending_request_count: int          # bu öğrencinin bekleyen talepleri
     # Paket 3.5b — header için aktif dönem rozeti
     active_phase: StudentActivePhase | None = None

@@ -9,7 +9,7 @@ Senaryolar (risk_analysis.compute_risk_score + analytics.generate_warnings):
   2. ESKİ programsız, hiç giriş (10g)            → no_login_5d + no_program
   3. ESKİ programsız, dün giriş (10g)            → no_program (no_login YOK)
   4. ZAMANLAMA: 2g programsız → no_program YOK; 4g → no_program VAR
-  5. ESKİ programlı, 3 gün boş (10g)             → inactive_3d + consecutive_empty
+  5. ESKİ programlı, 3 gün boş (10g)             → empty_streak + consecutive_empty
   6. AKTİF (10g, bugün giriş + tamamlama)        → temiz
 """
 from __future__ import annotations
@@ -121,7 +121,7 @@ def main():
         wc = _warning_codes(s1)
         check("1. YENİ öğrenci → risk SESSİZ (no_login/no_program yok)",
               "no_login_5d" not in rc and "no_program" not in rc, f"codes={rc} score={score}")
-        check("1b. YENİ öğrenci → 'inactive_3d' uyarısı YOK", "inactive_3d" not in wc, f"warnings={wc}")
+        check("1b. YENİ öğrenci → 'empty_streak' uyarısı YOK", "empty_streak" not in wc, f"warnings={wc}")
 
         # 2) ESKİ programsız, hiç giriş yapmamış
         s2 = _mk_student("eski_giris_yok", age_days=10)
@@ -135,7 +135,7 @@ def main():
         wc = _warning_codes(s3)
         check("3. ESKİ + dün giriş + programsız → no_program VAR, no_login YOK",
               "no_program" in rc and "no_login_5d" not in rc, f"codes={rc}")
-        check("3b. programsız → inactive_3d YOK", "inactive_3d" not in wc, f"warnings={wc}")
+        check("3b. programsız → empty_streak YOK", "empty_streak" not in wc, f"warnings={wc}")
 
         # 4) ZAMANLAMA — no_program eşiği (3 gün)
         s4a = _mk_student("yas2", age_days=2)
@@ -151,8 +151,8 @@ def main():
             _add_task(s5, today - timedelta(days=dd), planned=20, completed=0)
         rc, _, _ = _risk_codes(s5)
         wc = _warning_codes(s5)
-        check("5. ESKİ + programlı + 3 gün boş → inactive_3d uyarısı VAR",
-              "inactive_3d" in wc, f"warnings={wc}")
+        check("5. ESKİ + programlı + 3 gün boş → empty_streak uyarısı VAR",
+              "empty_streak" in wc, f"warnings={wc}")
         check("5b. risk: consecutive_empty veya low_completion VAR",
               "consecutive_empty" in rc or "low_completion" in rc, f"codes={rc}")
 
@@ -161,8 +161,8 @@ def main():
         _add_task(s6, today, planned=10, completed=10)
         rc, score, lvl = _risk_codes(s6)
         wc = _warning_codes(s6)
-        check("6. AKTİF öğrenci → inactive_3d YOK + bugün_tik_yok YOK",
-              "inactive_3d" not in wc and "today_no_tick" not in wc, f"warnings={wc} risk={rc}")
+        check("6. AKTİF öğrenci → empty_streak YOK + bugün_tik_yok YOK",
+              "empty_streak" not in wc and "today_no_tick" not in wc, f"warnings={wc} risk={rc}")
 
     finally:
         with SessionLocal() as db:

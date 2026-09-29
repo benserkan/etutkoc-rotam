@@ -112,8 +112,9 @@ def _warning_codes(sid):
     with SessionLocal() as db:
         s = db.get(User, sid)
         proj = analytics.compute_projection(db, s, today, window_days=28, buffer_days=5)
-        ws = analytics.generate_warnings(db, s, today, proj)
-        return {w.code for w in ws}
+        from app.services.student_flags import evaluate_flags
+        _r = evaluate_flags(db, s, today, proj)
+        return {w.code for w in (_r.primary + _r.secondary)}
 
 
 def main():

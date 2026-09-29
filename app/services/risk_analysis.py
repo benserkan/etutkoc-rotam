@@ -268,20 +268,37 @@ def compute_risk_score(
         ))
         score += WEIGHTS["drop_30pct"]
 
-    # 5) Bu hafta hiç görev yok — yeni öğrenciye (hesap < 3 gün) "Programsız"
-    # demek erken; koça programı kurması için onboarding süresi tanı.
-    # NOT: "programı var mı" = görev SAYISI (tasks_total). Yalnız etkinlik görevi
-    # (Diğer/Video, soru sayısı 0) atanmış hafta da PROGRAMLIDIR → week.planned
-    # (soru) yerine week.tasks_total kullanılır (aksi halde etkinlik-only hafta
-    # yanlışlıkla "Programsız" damgalanır).
-    if week.tasks_total == 0 and (account_age_days is None or account_age_days >= ONBOARDING_GRACE_DAYS):
+    # 5) Programı yok + bayrak motoruyla hizalama (2026-09-29 tek motor).
+    # Eski kural "son 7 günde görev yok" idi → geçen haftanın görevleri, bu hafta
+    # programı olmayan öğrenciyi (Boran) gizliyordu. Artık student_flags'ın A
+    # katmanı: bugün ve sonrasında yayınlanmış görev yok.
+    from app.services.student_flags import evaluate_flags
+    _flags = evaluate_flags(db, student, today, None)
+    _codes = {w.code for w in _flags.primary}
+    if "program_none" in _codes:
+        _f = next(w for w in _flags.primary if w.code == "program_none")
         indicators.append(RiskIndicator(
-            code="no_program",
-            title="Programsız",
-            detail="Bu haftaya planlanmış hiç görev yok — öğretmen henüz programı oluşturmamış olabilir",
+            code="no_program", title=_f.title, detail=_f.detail,
             weight=WEIGHTS["no_program"],
         ))
         score += WEIGHTS["no_program"]
+    # Ana kırmızı/sarı bayraklar seviyeyi en az Risk/Dikkat'e çeker; gerekçe
+    # listesine eklenir ("En çok risk altındaki 5" doğru sebebi söylesin).
+    _have = {i.title for i in indicators}
+    for _f in _flags.primary:
+        if _f.layer == "A" or _f.title in _have or _f.coach_only:
+            continue
+        if _f.level == "red":
+            indicators.append(RiskIndicator(code=f"flag_{_f.code}", title=_f.title,
+                                            detail=_f.detail, weight=0))
+    # A katmanı (program yok/bitiyor/taslak) koçun aksiyonudur ve kendi göstergesi
+    # (no_program) + eylem merkezinde "boş program" kategorisi var → seviyeyi
+    # ayrıca yükseltmez (aynı olgu iki kez sayılmasın).
+    _student_flags = [w for w in _flags.primary if w.layer != "A" and not w.coach_only]
+    if any(w.level == "red" for w in _student_flags):
+        score = max(score, 60)
+    elif _student_flags:
+        score = max(score, 30)
 
     score = min(score, 100)
     level = _level_for_score(score)

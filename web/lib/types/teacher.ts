@@ -309,6 +309,12 @@ export interface TeacherStudentDetailResponse {
   worst_warning_level: WarningLevel;
   warnings: string[];
   warning_items?: WarningItem[];
+  /** Bayrak motoru: bastırılan belirtiler + bilgi sinyalleri. */
+  extra_items?: WarningItem[];
+  /** Bayrak motoru: iyi gidenler. */
+  good_items?: WarningItem[];
+  /** Tek cümle durum özeti. */
+  headline?: string;
   pending_request_count: number;
   // Paket 3.5b
   active_phase?: StudentActivePhase | null;

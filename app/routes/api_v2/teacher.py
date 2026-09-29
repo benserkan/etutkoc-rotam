@@ -901,12 +901,28 @@ _WARN_LINK = {
     "projection_tight": ("dna", "Çalışma analizini gör"),
     "projection_zero_rate": ("dna", "Çalışma analizini gör"),
     "subjects_unprogrammed": ("week", "Programa ekle"),
+    "program_none": ("week", "Program oluştur"),
+    "program_ending": ("week", "Yeni haftayı hazırla"),
+    "draft_only": ("week", "Taslağı yayınla"),
+    "empty_streak": ("week", "Günleri incele"),
+    "completion_low": ("week", "Haftalık planı incele"),
+    "completion_drop": ("week", "Haftalık planı incele"),
+    "no_login": ("#overview", "Öğrenciyle iletişime geç"),
+    "deneme_skipped": ("week", "Deneme görevlerini incele"),
+    "exam_drop": ("#exams", "Denemeleri incele"),
+    "bulk_marking": ("day", "Günü incele"),
+    "dy_missing": ("day", "Günü incele"),
+    "good_net_up": ("#exams", "Denemeleri gör"),
 }
 
 
 def warning_link(student_id: int, code: str) -> tuple[str, str]:
     """Uyarı kodu → kanıt sayfası (tek merkez: durum özeti + uyarı akışı)."""
     suffix, label = _WARN_LINK.get(code, ("week", "Programı incele"))
+    if code.startswith("subject_avoid_"):
+        suffix, label = "week", "Bu dersin görevlerini incele"
+    if suffix.startswith("#"):
+        return f"/teacher/students/{student_id}{suffix}", label
     return f"/teacher/students/{student_id}/{suffix}", label
 
 
@@ -1164,6 +1180,21 @@ def teacher_student_detail_v2(
         worst_warning_level=sn.worst_warning_level,
         warnings=warnings_text,
         warning_items=warning_items,
+        extra_items=[
+            WarningItem(level=w.level, code=w.code, title=w.title, detail=w.detail,
+                        link=warning_link(student.id, w.code)[0],
+                        link_label=warning_link(student.id, w.code)[1],
+                        evidence=warning_evidence(w))
+            for w in sn.extra_warnings
+        ],
+        good_items=[
+            WarningItem(level="green", code=w.code, title=w.title, detail=w.detail,
+                        link=warning_link(student.id, w.code)[0],
+                        link_label=warning_link(student.id, w.code)[1],
+                        evidence=warning_evidence(w))
+            for w in sn.good_signals
+        ],
+        headline=sn.headline,
         pending_request_count=_pending_request_count_for_student(db, student.id),
         active_phase=active_phase,
         week_anchor=week_anchor.isoformat() if week_anchor else None,

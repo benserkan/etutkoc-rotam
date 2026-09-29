@@ -208,8 +208,10 @@ def main() -> int:
             r = summary(db, iid)
             inact = items_of(r, category="inactive_program")
             atr = items_of(r, category="at_risk")
-            chk("6c. programı var + 3 gün boş (medium) → inactive_program UYARI (eskiden 0)",
-                len(inact) == 1 and inact[0]["severity"] == "warn" and len(atr) == 0,
+            # 2026-09-29 bayrak motoru: 3 programlı gün üst üste boş = KIRMIZI
+            # (koç onaylı eşik) → risk "Risk" seviyesine çıkar, at_risk kartı.
+            chk("6c. programı var + 3 gün boş → risk kartı (bayrak motoru: kırmızı)",
+                len(atr) == 1 and len(inact) == 0,
                 str([(i["category"], i["severity"], i["title"]) for i in r["items"]]))
             clear_students(db, iid, tid)
 

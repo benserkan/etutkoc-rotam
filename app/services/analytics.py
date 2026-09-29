@@ -82,6 +82,8 @@ class Warning:
     # Kanıt: uyarının neden üretildiğini gösteren (etiket, değer) satırları —
     # koç "bu doğru mu?" sorusunu veriye bakarak yanıtlayabilsin.
     evidence: list[tuple[str, str]] = field(default_factory=list)
+    layer: str = ""            # A–G (student_flags katmanı)
+    coach_only: bool = False   # veli ekranına yansımaz
 
 
 @dataclass
@@ -96,6 +98,11 @@ class StudentSnapshot:
     projection: Projection
     warnings: list[Warning] = field(default_factory=list)
     worst_warning_level: Literal["green", "amber", "red"] = "green"
+    # 2026-09-29 bayrak motoru: ek sinyaller + iyi gidenler + tek cümle özet
+    extra_warnings: list[Warning] = field(default_factory=list)
+    good_signals: list[Warning] = field(default_factory=list)
+    headline: str = ""
+    parent_level: Literal["green", "amber", "red"] = "green"
 
 
 # ---------------------------- Yardımcılar ----------------------------
@@ -814,7 +821,17 @@ def subject_breakdown(
 def generate_warnings(
     db: Session, student: User, today: date, projection: Projection
 ) -> list[Warning]:
-    """Araba-ekranı tarzı akıllı uyarılar. Sadece uyulması gereken durumlarda dön."""
+    """Koç uyarıları = bayrak motorunun ANA kartları (student_flags — tek kaynak)."""
+    from app.services.student_flags import evaluate_flags
+    return evaluate_flags(db, student, today, projection).primary
+
+
+def legacy_warnings(
+    db: Session, student: User, today: date, projection: Projection | None
+) -> list[Warning]:
+    """Eski üretici — yalnız student_flags'ın hazır parçaları için kaynak:
+    today_no_tick · subject_stale/untouched · subjects_unprogrammed · projection_*.
+    (Katılım/tempo kodları artık student_flags'ta üretilir; buradakiler yok sayılır.)"""
     out: list[Warning] = []
 
     # Mola modu (is_paused): koçluk takibi duraklatıldı (yaz molası vb.) → koç-yüzü
@@ -967,7 +984,7 @@ def generate_warnings(
         ))
 
     # 5) Projeksiyon açığı
-    if projection.days_left is not None and projection.days_left > 0:
+    if projection is not None and projection.days_left is not None and projection.days_left > 0:
         remaining_overall = projection.total_tests - projection.completed
         if remaining_overall > 0 and projection.rate_per_day > 0:
             if projection.gap < 0:
@@ -1182,7 +1199,9 @@ def student_snapshot(
     hit7 = hit_rate(db, student.id, today, 7)
     # Gerçekçi projeksiyon — 28 günlük DOW penceresi + 5 günlük sınav tamponu
     proj = compute_projection(db, student, today, window_days=28, buffer_days=5)
-    warnings = generate_warnings(db, student, today, proj)
+    from app.services.student_flags import evaluate_flags
+    _rep = evaluate_flags(db, student, today, proj)
+    warnings = _rep.primary
     return StudentSnapshot(
         student=student,
         today=today_stats,
@@ -1194,4 +1213,8 @@ def student_snapshot(
         projection=proj,
         warnings=warnings,
         worst_warning_level=worst_level(warnings),
+        extra_warnings=_rep.secondary,
+        good_signals=_rep.good,
+        headline=_rep.headline,
+        parent_level=_rep.parent_level,
     )
