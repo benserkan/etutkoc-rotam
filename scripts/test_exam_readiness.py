@@ -177,6 +177,7 @@ def main() -> int:
         task(s, D(30), Dd, 2, 2)                  # D 30 gün önce bırakıldı
         task(s, D(5), E, 2, 2)                    # E aktif ama bitmiş
         task(s, D(4), K, 2, 0)                    # K aktif ama konusu kapalı
+        task(s, today + timedelta(days=1), A, 2, 0)  # program sürüyor (A katmanı sessiz)
         with SessionLocal() as db:
             rd = compute_readiness(db, db.get(User, s), today)
         sr = next((x for x in rd.subjects if x.subject_id == mat), None)
@@ -206,6 +207,17 @@ def main() -> int:
             eb is not None and any(l.startswith("Bırakılan") for l, _ in eb.evidence), str([w.code for w in rep.primary]))
         chk("8b sınava 70 gün → sarı (60 gün altı kırmızı)", eb is not None and eb.level == "amber",
             eb.level if eb else "")
+        chk("8c açıklamada yıllı tarih", eb is not None and str(today.year) in eb.detail
+            or (eb is not None and str(today.year + 1) in eb.detail), eb.detail if eb else "")
+        # Program bittiğinde (A kırmızı) sınav kartı ek sinyale iner
+        with SessionLocal() as db:
+            db.query(Task).filter(Task.student_id == s, Task.date > today).delete(synchronize_session=False)
+            db.commit()
+            rep2 = evaluate_flags(db, db.get(User, s), today, None)
+        chk("8d programı yokken sınav kartı ek sinyalde",
+            not any(w.code.startswith("exam_") for w in rep2.primary)
+            and any(w.code == f"exam_behind_{mat}" for w in rep2.secondary),
+            f"P={[w.code for w in rep2.primary]}")
 
         # 7 kısa geçmiş
         s2 = mk_student("yeni")

@@ -145,6 +145,7 @@ export interface TeacherStudentListItem {
   grade_level: number | null;
   is_active: boolean;
   is_paused?: boolean;        // mola modu (takip duraklatıldı)
+  is_graduate?: boolean;
   last_login_at: string | null;
   /** Şube ("10-A") — süzme + toplu işlem anahtarı. */
   class_group?: string | null;

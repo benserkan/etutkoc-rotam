@@ -98,9 +98,16 @@ def main() -> int:
                     rows.nth(i).locator('[data-testid="student-select"]').check()
             chk("4. toplu çubuk görünür", pg.locator('[data-testid="class-group-bar"]').count() == 1)
             chk("4a. çubukta açıklama var",
-                "Öğrencinin sınıfını değiştirmez" in pg.locator('[data-testid="class-group-help"]').inner_text())
+                "sınıfını değiştirmez" in pg.locator('[data-testid="class-group-help"]').inner_text())
+            chips = pg.locator('[data-testid="class-group-chip"]').all_inner_texts()
+            chk("4a2. sınıfa uyan mevcut şube çipi (10-A)", "10-A" in chips, str(chips))
+            pg.locator('[data-testid="class-group-bar"] input[aria-label="Şube harfi"]').fill("x")
+            pv = pg.locator('[data-testid="class-group-preview"]')
+            pg.screenshot(path=os.path.join(SHOT_DIR, "student_class_group_bar.png"))
+            chk("4a3. yalnız harf → önizleme 10-X", pv.count() == 1 and "10-X" in pv.inner_text(),
+                pv.inner_text() if pv.count() else "")
             # 10. sınıf öğrencilerini 12-A'ya almaya çalış → uyuşmazlık uyarısı
-            pg.locator('[data-testid="class-group-bar"] input[aria-label="Şube adı"]').fill("12-A")
+            pg.locator('[data-testid="class-group-bar"] input[aria-label="Şube harfi"]').fill("12-A")
             pg.click('[data-testid="class-group-apply"]')
             pg.wait_for_timeout(2000)
             mm = pg.locator('[data-testid="class-group-mismatch"]')
@@ -109,7 +116,7 @@ def main() -> int:
             with SessionLocal() as db:
                 g12 = [u.class_group for u in db.query(User).filter(User.id.in_(d["ids"]))]
             chk("4c. uyuşmazlıkta hiçbir şey yazılmadı", "12-A" not in g12, str(g12))
-            pg.locator('[data-testid="class-group-bar"] input[aria-label="Şube adı"]').fill("10-B")
+            pg.locator('[data-testid="class-group-bar"] input[aria-label="Şube harfi"]').fill("10-B")
             chk("4d. ad değişince uyarı kalkar", mm.count() == 0)
             pg.click('[data-testid="class-group-apply"]')
             pg.wait_for_timeout(2500)

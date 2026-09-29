@@ -115,8 +115,12 @@ def main() -> int:
         check("5a2. uyuşmazlıkta hiçbir şey yazılmadı", grp(d["n1"]) is None)
         r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"]], "class_group": "Mezun grubu"})
         check("5a3. mezun olmayana 'Mezun…' → 409", r.status_code == 409, str(r.status_code))
-        r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"]], "class_group": "Hafta sonu"})
-        check("5a4. sınıfsız ad serbest", r.status_code == 200 and grp(d["n1"]) == "Hafta sonu")
+        r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"]], "class_group": "a"})
+        check("5a4. yalnız harf → sınıf öğrenciden: 'a' → 10-A", r.status_code == 200 and grp(d["n1"]) == "10-A",
+              str(grp(d["n1"])))
+        r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"]], "class_group": "10 - b"})
+        check("5a4b. yazım farkı tek biçime: '10 - b' → 10-B", r.status_code == 200 and grp(d["n1"]) == "10-B",
+              str(grp(d["n1"])))
         r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"]], "class_group": "10-D"})
         check("5a5. aynı sınıf serbest", r.status_code == 200 and grp(d["n1"]) == "10-D")
         r = c.post(f"{L}/class-group", json={"student_ids": [d["n1"], d["b1"], d["x"]],
@@ -124,7 +128,7 @@ def main() -> int:
         body = r.json()["data"] if r.status_code == 200 else {}
         check("5. toplu atama (force)", r.status_code == 200 and body.get("updated_count") == 2
               and body.get("skipped_invalid_ids") == [d["x"]], r.text[:200])
-        check("6. normalize '11 A'", grp(d["n1"]) == "11 A" and grp(d["b1"]) == "11 A")
+        check("6. normalize '11 A' → 11-A", grp(d["n1"]) == "11-A" and grp(d["b1"]) == "11-A")
         check("5b. yabancı öğrenci dokunulmadı", grp(d["x"]) is None)
         check("5c. invalidate öğrenci listesi",
               f"teacher:{d['coach']}:students" in r.json().get("invalidate", []))

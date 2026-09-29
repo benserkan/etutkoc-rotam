@@ -107,6 +107,7 @@ class TeacherStudentListItem(BaseModel):
     grade_level: int | None
     is_active: bool
     is_paused: bool = False             # mola modu (takip duraklatıldı — uyarı susar)
+    is_graduate: bool = False
     last_login_at: datetime | None
     class_group: str | None = None      # şube ("10-A") — süzme + toplu işlem anahtarı
 

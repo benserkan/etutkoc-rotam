@@ -252,6 +252,7 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
       {selected.size > 0 ? (
         <ClassGroupBar
           selectedIds={Array.from(selected)}
+          selectedRows={(data?.items ?? []).filter((r) => selected.has(r.id))}
           groupNames={groupNames}
           onDone={() => setSelected(new Set())}
         />
@@ -909,22 +910,47 @@ function Pager({
 
 // ---------------------------------------------------------------- Toplu şube
 
+function gradePrefix(r: { grade_level: number | null; is_graduate?: boolean }): string | null {
+  if (r.is_graduate) return "Mezun";
+  return r.grade_level ? String(r.grade_level) : null;
+}
+
+function trUpper(v: string): string {
+  return v.replace(/i/g, "İ").replace(/ı/g, "I").toUpperCase();
+}
+
+/**
+ * Seçili öğrencileri şubeye al (2026-09-29 sade model): şube = sınıf + harf/kısa ad.
+ * Sınıf öğrencinin kendisinden gelir; koç ya mevcut bir şube çipine tek tıklar ya da
+ * yalnız harfi yazar ("A" → 10. sınıfta 10-A). Yazım farkları sunucuda tek biçime iner.
+ */
 function ClassGroupBar({
   selectedIds,
+  selectedRows,
   groupNames,
   onDone,
 }: {
   selectedIds: number[];
+  selectedRows: TeacherStudentListItem[];
   groupNames: string[];
   onDone: () => void;
 }) {
-  const [value, setValue] = React.useState("");
+  const [code, setCode] = React.useState("");
   const [mismatch, setMismatch] = React.useState<{
     message: string;
+    value: string;
     students: { id: number; name: string; grade_label: string | null }[];
   } | null>(null);
   const mut = useSetStudentsClassGroup();
-  const listId = "class-group-options";
+  const prefixes = Array.from(
+    new Set(selectedRows.map(gradePrefix).filter((p): p is string => !!p)),
+  );
+  const chips = groupNames.filter((g) => prefixes.some((p) => g === p || g.startsWith(`${p}-`)));
+  const clean = trUpper(code.trim().replace(/\s+/g, " "));
+  const preview = clean
+    ? (prefixes.length > 0 ? prefixes.map((p) => `${p}-${clean}`) : [clean]).join(", ")
+    : "";
+
   function apply(v: string, force = false) {
     mut.mutate(
       { studentIds: selectedIds, classGroup: v, force },
@@ -936,24 +962,21 @@ function ClassGroupBar({
         onError: (e) => {
           if (e.detail?.code === "grade_mismatch") {
             const det = (e.detail as { details?: { students?: { id: number; name: string; grade_label: string | null }[] } }).details;
-            setMismatch({ message: e.message, students: det?.students ?? [] });
+            setMismatch({ message: e.message, value: v, students: det?.students ?? [] });
           }
         },
       },
     );
   }
+
   return (
     <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
       <div
-        className="w-full max-w-3xl space-y-2 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl ring-1 ring-black/10"
+        className="w-full max-w-3xl space-y-3 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl ring-1 ring-black/10"
         data-testid="class-group-bar"
       >
         {mismatch ? (
-          <div
-            className="rounded-lg bg-amber-500 px-3 py-2 text-slate-950"
-            role="alert"
-            data-testid="class-group-mismatch"
-          >
+          <div className="rounded-lg bg-amber-500 px-3 py-2 text-slate-950" role="alert" data-testid="class-group-mismatch">
             <p className="font-semibold">Sınıf uyuşmuyor</p>
             <p className="mt-0.5">{mismatch.message}</p>
             {mismatch.students.length > 0 ? (
@@ -965,83 +988,86 @@ function ClassGroupBar({
                 ))}
               </ul>
             ) : null}
-            <p className="mt-1">
-              Öğrencinin sınıfını değiştirmek istiyorsan profilinden ya da Sınıf
-              Yükseltme sayfasından yap. Bilerek karma bir grup kuruyorsan yine de atayabilirsin.
-            </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => apply(value, true)}
-                disabled={mut.isPending}
+              <button type="button" onClick={() => apply(mismatch.value, true)} disabled={mut.isPending}
                 data-testid="class-group-force"
-                className="h-8 rounded-md bg-slate-900 px-3 font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-              >
+                className="h-8 rounded-md bg-slate-900 px-3 font-medium text-white hover:bg-slate-800 disabled:opacity-50">
                 Yine de bu şubeye al
               </button>
-              <button
-                type="button"
-                onClick={() => setMismatch(null)}
-                className="h-8 rounded-md px-3 font-medium text-slate-950 hover:bg-amber-400"
-              >
-                Vazgeç, adı düzelteyim
+              <button type="button" onClick={() => setMismatch(null)}
+                className="h-8 rounded-md px-3 font-medium text-slate-950 hover:bg-amber-400">
+                Vazgeç
               </button>
             </div>
           </div>
         ) : null}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-medium">{selectedIds.length} öğrenci seçili</span>
-          <span className="text-slate-300">· şubeye al:</span>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-medium">
+            {selectedIds.length} öğrenci seçili
+            {prefixes.length > 0 ? (
+              <span className="text-slate-300"> · {prefixes.map((p) => (p === "Mezun" ? "mezun" : `${p}. sınıf`)).join(", ")}</span>
+            ) : null}
+          </span>
+          <div className="flex items-center gap-1">
+            <button type="button" disabled={mut.isPending} onClick={() => apply("")}
+              className="h-8 rounded-md px-2.5 text-slate-200 hover:bg-slate-800 disabled:opacity-50">
+              Şubeden çıkar
+            </button>
+            <button type="button" onClick={onDone} aria-label="Seçimi temizle"
+              className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-slate-300 hover:bg-slate-800 hover:text-white">
+              <X className="size-4" aria-hidden />
+              Seçimi temizle
+            </button>
+          </div>
+        </div>
+
+        {chips.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5" data-testid="class-group-chips">
+            <span className="text-slate-300">Mevcut şubeye al:</span>
+            {chips.map((g) => (
+              <button key={g} type="button" disabled={mut.isPending} onClick={() => apply(g)}
+                data-testid="class-group-chip"
+                className="h-8 rounded-full bg-cyan-600 px-3 font-semibold text-white hover:bg-cyan-500 disabled:opacity-50">
+                {g}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <form
+          className="flex flex-wrap items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (clean) apply(clean);
+          }}
+        >
+          <label className="text-slate-300" htmlFor="class-group-code">Yeni şube:</label>
           <input
-            list={listId}
-            value={value}
+            id="class-group-code"
+            value={code}
             onChange={(e) => {
-              setValue(e.target.value);
+              setCode(e.target.value);
               setMismatch(null);
             }}
-            placeholder="örn. 10-A"
-            maxLength={60}
-            className="h-9 w-40 rounded-md border border-slate-600 bg-slate-800 px-2 text-sm text-white placeholder:text-slate-400"
-            aria-label="Şube adı"
+            placeholder="harf ya da kısa ad (A, Sayısal)"
+            maxLength={20}
+            className="h-9 w-56 rounded-md border border-slate-600 bg-slate-800 px-2 text-sm text-white placeholder:text-slate-400"
+            aria-label="Şube harfi"
           />
-          <datalist id={listId}>
-            {groupNames.map((g) => (
-              <option key={g} value={g} />
-            ))}
-          </datalist>
-          <button
-            type="button"
-            disabled={!value.trim() || mut.isPending}
-            onClick={() => apply(value)}
-            data-testid="class-group-apply"
-            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-cyan-600 px-3 font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
-          >
+          <button type="submit" disabled={!clean || mut.isPending} data-testid="class-group-apply"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-cyan-600 px-3 font-medium text-white hover:bg-cyan-500 disabled:opacity-50">
             {mut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
-            Şubeye al
+            Oluştur ve al
           </button>
-          <button
-            type="button"
-            disabled={mut.isPending}
-            onClick={() => apply("")}
-            className="h-9 rounded-md px-3 text-slate-200 hover:bg-slate-800 disabled:opacity-50"
-          >
-            Şubeyi kaldır
-          </button>
-          <button
-            type="button"
-            onClick={onDone}
-            className="ml-auto inline-flex h-9 items-center gap-1 rounded-md px-2 text-slate-300 hover:bg-slate-800 hover:text-white"
-            aria-label="Seçimi temizle"
-          >
-            <X className="size-4" aria-hidden />
-            Seçimi temizle
-          </button>
-        </div>
+          {preview ? (
+            <span className="text-slate-200" data-testid="class-group-preview">→ {preview}</span>
+          ) : null}
+        </form>
         <p className="text-xs text-slate-300" data-testid="class-group-help">
-          Şube, öğrencileri gruplamak için kullandığın bir etikettir (örnek: 10-A,
-          12 Sayısal, Hafta sonu grubu). Öğrencinin sınıfını değiştirmez. Ad bir
-          sınıfla başlıyorsa (12-A gibi) sistem, seçili öğrencilerin o sınıfta olup
-          olmadığını kontrol eder.
+          Şube = sınıf + harf. Sınıfı yazmana gerek yok, öğrenciden alınır: 10. sınıf öğrencisi
+          için “A” yazarsan şube 10-A olur. Şube yalnız gruplama içindir, öğrencinin sınıfını
+          değiştirmez.
         </p>
       </div>
     </div>

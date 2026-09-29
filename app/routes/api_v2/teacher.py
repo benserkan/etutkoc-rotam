@@ -860,6 +860,7 @@ def teacher_students_v2(
             grade_level=s.grade_level,
             is_active=bool(s.is_active),
             is_paused=bool(s.is_paused),
+            is_graduate=bool(getattr(s, "is_graduate", False)),
             last_login_at=s.last_active_at,
             class_group=s.class_group,
             worst_warning_level=(sn.worst_warning_level if sn else "green"),
@@ -933,11 +934,41 @@ def warning_evidence(w) -> list:
     return [WarningEvidence(label=a, value=b) for a, b in (getattr(w, "evidence", None) or [])]
 
 
+def _tr_upper(v: str) -> str:
+    return v.replace("i", "İ").replace("ı", "I").upper()
+
+
 def normalize_class_group(v: str | None) -> str | None:
-    """Şube adını sadeleştirir: boşluklar tekilleşir, en fazla 60 karakter;
-    boş → None."""
+    """Şube adının TEK biçimi (2026-09-29): sınıf + '-' + BÜYÜK harf/ad.
+    '10 - a' / '10a' / '10A' → '10-A' · '12 mezun' / '12MEZUN' → '12-MEZUN' ·
+    'mezun a' → 'Mezun-A' · yalnız sınıf '11' → '11'. Sınıf taşımayan eski serbest
+    adlar yalnız boşluk sadeleştirilerek korunur. Boş → None."""
+    import re as _re
+
     s = " ".join((v or "").split())[:60]
-    return s or None
+    if not s:
+        return None
+    m = _re.match(r"^(\d{1,2})(?!\d)\s*[-./_ ]*\s*(.*)$", s)
+    if m and 5 <= int(m.group(1)) <= 12:
+        rest = _tr_upper(m.group(2).strip(" -./_"))
+        return f"{int(m.group(1))}-{rest}" if rest else str(int(m.group(1)))
+    if s.lower().startswith("mezun"):
+        rest = _tr_upper(s[5:].strip(" -./_"))
+        return f"Mezun-{rest}" if rest else "Mezun"
+    return s
+
+
+def class_group_for_student(code: str, student: User) -> str | None:
+    """Koçun yalnız harf/kısa ad yazdığı durumda ('A', 'Sayısal') sınıf öğrenciden
+    eklenir: 10. sınıf → '10-A', mezun → 'Mezun-A', sınıfı yoksa 'A'."""
+    code = _tr_upper(" ".join(code.split()).strip(" -./_"))[:40]
+    if not code:
+        return None
+    if getattr(student, "is_graduate", False):
+        return f"Mezun-{code}"
+    if student.grade_level:
+        return f"{student.grade_level}-{code}"
+    return code
 
 
 def class_group_grade(v: str | None) -> int | str | None:
@@ -988,7 +1019,14 @@ def teacher_students_class_group_v2(
         .all()
     )
     found = {u.id for u in rows}
-    target = class_group_grade(grp)
+    raw = " ".join((body.class_group or "").split())
+    # Yalnız harf/kısa ad yazıldıysa (sınıf yok) sınıf öğrenciden eklenir →
+    # uyuşmazlık imkânsız. Sınıf yazıldıysa ('12-A') tek biçime çevrilip korunur.
+    per_student: dict[int, str | None] = {}
+    if raw and class_group_grade(raw) is None and not raw.lower().startswith("mezun"):
+        for u in rows:
+            per_student[u.id] = class_group_for_student(raw, u)
+    target = class_group_grade(grp) if not per_student else None
     if target is not None and not body.force:
         mism = []
         for u in rows:
@@ -1007,12 +1045,14 @@ def teacher_students_class_group_v2(
                 "details": {"group_grade_label": tl, "students": mism},
             })
     for u in rows:
-        u.class_group = grp
+        u.class_group = per_student.get(u.id, grp) if per_student else grp
     db.commit()
+    assigned = sorted({per_student[u.id] for u in rows if per_student.get(u.id)}) if per_student else []
     keys = [f"teacher:{user.id}:students"]
     return MutationResponse[StudentClassGroupResult](
         data=StudentClassGroupResult(
-            updated_count=len(rows), class_group=grp,
+            updated_count=len(rows),
+            class_group=(", ".join(assigned) if assigned else grp),
             skipped_invalid_ids=[i for i in ids if i not in found],
         ),
         invalidate=keys,

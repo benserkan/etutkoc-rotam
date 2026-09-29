@@ -277,6 +277,10 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
                      ("Son", f"{_d(same[0].exam_date)} · {float(same[0].net):.2f}")])
 
     # ---------------------------------------------------------------- E. Sınav hedefi
+    def _dy(d):
+        """Yıllı tarih — sınav tahmininde bitiş ile hedef farklı yıllarda olabilir."""
+        return f"{_d(d)} {d.year}" if d else "—"
+
     if include_goal:
         from app.services.exam_readiness import compute_readiness
         rd = compute_readiness(db, student, today)
@@ -293,15 +297,15 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
             base_ev += [
                 ("Kalan", f"{sr.remaining_tests} test" + (f" · {sr.remaining_topics} konu" if sr.remaining_topics else "")),
                 ("Hız", f"{sr.pace:.1f} test/gün (son {sr.pace_days} günde {sr.solved_window} test)"),
-                ("Hedef", f"{_d(sr.target_date)} (sınav {_d(rd.exam_date)} · son 6 hafta deneme/tekrar)"),
+                ("Hedef", f"{_dy(sr.target_date)} (sınav {_dy(rd.exam_date)} · son 6 hafta deneme/tekrar)"),
             ]
             if sr.status == "late":
                 need = sr.remaining_tests / max(1, (sr.target_date - today).days)
                 add("E", "red" if (days_to_exam is not None and days_to_exam <= 60) else "amber",
                     f"exam_behind_{sr.subject_id}", f"{sr.subject_name} sınav takvimine yetişmiyor",
-                    f"Bu hızla aktif kaynaklar {_d(sr.finish_date)} tarihinde biter; hedef {_d(sr.target_date)} "
+                    f"Bu hızla aktif kaynaklar {_dy(sr.finish_date)} tarihinde biter; hedef {_dy(sr.target_date)} "
                     f"— {sr.days_late} gün geride. Gereken: günde {need:.1f} test.",
-                    base_ev + [("Tahmini bitiş", _d(sr.finish_date)), ("Gereken hız", f"{need:.1f} test/gün")])
+                    base_ev + [("Tahmini bitiş", _dy(sr.finish_date)), ("Gereken hız", f"{need:.1f} test/gün")])
             elif sr.status == "stalled" and sr.subject_id not in c_subjects:
                 add("E", "amber", f"exam_stalled_{sr.subject_id}", f"{sr.subject_name} ilerlemiyor",
                     f"Aktif kaynaklarda {sr.remaining_tests} test kaldı ama son {sr.pace_days} günde çözüm yok.",
@@ -367,6 +371,9 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
         if reds_ab and w.code.startswith(("subject_stale_", "subject_untouched_")):
             demote = True
         if reds_ab and w.code == "deneme_skipped":
+            demote = True
+        # Öğrenci programı bırakmışken sınav takvimi kartları aynı olgunun sonucu.
+        if reds_ab and w.layer == "E":
             demote = True
         # Kaçınma, diğer derslerde de iş yapılmıyorsa anlamsız (genel bırakma —
         # B katmanı zaten söylüyor). Ölçüt DİĞER derslerin oranı: genel oran,
