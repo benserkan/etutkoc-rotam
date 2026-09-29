@@ -571,6 +571,52 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
 
 ---
 
+## KOÇ PANELİ TURU — son görülme · talep gelen kutusu · kanıtlı uyarılar · şube koruması · pano + görüşmeler yeni tasarım (2026-09-29, CANLI)
+
+- **Son görülme (migration `i0j3m6n7m11i`, prod head):** `users.last_seen_at` — mobil
+  Bearer dahil kimlikli her istekte 10 dk throttle ile yazılır (impersonation hariç);
+  `User.last_active_at` hybrid. Risk "5+ gündür giriş yok" artık buna bakar (Emir #113:
+  mobilden her gün işaretlerken son girişi 1 Eyl'de kalmıştı). `last_login_at` güvenlik
+  alanı olarak DEĞİŞMEZ. Test `test_last_seen_mobile` 8/8.
+- **Talepler:** QUESTION (soru/not) onay beklemez, görevi kilitlemez; `POST
+  /teacher/requests/{id}/acknowledge` = cevapsız kapat ("Gördüm"). Yanıtta
+  `open_question_count`; rozet ikisini sayar. `/teacher/requests` iki bölümlü gelen
+  kutusu (`requests-inbox-client.tsx`: onay bekleyenler + soru/not; satır içi onay /
+  gerekçeli red / cevap). Pano KPI'sında "+N soru/not mesajı". teacher_requests 18 ·
+  `live_requests_inbox` 14/14.
+- **Uyarı akışı doğruluğu (prod teşhisi `scripts/diagnose_warning_feed.py <koç_id>`,
+  15 uyarı → 9):** (a) ders uyarısı yalnız son 14 günde VERİLMİŞ ama YAPILMAMIŞ test
+  işinde (son çözüm ≥7 gün / hiç) — eskiden koçun programlamadığı ders öğrenci
+  kusuru gibi "58 gündür durgun" yazıyordu, rezervi iade edilmiş hiç yapılmamış ders
+  kaçıyordu; baseline çözümü olan ders "başlanmadı" sayılmaz. (b) programda olmayan
+  dersler öğrenci başına TEK `subjects_unprogrammed` satırı. (c) haftalık tempo:
+  son 7 tamamlanmış gün, yalnız yayınlanmış görev, görev bazlı (taslak sayılmaz).
+  (d) kademeler birleşir: `weekly_zero` > `inactive_3d` > `yesterday_no_tick`.
+  (e) akşam eşiği TR saati. (f) `Warning.evidence` (etiket→değer) + `warning_link`
+  tek merkez (teacher.py) → pano akışı + öğrenci Durum Özeti "Neden?" kanıtı.
+  (g) projeksiyon hızı ilk yayınlanmış görevden ölçülür (kısa geçmiş 28 güne
+  bölünüyordu: Zeynep 11→2.8); öğrenci gereken hızdaysa uyarı "Program temposu
+  sınava yetmiyor" (koç aksiyonu) + "Programdaki tempo" kanıtı. Uyarılar HAFTALIK
+  SIFIRLANMAZ — canlı hesaplanır; "Gördüm" 3 g / 7 g gizler. `test_warning_rules_v2`
+  15/15 · projection_tests_only 11 · gorev 83/83.
+- **Şube çubuğu:** açıklama ("şube etikettir, sınıfı değiştirmez"); ad sınıfla
+  başlıyorsa (`class_group_grade`: "12-A"→12, "Mezun…"→mezun, 5-12 arası) seçili
+  öğrenci sınıfıyla uyuşmazlıkta 409 `grade_mismatch` (öğrenci listesiyle), bilinçli
+  karma grup `force=True` ("Yine de bu şubeye al"). PATCH profil yolu korumasız
+  (bilinçli). class_group 20/20 · live 16/16.
+- **Pano yeni tasarım:** KPI şeridi, dağılım barı, kırpmasız risk listesi (neden
+  çipleri), öğrenci bazlı gruplu Uyarı Akışı (ilk 6 öğrenci + "tümü"), "Neden?"
+  açılır kanıt, Gördüm/7 gün mobilde de görünür. `live_dashboard_warnings` 12/12.
+- **Görüşmeler yeni tasarım:** özet şeridi (bu hafta planlı / onay bekleyen / kaydı
+  bekleyen seans) + "Sıradaki görüşme" kartı + AJANDA takvim (gün satırı, kartlar
+  yan yana — 7 sütun ızgara adları hece ortasından bölüyordu, reddedildi) + yan panel
+  (istekler, haftalık planlar, uygunluk özeti, Google); window.prompt/confirm yerine
+  `AskDialog`/`SeriesTimeDialog`. `live_appointments_page` 13/13 (kart ≥220px).
+- **DERS:** ellipsis denetimi `break-words` ile hece ortasından bölünmeyi YAKALAMAZ —
+  dar kart içeren canlı testlere minimum genişlik ölçümü konur.
+
+---
+
 ## KURUM TOPLU KURULUM — 4 madde (2026-09-27, kurum anlaşması ~25 öğrenci)
 
 **Tetikleyici (kullanıcı):** yeni kurum — 8. sınıf 3, 10-11. sınıf ~20, 12 +
