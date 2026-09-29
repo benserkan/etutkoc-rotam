@@ -1127,7 +1127,46 @@ def institution_goals_v2(
 # =============================================================================
 
 
-def _invitation_to_item(inv: Invitation, origin: str) -> InvitationItem:
+def _invitation_signup_url(inv: Invitation) -> str:
+    """Davet bağlantısı DAİMA sitenin genel adresinden (APP_BASE_URL) üretilir —
+    istek adresinden değil (vekil arkasında http/iç ad sızabiliyordu)."""
+    from app.config import settings as _settings
+
+    return f"{_settings.app_base_url.rstrip('/')}/signup/invite/{inv.token}"
+
+
+def _invitation_email_status(db: Session, invs: list[Invitation]) -> dict[int, tuple[str, datetime]]:
+    """Her davet için en son davet e-postasının durumu (iletişim kaydından)."""
+    from app.models.communication_log import CommunicationLog
+
+    emails = {i.email for i in invs if i.email}
+    if not emails:
+        return {}
+    rows = (
+        db.query(CommunicationLog)
+        .filter(
+            CommunicationLog.category == "teacher_invitation",
+            CommunicationLog.to_address.in_(emails),
+        )
+        .order_by(CommunicationLog.id.desc())
+        .all()
+    )
+    out: dict[int, tuple[str, datetime]] = {}
+    for inv in invs:
+        if not inv.email:
+            continue
+        created = inv.created_at.replace(tzinfo=None) if inv.created_at else None
+        for r in rows:
+            rc = r.created_at.replace(tzinfo=None) if r.created_at else None
+            if r.to_address == inv.email and (created is None or rc is None or rc >= created):
+                out[inv.id] = (r.status, r.created_at)
+                break
+    return out
+
+
+def _invitation_to_item(
+    inv: Invitation, origin: str = "", email_info: tuple[str, datetime] | None = None,
+) -> InvitationItem:
     """Bir Invitation modelini API zarfına çevir. signup_url tam URL döner."""
     return InvitationItem(
         id=inv.id,
@@ -1142,7 +1181,22 @@ def _invitation_to_item(inv: Invitation, origin: str) -> InvitationItem:
         consumed_by_user_id=inv.consumed_by_user_id,
         revoked_at=inv.revoked_at,
         is_usable=inv.is_usable,
-        signup_url=f"{origin.rstrip('/')}/signup/invite/{inv.token}",
+        signup_url=_invitation_signup_url(inv),
+        email_status=email_info[0] if email_info else None,
+        emailed_at=email_info[1] if email_info else None,
+    )
+
+
+def _send_invitation_email(db: Session, inv: Invitation, admin: User) -> bool:
+    """Davet e-postasını gönderir (commit SONRASI çağrılır — açık işlem yok)."""
+    from app.services.email_service import notify_teacher_invitation
+
+    inst = db.get(Institution, inv.institution_id) if inv.institution_id else None
+    return notify_teacher_invitation(
+        inv,
+        institution_name=inst.name if inst else "Kurumunuz",
+        inviter_name=admin.full_name or admin.email,
+        signup_url=_invitation_signup_url(inv),
     )
 
 
@@ -1168,7 +1222,8 @@ def institution_invitations_list_v2(
         .order_by(Invitation.created_at.desc())
         .all()
     )
-    items = [_invitation_to_item(i, origin) for i in invs]
+    email_map = _invitation_email_status(db, invs)
+    items = [_invitation_to_item(i, origin, email_map.get(i.id)) for i in invs]
     return InvitationListResponse(
         institution=_institution_brief(inst),
         items=items,
@@ -1252,8 +1307,59 @@ def institution_invitations_create_v2(
     db.commit()
     db.refresh(inv)
 
+    # E-posta commit SONRASI (dış çağrı açık işlem içinde yapılmaz)
+    if inv.email and body.send_email:
+        _send_invitation_email(db, inv, user)
+
     return MutationResponse[InvitationItem](
-        data=_invitation_to_item(inv, _request_origin(request)),
+        data=_invitation_to_item(inv, "", _invitation_email_status(db, [inv]).get(inv.id)),
+        invalidate=_invalidate_keys(user.institution_id, "invitations"),
+    )
+
+
+@router.post(
+    "/invitations/{invitation_id}/send-email",
+    response_model=MutationResponse[InvitationItem],
+)
+def institution_invitations_send_email_v2(
+    invitation_id: int,
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Davet bağlantısını (yeniden) e-postayla gönder — yalnız e-postalı ve
+    kullanılabilir (bekleyen) davette."""
+    inv = (
+        db.query(Invitation)
+        .filter(Invitation.id == invitation_id, Invitation.institution_id == user.institution_id)
+        .first()
+    )
+    if inv is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "invitation_not_found",
+                    "message": "Davetiye bulunamadı."},
+        )
+    if not inv.email:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "no_email",
+                    "message": "Bu davette e-posta yok — bağlantıyı kopyalayıp kendin ilet."},
+        )
+    if not inv.is_usable:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "conflict", "code": "invitation_not_usable",
+                    "message": "Davet kullanılmış, süresi geçmiş ya da iptal edilmiş."},
+        )
+    ok = _send_invitation_email(db, inv, user)
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"error": "upstream_unavailable", "code": "email_not_sent",
+                    "message": "E-posta gönderilemedi — bağlantıyı kopyalayıp iletebilirsin."},
+        )
+    return MutationResponse[InvitationItem](
+        data=_invitation_to_item(inv, "", _invitation_email_status(db, [inv]).get(inv.id)),
         invalidate=_invalidate_keys(user.institution_id, "invitations"),
     )
 

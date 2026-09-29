@@ -1083,6 +1083,14 @@ def v2_signup_invite(
             detail={"error": "invalid", "code": "signup_invalid", "message": err},
         )
     email_clean = payload.email.strip().lower()
+    # E-postalı davet o adrese KİLİTLİDİR (bağlantı başkasına geçse de başka
+    # adresle hesap açılamaz) — önceden yalnız formda kilitliydi.
+    if inv.email and email_clean != inv.email.strip().lower():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "email_mismatch",
+                    "message": f"Bu davet {inv.email} adresine özel — kayıt bu adresle yapılmalı."},
+        )
     if db.query(User).filter(User.email == email_clean).first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

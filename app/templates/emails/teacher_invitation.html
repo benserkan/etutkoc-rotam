@@ -1,0 +1,58 @@
+Subject: {{ institution_name }} sizi ETÜTKOÇ Rotam'a öğretmen olarak davet etti
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 22px;">
+      <img src="{{ app_base_url }}/etutkoc-mark.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
+      <span style="font-size: 22px; font-weight: 800; vertical-align: middle;">
+        <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
+      </span>
+      <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.18em; margin-top: 4px;">Çalışma Takip Sistemi</div>
+    </div>
+
+    <h2 style="font-size: 17px; color: #0f172a; margin: 0 0 12px;">
+      Merhaba{% if full_name %} {{ full_name }}{% endif %},
+    </h2>
+
+    <p style="margin: 0 0 14px; line-height: 1.55;">
+      <b>{{ inviter_name }}</b>, <b>{{ institution_name }}</b> kurumunun ETÜTKOÇ Rotam hesabına sizi
+      <b>öğretmen</b> olarak davet etti.
+    </p>
+
+    <p style="margin: 0 0 14px; line-height: 1.55;">
+      Rotam'da öğrencileriniz için haftalık program hazırlar, kitap ve deneme ilerlemesini takip eder,
+      velileri otomatik bilgilendirirsiniz. Hesabınızı oluşturmak için aşağıdaki butona tıklayın —
+      adınızı ve bir şifre belirlemeniz yeterli.
+    </p>
+
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="{{ signup_url }}"
+         style="display: inline-block; background: #117A86; color: #ffffff; padding: 13px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+        Daveti kabul et ve hesabımı oluştur
+      </a>
+    </div>
+
+    <div style="background: #f1f5f9; border-radius: 8px; padding: 14px 18px; margin: 20px 0;">
+      <p style="margin: 0 0 6px; font-size: 12px; color: #475569;">
+        <b>Bağlantı {{ expires_label }} tarihine kadar geçerlidir</b> ve yalnız bir kez kullanılabilir.
+      </p>
+      <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.55;">
+        Hesabınız <b>{{ email }}</b> adresiyle açılır. Buton çalışmazsa bu adresi tarayıcınıza yapıştırın:<br>
+        <span style="word-break: break-all; color: #117A86;">{{ signup_url }}</span>
+      </p>
+    </div>
+
+    <p style="margin: 16px 0 0; font-size: 12px; color: #64748b; line-height: 1.5;">
+      Bu daveti beklemiyorsanız mesajı silebilirsiniz; hesap açılmaz.
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 26px 0 14px;">
+    <p style="margin: 0; font-size: 10px; color: #94a3b8; line-height: 1.55;">
+      Bu mail {{ institution_name }} yöneticisinin isteğiyle otomatik gönderildi · ETÜTKOÇ Rotam · {{ app_base_url }}
+    </p>
+  </div>
+</body>
+</html>

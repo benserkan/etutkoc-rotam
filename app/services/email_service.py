@@ -209,6 +209,39 @@ def notify_parent_invitation(invitation, *, teacher, student, relation_label: st
     )
 
 
+def notify_teacher_invitation(invitation, *, institution_name: str, inviter_name: str,
+                              signup_url: str) -> bool:
+    """Kurum → öğretmen davet maili. Yalnız e-postası belirtilmiş davette.
+
+    Returns: sağlayıcı kabul etti (True) / gönderilemedi ya da e-posta kapalı (False).
+    """
+    if not invitation.email:
+        return False
+    expires = invitation.expires_at
+    if expires.tzinfo is None:
+        from datetime import timezone as _tz
+
+        expires = expires.replace(tzinfo=_tz.utc)
+    try:
+        from zoneinfo import ZoneInfo
+
+        expires_label = expires.astimezone(ZoneInfo("Europe/Istanbul")).strftime("%d.%m.%Y %H:%M")
+    except Exception:  # noqa: BLE001
+        expires_label = expires.strftime("%d.%m.%Y")
+    return send_email(
+        to=invitation.email,
+        template="teacher_invitation",
+        ctx={
+            "full_name": invitation.full_name,
+            "email": invitation.email,
+            "institution_name": institution_name,
+            "inviter_name": inviter_name,
+            "signup_url": signup_url,
+            "expires_label": expires_label,
+        },
+    )
+
+
 def notify_new_signup_admin(user) -> int:
     """Yeni koç self-signup olduğunda satış/admin adresine bilgilendirme maili.
 

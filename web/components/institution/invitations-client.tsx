@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, Loader2, Plus, ShieldAlert } from "lucide-react";
+import { Check, Copy, Loader2, Mail, Plus, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ import {
 import {
   useCreateInstitutionInvitation,
   useRevokeInstitutionInvitation,
+  useSendInvitationEmail,
 } from "@/lib/hooks/use-institution-mutations";
 import type {
   InvitationItem,
@@ -83,8 +84,9 @@ export function InvitationsClient({ initial, embedded = false }: Props) {
             </h1>
           )}
           <p className="text-sm text-muted-foreground mt-1">
-            {institution.name} — kurumuna öğretmen davet et. Bağlantı{" "}
-            <strong>7 gün</strong> geçerli ve tek seferlik.
+            {institution.name} — kurumuna öğretmen davet et. E-posta yazarsan
+            davet bağlantısı o adrese gönderilir. Bağlantı <strong>7 gün</strong>{" "}
+            geçerli ve tek seferlik.
           </p>
           <DemoHint contextKey="invitations" role="institution_admin" className="mt-2" />
         </div>
@@ -110,6 +112,7 @@ export function InvitationsClient({ initial, embedded = false }: Props) {
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Alıcı</th>
                   <th className="text-left px-4 py-2 font-medium">Durum</th>
+                  <th className="text-left px-4 py-2 font-medium">E-posta</th>
                   <th className="text-left px-4 py-2 font-medium">
                     Oluşturuldu
                   </th>
@@ -187,6 +190,9 @@ function InvitationRow({
       <td className="px-4 py-2">
         <StatusBadge status={inv.status} />
       </td>
+      <td className="px-4 py-2">
+        <EmailCell inv={inv} />
+      </td>
       <td className="px-4 py-2 text-xs text-muted-foreground">
         {formatDate(inv.created_at)}
       </td>
@@ -213,6 +219,55 @@ function InvitationRow({
         )}
       </td>
     </tr>
+  );
+}
+
+const EMAIL_STATUS: Record<string, { label: string; cls: string }> = {
+  sent: { label: "Gönderildi", cls: "bg-emerald-600 text-white" },
+  delivered: { label: "Teslim edildi", cls: "bg-emerald-600 text-white" },
+  bounced: { label: "Ulaşmadı", cls: "bg-rose-600 text-white" },
+  complained: { label: "Spam bildirildi", cls: "bg-rose-600 text-white" },
+  failed: { label: "Gönderilemedi", cls: "bg-rose-600 text-white" },
+  suppressed: { label: "E-posta kapalı", cls: "bg-slate-500 text-white" },
+};
+
+function EmailCell({ inv }: { inv: InvitationItem }) {
+  const send = useSendInvitationEmail();
+  if (!inv.email) {
+    return <span className="text-[11px] text-muted-foreground">yok — bağlantıyı ilet</span>;
+  }
+  const st = inv.email_status ? EMAIL_STATUS[inv.email_status] : null;
+  const canSend = inv.status === "pending";
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" data-testid="invitation-email-cell">
+      {st ? (
+        <span
+          className={cn("rounded px-1.5 py-0.5 text-[11px] font-semibold", st.cls)}
+          title={inv.emailed_at ? `Son gönderim: ${formatDate(inv.emailed_at)}` : undefined}
+        >
+          {st.label}
+        </span>
+      ) : (
+        <span className="text-[11px] text-muted-foreground">gönderilmedi</span>
+      )}
+      {canSend ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          disabled={send.isPending}
+          onClick={() => send.mutate(inv.id)}
+        >
+          {send.isPending ? (
+            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+          ) : (
+            <Mail className="size-3.5" aria-hidden />
+          )}
+          {st ? "Tekrar gönder" : "Gönder"}
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
@@ -309,12 +364,14 @@ function NewInvitationDialog({
   const mut = useCreateInstitutionInvitation();
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState("");
+  const [sendMail, setSendMail] = React.useState(true);
 
   React.useEffect(() => {
     if (!open) {
       const t = setTimeout(() => {
         setFullName("");
         setEmail("");
+        setSendMail(true);
         mut.reset();
       }, 200);
       return () => clearTimeout(t);
@@ -327,6 +384,7 @@ function NewInvitationDialog({
       {
         full_name: fullName.trim() || null,
         email: email.trim().toLowerCase() || null,
+        send_email: sendMail,
       },
       {
         onSuccess: () => onOpenChange(false),
@@ -369,12 +427,29 @@ function NewInvitationDialog({
               kayıt olur.
             </p>
           </div>
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
-            <strong>📨 Davetiye linki:</strong> oluşturulduktan sonra tabloda
-            görünür. Linki <strong>kendin alıcıya iletmelisin</strong> —
-            sistem henüz e-posta göndermiyor. Link <strong>7 gün</strong>{" "}
-            geçerli, tek seferlik.
-          </div>
+          {email.trim() ? (
+            <label className="flex items-start gap-2 rounded-md border border-border px-3 py-2.5 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={sendMail}
+                onChange={(e) => setSendMail(e.target.checked)}
+                data-testid="inv-send-email"
+              />
+              <span>
+                <strong>Davet bağlantısını bu adrese e-postayla gönder</strong>
+                <span className="block text-xs text-muted-foreground">
+                  Öğretmen e-postadaki butonla adını ve şifresini belirleyip hesabını açar.
+                  Bağlantı ayrıca tabloda durur.
+                </span>
+              </span>
+            </label>
+          ) : (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+              <strong>E-posta yazmazsan</strong> bağlantı tabloda görünür; onu kendin
+              iletmelisin (WhatsApp vb.). Bağlantı <strong>7 gün</strong> geçerli, tek seferlik.
+            </div>
+          )}
           <DialogFooter className="gap-2 pt-2">
             <Button
               type="button"
@@ -388,7 +463,7 @@ function NewInvitationDialog({
               {mut.isPending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : null}
-              Oluştur
+              {email.trim() && sendMail ? "Oluştur ve gönder" : "Oluştur"}
             </Button>
           </DialogFooter>
         </form>

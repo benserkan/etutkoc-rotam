@@ -250,10 +250,17 @@ export function useCreateInstitutionInvitation() {
       ),
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
-      if (res.data.email) {
-        toast.success(
-          `Davetiye oluşturuldu — link tabloda. E-posta: ${res.data.email}`,
-        );
+      const st = res.data.email_status;
+      if (res.data.email && (st === "sent" || st === "delivered")) {
+        toast.success(`Davet e-postası gönderildi: ${res.data.email}`, {
+          description: "Bağlantı tabloda da duruyor; gerekirse kopyalayıp iletebilirsin.",
+        });
+      } else if (res.data.email && st) {
+        toast.warning("Davetiye oluşturuldu ama e-posta gönderilemedi", {
+          description: "Bağlantıyı tablodan kopyalayıp kendin ilet ya da 'Tekrar gönder'i dene.",
+        });
+      } else if (res.data.email) {
+        toast.success(`Davetiye oluşturuldu — bağlantı tabloda. E-posta: ${res.data.email}`);
       } else {
         toast.success(
           "Davetiye oluşturuldu — link tabloda. Açık davetiye (e-posta yok).",
@@ -263,6 +270,26 @@ export function useCreateInstitutionInvitation() {
     onError: (e) => {
       toast.error(errorTitle(e, "Davetiye oluşturulamadı"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+export function useSendInvitationEmail() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<InvitationItem>, Error, number>({
+    mutationFn: (id) =>
+      api<MutationResponse<InvitationItem>>(
+        `/api/v2/institution/invitations/${id}/send-email`,
+        { method: "POST" },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(`Davet e-postası gönderildi: ${res.data.email}`);
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "E-posta gönderilemedi"), {
+        description: errorMessage(e, "Bağlantıyı kopyalayıp kendin iletebilirsin."),
       });
     },
   });

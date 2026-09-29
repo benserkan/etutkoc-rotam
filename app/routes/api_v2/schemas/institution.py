@@ -254,6 +254,10 @@ class InvitationItem(BaseModel):
     is_usable: bool
     # Frontend kopyalama UX'i için tam URL
     signup_url: str
+    # Davet e-postası (iletişim kaydından): sent | delivered | bounced | failed |
+    # complained | suppressed | None (hiç gönderilmedi)
+    email_status: str | None = None
+    emailed_at: datetime | None = None
 
 
 class InvitationListResponse(BaseModel):
@@ -267,6 +271,8 @@ class InvitationCreateBody(BaseModel):
     """E-posta veya isim opsiyonel; ikisi de boşsa "açık davetiye" üretilir."""
     full_name: str | None = Field(default=None, max_length=200)
     email: str | None = Field(default=None, max_length=200)
+    # E-posta doluysa davet bağlantısı o adrese e-postayla gider (varsayılan açık)
+    send_email: bool = True
 
 
 # =============================================================================

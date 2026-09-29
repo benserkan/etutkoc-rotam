@@ -193,6 +193,9 @@ export interface InvitationItem {
   revoked_at: string | null;
   is_usable: boolean;
   signup_url: string;
+  /** Davet e-postası: sent | delivered | bounced | failed | complained | suppressed | null */
+  email_status: string | null;
+  emailed_at: string | null;
 }
 
 export interface InvitationListResponse {
@@ -205,6 +208,8 @@ export interface InvitationListResponse {
 export interface InvitationCreateBody {
   full_name?: string | null;
   email?: string | null;
+  /** E-posta doluysa davet bağlantısı o adrese gönderilir (varsayılan true). */
+  send_email?: boolean;
 }
 
 // =============================================================================

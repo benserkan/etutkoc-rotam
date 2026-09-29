@@ -84,6 +84,8 @@ export function SignupInviteForm({ token, defaultEmail, defaultFullName, role }:
         const code = e.detail?.code;
         if (e.status === 410 || code === "invitation_unusable") {
           toast.error("Davetiye geçersiz", { description: e.detail?.message });
+        } else if (code === "email_mismatch") {
+          form.setError("email", { message: e.detail?.message ?? "Bu davet başka bir adrese özel." });
         } else if (e.status === 409 && code === "email_taken") {
           form.setError("email", { message: "Bu e-posta zaten kayıtlı." });
         } else if (code === "invalid_phone") {
@@ -120,7 +122,12 @@ export function SignupInviteForm({ token, defaultEmail, defaultFullName, role }:
       <div className="space-y-2">
         <Label htmlFor="email">E-posta</Label>
         <Input id="email" type="email" autoComplete="username" disabled={isSubmitting}
+               readOnly={!!defaultEmail}
+               className={defaultEmail ? "bg-muted" : undefined}
                {...form.register("email")} aria-invalid={!!form.formState.errors.email} />
+        {defaultEmail ? (
+          <p className="text-xs text-muted-foreground">Bu davet bu adrese özel — değiştirilemez.</p>
+        ) : null}
         {form.formState.errors.email ? (
           <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
         ) : null}
