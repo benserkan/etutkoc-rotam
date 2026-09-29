@@ -79,7 +79,8 @@ def _subject_of(t: Task):
     return None
 
 
-def evaluate_flags(db: Session, student: User, today: date, projection=None) -> FlagReport:
+def evaluate_flags(db: Session, student: User, today: date, projection=None,
+                   *, include_goal: bool = True) -> FlagReport:
     from app.services.analytics import Warning, _d, legacy_warnings
 
     rep = FlagReport()
@@ -111,8 +112,8 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None) -> 
         flags.append(w)
         return w
 
-    legacy = legacy_warnings(db, student, today, projection) if projection is not None else \
-        legacy_warnings(db, student, today, None)
+    # Eski üreticiden yalnız hazır parçalar; sınav tahmini artık exam_readiness'ta.
+    legacy = legacy_warnings(db, student, today, None)
     legacy_by = {w.code: w for w in legacy}
 
     # ---------------------------------------------------------------- A. Program
@@ -276,9 +277,35 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None) -> 
                      ("Son", f"{_d(same[0].exam_date)} · {float(same[0].net):.2f}")])
 
     # ---------------------------------------------------------------- E. Sınav hedefi
-    for w in legacy:
-        if w.code.startswith("projection_") or w.code.startswith("exam_behind_"):
-            add("E", w.level, w.code, w.title, w.detail, w.evidence)
+    if include_goal:
+        from app.services.exam_readiness import compute_readiness
+        rd = compute_readiness(db, student, today)
+        days_to_exam = (rd.exam_date - today).days if rd.exam_date else None
+        c_subjects = {int(w.code.rsplit("_", 1)[1]) for w in flags
+                      if w.code.startswith(("subject_avoid_", "subject_stale_", "subject_untouched_"))}
+        for sr in rd.subjects:
+            src = " · ".join(f"{b['name']} (kalan {b['remaining']})" for b in sr.active_books)
+            base_ev = [("Aktif kaynak", src or "—")]
+            if sr.dropped_books:
+                base_ev.append(("Bırakılan (21+ gündür görev yok)", ", ".join(sr.dropped_books)))
+            if sr.finished_books:
+                base_ev.append(("Biten", ", ".join(sr.finished_books)))
+            base_ev += [
+                ("Kalan", f"{sr.remaining_tests} test" + (f" · {sr.remaining_topics} konu" if sr.remaining_topics else "")),
+                ("Hız", f"{sr.pace:.1f} test/gün (son {sr.pace_days} günde {sr.solved_window} test)"),
+                ("Hedef", f"{_d(sr.target_date)} (sınav {_d(rd.exam_date)} · son 6 hafta deneme/tekrar)"),
+            ]
+            if sr.status == "late":
+                need = sr.remaining_tests / max(1, (sr.target_date - today).days)
+                add("E", "red" if (days_to_exam is not None and days_to_exam <= 60) else "amber",
+                    f"exam_behind_{sr.subject_id}", f"{sr.subject_name} sınav takvimine yetişmiyor",
+                    f"Bu hızla aktif kaynaklar {_d(sr.finish_date)} tarihinde biter; hedef {_d(sr.target_date)} "
+                    f"— {sr.days_late} gün geride. Gereken: günde {need:.1f} test.",
+                    base_ev + [("Tahmini bitiş", _d(sr.finish_date)), ("Gereken hız", f"{need:.1f} test/gün")])
+            elif sr.status == "stalled" and sr.subject_id not in c_subjects:
+                add("E", "amber", f"exam_stalled_{sr.subject_id}", f"{sr.subject_name} ilerlemiyor",
+                    f"Aktif kaynaklarda {sr.remaining_tests} test kaldı ama son {sr.pace_days} günde çözüm yok.",
+                    base_ev)
 
     # ---------------------------------------------------------------- F. Veri güvenilirliği
     recent = [t for t in past if t.date >= today - timedelta(days=14)]

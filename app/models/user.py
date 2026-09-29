@@ -356,20 +356,21 @@ class User(Base):
         from datetime import date as _date
 
         target = self.effective_exam_target
-        if target is None or self.academic_year is None:
-            return None
-        end_year = (
-            (self.academic_year.start_year + 1) if self.academic_year.start_year else None
-        )
-        if not end_year:
+        if target not in ("LGS", "YKS"):
             return None
         # Yaklaşık takvim: LGS Haziran ilk Pazar, YKS Haziran üçüncü hafta sonu.
-        # Kesinlik gerekirse ileride bir EXAM_CALENDAR sözlüğü eklenebilir.
-        if target == "LGS":
-            return _date(end_year, 6, 7)
-        if target == "YKS":
-            return _date(end_year, 6, 20)
-        return None
+        month, day = (6, 7) if target == "LGS" else (6, 20)
+        end_year = (
+            (self.academic_year.start_year + 1)
+            if self.academic_year is not None and self.academic_year.start_year else None
+        )
+        today = _date.today()
+        # Akademik yılı atanmamış ya da geçmişte kalmış öğrenci (2026-09-29: prod'da
+        # 12. sınıf/mezunların çoğu) → önümüzdeki sınav dönemi. Eskiden None dönüyor;
+        # sınav tahmini ve velinin "sınav yaklaşıyor" bildirimi sessizce kapanıyordu.
+        if end_year is None or _date(end_year, month, day) < today:
+            end_year = today.year if (today.month, today.day) <= (month, day) else today.year + 1
+        return _date(end_year, month, day)
 
     @property
     def effective_curriculum_model(self):

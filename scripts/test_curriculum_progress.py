@@ -154,7 +154,11 @@ def main() -> int:
                   cn.get("Çarpanlar") == 5, f"{cn}")
 
             # --- Faz 4: yetişme projeksiyonu ---
-            # sınav tarihi yok → sinav_yok; kalan konu = 4-2 = 2
+            # sınav hedefi olmayan öğrenci (9-10. sınıf) → sinav_yok. 8. sınıf artık
+            # akademik yılı olmasa da önümüzdeki LGS tarihini alır (2026-09-29).
+            from unittest.mock import patch as _patch
+            with _patch.object(type(st), "effective_exam_date", property(lambda self: None)):
+                res = cp.compute_curriculum_progress(db, st, ids["teacher"])
             proj = res.projection
             check("19. projeksiyon var + sınav yok → verdict sinav_yok",
                   proj is not None and proj.verdict == "sinav_yok",

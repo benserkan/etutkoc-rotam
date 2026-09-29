@@ -231,23 +231,8 @@ def main() -> int:
         chk("8b her uyarı kanıt taşır", all_w and all(x.evidence for x in all_w),
             str([x.code for x in all_w if not x.evidence]))
 
-        # Projeksiyon: öğrenci gereken hızda ama program seyrek → koç aksiyonu dili
-        s10 = mk_student("proj")
-        def _proj(rate):
-            return analytics.Projection(
-                exam_date=today + timedelta(days=200), days_left=200, rate_per_day=rate,
-                window_days=7, total_tests=4000, completed=100, reserved=0, remaining=3900,
-                projected_completable=2000, gap=-1900, required_rate=20.0, effective_days=195)
-        with SessionLocal() as db:
-            st = db.get(User, s10)
-            wa = {w.code: w for w in analytics.generate_warnings(db, st, today, _proj(25.0))}
-            wb = {w.code: w for w in analytics.generate_warnings(db, st, today, _proj(5.0))}
-        pa, pb = wa.get("projection_shortfall"), wb.get("projection_shortfall")
-        chk("10 hızlı öğrenci + seyrek program → 'Program temposu sınava yetmiyor'",
-            pa is not None and pa.title == "Program temposu sınava yetmiyor"
-            and "programdaki tempo günde ~10.3" in pa.detail, pa.detail if pa else str(list(wa)))
-        chk("10b yavaş öğrenci → 'Sınava yetişmeyecek'",
-            pb is not None and pb.title == "Sınava yetişmeyecek", pb.title if pb else str(list(wb)))
+        # (Genel projeksiyon uyarısı 2026-09-29'da ders bazlı exam_readiness'a
+        # taşındı — test_exam_readiness.py.)
 
         # Uç: kanıt + bağlantı
         cl = TestClient(app)

@@ -921,6 +921,8 @@ def warning_link(student_id: int, code: str) -> tuple[str, str]:
     suffix, label = _WARN_LINK.get(code, ("week", "Programı incele"))
     if code.startswith("subject_avoid_"):
         suffix, label = "week", "Bu dersin görevlerini incele"
+    if code.startswith(("exam_behind_", "exam_stalled_")):
+        suffix, label = "#analytics", "Sınava hazırlık tablosunu gör"
     if suffix.startswith("#"):
         return f"/teacher/students/{student_id}{suffix}", label
     return f"/teacher/students/{student_id}/{suffix}", label
@@ -9643,6 +9645,68 @@ _TR_MONTHS_SHORT = [
 
 def _format_trend_label(d: date) -> str:
     return f"{d.day:02d} {_TR_MONTHS_SHORT[d.month - 1]}"
+
+
+class ExamReadinessBook(BaseModel):
+    name: str
+    remaining: int
+
+
+class ExamReadinessSubject(BaseModel):
+    subject_id: int
+    subject_name: str
+    status: str                      # ok | late | stalled | early | done
+    active_books: list[ExamReadinessBook]
+    dropped_books: list[str]
+    finished_books: list[str]
+    remaining_tests: int
+    remaining_topics: int
+    pace: float
+    pace_days: int
+    solved_window: int
+    finish_date: date | None
+    target_date: date | None
+    days_late: int | None
+    required_pace: float | None
+
+
+class ExamReadinessResponse(BaseModel):
+    exam_date: date | None
+    target_date: date | None
+    days_to_exam: int | None
+    subjects: list[ExamReadinessSubject]
+
+
+@router.get("/students/{student_id}/exam-readiness", response_model=ExamReadinessResponse)
+def teacher_student_exam_readiness_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Sınava hazırlık — ders bazlı, aktif kaynak modeli (exam_readiness)."""
+    from app.services.exam_readiness import compute_readiness
+
+    student = _get_owned_student(db, student_id, user.id)
+    today = date.today()
+    rd = compute_readiness(db, student, today)
+    out = []
+    for sr in rd.subjects:
+        days_left_target = (sr.target_date - today).days if sr.target_date else None
+        need = (sr.remaining_tests / days_left_target) if days_left_target and days_left_target > 0 else None
+        out.append(ExamReadinessSubject(
+            subject_id=sr.subject_id, subject_name=sr.subject_name, status=sr.status,
+            active_books=[ExamReadinessBook(**b) for b in sr.active_books],
+            dropped_books=sr.dropped_books, finished_books=sr.finished_books,
+            remaining_tests=sr.remaining_tests, remaining_topics=sr.remaining_topics,
+            pace=round(sr.pace, 2), pace_days=sr.pace_days, solved_window=sr.solved_window,
+            finish_date=sr.finish_date, target_date=sr.target_date, days_late=sr.days_late,
+            required_pace=round(need, 2) if need is not None else None,
+        ))
+    return ExamReadinessResponse(
+        exam_date=rd.exam_date, target_date=rd.target_date,
+        days_to_exam=(rd.exam_date - today).days if rd.exam_date else None,
+        subjects=out,
+    )
 
 
 @router.get(

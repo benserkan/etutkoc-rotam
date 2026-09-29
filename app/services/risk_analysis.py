@@ -273,7 +273,7 @@ def compute_risk_score(
     # programı olmayan öğrenciyi (Boran) gizliyordu. Artık student_flags'ın A
     # katmanı: bugün ve sonrasında yayınlanmış görev yok.
     from app.services.student_flags import evaluate_flags
-    _flags = evaluate_flags(db, student, today, None)
+    _flags = evaluate_flags(db, student, today, None, include_goal=False)
     _codes = {w.code for w in _flags.primary}
     if "program_none" in _codes:
         _f = next(w for w in _flags.primary if w.code == "program_none")

@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
+
+import { ExamReadinessCard } from "@/components/teacher/exam-readiness-card";
 import {
   Activity,
   AlertTriangle,
@@ -13,7 +15,6 @@ import {
   LineChart,
   Loader2,
   Minus,
-  Target,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -23,7 +24,6 @@ import type {
   AnalyticsDayFlag,
   AnalyticsDow,
   AnalyticsExamPoint,
-  AnalyticsProjection,
   AnalyticsSubjectRow,
   AnalyticsSummary,
   AnalyticsTrendPoint,
@@ -72,7 +72,7 @@ export function StudentAnalyticsPanel({ studentId }: Props) {
   return (
     <div className="space-y-4">
       <SummaryStrip summary={d.summary} />
-      <ProjectionCard projection={d.projection} />
+      <ExamReadinessCard studentId={studentId} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <WeeklyTrendCard weeks={d.weekly_trend} />
         <DowCard dows={d.dow_performance} />
@@ -160,53 +160,6 @@ function SummaryStrip({ summary: s }: { summary: AnalyticsSummary }) {
 
 // ============================================================================
 // Projeksiyon
-// ============================================================================
-
-function ProjectionCard({ projection: p }: { projection: AnalyticsProjection }) {
-  const t = levelTone(p.status);
-  const isYearEnd = !p.exam_label || p.exam_label === "Yıl Sonu";
-  const title = isYearEnd ? "Yıl Sonuna Projeksiyon" : `${p.exam_label}'e Projeksiyon`;
-  const statusLabel =
-    p.status === "red" ? "Hedefin gerisinde" : p.status === "amber" ? "Tedbirli ilerliyor" : "Hedefe uygun";
-  const confLabel =
-    p.confidence_level === "high" ? "yüksek güven" : p.confidence_level === "medium" ? "orta güven" : "düşük güven";
-
-  return (
-    <Card>
-      <CardHeader className="pb-2 flex-row items-center justify-between gap-2 space-y-0">
-        <CardTitle className="text-base font-semibold inline-flex items-center gap-2">
-          <Target className="size-4 text-cyan-600" aria-hidden />
-          {title}
-        </CardTitle>
-        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium border", t.bg, t.text, t.border)}>
-          {statusLabel}
-        </span>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          {p.days_left != null ? (
-            <StatTile label={isYearEnd ? "Yıl sonuna" : "Sınava"} value={`${p.days_left}`} unit="gün" />
-          ) : null}
-          <StatTile label="Toplam hedef" value={`${p.total_tests}`} unit="test" />
-          <StatTile label="Tamamlandı" value={`${p.completed}`} unit="test" tone="text-emerald-700" />
-          <StatTile label="Kalan" value={`${p.remaining}`} unit="test" />
-          <StatTile label="Beklenen erim" value={`${p.projected_completable}`} unit="test" tone={t.text} />
-          <StatTile label="Günlük hız" value={`${p.rate_per_day}`} unit="test/gün" sub={`gereken ${p.required_rate}`} />
-        </div>
-        <p className="text-[11px] text-muted-foreground italic mt-3 leading-relaxed">
-          Mevcut tempo ve son 28 günlük desene göre ({confLabel}) tahmin. Açık (gap):{" "}
-          <b className={cn(p.gap < 0 ? "text-rose-600" : "text-emerald-600")}>
-            {p.gap > 0 ? "+" : ""}{p.gap} test
-          </b>{" "}
-          {p.gap < 0 ? "— mevcut tempoyla hedefin altında kalır." : "— mevcut tempoyla hedefe ulaşır."}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ============================================================================
-// Haftalık tamamlama trendi
 // ============================================================================
 
 function barColor(pct: number): string {
