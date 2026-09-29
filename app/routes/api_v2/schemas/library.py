@@ -621,3 +621,66 @@ class AdminCatalogListResponse(BaseModel):
 class DeletedRef(BaseModel):
     deleted: bool
     id: int
+
+
+# =============================================================================
+# Süper admin — tam kitap tarama işleri (arka plan)
+# =============================================================================
+
+
+class BookScanJobItem(BaseModel):
+    id: int
+    filename: str
+    file_size: int
+    page_count: int | None
+    status: str                  # queued | running | done | failed
+    status_label: str
+    progress: int                # 0-100
+    stage: str | None
+    error: str | None
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None
+    created_by_name: str | None
+    # Özet (bitmiş işte)
+    section_count: int | None = None
+    total_tests: int | None = None
+    needs_review: bool | None = None
+    book_title: str | None = None
+
+
+class BookScanJobListResponse(BaseModel):
+    items: list[BookScanJobItem]
+
+
+class BookScanGate(BaseModel):
+    code: str
+    label: str
+    ok: bool
+    detail: str
+
+
+class BookScanSection(BaseModel):
+    label: str
+    test_count: int | None
+    source: str | None = None    # toc | scan | scan_text | unknown
+    page: int | None = None
+    flag: str | None = None      # scan_mismatch | no_banner | no_page | toc_count_mismatch
+
+
+class BookScanResultModel(BaseModel):
+    book_title: str | None
+    publisher: str | None
+    subject_hint: str | None
+    page_count: int | None
+    offset: int | None
+    mode: str                    # toc | text | vision
+    sections: list[BookScanSection]
+    total_tests: int
+    warnings: list[str]
+    gates: list[BookScanGate]
+    needs_review: bool
+
+
+class BookScanJobDetail(BookScanJobItem):
+    result: BookScanResultModel | None = None

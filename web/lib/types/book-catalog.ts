@@ -182,3 +182,70 @@ export interface AdminCatalogListResponse {
   pending_count: number;
   hidden_count: number;
 }
+
+// =============================================================================
+// Süper admin — tam kitap tarama işleri (arka plan)
+// =============================================================================
+
+export type BookScanJobStatus = "queued" | "running" | "done" | "failed";
+
+export interface BookScanJobItem {
+  id: number;
+  filename: string;
+  file_size: number;
+  page_count: number | null;
+  status: BookScanJobStatus;
+  status_label: string;
+  /** 0-100 */
+  progress: number;
+  stage: string | null;
+  error: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  created_by_name: string | null;
+  section_count: number | null;
+  total_tests: number | null;
+  needs_review: boolean | null;
+  book_title: string | null;
+}
+
+export interface BookScanJobListResponse {
+  items: BookScanJobItem[];
+}
+
+export interface BookScanGate {
+  code: string;
+  label: string;
+  ok: boolean;
+  detail: string;
+}
+
+export interface BookScanSection {
+  label: string;
+  test_count: number | null;
+  /** toc | scan | scan_text | unknown */
+  source: string | null;
+  page: number | null;
+  /** scan_mismatch | no_banner | no_page | toc_count_mismatch */
+  flag: string | null;
+}
+
+export interface BookScanResult {
+  book_title: string | null;
+  publisher: string | null;
+  subject_hint: string | null;
+  page_count: number | null;
+  offset: number | null;
+  /** toc | text | vision */
+  mode: string;
+  sections: BookScanSection[];
+  total_tests: number;
+  warnings: string[];
+  gates: BookScanGate[];
+  needs_review: boolean;
+}
+
+export interface BookScanJobDetail extends BookScanJobItem {
+  result: BookScanResult | null;
+}

@@ -10,6 +10,9 @@ import type {
   AdminCatalogListResponse,
   AdminCatalogUpdateBody,
   BookScanResult,
+  BookScanJobDetail,
+  BookScanJobItem,
+  BookScanJobListResponse,
   CatalogBrowseResponse,
   CatalogContributeBody,
   CatalogContributeResult,
@@ -24,6 +27,8 @@ export const bookCatalogKeys = {
   adminList: (status: string | null, q: string) =>
     ["admin", "book-catalog", status ?? "", q] as const,
   adminSubjects: () => ["admin", "book-catalog", "subjects"] as const,
+  adminScanJobs: () => ["admin", "book-catalog", "scan-jobs"] as const,
+  adminScanJob: (id: number) => ["admin", "book-catalog", "scan-jobs", String(id)] as const,
   coachSearch: (q: string, subjectId: number | null) =>
     ["teacher", "library", "book-catalog", "search", q, subjectId ?? 0] as const,
   coachBrowse: () => ["teacher", "library", "book-catalog", "browse"] as const,
@@ -169,6 +174,38 @@ export function adminCatalogAction(
 ): Promise<MutationResponse<unknown>> {
   return api<MutationResponse<unknown>>(
     `/api/v2/admin/book-catalog/${id}/${action}`,
+    { method: "POST" },
+  );
+}
+
+// Tam kitap tarama işleri (arka plan)
+
+export function getAdminScanJobs(): Promise<BookScanJobListResponse> {
+  return api<BookScanJobListResponse>("/api/v2/admin/book-catalog/scan-jobs");
+}
+
+export function getAdminScanJob(id: number): Promise<BookScanJobDetail> {
+  return api<BookScanJobDetail>(`/api/v2/admin/book-catalog/scan-jobs/${id}`);
+}
+
+export function adminCreateScanJob(
+  file: File,
+  tocPages: number,
+  pageOffset: number | null,
+): Promise<MutationResponse<BookScanJobItem>> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("toc_pages", String(tocPages));
+  if (pageOffset != null) fd.append("page_offset", String(pageOffset));
+  return multipart<MutationResponse<BookScanJobItem>>(
+    "/api/v2/admin/book-catalog/scan-jobs",
+    fd,
+  );
+}
+
+export function adminDeleteScanJob(id: number): Promise<MutationResponse<unknown>> {
+  return api<MutationResponse<unknown>>(
+    `/api/v2/admin/book-catalog/scan-jobs/${id}/delete`,
     { method: "POST" },
   );
 }

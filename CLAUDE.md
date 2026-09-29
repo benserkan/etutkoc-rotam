@@ -8272,7 +8272,7 @@ alarmı · email enumeration koruması · auto-resume · self-signup + invite + 
 - **D7 P5 tam regresyon: 19 suite GREEN** (api_v1 47 + auth p1/p2/p3/p4/p5 + me +
   admin tüm + parent + institution + tenant)
 
-## Kitap sihirbazı — katalog tarayıcısı + "Kapak + içindekiler" + sayfa tahmini (2026-09-29, CANLI, migration YOK)
+## Kitap sihirbazı — katalog tarayıcısı + "Kapak + içindekiler" + sayfa tahmini + admin tam kitap tarama (2026-09-29, CANLI)
 
 - **Katalog tarayıcısı** (commit `0c58614`): sihirbaz 1. adımda yazmadan TÜM yayındaki
   katalog (133 kitap) ders başlıkları altında; sınav grubu (LGS/TYT/AYT/okul — brief'e
@@ -8297,7 +8297,29 @@ alarmı · email enumeration koruması · auto-resume · self-signup + invite + 
   uçlarını koparıyordu; prod Caddy doğrudan).
 - Test: book_catalog 34/34 · ai_book_structure 16/16 · teacher_library 25 · YENİ
   `live_book_catalog_browse.py` 17/17 (`[pdf] [--expect-estimate]`).
-- **KALAN (paket 4, ertelendi):** tam dijital kopyadan gövde taraması (arka plan işi, önce admin).
+- **Paket 4 — süper admin "Tam kitap tara" (arka plan işi), migration `j1k4n7o8n22j`:**
+  `book_scan_jobs` tablosu (dosya adı/boyut/sayfa · durum queued/running/done/failed · ilerleme
+  + aşama metni · nabız · sonuç JSON · hata). Algoritma CLI'dan **`app/services/book_pipeline.py`
+  TEK MERKEZ**'e taşındı (`run_pipeline(pdf_path, toc_pages, offset, progress)`); CLI
+  `scripts/book_structure_pipeline.py` artık ince sarmalayıcı (DNS yaması yalnız orada).
+  **Sağlamlık kapıları:** içindekiler iki okumada aynı · her bölümün sayısı bulundu · iki
+  görüntü geçişi uyuştu · test numaraları kesintisiz · sayfa/test oranı 1,5–2,8 → biri
+  düşerse `needs_review` ("Elle incele"). `app/services/book_scan_jobs.py`: PDF (≤450 MB)
+  geçici klasöre AKIŞLA yazılır (`BOOK_SCAN_DIR`, varsayılan tmp), web sürecinde daemon iş
+  parçacığı koşar (süreç başına tek iş — semafor), ilerlemeyi 3 sn'de bir yazar, bitince PDF
+  silinir; nabzı 20 dk kesilen koşan iş / 3 saattir sırada bekleyen iş listelemede "başarısız"
+  (yeniden başlatma). Uçlar `/admin/book-catalog/scan-jobs` (POST yükle · GET liste · GET
+  detay+sonuç · POST delete; koşan iş 409). Web `/admin/book-catalog`: "Tam kitap tara"
+  paneli (yükleme + içindekiler sayfa sayısı + opsiyonel sayfa kayması · iş listesi 3 sn
+  yoklama + ilerleme çubuğu · "Sonucu aç": kapılar ✓/✗ + bölümler kaynak/bayrak rozetli +
+  uyarılar · "Kataloğa aktar" → mevcut kayıt formu taslakla dolu; kapıdan geçemeyen kayıt
+  varsayılan olarak ONAY KUYRUĞUNA). Tarama asla doğrudan yayına çıkmaz.
+  Gerçek deneme: Ankara Güçlendiren 8 SB (126 MB, 320 s.) arka plan işinde **77 sn**, metin
+  katmanı, 52 konu · 96 test; kapılar "elle incele" dedi (testler ünite düzeyinde, 16 alt
+  konuda bant yok — doğru tespit). **DEV SINIRI:** Next dev rewrite vekili ~100 MB+
+  yüklemeyi koparıyor (FastAPI'ye doğrudan 1,7 sn); prod'da Caddy `/api/v2` doğrudan
+  FastAPI → sorun yok. Test: YENİ `test_api_v2_admin_book_scan_jobs.py` 13/13 · YENİ
+  `live_admin_book_scan.py "<pdf>"` (gerçek tarama).
 
 ## Kopya kitap kayıtları temizliği (2026-09-29, migration YOK)
 

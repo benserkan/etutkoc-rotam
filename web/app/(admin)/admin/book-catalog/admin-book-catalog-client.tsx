@@ -62,6 +62,8 @@ import {
   type SubjectRef,
 } from "@/lib/types/library";
 import { groupSubjectsByCurriculum } from "@/lib/utils/subjects";
+import { ScanJobsPanel } from "@/components/book-catalog/scan-jobs-panel";
+import type { BookScanResult } from "@/lib/types/book-catalog";
 
 const STATUS_TONE: Record<string, string> = {
   verified:
@@ -153,19 +155,42 @@ function formFromDetail(d: CatalogEntryDetail): EntryFormState {
   };
 }
 
+function formFromScan(r: BookScanResult): EntryFormState {
+  return {
+    ...EMPTY_FORM,
+    name: r.book_title ?? "",
+    publisher: r.publisher ?? "",
+    // Taramadan gelen kayıt önce ONAY KUYRUĞUNA — admin kitapla karşılaştırıp yayınlar
+    publish: !r.needs_review,
+    sections: r.sections.map((s) => ({
+      label: s.label,
+      test_count: s.test_count,
+      suspect: !!s.flag,
+      topic_id: null,
+    })),
+  };
+}
+
 function EntryDialog({
   mode,
   entryId,
   subjects,
+  scan,
   onClose,
 }: {
   mode: "create" | "edit";
   entryId: number | null;
   subjects: SubjectRef[];
+  /** "Tam kitap tara" sonucundan aktarılan taslak (yalnız oluşturma). */
+  scan?: BookScanResult | null;
   onClose: () => void;
 }) {
-  const [form, setForm] = React.useState<EntryFormState>(EMPTY_FORM);
-  const [readWarnings, setReadWarnings] = React.useState<string[]>([]);
+  const [form, setForm] = React.useState<EntryFormState>(() =>
+    scan ? formFromScan(scan) : EMPTY_FORM,
+  );
+  const [readWarnings, setReadWarnings] = React.useState<string[]>(() =>
+    scan ? scan.gates.filter((g) => !g.ok).map((g) => `${g.label}: ${g.detail}`) : [],
+  );
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   const detailQ = useQuery({
@@ -512,7 +537,7 @@ export function AdminBookCatalogClient({
   const [search, setSearch] = React.useState("");
   const [debouncedQ, setDebouncedQ] = React.useState("");
   const [dialog, setDialog] = React.useState<
-    | { kind: "create" }
+    | { kind: "create"; scan?: BookScanResult }
     | { kind: "edit"; id: number }
     | {
         kind: "confirm";
@@ -596,6 +621,8 @@ export function AdminBookCatalogClient({
           </button>
         </div>
       </div>
+
+      <ScanJobsPanel onImport={(r) => setDialog({ kind: "create", scan: r })} />
 
       {/* Filtre + arama */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -778,6 +805,7 @@ export function AdminBookCatalogClient({
           mode={dialog.kind}
           entryId={dialog.kind === "edit" ? dialog.id : null}
           subjects={subjectsQ.data?.items ?? []}
+          scan={dialog.kind === "create" ? (dialog.scan ?? null) : null}
           onClose={() => setDialog(null)}
         />
       )}

@@ -426,6 +426,7 @@ from app.models.focus import (
     StudentBadge,
 )
 from app.models.progress import SectionProgress, StudentBook
+from app.models.book_scan_job import BookScanJob
 from app.models.self_study import (
     SS_SOURCE_COACH,
     SS_SOURCE_LABELS_TR,
@@ -800,6 +801,7 @@ __all__ = [
     "SS_STATUS_PENDING",
     "SS_STATUS_REJECTED",
     "SelfStudyEntry",
+    "BookScanJob",
     "GOAL_KIND_EMOJIS",
     "GOAL_KIND_LABELS_TR",
     "GOAL_STATUS_LABELS_TR",

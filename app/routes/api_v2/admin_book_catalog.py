@@ -9,13 +9,17 @@ Endpoint haritası (prefix `/admin/book-catalog`, tümü `_require_super_admin`)
   POST   /{entry_id}/verify    → yayına al (pending/hidden → verified)
   POST   /{entry_id}/hide      → yayından kaldır (geri alınabilir)
   POST   /{entry_id}/delete    → sil (yalnız hiç kullanılmamış; aksi 409 → hide öner)
+  POST   /scan-jobs            → tam kitap PDF'i → arka plan tarama işi (≤450 MB)
+  GET    /scan-jobs            → son 20 iş (ilerleme + özet)
+  GET    /scan-jobs/{job_id}   → iş + sonuç taslağı (bölümler + sağlamlık kapıları)
+  POST   /scan-jobs/{job_id}/delete → iş kaydını sil (koşan iş hariç)
 
 Tüm moderasyon işlemleri `BOOK_CATALOG_UPDATE` ile audit'lenir.
 Okuma ucu SENKRON def (uzun Gemini çağrısı — exam_import dersi).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
@@ -37,6 +41,10 @@ from app.routes.api_v2.schemas.library import (
     AdminCatalogCreateBody,
     AdminCatalogListResponse,
     AdminCatalogUpdateBody,
+    BookScanJobDetail,
+    BookScanJobItem,
+    BookScanJobListResponse,
+    BookScanResultModel,
     CatalogEntryDetail,
     DeletedRef,
     StructureReadResult,
@@ -236,6 +244,130 @@ def admin_catalog_subjects_v2(
         )
         for s in subjects
     ])
+
+
+# =============================================================================
+# Tam kitap tarama işleri (arka plan) — /{entry_id} rotalarından ÖNCE
+# =============================================================================
+
+
+def _scan_job_item(db: Session, job, *, with_result: bool = False):
+    from app.models.book_scan_job import JOB_STATUS_LABELS_TR
+    from app.services import book_scan_jobs as jobs_svc
+
+    creator = db.get(User, job.created_by_id) if job.created_by_id else None
+    res = jobs_svc.job_result(job)
+    data = dict(
+        id=job.id,
+        filename=job.filename,
+        file_size=job.file_size,
+        page_count=job.page_count,
+        status=job.status,
+        status_label=JOB_STATUS_LABELS_TR.get(job.status, job.status),
+        progress=job.progress,
+        stage=job.stage,
+        error=job.error,
+        created_at=job.created_at,
+        started_at=job.started_at,
+        finished_at=job.finished_at,
+        created_by_name=creator.full_name if creator else None,
+        section_count=len(res["sections"]) if res else None,
+        total_tests=res.get("total_tests") if res else None,
+        needs_review=res.get("needs_review") if res else None,
+        book_title=res.get("book_title") if res else None,
+    )
+    if with_result:
+        return BookScanJobDetail(
+            **data, result=BookScanResultModel(**{k: v for k, v in res.items() if k != "scan_debug"})
+            if res else None,
+        )
+    return BookScanJobItem(**data)
+
+
+def _scan_error(e) -> HTTPException:
+    return HTTPException(
+        status_code=e.http,
+        detail={"error": "validation" if e.http == 422 else "conflict", "code": e.code,
+                "message": e.message},
+    )
+
+
+@router.post("/scan-jobs", response_model=MutationResponse[BookScanJobItem])
+def admin_scan_job_create_v2(
+    file: UploadFile = File(...),
+    toc_pages: int = Form(12),
+    page_offset: int | None = Form(None),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Tam kitap PDF'i → arka plan tarama işi. Yanıt HEMEN döner; ilerleme
+    GET /scan-jobs ile izlenir. Sonuç taslaktır — kataloğa admin kaydeder."""
+    from app.services import book_scan_jobs as jobs_svc
+
+    if (file.content_type or "").lower() not in ("application/pdf", "application/octet-stream"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "not_pdf", "message": "Yalnız PDF yüklenebilir."},
+        )
+    try:
+        job = jobs_svc.create_job(
+            db, user.id, fileobj=file.file, filename=file.filename or "kitap.pdf",
+            toc_pages=toc_pages, page_offset=page_offset,
+        )
+    except jobs_svc.ScanJobError as e:
+        raise _scan_error(e)
+    return MutationResponse(
+        data=_scan_job_item(db, job), invalidate=["admin:book-catalog:scan-jobs"],
+    )
+
+
+@router.get("/scan-jobs", response_model=BookScanJobListResponse)
+def admin_scan_job_list_v2(
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    from app.services import book_scan_jobs as jobs_svc
+
+    return BookScanJobListResponse(items=[_scan_job_item(db, j) for j in jobs_svc.list_jobs(db)])
+
+
+@router.get("/scan-jobs/{job_id}", response_model=BookScanJobDetail)
+def admin_scan_job_detail_v2(
+    job_id: int,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    from app.models.book_scan_job import BookScanJob
+
+    job = db.get(BookScanJob, job_id)
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "scan_job_not_found", "message": "İş bulunamadı."},
+        )
+    return _scan_job_item(db, job, with_result=True)
+
+
+@router.post("/scan-jobs/{job_id}/delete", response_model=MutationResponse[DeletedRef])
+def admin_scan_job_delete_v2(
+    job_id: int,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    from app.models.book_scan_job import BookScanJob
+    from app.services import book_scan_jobs as jobs_svc
+
+    job = db.get(BookScanJob, job_id)
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "scan_job_not_found", "message": "İş bulunamadı."},
+        )
+    try:
+        jobs_svc.delete_job(db, job)
+    except jobs_svc.ScanJobError as e:
+        raise _scan_error(e)
+    return MutationResponse(data=DeletedRef(deleted=True, id=job_id), invalidate=["admin:book-catalog:scan-jobs"])
 
 
 @router.get("/{entry_id}", response_model=CatalogEntryDetail)

@@ -13,6 +13,8 @@ import { ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
 import {
   adminCatalogAction,
+  adminCreateScanJob,
+  adminDeleteScanJob,
   adminCreateCatalogEntry,
   adminReadStructure,
   adminUpdateCatalogEntry,
@@ -25,6 +27,7 @@ import type {
   AdminCatalogCreateBody,
   AdminCatalogUpdateBody,
   BookScanResult,
+  BookScanJobItem,
   CatalogContributeBody,
   CatalogContributeResult,
   CatalogEntryDetail,
@@ -186,6 +189,59 @@ export function useAdminCatalogAction() {
           : "İşlem yapılamadı",
         { description: (e.detail as { message?: string } | undefined)?.message },
       );
+    },
+  });
+}
+
+// =============================================================================
+// Süper admin: tam kitap tarama işleri
+// =============================================================================
+
+const SCAN_JOB_ERRORS: Record<string, string> = {
+  not_pdf: "Yalnız PDF yüklenebilir",
+  file_too_large: "PDF en fazla 450 MB olabilir",
+  empty_file: "Dosya boş",
+  pdf_unreadable: "PDF açılamadı",
+  pdf_too_short: "PDF çok kısa",
+  job_running: "Taranan iş silinemez",
+};
+
+export function useCreateScanJob() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<BookScanJobItem>,
+    ApiError,
+    { file: File; tocPages: number; pageOffset: number | null }
+  >({
+    mutationFn: ({ file, tocPages, pageOffset }) => adminCreateScanJob(file, tocPages, pageOffset),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Tarama başladı", {
+        description: "Sayfayı kapatabilirsin — ilerleme listede görünür.",
+      });
+    },
+    onError: (e) => {
+      const code = (e.detail as { code?: string } | undefined)?.code ?? "";
+      toast.error(SCAN_JOB_ERRORS[code] ?? "Tarama başlatılamadı", {
+        description: (e.detail as { message?: string } | undefined)?.message,
+      });
+    },
+  });
+}
+
+export function useDeleteScanJob() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<unknown>, ApiError, number>({
+    mutationFn: (id) => adminDeleteScanJob(id),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("İş kaydı silindi");
+    },
+    onError: (e) => {
+      const code = (e.detail as { code?: string } | undefined)?.code ?? "";
+      toast.error(SCAN_JOB_ERRORS[code] ?? "Silinemedi", {
+        description: (e.detail as { message?: string } | undefined)?.message,
+      });
     },
   });
 }
