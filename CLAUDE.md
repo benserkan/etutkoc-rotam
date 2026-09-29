@@ -3453,6 +3453,25 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   TÜMEVARIM I-II + iki konulu bölümlerin Bire Bir ÖSYM'si (Yaşam Bilimi ·
   Ekosistem+Güncel — AI ikincisini "Ekosistem"e bağlamıştı, dev+prod'da elle
   NULL). Tek-konulu bölümlerin Bire Bir'i konusuna bağlı.
+- **AÇI YAYINLARI — 11 SORU BANKASI CANLI (2026-09-29, prod id 204-214, dev
+  119-129 civarı; migration YOK, commit YOK — JSON'lar `data/kitap-katalog/aci_*.json`):**
+  TYT Mat 36/174 · TYT Geo 20/108 · AYT Geo 25/139 · TYT Kim 9/108 · AYT Mat 17/139 ·
+  TYT Türkçe 14/139 · AYT Kim 10/107 · TYT-AYT Tarih 26/106 · AYT Tarih 38/106 ·
+  AYT Edebiyat 18/123 · 8. Sınıf İnkılap 34/98 (bölüm/test). Hepsi dijital PDF →
+  **Gemini'siz font imzası**: Açı şablonu üst bantta konu adı (8.8pt) + KKT/ÖTT +
+  "Test NN" (9.7pt, KONU içinde sıralı; KKT ve ÖTT tek sayaçta); her test TAM 2 sayfa
+  → 11 kitabın hepsinde `ön sayfalar + test×2 = cevap anahtarı başlangıcı` birebir.
+  İnkılap farklı: ünite no + iki satırlık konu + ünite içi test no + Öğreten/Geliştiren/
+  Sınav Tadında (konu başına 3) + ünite sonu Ünite Değerlendirme. **Dersler:** (a) test
+  başlığını testin İLK sayfasından al — 2. sayfa başlıklarında dizgi hatası var (TYT
+  Tarih "XIV ve XV. Yüzyılda…" = zincir devamı, birleştirildi); (b) Açı PDF'leri büyük
+  harf başlıklarda "İ" yerine ASCII "I" basıyor ("ILIŞKILERDE", "LIDERLIĞE") → başlık
+  düzenine çevirirken düzeltme sözlüğü şart; (c) çok konulu "A - B" başlıklı ÖTT'ler +
+  Tarama/Genel Tekrar ayrı bölüm "(Karma)" ve bilinçli eşleşmesiz; AYT Tarih
+  "Türklerde …" tematik bölümleri (tüm dönemler) eşleşmesiz; İnkılap ünite
+  değerlendirmeleri ünite konusuna eşli. (d) AI eşlemesi turdan tura değişti → gözden
+  geçirilmiş eşleme JSON'a `topic` olarak SABİTLENDİ, prod `--no-map` ile deterministik
+  seed edildi (Gemini çağrısı yok). Tarayıcı betikleri scratchpad'deydi (repo'da değil).
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
@@ -8252,6 +8271,33 @@ alarmı · email enumeration koruması · auto-resume · self-signup + invite + 
   - Verify: tsc ✅ · eslint ✅ · build ✅.
 - **D7 P5 tam regresyon: 19 suite GREEN** (api_v1 47 + auth p1/p2/p3/p4/p5 + me +
   admin tüm + parent + institution + tenant)
+
+## Kitap sihirbazı — katalog tarayıcısı + "Kapak + içindekiler" + sayfa tahmini (2026-09-29, CANLI, migration YOK)
+
+- **Katalog tarayıcısı** (commit `0c58614`): sihirbaz 1. adımda yazmadan TÜM yayındaki
+  katalog (133 kitap) ders başlıkları altında; sınav grubu (LGS/TYT/AYT/okul — brief'e
+  `exam_group`) · ders · tür · yayınevi süzgeci + kelime bazlı yerel arama; kitaba tıkla →
+  bölümler + test sayıları (detay ucu); ad kırpılmaz. `GET /teacher/library/book-catalog/browse`
+  (`book_catalog.list_verified`).
+- **Kapak + içindekiler tek yükleme**: `POST /book-structure/scan` — ≤8 görsel ya da PDF
+  (80 MB'a kadar, tam kitap olur). **PyMuPDF** (requirements'a eklendi): PDF'in 1. sayfası kapak
+  görseli, okumaya yalnız ilk 12 sayfa (kırpılmış PDF >10 MB ise sayfalar JPEG). Kapaktan kimlik →
+  katalog eşleşmesi varsa okuma YAPILMAZ ("Bu kitap değil — içindekileri oku" = `force_read`);
+  yoksa çift okuma → taslak formu doldurur (ad/yayınevi) ve 2. adımda yeniden yükleme olmadan
+  hazır gelir (`PhotoReadPanel initial`). Eski `identify-cover` ucu duruyor.
+- **Çift okuma düzey farkı**: bir okuma üniteleri, öbürü konuları seçince listeler alt alta
+  yapıştırılıyordu (Ay Serisi Fen: 7+25=32 satır) → etiket örtüşmesi < yarı ya da uzunluk ≥1,5×
+  (küçük liste ≥4) ise ayrıntılı okuma esas + uyarı.
+- **Sayfa tahmini** (commit `9fed038`): okuma bölüm başlangıç sayfasını da alır; test sayısı
+  yazmıyorsa test ≈ aralık / 2 (son bölüm ortanca), yalnız sayfa bölümlerin ≥yarısında var ve
+  sıralıysa; yazılı sayı korunur; sayfa+test'siz satırlar (ünite başlıkları) çıkarılır. Editörde
+  dolgulu "tahmini" rozeti + not; elle değiştirmek / Tümüne uygula rozeti kaldırır. Mozaik 8 Fen
+  PDF'inde 42 bölüm = katalog kaydıyla aynı.
+- Dev: `next.config` `experimental.proxyTimeout: 300_000` (rewrite vekili 30 sn'de uzun AI
+  uçlarını koparıyordu; prod Caddy doğrudan).
+- Test: book_catalog 34/34 · ai_book_structure 16/16 · teacher_library 25 · YENİ
+  `live_book_catalog_browse.py` 17/17 (`[pdf] [--expect-estimate]`).
+- **KALAN (paket 4, ertelendi):** tam dijital kopyadan gövde taraması (arka plan işi, önce admin).
 
 ## Kopya kitap kayıtları temizliği (2026-09-29, migration YOK)
 
