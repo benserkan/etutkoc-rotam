@@ -611,6 +611,8 @@ export interface TeacherRequestListResponse {
   page_size: number;
   has_next: boolean;
   pending_count: number;
+  /** Onay beklemeyen, henüz görülmemiş soru/not mesajı sayısı. */
+  open_question_count?: number;
 }
 export const teacherRequestKeys = {
   list: (status: string) => ["teacher", "requests", status] as const,
@@ -628,6 +630,10 @@ export function approveTeacherRequest(id: number, response?: string): Promise<un
 }
 export function rejectTeacherRequest(id: number, reason: string): Promise<unknown> {
   return apiRequest(`/api/v2/teacher/requests/${id}/reject`, { method: "POST", body: { reason } });
+}
+/** Soru/not mesajını cevap yazmadan kapat ("Gördüm"). */
+export function acknowledgeTeacherRequest(id: number): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/requests/${id}/acknowledge`, { method: "POST", body: {} });
 }
 export function respondTeacherRequest(id: number, response: string): Promise<unknown> {
   return apiRequest(`/api/v2/teacher/requests/${id}/respond`, { method: "POST", body: { response } });

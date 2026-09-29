@@ -14,6 +14,11 @@ from app.models import (User, UserRole, Book, BookType, BookSection, Subject,
 from app.services import analytics
 from app.services.security import hash_password
 
+# Gün içi uyarı saate bağlı (2026-09-29): testler akşam 23:30'da çalışıyormuş gibi
+import datetime as _dt_freeze
+from app.services import analytics as _an_freeze
+_an_freeze._tr_now = lambda: _dt_freeze.datetime.combine(_dt_freeze.date.today(), _dt_freeze.time(23, 30), tzinfo=_dt_freeze.timezone.utc)
+
 PASS = FAIL = 0
 def check(n, c, e=""):
     global PASS, FAIL

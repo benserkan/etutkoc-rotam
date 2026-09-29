@@ -8,7 +8,7 @@ const TYPE_LABEL: Record<string, string> = {
   change: "Sayı değişikliği",
   replace: "Kaynak değişikliği",
   remove: "Görev kaldırma",
-  question: "Soru",
+  question: "Soru / not",
   add: "Görev ekleme",
 };
 const STATUS: Record<string, { label: string; bg: string; text: string }> = {
@@ -32,12 +32,14 @@ function RequestCard({
   onApprove,
   onReject,
   onRespond,
+  onAck,
 }: {
   req: TeacherRequestListItem;
   busy: boolean;
   onApprove: (r: TeacherRequestListItem) => void;
   onReject: (r: TeacherRequestListItem) => void;
   onRespond: (r: TeacherRequestListItem) => void;
+  onAck: (r: TeacherRequestListItem) => void;
 }) {
   const st = STATUS[req.status] ?? STATUS.pending;
   const isQuestion = req.type === "question";
@@ -58,7 +60,7 @@ function RequestCard({
       <Text className="mt-1 text-[13px] font-medium text-brand-700">{req.student_name}</Text>
 
       {req.task_title ? (
-        <Text className="mt-1 text-[13px] text-slate-600" numberOfLines={2}>
+        <Text className="mt-1 text-[13px] text-slate-600">
           {req.task_title}
           {req.task_date ? <Text className="text-slate-400">  ·  {shortDate(req.task_date)}</Text> : null}
         </Text>
@@ -80,14 +82,24 @@ function RequestCard({
       {pending ? (
         <View className="mt-3 flex-row gap-2">
           {isQuestion ? (
-            <Pressable
-              onPress={() => onRespond(req)}
-              disabled={busy}
-              className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-brand-700 py-2.5 active:bg-brand-800"
-            >
-              <Ionicons name="chatbubble-outline" size={16} color="#fff" />
-              <Text className="text-sm font-semibold text-white">Yanıtla</Text>
-            </Pressable>
+            <>
+              <Pressable
+                onPress={() => onRespond(req)}
+                disabled={busy}
+                className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-brand-700 py-2.5 active:bg-brand-800"
+              >
+                <Ionicons name="chatbubble-outline" size={16} color="#fff" />
+                <Text className="text-sm font-semibold text-white">Cevapla</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => onAck(req)}
+                disabled={busy}
+                className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 active:bg-slate-50"
+              >
+                <Ionicons name="checkmark-done" size={17} color="#334155" />
+                <Text className="text-sm font-semibold text-slate-700">Gördüm</Text>
+              </Pressable>
+            </>
           ) : (
             <>
               <Pressable
@@ -116,12 +128,27 @@ function RequestCard({
   );
 }
 
+function SectionHeader({ title, count, hint }: { title: string; count: number; hint: string }) {
+  return (
+    <View className="mt-1">
+      <View className="flex-row items-center gap-2">
+        <Text className="text-sm font-bold text-slate-900">{title}</Text>
+        <View className="rounded-full bg-slate-800 px-2 py-0.5">
+          <Text className="text-[11px] font-bold text-white">{count}</Text>
+        </View>
+      </View>
+      <Text className="mt-0.5 text-xs text-slate-500">{hint}</Text>
+    </View>
+  );
+}
+
 export function TeacherRequestsView({
   data,
   busy = false,
   onApprove,
   onReject,
   onRespond,
+  onAck,
   refreshing = false,
   onRefresh,
 }: {
@@ -130,9 +157,17 @@ export function TeacherRequestsView({
   onApprove: (r: TeacherRequestListItem) => void;
   onReject: (r: TeacherRequestListItem) => void;
   onRespond: (r: TeacherRequestListItem) => void;
+  onAck: (r: TeacherRequestListItem) => void;
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
+  const pending = data.items.filter((r) => r.status === "pending");
+  const approvals = pending.filter((r) => r.type !== "question");
+  const notes = pending.filter((r) => r.type === "question");
+  const rest = data.items.filter((r) => r.status !== "pending");
+  const card = (r: TeacherRequestListItem) => (
+    <RequestCard key={r.id} req={r} busy={busy} onApprove={onApprove} onReject={onReject} onRespond={onRespond} onAck={onAck} />
+  );
   return (
     <ScrollView
       className="flex-1 bg-slate-50"
@@ -148,9 +183,28 @@ export function TeacherRequestsView({
           </Text>
         </View>
       ) : (
-        data.items.map((r) => (
-          <RequestCard key={r.id} req={r} busy={busy} onApprove={onApprove} onReject={onReject} onRespond={onRespond} />
-        ))
+        <>
+          {approvals.length > 0 ? (
+            <>
+              <SectionHeader title="Onayını bekleyenler" count={approvals.length}
+                hint="Programda değişiklik istiyor. Onaylarsan programa uygulanır; reddedersen gerekçen öğrenciye gider." />
+              {approvals.map(card)}
+            </>
+          ) : null}
+          {notes.length > 0 ? (
+            <>
+              <SectionHeader title="Soru ve not mesajları" count={notes.length}
+                hint="Onay gerektirmez, görevi kilitlemez. İstersen cevapla; gerekmiyorsa “Gördüm” ile kapat." />
+              {notes.map(card)}
+            </>
+          ) : null}
+          {rest.length > 0 ? (
+            <>
+              {pending.length > 0 ? <SectionHeader title="Geçmiş" count={rest.length} hint="Yanıtlanmış ve kapanmış talepler." /> : null}
+              {rest.map(card)}
+            </>
+          ) : null}
+        </>
       )}
     </ScrollView>
   );

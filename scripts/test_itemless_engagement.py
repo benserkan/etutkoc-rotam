@@ -33,6 +33,11 @@ from app.models.task import Task, TaskBookItem, TaskType, TaskStatus
 from app.services.security import hash_password
 from app.services import analytics, risk_analysis
 
+# Gün içi uyarı saate bağlı (2026-09-29): testler akşam 23:30'da çalışıyormuş gibi
+import datetime as _dt_freeze
+from app.services import analytics as _an_freeze
+_an_freeze._tr_now = lambda: _dt_freeze.datetime.combine(_dt_freeze.date.today(), _dt_freeze.time(23, 30), tzinfo=_dt_freeze.timezone.utc)
+
 PFX = "itleng_" + secrets.token_hex(3)
 PWD = "ItlEng!2345"
 now = datetime.now(timezone.utc)

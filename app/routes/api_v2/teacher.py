@@ -575,7 +575,7 @@ def teacher_dashboard_v2(
             if _t.date == today:
                 _today_by.setdefault(_t.student_id, []).append(_t)
         for _sid in _all_ids:
-            _gw = gorev_stats.summarize(_wk_by.get(_sid, []))
+            _gw = gorev_stats.summarize(gorev_stats.settled_tasks(_wk_by.get(_sid, []), today))
             gorev_week_total += _gw.gorev_total
             gorev_week_done += _gw.gorev_done
             test_week_planned += _gw.test_planned
@@ -852,7 +852,7 @@ def teacher_students_v2(
             ww = min(sn.warnings, key=lambda x: _wrank.get(x.level, 9))
             ww_title, ww_detail = ww.title, ww.detail
         _g = gorev_stats.summarize(_today_by_student.get(s.id, []))
-        _gw = gorev_stats.summarize(_week_by_student.get(s.id, []))
+        _gw = gorev_stats.summarize(gorev_stats.settled_tasks(_week_by_student.get(s.id, []), today))
         items.append(TeacherStudentListItem(
             id=s.id,
             full_name=s.full_name,
@@ -1100,7 +1100,7 @@ def teacher_student_detail_v2(
     # Görev/test/deneme ayrımlı özet (tek merkez: gorev_stats)
     from app.services import gorev_stats
     _today_g = gorev_stats.summarize(_today_tasks)
-    _week_g = gorev_stats.summarize(_week_tasks)
+    _week_g = gorev_stats.summarize(gorev_stats.settled_tasks(_week_tasks, today))
     today_done, today_tasks_total = _today_g.gorev_done, _today_g.gorev_total
     today_task_pct = _today_g.gorev_pct / 100
     week_done, week_tasks_total = _week_g.gorev_done, _week_g.gorev_total

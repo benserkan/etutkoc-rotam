@@ -148,16 +148,16 @@ try:
     check("VELİ-PANO.1 today_gorev_total = TRUTH", c["today_gorev_total"] == T.gorev_total, f"{c['today_gorev_total']}")
     check("VELİ-PANO.2 today_gorev_done = TRUTH", c["today_gorev_done"] == T.gorev_done, f"{c['today_gorev_done']}")
     # Hafta (son 7 gün) = bugün 5 + dün 1 = 6 görev; done = bugün 4 + dün 1 = 5
-    check("VELİ-PANO.3 week_gorev_total=6 (bugün5+dün1)", c["week_gorev_total"] == 6, f"{c['week_gorev_total']}")
+    check("VELİ-PANO.3 week_gorev_total=5 (bugünün yapılmamış görevi paydada değil)", c["week_gorev_total"] == 5, f"{c['week_gorev_total']}")
     check("VELİ-PANO.4 week_gorev_done=5", c["week_gorev_done"] == 5, f"{c['week_gorev_done']}")
     # Hafta test hacmi = bugün 20 + dün 8 = 28 (deneme/tam-deneme HARİÇ)
-    check("VELİ-PANO.5 week_test_planned=28 (deneme HARİÇ)", c["week_test_planned"] == 28, f"{c['week_test_planned']}")
+    check("VELİ-PANO.5 week_test_planned=18 (deneme + bugünün açık görevi HARİÇ)", c["week_test_planned"] == 18, f"{c['week_test_planned']}")
 
     # ---- VELİ DETAY (student_overview) ----
     ov = student_overview(db, par, stu.id)
     check("VELİ-DETAY.1 today.gorev_done = TRUTH", ov["today"]["gorev_done"] == T.gorev_done)
-    check("VELİ-DETAY.2 week.gorev_total=6", ov["week"]["gorev_total"] == 6, f"{ov['week']['gorev_total']}")
-    check("VELİ-DETAY.3 week.test_planned=28 (deneme HARİÇ)", ov["week"]["test_planned"] == 28, f"{ov['week']['test_planned']}")
+    check("VELİ-DETAY.2 week.gorev_total=5", ov["week"]["gorev_total"] == 5, f"{ov['week']['gorev_total']}")
+    check("VELİ-DETAY.3 week.test_planned=18 (deneme + bugünün açık görevi HARİÇ)", ov["week"]["test_planned"] == 18, f"{ov['week']['test_planned']}")
 
     # ---- TUTARLILIK: yüzeyler AYNI bugün-görev sayısını veriyor ----
     check("TUTARLILIK bugün-görev: gün==veli-pano==veli-detay",

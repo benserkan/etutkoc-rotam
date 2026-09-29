@@ -95,6 +95,14 @@ def classify_gorev(task: Task) -> str:
     return "test"
 
 
+def settled_tasks(tasks, today):
+    """"Son 7 gün" özetleri için: bugünün HENÜZ YAPILMAMIŞ görevleri paydaya
+    girmez (gün sürüyor). Sabah bakan koç "%80" görüp alarma geçmesin — Zeynep
+    Ela: biten günlerde 37/37 yaparken bugünün 9 açık göreviyle 37/46 görünüyordu.
+    Bugün yapılmış görev sayılır; geçmiş günler olduğu gibi kalır."""
+    return [t for t in tasks if not (t.date == today and not gorev_done(t))]
+
+
 def gorev_done(task: Task) -> bool:
     """Görev tamamlandı mı? (manşet % + 'X/Y görev' için)
 

@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { TeacherRequestsView } from "@/components/teacher/teacher-requests-view";
 import { ApiError } from "@/lib/api";
 import {
+  acknowledgeTeacherRequest,
   approveTeacherRequest,
   getTeacherRequests,
   rejectTeacherRequest,
@@ -64,7 +65,12 @@ export default function TeacherRequestsTab() {
     onSuccess: () => { invalidate(); closeAction(); },
     onError: onErr,
   });
-  const busy = approveMut.isPending || rejectMut.isPending || respondMut.isPending;
+  const ackMut = useMutation({
+    mutationFn: (id: number) => acknowledgeTeacherRequest(id),
+    onSuccess: invalidate,
+    onError: onErr,
+  });
+  const busy = approveMut.isPending || rejectMut.isPending || respondMut.isPending || ackMut.isPending;
 
   function closeAction() {
     setAction(null);
@@ -91,7 +97,11 @@ export default function TeacherRequestsTab() {
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
       <View className="px-4 py-3">
         <Text className="text-xl font-bold text-slate-900">Talepler</Text>
-        <Text className="mt-0.5 text-xs text-slate-500">Öğrencilerinden GELEN program istekleri ve soruları. Buradan onayla, reddet veya yanıtla.</Text>
+        <Text className="mt-0.5 text-xs text-slate-500">
+          {q.data
+            ? `${q.data.pending_count} talep onayını bekliyor · ${q.data.open_question_count ?? 0} yeni mesaj`
+            : "Öğrencilerinden gelen program istekleri ve mesajları."}
+        </Text>
         <View className="mt-2 flex-row items-start gap-1.5 rounded-lg bg-brand-50 px-3 py-2">
           <Ionicons name="information-circle-outline" size={15} color="#0e7490" style={{ marginTop: 1 }} />
           <Text className="flex-1 text-[11px] text-brand-800">
@@ -136,6 +146,7 @@ export default function TeacherRequestsTab() {
           onApprove={onApprove}
           onReject={(r) => setAction({ item: r, type: "reject" })}
           onRespond={(r) => setAction({ item: r, type: "respond" })}
+          onAck={(r) => ackMut.mutate(r.id)}
           refreshing={q.isRefetching}
           onRefresh={() => q.refetch()}
         />
@@ -146,7 +157,7 @@ export default function TeacherRequestsTab() {
         <KeyboardAvoidingView behavior="padding" className="flex-1 justify-end bg-black/40">
           <View className="rounded-t-3xl bg-white p-5 pb-8">
             <Text className="text-base font-bold text-slate-900">
-              {action?.type === "reject" ? "Talebi reddet" : "Soruyu yanıtla"}
+              {action?.type === "reject" ? "Talebi reddet" : "Mesajı cevapla"}
             </Text>
             <Text className="mt-1 text-xs text-slate-500">
               {action?.type === "reject" ? "Öğrenciye iletilecek red gerekçesi." : "Öğrenciye iletilecek yanıt."}

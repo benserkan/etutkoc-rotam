@@ -128,7 +128,7 @@ def list_parent_students(db: Session, parent: User) -> list[dict[str, Any]]:
                     Task.date <= today, Task.is_draft.is_(False))
             .all()
         )
-        _gw = gorev_stats.summarize(_wk_tasks)
+        _gw = gorev_stats.summarize(gorev_stats.settled_tasks(_wk_tasks, today))
         _gt = gorev_stats.summarize([t for t in _wk_tasks if t.date == today])
         out.append({
             "student_id": s.id,
@@ -195,7 +195,7 @@ def student_overview(db: Session, parent: User, student_id: int) -> dict[str, An
                 Task.date <= today, Task.is_draft.is_(False))
         .all()
     )
-    _gw = gorev_stats.summarize(_wk_tasks)
+    _gw = gorev_stats.summarize(gorev_stats.settled_tasks(_wk_tasks, today))
     _gt = gorev_stats.summarize([t for t in _wk_tasks if t.date == today])
 
     # 30 günlük TEST trend serileri — yalnız soru bankası (deneme test'e karışmaz)

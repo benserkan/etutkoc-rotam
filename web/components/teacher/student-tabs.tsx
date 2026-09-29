@@ -876,6 +876,18 @@ function StatusSummary({
               {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
               Tutarlılık %{consistency}
             </p>
+            <dl className="mt-2 grid grid-cols-1 gap-x-3 gap-y-0.5 text-xs opacity-90 sm:grid-cols-[auto_1fr]">
+              <dt className="font-semibold">Son 7 gün görev</dt>
+              <dd>
+                Son 7 günde verilen görevlerin kaçı tamamlandı. Bugünün henüz
+                yapılmamış görevleri sayılmaz (gün sürüyor).
+              </dd>
+              <dt className="font-semibold">Tutarlılık</dt>
+              <dd>
+                Son 7 günde görev verilen günlerin kaçında en az bir görev
+                tamamlandı. Programsız günler ve henüz tik atılmamış bugün sayılmaz.
+              </dd>
+            </dl>
           </div>
         )}
 

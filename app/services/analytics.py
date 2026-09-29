@@ -121,6 +121,49 @@ def _tr_now() -> datetime:
     return datetime.now(timezone.utc) + timedelta(hours=3)
 
 
+TICK_DEFAULT_DUE_MIN = 19 * 60      # geçmişi az öğrencide: 19:00
+TICK_MIN_DUE_MIN = 12 * 60          # en erken 12:00 (sabah uyarısı anlamsız)
+TICK_MAX_DUE_MIN = 23 * 60          # en geç 23:00
+TICK_HISTORY_DAYS = 21
+TICK_MIN_SAMPLE_DAYS = 5
+
+
+def usual_first_tick(db: Session, student_id: int, today: date) -> tuple[int, int]:
+    """Öğrencinin ilk tik saati alışkanlığı → (beklenen başlama dakikası, örnek gün).
+
+    Son 21 günde her gün için İLK tamamlanan görevin saati (TR) alınır; saat,
+    görevin kendi gününe göre ölçülür (00:23'te atılan tik = önceki günün 24:23'ü
+    — öğrencilerin çoğu tiklerini gece topluca atıyor). Günlerin %75'inde bu
+    saate kadar başlamıştır → beklenen = 75. yüzdelik + 60 dk, [12:00, 23:00].
+    """
+    start = today - timedelta(days=TICK_HISTORY_DAYS)
+    rows = (
+        db.query(Task.date, Task.completed_at)
+        .filter(Task.student_id == student_id, Task.date >= start, Task.date < today,
+                Task.completed_at.isnot(None), Task.is_draft.is_(False))
+        .all()
+    )
+    first: dict[date, int] = {}
+    for d, ts in rows:
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        tr = ts + timedelta(hours=3)
+        mins = (tr.date() - d).days * 1440 + tr.hour * 60 + tr.minute
+        if mins < 0 or mins > 1440 + 6 * 60:   # günden önce / ertesi 06:00 sonrası: geç giriş, alışkanlık değil
+            continue
+        first[d] = min(first.get(d, 10**6), mins)
+    vals = sorted(first.values())
+    if len(vals) < TICK_MIN_SAMPLE_DAYS:
+        return TICK_DEFAULT_DUE_MIN, len(vals)
+    p75 = vals[min(len(vals) - 1, int(round(0.75 * (len(vals) - 1))))]
+    return max(TICK_MIN_DUE_MIN, min(TICK_MAX_DUE_MIN, p75 + 60)), len(vals)
+
+
+def _hm(mins: int) -> str:
+    m = mins % 1440
+    return f"{m // 60:02d}:{m % 60:02d}" + (" (gece)" if mins >= 1440 else "")
+
+
 def _as_local_date(dt: datetime | None) -> date | None:
     if dt is None:
         return None
@@ -637,15 +680,33 @@ def daily_activity_flag_series(
 def consistency_score(
     db: Session, student_id: int, end_date: date, days: int = 7
 ) -> float:
-    """Son N günün kaçında öğrenci en az 1 görevi tikledi (etkinlik dahil) / N.
+    """Tutarlılık = son N günde PROGRAMLI günlerin kaçında en az 1 tik var.
 
-    Engagement metriği — itemless etkinlik görevi tamamlaması da aktif gün sayılır.
+    2026-09-29 düzeltmesi: eskiden payda N gündü → programsız dinlenme günü ve
+    henüz bitmemiş bugün "pasif" sayılıyordu (Zeynep Ela: programlı 5 günün
+    5'inde tik varken %71). Artık payda = yayınlanmış görevi olan günler; bitiş
+    günü (bugün) yalnız tik atılmışsa hesaba girer (gün sürüyor). Etkinlik
+    görevi tamamlaması da aktif gün sayılır.
     """
-    flags = daily_activity_flag_series(db, student_id, end_date, days)
-    if not flags:
+    start = end_date - timedelta(days=days - 1)
+    tasks = (
+        db.query(Task)
+        .options(joinedload(Task.book_items))
+        .filter(Task.student_id == student_id, Task.date >= start,
+                Task.date <= end_date, Task.is_draft.is_(False))
+        .all()
+    )
+    programmed: set[date] = set()
+    active: set[date] = set()
+    for t in tasks:
+        programmed.add(t.date)
+        if t.status == TaskStatus.COMPLETED or any(it.completed_count > 0 for it in t.book_items):
+            active.add(t.date)
+    if end_date in programmed and end_date not in active:
+        programmed.discard(end_date)
+    if not programmed:
         return 0.0
-    active_days = sum(1 for v in flags.values() if v)
-    return active_days / days
+    return len(active & programmed) / len(programmed)
 
 
 def hit_rate(
@@ -789,21 +850,29 @@ def generate_warnings(
     _today_gorev = len(_today_tasks)
     _today_gorev_done = sum(1 for t in _today_tasks if gorev_stats.gorev_done(t))
     if _today_gorev > 0 and _today_gorev_done == 0:
-        # Saat geç mi? Akşam geçmiş ama hiç tik yok — kırmızı; gün hâlâ devam ediyorsa sarı
+        # Gün içi uyarı yalnız öğrencinin OLAĞAN başlama saati geçince (2026-09-29):
+        # sabah 08:52'de "bugün hiç tik yok" demek anlamsız ve alarm körlüğü
+        # yaratıyordu; tiklerin çoğu 22:00–01:00 arası atılıyor. Kırmızıya dönüş
+        # yok — ertesi gün 'yesterday_no_tick' devreye girer.
         _now_tr = _tr_now()
-        level = "red" if _now_tr.hour >= 20 else "amber"
-        out.append(Warning(
-            level=level,
-            code="today_no_tick",
-            title="Bugün hiç tik yapmadı",
-            detail=f"Bugüne planlanmış {_today_gorev} görev var, henüz hiçbiri yapılmadı.",
-            evidence=[
-                ("Bugün", _d(today)),
-                ("Yayınlanmış görev", f"{_today_gorev} görev"),
-                ("Tamamlanan", "0 görev"),
-                ("Kontrol saati", f"{_now_tr:%H:%M} (20:00'den sonra kırmızıya döner)"),
-            ],
-        ))
+        _due, _n = usual_first_tick(db, student.id, today)
+        _now_min = _now_tr.hour * 60 + _now_tr.minute
+        if _now_tr.date() == today and _now_min >= _due:
+            out.append(Warning(
+                level="amber",
+                code="today_no_tick",
+                title="Bugün henüz başlamadı",
+                detail=(f"Bugüne {_today_gorev} görev var, hiçbiri yapılmadı; öğrenci "
+                        f"genelde bu saate kadar başlamış olur."),
+                evidence=[
+                    ("Bugün", _d(today)),
+                    ("Yayınlanmış görev", f"{_today_gorev} görev · 0 tamamlandı"),
+                    ("Olağan başlama", (f"{_hm(_due - 60)} (son {TICK_HISTORY_DAYS} günde {_n} günün %75'i)"
+                                        if _n >= TICK_MIN_SAMPLE_DAYS else
+                                        f"geçmiş az ({_n} gün) — varsayılan {_hm(_due)}")),
+                    ("Uyarı saati", f"{_hm(_due)} · şimdi {_now_tr:%H:%M}"),
+                ],
+            ))
 
     # 2) Dün de tik yoksa — ciddileştir (etkinlik görevi de tik sayılır)
     yesterday = today - timedelta(days=1)
