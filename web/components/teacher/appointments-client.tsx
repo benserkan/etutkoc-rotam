@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -9,6 +10,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
   Clock,
   Link2,
   Pencil,
@@ -16,6 +18,7 @@ import {
   Repeat,
   Video,
   X,
+  type LucideIcon,
 } from "lucide-react";
 
 import {
@@ -52,30 +55,35 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * Koç görüşme takvimi — 14 günlük görünüm + bekleyen istekler + haftalık
- * planlar + uygunluk saatleri + Google Meet bağlantısı.
+ * Koç görüşme takvimi — 2026-09-29 yeniden tasarım: özet şeridi + sıradaki
+ * görüşme + haftalık ızgara + yan sütun (istekler, haftalık planlar,
+ * uygunluk, Google). Tarayıcı istemleri (prompt/confirm) yerine diyaloglar.
  */
 
 const WEEKDAYS = [
   "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar",
 ];
+const MONTHS = [
+  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+];
 
-const STATUS_TONE: Record<string, string> = {
-  scheduled: "border-l-cyan-500 bg-cyan-50 dark:bg-cyan-500/10",
-  pending: "border-l-amber-500 bg-amber-50 dark:bg-amber-500/10",
-  cancelled: "border-l-slate-300 bg-slate-50 dark:bg-slate-500/10 opacity-70",
-  rejected: "border-l-slate-300 bg-slate-50 dark:bg-slate-500/10 opacity-70",
-  done: "border-l-emerald-500 bg-emerald-50 dark:bg-emerald-500/10",
-  no_show: "border-l-rose-500 bg-rose-50 dark:bg-rose-500/10",
+const STATUS_RAIL: Record<string, string> = {
+  scheduled: "border-l-cyan-600",
+  pending: "border-l-amber-500",
+  cancelled: "border-l-slate-400 opacity-70",
+  rejected: "border-l-slate-400 opacity-70",
+  done: "border-l-emerald-600",
+  no_show: "border-l-rose-600",
 };
 
 const STATUS_CHIP: Record<string, string> = {
-  scheduled: "bg-cyan-100 text-cyan-900 dark:bg-cyan-500/20 dark:text-cyan-200",
-  pending: "bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200",
-  cancelled: "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-  rejected: "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-  done: "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-200",
-  no_show: "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200",
+  scheduled: "bg-cyan-700 text-white",
+  pending: "bg-amber-500 text-slate-950",
+  cancelled: "bg-slate-500 text-white",
+  rejected: "bg-slate-500 text-white",
+  done: "bg-emerald-600 text-white",
+  no_show: "bg-rose-600 text-white",
 };
 
 function todayISO(): string {
@@ -100,24 +108,56 @@ function fmtShort(iso: string): string {
   return `${dd}.${m}`;
 }
 
+function fmtLong(iso: string): string {
+  const d = new Date(`${iso}T12:00:00`);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function weekdayIdx(iso: string): number {
+  return (new Date(`${iso}T12:00:00`).getDay() + 6) % 7;
+}
+
+function relDay(iso: string): string {
+  const t = todayISO();
+  if (iso === t) return "Bugün";
+  if (iso === addDays(t, 1)) return "Yarın";
+  return `${fmtLong(iso)} ${WEEKDAYS[weekdayIdx(iso)]}`;
+}
+
 interface Props {
   initial: TeacherAppointmentsResponse;
   students: TeacherStudentListItem[];
 }
 
-export function AppointmentsClient({ initial, students }: Props) {
-  const [weekStart, setWeekStart] = React.useState(() => mondayOf(todayISO()));
-  const isDefaultRange = weekStart === mondayOf(todayISO());
+type ReasonAsk = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  danger?: boolean;
+  withReason: boolean;
+  onConfirm: (reason: string) => void;
+} | null;
 
-  const q = useQuery<TeacherAppointmentsResponse>({
-    queryKey: appointmentKeys.teacher("me", weekStart),
-    queryFn: () => getTeacherAppointments(weekStart, addDays(weekStart, 13)),
-    initialData: isDefaultRange ? initial : undefined,
+export function AppointmentsClient({ initial, students }: Props) {
+  const thisMonday = mondayOf(todayISO());
+  const [weekStart, setWeekStart] = React.useState(thisMonday);
+
+  // Özet (bu hafta + gelecek hafta) — takvim nereye gidilirse gitsin sabit
+  const home = useQuery<TeacherAppointmentsResponse>({
+    queryKey: appointmentKeys.teacher("me", thisMonday),
+    queryFn: () => getTeacherAppointments(thisMonday, addDays(thisMonday, 13)),
+    initialData: initial,
     staleTime: 15_000,
   });
-  const data = q.data ?? initial;
+  const view = useQuery<TeacherAppointmentsResponse>({
+    queryKey: appointmentKeys.teacher("me", weekStart),
+    queryFn: () => getTeacherAppointments(weekStart, addDays(weekStart, 13)),
+    enabled: weekStart !== thisMonday,
+    staleTime: 15_000,
+  });
+  const homeData = home.data ?? initial;
+  const viewData = weekStart === thisMonday ? homeData : (view.data ?? null);
 
-  // Google OAuth dönüş bildirimi (?google=connected|error|denied)
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const g = params.get("google");
@@ -132,130 +172,458 @@ export function AppointmentsClient({ initial, students }: Props) {
   const [availOpen, setAvailOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<AppointmentItem | null>(null);
   const [recording, setRecording] = React.useState<AppointmentItem | null>(null);
+  const [seriesTime, setSeriesTime] = React.useState<SeriesItem | null>(null);
+  const [ask, setAsk] = React.useState<ReasonAsk>(null);
+
+  const today = todayISO();
+  const upcoming = homeData.items
+    .filter((a) => a.status === "scheduled" && !a.is_past)
+    .sort((a, b) => (a.date + a.start_time).localeCompare(b.date + b.start_time));
+  const next = upcoming[0] ?? null;
+  const thisWeekEnd = addDays(thisMonday, 6);
+  const weekPlanned = homeData.items.filter(
+    (a) => a.status === "scheduled" && a.date >= thisMonday && a.date <= thisWeekEnd,
+  ).length;
+  const toRecord = homeData.items.filter(
+    (a) => !a.session_id && ((a.status === "scheduled" && a.is_past) || a.status === "done" || a.status === "no_show"),
+  );
 
   const days = React.useMemo(() => {
     const out: { date: string; items: AppointmentItem[] }[] = [];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = addDays(weekStart, i);
-      out.push({ date: d, items: data.items.filter((a) => a.date === d) });
+      out.push({
+        date: d,
+        items: (viewData?.items ?? [])
+          .filter((a) => a.date === d)
+          .sort((a, b) => a.start_time.localeCompare(b.start_time)),
+      });
     }
     return out;
-  }, [weekStart, data.items]);
+  }, [weekStart, viewData]);
+  const viewCount = days.reduce((n, d) => n + d.items.filter((a) => a.status === "scheduled").length, 0);
 
-  const activeCount = data.items.filter((a) => a.status === "scheduled").length;
+  const cardActions = {
+    onEdit: setEditing,
+    onRecord: setRecording,
+    onAsk: setAsk,
+  };
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold inline-flex items-center gap-2">
-            <Video className="size-5 text-cyan-700" aria-hidden />
+          <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
+            <Video className="size-6 text-cyan-700 dark:text-cyan-400" aria-hidden />
             Görüşmeler
           </h1>
-          <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-            Online koçluk görüşmelerini planla; öğrenci ve veli otomatik
-            bilgilendirilir, görüşmeden önce hatırlatma gider.
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            Online koçluk görüşmelerini planla; öğrenci ve veli otomatik bilgilendirilir,
+            görüşmeden önce hatırlatma gider.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setAvailOpen(true)}>
-            <Clock className="size-4 mr-1.5" aria-hidden />
+            <Clock className="mr-1.5 size-4" aria-hidden />
             Uygunluk saatleri
           </Button>
           <Button
-            className="bg-cyan-700 hover:bg-cyan-800 text-white hover:text-white"
+            className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white"
             onClick={() => setCreateOpen(true)}
+            data-testid="appt-new"
           >
-            <Plus className="size-4 mr-1.5" aria-hidden />
+            <Plus className="mr-1.5 size-4" aria-hidden />
             Yeni görüşme
           </Button>
         </div>
+      </header>
+
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatCard icon={CalendarDays} chip="bg-cyan-700 text-white" label="Bu hafta planlı"
+          value={weekPlanned} unit="görüşme" />
+        <StatCard icon={CalendarClock} chip={homeData.pending.length > 0 ? "bg-amber-500 text-slate-950" : "bg-slate-600 text-white"}
+          label="Onay bekleyen istek" value={homeData.pending.length} unit="istek" />
+        <StatCard icon={ClipboardCheck} chip={toRecord.length > 0 ? "bg-rose-600 text-white" : "bg-slate-600 text-white"}
+          label="Kaydı bekleyen seans" value={toRecord.length} unit="görüşme (bu hafta)" />
+      </section>
+
+      <NextCard next={next} onRecord={setRecording} />
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_340px]">
+        <section className="rounded-xl border border-border bg-card shadow-sm" data-section="appointments:calendar">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold">
+                {fmtLong(weekStart)} – {fmtLong(addDays(weekStart, 6))}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {viewData ? `${viewCount} planlı görüşme` : "Yükleniyor…"}
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="sm" onClick={() => setWeekStart((w) => addDays(w, -7))} aria-label="Önceki hafta">
+                <ChevronLeft className="size-4" aria-hidden />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setWeekStart(thisMonday)} disabled={weekStart === thisMonday}>
+                Bu hafta
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setWeekStart((w) => addDays(w, 7))} aria-label="Sonraki hafta">
+                <ChevronRight className="size-4" aria-hidden />
+              </Button>
+            </div>
+          </div>
+          <div className="divide-y divide-border">
+            {days.map(({ date, items }) => (
+              <DayColumn key={date} date={date} items={items} isToday={date === today} {...cardActions} />
+            ))}
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <PendingPanel pending={homeData.pending} onAsk={setAsk} />
+          <SeriesPanel series={homeData.series} onTime={setSeriesTime} onAsk={setAsk} />
+          <AvailabilitySummary windows={homeData.availability} onEdit={() => setAvailOpen(true)} />
+          <GoogleCard google={homeData.google} onAsk={setAsk} />
+        </aside>
       </div>
 
-      <GoogleCard google={data.google} />
-
-      {data.pending.length > 0 && (
-        <PendingBand pending={data.pending} />
-      )}
-
-      {/* Takvim gezgini */}
-      <div className="rounded-xl border border-border bg-card">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <div className="text-sm font-semibold inline-flex items-center gap-2">
-            <CalendarDays className="size-4 text-cyan-700" aria-hidden />
-            {fmtShort(weekStart)} – {fmtShort(addDays(weekStart, 13))}
-            <span className="text-xs font-normal text-muted-foreground">
-              · {activeCount} planlı görüşme
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline" size="sm"
-              onClick={() => setWeekStart((w) => addDays(w, -7))}
-              aria-label="Önceki hafta"
-            >
-              <ChevronLeft className="size-4" aria-hidden />
-            </Button>
-            <Button
-              variant="outline" size="sm"
-              onClick={() => setWeekStart(mondayOf(todayISO()))}
-            >
-              Bugün
-            </Button>
-            <Button
-              variant="outline" size="sm"
-              onClick={() => setWeekStart((w) => addDays(w, 7))}
-              aria-label="Sonraki hafta"
-            >
-              <ChevronRight className="size-4" aria-hidden />
-            </Button>
-          </div>
-        </div>
-
-        <div className="divide-y divide-border">
-          {days.map(({ date, items }) => (
-            <DayRow
-              key={date}
-              date={date}
-              items={items}
-              isToday={date === todayISO()}
-              onEdit={setEditing}
-              onRecord={setRecording}
-            />
-          ))}
-        </div>
-      </div>
-
-      {data.series.length > 0 && <SeriesSection series={data.series} />}
-
-      <CreateDialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        students={students}
-      />
-      <AvailabilityDialog
-        open={availOpen}
-        onClose={() => setAvailOpen(false)}
-        initial={data.availability}
-      />
-      {editing && (
-        <EditDialog appt={editing} onClose={() => setEditing(null)} />
-      )}
-      {recording && (
-        <RecordSessionDialog
-          appt={recording}
-          onClose={() => setRecording(null)}
-        />
-      )}
+      <CreateDialog open={createOpen} onClose={() => setCreateOpen(false)} students={students} />
+      <AvailabilityDialog open={availOpen} onClose={() => setAvailOpen(false)} initial={homeData.availability} />
+      {editing && <EditDialog appt={editing} onClose={() => setEditing(null)} />}
+      {recording && <RecordSessionDialog appt={recording} onClose={() => setRecording(null)} />}
+      {seriesTime && <SeriesTimeDialog series={seriesTime} onClose={() => setSeriesTime(null)} />}
+      {ask && <AskDialog ask={ask} onClose={() => setAsk(null)} />}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Google kartı
+// Özet kartları
 // ---------------------------------------------------------------------------
 
-function GoogleCard({ google }: { google: TeacherAppointmentsResponse["google"] }) {
+function StatCard({ icon: Icon, chip, label, value, unit }: {
+  icon: LucideIcon; chip: string; label: string; value: number; unit: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+      <span className={cn("grid size-10 shrink-0 place-items-center rounded-lg", chip)}>
+        <Icon className="size-5" aria-hidden />
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <p className="text-2xl font-bold tabular-nums leading-tight">
+          {value} <span className="text-sm font-medium text-muted-foreground">{unit}</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function NextCard({ next, onRecord }: { next: AppointmentItem | null; onRecord: (a: AppointmentItem) => void }) {
+  if (!next) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-card px-5 py-4 text-sm text-muted-foreground">
+        Önümüzdeki iki haftada planlı görüşme yok. “Yeni görüşme” ile plan yapabilirsin.
+      </div>
+    );
+  }
+  return (
+    <div
+      className="flex flex-wrap items-center gap-4 rounded-xl bg-gradient-to-r from-cyan-800 to-cyan-600 px-5 py-4 text-white shadow-sm"
+      data-testid="appt-next"
+    >
+      <div className="grid size-14 shrink-0 place-items-center rounded-xl bg-white/15 text-center">
+        <span className="text-lg font-bold leading-none">{next.start_time}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium uppercase tracking-wider text-cyan-100">Sıradaki görüşme</p>
+        <p className="break-words text-lg font-semibold">{next.student_name}</p>
+        <p className="text-sm text-cyan-50">
+          {relDay(next.date)} · {next.start_time} · {next.duration_min} dakika
+          {next.series_id ? " · her hafta" : ""}
+        </p>
+        {next.note ? <p className="mt-0.5 text-sm text-cyan-50">Not: {next.note}</p> : null}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {next.meeting_link ? (
+          <a
+            href={next.meeting_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-cyan-900 hover:bg-cyan-50"
+          >
+            <Video className="size-4" aria-hidden />
+            Görüşmeye katıl
+          </a>
+        ) : (
+          <span className="rounded-lg bg-white/15 px-3 py-2 text-xs text-white">
+            Görüşme linki eklenmemiş
+          </span>
+        )}
+        <Link
+          href={`/teacher/students/${next.student_id}`}
+          className="inline-flex items-center rounded-lg border border-white/40 px-3 py-2 text-sm font-medium text-white hover:bg-white/10"
+        >
+          Öğrenci profili
+        </Link>
+        {next.is_past ? (
+          <button type="button" onClick={() => onRecord(next)}
+            className="rounded-lg border border-white/40 px-3 py-2 text-sm font-medium text-white hover:bg-white/10">
+            Seansı kaydet
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Takvim
+// ---------------------------------------------------------------------------
+
+type CardActions = {
+  onEdit: (a: AppointmentItem) => void;
+  onRecord: (a: AppointmentItem) => void;
+  onAsk: (a: ReasonAsk) => void;
+};
+
+function DayColumn({ date, items, isToday, ...actions }: {
+  date: string; items: AppointmentItem[]; isToday: boolean;
+} & CardActions) {
+  const past = date < todayISO();
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-2 px-4 py-3 sm:flex-row sm:gap-4",
+        isToday && "bg-cyan-50/70 dark:bg-cyan-500/10",
+        past && !isToday && "bg-muted/30",
+      )}
+      data-testid="appt-day"
+    >
+      <div className="shrink-0 sm:w-32">
+        <p className={cn("text-xs font-semibold uppercase tracking-wide",
+          isToday ? "text-cyan-800 dark:text-cyan-300" : "text-muted-foreground")}>
+          {WEEKDAYS[weekdayIdx(date)]}{isToday ? " · Bugün" : ""}
+        </p>
+        <p className={cn("text-sm font-semibold", isToday && "text-cyan-800 dark:text-cyan-300")}>
+          {fmtLong(date)}
+        </p>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-xs text-muted-foreground/70 sm:self-center">Görüşme yok</p>
+      ) : (
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2 2xl:grid-cols-3">
+          {items.map((a) => <AppointmentCard key={a.id} appt={a} {...actions} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AppointmentCard({ appt, onEdit, onRecord, onAsk }: { appt: AppointmentItem } & CardActions) {
+  const setStatus = useSetAppointmentStatus();
+  const active = appt.status === "scheduled" || appt.status === "pending";
+  const needsRecord = !appt.session_id && ((appt.status === "scheduled" && appt.is_past) || appt.status === "done" || appt.status === "no_show");
+  return (
+    <div className={cn("rounded-lg border border-border border-l-4 bg-card p-2.5 shadow-sm", STATUS_RAIL[appt.status])}
+      data-testid="appt-card">
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <span className="text-base font-bold tabular-nums">{appt.start_time}</span>
+        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", STATUS_CHIP[appt.status])}>
+          {appt.status_label}
+        </span>
+      </div>
+      <Link href={`/teacher/students/${appt.student_id}`} className="mt-0.5 block break-words text-sm font-medium hover:underline">
+        {appt.student_name}
+      </Link>
+      <p className="text-xs text-muted-foreground">
+        {appt.duration_min} dk
+        {appt.series_id ? (
+          <span className="ml-1 inline-flex items-center gap-0.5"><Repeat className="size-3" aria-hidden /> her hafta</span>
+        ) : null}
+      </p>
+      {appt.note ? <p className="mt-1 break-words text-xs text-muted-foreground">{appt.note}</p> : null}
+      {appt.cancel_reason ? <p className="mt-1 break-words text-xs text-muted-foreground">Sebep: {appt.cancel_reason}</p> : null}
+      <div className="mt-2 flex flex-wrap gap-1">
+        {appt.meeting_link && active && !appt.is_past ? (
+          <a href={appt.meeting_link} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-md bg-cyan-700 px-2 py-1 text-xs font-semibold text-white hover:bg-cyan-800">
+            <Video className="size-3" aria-hidden /> Katıl
+          </a>
+        ) : null}
+        {appt.session_id ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">
+            <Check className="size-3" aria-hidden /> Seans kaydedildi
+          </span>
+        ) : needsRecord ? (
+          <button type="button" onClick={() => onRecord(appt)}
+            className="rounded-md bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700">
+            Seansı kaydet
+          </button>
+        ) : null}
+        {appt.status === "scheduled" && !appt.is_past ? (
+          <>
+            <button type="button" onClick={() => onEdit(appt)} aria-label="Düzenle"
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium hover:bg-muted">
+              <Pencil className="size-3" aria-hidden /> Düzenle
+            </button>
+            <button type="button" disabled={setStatus.isPending}
+              onClick={() => onAsk({
+                title: "Görüşmeyi iptal et",
+                description: `${appt.student_name} · ${relDay(appt.date)} ${appt.start_time}. Öğrenci ve veliye iptal bildirimi gider.`,
+                confirmLabel: "Görüşmeyi iptal et",
+                danger: true,
+                withReason: true,
+                onConfirm: (reason) => setStatus.mutate({ apptId: appt.id, status: "cancelled", reason: reason || undefined }),
+              })}
+              className="rounded-md border border-border px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10">
+              İptal
+            </button>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Yan sütun
+// ---------------------------------------------------------------------------
+
+function Panel({ icon: Icon, title, children, action }: {
+  icon: LucideIcon; title: string; children: React.ReactNode; action?: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
+          <Icon className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function PendingPanel({ pending, onAsk }: { pending: AppointmentItem[]; onAsk: (a: ReasonAsk) => void }) {
+  const approve = useApproveAppointment();
+  const reject = useRejectAppointment();
+  return (
+    <Panel icon={CalendarClock} title={`Görüşme istekleri (${pending.length})`}>
+      {pending.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Bekleyen istek yok. Öğrenciler uygunluk saatlerinden görüşme isteyebilir.
+        </p>
+      ) : (
+        <ul className="space-y-2" data-testid="appt-pending">
+          {pending.map((p) => (
+            <li key={p.id} className="rounded-lg border border-amber-300 border-l-4 border-l-amber-500 p-2.5 dark:border-amber-500/40">
+              <p className="break-words text-sm font-semibold">{p.student_name}</p>
+              <p className="text-xs text-muted-foreground">
+                {relDay(p.date)} · {p.start_time} · {p.duration_min} dk
+              </p>
+              {p.request_note ? (
+                <p className="mt-1 break-words rounded-md bg-muted/60 px-2 py-1 text-xs">“{p.request_note}”</p>
+              ) : null}
+              <div className="mt-2 flex gap-1.5">
+                <Button size="sm" className="h-7 bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white"
+                  disabled={approve.isPending} onClick={() => approve.mutate({ apptId: p.id })}>
+                  <Check className="mr-1 size-3.5" aria-hidden /> Onayla
+                </Button>
+                <Button size="sm" variant="outline" className="h-7" disabled={reject.isPending}
+                  onClick={() => onAsk({
+                    title: "Görüşme isteğini reddet",
+                    description: `${p.student_name} · ${relDay(p.date)} ${p.start_time}. Sebep öğrenciye iletilir.`,
+                    confirmLabel: "Reddet",
+                    danger: true,
+                    withReason: true,
+                    onConfirm: (reason) => reject.mutate({ apptId: p.id, reason: reason || undefined }),
+                  })}>
+                  <X className="mr-1 size-3.5" aria-hidden /> Reddet
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+function SeriesPanel({ series, onTime, onAsk }: {
+  series: SeriesItem[]; onTime: (s: SeriesItem) => void; onAsk: (a: ReasonAsk) => void;
+}) {
+  const update = useUpdateSeries();
+  return (
+    <Panel icon={Repeat} title="Haftalık görüşme planları">
+      {series.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Sabit gün/saatli görüşme yok. Yeni görüşmede “Her hafta tekrarla”yı seçersen
+          sistem randevuyu her hafta kendiliğinden oluşturur.
+        </p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {series.map((s) => (
+            <li key={s.id} className="py-2">
+              <p className="break-words text-sm font-medium">{s.student_name}</p>
+              <p className="text-xs text-muted-foreground">
+                Her {s.weekday_label} {s.start_time} · {s.duration_min} dk
+                {s.link_source === "google" ? " · Meet otomatik" : s.meeting_link ? " · link var" : ""}
+              </p>
+              <div className="mt-1.5 flex gap-1.5">
+                <button type="button" onClick={() => onTime(s)} disabled={update.isPending}
+                  className="rounded-md border border-border px-2 py-1 text-xs font-medium hover:bg-muted">
+                  Saati değiştir
+                </button>
+                <button type="button" disabled={update.isPending}
+                  onClick={() => onAsk({
+                    title: "Haftalık planı kapat",
+                    description: `${s.student_name} ile her ${s.weekday_label} ${s.start_time} görüşmesi kapatılır; gelecekteki planlı görüşmeler iptal edilir.`,
+                    confirmLabel: "Planı kapat",
+                    danger: true,
+                    withReason: false,
+                    onConfirm: () => update.mutate({ seriesId: s.id, active: false }),
+                  })}
+                  className="rounded-md border border-border px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10">
+                  Kapat
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+function AvailabilitySummary({ windows, onEdit }: { windows: AvailabilityWindowItem[]; onEdit: () => void }) {
+  const sorted = [...windows].sort((a, b) => a.weekday - b.weekday || a.start_time.localeCompare(b.start_time));
+  return (
+    <Panel icon={Clock} title="Uygunluk saatlerin"
+      action={<button type="button" onClick={onEdit} className="text-xs font-medium text-cyan-700 hover:underline dark:text-cyan-400">Düzenle</button>}>
+      {sorted.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Tanımlı değil — öğrenciler görüşme isteyemez, görüşmeleri yalnız sen planlarsın.
+        </p>
+      ) : (
+        <ul className="space-y-1 text-xs">
+          {sorted.map((w, i) => (
+            <li key={i} className="flex justify-between gap-2">
+              <span className="font-medium">{WEEKDAYS[w.weekday]}</span>
+              <span className="text-muted-foreground">{w.start_time}–{w.end_time} · {w.slot_minutes} dk</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+function GoogleCard({ google, onAsk }: {
+  google: TeacherAppointmentsResponse["google"]; onAsk: (a: ReasonAsk) => void;
+}) {
   const disconnect = useDisconnectGoogle();
   const [loading, setLoading] = React.useState(false);
   if (!google.configured) return null;
@@ -272,341 +640,101 @@ function GoogleCard({ google }: { google: TeacherAppointmentsResponse["google"] 
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="size-9 rounded-lg bg-cyan-50 dark:bg-cyan-500/10 flex items-center justify-center shrink-0">
-          <Link2 className="size-4 text-cyan-700" aria-hidden />
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm font-semibold">Google Meet bağlantısı</div>
-          {google.connected ? (
-            <div className="text-xs text-muted-foreground truncate">
-              {google.email ?? "Bağlı"} — yeni randevulara Meet linki otomatik eklenir
-              {google.last_error && (
-                <span className="text-rose-600 dark:text-rose-400">
-                  {" "}· Son hata: {google.last_error}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div className="text-xs text-muted-foreground">
-              Google hesabını bağlarsan görüşme linkleri senin hesabından
-              otomatik oluşturulur (ücretsiz Gmail yeterli). Bağlamazsan linki
-              elle yapıştırabilirsin.
-            </div>
-          )}
-        </div>
-      </div>
+    <Panel icon={Link2} title="Google Meet bağlantısı">
       {google.connected ? (
-        <Button
-          variant="outline" size="sm"
-          onClick={() => {
-            if (window.confirm("Google bağlantısı kaldırılsın mı? Mevcut linkler silinmez; yeni randevularda otomatik link üretilmez.")) {
-              disconnect.mutate();
-            }
-          }}
-          disabled={disconnect.isPending}
-        >
-          Bağlantıyı kaldır
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          className="bg-cyan-700 hover:bg-cyan-800 text-white hover:text-white"
-          onClick={connect}
-          disabled={loading}
-        >
-          {loading ? "Yönlendiriliyor…" : "Google ile bağlan"}
-        </Button>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Bekleyen istekler
-// ---------------------------------------------------------------------------
-
-function PendingBand({ pending }: { pending: AppointmentItem[] }) {
-  const approve = useApproveAppointment();
-  const reject = useRejectAppointment();
-  return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-4">
-      <div className="text-sm font-semibold text-amber-900 dark:text-amber-200 inline-flex items-center gap-2">
-        <CalendarClock className="size-4" aria-hidden />
-        Onay bekleyen görüşme istekleri ({pending.length})
-      </div>
-      <div className="mt-3 space-y-2">
-        {pending.map((p) => (
-          <div
-            key={p.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white dark:bg-slate-900/40 border border-amber-200 dark:border-amber-500/30 px-3 py-2"
-          >
-            <div className="min-w-0 text-sm">
-              <span className="font-semibold">{p.student_name}</span>
-              <span className="text-muted-foreground">
-                {" "}· {fmtShort(p.date)} {p.weekday_label} {p.start_time}
-                {" "}· {p.duration_min} dk
-              </span>
-              {p.request_note && (
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  &quot;{p.request_note}&quot;
-                </div>
-              )}
-            </div>
-            <div className="flex gap-1.5">
-              <Button
-                size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white hover:text-white"
-                disabled={approve.isPending}
-                onClick={() => approve.mutate({ apptId: p.id })}
-              >
-                <Check className="size-3.5 mr-1" aria-hidden />
-                Onayla
-              </Button>
-              <Button
-                size="sm" variant="outline"
-                disabled={reject.isPending}
-                onClick={() => {
-                  const reason = window.prompt(
-                    "Reddetme sebebi (öğrenciye iletilir, boş bırakılabilir):",
-                  );
-                  if (reason === null) return;
-                  reject.mutate({ apptId: p.id, reason: reason || undefined });
-                }}
-              >
-                <X className="size-3.5 mr-1" aria-hidden />
-                Reddet
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Gün satırı + randevu kartı
-// ---------------------------------------------------------------------------
-
-function DayRow({
-  date,
-  items,
-  isToday,
-  onEdit,
-  onRecord,
-}: {
-  date: string;
-  items: AppointmentItem[];
-  isToday: boolean;
-  onEdit: (a: AppointmentItem) => void;
-  onRecord: (a: AppointmentItem) => void;
-}) {
-  const weekday = WEEKDAYS[new Date(`${date}T12:00:00`).getDay() === 0 ? 6 : new Date(`${date}T12:00:00`).getDay() - 1];
-  if (items.length === 0) {
-    return (
-      <div className="flex items-center gap-3 px-4 py-1.5 text-xs text-muted-foreground/60">
-        <span className={cn("w-28 shrink-0", isToday && "font-bold text-cyan-700 dark:text-cyan-400")}>
-          {fmtShort(date)} {weekday}{isToday ? " · Bugün" : ""}
-        </span>
-        <span>—</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-start gap-2 px-4 py-2.5">
-      <span className={cn(
-        "w-28 shrink-0 text-xs pt-1.5 font-medium",
-        isToday ? "font-bold text-cyan-700 dark:text-cyan-400" : "text-muted-foreground",
-      )}>
-        {fmtShort(date)} {weekday}{isToday ? " · Bugün" : ""}
-      </span>
-      <div className="flex-1 space-y-1.5">
-        {items.map((a) => (
-          <AppointmentCard key={a.id} appt={a} onEdit={onEdit} onRecord={onRecord} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AppointmentCard({
-  appt,
-  onEdit,
-  onRecord,
-}: {
-  appt: AppointmentItem;
-  onEdit: (a: AppointmentItem) => void;
-  onRecord: (a: AppointmentItem) => void;
-}) {
-  const setStatus = useSetAppointmentStatus();
-  const active = appt.status === "scheduled" || appt.status === "pending";
-  return (
-    <div className={cn(
-      "rounded-lg border border-border border-l-4 px-3 py-2",
-      STATUS_TONE[appt.status] ?? "",
-    )}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="min-w-0 text-sm">
-          <span className="font-semibold text-slate-900 dark:text-slate-100">
-            {appt.start_time}
-          </span>
-          <span className="text-slate-700 dark:text-slate-300">
-            {" "}· {appt.student_name} · {appt.duration_min} dk
-          </span>
-          {appt.series_id && (
-            <span title="Haftalık tekrarlayan görüşme">
-              <Repeat className="inline size-3.5 ml-1.5 text-cyan-700 dark:text-cyan-400" aria-hidden />
-            </span>
-          )}
-          <span className={cn(
-            "ml-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold",
-            STATUS_CHIP[appt.status] ?? "",
-          )}>
-            {appt.status_label}
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          {appt.meeting_link && active && (
-            <a
-              href={appt.meeting_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-md bg-cyan-700 hover:bg-cyan-800 text-white px-2.5 py-1 text-xs font-semibold"
-            >
-              <Video className="size-3.5" aria-hidden />
-              Katıl
-            </a>
-          )}
-          {/* F4 — seans kaydedildiyse rozet; biten görüşmede "Seansı kaydet" */}
-          {appt.session_id ? (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 px-1.5">
-              <Check className="size-3.5" aria-hidden />
-              Seans kaydedildi
-            </span>
-          ) : (appt.status === "done" || appt.status === "no_show") ? (
-            <Button
-              variant="ghost" size="sm"
-              className="h-7 px-2 text-cyan-700 dark:text-cyan-400"
-              onClick={() => onRecord(appt)}
-            >
-              Seansı kaydet
-            </Button>
+        <>
+          <p className="break-words text-xs text-muted-foreground">
+            {google.email ?? "Bağlı"} — yeni randevulara Meet linki otomatik eklenir.
+          </p>
+          {google.last_error ? (
+            <p className="mt-1 break-words text-xs text-rose-700 dark:text-rose-400">Son hata: {google.last_error}</p>
           ) : null}
-          {appt.status === "scheduled" && (
-            <>
-              <Button
-                variant="ghost" size="sm" className="h-7 px-2"
-                onClick={() => onEdit(appt)}
-                aria-label="Düzenle"
-              >
-                <Pencil className="size-3.5" aria-hidden />
-              </Button>
-              {appt.is_past ? (
-                <Button
-                  size="sm"
-                  className="h-7 px-2.5 bg-cyan-700 hover:bg-cyan-800 text-white hover:text-white text-xs"
-                  onClick={() => onRecord(appt)}
-                >
-                  Seansı kaydet
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost" size="sm"
-                  className="h-7 px-2 text-rose-700 dark:text-rose-400"
-                  disabled={setStatus.isPending}
-                  onClick={() => {
-                    const reason = window.prompt(
-                      "İptal sebebi (öğrenci ve veliye iletilir, boş bırakılabilir):",
-                    );
-                    if (reason === null) return;
-                    setStatus.mutate({
-                      apptId: appt.id, status: "cancelled",
-                      reason: reason || undefined,
-                    });
-                  }}
-                >
-                  İptal
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-      {appt.note && (
-        <div className="text-xs text-muted-foreground mt-1">{appt.note}</div>
+          <Button variant="outline" size="sm" className="mt-2" disabled={disconnect.isPending}
+            onClick={() => onAsk({
+              title: "Google bağlantısını kaldır",
+              description: "Mevcut linkler silinmez; yeni randevularda otomatik Meet linki üretilmez.",
+              confirmLabel: "Bağlantıyı kaldır",
+              danger: true,
+              withReason: false,
+              onConfirm: () => disconnect.mutate(),
+            })}>
+            Bağlantıyı kaldır
+          </Button>
+        </>
+      ) : (
+        <>
+          <p className="text-xs text-muted-foreground">
+            Google hesabını bağlarsan görüşme linkleri senin hesabından otomatik oluşturulur
+            (ücretsiz Gmail yeterli). Bağlamazsan linki elle yapıştırabilirsin.
+          </p>
+          <Button size="sm" className="mt-2 bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white"
+            onClick={connect} disabled={loading}>
+            {loading ? "Yönlendiriliyor…" : "Google ile bağlan"}
+          </Button>
+        </>
       )}
-      {appt.cancel_reason && (
-        <div className="text-xs text-muted-foreground mt-1">
-          Sebep: {appt.cancel_reason}
-        </div>
-      )}
-    </div>
+    </Panel>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Haftalık planlar
+// Onay / gerekçe diyaloğu + seri saati
 // ---------------------------------------------------------------------------
 
-function SeriesSection({ series }: { series: SeriesItem[] }) {
-  const update = useUpdateSeries();
+function AskDialog({ ask, onClose }: { ask: NonNullable<ReasonAsk>; onClose: () => void }) {
+  const [reason, setReason] = React.useState("");
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="px-4 py-3 border-b border-border">
-        <div className="text-sm font-semibold inline-flex items-center gap-2">
-          <Repeat className="size-4 text-cyan-700" aria-hidden />
-          Haftalık görüşme planları
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{ask.title}</DialogTitle>
+          <DialogDescription>{ask.description}</DialogDescription>
+        </DialogHeader>
+        {ask.withReason ? (
+          <label className="block text-sm">
+            <span className="font-medium">Sebep (isteğe bağlı)</span>
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3}
+              data-testid="ask-reason"
+              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
+          </label>
+        ) : null}
+        <div className="flex justify-end gap-2 pt-1">
+          <Button type="button" variant="outline" onClick={onClose}>Vazgeç</Button>
+          <Button type="button" data-testid="ask-confirm"
+            className={cn("text-white hover:text-white", ask.danger ? "bg-rose-600 hover:bg-rose-700" : "bg-cyan-700 hover:bg-cyan-800")}
+            onClick={() => { ask.onConfirm(reason.trim()); onClose(); }}>
+            {ask.confirmLabel}
+          </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Sabit gün/saat — sistem her hafta randevuyu kendiliğinden oluşturur.
-        </p>
-      </div>
-      <div className="divide-y divide-border">
-        {series.map((s) => (
-          <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-sm">
-            <div className="min-w-0">
-              <span className="font-semibold">{s.student_name}</span>
-              <span className="text-muted-foreground">
-                {" "}· her {s.weekday_label} {s.start_time} · {s.duration_min} dk
-              </span>
-              {s.meeting_link && (
-                <span className="text-xs text-muted-foreground block truncate max-w-md">
-                  {s.link_source === "google" ? "Meet (otomatik): " : "Link: "}
-                  {s.meeting_link}
-                </span>
-              )}
-            </div>
-            <div className="flex gap-1.5">
-              <Button
-                variant="outline" size="sm"
-                disabled={update.isPending}
-                onClick={() => {
-                  const t = window.prompt("Yeni saat (SS:DD):", s.start_time);
-                  if (!t || t === s.start_time) return;
-                  update.mutate({ seriesId: s.id, start_time: t });
-                }}
-              >
-                Saati değiştir
-              </Button>
-              <Button
-                variant="outline" size="sm"
-                className="text-rose-700 dark:text-rose-400"
-                disabled={update.isPending}
-                onClick={() => {
-                  if (window.confirm(`${s.student_name} ile haftalık görüşme planı kapatılsın mı? Gelecekteki planlı görüşmeler iptal edilir.`)) {
-                    update.mutate({ seriesId: s.id, active: false });
-                  }
-                }}
-              >
-                Kapat
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SeriesTimeDialog({ series, onClose }: { series: SeriesItem; onClose: () => void }) {
+  const update = useUpdateSeries();
+  const [time, setTime] = React.useState(series.start_time);
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Haftalık görüşme saati</DialogTitle>
+          <DialogDescription>
+            {series.student_name} · her {series.weekday_label}. Gelecekteki planlı görüşmeler yeni saate taşınır.
+          </DialogDescription>
+        </DialogHeader>
+        <input type="time" value={time} onChange={(e) => setTime(e.target.value)}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
+        <div className="flex justify-end gap-2 pt-1">
+          <Button type="button" variant="outline" onClick={onClose}>Vazgeç</Button>
+          <Button type="button" disabled={!time || time === series.start_time || update.isPending}
+            className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white"
+            onClick={() => update.mutate({ seriesId: series.id, start_time: time }, { onSuccess: onClose })}>
+            Kaydet
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
