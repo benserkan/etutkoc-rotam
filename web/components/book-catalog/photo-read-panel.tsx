@@ -25,6 +25,11 @@ import { useBulkCreateSections } from "@/lib/hooks/use-library-mutations";
 import type { LibraryBookDetailResponse } from "@/lib/types/library";
 import type { StructureReadResult } from "@/lib/types/book-catalog";
 
+// Tahmin uyarısı editörün kendi "tahmini" notunda anlatılıyor — tekrar gösterme.
+function visibleWarnings(ws: string[]): string[] {
+  return ws.filter((w) => !w.includes("TAHMİN"));
+}
+
 export function PhotoReadPanel({
   book,
   initial,
@@ -39,10 +44,11 @@ export function PhotoReadPanel({
           label: s.label,
           test_count: s.test_count,
           suspect: s.suspect,
+          estimated: s.estimated ?? false,
         }))
       : null,
   );
-  const [warnings, setWarnings] = React.useState<string[]>(() => initial?.warnings ?? []);
+  const [warnings, setWarnings] = React.useState<string[]>(() => visibleWarnings(initial?.warnings ?? []));
   const [readsLeft, setReadsLeft] = React.useState<number | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
@@ -58,9 +64,10 @@ export function PhotoReadPanel({
             label: s.label,
             test_count: s.test_count,
             suspect: s.suspect,
+            estimated: s.estimated ?? false,
           })),
         );
-        setWarnings(res.warnings);
+        setWarnings(visibleWarnings(res.warnings));
         setReadsLeft(res.reads_left_today);
       },
     });

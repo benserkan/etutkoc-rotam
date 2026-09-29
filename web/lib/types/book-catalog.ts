@@ -16,6 +16,10 @@ export interface StructureReadSection {
   test_count: number | null;
   /** Çift okuma çelişkisi — önizlemede amber vurgulanır. */
   suspect: boolean;
+  /** İçindekilerde yazan başlangıç sayfası. */
+  page?: number | null;
+  /** Test sayısı yazmıyordu — sayfa aralığından TAHMİN edildi. */
+  estimated?: boolean;
 }
 
 export interface StructureReadResult {

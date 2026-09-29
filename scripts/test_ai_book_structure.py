@@ -224,6 +224,47 @@ def main() -> int:
             str(res)[:200],
         )
 
+        # ===== 9b. test sayısı YOK + sayfa var → sayfa aralığından tahmin =====
+        paged_json = json.dumps({
+            "book_title": "Sayfalı Kitap", "publisher": None, "subject_hint": None,
+            "grade_hint": None,
+            "sections": [
+                {"label": "SAYILAR", "test_count": None, "page": None},
+                {"label": "Kümeler", "test_count": None, "page": 5},
+                {"label": "Fonksiyonlar", "test_count": None, "page": 15},
+                {"label": "Polinomlar", "test_count": 7, "page": 29},
+                {"label": "Olasılık", "test_count": None, "page": 43},
+            ],
+        }, ensure_ascii=False)
+        gemini.generate = lambda *a, **k: paged_json  # type: ignore[assignment]
+        res = abs_svc.read_structure([(b"fakejpg", "image/jpeg")])
+        secs = res["sections"]
+        check(
+            "9b. sayfa tahmini (+ünite başlığı çıkar): 10 s.→5 · 14 s.→7 · yazılı 7 korunur · son bölüm ortanca · estimated işaretli",
+            [x["test_count"] for x in secs] == [5, 7, 7, 7]
+            and [x["estimated"] for x in secs] == [True, True, False, True]
+            and any("TAHMİN" in w for w in res["warnings"])
+            and any("ünite başlığı" in w for w in res["warnings"])
+            and not any("elle doldurun" in w for w in res["warnings"]),
+            str(secs),
+        )
+        # ===== 9c. sayfa sırası bozuk / eksik → tahmin YOK (uydurma yok) =====
+        bad = [
+            {"label": "A", "test_count": None, "page": 30, "suspect": False},
+            {"label": "B", "test_count": None, "page": 10, "suspect": False},
+            {"label": "C", "test_count": None, "page": None, "suspect": False},
+        ]
+        few = [
+            {"label": "A", "test_count": None, "page": 3, "suspect": False},
+            {"label": "B", "test_count": None, "page": None, "suspect": False},
+            {"label": "C", "test_count": None, "page": None, "suspect": False},
+        ]
+        check(
+            "9c. sayfa sırası bozuk ya da yetersiz → tahmin yapılmaz",
+            abs_svc.estimate_from_pages(bad) == 0 and abs_svc.estimate_from_pages(few) == 0
+            and all(x["test_count"] is None for x in bad + few),
+        )
+
         # ===== 10. identify_cover =====
         gemini.generate = lambda *a, **k: json.dumps({  # type: ignore[assignment]
             "book_title": "Apotemi TYT Matematik", "publisher": "Apotemi",

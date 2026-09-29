@@ -476,7 +476,9 @@ class BookSetApplyResult(BaseModel):
 class StructureReadSection(BaseModel):
     label: str
     test_count: int | None       # null = içindekilerde yazmıyor (koç doldurur)
-    suspect: bool = False        # çift okuma çelişkisi — önizlemede amber
+    suspect: bool = False
+    page: int | None = None      # içindekilerde yazan başlangıç sayfası
+    estimated: bool = False      # test sayısı sayfa aralığından TAHMİN edildi        # çift okuma çelişkisi — önizlemede amber
 
 
 class StructureReadResult(BaseModel):

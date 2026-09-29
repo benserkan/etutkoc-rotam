@@ -69,6 +69,7 @@ KURALLAR (çok önemli):
     bir sonraki konu başlığına kadar gelen test satırları o konuya aittir).
   * Sayfa numaralarını sayma, TESTLERİ say.
   * İçindekiler test bilgisi hiç vermiyorsa test_count=null yaz — ASLA TAHMİN ETME.
+- page: bölümün içindekilerde YAZAN başlangıç sayfa numarası (tam sayı); yazmıyorsa null. Sayfa numarasını ASLA uydurma.
 - ÇALIŞMA BÖLÜMÜ OLMAYAN satırları listeye ALMA: önsöz/sunuş, içindekiler,
   cevap anahtarı, çözümler, kavramlar sözlüğü, dizin, yazar hakkında vb.
 - SADECE NUMARA taşıyan GRUP başlıklarını listeye ALMA: "BÖLÜM 07", "ÜNİTE 3"
@@ -89,7 +90,7 @@ YALNIZ şu JSON nesnesini döndür:
   "subject_hint": "ders adı" | null,
   "grade_hint": 5-12 arası tam sayı | null,
   "sections": [
-    {"label": "bölüm/ünite adı", "test_count": int | null}
+    {"label": "bölüm/ünite adı", "test_count": int | null, "page": int | null}
   ]
 }"""
 
@@ -133,6 +134,14 @@ def _clean_count(v: Any) -> int | None:
     return min(n, 200)
 
 
+def _clean_page(v: Any) -> int | None:
+    try:
+        n = int(str(v).strip())
+    except (TypeError, ValueError):
+        return None
+    return n if 1 <= n <= 2000 else None
+
+
 def _clean_grade(v: Any) -> int | None:
     try:
         n = int(v)
@@ -161,7 +170,11 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
             continue
         if _GROUP_HEADER_RE.match(label):
             continue
-        sections.append({"label": label, "test_count": _clean_count(item.get("test_count"))})
+        sections.append({
+            "label": label,
+            "test_count": _clean_count(item.get("test_count")),
+            "page": _clean_page(item.get("page")),
+        })
     return {
         "book_title": _clean_str(data.get("book_title")),
         "publisher": _clean_str(data.get("publisher")),
@@ -246,7 +259,8 @@ def _merge_reads(r1: dict[str, Any], r2: dict[str, Any]) -> dict[str, Any]:
                 "subject_hint": r1["subject_hint"] or r2["subject_hint"],
                 "grade_hint": r1["grade_hint"] or r2["grade_hint"],
                 "sections": [
-                    {"label": x["label"], "test_count": x["test_count"], "suspect": False}
+                    {"label": x["label"], "test_count": x["test_count"], "suspect": False,
+                     "page": x.get("page")}
                     for x in base_r["sections"]
                 ],
                 "warnings": warnings,
@@ -290,12 +304,14 @@ def _merge_reads(r1: dict[str, Any], r2: dict[str, Any]) -> dict[str, Any]:
             count = c1 if c1 is not None else c2
             if count is not None and not _labels_agree(a["label"], (b or a)["label"]):
                 suspect = True
-        merged.append({"label": label, "test_count": count, "suspect": suspect})
+        page = a.get("page") or (b.get("page") if b else None)
+        merged.append({"label": label, "test_count": count, "suspect": suspect, "page": page})
 
     # Yalnız ikinci okumada görünen bölümler (birincinin kaçırdıkları)
     extra = [sec for sec in s2 if id(sec) not in used2]
     for sec in extra:
-        merged.append({"label": sec["label"], "test_count": sec["test_count"], "suspect": True})
+        merged.append({"label": sec["label"], "test_count": sec["test_count"], "suspect": True,
+                       "page": sec.get("page")})
 
     if len(s1) != len(s2):
         warnings.append(
@@ -357,7 +373,8 @@ def read_structure(files: list[tuple[bytes, str]]) -> dict[str, Any]:
         result = {
             **only,
             "sections": [
-                {"label": s["label"], "test_count": s["test_count"], "suspect": False}
+                {"label": s["label"], "test_count": s["test_count"], "suspect": False,
+                 "page": s.get("page")}
                 for s in only["sections"]
             ],
             "warnings": [single_warning],
@@ -369,12 +386,77 @@ def read_structure(files: list[tuple[bytes, str]]) -> dict[str, Any]:
             "Bu görselden bölüm listesi çıkarılamadı. Lütfen kitabın İÇİNDEKİLER "
             "sayfasını net bir şekilde çekin (kapak değil)."
         )
+    for sec in result["sections"]:
+        sec.setdefault("estimated", False)
+    estimated = estimate_from_pages(result["sections"])
+    if estimated:
+        # Sayfa numarası ve test sayısı olmayan satırlar bu düzende ünite
+        # başlıklarıdır ("BASINÇ", "MADDE VE ENDÜSTRİ") — test bağlanmaz.
+        headers = [
+            x for x in result["sections"]
+            if x.get("test_count") is None and not x.get("page")
+        ]
+        if headers and len(headers) < len(result["sections"]) // 2:
+            result["sections"] = [x for x in result["sections"] if x not in headers]
+            result["warnings"].append(
+                f"{len(headers)} ünite başlığı (sayfa ve test bilgisi yok) listeden çıkarıldı: "
+                + ", ".join(h["label"] for h in headers[:6])
+                + ("…" if len(headers) > 6 else "")
+            )
+        result["warnings"].append(
+            f"{estimated} bölümde test sayısı içindekilerde yazmıyor — sayfa aralığından "
+            f"TAHMİN edildi (her test ≈ {PAGES_PER_TEST} sayfa). 'Tahmini' satırları kitapla "
+            "karşılaştır; konu anlatımı sayfaları varsa sayı fazla çıkabilir."
+        )
     missing = sum(1 for s in result["sections"] if s["test_count"] is None)
     if missing:
         result["warnings"].append(
             f"{missing} bölümde test sayısı içindekilerde yazmıyor — elle doldurun."
         )
     return result
+
+
+PAGES_PER_TEST = 2
+
+
+def estimate_from_pages(sections: list[dict[str, Any]]) -> int:
+    """Test sayısı yazmayan bölümlere içindekilerdeki SAYFA ARALIĞINDAN tahmin.
+
+    Kural: aralık = sonraki sayfa numaralı bölümün başlangıcı − bu bölümün
+    başlangıcı; test ≈ aralık / PAGES_PER_TEST (en az 1). Son bölümün bitişi
+    bilinmediğinden diğer aralıkların ortancası kullanılır. Yalnız sayfa
+    numaraları bölümlerin en az yarısında VAR ve SIRALI (azalmayan) ise
+    çalışır — aksi halde hiçbir şey uydurulmaz. Tahmin edilen satır
+    `estimated=True` taşır (arayüzde "tahmini" rozeti). Döner: tahmin sayısı.
+    """
+    if not any(s.get("test_count") is None for s in sections):
+        return 0
+    idx = [i for i, s in enumerate(sections) if s.get("page")]
+    if len(idx) < max(2, (len(sections) + 1) // 2):
+        return 0
+    pages = [sections[i]["page"] for i in idx]
+    if any(b < a for a, b in zip(pages, pages[1:])):
+        return 0
+    spans: dict[int, int] = {}
+    for k, i in enumerate(idx[:-1]):
+        span = sections[idx[k + 1]]["page"] - sections[i]["page"]
+        if span > 0:
+            spans[i] = span
+    if not spans:
+        return 0
+    ordered = sorted(spans.values())
+    median = ordered[len(ordered) // 2]
+    n = 0
+    for i, sec in enumerate(sections):
+        if sec.get("test_count") is not None or not sec.get("page"):
+            continue
+        span = spans.get(i) or (median if i == idx[-1] else None)
+        if not span:
+            continue
+        sec["test_count"] = max(1, round(span / PAGES_PER_TEST))
+        sec["estimated"] = True
+        n += 1
+    return n
 
 
 def identify_cover(image: bytes, media_type: str) -> dict[str, Any]:
@@ -434,7 +516,10 @@ def prepare_scan_files(files: list[tuple[bytes, str]]) -> dict[str, Any]:
             raise ScanFileError("mixed_files", "PDF tek başına yüklenmeli (fotoğrafla karıştırmayın).")
         raw = pdfs[0][0]
         try:
-            import fitz  # PyMuPDF
+            try:
+                import pymupdf as fitz  # PyMuPDF (yeni ad)
+            except ImportError:
+                import fitz  # PyMuPDF eski ad
         except ImportError:  # pragma: no cover — kurulum eksik
             if len(raw) > MAX_PDF_BYTES:
                 raise ScanFileError("file_too_large", "PDF en fazla 10 MB olabilir.")

@@ -203,6 +203,7 @@ function EntryDialog({
             label: s.label,
             test_count: s.test_count,
             suspect: s.suspect,
+            estimated: s.estimated ?? false,
           })),
         }));
       },

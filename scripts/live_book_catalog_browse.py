@@ -73,7 +73,7 @@ def truncated(pg, sel: str) -> int:
 def main() -> int:
     from playwright.sync_api import sync_playwright
     os.makedirs(SHOT_DIR, exist_ok=True)
-    pdf_match = sys.argv[1] if len(sys.argv) > 1 else None
+    pdf_match = next((a for a in sys.argv[1:] if not a.startswith("--")), None)
     d = seed()
     try:
         with sync_playwright() as pw:
@@ -158,8 +158,9 @@ def main() -> int:
                     or pg.locator('[data-testid="scan-read-ok"]').count() == 1, out[:200])
                 pg.screenshot(path=os.path.join(SHOT_DIR, "catalog_scan.png"), full_page=True)
                 force = pg.get_by_role("button", name="Bu kitap değil — içindekileri oku")
-                if matched and force.count():
-                    force.click()
+                if (matched and force.count()) or pg.locator('[data-testid="scan-read-ok"]').count():
+                    if matched and force.count():
+                        force.click()
                     pg.wait_for_selector('[data-testid="scan-read-ok"]', timeout=240_000)
                     name_val = pg.locator("#cb-name").input_value() \
                         if pg.locator("#cb-name").count() else ""
@@ -178,6 +179,12 @@ def main() -> int:
                     body = pg.locator("main").inner_text()
                     chk("15. 2. adımda okunan bölümler taslak olarak hazır",
                         "bölüm okundu" in body and "kitaba ekle" in body, body[:300])
+                    if "--expect-estimate" in sys.argv:
+                        chk("16. tahmini rozeti + açıklama notu",
+                            pg.locator('[data-testid="estimated-badge"]').count() > 0
+                            and pg.locator('[data-testid="estimated-note"]').count() == 1)
+                        chk("17. taslak listesinde kırpma/taşma yok",
+                            not pg.evaluate("() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1"))
                     pg.screenshot(path=os.path.join(SHOT_DIR, "catalog_scan_step2.png"), full_page=True)
             b.close()
     finally:

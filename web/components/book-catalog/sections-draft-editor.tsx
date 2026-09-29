@@ -22,6 +22,8 @@ export interface DraftSection {
   label: string;
   test_count: number | null;
   suspect?: boolean;
+  /** Test sayısı içindekilerde yoktu — sayfa aralığından tahmin (≈2 sayfa/test). */
+  estimated?: boolean;
   /** Mevcut müfredat bağı — editör DOKUNMAZ, kaydetmede aynen geri gönderilir
    *  (admin düzenlemesi kürasyonu silmesin; 2026-08-11 bug'ı). Yeni satır: null. */
   topic_id?: number | null;
@@ -44,7 +46,18 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
   const [bulkCount, setBulkCount] = React.useState("");
 
   const update = (i: number, patch: Partial<DraftSection>) => {
-    onChange(sections.map((s, idx) => (idx === i ? { ...s, ...patch, suspect: patch.test_count !== undefined ? false : s.suspect } : s)));
+    onChange(
+      sections.map((s, idx) =>
+        idx === i
+          ? {
+              ...s,
+              ...patch,
+              suspect: patch.test_count !== undefined ? false : s.suspect,
+              estimated: patch.test_count !== undefined ? false : s.estimated,
+            }
+          : s,
+      ),
+    );
   };
   const remove = (i: number) => onChange(sections.filter((_, idx) => idx !== i));
   const add = () =>
@@ -52,14 +65,33 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
   const applyAll = () => {
     const n = Number(bulkCount);
     if (!Number.isFinite(n) || n < 1) return;
-    onChange(sections.map((s) => ({ ...s, test_count: Math.min(Math.round(n), 500), suspect: false })));
+    onChange(
+      sections.map((s) => ({
+        ...s,
+        test_count: Math.min(Math.round(n), 500),
+        suspect: false,
+        estimated: false,
+      })),
+    );
   };
 
   const suspectCount = sections.filter((s) => s.suspect).length;
   const missingCount = sections.filter((s) => (s.test_count ?? 0) < 1).length;
+  const estimatedCount = sections.filter((s) => s.estimated).length;
 
   return (
     <div className="space-y-2">
+      {estimatedCount > 0 && (
+        <div
+          className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-100"
+          data-testid="estimated-note"
+        >
+          <strong>{estimatedCount} bölümün test sayısı tahmini:</strong> içindekilerde test
+          sayısı yazmıyordu; sayfa aralığından hesaplandı (her test ≈ 2 sayfa). Kitapla
+          karşılaştırıp düzelt — hepsi aynıysa sağ alttaki <em>Tümüne uygula</em> ile tek
+          seferde yaz.
+        </div>
+      )}
       {(suspectCount > 0 || missingCount > 0) && (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
@@ -115,6 +147,15 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
               )}
             />
             <span className="w-8 shrink-0 text-xs text-muted-foreground">test</span>
+            {s.estimated ? (
+              <span
+                className="shrink-0 rounded bg-sky-600 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                title="İçindekilerde test sayısı yoktu — sayfa aralığından tahmin edildi"
+                data-testid="estimated-badge"
+              >
+                tahmini
+              </span>
+            ) : null}
             <button
               type="button"
               onClick={() => remove(i)}
