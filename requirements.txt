@@ -20,3 +20,4 @@ pyotp>=2.9.0  # 2FA TOTP (Dalga 7 P4)
 cryptography>=42.0.0  # süper admin API anahtarı şifreleme (Fernet) — system_secrets
 PyJWT>=2.9.0  # JWT access/refresh + BFF cookie + api_v1 mobil (jwt_auth.py)
 iyzipay>=1.0.46  # Iyzico Checkout Form (Ödeme Paket Ö1) — sandbox + prod tek SDK
+pymupdf>=1.24.0  # kitap tarama: PDF'in ilk sayfaları + kapak görseli (book-structure/scan)

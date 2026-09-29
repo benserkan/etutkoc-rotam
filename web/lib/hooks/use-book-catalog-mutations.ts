@@ -19,10 +19,12 @@ import {
   coachContributeCatalog,
   coachIdentifyCover,
   coachReadStructure,
+  coachScanBook,
 } from "@/lib/api/book-catalog";
 import type {
   AdminCatalogCreateBody,
   AdminCatalogUpdateBody,
+  BookScanResult,
   CatalogContributeBody,
   CatalogContributeResult,
   CatalogEntryDetail,
@@ -36,6 +38,7 @@ const READ_ERROR_TITLES: Record<string, string> = {
   file_too_large: "Dosya çok büyük",
   invalid_media_type: "Desteklenmeyen dosya türü",
   too_many_files: "Çok fazla fotoğraf",
+  pdf_unreadable: "PDF açılamadı",
   mixed_files: "PDF tek başına yüklenmeli",
   no_files: "Dosya seçilmedi",
   ai_provider_error: "AI servisi şu an yanıt vermiyor",
@@ -57,6 +60,14 @@ export function useReadStructure(scope: "coach" | "admin") {
     mutationFn: (files) =>
       scope === "admin" ? adminReadStructure(files) : coachReadStructure(files),
     onError: (e) => readErrorToast(e, "İçindekiler okunamadı"),
+  });
+}
+
+export function useScanBook() {
+  // eslint-disable-next-line lgs/missing-invalidate -- salt tanıma + taslak; sunucu durumunu değiştirmez
+  return useMutation<BookScanResult, ApiError, { files: File[]; forceRead?: boolean }>({
+    mutationFn: ({ files, forceRead }) => coachScanBook(files, forceRead ?? false),
+    onError: (e) => readErrorToast(e, "Kitap okunamadı"),
   });
 }
 

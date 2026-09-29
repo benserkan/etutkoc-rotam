@@ -515,11 +515,20 @@ class CatalogEntryBrief(BaseModel):
     status: str                  # pending | verified | hidden (koç ucunda hep verified)
     source: str | None = None    # admin görünümü (admin_seed / coach_contribution / ai_read)
     created_at: datetime
+    # Sınav grubu (katalog tarayıcısı süzgeci): lgs | tyt | ayt | okul
+    exam_group: str | None = None
 
 
 class CatalogSearchResponse(BaseModel):
     items: list[CatalogEntryBrief]
     total: int
+
+
+class CatalogBrowseResponse(BaseModel):
+    """Katalog tarayıcısı — yayındaki TÜM kayıtlar (ders adına göre sıralı)."""
+    items: list[CatalogEntryBrief]
+    total: int
+    total_tests: int
 
 
 class CatalogEntryDetail(CatalogEntryBrief):
@@ -540,6 +549,21 @@ class ContributeSectionItem(BaseModel):
     label: str
     test_count: int              # ≥1 (kitap oluşturulduğunda zaten dolu)
     topic_id: int | None = None
+
+
+class BookScanResult(BaseModel):
+    """"Kapak + içindekiler" tek yüklemesi: kimlik + katalog eşleşmesi + (gerekirse) yapı."""
+    book_title: str | None
+    publisher: str | None
+    subject_hint: str | None
+    grade_hint: int | None
+    exam_hint: str | None
+    catalog_matches: list[CatalogEntryBrief]
+    # Katalogda eşleşme varsa ve force_read verilmediyse None (okuma yapılmaz)
+    structure: StructureReadResult | None = None
+    notes: list[str] = []
+    page_count: int | None = None
+    reads_left_today: int | None = None
 
 
 class CatalogContributeBody(BaseModel):

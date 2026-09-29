@@ -71,6 +71,9 @@ interface Props {
   onCreated?: (book: LibraryBookDetailResponse) => void;
   submitLabel?: string;
   hideCancel?: boolean;
+  /** Kapak/içindekiler taramasından gelen ön-dolum (sihirbaz). */
+  initialName?: string | null;
+  initialPublisher?: string | null;
 }
 
 export function BookCreateForm({
@@ -79,12 +82,14 @@ export function BookCreateForm({
   onCreated,
   submitLabel,
   hideCancel,
+  initialName,
+  initialPublisher,
 }: Props) {
   const router = useRouter();
   const createMut = useCreateBook();
 
-  const [name, setName] = React.useState("");
-  const [publisher, setPublisher] = React.useState("");
+  const [name, setName] = React.useState(initialName ?? "");
+  const [publisher, setPublisher] = React.useState(initialPublisher ?? "");
   const [type, setType] = React.useState<LibraryBookType>("soru_bankasi");
   const [avgQ, setAvgQ] = React.useState("");
   const [preset, setPreset] = React.useState<GradePreset>("any");

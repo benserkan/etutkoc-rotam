@@ -114,6 +114,40 @@ def main() -> int:
         str(m["sections"]),
     )
 
+    # ===== 4b. merge: iki okuma FARKLI DÜZEY (ünite / konu) → yapıştırma yok =====
+    units = {**r_ok, "sections": [
+        {"label": "1. Ünite: Mevsimler ve İklim", "test_count": None},
+        {"label": "2. Ünite: DNA ve Genetik Kod", "test_count": None},
+    ]}
+    topics = {**r_ok, "sections": [
+        {"label": "Mevsimlerin Oluşumu", "test_count": None},
+        {"label": "İklim ve Hava Hareketleri", "test_count": None},
+        {"label": "DNA ve Genetik Kod", "test_count": None},
+        {"label": "Kalıtım", "test_count": None},
+    ]}
+    m = abs_svc._merge_reads(units, topics)
+    check(
+        "4b. merge: farklı düzey → ayrıntılı liste tek başına (4 satır, suspect yok)",
+        len(m["sections"]) == 4 and not any(x["suspect"] for x in m["sections"])
+        and any("farklı düzey" in w for w in m["warnings"]),
+        str(m),
+    )
+
+    # ===== 4c. merge: "Ünite - Konu" satırları vs yalnız üniteler (önek uyuşur) =====
+    prefixed = {**r_ok, "sections": [
+        {"label": f"{u}. Ünite: U{u} - Konu {k}", "test_count": None}
+        for u in range(1, 5) for k in (1, 2)
+    ]}
+    only_units = {**r_ok, "sections": [
+        {"label": f"{u}. Ünite: U{u}", "test_count": None} for u in range(1, 5)
+    ]}
+    m = abs_svc._merge_reads(only_units, prefixed)
+    check(
+        "4c. merge: önek-uyuşan farklı düzey → 8 satır, yapıştırma yok",
+        len(m["sections"]) == 8 and any("farklı düzey" in w for w in m["warnings"]),
+        str(m["sections"]),
+    )
+
     # ===== 5. merge: uzunluk farkı → ekstra bölüm suspect + uyarı =====
     r4 = {**r_ok, "sections": [
         {"label": "Sayılar", "test_count": 10},
@@ -229,7 +263,7 @@ def main() -> int:
             )
             check(
                 "11. record_book_read: 2 kayıt + günlük sayım arttı",
-                after == before + 2 and len(ev) == 2 and all(e.credits == 0 for e in ev),
+                after == before + 2 and len(ev) == after and all(e.credits == 0 for e in ev),
                 f"before={before} after={after} n={len(ev)}",
             )
             acc = (

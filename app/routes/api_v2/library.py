@@ -46,9 +46,10 @@ varsa 409 `has_reservations` / `has_progress` ile reddedilir.
 """
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -112,6 +113,8 @@ from app.routes.api_v2.schemas.library import (
     CatalogContributeResult,
     CatalogEntryBrief,
     CatalogEntryDetail,
+    BookScanResult,
+    CatalogBrowseResponse,
     CatalogSearchResponse,
     CatalogSectionItem,
     CoverIdentifyResult,
@@ -131,6 +134,8 @@ from app.routes.api_v2.schemas.library import (
     TopicRef,
 )
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/teacher/library", tags=["v2-teacher-library"])
 
@@ -1380,19 +1385,40 @@ def _ai_upstream_error(message: str) -> HTTPException:
     )
 
 
-def _catalog_brief(db: Session, tpl: BookTemplate) -> CatalogEntryBrief:
+def _catalog_exam_group(subject: Subject | None, tpl: BookTemplate) -> str:
+    """Katalog tarayıcısı sınav grubu: lgs | tyt | ayt | okul."""
+    sec = getattr(subject, "exam_section", None) if subject is not None else None
+    val = getattr(sec, "value", sec) or ""
+    if val == "tyt":
+        return "tyt"
+    if str(val).startswith("ayt"):
+        return "ayt"
+    model = getattr(subject, "curriculum_model", None) if subject is not None else None
+    model_val = str(getattr(model, "value", model) or "")
+    if val == "lgs" or model_val.lower() == "lgs":
+        return "lgs"
+    if tpl.target_grade_max is not None and tpl.target_grade_max <= 8 and not tpl.target_graduate:
+        return "lgs"
+    return "okul"
+
+
+def _catalog_brief(
+    db: Session, tpl: BookTemplate, subjects: dict[int, Subject] | None = None,
+) -> CatalogEntryBrief:
     secs = sorted(tpl.sections or [], key=lambda s: (s.order, s.id))
-    subject_name: str | None = None
+    subject: Subject | None = None
     if tpl.subject_id is not None:
-        row = db.query(Subject.name).filter(Subject.id == tpl.subject_id).first()
-        subject_name = row[0] if row else None
+        if subjects is not None and tpl.subject_id in subjects:
+            subject = subjects[tpl.subject_id]
+        else:
+            subject = db.get(Subject, tpl.subject_id)
     return CatalogEntryBrief(
         id=tpl.id,
         name=tpl.name,
         publisher=tpl.publisher,
         type=tpl.type.value if tpl.type else "soru_bankasi",
         subject_id=tpl.subject_id,
-        subject_name=subject_name,
+        subject_name=subject.name if subject is not None else None,
         target_grade_min=tpl.target_grade_min,
         target_grade_max=tpl.target_grade_max,
         target_graduate=bool(tpl.target_graduate),
@@ -1403,6 +1429,7 @@ def _catalog_brief(db: Session, tpl: BookTemplate) -> CatalogEntryBrief:
         status=tpl.catalog_status or "verified",
         source=tpl.source,
         created_at=tpl.created_at,
+        exam_group=_catalog_exam_group(subject, tpl),
     )
 
 
@@ -1466,6 +1493,96 @@ def library_structure_read_v2(
     )
 
 
+@router.post("/book-structure/scan", response_model=BookScanResult)
+def library_structure_scan_v2(
+    files: list[UploadFile] = File(default=[]),
+    force_read: bool = Form(False),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """"Kapak + içindekiler" TEK yükleme (1 PDF — tam kitap da olur — ya da ≤8 görsel).
+
+    1) Kapak (ilk görsel / PDF'in 1. sayfası) → kitap kimliği → katalog eşleşmesi.
+    2) Katalogda eşleşme varsa okuma YAPILMAZ (koç "Yapısını kullan" der);
+       `force_read=true` ya da eşleşme yoksa içindekiler ÇİFT okunur.
+    PDF'in yalnız ilk sayfaları okunur. Kredi düşmez; günlük tavana sayılır.
+    """
+    from app.services import ai_book_structure as abs_svc
+    from app.services import book_catalog as catalog_svc
+
+    raw_files: list[tuple[bytes, str]] = []
+    for f in [f for f in (files or []) if f is not None]:
+        raw = f.file.read()
+        if not raw:
+            raise _validation_error("empty_file", "Dosya boş.")
+        ct = (f.content_type or "").lower()
+        if ct == abs_svc.PDF_MIME and len(raw) > abs_svc.MAX_SCAN_PDF_BYTES:
+            raise _validation_error("file_too_large", "PDF en fazla 80 MB olabilir.")
+        raw_files.append((raw, ct))
+    try:
+        prep = abs_svc.prepare_scan_files(raw_files)
+    except abs_svc.ScanFileError as e:
+        raise _validation_error(e.code, e.message)
+
+    reads_left = _check_read_cap(db, user)
+    notes: list[str] = list(prep["notes"])
+    info: dict = {"book_title": None, "publisher": None, "subject_hint": None,
+                  "grade_hint": None, "exam_hint": None}
+    if prep["cover"] is not None:
+        try:
+            info = abs_svc.identify_cover(*prep["cover"])
+            abs_svc.record_book_read(db, user, mode="cover", section_count=0, autocommit=True)
+        except (abs_svc.AIServiceUnavailable, abs_svc.AIInvalidResponse) as e:
+            logger.warning("scan: kapak tanıma düştü: %s", e)
+            notes.append("Kapak tanınamadı — içindekiler yine de okundu.")
+    matches = (
+        catalog_svc.find_matches(db, info.get("book_title"), info.get("publisher"))
+        if info.get("book_title") else []
+    )
+
+    structure: StructureReadResult | None = None
+    if force_read or not matches:
+        try:
+            result = abs_svc.read_structure(prep["toc"])
+        except abs_svc.NotATocError as e:
+            abs_svc.record_book_read(db, user, mode="toc", section_count=0, autocommit=True)
+            raise _validation_error("not_a_toc", str(e))
+        except abs_svc.AIServiceUnavailable as e:
+            raise _ai_upstream_error(f"AI servisi kullanılamıyor: {e}")
+        except abs_svc.AIInvalidResponse as e:
+            raise _ai_upstream_error(f"AI yanıtı işlenemedi: {e}")
+        abs_svc.record_book_read(
+            db, user, mode="toc", section_count=len(result["sections"]), autocommit=True,
+        )
+        reads_left = max(0, reads_left - 1)
+        structure = StructureReadResult(
+            book_title=result["book_title"],
+            publisher=result["publisher"],
+            subject_hint=result["subject_hint"],
+            grade_hint=result["grade_hint"],
+            sections=[StructureReadSection(**s) for s in result["sections"]],
+            warnings=result["warnings"],
+            read_count=result["read_count"],
+            reads_left_today=reads_left,
+        )
+        # Kapak okunamadıysa kimliği içindekiler okumasından tamamla
+        for k in ("book_title", "publisher", "subject_hint", "grade_hint"):
+            if not info.get(k) and result.get(k):
+                info[k] = result[k]
+    return BookScanResult(
+        book_title=info.get("book_title"),
+        publisher=info.get("publisher"),
+        subject_hint=info.get("subject_hint"),
+        grade_hint=info.get("grade_hint"),
+        exam_hint=info.get("exam_hint"),
+        catalog_matches=[_catalog_brief(db, m) for m in matches],
+        structure=structure,
+        notes=notes,
+        page_count=prep["page_count"],
+        reads_left_today=reads_left,
+    )
+
+
 @router.post("/book-structure/identify-cover", response_model=CoverIdentifyResult)
 def library_identify_cover_v2(
     file: UploadFile = File(...),
@@ -1504,6 +1621,31 @@ def library_identify_cover_v2(
         exam_hint=info["exam_hint"],
         catalog_matches=[_catalog_brief(db, m) for m in matches],
         reads_left_today=reads_left,
+    )
+
+
+@router.get("/book-catalog/browse", response_model=CatalogBrowseResponse)
+def library_catalog_browse_v2(
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Katalog tarayıcısı — yayındaki (verified) TÜM kayıtlar.
+
+    Koç yazmadan katalogda ne olduğunu görsün (ders / sınav grubu / tür /
+    yayınevi süzgeçleri istemcide). Katalog küçük (yüzler) → tek yanıt.
+    Sıra: ders adı → kullanım (çok kullanılan önde) → kitap adı.
+    """
+    from app.services import book_catalog as catalog_svc
+
+    rows = catalog_svc.list_verified(db)
+    subj_ids = {t.subject_id for t in rows if t.subject_id is not None}
+    subjects = {
+        s.id: s for s in db.query(Subject).filter(Subject.id.in_(subj_ids)).all()
+    } if subj_ids else {}
+    items = [_catalog_brief(db, t, subjects) for t in rows]
+    items.sort(key=lambda e: ((e.subject_name or "~").lower(), -e.usage_count, e.name.lower()))
+    return CatalogBrowseResponse(
+        items=items, total=len(items), total_tests=sum(e.total_tests for e in items),
     )
 
 

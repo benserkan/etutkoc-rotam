@@ -45,6 +45,7 @@ import { BookCreateForm } from "@/components/teacher/book-create-form";
 import { CatalogQuickStart } from "@/components/book-catalog/catalog-quick-start";
 import { PhotoReadPanel } from "@/components/book-catalog/photo-read-panel";
 import { useContributeCatalog } from "@/lib/hooks/use-book-catalog-mutations";
+import type { BookScanResult, StructureReadResult } from "@/lib/types/book-catalog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,8 @@ export function BookWizardClient({ subjects, templates, students }: Props) {
   const [bookId, setBookId] = React.useState<number | null>(null);
   // Katalogdan oluşturulan kitap TEKRAR kataloğa önerilmez (mükerrer katkı yok)
   const [fromCatalog, setFromCatalog] = React.useState(false);
+  // 1. adımda "Kapak + içindekiler" ile okunan taslak — form ön-dolumu + 2. adım
+  const [scanned, setScanned] = React.useState<BookScanResult | null>(null);
 
   const bookQ = useQuery<LibraryBookDetailResponse>({
     queryKey: bookId ? libraryKeys.book(bookId) : ["library", "book", "none"],
@@ -114,7 +117,10 @@ export function BookWizardClient({ subjects, templates, students }: Props) {
             setBookId(b.id);
             setStep(2);
           }}
+          scanned={scanned}
+          onScanned={setScanned}
           onCreatedFromCatalog={(b) => {
+            setScanned(null);
             setFromCatalog(true);
             setBookId(b.id);
             setStep(2);
@@ -128,6 +134,7 @@ export function BookWizardClient({ subjects, templates, students }: Props) {
             <StepSections
               book={book}
               isExam={isExam}
+              scanned={scanned?.structure ?? null}
               onBack={null}
               onNext={() => setStep(3)}
             />
@@ -225,11 +232,15 @@ function StepNarration({ children }: { children: React.ReactNode }) {
 function StepInfo({
   subjects,
   templates,
+  scanned,
+  onScanned,
   onCreated,
   onCreatedFromCatalog,
 }: {
   subjects: SubjectRef[];
   templates: BookTemplateListItem[];
+  scanned: BookScanResult | null;
+  onScanned: (r: BookScanResult) => void;
   onCreated: (book: LibraryBookDetailResponse) => void;
   onCreatedFromCatalog: (book: LibraryBookDetailResponse) => void;
 }) {
@@ -240,8 +251,11 @@ function StepInfo({
         tanımlıysa yapısı (üniteler + birebir test sayıları) tek tıkla gelir.
         Yoksa alttaki formla oluştur.
       </StepNarration>
-      <CatalogQuickStart onCreated={onCreatedFromCatalog} />
+      <CatalogQuickStart onCreated={onCreatedFromCatalog} onScanned={onScanned} />
       <BookCreateForm
+        key={scanned ? `scan-${scanned.book_title ?? ""}-${scanned.structure?.sections.length ?? 0}` : "blank"}
+        initialName={scanned?.book_title}
+        initialPublisher={scanned?.publisher}
         subjects={subjects}
         templates={templates}
         onCreated={onCreated}
@@ -259,18 +273,20 @@ function StepInfo({
 function StepSections({
   book,
   isExam,
+  scanned,
   onBack,
   onNext,
 }: {
   book: LibraryBookDetailResponse;
   isExam: boolean;
+  scanned: StructureReadResult | null;
   onBack: (() => void) | null;
   onNext: () => void;
 }) {
   const hasSections = book.sections.length > 0;
   const [method, setMethod] = React.useState<
     "photo" | "catalog" | "ai" | "manual" | null
-  >(null);
+  >(scanned ? "photo" : null);
 
   const catalogMut = useBulkSectionsFromCatalog(book.id);
   const aiMut = useAiSuggestSections(book.id);
@@ -399,7 +415,9 @@ function StepSections({
         </div>
       ) : null}
 
-      {!hasSections && method === "photo" ? <PhotoReadPanel book={book} /> : null}
+      {!hasSections && method === "photo" ? (
+        <PhotoReadPanel book={book} initial={scanned} />
+      ) : null}
 
       {!hasSections && method === "catalog" ? (
         <Card>

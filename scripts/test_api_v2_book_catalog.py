@@ -276,6 +276,23 @@ def main() -> int:
             f"n_cat={n_cat} cat_in_personal={has_catalog_in_personal}",
         )
 
+        # ===== 8b. katalog tarayıcısı: verified var · pending/kişisel yok =====
+        r = coach.get("/api/v2/teacher/library/book-catalog/browse")
+        bitems = r.json().get("items", []) if r.status_code == 200 else []
+        bids = {i["id"] for i in bitems}
+        mine = next((i for i in bitems if i["id"] == entry_id), None)
+        check(
+            "8b. browse → verified var, pending + kişisel şablon yok, exam_group dolu",
+            r.status_code == 200 and entry_id in bids and pending_id not in bids
+            and seed["a_personal_template_id"] not in bids
+            and seed["b_personal_template_id"] not in bids
+            and mine is not None and mine.get("exam_group") in ("lgs", "tyt", "ayt", "okul")
+            and r.json().get("total") == len(bitems),
+            f"status={r.status_code} n={len(bitems)}",
+        )
+        r = anon.get("/api/v2/teacher/library/book-catalog/browse")
+        check("8c. browse anonim → 401", r.status_code == 401, f"status={r.status_code}")
+
         # ===== 9. POST /books katalog kaydıyla → bölüm + konu + usage =====
         r = coach.post("/api/v2/teacher/library/books", json={
             "name": f"4K TYT Matematik {PFX}",
@@ -586,6 +603,85 @@ def main() -> int:
             r.status_code == 200 and r.json().get("reads_left_today") is None
             and r2.status_code == 403,
             f"admin={r.status_code} koc={r2.status_code}",
+        )
+
+        # ===== 26c-f. "Kapak + içindekiler" tek yükleme (scan) =====
+        r = coach_b.post(
+            "/api/v2/teacher/library/book-structure/scan",
+            files=[("files", ("kapak.jpg", b"fake", "image/jpeg")),
+                   ("files", ("ic1.jpg", b"fake2", "image/jpeg"))],
+        )
+        body = r.json() if r.status_code == 200 else {}
+        check(
+            "26c. scan: katalog eşleşmesi var → okuma YAPILMAZ (structure null)",
+            r.status_code == 200 and body.get("structure") is None
+            and any(m["id"] == contrib_id for m in body.get("catalog_matches", [])),
+            f"status={r.status_code} body={str(body)[:200]}",
+        )
+        r = coach_b.post(
+            "/api/v2/teacher/library/book-structure/scan",
+            files=[("files", ("kapak.jpg", b"fake", "image/jpeg"))],
+            data={"force_read": "true"},
+        )
+        body = r.json() if r.status_code == 200 else {}
+        check(
+            "26d. scan force_read → yapı okundu (2 bölüm)",
+            r.status_code == 200 and body.get("structure") is not None
+            and len(body["structure"]["sections"]) == 2,
+            f"status={r.status_code}",
+        )
+        # gerçek 15 sayfalık PDF → kapak görsele çevrilir, okumaya ilk 12 sayfa gider
+        import fitz as _fitz
+        _doc = _fitz.open()
+        for i in range(15):
+            _pg = _doc.new_page()
+            _pg.insert_text((72, 72), f"Sayfa {i + 1}")
+        pdf_bytes = _doc.tobytes()
+        _doc.close()
+        seen: dict = {}
+
+        def _cover_nomatch(img, mt):
+            seen["cover_mt"] = mt
+            return {"book_title": f"Hiç Olmayan Kitap {PFX}", "publisher": None,
+                    "subject_hint": None, "grade_hint": None, "exam_hint": None}
+
+        def _read_capture(files):
+            seen["toc"] = files
+            return {"book_title": None, "publisher": "Okunan Yayın", "subject_hint": None,
+                    "grade_hint": None,
+                    "sections": [{"label": "A", "test_count": 3, "suspect": False},
+                                 {"label": "B", "test_count": None, "suspect": False}],
+                    "warnings": [], "read_count": 2}
+
+        abs_svc.identify_cover = _cover_nomatch  # type: ignore[assignment]
+        abs_svc.read_structure = _read_capture  # type: ignore[assignment]
+        r = coach_b.post(
+            "/api/v2/teacher/library/book-structure/scan",
+            files=[("files", ("kitap.pdf", pdf_bytes, "application/pdf"))],
+        )
+        body = r.json() if r.status_code == 200 else {}
+        toc = seen.get("toc") or []
+        n_pages = None
+        if toc and toc[0][1] == "application/pdf":
+            _d = _fitz.open(stream=toc[0][0], filetype="pdf")
+            n_pages = _d.page_count
+            _d.close()
+        check(
+            "26e. scan PDF: kapak JPEG · okumaya ilk 12 sayfa · not + page_count 15 · yayınevi okumadan",
+            r.status_code == 200 and seen.get("cover_mt") == "image/jpeg" and n_pages == 12
+            and body.get("page_count") == 15 and any("15 sayfa" in n for n in body.get("notes", []))
+            and body.get("publisher") == "Okunan Yayın" and body.get("structure") is not None,
+            f"status={r.status_code} pages={n_pages} body={str(body)[:200]}",
+        )
+        r = coach_b.post(
+            "/api/v2/teacher/library/book-structure/scan",
+            files=[("files", ("kitap.pdf", pdf_bytes, "application/pdf")),
+                   ("files", ("k.jpg", b"x", "image/jpeg"))],
+        )
+        check(
+            "26f. scan PDF + görsel karışık → 422 mixed_files",
+            r.status_code == 422 and r.json()["detail"]["code"] == "mixed_files",
+            f"status={r.status_code}",
         )
 
         # ===== 26b. etiket-bazlı toplu bölüm (fotoğraf akışının 'Uygula'sı) =====

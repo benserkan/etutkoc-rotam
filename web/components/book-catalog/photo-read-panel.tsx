@@ -23,10 +23,26 @@ import {
 } from "@/lib/hooks/use-book-catalog-mutations";
 import { useBulkCreateSections } from "@/lib/hooks/use-library-mutations";
 import type { LibraryBookDetailResponse } from "@/lib/types/library";
+import type { StructureReadResult } from "@/lib/types/book-catalog";
 
-export function PhotoReadPanel({ book }: { book: LibraryBookDetailResponse }) {
-  const [draft, setDraft] = React.useState<DraftSection[] | null>(null);
-  const [warnings, setWarnings] = React.useState<string[]>([]);
+export function PhotoReadPanel({
+  book,
+  initial,
+}: {
+  book: LibraryBookDetailResponse;
+  /** 1. adımdaki "Kapak + içindekiler" okuması — tekrar yükleme gerekmez. */
+  initial?: StructureReadResult | null;
+}) {
+  const [draft, setDraft] = React.useState<DraftSection[] | null>(() =>
+    initial
+      ? initial.sections.map((s) => ({
+          label: s.label,
+          test_count: s.test_count,
+          suspect: s.suspect,
+        }))
+      : null,
+  );
+  const [warnings, setWarnings] = React.useState<string[]>(() => initial?.warnings ?? []);
   const [readsLeft, setReadsLeft] = React.useState<number | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
 

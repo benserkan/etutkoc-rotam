@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
   // "yükleniyor"da takılır). Yalnız dev'i etkiler.
   allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.1.26"],
 
+  // Dev rewrite vekilinin varsayılan 30 sn zaman aşımı uzun AI uçlarını
+  // (kitap/deneme okuma ~1-3 dk) koparıyordu. Prod'da Caddy doğrudan FastAPI'ye
+  // gider; bu ayar yalnız dev rewrite'larını etkiler.
+  experimental: { proxyTimeout: 300_000 },
+
   async rewrites() {
     const apiTarget = process.env.INTERNAL_API_URL || "http://127.0.0.1:8081";
     return [

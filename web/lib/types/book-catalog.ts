@@ -75,6 +75,38 @@ export interface CatalogEntryBrief {
   status: CatalogStatus | string;
   source?: string | null;
   created_at: string;
+  /** Sınav grubu (katalog tarayıcısı süzgeci). */
+  exam_group?: CatalogExamGroup | null;
+}
+
+export type CatalogExamGroup = "lgs" | "tyt" | "ayt" | "okul";
+
+export const CATALOG_EXAM_GROUP_LABELS_TR: Record<CatalogExamGroup, string> = {
+  lgs: "LGS / ortaokul",
+  tyt: "TYT",
+  ayt: "AYT",
+  okul: "Lise (okul)",
+};
+
+export interface CatalogBrowseResponse {
+  items: CatalogEntryBrief[];
+  total: number;
+  total_tests: number;
+}
+
+/** "Kapak + içindekiler" tek yüklemesi. */
+export interface BookScanResult {
+  book_title: string | null;
+  publisher: string | null;
+  subject_hint: string | null;
+  grade_hint: number | null;
+  exam_hint: string | null;
+  catalog_matches: CatalogEntryBrief[];
+  /** Katalogda eşleşme varsa (ve zorla okunmadıysa) null. */
+  structure: StructureReadResult | null;
+  notes: string[];
+  page_count: number | null;
+  reads_left_today: number | null;
 }
 
 export interface CatalogEntryDetail extends CatalogEntryBrief {

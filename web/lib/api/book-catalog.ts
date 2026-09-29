@@ -9,6 +9,8 @@ import type {
   AdminCatalogCreateBody,
   AdminCatalogListResponse,
   AdminCatalogUpdateBody,
+  BookScanResult,
+  CatalogBrowseResponse,
   CatalogContributeBody,
   CatalogContributeResult,
   CatalogEntryDetail,
@@ -24,6 +26,7 @@ export const bookCatalogKeys = {
   adminSubjects: () => ["admin", "book-catalog", "subjects"] as const,
   coachSearch: (q: string, subjectId: number | null) =>
     ["teacher", "library", "book-catalog", "search", q, subjectId ?? 0] as const,
+  coachBrowse: () => ["teacher", "library", "book-catalog", "browse"] as const,
   coachDetail: (id: number) =>
     ["teacher", "library", "book-catalog", String(id)] as const,
 };
@@ -60,6 +63,18 @@ export function coachReadStructure(files: File[]): Promise<StructureReadResult> 
     "/api/v2/teacher/library/book-structure/read",
     filesToFormData(files),
   );
+}
+
+/** "Kapak + içindekiler" tek yükleme (1 PDF ya da ≤8 görsel). */
+export function coachScanBook(files: File[], forceRead = false): Promise<BookScanResult> {
+  const fd = filesToFormData(files);
+  if (forceRead) fd.append("force_read", "true");
+  return multipart<BookScanResult>("/api/v2/teacher/library/book-structure/scan", fd);
+}
+
+/** Katalog tarayıcısı — yayındaki tüm kayıtlar. */
+export function coachBrowseCatalog(): Promise<CatalogBrowseResponse> {
+  return api<CatalogBrowseResponse>("/api/v2/teacher/library/book-catalog/browse");
 }
 
 /** Kapak fotoğrafı → kitap kimliği + katalog eşleşmeleri. */

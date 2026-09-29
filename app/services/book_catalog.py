@@ -67,6 +67,15 @@ def _catalog_base(db: Session):
     )
 
 
+def list_verified(db: Session) -> list[BookTemplate]:
+    """Yayındaki (verified) tüm katalog kayıtları — koç katalog tarayıcısı."""
+    return (
+        _catalog_base(db)
+        .filter(BookTemplate.catalog_status == CATALOG_STATUS_VERIFIED)
+        .all()
+    )
+
+
 def search_catalog(
     db: Session,
     q: str,

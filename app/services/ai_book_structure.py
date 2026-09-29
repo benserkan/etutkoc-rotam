@@ -37,6 +37,11 @@ ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGES = 6
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 MAX_PDF_BYTES = 10 * 1024 * 1024
+# Tek yükleme ("Kapak + içindekiler"): büyük PDF kabul edilir, yalnız ilk
+# sayfaları okunur (kapak + içindekiler kitabın başındadır).
+MAX_SCAN_PDF_BYTES = 80 * 1024 * 1024
+MAX_SCAN_IMAGES = 8
+SCAN_PDF_PAGES = 12
 
 # Koç başına günlük okuma tavanı (kredi yok — yalnız kötüye kullanım rayı).
 AI_BOOK_READ_DAILY_LIMIT = 30
@@ -70,6 +75,7 @@ KURALLAR (çok önemli):
   gibi altında konu listesi olan ara başlıklar bölüm DEĞİLDİR — onların
   altındaki KONULARI çıkar. (Adı da olan üniteler kalır: "1. Ünite — Sayılar".)
 - Alt başlıklar değil ÜNİTE/BÖLÜM düzeyini çıkar: testlerin bağlandığı düzey esas alınır.
+- Verilen sayfaların bazıları kapak, önsöz, künye ya da soru sayfası olabilir — bunları yok say, yalnız İÇİNDEKİLER sayfalarından çıkar (kitap adı/yayınevi için kapağı kullanabilirsin).
 - Birden çok görsel/sayfa verdiysem hepsi AYNI kitabın devamıdır — tek liste halinde sırayla birleştir, tekrar eden başlıkları bir kez yaz.
 - Kitap adı/yayınevi belgede görünüyorsa yaz; görünmüyorsa null.
 - subject_hint: kitabın dersi (örn. "Matematik", "Fen Bilimleri", "Türkçe") — belgeden anlaşılıyorsa.
@@ -214,6 +220,38 @@ def _merge_reads(r1: dict[str, Any], r2: dict[str, Any]) -> dict[str, Any]:
     s1, s2 = r1["sections"], r2["sections"]
     warnings: list[str] = []
     merged: list[dict[str, Any]] = []
+
+    # İki okuma FARKLI DÜZEY seçtiyse (biri üniteler, öbürü konular) sıra
+    # hizalaması anlamsızdır — birleştirmek iki listeyi alt alta yapıştırır.
+    # Etiket örtüşmesi küçük listenin yarısından azsa tek okuma esas alınır:
+    # test sayısı daha çok olan, eşitse daha ayrıntılı (çok satırlı) olan.
+    if s1 and s2:
+        small, large = (s1, s2) if len(s1) <= len(s2) else (s2, s1)
+        overlap = sum(1 for a in small if any(_labels_agree(a["label"], b["label"]) for b in large))
+        # Uzunluk 1,5 katı ve üstü de düzey farkıdır (birinde "Ünite - Konu"
+        # satırları, öbüründe yalnız üniteler — etiketler önek olarak uyuşur).
+        if overlap * 2 < len(small) or (len(small) >= 4 and len(large) * 2 >= len(small) * 3):
+            def _score(secs: list[dict[str, Any]]) -> tuple[int, int]:
+                return (sum(1 for x in secs if x["test_count"] is not None), len(secs))
+
+            base_r, other_r = (r1, r2) if _score(s1) >= _score(s2) else (r2, r1)
+            warnings.append(
+                f"İki okuma farklı düzey seçti ({len(base_r['sections'])} / "
+                f"{len(other_r['sections'])} satır) — daha ayrıntılı liste alındı; "
+                "bölümleri kitapla karşılaştır."
+            )
+            return {
+                "book_title": r1["book_title"] or r2["book_title"],
+                "publisher": r1["publisher"] or r2["publisher"],
+                "subject_hint": r1["subject_hint"] or r2["subject_hint"],
+                "grade_hint": r1["grade_hint"] or r2["grade_hint"],
+                "sections": [
+                    {"label": x["label"], "test_count": x["test_count"], "suspect": False}
+                    for x in base_r["sections"]
+                ],
+                "warnings": warnings,
+                "read_count": 2,
+            }
 
     by_norm2: dict[str, dict[str, Any]] = {}
     for sec in s2:
@@ -361,6 +399,77 @@ def identify_cover(image: bytes, media_type: str) -> dict[str, Any]:
         "grade_hint": _clean_grade(data.get("grade_hint")),
         "exam_hint": _clean_str(data.get("exam_hint"), 40),
     }
+
+
+class ScanFileError(ValueError):
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+
+def _render_pdf_page(doc: Any, index: int, dpi: int = 110) -> bytes:
+    page = doc.load_page(index)
+    pix = page.get_pixmap(dpi=dpi)
+    return pix.tobytes("jpeg")
+
+
+def prepare_scan_files(files: list[tuple[bytes, str]]) -> dict[str, Any]:
+    """"Kapak + içindekiler" tek yüklemesini okumaya hazırlar.
+
+    - Görseller: ilki kapak sayılır, TÜMÜ içindekiler okumasına gider.
+    - PDF: ilk sayfa görsele çevrilip kapak olur; okumaya yalnız ilk
+      SCAN_PDF_PAGES sayfa gider (tam kitap yüklense de). Kırpılmış PDF hâlâ
+      10 MB'ı aşıyorsa (taranmış ağır sayfalar) sayfalar JPEG'e çevrilir.
+
+    Döner: {"cover": (bytes, mt) | None, "toc": [(bytes, mt)], "notes": [str],
+            "page_count": int | None}
+    """
+    notes: list[str] = []
+    if not files:
+        raise ScanFileError("no_files", "En az bir fotoğraf veya PDF yükleyin.")
+    pdfs = [f for f in files if f[1] == PDF_MIME]
+    if pdfs:
+        if len(files) > 1:
+            raise ScanFileError("mixed_files", "PDF tek başına yüklenmeli (fotoğrafla karıştırmayın).")
+        raw = pdfs[0][0]
+        try:
+            import fitz  # PyMuPDF
+        except ImportError:  # pragma: no cover — kurulum eksik
+            if len(raw) > MAX_PDF_BYTES:
+                raise ScanFileError("file_too_large", "PDF en fazla 10 MB olabilir.")
+            return {"cover": None, "toc": [(raw, PDF_MIME)], "notes": notes, "page_count": None}
+        try:
+            doc = fitz.open(stream=raw, filetype="pdf")
+        except Exception:
+            raise ScanFileError("pdf_unreadable", "PDF açılamadı — dosya bozuk ya da şifreli olabilir.")
+        with doc:
+            total = doc.page_count
+            if total == 0:
+                raise ScanFileError("pdf_unreadable", "PDF'te sayfa yok.")
+            cover = (_render_pdf_page(doc, 0), "image/jpeg")
+            n = min(total, SCAN_PDF_PAGES)
+            if total > n:
+                notes.append(
+                    f"PDF {total} sayfa — yalnız ilk {n} sayfası (kapak + içindekiler) okundu."
+                )
+            sub = fitz.open()
+            with sub:
+                sub.insert_pdf(doc, from_page=0, to_page=n - 1)
+                trimmed = sub.tobytes(garbage=3, deflate=True)
+            if len(trimmed) <= MAX_PDF_BYTES:
+                toc = [(trimmed, PDF_MIME)]
+            else:
+                toc = [(_render_pdf_page(doc, i, dpi=130), "image/jpeg") for i in range(n)]
+        return {"cover": cover, "toc": toc, "notes": notes, "page_count": total}
+    if len(files) > MAX_SCAN_IMAGES:
+        raise ScanFileError("too_many_files", f"En fazla {MAX_SCAN_IMAGES} fotoğraf yüklenebilir.")
+    for raw, mt in files:
+        if mt not in ALLOWED_IMAGE_TYPES:
+            raise ScanFileError("invalid_media_type", "Yalnız JPEG/PNG/WebP fotoğraf veya PDF yükleyin.")
+        if len(raw) > MAX_IMAGE_BYTES:
+            raise ScanFileError("file_too_large", "Her fotoğraf en fazla 8 MB olabilir.")
+    return {"cover": files[0], "toc": list(files), "notes": notes, "page_count": None}
 
 
 # =============================================================================
