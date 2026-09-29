@@ -612,6 +612,17 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
   yan yana — 7 sütun ızgara adları hece ortasından bölüyordu, reddedildi) + yan panel
   (istekler, haftalık planlar, uygunluk özeti, Google); window.prompt/confirm yerine
   `AskDialog`/`SeriesTimeDialog`. `live_appointments_page` 13/13 (kart ≥220px).
+- **Gün içi uyarı + metrik tanımları (aynı gün, 2. tur, CANLI):** "Bugün henüz
+  başlamadı" (`today_no_tick`) öğrencinin kendi ritmine bağlı — `usual_first_tick`:
+  son 21 günde ilk tik saatinin %75'i + 60 dk (gece tikleri görev gününe göre 24+
+  saat; [12:00, 23:00]; <5 gün veri → 19:00); kırmızı yok. Prod: tiklerin çoğu
+  22:00–01:00. `consistency_score` = programlı günlerin kaçında tik (programsız gün
+  + tiksiz bugün paydada değil). "Son 7 gün görev %" `gorev_stats.settled_tasks`
+  ile bugünün açık görevlerini saymaz (pano/liste/360/veli ×2; kurum tamamlama
+  tanımına DOKUNULMADI). Zeynep: %80→%100, tutarlılık %71→%100. Durum Özeti'nde
+  tanımlar her zaman görünür. Testler saati `analytics._tr_now` ile sabitler.
+  Mobil koç Talepler: onay / soru-not / geçmiş bölümleri + Gördüm (OTA `161c0dcb`).
+  `test_today_no_tick_timing` 7/7. (Bilinen, önceden var: itemless_engagement S6.)
 - **DERS:** ellipsis denetimi `break-words` ile hece ortasından bölünmeyi YAKALAMAZ —
   dar kart içeren canlı testlere minimum genişlik ölçümü konur.
 
