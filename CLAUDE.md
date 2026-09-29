@@ -8330,6 +8330,17 @@ alarmı · email enumeration koruması · auto-resume · self-signup + invite + 
   FastAPI → sorun yok. Test: YENİ `test_api_v2_admin_book_scan_jobs.py` 13/13 · YENİ
   `live_admin_book_scan.py "<pdf>"` (gerçek tarama).
 
+## Kurum öğretmen daveti e-postayla (2026-09-29, commit `4e6b4d6`, migration YOK, CANLI)
+
+- Önceden davet bağlantısı yalnız tabloda duruyordu ("sistem henüz e-posta göndermiyor").
+  Artık e-postalı davet oluşturulunca `teacher_invitation` e-postası gider (commit sonrası;
+  `send_email` kutusuyla kapatılabilir) + `POST /institution/invitations/{id}/send-email`
+  (tekrar gönder). Liste `email_status`/`emailed_at` (communication_logs, id sırasıyla en son).
+  Bağlantı APP_BASE_URL'den (istek adresinden değil). **Davetle kayıtta e-posta kilidi artık
+  sunucuda** (422 `email_mismatch`; önce yalnız açıklamada vardı), form alanı salt-okunur.
+  Test `test_api_v2_teacher_invitation_email.py` 21/21. Prod'da gerçek gönderim ZeptoMail
+  `sent` doğrulandı (test daveti #2 iptal edildi).
+
 ## Kopya kitap kayıtları temizliği (2026-09-29, migration YOK)
 
 - Sorun: aynı öğrencide aynı adlı İKİ ayrı Book kaydı atanmış görünüyordu (StudentBook
