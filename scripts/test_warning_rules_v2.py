@@ -243,6 +243,20 @@ def main() -> int:
         chk("9 akış kanıt + bağlantı döner",
             br and br[0]["evidence"] and br[0]["link"].startswith(f"/teacher/students/{boran}/"),
             r.text[:300])
+
+        # 10 Tek "son 7 gün" tanımı: öğrenci listesi ile uyarı AYNI sayıyı söyler
+        # (Emir: listede 38/51 %75, uyarıda 38/62 %61 — iki farklı pencere).
+        task(s8, today, e_b, e_s, 2, 2)     # bugün yapılmış → sayılır
+        task(s8, today, e_b, e_s, 2, 0)     # bugün henüz yapılmamış → sayılmaz
+        lst = cl.get("/api/v2/teacher/students", params={"page_size": 100}).json()["items"]
+        row = next(x for x in lst if x["id"] == s8)
+        feed = cl.get("/api/v2/teacher/dashboard/warnings-feed").json()
+        fl = next((x for x in feed["rows"] + feed["snoozed_rows"]
+                   if x["student_id"] == s8 and x["code"] == "completion_low"), None)
+        ev = {e["label"]: e["value"] for e in (fl["evidence"] if fl else [])}
+        want = f'{row["week_gorev_done"]}/{row["week_gorev_total"]}'
+        chk("10 liste ile uyarı aynı pencere (görev x/y birebir)",
+            fl is not None and ev.get("Görev", "").startswith(want + " "), f"liste {want} · uyarı {ev.get('Görev')}")
     finally:
         cleanup()
     print(f"\n=== {passed} passed, {len(failed)} failed ===")

@@ -34,6 +34,9 @@ ACTIVE_AHEAD_DAYS = 14
 PACE_DAYS = 21
 REVIEW_WEEKS = 6
 MIN_HISTORY_DAYS = 14
+# Hedefi "en az BİR kaynağı bitirmek" olan dersler (koç kararı 2026-09-29):
+# kalan iş = bitmeye en yakın aktif kaynağın kalanı (diğer kaynaklar ek çalışma).
+SINGLE_SOURCE_KEYWORDS = ("geometri",)
 
 
 @dataclass
@@ -52,6 +55,7 @@ class SubjectReadiness:
     target_date: date | None = None
     days_late: int | None = None         # >0 geride, <=0 yetişiyor
     status: str = "ok"                   # ok | late | stalled | early | done
+    goal: str = "Tüm aktif kaynaklar"    # hedefin tanımı (ekranda yazılır)
     confidence: str = "ok"               # ok | early
 
 
@@ -153,6 +157,13 @@ def compute_readiness(db: Session, student: User, today: date) -> ReadinessRepor
             sr.remaining_tests += left
             topics |= topics_by_book.get(best, set())
         sr.remaining_topics = len(topics)
+        if any(k in sr.subject_name.lower() for k in SINGLE_SOURCE_KEYWORDS) and len(sr.active_books) > 1:
+            closest = min(sr.active_books, key=lambda b: b["remaining"])
+            sr.remaining_tests = closest["remaining"]
+            sr.goal = f"En az bir kaynağı bitirmek — en yakın: {closest['name']}"
+            sr.remaining_topics = 0
+        elif any(k in sr.subject_name.lower() for k in SINGLE_SOURCE_KEYWORDS):
+            sr.goal = "En az bir kaynağı bitirmek"
         sr.dropped_books = sorted(
             books[b].name for b in (seen.get(sid, set()) - bset) if b in books)
         start = max(first_day.get(sid, today), today - timedelta(days=PACE_DAYS))

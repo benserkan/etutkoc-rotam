@@ -9696,6 +9696,7 @@ class ExamReadinessSubject(BaseModel):
     subject_id: int
     subject_name: str
     status: str                      # ok | late | stalled | early | done
+    goal: str = ""
     active_books: list[ExamReadinessBook]
     dropped_books: list[str]
     finished_books: list[str]
@@ -9734,7 +9735,7 @@ def teacher_student_exam_readiness_v2(
         days_left_target = (sr.target_date - today).days if sr.target_date else None
         need = (sr.remaining_tests / days_left_target) if days_left_target and days_left_target > 0 else None
         out.append(ExamReadinessSubject(
-            subject_id=sr.subject_id, subject_name=sr.subject_name, status=sr.status,
+            subject_id=sr.subject_id, subject_name=sr.subject_name, status=sr.status, goal=sr.goal,
             active_books=[ExamReadinessBook(**b) for b in sr.active_books],
             dropped_books=sr.dropped_books, finished_books=sr.finished_books,
             remaining_tests=sr.remaining_tests, remaining_topics=sr.remaining_topics,

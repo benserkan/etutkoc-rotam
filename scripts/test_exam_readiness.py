@@ -219,6 +219,24 @@ def main() -> int:
             and any(w.code == f"exam_behind_{mat}" for w in rep2.secondary),
             f"P={[w.code for w in rep2.primary]}")
 
+        # 9 geometri: hedef en az bir kaynak → kalan = bitmeye en yakın kaynağın kalanı
+        s3 = mk_student("geo")
+        geo = mk_subject("TYT Geometri")
+        G1 = mk_book(geo, f"{PFX} G1", 200)
+        G2 = mk_book(geo, f"{PFX} G2", 100)
+        assign(s3, G1, completed=10)
+        assign(s3, G2, completed=40)
+        for k in range(1, 22):
+            task(s3, D(k), G1 if k % 2 else G2, 1, 1)
+        with SessionLocal() as db:
+            rd = compute_readiness(db, db.get(User, s3), today)
+        sg = next(x for x in rd.subjects if x.subject_id == geo)
+        chk("9 geometri: iki kaynak aktif ama kalan = en yakın kaynağın kalanı (60)",
+            sg.remaining_tests == 60 and "en az bir kaynağı" in sg.goal.lower(), f"{sg.remaining_tests} · {sg.goal}")
+        chk("9b diğer derslerde tüm aktif kaynaklar (hedef metni)",
+            next(x for x in compute_readiness(SessionLocal(), SessionLocal().get(User, s), today).subjects
+                 if x.subject_id == mat).goal == "Tüm aktif kaynaklar")
+
         # 7 kısa geçmiş
         s2 = mk_student("yeni")
         fiz = mk_subject("Fiz")

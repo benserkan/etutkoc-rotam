@@ -180,14 +180,17 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
             f"Son {len(streak)} programlı günde hiç görev yapmadı",
             f"{_d(lo)} – {_d(hi)} arasında verilen {n_tasks} görevin hiçbiri yapılmadı.", ev)
 
-    cur = [t for t in past if t.date >= today - timedelta(days=7)]
-    prev = [t for t in past if today - timedelta(days=14) <= t.date < today - timedelta(days=7)]
+    # "Son 7 gün" TEK TANIM (pano/liste/Durum Özeti ile aynı): bugün dahil son 7 gün,
+    # bugünün henüz yapılmamış görevleri sayılmaz (gorev_stats.settled_tasks).
+    cur = gorev_stats.settled_tasks(
+        [t for t in pub if today - timedelta(days=6) <= t.date <= today], today)
+    prev = [t for t in past if today - timedelta(days=13) <= t.date <= today - timedelta(days=7)]
     cs, ps = gorev_stats.summarize(cur), gorev_stats.summarize(prev)
     if cs.gorev_total >= COMPLETION_MIN_TASKS and cs.gorev_pct < COMPLETION_AMBER and not grace:
         add("B", "red" if cs.gorev_pct < COMPLETION_RED else "amber", "completion_low",
             f"Son 7 günde tamamlama %{cs.gorev_pct}",
             f"Verilen {cs.gorev_total} görevin {cs.gorev_done} tanesi tamamlandı.",
-            [("Dönem", f"{_d(today - timedelta(days=7))} – {_d(today - timedelta(days=1))} (bugün hariç)"),
+            [("Dönem", f"{_d(today - timedelta(days=6))} – {_d(today)} (bugünün yapılmamış görevleri sayılmaz)"),
              ("Görev", f"{cs.gorev_done}/{cs.gorev_total} (%{cs.gorev_pct})"),
              ("Test", f"{cs.test_completed}/{cs.test_planned} çözüldü"),
              ("Eşik", f"%{COMPLETION_AMBER} altı sarı · %{COMPLETION_RED} altı kırmızı")])
@@ -289,7 +292,7 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
                       if w.code.startswith(("subject_avoid_", "subject_stale_", "subject_untouched_"))}
         for sr in rd.subjects:
             src = " · ".join(f"{b['name']} (kalan {b['remaining']})" for b in sr.active_books)
-            base_ev = [("Aktif kaynak", src or "—")]
+            base_ev = [("Hedef kaynak", sr.goal), ("Aktif kaynak", src or "—")]
             if sr.dropped_books:
                 base_ev.append(("Bırakılan (21+ gündür görev yok)", ", ".join(sr.dropped_books)))
             if sr.finished_books:

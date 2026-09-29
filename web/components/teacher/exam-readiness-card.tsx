@@ -14,6 +14,7 @@ interface ReadinessSubject {
   subject_id: number;
   subject_name: string;
   status: "ok" | "late" | "stalled" | "early" | "done";
+  goal?: string;
   active_books: ReadinessBook[];
   dropped_books: string[];
   finished_books: string[];
@@ -103,6 +104,12 @@ export function ExamReadinessCard({ studentId }: { studentId: number }) {
                   </span>
                 </div>
                 <dl className="mt-1.5 grid grid-cols-1 gap-x-4 gap-y-0.5 text-xs sm:grid-cols-[auto_1fr]">
+                  {s.goal ? (
+                    <>
+                      <dt className="text-muted-foreground">Hedef</dt>
+                      <dd className="break-words">{s.goal}</dd>
+                    </>
+                  ) : null}
                   <dt className="text-muted-foreground">Aktif kaynak</dt>
                   <dd className="break-words">
                     {s.active_books.length > 0
