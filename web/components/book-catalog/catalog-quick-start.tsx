@@ -1,36 +1,33 @@
 "use client";
 
 /**
- * Sihirbaz Adım 1 — Ortak Kitap Kataloğu.
+ * Kitap ekleme sihirbazının "başlangıç yolları" için yapı taşları.
  *
- * Üç yol, tek kutu:
- *  1. Katalog tarayıcısı: yayındaki TÜM kitaplar ders başlıkları altında
- *     görünür; sınav grubu / ders / tür / yayınevi süzgeçleri + ad araması.
- *     Kitaba tıklayınca bölümleri ve test sayıları açılır; "Yapısını kullan"
- *     kitabı tek tıkla oluşturur (ünite + birebir test + müfredat eşleşmesi).
- *  2. "Kapak + içindekiler": kapak ve içindekiler fotoğrafları (≤8) ya da
- *     kitabın PDF'i (tam kitap da olur, ilk 12 sayfası okunur). Kapaktan
- *     kitap tanınır; katalogda varsa kaydı gösterilir, yoksa içindekiler
- *     okunur ve taslak sihirbaza verilir (2. adımda hazır gelir).
- *  3. Hiçbiri → alttaki form.
+ *  - `CatalogBrowser`: yayındaki TÜM katalog kitapları ders başlıkları altında;
+ *    sınav grubu / ders / tür / yayınevi süzgeçleri + ad araması. Kitaba
+ *    tıklayınca bölümleri ve test sayıları açılır; "Kütüphaneme ekle" kitabı
+ *    tek tıkla oluşturur (ünite + birebir test + müfredat eşleşmesi).
+ *  - `BookScanUpload`: kapak + içindekiler fotoğrafları (≤8) ya da kitabın PDF'i.
+ *    Kapaktan kitap tanınır; katalogda varsa kaydı gösterilir, yoksa içindekiler
+ *    okunur ve taslak sihirbaza verilir.
+ *  - `useCatalogApply`: katalog kaydından kitap oluşturma.
+ *
+ * Hangi yolun gösterileceğini sihirbaz ("Ne yapmak istiyorsun?") belirler.
  */
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BookOpen,
+  Camera,
   ChevronDown,
   ChevronRight,
   FileUp,
-  Library,
   Loader2,
   Search,
-  Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import {
   bookCatalogKeys,
   coachBrowseCatalog,
@@ -46,12 +43,6 @@ import {
 } from "@/lib/types/book-catalog";
 import type { LibraryBookDetailResponse, LibraryBookType } from "@/lib/types/library";
 import { LIBRARY_BOOK_TYPE_LABELS_TR } from "@/lib/types/library";
-
-interface Props {
-  onCreated: (book: LibraryBookDetailResponse) => void;
-  /** Katalogda olmayan kitabın içindekiler okuması — sihirbaz formu doldurur. */
-  onScanned?: (result: BookScanResult) => void;
-}
 
 const TR_MAP: Record<string, string> = {
   ı: "i", İ: "i", I: "i", ş: "s", Ş: "s", ğ: "g", Ğ: "g",
@@ -85,49 +76,19 @@ function gradeText(e: CatalogEntryBrief): string | null {
   return parts.length ? parts.join(" + ") : null;
 }
 
-export function CatalogQuickStart({ onCreated, onScanned }: Props) {
-  const [search, setSearch] = React.useState("");
-  const [group, setGroup] = React.useState<CatalogExamGroup | "">("");
-  const [subjectF, setSubjectF] = React.useState("");
-  const [typeF, setTypeF] = React.useState<LibraryBookType | "">("");
-  const [publisherF, setPublisherF] = React.useState("");
-  const [browseOpen, setBrowseOpen] = React.useState(true);
-  const [scan, setScan] = React.useState<BookScanResult | null>(null);
-  const [scanFiles, setScanFiles] = React.useState<File[] | null>(null);
-  const fileRef = React.useRef<HTMLInputElement>(null);
-
-  const browseQ = useQuery({
+/** Katalog özeti (başlangıç kartındaki "N kitap hazır" sayısı için). */
+export function useCatalogBrowse() {
+  return useQuery({
     queryKey: bookCatalogKeys.coachBrowse(),
     queryFn: coachBrowseCatalog,
     staleTime: 5 * 60_000,
   });
-  const all = React.useMemo(() => browseQ.data?.items ?? [], [browseQ.data]);
+}
 
-  const scanMut = useScanBook();
+/** Katalog kaydından kitap oluşturur (ünite + test + müfredat eşleşmesi). */
+export function useCatalogApply(onCreated: (book: LibraryBookDetailResponse) => void) {
   const createBook = useCreateBook();
-
-  const runScan = (files: File[], forceRead: boolean) => {
-    scanMut.mutate(
-      { files, forceRead },
-      {
-        onSuccess: (res) => {
-          setScan(res);
-          if (res.structure && onScanned) onScanned(res);
-        },
-      },
-    );
-  };
-
-  const onFiles = (list: FileList | null) => {
-    if (!list || list.length === 0) return;
-    const files = Array.from(list);
-    setScanFiles(files);
-    setScan(null);
-    runScan(files, false);
-    if (fileRef.current) fileRef.current.value = "";
-  };
-
-  const applyEntry = (e: CatalogEntryBrief) => {
+  const apply = (e: CatalogEntryBrief) => {
     if (e.subject_id == null) return;
     createBook.mutate(
       {
@@ -145,8 +106,29 @@ export function CatalogQuickStart({ onCreated, onScanned }: Props) {
       { onSuccess: (res) => onCreated(res.data) },
     );
   };
+  return { apply, isPending: createBook.isPending };
+}
 
-  // Süzgeç seçenekleri: bir üst süzgece göre daralır
+// =============================================================================
+// Katalog tarayıcısı
+// =============================================================================
+
+export function CatalogBrowser({
+  onApply,
+  busy,
+}: {
+  onApply: (e: CatalogEntryBrief) => void;
+  busy: boolean;
+}) {
+  const [search, setSearch] = React.useState("");
+  const [group, setGroup] = React.useState<CatalogExamGroup | "">("");
+  const [subjectF, setSubjectF] = React.useState("");
+  const [typeF, setTypeF] = React.useState<LibraryBookType | "">("");
+  const [publisherF, setPublisherF] = React.useState("");
+
+  const browseQ = useCatalogBrowse();
+  const all = React.useMemo(() => browseQ.data?.items ?? [], [browseQ.data]);
+
   const inGroup = React.useMemo(
     () => (group ? all.filter((e) => e.exam_group === group) : all),
     [all, group],
@@ -198,230 +180,236 @@ export function CatalogQuickStart({ onCreated, onScanned }: Props) {
   }, [filtered]);
 
   const anyFilter = !!(group || subjectF || typeF || publisherF || search.trim());
-  const busy = scanMut.isPending || createBook.isPending;
+  const selectCls = "h-10 rounded-lg border border-input bg-background px-2 text-sm";
 
   return (
-    <Card className="border-cyan-200 dark:border-cyan-500/30">
-      <CardContent className="space-y-3 p-4">
-        <div className="flex items-start gap-2">
-          <Sparkles className="mt-0.5 size-4 shrink-0 text-cyan-600 dark:text-cyan-300" aria-hidden />
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">Önce katalogda bakalım:</strong>{" "}
-            kitap daha önce tanımlandıysa üniteler + <strong>birebir test
-            sayıları</strong> + müfredat eşleştirmesi tek tıkla gelir — form
-            doldurmana gerek kalmaz.
-          </p>
-        </div>
+    <div className="space-y-3" data-testid="catalog-browser">
+      {/* Sınav grubu: tek dokunuşluk segment */}
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Sınav grubu">
+        {([["", "Tümü", all.length]] as [string, string, number][])
+          .concat(
+            (Object.keys(CATALOG_EXAM_GROUP_LABELS_TR) as CatalogExamGroup[])
+              .filter((g) => groupCounts[g])
+              .map((g) => [g, CATALOG_EXAM_GROUP_LABELS_TR[g], groupCounts[g] ?? 0]),
+          )
+          .map(([g, label, n]) => {
+            const on = group === g;
+            return (
+              <button
+                key={g || "all"}
+                type="button"
+                aria-pressed={on}
+                onClick={() => {
+                  setGroup(g as CatalogExamGroup | "");
+                  setSubjectF("");
+                  setPublisherF("");
+                }}
+                className={
+                  on
+                    ? "rounded-full bg-cyan-700 px-3 py-1.5 text-sm font-medium text-white"
+                    : "rounded-full border border-border px-3 py-1.5 text-sm text-foreground hover:bg-muted"
+                }
+              >
+                {label} <span className={on ? "text-cyan-100" : "text-muted-foreground"}>{n}</span>
+              </button>
+            );
+          })}
+      </div>
 
-        {/* Kapak + içindekiler tek yükleme */}
-        <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="min-w-0 flex-1 text-sm text-violet-900 dark:text-violet-100">
-              <strong>Kitap elinde mi?</strong> Kapağın ve içindekiler sayfalarının
-              fotoğraflarını (en çok 8) ya da kitabın PDF’ini seç.
-            </div>
-            <Button
-              type="button"
-              disabled={busy}
-              onClick={() => fileRef.current?.click()}
-              className="bg-violet-600 text-white hover:bg-violet-700 hover:text-white"
-              data-testid="scan-button"
-            >
-              {scanMut.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <FileUp className="size-4" aria-hidden />
-              )}
-              Kapak + içindekiler yükle
-            </Button>
-          </div>
-          <p className="mt-1.5 text-xs text-violet-800 dark:text-violet-200">
-            Sistem kapaktan kitabı tanır: katalogda varsa yapısı tek tıkla gelir;
-            yoksa içindekiler iki kez okunur ve test sayıları kitaptan alınır.
-            Tam kitap PDF’i de olur — yalnız ilk 12 sayfası (kapak + içindekiler)
-            okunur. Kredi harcamaz.
-          </p>
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            accept="image/jpeg,image/png,image/webp,application/pdf"
-            className="hidden"
-            onChange={(e) => onFiles(e.target.files)}
-            data-testid="scan-input"
-          />
-          {scanMut.isPending ? (
-            <p className="mt-2 text-xs text-violet-900 dark:text-violet-100">
-              <Loader2 className="mr-1 inline size-3.5 animate-spin" aria-hidden />
-              Kapak tanınıyor, gerekirse içindekiler okunuyor… (30-60 sn sürebilir)
-            </p>
-          ) : null}
-          {scan ? (
-            <ScanOutcome
-              scan={scan}
-              busy={busy}
-              onApply={applyEntry}
-              onForceRead={
-                scanFiles && !scan.structure ? () => runScan(scanFiles, true) : null
-              }
-            />
-          ) : null}
-        </div>
-
-        {/* Katalog tarayıcısı */}
-        <div className="space-y-2">
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Kitap adı ya da yayınevi yaz… (örn. 345 TYT Matematik)"
+          className="h-11 pl-9 text-base"
+          aria-label="Katalogda ara"
+          autoFocus
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <select aria-label="Ders" value={subjectF} onChange={(e) => setSubjectF(e.target.value)} className={selectCls}>
+          <option value="">Tüm dersler</option>
+          {subjectOptions.map(([n, c]) => (
+            <option key={n} value={n}>
+              {n} ({c})
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Tür"
+          value={typeF}
+          onChange={(e) => setTypeF(e.target.value as LibraryBookType | "")}
+          className={selectCls}
+        >
+          <option value="">Tüm türler</option>
+          {(Object.keys(LIBRARY_BOOK_TYPE_LABELS_TR) as LibraryBookType[]).map((t) => (
+            <option key={t} value={t}>
+              {LIBRARY_BOOK_TYPE_LABELS_TR[t]}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Yayınevi"
+          value={publisherF}
+          onChange={(e) => setPublisherF(e.target.value)}
+          className={selectCls}
+        >
+          <option value="">Tüm yayınevleri</option>
+          {publisherOptions.map(([n, c]) => (
+            <option key={n} value={n}>
+              {n} ({c})
+            </option>
+          ))}
+        </select>
+      </div>
+      {anyFilter ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>{filtered.length} kitap gösteriliyor</span>
           <button
             type="button"
-            onClick={() => setBrowseOpen((v) => !v)}
-            className="flex w-full items-center gap-2 text-left text-sm font-semibold"
-            aria-expanded={browseOpen}
-            data-testid="catalog-browse-toggle"
+            className="underline underline-offset-2"
+            onClick={() => {
+              setGroup("");
+              setSubjectF("");
+              setTypeF("");
+              setPublisherF("");
+              setSearch("");
+            }}
           >
-            {browseOpen ? (
-              <ChevronDown className="size-4 shrink-0" aria-hidden />
-            ) : (
-              <ChevronRight className="size-4 shrink-0" aria-hidden />
-            )}
-            <Library className="size-4 shrink-0 text-cyan-600 dark:text-cyan-300" aria-hidden />
-            {browseQ.data
-              ? `Katalogda ${browseQ.data.total} kitap var (toplam ${browseQ.data.total_tests.toLocaleString("tr-TR")} test)`
-              : "Katalog yükleniyor…"}
+            Süzgeçleri temizle
           </button>
-
-          {browseOpen ? (
-            <>
-              <div className="relative">
-                <Search
-                  className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Kitap adı ya da yayınevi… (örn. 345 TYT Matematik)"
-                  className="pl-8"
-                  aria-label="Katalogda ara"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <select
-                  aria-label="Sınav grubu"
-                  value={group}
-                  onChange={(e) => {
-                    setGroup(e.target.value as CatalogExamGroup | "");
-                    setSubjectF("");
-                    setPublisherF("");
-                  }}
-                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                >
-                  <option value="">Tüm sınavlar</option>
-                  {(Object.keys(CATALOG_EXAM_GROUP_LABELS_TR) as CatalogExamGroup[])
-                    .filter((g) => groupCounts[g])
-                    .map((g) => (
-                      <option key={g} value={g}>
-                        {CATALOG_EXAM_GROUP_LABELS_TR[g]} ({groupCounts[g]})
-                      </option>
-                    ))}
-                </select>
-                <select
-                  aria-label="Ders"
-                  value={subjectF}
-                  onChange={(e) => setSubjectF(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                >
-                  <option value="">Tüm dersler</option>
-                  {subjectOptions.map(([n, c]) => (
-                    <option key={n} value={n}>
-                      {n} ({c})
-                    </option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Tür"
-                  value={typeF}
-                  onChange={(e) => setTypeF(e.target.value as LibraryBookType | "")}
-                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                >
-                  <option value="">Tüm türler</option>
-                  {(Object.keys(LIBRARY_BOOK_TYPE_LABELS_TR) as LibraryBookType[]).map((t) => (
-                    <option key={t} value={t}>
-                      {LIBRARY_BOOK_TYPE_LABELS_TR[t]}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Yayınevi"
-                  value={publisherF}
-                  onChange={(e) => setPublisherF(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                >
-                  <option value="">Tüm yayınevleri</option>
-                  {publisherOptions.map(([n, c]) => (
-                    <option key={n} value={n}>
-                      {n} ({c})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {anyFilter ? (
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <span>{filtered.length} kitap gösteriliyor</span>
-                  <button
-                    type="button"
-                    className="underline underline-offset-2"
-                    onClick={() => {
-                      setGroup("");
-                      setSubjectF("");
-                      setTypeF("");
-                      setPublisherF("");
-                      setSearch("");
-                    }}
-                  >
-                    Süzgeçleri temizle
-                  </button>
-                </div>
-              ) : null}
-
-              {browseQ.isLoading ? (
-                <p className="text-xs text-muted-foreground">
-                  <Loader2 className="mr-1 inline size-3.5 animate-spin" aria-hidden />
-                  Katalog yükleniyor…
-                </p>
-              ) : grouped.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Katalogda bulunamadı — yukarıdan <strong>kapak + içindekiler</strong>{" "}
-                  yükle ya da alttaki formla oluştur.
-                </p>
-              ) : (
-                <div
-                  className="max-h-[28rem] space-y-3 overflow-y-auto pr-1"
-                  data-testid="catalog-browse-list"
-                >
-                  {grouped.map(([subj, items]) => (
-                    <section key={subj} className="space-y-1.5">
-                      <h4 className="sticky top-0 z-10 bg-card py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {subj} · {items.length}
-                      </h4>
-                      <ul className="space-y-1.5">
-                        {items.map((e) => (
-                          <CatalogRow key={e.id} entry={e} busy={busy} onApply={applyEntry} />
-                        ))}
-                      </ul>
-                    </section>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : null}
         </div>
-      </CardContent>
-    </Card>
+      ) : null}
+
+      {browseQ.isLoading ? (
+        <p className="text-sm text-muted-foreground">
+          <Loader2 className="mr-1 inline size-4 animate-spin" aria-hidden />
+          Katalog yükleniyor…
+        </p>
+      ) : grouped.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-sm text-muted-foreground">
+          Bu aramaya uyan kitap katalogda yok.
+        </p>
+      ) : (
+        <div className="max-h-[32rem] space-y-4 overflow-y-auto pr-1" data-testid="catalog-browse-list">
+          {grouped.map(([subj, items]) => (
+            <section key={subj} className="space-y-1.5">
+              <h4 className="sticky top-0 z-10 bg-card py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {subj} · {items.length}
+              </h4>
+              <ul className="space-y-1.5">
+                {items.map((e) => (
+                  <CatalogRow key={e.id} entry={e} busy={busy} onApply={onApply} />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
 // =============================================================================
-// Tarama sonucu
+// Kapak + içindekiler yükleme
 // =============================================================================
+
+export function BookScanUpload({
+  onApply,
+  onScanned,
+  busy,
+}: {
+  onApply: (e: CatalogEntryBrief) => void;
+  /** İçindekiler okundu (katalogda yok ya da koç "bu değil" dedi). */
+  onScanned: (result: BookScanResult) => void;
+  busy: boolean;
+}) {
+  const [scan, setScan] = React.useState<BookScanResult | null>(null);
+  const [files, setFiles] = React.useState<File[] | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  const scanMut = useScanBook();
+
+  const run = (fs: File[], forceRead: boolean) => {
+    scanMut.mutate(
+      { files: fs, forceRead },
+      {
+        onSuccess: (res) => {
+          setScan(res);
+          if (res.structure) onScanned(res);
+        },
+      },
+    );
+  };
+
+  const onFiles = (list: FileList | null) => {
+    if (!list || list.length === 0) return;
+    const fs = Array.from(list);
+    setFiles(fs);
+    setScan(null);
+    run(fs, false);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const disabled = busy || scanMut.isPending;
+
+  return (
+    <div className="space-y-3" data-testid="scan-upload">
+      {scanMut.isPending ? (
+        <div className="flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-5 text-sm text-violet-900 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-100">
+          <Loader2 className="size-5 shrink-0 animate-spin" aria-hidden />
+          <span>
+            Kapak tanınıyor; katalogda yoksa içindekiler iki kez okunuyor…
+            <br />
+            <span className="text-xs">30-60 saniye sürebilir, sayfadan ayrılma.</span>
+          </span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => fileRef.current?.click()}
+          className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/50 px-4 py-8 text-center transition hover:border-violet-500 hover:bg-violet-50 disabled:opacity-60 dark:border-violet-500/40 dark:bg-violet-500/5 dark:hover:bg-violet-500/10"
+          data-testid="scan-button"
+        >
+          <span className="inline-flex size-12 items-center justify-center rounded-full bg-violet-600 text-white">
+            <FileUp className="size-6" aria-hidden />
+          </span>
+          <span className="text-base font-semibold text-violet-950 dark:text-violet-100">
+            {scan ? "Başka dosya seç" : "Fotoğraf ya da PDF seç"}
+          </span>
+          <span className="max-w-md text-sm text-violet-900 dark:text-violet-200">
+            Kapağın ve içindekiler sayfalarının fotoğrafları (en çok 8) ya da kitabın PDF’i.
+            Tam kitap PDF’i de olur — yalnız ilk 12 sayfası okunur.
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs text-violet-800 dark:text-violet-300">
+            <Camera className="size-3.5" aria-hidden /> Telefonda doğrudan kamera açılır · kredi harcamaz
+          </span>
+        </button>
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        multiple
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        className="hidden"
+        onChange={(e) => onFiles(e.target.files)}
+        data-testid="scan-input"
+      />
+      {scan ? (
+        <ScanOutcome
+          scan={scan}
+          busy={disabled}
+          onApply={onApply}
+          onForceRead={files && !scan.structure ? () => run(files, true) : null}
+        />
+      ) : null}
+    </div>
+  );
+}
 
 function ScanOutcome({
   scan,
@@ -436,29 +424,26 @@ function ScanOutcome({
 }) {
   const ident = [scan.book_title, scan.publisher].filter(Boolean).join(" · ");
   return (
-    <div className="mt-3 space-y-2" data-testid="scan-outcome">
+    <div className="space-y-2" data-testid="scan-outcome">
       {ident ? (
-        <p className="text-sm text-violet-900 dark:text-violet-100">
+        <p className="text-sm">
           Tanınan kitap: <strong className="break-words">{ident}</strong>
         </p>
       ) : null}
       {scan.notes.map((n, i) => (
-        <p key={i} className="text-xs text-violet-800 dark:text-violet-200">
+        <p key={i} className="text-xs text-muted-foreground">
           • {n}
         </p>
       ))}
       {scan.structure ? (
-        <p className="rounded-md bg-emerald-600 px-3 py-2 text-sm text-white" data-testid="scan-read-ok">
+        <p className="rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white" data-testid="scan-read-ok">
           {scan.catalog_matches.length > 0 ? "İçindekilerden" : "Katalogda yok — içindekilerden"}{" "}
-          <strong>{scan.structure.sections.length} bölüm</strong> okundu. Aşağıdaki
-          formda ders ve sınıfı seçip oluştur; bölümler 2. adımda kontrol için
-          hazır gelecek.
+          <strong>{scan.structure.sections.length} bölüm</strong> okundu. Aşağıda ders ve sınıfı
+          seçip oluştur; bölümler bir sonraki adımda kontrol için hazır gelecek.
         </p>
       ) : scan.catalog_matches.length > 0 ? (
         <>
-          <p className="text-xs font-semibold text-violet-900 dark:text-violet-100">
-            Katalogda eşleşen kayıt:
-          </p>
+          <p className="text-sm font-semibold">Bu kitap katalogda var — yapısı hazır:</p>
           <ul className="space-y-1.5">
             {scan.catalog_matches.map((e) => (
               <CatalogRow key={e.id} entry={e} busy={busy} onApply={onApply} defaultOpen />
@@ -501,64 +486,63 @@ function CatalogRow({
 
   return (
     <li
-      className="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10"
+      className="rounded-xl border border-border bg-card transition hover:border-cyan-400"
       data-testid="catalog-row"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="min-w-0 flex-1 text-left"
           aria-expanded={open}
         >
-          <div className="flex items-start gap-1.5 text-sm font-medium text-emerald-900 dark:text-emerald-100">
+          <div className="flex items-start gap-1.5 text-sm font-medium">
             {open ? (
-              <ChevronDown className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <ChevronDown className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
             ) : (
-              <ChevronRight className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
             )}
-            <BookOpen className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
             <span className="break-words">{e.name}</span>
           </div>
-          <div className="pl-[2.375rem] text-xs text-emerald-800 dark:text-emerald-200">
+          <div className="pl-[2.375rem] text-xs text-muted-foreground">
             {e.publisher ? `${e.publisher} · ` : ""}
             {LIBRARY_BOOK_TYPE_LABELS_TR[e.type]}
             {grade ? ` · ${grade}` : ""} · {e.section_count} bölüm ·{" "}
-            <strong>{e.total_tests} test</strong>
-            {e.mapped_count > 0 ? ` · ${e.mapped_count} bölüm müfredata eşli` : ""}
+            <strong className="text-foreground">{e.total_tests} test</strong>
             {e.usage_count > 0 ? ` · ${e.usage_count} koç kullanıyor` : ""}
           </div>
         </button>
         <Button
           type="button"
           size="sm"
-          className={cn("bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white")}
+          className="bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white"
           disabled={busy || e.subject_id == null}
           title={
             e.subject_id == null
-              ? "Kayıtta ders bilgisi yok — alttaki formla oluştur"
-              : "Kitabı bu yapıyla oluştur"
+              ? "Kayıtta ders bilgisi yok — elle oluştur"
+              : "Kitabı bu yapıyla kütüphanene ekle"
           }
           onClick={() => onApply(e)}
         >
-          Yapısını kullan
+          Kütüphaneme ekle
         </Button>
       </div>
       {open ? (
-        <div className="border-t border-emerald-200 px-3 py-2 dark:border-emerald-500/30">
+        <div className="border-t border-border px-3 py-2">
           {detailQ.isLoading ? (
-            <p className="text-xs text-emerald-800 dark:text-emerald-200">
+            <p className="text-xs text-muted-foreground">
               <Loader2 className="mr-1 inline size-3.5 animate-spin" aria-hidden />
               Bölümler yükleniyor…
             </p>
           ) : detailQ.data ? (
-            <ol className="space-y-0.5 text-xs text-emerald-900 dark:text-emerald-100" data-testid="catalog-sections">
+            <ol className="space-y-0.5 text-xs" data-testid="catalog-sections">
               {detailQ.data.sections.map((s, i) => (
                 <li key={`${s.order}-${i}`} className="flex items-start justify-between gap-3">
                   <span className="min-w-0 break-words">
                     {i + 1}. {s.label}
                     {s.topic_name && s.topic_name !== s.label ? (
-                      <span className="text-emerald-700 dark:text-emerald-300"> → {s.topic_name}</span>
+                      <span className="text-muted-foreground"> → {s.topic_name}</span>
                     ) : null}
                   </span>
                   <span className="shrink-0 font-semibold tabular-nums">{s.test_count} test</span>

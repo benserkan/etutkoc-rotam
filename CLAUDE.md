@@ -8293,6 +8293,15 @@ alarmı · email enumeration koruması · auto-resume · self-signup + invite + 
   sıralıysa; yazılı sayı korunur; sayfa+test'siz satırlar (ünite başlıkları) çıkarılır. Editörde
   dolgulu "tahmini" rozeti + not; elle değiştirmek / Tümüne uygula rozeti kaldırır. Mozaik 8 Fen
   PDF'inde 42 bölüm = katalog kaydıyla aynı.
+- **Soru-cevaplı başlangıç (aynı gün, kullanıcı: "iç içe yapılar, nereden başlayacağım?")**:
+  sihirbaz artık "**Ne yapmak istiyorsun?**" ekranıyla açılır; form/katalog/tarama aynı anda
+  GÖRÜNMEZ. Yollar: **Hazır bir kitap ekle** (katalog tarayıcısı; buton "Kütüphaneme ekle") ·
+  **Kitabım elimde, tarat** (büyük yükleme alanı → katalogda varsa kayıt, yoksa okuma + ad/yayınevi
+  dolu form "Oluştur ve bölümlere geç") · **Kitabı kendim tanımlayacağım** (form, şablon seçici
+  gizli) · **Kendi şablonumdan başla** (yalnız şablon varsa; şablon zorunlu). Her yolda "Başka yol
+  seç" + "Aradığın yok mu?" geçişleri. `catalog-quick-start.tsx` artık yapı taşları
+  (`CatalogBrowser`, `BookScanUpload`, `useCatalogApply`, `useCatalogBrowse`);
+  `BookCreateForm templateMode` (optional|hide|required). live_book_catalog_browse **24/24**.
 - Dev: `next.config` `experimental.proxyTimeout: 300_000` (rewrite vekili 30 sn'de uzun AI
   uçlarını koparıyordu; prod Caddy doğrudan).
 - Test: book_catalog 34/34 · ai_book_structure 16/16 · teacher_library 25 · YENİ

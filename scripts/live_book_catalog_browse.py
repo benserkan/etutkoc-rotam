@@ -91,16 +91,28 @@ def main() -> int:
                 later.first.click()
                 pg.wait_for_timeout(500)
 
-            toggle = pg.locator('[data-testid="catalog-browse-toggle"]')
-            chk("1. 'Katalogda N kitap var' başlığı", toggle.count() == 1 and "Katalogda" in toggle.inner_text(),
-                toggle.inner_text() if toggle.count() else "")
+            start = pg.locator('[data-testid="start-choice"]')
+            chk("0. açılışta 'Ne yapmak istiyorsun?' + 3 yol (form YOK)",
+                start.count() == 1 and "Ne yapmak istiyorsun" in start.inner_text()
+                and pg.locator('[data-testid^="choose-"]').count() >= 3
+                and pg.locator("#cb-name").count() == 0,
+                start.inner_text()[:200] if start.count() else "")
+            chk("0b. seçim kartlarında kırpma yok + taşma yok",
+                truncated(pg, '[data-testid="start-choice"]') == 0
+                and not pg.evaluate("() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1"))
+            pg.screenshot(path=os.path.join(SHOT_DIR, "book_start_choice.png"), full_page=True)
+            catalog_card = pg.locator('[data-testid="choose-catalog"]')
+            chk("1. 'Hazır bir kitap ekle' kartında katalog sayısı", "Katalogda" in catalog_card.inner_text(),
+                catalog_card.inner_text()[:160])
+            catalog_card.click()
+            pg.wait_for_timeout(1500)
             rows = pg.locator('[data-testid="catalog-row"]')
             n_all = rows.count()
             chk("2. yazmadan tüm katalog listeleniyor (>20)", n_all > 20, str(n_all))
             chk("3. ders başlıkları", pg.locator('[data-testid="catalog-browse-list"] h4').count() >= 3)
             chk("4. kitap adı kırpılmıyor", truncated(pg, '[data-testid="catalog-browse-list"]') == 0)
 
-            pg.get_by_label("Sınav grubu").select_option("lgs")
+            pg.get_by_role("group", name="Sınav grubu").get_by_role("button", name="LGS").click()
             pg.wait_for_timeout(400)
             n_lgs = rows.count()
             chk("5. LGS süzgeci listeyi daraltır", 0 < n_lgs < n_all, f"{n_lgs}/{n_all}")
@@ -137,17 +149,45 @@ def main() -> int:
             chk("11. süzgeç temizlenince tüm liste geri", rows.count() == n_all)
             pg.get_by_label("Katalogda ara").fill("ay serisi fen bilimleri soru")
             pg.wait_for_timeout(400)
-            rows.first.get_by_role("button", name="Yapısını kullan").click()
+            rows.first.get_by_role("button", name="Kütüphaneme ekle").click()
             pg.wait_for_timeout(3500)
             with SessionLocal() as db:
                 bk = db.query(Book).filter(Book.teacher_id == d["coach"]).first()
                 n_sec = db.query(BookSection).filter(BookSection.book_id == bk.id).count() if bk else 0
-            chk("12. 'Yapısını kullan' kitabı bölümleriyle oluşturdu", bk is not None and n_sec >= 2,
+            chk("12. 'Kütüphaneme ekle' kitabı bölümleriyle oluşturdu", bk is not None and n_sec >= 2,
                 f"sec={n_sec}")
+
+            # elle yol: form açılır, şablon seçici YOK
+            pg.goto(f"{BASE}/teacher/library/new", wait_until="networkidle")
+            pg.wait_for_timeout(2000)
+            pg.locator('[data-testid="choose-manual"]').click()
+            pg.wait_for_timeout(800)
+            chk("12c. elle yol: form açık, şablon seçici yok, 'Başka yol seç' var",
+                pg.locator("#cb-name").count() == 1 and pg.locator("#cb-template").count() == 0
+                and pg.get_by_role("button", name="Başka yol seç").count() == 1)
+            pg.get_by_role("button", name="Başka yol seç").click()
+            pg.wait_for_timeout(500)
+            chk("12d. geri dönünce seçim ekranı", pg.locator('[data-testid="start-choice"]').count() == 1)
+            pg.evaluate("() => document.documentElement.classList.add('dark')")
+            pg.wait_for_timeout(300)
+            bad = measure(pg, '[data-testid="start-choice"]', min_ratio=3.0)["bad"]
+            chk("12e. koyu tema kontrastı (seçim kartları)", bad == 0, str(bad))
+            pg.screenshot(path=os.path.join(SHOT_DIR, "book_start_choice_dark.png"), full_page=True)
+            pg.evaluate("() => document.documentElement.classList.remove('dark')")
+            pg.set_viewport_size({"width": 390, "height": 850})
+            pg.wait_for_timeout(400)
+            chk("12f. 390px seçim ekranı taşmıyor",
+                not pg.evaluate("() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1"))
+            pg.screenshot(path=os.path.join(SHOT_DIR, "book_start_choice_mobile.png"), full_page=True)
+            pg.set_viewport_size({"width": 1300, "height": 950})
 
             if pdf_match and os.path.exists(pdf_match):
                 pg.goto(f"{BASE}/teacher/library/new", wait_until="networkidle")
                 pg.wait_for_timeout(2500)
+                pg.locator('[data-testid="choose-scan"]').click()
+                pg.wait_for_timeout(800)
+                chk("12b. tarat yolu: yükleme alanı + form henüz YOK",
+                    pg.locator('[data-testid="scan-button"]').count() == 1 and pg.locator("#cb-name").count() == 0)
                 pg.locator('[data-testid="scan-input"]').set_input_files(pdf_match)
                 pg.wait_for_selector('[data-testid="scan-outcome"]', timeout=180_000)
                 pg.wait_for_timeout(800)
@@ -174,7 +214,7 @@ def main() -> int:
                     opts = sel.locator("option").all_inner_texts()
                     fen = next((o for o in opts if "Fen" in o), None) or opts[1]
                     sel.select_option(label=fen)
-                    pg.get_by_role("button", name="Oluştur ve devam et").click()
+                    pg.get_by_role("button", name="Oluştur ve bölümlere geç").click()
                     pg.wait_for_timeout(4000)
                     body = pg.locator("main").inner_text()
                     chk("15. 2. adımda okunan bölümler taslak olarak hazır",

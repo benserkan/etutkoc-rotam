@@ -74,6 +74,8 @@ interface Props {
   /** Kapak/içindekiler taramasından gelen ön-dolum (sihirbaz). */
   initialName?: string | null;
   initialPublisher?: string | null;
+  /** Şablon seçici: "hide" gizler, "required" zorunlu + en üstte gösterir. */
+  templateMode?: "optional" | "hide" | "required";
 }
 
 export function BookCreateForm({
@@ -84,6 +86,7 @@ export function BookCreateForm({
   hideCancel,
   initialName,
   initialPublisher,
+  templateMode = "optional",
 }: Props) {
   const router = useRouter();
   const createMut = useCreateBook();
@@ -160,6 +163,10 @@ export function BookCreateForm({
     }
     if (!subjectId) {
       setError("Ders seçin.");
+      return;
+    }
+    if (templateMode === "required" && !templateId) {
+      setError("Bir şablon seçin.");
       return;
     }
     const gMin = gradeMin ? Number(gradeMin) : null;
@@ -401,9 +408,11 @@ export function BookCreateForm({
             </div>
           </div>
 
-          {templates.length > 0 ? (
+          {templates.length > 0 && templateMode !== "hide" ? (
             <div className="space-y-1">
-              <Label htmlFor="cb-template">Şablondan başla (opsiyonel)</Label>
+              <Label htmlFor="cb-template">
+                {templateMode === "required" ? "Hangi şablondan?" : "Şablondan başla (opsiyonel)"}
+              </Label>
               <select
                 id="cb-template"
                 value={templateId === "" ? "" : String(templateId)}
@@ -415,7 +424,9 @@ export function BookCreateForm({
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 )}
               >
-                <option value="">Sıfırdan başla</option>
+                <option value="">
+                  {templateMode === "required" ? "— Şablon seç —" : "Sıfırdan başla"}
+                </option>
                 {templates.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name} ({t.section_count} bölüm)

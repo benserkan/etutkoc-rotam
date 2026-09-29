@@ -9,6 +9,8 @@ import {
   BookOpen,
   Camera,
   Check,
+  Copy,
+  Library,
   CheckCircle2,
   ListChecks,
   Loader2,
@@ -42,7 +44,12 @@ import type { TeacherStudentListItem } from "@/lib/types/teacher";
 import { isExamSubject } from "@/lib/utils/subjects";
 
 import { BookCreateForm } from "@/components/teacher/book-create-form";
-import { CatalogQuickStart } from "@/components/book-catalog/catalog-quick-start";
+import {
+  BookScanUpload,
+  CatalogBrowser,
+  useCatalogApply,
+  useCatalogBrowse,
+} from "@/components/book-catalog/catalog-quick-start";
 import { PhotoReadPanel } from "@/components/book-catalog/photo-read-panel";
 import { useContributeCatalog } from "@/lib/hooks/use-book-catalog-mutations";
 import type { BookScanResult, StructureReadResult } from "@/lib/types/book-catalog";
@@ -62,7 +69,7 @@ import { cn } from "@/lib/utils";
  */
 
 const STEPS = [
-  { n: 1, label: "Bilgiler", icon: BookOpen },
+  { n: 1, label: "Başlangıç", icon: BookOpen },
   { n: 2, label: "Üniteler", icon: ListChecks },
   { n: 3, label: "Eşleştirme", icon: Sparkles },
   { n: 4, label: "Öğrenci", icon: Users },
@@ -102,8 +109,8 @@ export function BookWizardClient({ subjects, templates, students }: Props) {
           Yeni kitap
         </h1>
         <p className="text-sm text-muted-foreground">
-          Sistem seni adım adım yönlendirecek — her adımda ne yapıldığını
-          açıklar, önerilen yolu vurgular.
+          Birkaç soruyla kitabını kütüphanene ekleyelim — yolu sen seç, gerisini
+          sistem adım adım gösterir.
         </p>
       </header>
 
@@ -226,8 +233,17 @@ function StepNarration({ children }: { children: React.ReactNode }) {
 }
 
 // =============================================================================
-// 1) Bilgiler
+// 1) Başlangıç — "Ne yapmak istiyorsun?" + seçilen yol
 // =============================================================================
+
+type StartPath = "catalog" | "scan" | "manual" | "template";
+
+const PATH_TITLES: Record<StartPath, string> = {
+  catalog: "Hazır bir kitap ekle",
+  scan: "Kitabım elimde, tarat",
+  manual: "Kitabı kendim tanımlayacağım",
+  template: "Kendi şablonumdan başla",
+};
 
 function StepInfo({
   subjects,
@@ -240,28 +256,255 @@ function StepInfo({
   subjects: SubjectRef[];
   templates: BookTemplateListItem[];
   scanned: BookScanResult | null;
-  onScanned: (r: BookScanResult) => void;
+  onScanned: (r: BookScanResult | null) => void;
   onCreated: (book: LibraryBookDetailResponse) => void;
   onCreatedFromCatalog: (book: LibraryBookDetailResponse) => void;
 }) {
-  return (
-    <div className="space-y-3">
-      <StepNarration>
-        <strong>1. Adım — Kitap bilgileri.</strong> Önce katalogda ara — kitap
-        tanımlıysa yapısı (üniteler + birebir test sayıları) tek tıkla gelir.
-        Yoksa alttaki formla oluştur.
-      </StepNarration>
-      <CatalogQuickStart onCreated={onCreatedFromCatalog} onScanned={onScanned} />
-      <BookCreateForm
-        key={scanned ? `scan-${scanned.book_title ?? ""}-${scanned.structure?.sections.length ?? 0}` : "blank"}
-        initialName={scanned?.book_title}
-        initialPublisher={scanned?.publisher}
-        subjects={subjects}
-        templates={templates}
-        onCreated={onCreated}
-        submitLabel="Oluştur ve devam et"
-        hideCancel
+  const [path, setPath] = React.useState<StartPath | null>(scanned ? "scan" : null);
+  const browseQ = useCatalogBrowse();
+  const catalog = useCatalogApply(onCreatedFromCatalog);
+
+  const choose = (p: StartPath | null) => {
+    if (p !== "scan") onScanned(null);
+    setPath(p);
+  };
+
+  if (path === null) {
+    return (
+      <StartChoice
+        catalogCount={browseQ.data?.total ?? null}
+        templateCount={templates.length}
+        onChoose={choose}
       />
+    );
+  }
+
+  return (
+    <div className="space-y-4" data-testid={`path-${path}`}>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={() => choose(null)}>
+          <ArrowLeft className="size-4" aria-hidden /> Başka yol seç
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          Seçimin: <strong className="text-foreground">{PATH_TITLES[path]}</strong>
+        </span>
+      </div>
+
+      {path === "catalog" ? (
+        <Card>
+          <CardContent className="space-y-4 p-4 sm:p-5">
+            <div>
+              <h2 className="text-lg font-semibold">Kitabını katalogda bul</h2>
+              <p className="text-sm text-muted-foreground">
+                Kitaba dokunup üniteleri ve test sayılarını görebilirsin. Doğruysa{" "}
+                <strong>Kütüphaneme ekle</strong> — üniteler, test sayıları ve müfredat
+                eşleşmesi hazır gelir.
+              </p>
+            </div>
+            <CatalogBrowser onApply={catalog.apply} busy={catalog.isPending} />
+            <NotFoundFooter
+              text="Aradığın kitap katalogda yok mu?"
+              actions={[
+                { label: "Kitabı tarat", onClick: () => choose("scan") },
+                { label: "Kendim tanımlayacağım", onClick: () => choose("manual") },
+              ]}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {path === "scan" ? (
+        <>
+          <Card>
+            <CardContent className="space-y-4 p-4 sm:p-5">
+              <div>
+                <h2 className="text-lg font-semibold">Kapağı ve içindekileri yükle</h2>
+                <p className="text-sm text-muted-foreground">
+                  Sistem kapaktan kitabı tanır. Katalogda varsa yapısı hazır gelir; yoksa
+                  içindekiler iki kez okunur ve test sayıları kitaptan alınır (yazmıyorsa
+                  sayfa aralığından tahmin edilir).
+                </p>
+              </div>
+              <BookScanUpload
+                onApply={catalog.apply}
+                onScanned={onScanned}
+                busy={catalog.isPending}
+              />
+            </CardContent>
+          </Card>
+          {scanned?.structure ? (
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold">Kitap bilgilerini tamamla</h2>
+              <p className="text-sm text-muted-foreground">
+                Ad ve yayınevi kitaptan okundu — kontrol et, <strong>ders</strong> ve{" "}
+                <strong>sınıf</strong> seç.
+              </p>
+              <BookCreateForm
+                key={`scan-${scanned.book_title ?? ""}-${scanned.structure.sections.length}`}
+                initialName={scanned.book_title}
+                initialPublisher={scanned.publisher}
+                subjects={subjects}
+                templates={templates}
+                templateMode="hide"
+                onCreated={onCreated}
+                submitLabel="Oluştur ve bölümlere geç"
+                hideCancel
+              />
+            </div>
+          ) : (
+            <NotFoundFooter
+              text="Kitap elinde değil mi?"
+              actions={[
+                { label: "Katalogda göz at", onClick: () => choose("catalog") },
+                { label: "Kendim tanımlayacağım", onClick: () => choose("manual") },
+              ]}
+            />
+          )}
+        </>
+      ) : null}
+
+      {path === "manual" || path === "template" ? (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold">
+            {path === "template" ? "Şablonu seç, kitabı adlandır" : "Kitabın bilgileri"}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {path === "template"
+              ? "Ünite yapısı ve test sayıları seçtiğin şablondan gelir."
+              : "Üniteleri bir sonraki adımda resmi konulardan, yapay zekâyla, içindekiler fotoğrafından ya da elle eklersin."}
+          </p>
+          <BookCreateForm
+            subjects={subjects}
+            templates={templates}
+            templateMode={path === "template" ? "required" : "hide"}
+            onCreated={onCreated}
+            submitLabel="Oluştur ve devam et"
+            hideCancel
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StartChoice({
+  catalogCount,
+  templateCount,
+  onChoose,
+}: {
+  catalogCount: number | null;
+  templateCount: number;
+  onChoose: (p: StartPath) => void;
+}) {
+  const options: {
+    path: StartPath;
+    icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+    title: string;
+    desc: string;
+    meta: string;
+    badge?: string;
+    tone: string;
+  }[] = [
+    {
+      path: "catalog",
+      icon: Library,
+      title: PATH_TITLES.catalog,
+      desc:
+        catalogCount != null
+          ? `Katalogda ${catalogCount} kitap var. Üniteleri ve test sayıları hazır — bul, tek dokunuşla kütüphanene ekle.`
+          : "Katalogdaki kitaplardan seç; üniteleri ve test sayıları hazır gelir.",
+      meta: "Yaklaşık 10 saniye",
+      badge: "En hızlı",
+      tone: "bg-emerald-600",
+    },
+    {
+      path: "scan",
+      icon: Camera,
+      title: PATH_TITLES.scan,
+      desc: "Kapağın ve içindekilerin fotoğrafını ya da kitabın PDF’ini yükle. Sistem kitabı tanır; katalogda yoksa içindekilerden oluşturur.",
+      meta: "Yaklaşık 1 dakika",
+      tone: "bg-violet-600",
+    },
+    {
+      path: "manual",
+      icon: PenLine,
+      title: PATH_TITLES.manual,
+      desc: "Adını, dersini ve sınıfını gir. Üniteleri sonra resmi konulardan, yapay zekâyla ya da elle eklersin.",
+      meta: "Yaklaşık 3-5 dakika",
+      tone: "bg-slate-700",
+    },
+  ];
+  if (templateCount > 0) {
+    options.push({
+      path: "template",
+      icon: Copy,
+      title: PATH_TITLES.template,
+      desc: `Kayıtlı ${templateCount} kitap şablonun var — ünite yapısı şablondan gelir, yalnız adı ve dersi seçersin.`,
+      meta: "Yaklaşık 1 dakika",
+      tone: "bg-amber-600",
+    });
+  }
+  return (
+    <div className="space-y-4" data-testid="start-choice">
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight">Ne yapmak istiyorsun?</h2>
+        <p className="text-sm text-muted-foreground">
+          Seçimine göre sana uygun adımlar açılacak. İstediğin an geri dönüp başka yol seçebilirsin.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {options.map((o) => {
+          const Icon = o.icon;
+          return (
+            <button
+              key={o.path}
+              type="button"
+              onClick={() => onChoose(o.path)}
+              className="group relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-500 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+              data-testid={`choose-${o.path}`}
+            >
+              {o.badge ? (
+                <span className="absolute right-4 top-4 rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {o.badge}
+                </span>
+              ) : null}
+              <span className={cn("inline-flex size-11 items-center justify-center rounded-xl text-white", o.tone)}>
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <span className="text-base font-semibold">{o.title}</span>
+              <span className="text-sm text-muted-foreground">{o.desc}</span>
+              <span className="mt-auto flex items-center justify-between pt-1 text-xs text-muted-foreground">
+                <span>{o.meta}</span>
+                <ArrowRight
+                  className="size-4 text-cyan-700 transition group-hover:translate-x-0.5 dark:text-cyan-300"
+                  aria-hidden
+                />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function NotFoundFooter({
+  text,
+  actions,
+}: {
+  text: string;
+  actions: { label: string; onClick: () => void }[];
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-xl bg-muted/60 px-4 py-3">
+      <span className="text-sm font-medium">{text}</span>
+      <span className="flex flex-wrap gap-2">
+        {actions.map((a) => (
+          <Button key={a.label} type="button" size="sm" variant="outline" onClick={a.onClick}>
+            {a.label}
+          </Button>
+        ))}
+      </span>
     </div>
   );
 }
