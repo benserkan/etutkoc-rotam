@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { KeyRound, Mail } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,10 @@ import type {
 import { formatLastLogin } from "@/components/institution/dashboard-client";
 import { NewTeacherDialog } from "@/components/institution/new-teacher-dialog";
 import { TeacherRowActions } from "@/components/institution/teacher-row-actions";
-import { InvitationsClient } from "@/components/institution/invitations-client";
+import {
+  InvitationsClient,
+  NewInvitationDialog,
+} from "@/components/institution/invitations-client";
 import { ColumnHint } from "@/components/ui/column-hint";
 import type { InvitationListResponse } from "@/lib/types/institution";
 
@@ -47,6 +51,8 @@ export function TeachersListClient({ initial, invitations, tab }: Props) {
   const data = q.data ?? initial;
   const { institution, items } = data;
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [inviteOpen, setInviteOpen] = React.useState(false);
+  const router = useRouter();
   const pendingInv = invitations.items.filter((i) => i.status === "pending").length;
 
   return (
@@ -66,12 +72,16 @@ export function TeachersListClient({ initial, invitations, tab }: Props) {
             {institution.name} — {items.length} öğretmen
           </p>
         </div>
-        {tab === "liste" ? (
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="size-4" aria-hidden />
-            Öğretmen Ekle
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setInviteOpen(true)} data-testid="invite-teacher">
+            <Mail className="size-4" aria-hidden />
+            Öğretmen davet et
           </Button>
-        ) : null}
+          <Button variant="outline" onClick={() => setCreateOpen(true)}>
+            <KeyRound className="size-4" aria-hidden />
+            Hesabı ben açayım
+          </Button>
+        </div>
       </header>
 
       <nav className="flex flex-wrap gap-2 border-b border-border" aria-label="Öğretmen sekmeleri">
@@ -84,21 +94,39 @@ export function TeachersListClient({ initial, invitations, tab }: Props) {
         </TabLink>
       </nav>
 
-      <div className="grid gap-3 text-sm sm:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card p-3">
-          <p className="font-medium">Öğretmen ekle — hesabı sen açarsın</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Ad ve e-posta girersin, sistem geçici şifre üretir; bilgileri öğretmene
-            sen iletirsin. Öğretmen hemen giriş yapabilir.
-          </p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-3">
-          <p className="font-medium">Davet bağlantısı — öğretmen kendisi kaydolur</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Tek kullanımlık bir bağlantı oluşturursun (7 gün geçerli); öğretmen
-            bağlantıyı açıp kendi şifresini belirleyerek kaydolur.
-          </p>
-        </div>
+      <div className="grid gap-3 text-sm sm:grid-cols-2" data-testid="add-teacher-options">
+        <button
+          type="button"
+          onClick={() => setInviteOpen(true)}
+          className="relative rounded-xl border-2 border-emerald-500 bg-card p-4 text-left transition hover:bg-muted/40"
+        >
+          <span className="absolute right-3 top-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+            Önerilen
+          </span>
+          <span className="flex items-center gap-2 pr-20 font-semibold">
+            <Mail className="size-4 shrink-0 text-emerald-600" aria-hidden />
+            Davet et — öğretmen kendisi kaydolur
+          </span>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            E-postasını yazarsın, davet bağlantısı o adrese gider. Öğretmen adını ve kendi
+            şifresini belirleyip hesabını açar — şifre kimsenin eline geçmez, e-posta adresi
+            doğrulanmış olur. Bağlantı 7 gün geçerli.
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className="rounded-xl border border-border bg-card p-4 text-left transition hover:bg-muted/40"
+        >
+          <span className="flex items-center gap-2 font-semibold">
+            <KeyRound className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            Hesabı ben açayım — geçici şifreyle
+          </span>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            Öğretmen yanındaysa, e-postası yoksa ya da toplu açılışta. Sistem geçici şifre
+            üretir, bilgileri sen iletirsin; ilk girişte şifresini değiştirir.
+          </span>
+        </button>
       </div>
 
       {tab === "davet" ? (
@@ -106,7 +134,7 @@ export function TeachersListClient({ initial, invitations, tab }: Props) {
       ) : items.length === 0 ? (
         <Card>
           <div className="p-12 text-center text-sm text-muted-foreground">
-            Henüz öğretmen yok. Sağ üstten ekle.
+            Henüz öğretmen yok. Yukarıdan davet et.
           </div>
         </Card>
       ) : (
@@ -164,6 +192,17 @@ export function TeachersListClient({ initial, invitations, tab }: Props) {
       <NewTeacherDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
+        onSwitchToInvite={() => {
+          setCreateOpen(false);
+          setInviteOpen(true);
+        }}
+      />
+      <NewInvitationDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        onCreated={() => {
+          if (tab !== "davet") router.push("/institution/teachers?tab=davet");
+        }}
       />
     </div>
   );

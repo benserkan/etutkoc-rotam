@@ -90,10 +90,13 @@ export function InvitationsClient({ initial, embedded = false }: Props) {
           </p>
           <DemoHint contextKey="invitations" role="institution_admin" className="mt-2" />
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" aria-hidden />
-          Yeni davet bağlantısı
-        </Button>
+        {/* Gömülüyken sayfa başlığındaki "Öğretmen davet et" düğmesi kullanılır */}
+        {embedded ? null : (
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" aria-hidden />
+            Yeni davet bağlantısı
+          </Button>
+        )}
       </header>
 
       <SecurityNote />
@@ -354,12 +357,15 @@ function LinkCopyControl({ url }: { url: string }) {
   );
 }
 
-function NewInvitationDialog({
+export function NewInvitationDialog({
   open,
   onOpenChange,
+  onCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Oluşturulunca (örn. davet sekmesine geç). */
+  onCreated?: () => void;
 }) {
   const mut = useCreateInstitutionInvitation();
   const [fullName, setFullName] = React.useState("");
@@ -387,7 +393,10 @@ function NewInvitationDialog({
         send_email: sendMail,
       },
       {
-        onSuccess: () => onOpenChange(false),
+        onSuccess: () => {
+          onOpenChange(false);
+          onCreated?.();
+        },
       },
     );
   }
@@ -396,7 +405,7 @@ function NewInvitationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Yeni Öğretmen Davetiyesi</DialogTitle>
+          <DialogTitle>Öğretmeni davet et</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1">

@@ -19,6 +19,8 @@ import type { TeacherCreateResult } from "@/lib/types/institution";
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** "Davet et (önerilen)" yoluna geç. */
+  onSwitchToInvite?: () => void;
 }
 
 /**
@@ -30,7 +32,7 @@ interface Props {
  *   3) Dialog bu evrede başarı kartına geçer: şifre + "Kopyala" + güvenlik notu
  *   4) "Tamam" ile dialog kapanır; tekrar açıldığında temiz form
  */
-export function NewTeacherDialog({ open, onOpenChange }: Props) {
+export function NewTeacherDialog({ open, onOpenChange, onSwitchToInvite }: Props) {
   const mut = useCreateInstitutionTeacher();
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -68,7 +70,7 @@ export function NewTeacherDialog({ open, onOpenChange }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {createdResult ? "Öğretmen oluşturuldu" : "Yeni Öğretmen"}
+            {createdResult ? "Öğretmen oluşturuldu" : "Hesabı ben açayım"}
           </DialogTitle>
         </DialogHeader>
 
@@ -79,6 +81,20 @@ export function NewTeacherDialog({ open, onOpenChange }: Props) {
           />
         ) : (
           <form onSubmit={submit} className="space-y-4">
+            {onSwitchToInvite ? (
+              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100">
+                <strong>Önerilen yol davet bağlantısıdır:</strong> öğretmen şifresini kendisi
+                belirler, e-posta adresi doğrulanmış olur. Bu yolu öğretmen yanındaysa ya da
+                e-postası yoksa kullan.{" "}
+                <button
+                  type="button"
+                  onClick={onSwitchToInvite}
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Davet bağlantısı gönder
+                </button>
+              </div>
+            ) : null}
             <div className="space-y-1">
               <Label htmlFor="ntn-name">
                 Ad Soyad <span className="text-rose-500">*</span>
