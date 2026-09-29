@@ -8253,6 +8253,20 @@ alarmı · email enumeration koruması · auto-resume · self-signup + invite + 
 - **D7 P5 tam regresyon: 19 suite GREEN** (api_v1 47 + auth p1/p2/p3/p4/p5 + me +
   admin tüm + parent + institution + tenant)
 
+## Kopya kitap kayıtları temizliği (2026-09-29, migration YOK)
+
+- Sorun: aynı öğrencide aynı adlı İKİ ayrı Book kaydı atanmış görünüyordu (StudentBook
+  (student,book) tekil; kopya = aynı adla iki Book). Sistem geneli tarama
+  (`scripts/diagnose_duplicate_books.py`, salt okuma) → 2 grup, ikisi de #164 Zeynep Ela.
+- `scripts/merge_duplicate_books.py` (kuru çalışma varsayılan, `--apply`, `--student=N`):
+  ilk atanan kalır; kopyanın bölüm yapısı birebir değilse / başka öğrencide kullanılıyorsa
+  ATLANIR; tüm kitap/bölüm referansları (görev kalemi, yanlış soru, iskelet satırı + hayalet
+  kaydı, talep, şablon, öneri geri bildirimi, bağımsız çalışma, kitap seti) eşleşen bölüme
+  taşınır, ilerleme toplanır, kopya atama + kitap silinir.
+- Prod: yedek `pre_dupbooks_20260929_0804.dump` → 2 birleştirme (#503→#489 Paraf, 2
+  iskelet satırı; #497→#494 3D AYT Fizik, Vektörler görevi + 3 çözülen taşındı) → tarama 0
+  grup, sayaç drift 0; Zeynep 3D AYT Fizik'te Kuvvet ve Denge 3 + Vektörler 3 korundu.
+
 ## Kurum Yöneticisi — Program Uyum Panosu (2026-05-20)
 
 **Bağlam:** Kullanıcı, kurum yöneticisi kimliğiyle paneli değerlendirdi. Tespit:
