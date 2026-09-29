@@ -628,6 +628,51 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
 
 ---
 
+## UYARI SİSTEMİ REVİZYONU — tek bayrak motoru + ders bazlı sınav hazırlığı + sade şube (2026-09-29, CANLI)
+
+- **Tetikleyici (koç, Boran #157):** program 26 Eyl'de bitmiş, son 4 programlı gün hiç
+  yapılmamış — ekranda kırmızı yoktu, 5 sarı ders belirtisi vardı. "Uyarılar çoğu zaman
+  bizi yanıltıyor." Koç onaylı A–G kategorileri + eşikler.
+- **TEK MOTOR `app/services/student_flags.py` (`evaluate_flags` → FlagReport: primary /
+  secondary / good / headline / level / parent_level).** `analytics.generate_warnings` =
+  motorun ana kartları (pano, liste, detay, mobil otomatik); eski üretici
+  `legacy_warnings` yalnız hazır parçalar için (today_no_tick, subject_stale/untouched,
+  subjects_unprogrammed). Katmanlar:
+  A program (`program_none` kırmızı = bugün ve sonrası yayınlı görev yok, hesap ≥3 g ·
+  `program_ending` · `draft_only` · `subjects_unprogrammed` bilgi) · B katılım
+  (`empty_streak` programlı gün boş 2 sarı/3 kırmızı, açılış kanıtta, bugün tik atıldıysa
+  yok · `completion_low` son 7 BİTMİŞ gün %70/%40 · `completion_drop` 30 puan · `no_login`
+  3/5 gün · `today_no_tick`) · C (`subject_avoid_{id}` diğer derslerden 30 puan geride ya
+  da %0, ölçüt DİĞER derslerin oranı) · D (`deneme_skipped` koça özel · `exam_drop` aynı
+  tür) · E (`exam_behind_{id}` / `exam_stalled_{id}`) · F (`bulk_marking` günde 5+ görev
+  10 dk içinde ≥3 gün · `dy_missing`; bilgi, koça özel) · G (`good_streak`,
+  `good_completion`, `good_deneme`, `good_net_up`). Başlangıç muafiyeti <3 gün.
+  **Hiyerarşi:** A/B kırmızısı C durgunluk + D deneme + E kartlarını ek sinyale indirir;
+  empty_streak kırmızı → completion_low ek; no_login + empty_streak → no_login ek.
+  UI öğrenci başına en çok 3 ana kart + "Ek sinyaller" + iyi gidenler + tek cümle özet;
+  programsız günde "Bugün programı yok". **Veli rengi** `parent_level` (koça özel
+  bayraklar hariç). **Risk puanı** motorla hizalı: `no_program` = program_none; B/C/D
+  kırmızısı seviyeyi en az Risk'e, sarısı Dikkat'e çeker; A ve E yükseltmez.
+- **Ders bazlı sınav hazırlığı `exam_readiness.py`** (eski genel 4052 testlik hesap
+  yerine): aktif kaynak = son 21 gün / önümüzdeki 14 günde görev verilen test kitapları
+  (dinamik; 21+ gün görevsiz = bırakıldı; bitmiş kitap + kapatılan konu hariç; aynı adlı
+  iki kitap kaydı tek sayılır) · hız = son 21 gün · hedef = sınav − 6 hafta · geçmiş <14
+  gün "erken". Uç `GET /teacher/students/{id}/exam-readiness`; Analitik sekmesinde
+  `ExamReadinessCard`. **`User.effective_exam_date` geri dönüşü:** akademik yılı yok /
+  geçmişte kalmış 12. sınıf-mezun önümüzdeki YKS'yi alır (prod'da çoğunda None'dı →
+  tahmin ve veli "sınav yaklaşıyor" bildirimi kapalıydı).
+- **Şube sade model:** şube = sınıf + harf; koç yalnız "A" yazar (sınıf öğrenciden:
+  10-A, Mezun-A), sınıfa uyan şube çipleri tek tık, önizleme. `normalize_class_group`
+  tek biçim ('10 - a'→10-A, '12 Mezun'→12-MEZUN). `scripts/normalize_class_groups.py`.
+- **Doğrulama:** `scripts/compare_flags.py <koç>` + `compare_readiness.py <koç>` (salt
+  okuma; yeni kod canlıdan önce konteynerde geçici klasörden koşulabilir). Testler:
+  student_flags 24 · exam_readiness 13 · exam_date_fallback 6 · warning_rules_v2 13 ·
+  live_dashboard_warnings 15 · student_class_group 21 · live 18 · gorev 83/83.
+- **DERS:** aynı kitabın aynı öğrenciye iki kez atanması DB'de imkânsız (unique) —
+  "iki kez" görünen kitaplar aynı adlı iki ayrı Book kaydı.
+
+---
+
 ## KURUM TOPLU KURULUM — 4 madde (2026-09-27, kurum anlaşması ~25 öğrenci)
 
 **Tetikleyici (kullanıcı):** yeni kurum — 8. sınıf 3, 10-11. sınıf ~20, 12 +
