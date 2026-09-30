@@ -153,6 +153,7 @@ export function ParentInvitationClient({ invitation }: Props) {
               <ShellBrand
                 href="/"
                 variant="sidebar"
+                className="w-auto max-w-sm"
                 brand={{
                   institution_id: 0,
                   name: invitation.brand_name,

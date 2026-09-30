@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 
 import { BrandLogo } from "@/components/brand-logo";
@@ -37,6 +40,9 @@ export function ShellBrand({
   variant?: "sidebar" | "bar";
 }) {
   const sidebar = variant === "sidebar";
+  if (brand && sidebar) {
+    return <SidebarBrandCard brand={brand} href={href} className={className} />;
+  }
   if (!brand) {
     return (
       <BrandLogo
@@ -87,6 +93,108 @@ export function ShellBrand({
           ETÜTKOÇ Rotam altyapısı
         </span>
       ) : null}
+    </Link>
+  );
+}
+
+/** Kurum adının baş harfleri (logo yoksa monogram karosu). */
+function initials(name: string): string {
+  const parts = name
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  return parts
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toLocaleUpperCase("tr-TR"))
+    .join("");
+}
+
+/**
+ * Sol menü başındaki kurum kartı.
+ *
+ * Kare/yuvarlak logo → beyaz karo + yanında kurum adı (tema fark etmeksizin
+ * logo kendi zemininde durur, koyu temada "beyaz kutu" gibi yüzmez).
+ * Yatay (geniş) logo → tam genişlik beyaz şerit; logo zaten adı içerir.
+ * Logo yok → kurum rengiyle monogram karo + ad. Altyapı notu tek satır.
+ */
+function SidebarBrandCard({
+  brand,
+  href,
+  className,
+}: {
+  brand: BrandRef;
+  href: string;
+  className?: string;
+}) {
+  const [wide, setWide] = React.useState(false);
+  const logo = brand.logo_url;
+  const measure = React.useCallback((img: HTMLImageElement) => {
+    if (img.naturalHeight > 0 && img.naturalWidth / img.naturalHeight >= 1.8) setWide(true);
+  }, []);
+
+  const platformNote = (
+    <span className="block whitespace-nowrap text-[10.5px] leading-tight text-muted-foreground">
+      Altyapı: ETÜTKOÇ Rotam
+    </span>
+  );
+
+  if (logo && wide) {
+    return (
+      <Link
+        href={href}
+        aria-label={brand.name}
+        title={brand.name}
+        data-testid="shell-brand"
+        className={cn("block w-full min-w-0 space-y-1.5", className)}
+      >
+        <span className="flex h-16 w-full items-center justify-center rounded-xl bg-white px-3 shadow-sm ring-1 ring-black/5">
+          {/* eslint-disable-next-line @next/next/no-img-element -- kurum logosu (dinamik, herkese açık uç) */}
+          <img src={logo} alt={brand.name} className="block max-h-12 max-w-full object-contain" />
+        </span>
+        {platformNote}
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      aria-label={brand.name}
+      title={brand.name}
+      data-testid="shell-brand"
+      className={cn(
+        "group flex w-full min-w-0 items-center gap-3 rounded-xl p-1.5 -m-1.5 transition-colors hover:bg-muted/60",
+        className,
+      )}
+    >
+      {logo ? (
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-sm ring-1 ring-black/5">
+          {/* eslint-disable-next-line @next/next/no-img-element -- kurum logosu (dinamik, herkese açık uç) */}
+          <img
+            src={logo}
+            alt=""
+            className="block max-h-full max-w-full object-contain"
+            ref={(el) => {
+              // Hidrasyondan önce yüklenen görselde onLoad tetiklenmez → ref'te de ölç.
+              if (el?.complete) measure(el);
+            }}
+            onLoad={(e) => measure(e.currentTarget)}
+          />
+        </span>
+      ) : (
+        <span
+          aria-hidden
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-cyan-700 font-display text-lg font-bold text-white shadow-sm"
+        >
+          {initials(brand.name)}
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[15px] font-bold leading-snug text-foreground break-words">
+          {brand.name}
+        </span>
+        <span className="mt-1 block">{platformNote}</span>
+      </span>
     </Link>
   );
 }
