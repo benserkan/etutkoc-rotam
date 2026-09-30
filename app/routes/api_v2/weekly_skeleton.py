@@ -31,6 +31,8 @@ from app.routes.api_v2.schemas.weekly_skeleton import (
     GhostAcceptResult,
     GhostActionBody,
     GhostRoutineBody,
+    RoutinePreviewItem,
+    RoutinePreviewTask,
     GhostsResponse,
     PeriodCreateBody,
     PeriodUpdateBody,
@@ -655,6 +657,34 @@ def accept_ghost(
     )
 
 
+def _routine_preview(db: Session, tasks: list) -> list[RoutinePreviewTask]:
+    """Henüz commit edilmemiş (geri alınacak) rutin görevlerinden önizleme satırları."""
+    out: list[RoutinePreviewTask] = []
+    for t in tasks:
+        db.refresh(t)
+        items = []
+        subj_name = ""
+        for it in t.book_items:
+            items.append(RoutinePreviewItem(
+                book_name=it.book.name if it.book else it.label,
+                section_label=it.section.label if it.section else None,
+                count=it.planned_count or 0,
+            ))
+            if not subj_name and it.book is not None:
+                s_ = db.get(Subject, it.book.subject_id)
+                subj_name = s_.name if s_ else ""
+        if not subj_name and " · " in (t.title or ""):
+            subj_name = t.title.split(" · ", 1)[0]
+        planned = sum(i.count for i in items)
+        out.append(RoutinePreviewTask(
+            date=t.date.isoformat(), subject_name=subj_name, title=t.title or "",
+            planned=planned, is_activity=not items,
+            too_many=planned > sk.ROUTINE_WARN_COUNT, items=items,
+        ))
+    out.sort(key=lambda x: (x.date, x.subject_name))
+    return out
+
+
 @router.post("/students/{student_id}/skeleton/ghosts/accept-routine",
              response_model=MutationResponse[GhostAcceptResult])
 def accept_routine(
@@ -698,12 +728,19 @@ def accept_routine(
                     ))
             db.flush()
             d += timedelta(days=1)
+        preview = _routine_preview(db, tasks) if body.dry_run else []
     except ReservationError as e:
         db.rollback()
         raise _reservation_to_http(e)
     except HTTPException:
         db.rollback()
         raise
+    if body.dry_run:
+        db.rollback()
+        return MutationResponse[GhostAcceptResult](
+            data=GhostAcceptResult(created=len(preview), preview=preview),
+            invalidate=[], warnings=warnings,
+        )
     db.commit()
     inv: list[str] = [_key(user.id, student.id)]
     for t in tasks:

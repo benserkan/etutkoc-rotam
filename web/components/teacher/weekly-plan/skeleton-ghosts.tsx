@@ -19,7 +19,7 @@
  */
 
 import * as React from "react";
-import { CalendarCheck, Check, Loader2, PencilLine, Search, Sparkles, X } from "lucide-react";
+import { AlertTriangle, CalendarCheck, Check, Loader2, PencilLine, Search, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -31,7 +31,17 @@ import {
   useAcceptGhost,
   useAcceptRoutine,
   useGhostAction,
+  useRoutinePreview,
+  type RoutinePreviewTask,
 } from "@/lib/api/weekly-skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { TaskQuickAdd } from "./task-quick-add";
@@ -487,7 +497,7 @@ export function DayGhostRows({
   /** Görüntülenen haftanın son günü — "bu haftanın rutinleri" için */
   weekEnd?: string;
 }) {
-  const routine = useAcceptRoutine(studentId);
+  const [range, setRange] = React.useState<{ date: string; end?: string } | null>(null);
   if (ghosts.length === 0) return null;
   const routineCount = ghosts.filter(isWritableRoutine).length;
   const usePeriods = ghosts.some((g) => g.period != null);
@@ -515,8 +525,7 @@ export function DayGhostRows({
           <span className="ml-auto flex flex-wrap items-center gap-1.5">
             <button
               type="button"
-              disabled={routine.isPending}
-              onClick={() => routine.mutate({ date })}
+              onClick={() => setRange({ date })}
               className="inline-flex items-center gap-1 rounded-md bg-emerald-700 px-2 py-1 text-[11.5px] font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
             >
               <Check className="size-3.5" aria-hidden />
@@ -525,8 +534,7 @@ export function DayGhostRows({
             {canWeek ? (
               <button
                 type="button"
-                disabled={routine.isPending}
-                onClick={() => routine.mutate({ date, end: weekEnd })}
+                onClick={() => setRange({ date, end: weekEnd })}
                 title="Bugünden haftanın sonuna kadar her günün rutinleri sırayla yazılır — her gün bir öncekinin kaldığı yerden devam eder"
                 className="inline-flex items-center gap-1 rounded-md border border-emerald-700 px-2 py-1 text-[11.5px] font-semibold text-emerald-800 hover:bg-emerald-500/10 disabled:opacity-60 dark:border-emerald-400 dark:text-emerald-300"
               >
@@ -537,6 +545,13 @@ export function DayGhostRows({
           </span>
         ) : null}
       </div>
+      {range ? (
+        <RoutinePreviewDialog
+          studentId={studentId}
+          range={range}
+          onClose={() => setRange(null)}
+        />
+      ) : null}
       <div className="space-y-1.5">
         {sorted.map((g, i) => {
           const prev = sorted[i - 1];
@@ -555,6 +570,136 @@ export function DayGhostRows({
         })}
       </div>
     </div>
+  );
+}
+
+const DOW_TR = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+
+function dayTitle(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return `${DOW_TR[dt.getDay()]} ${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}`;
+}
+
+/** Rutinleri yazmadan ÖNCE gün gün ne yazılacağını gösterir; onay verilmeden
+ *  görev yazılmaz. Önizleme sunucudaki gerçek yazma döngüsünden gelir. */
+function RoutinePreviewDialog({
+  studentId,
+  range,
+  onClose,
+}: {
+  studentId: number;
+  range: { date: string; end?: string };
+  onClose: () => void;
+}) {
+  const preview = useRoutinePreview(studentId);
+  const routine = useAcceptRoutine(studentId);
+  const { mutate } = preview;
+  React.useEffect(() => {
+    mutate(range);
+  }, [mutate, range]);
+  const rows: RoutinePreviewTask[] = preview.data?.data.preview ?? [];
+  const byDay = new Map<string, RoutinePreviewTask[]>();
+  for (const r of rows) byDay.set(r.date, [...(byDay.get(r.date) ?? []), r]);
+  const unusual = rows.filter((r) => r.too_many).length;
+  const loading = preview.isPending || (!preview.data && !preview.isError);
+
+  return (
+    <Dialog open onOpenChange={(o) => (o ? null : onClose())}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Yazılacak rutin görevler</DialogTitle>
+          <DialogDescription>
+            Henüz hiçbir şey yazılmadı. Listeyi kontrol et; onaylarsan görevler taslak olarak
+            eklenir.
+          </DialogDescription>
+        </DialogHeader>
+        {loading ? (
+          <p className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" aria-hidden /> Hesaplanıyor…
+          </p>
+        ) : rows.length === 0 ? (
+          <p className="py-6 text-sm text-muted-foreground">Yazılacak rutin görev yok.</p>
+        ) : (
+          <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1" data-testid="routine-preview">
+            {unusual > 0 ? (
+              <p className="flex items-start gap-2 rounded-md bg-rose-600 px-3 py-2 text-[12.5px] font-medium text-white">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                {unusual} görevde günlük test sayısı olağandışı yüksek. İskeletteki
+                &quot;Test / gün&quot; değerini kontrol et.
+              </p>
+            ) : null}
+            {[...byDay.entries()].map(([d, list]) => (
+              <div key={d}>
+                <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {dayTitle(d)}
+                </p>
+                <ul className="space-y-1">
+                  {list.map((r, i) => (
+                    <li
+                      key={i}
+                      data-too-many={r.too_many ? "1" : undefined}
+                      className={cn(
+                        "rounded-md border px-2.5 py-1.5 text-[12.5px]",
+                        r.too_many ? "border-rose-500 bg-rose-500/10" : "border-border",
+                      )}
+                    >
+                      <div className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-semibold">{r.subject_name}</span>
+                        {r.is_activity ? (
+                          <span className="text-muted-foreground">{r.title} (etkinlik)</span>
+                        ) : (
+                          <span
+                            className={cn(
+                              "font-semibold tabular-nums",
+                              r.too_many ? "text-rose-700 dark:text-rose-300" : "",
+                            )}
+                          >
+                            {r.planned} test
+                          </span>
+                        )}
+                      </div>
+                      {r.items.length > 0 ? (
+                        <ul className="mt-0.5 text-[12px] text-muted-foreground">
+                          {r.items.map((it, j) => (
+                            <li key={j} className="break-words">
+                              {it.book_name}
+                              {it.section_label ? ` · ${it.section_label}` : ""} — {it.count} test
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+        <DialogFooter>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
+          >
+            Vazgeç
+          </button>
+          <button
+            type="button"
+            disabled={loading || routine.isPending || rows.length === 0}
+            onClick={() => routine.mutate(range, { onSuccess: onClose })}
+            className="inline-flex items-center gap-1.5 rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+          >
+            {routine.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Check className="size-4" aria-hidden />
+            )}
+            {rows.length} görevi yaz
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

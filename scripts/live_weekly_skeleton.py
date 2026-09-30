@@ -305,6 +305,10 @@ def main() -> int:
             # 9. rutin
             before = len(today_tasks(sid))
             pg.get_by_role("button", name="Rutinleri onayla (1)").click()
+            pg.get_by_test_id("routine-preview").wait_for(timeout=15000)
+            mid = len(today_tasks(sid))
+            chk("9a. önizleme açıldı · onaydan önce görev yazılmadı", mid == before, f"{before}->{mid}")
+            pg.get_by_role("button", name="1 görevi yaz").click()
             pg.wait_for_timeout(2500)
             with SessionLocal() as db:
                 fiz_tasks = (db.query(TaskBookItem).join(Task, Task.id == TaskBookItem.task_id)

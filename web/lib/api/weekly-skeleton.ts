@@ -155,10 +155,25 @@ export interface GhostsResponse {
   days: { date: string; ghosts: GhostCell[] }[];
 }
 
+export interface RoutinePreviewTask {
+  date: string;
+  subject_name: string;
+  title: string;
+  planned: number;
+  is_activity: boolean;
+  /** Günlük rutin adedi olağandışı (ROUTINE_WARN_COUNT üstü) */
+  too_many: boolean;
+  items: { book_name: string | null; section_label: string | null; count: number }[];
+}
+
 export interface GhostAcceptResult {
   task_ids: number[];
   created: number;
+  preview?: RoutinePreviewTask[];
 }
+
+/** Bu adedin üstündeki günlük rutin olağandışı sayılır (backend ile aynı). */
+export const ROUTINE_WARN_COUNT = 6;
 
 export interface GhostAcceptanceReport {
   actions: number;
@@ -359,6 +374,24 @@ export function useAcceptRoutine(studentId: number) {
       applyInvalidate(qc, res.invalidate);
       showWarnings(res, `${res.data.created} rutin görev eklendi`);
     },
+  });
+}
+
+/** Rutin yazma ÖNİZLEMESİ — sunucu yazma döngüsünü çalıştırıp geri alır. */
+export function useRoutinePreview(studentId: number) {
+  // Önizleme yan etkisiz (sunucuda işlem geri alınır) → invalidate YOK.
+  // eslint-disable-next-line lgs/missing-invalidate -- preview yan etkisiz
+  return useMutation<
+    MutationResponse<GhostAcceptResult>,
+    ApiError,
+    { date: string; end?: string }
+  >({
+    mutationFn: (body) =>
+      api(`${base(studentId)}/ghosts/accept-routine`, {
+        method: "POST",
+        body: JSON.stringify({ ...body, dry_run: true }),
+      }),
+    onError: (e) => showErr(e, "Önizleme alınamadı"),
   });
 }
 

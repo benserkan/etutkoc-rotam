@@ -59,6 +59,7 @@ import {
   useSaveSkeleton,
   useSkeletonFromWeek,
   WEEKDAY_LABELS,
+  ROUTINE_WARN_COUNT,
 } from "@/lib/api/weekly-skeleton";
 
 type Row = SkeletonSlotIn & { key: string };
@@ -250,6 +251,25 @@ export function SkeletonEditorDialog({
   }
 
   function submit() {
+    // Olağandışı günlük rutin adedi (ör. yanlışlıkla 13) sessizce kaydedilmesin.
+    const unusual = list.filter(
+      (r) => r.is_routine && (r.default_count ?? 0) > ROUTINE_WARN_COUNT,
+    );
+    if (
+      unusual.length > 0 &&
+      !window.confirm(
+        "Günde " + ROUTINE_WARN_COUNT + " testten fazla rutin var:\n" +
+          unusual
+            .map(
+              (r) =>
+                `• ${WEEKDAY_LABELS[r.weekday]} · ${subjects.find((x) => x.id === r.subject_id)?.name ?? "?"} — günde ${r.default_count} test`,
+            )
+            .join("\n") +
+          "\n\nBu değerler doğru mu? Emin değilsen İptal'e basıp düzelt.",
+      )
+    ) {
+      return;
+    }
     const day_capacity: Record<string, number | null> = {};
     for (let wd = 0; wd < 7; wd++) {
       const v = (capDraft[wd] ?? "").trim();
@@ -863,13 +883,29 @@ function RowCard({
             min={1}
             max={100}
             value={row.default_count ?? ""}
-            placeholder="otomatik"
+            placeholder={kind === "routine" ? "3" : "otomatik"}
             onChange={(e) =>
               onChange({ default_count: e.target.value ? Number(e.target.value) : null })
             }
-            className={inputCls}
+            className={cn(
+              inputCls,
+              kind === "routine" &&
+                (row.default_count ?? 0) > ROUTINE_WARN_COUNT &&
+                "border-rose-600 ring-2 ring-rose-500/40",
+            )}
             aria-label="Test sayısı"
+            aria-invalid={
+              kind === "routine" && (row.default_count ?? 0) > ROUTINE_WARN_COUNT ? true : undefined
+            }
           />
+          {kind === "routine" && (row.default_count ?? 0) > ROUTINE_WARN_COUNT ? (
+            <span
+              className="mt-0.5 block rounded bg-rose-600 px-1 py-0.5 text-[10.5px] font-semibold leading-tight text-white"
+              data-testid="routine-count-warning"
+            >
+              Günde {row.default_count} test çok fazla — doğru mu?
+            </span>
+          ) : null}
         </Field>
         <button
           type="button"

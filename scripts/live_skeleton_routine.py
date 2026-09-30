@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import re
 import sys
 from datetime import date, timedelta
 
@@ -273,6 +274,11 @@ def main() -> int:
             had_btn = btn.count() == 1
             if had_btn:
                 btn.click()
+                # Önizleme penceresi: önce yazılacaklar listelenir, onayla yazılır
+                pg.get_by_test_id("routine-preview").wait_for(timeout=15000)
+                chk("4a. önizleme penceresi açıldı, onaydan önce görev yazılmadı",
+                    pg.get_by_test_id("routine-preview").is_visible())
+                pg.get_by_role("button", name=re.compile(r"görevi yaz$")).click()
                 pg.wait_for_timeout(3000)
             with SessionLocal() as db:
                 ts = (db.query(Task).filter(Task.student_id == sid, Task.date >= date.today())

@@ -204,11 +204,32 @@ class GhostRoutineBody(BaseModel):
     date: str
     # Verilirse date..end arası tüm günlerin rutinleri sırayla yazılır (≤14 gün)
     end: str | None = None
+    # True → hiçbir şey yazılmaz; yazılacak görevler gün gün döner (önizleme).
+    # Gerçek yazma döngüsü aynen çalışıp işlem geri alındığı için önizleme ile
+    # yazılan birebir aynıdır.
+    dry_run: bool = False
+
+
+class RoutinePreviewItem(BaseModel):
+    book_name: str | None = None
+    section_label: str | None = None
+    count: int = 0
+
+
+class RoutinePreviewTask(BaseModel):
+    date: str
+    subject_name: str
+    title: str
+    planned: int = 0
+    is_activity: bool = False
+    too_many: bool = False                    # günlük rutin adedi olağandışı
+    items: list[RoutinePreviewItem] = []
 
 
 class GhostAcceptResult(BaseModel):
     task_ids: list[int] = []
     created: int = 0
+    preview: list[RoutinePreviewTask] = []
 
 
 class GhostAcceptanceReport(BaseModel):

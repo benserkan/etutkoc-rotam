@@ -233,6 +233,22 @@ def main() -> int:
         check("5. konu satırında satırın kitabının çipi önde",
               bool(gk and gk["chips"] and gk["chips"][0]["book_id"] == ids["konu"]), str(gk)[:300])
 
+        # 5b — ÖNİZLEME: dry_run hiçbir görev yazmaz, yazılacakları gün gün döner
+        with SessionLocal() as db:
+            n_before = db.query(Task).filter(Task.student_id == ids["st"]).count()
+        rp = c.post(f"{base}/ghosts/accept-routine",
+                    json={"date": today.isoformat(),
+                          "end": (today + timedelta(days=2)).isoformat(), "dry_run": True})
+        with SessionLocal() as db:
+            n_after = db.query(Task).filter(Task.student_id == ids["st"]).count()
+        prev = rp.json()["data"]["preview"] if rp.status_code == 200 else []
+        check("5b. dry_run: görev yazılmaz, 3 gün × 3 rutin önizlenir",
+              rp.status_code == 200 and n_before == n_after and len(prev) == 9
+              and rp.json()["invalidate"] == []
+              and all(x["is_activity"] or x["items"] for x in prev)
+              and not any(x["too_many"] for x in prev),
+              f"{rp.status_code} {n_before}->{n_after} {len(prev)} {rp.text[:200]}")
+
         # 6 — üç günün rutinleri tek istekte
         d1, d3 = today, today + timedelta(days=2)
         r6 = c.post(f"{base}/ghosts/accept-routine",
@@ -328,6 +344,28 @@ def main() -> int:
         firsts = [x["chips"][0]["section_id"] for x in g11["days"][0]["ghosts"] if x["chips"]]
         check("11. aynı kitaptan iki satır: ilk çipler farklı",
               len(firsts) == 2 and firsts[0] != firsts[1], str(firsts))
+
+        # 12 — adedi BOŞ rutin: kalem-başı alışkanlık (1) değil günlük toplam 3
+        d12 = today + timedelta(days=4)
+        slot12 = {"weekday": d12.weekday(), "period": None, "subject_id": ids["tur"],
+                  "position": 0, "is_routine": True, "book_id": ids["par"],
+                  "routine_mode": "karma"}
+        c.post(base, json={"slots": [dict(slot12, default_count=None)]})
+        r12 = c.post(f"{base}/ghosts/accept-routine",
+                     json={"date": d12.isoformat(), "dry_run": True})
+        p12 = r12.json()["data"]["preview"] if r12.status_code == 200 else []
+        check("12. adedi boş karışık rutin → günde 3 test (3 farklı bölümden 1'er)",
+              len(p12) == 1 and p12[0]["planned"] == 3 and len(p12[0]["items"]) == 3,
+              r12.text[:300])
+
+        # 13 — olağandışı günlük adet önizlemede işaretlenir (13 test)
+        c.post(base, json={"slots": [dict(slot12, default_count=13, routine_mode="sirali")]})
+        r13 = c.post(f"{base}/ghosts/accept-routine",
+                     json={"date": d12.isoformat(), "dry_run": True})
+        p13 = r13.json()["data"]["preview"] if r13.status_code == 200 else []
+        check("13. günde 13 testlik rutin önizlemede too_many",
+              len(p13) == 1 and p13[0]["planned"] == 13 and p13[0]["too_many"] is True,
+              r13.text[:300])
     finally:
         with SessionLocal() as db:
             if ids.get("st"):

@@ -55,6 +55,12 @@ MAX_RANGE_DAYS = 14
 # "Bu haftayı iskelet yap": aynı kaynak (kitap ya da serbest metin başlığı)
 # haftanın en az bu kadar gününde varsa satır RUTİN işaretlenir.
 ROUTINE_MIN_DAYS = 4
+# Rutinin GÜNLÜK toplam adedi boşsa kullanılan değer. Koçun kalem-başı alışkanlığı
+# (P3) burada KULLANILMAZ: karışık paragraf rutininde her bölümden 1'er test
+# verildiği için alışkanlık 1 çıkıyor, oysa rutinin günlük toplamı 3'tür.
+ROUTINE_DEFAULT_COUNT = 3
+# Bu adedin üstündeki günlük rutin olağandışı sayılır (düzenleyici + önizleme uyarır).
+ROUTINE_WARN_COUNT = 6
 WEAK_MIN_EXAM_WRONG = 2
 # Ders başına en çok kaç 'yeni konu' çipi (her biri FARKLI kitaptan). F1c
 # backtest'iyle seçilir (scripts/backtest_skeleton_chips.py --new-chips N).
@@ -999,7 +1005,9 @@ def build_ghosts(
             # hayalette sona atılır (aynı kitaptan iki satır aynı konuyu önermesin).
             shown_first: set[int] = set()
             for s in unfilled:
-                fallback_q = s.default_count or _default_quantity(db, ctx, subj)
+                fallback_q = s.default_count or (
+                    ROUTINE_DEFAULT_COUNT if s.is_routine else _default_quantity(db, ctx, subj)
+                )
                 chips: list[dict] = []
                 if s.is_routine and s.book_id:
                     rc = _routine_chip(ctx, s, d, fallback_q)
