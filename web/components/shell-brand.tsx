@@ -21,6 +21,7 @@ export function ShellBrand({
   onDark = false,
   className,
   showPlatformNote = true,
+  variant = "bar",
 }: {
   brand: BrandRef | null | undefined;
   href: string;
@@ -28,7 +29,14 @@ export function ShellBrand({
   onDark?: boolean;
   className?: string;
   showPlatformNote?: boolean;
+  /**
+   * sidebar = sol menü başı (geniş alan → büyük logo) · bar = üst çubuk
+   * (dar yükseklik). Kare logolar küçük yükseklikte okunmaz; bu yüzden
+   * yükseklik varyanta göre ayrı.
+   */
+  variant?: "sidebar" | "bar";
 }) {
+  const sidebar = variant === "sidebar";
   if (!brand) {
     return (
       <BrandLogo
@@ -53,14 +61,16 @@ export function ShellBrand({
           src={brand.logo_url}
           alt={brand.name}
           className={cn(
-            "block h-8 w-auto max-w-[190px] object-contain",
+            "block w-auto object-contain",
+            sidebar ? "h-16 max-w-[210px]" : "h-10 max-w-[180px]",
             onDark && "rounded-md bg-white px-1.5 py-0.5",
           )}
         />
       ) : (
         <span
           className={cn(
-            "font-display text-base font-bold leading-tight break-words",
+            "font-display font-bold leading-tight break-words",
+            sidebar ? "text-lg" : "text-base",
             onDark ? "text-white" : "text-foreground",
           )}
         >
@@ -70,7 +80,7 @@ export function ShellBrand({
       {showPlatformNote ? (
         <span
           className={cn(
-            "text-[10px] leading-none",
+            "text-[10px] leading-none whitespace-nowrap",
             onDark ? "text-white/70" : "text-muted-foreground",
           )}
         >

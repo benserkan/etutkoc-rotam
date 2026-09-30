@@ -174,6 +174,10 @@ class InvitationInfoOut(BaseModel):
     institution_name: str | None = None
     # Kurumsal kimlik — davet sayfasında kurum logosu/adı
     institution_logo_url: str | None = None
+    # Karşılama ekranı: davet eden kişi + son geçerlilik + SMS doğrulama açık mı
+    inviter_name: str | None = None
+    expires_at: datetime | None = None
+    phone_verification_available: bool = False
 
 
 class SignupOut(BaseModel):
@@ -1048,7 +1052,25 @@ def v2_signup_invite_info(token: str, db: Session = Depends(get_db)):
         role=inv.role.value,
         institution_name=inv.institution.name if inv.institution else None,
         institution_logo_url=_invite_logo(db, inv),
+        inviter_name=_invite_inviter_name(db, inv),
+        expires_at=inv.expires_at,
+        phone_verification_available=_sms_available(),
     )
+
+
+def _invite_inviter_name(db: Session, inv) -> str | None:
+    if not inv.created_by_user_id:
+        return None
+    u = db.get(User, inv.created_by_user_id)
+    return u.full_name if u else None
+
+
+def _sms_available() -> bool:
+    try:
+        from app.services.sms_provider import is_sms_enabled
+        return bool(is_sms_enabled())
+    except Exception:
+        return False
 
 
 def _invite_logo(db: Session, inv) -> str | None:

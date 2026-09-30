@@ -152,6 +152,7 @@ export function ParentInvitationClient({ invitation }: Props) {
             <div className="mb-2">
               <ShellBrand
                 href="/"
+                variant="sidebar"
                 brand={{
                   institution_id: 0,
                   name: invitation.brand_name,

@@ -109,7 +109,7 @@ export function SiteHeader({ user, enableBadges = true, brand }: Props) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
+      <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-3 px-4 py-1.5">
         <ShellBrand
           brand={brand ?? null}
           href={isStudent ? "/student/day" : "/me/account"}

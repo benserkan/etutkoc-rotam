@@ -43,6 +43,7 @@ export default async function ParentLayout({
         enabled
         guideKey="parent_onboarding"
         guideHref="/parent/guide"
+        brandName={data.brand?.name ?? null}
         description="Sana veli panelini adım adım, sesli anlatımla göstereceğim: çocuğunun kartını okumaktan Rota'nın yorumlarına, sesli soru sormaktan haftalık rapora. Teknoloji bilgisi gerekmez — her adımı ekranda birlikte yapacağız."
         menuHint="Üst menüdeki Rehber bağlantısı her zaman durur; istediğin bölümü sonra da izleyebilirsin."
       />

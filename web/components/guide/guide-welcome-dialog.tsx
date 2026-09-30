@@ -26,6 +26,8 @@ interface Props {
   description: string;
   /** "Rehber bağlantısı nerede" ipucu (menü rol bazlı değişir). */
   menuHint: string;
+  /** Kurumsal kimlik — kuruma bağlı kullanıcıda kurum adı; yoksa platform. */
+  brandName?: string | null;
 }
 
 /**
@@ -35,7 +37,7 @@ interface Props {
  * görünür; "Daha sonra" = dismiss (bir daha kendiliğinden açılmaz; menüdeki
  * Rehber bağlantısı her zaman durur). Başka cihazdan girse de aynı davranış.
  */
-export function GuideWelcomeDialog({ enabled, guideKey, guideHref, description, menuHint }: Props) {
+export function GuideWelcomeDialog({ enabled, guideKey, guideHref, description, menuHint, brandName }: Props) {
   const pathname = usePathname();
   const onGuidePage = pathname?.startsWith(guideHref) ?? false;
   const q = useGuide(guideKey, enabled && !onGuidePage);
@@ -62,7 +64,7 @@ export function GuideWelcomeDialog({ enabled, guideKey, guideHref, description, 
             <div>
               <DialogTitle>Merhaba, ben Rota!</DialogTitle>
               <DialogDescription className="mt-1">
-                Etütkoç Rotam rehberin
+                {brandName ? `${brandName} rehberin` : "Etütkoç Rotam rehberin"}
               </DialogDescription>
             </div>
           </div>

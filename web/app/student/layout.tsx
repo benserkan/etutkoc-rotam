@@ -53,7 +53,8 @@ export default async function StudentLayout({
         enabled
         guideKey="student_onboarding"
         guideHref="/student/guide"
-        description="Sana Rotam'ı adım adım, sesli anlatımla göstereceğim: günlük görevlerini işaretlemekten yanlış soru arşivine, deneme analizinden hedeflerine. Bölüm bölüm ilerler; istediğin an ara verip kaldığın yerden devam edersin."
+        brandName={data.brand?.name ?? null}
+        description={`Sana ${data.brand?.name ? "sistemimizi" : "Rotam'ı"} adım adım, sesli anlatımla göstereceğim: günlük görevlerini işaretlemekten yanlış soru arşivine, deneme analizinden hedeflerine. Bölüm bölüm ilerler; istediğin an ara verip kaldığın yerden devam edersin.`}
         menuHint="Üst menüdeki Daha fazla bölümünde Rehber bağlantısı her zaman durur."
       />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</main>

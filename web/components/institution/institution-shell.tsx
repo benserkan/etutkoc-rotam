@@ -216,8 +216,8 @@ export function InstitutionShell({ user, institution, brand, children }: Props) 
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* Sidebar (lg+) */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 lg:sticky lg:top-0 lg:h-screen border-r border-border bg-card/40">
-        <div className="px-4 min-h-14 py-2 flex items-center border-b border-border">
-          <ShellBrand brand={brand ?? null} href="/institution" size={28} />
+        <div className="px-4 min-h-14 py-3 flex items-center border-b border-border">
+          <ShellBrand brand={brand ?? null} href="/institution" size={28} variant="sidebar" />
         </div>
         <nav
           className="flex-1 overflow-y-auto p-2 space-y-3"
@@ -241,7 +241,7 @@ export function InstitutionShell({ user, institution, brand, children }: Props) 
 
       {/* Topbar (lg-) */}
       <header className="lg:hidden sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
-        <div className="flex h-14 items-center gap-3 px-4">
+        <div className="flex min-h-16 items-center gap-3 px-4 py-1.5">
           <ShellBrand brand={brand ?? null} href="/institution" size={28} className="shrink-0" />
           <div className="flex-1" />
           <Button
