@@ -1,0 +1,213 @@
+{
+ "name": "345 AYT Matematik Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "AYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Polinomlar",
+   "test_count": 11,
+   "page": 6,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 6,
+    "osym_tadinda": 4,
+    "orijinal": 1
+   },
+   "pdf_index": 5,
+   "topic": "Polinomlar"
+  },
+  {
+   "label": "İkinci Dereceden Denklemler",
+   "test_count": 11,
+   "page": 28,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 5,
+    "osym_tadinda": 5,
+    "orijinal": 1
+   },
+   "pdf_index": 28,
+   "topic": "İkinci Dereceden Denklemler"
+  },
+  {
+   "label": "Parabol",
+   "test_count": 12,
+   "page": 50,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 7,
+    "osym_tadinda": 4,
+    "orijinal": 1
+   },
+   "pdf_index": 52,
+   "topic": "Parabol"
+  },
+  {
+   "label": "Eşitsizlikler",
+   "test_count": 11,
+   "page": 74,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 6,
+    "osym_tadinda": 4,
+    "orijinal": 1
+   },
+   "pdf_index": 77,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "Trigonometri - I",
+   "test_count": 10,
+   "page": 98,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 10,
+    "osym_tadinda": 0,
+    "orijinal": 0
+   },
+   "pdf_index": 101,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri - II",
+   "test_count": 18,
+   "page": 118,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 8,
+    "osym_tadinda": 9,
+    "orijinal": 1
+   },
+   "pdf_index": 121,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Logaritma",
+   "test_count": 15,
+   "page": 156,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 6,
+    "osym_tadinda": 8,
+    "orijinal": 1
+   },
+   "pdf_index": 161,
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Diziler",
+   "test_count": 11,
+   "page": 186,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 6,
+    "osym_tadinda": 4,
+    "orijinal": 1
+   },
+   "pdf_index": 192,
+   "topic": "Diziler"
+  },
+  {
+   "label": "Fonksiyonlar",
+   "test_count": 7,
+   "page": 206,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 3,
+    "osym_tadinda": 4,
+    "orijinal": 0
+   },
+   "pdf_index": 212,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Limit - Süreklilik",
+   "test_count": 9,
+   "page": 220,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 3,
+    "osym_tadinda": 6,
+    "orijinal": 0
+   },
+   "pdf_index": 226,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Türev - I",
+   "test_count": 11,
+   "page": 238,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 8,
+    "osym_tadinda": 3,
+    "orijinal": 0
+   },
+   "pdf_index": 245,
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev - II",
+   "test_count": 20,
+   "page": 260,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 11,
+    "osym_tadinda": 8,
+    "orijinal": 1
+   },
+   "pdf_index": 267,
+   "topic": "Türev"
+  },
+  {
+   "label": "İntegral - I",
+   "test_count": 5,
+   "page": 302,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 5,
+    "osym_tadinda": 0,
+    "orijinal": 0
+   },
+   "pdf_index": 311,
+   "topic": "İntegral"
+  },
+  {
+   "label": "İntegral - II",
+   "test_count": 24,
+   "page": 312,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 10,
+    "osym_tadinda": 13,
+    "orijinal": 1
+   },
+   "pdf_index": 321,
+   "topic": "İntegral"
+  },
+  {
+   "label": "Sayma - Olasılık",
+   "test_count": 12,
+   "page": 362,
+   "source": "serit+icindekiler",
+   "breakdown": {
+    "klasiklesmis": 6,
+    "osym_tadinda": 5,
+    "orijinal": 1
+   },
+   "pdf_index": 371
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (2027 baskısı, 394 s., metin katmanı yok). 345 deseni: konu başına 'Klasikleşmiş Sorular TEST 1..k' + 'ÖSYM Tadında Sorular 1..m' + 'Orijinal Sorular 1'; her seri konu başına 1'den numaralanır, test = üç serinin toplamı (breakdown). Sayımlar tüm sayfaların üst şeridinden gözle okundu; tüm zincirler 1..N kopuksuz.",
+  "İçindekiler 15 bölüm adını ve başlangıç sayfasını verdi (page = basılı sayfa, içindekilerden); test sayısı yazmıyor. pdf_index gövdedeki gerçek başlangıç (taramada boş/tekrarlı sayfalar yüzünden basılı numaradan giderek kayar).",
+  "Trigonometri - I yalnız Klasikleşmiş 1-10 içerir; trigonometrinin ÖSYM Tadında 1-9 + Orijinal serisi kitapta 'Trigonometri - II' altında basılı, oraya yazıldı. İntegral - I de yalnız Klasikleşmiş 1-5; ÖSYM/Orijinal İntegral - II'de.",
+  "Fonksiyonlar, Limit - Süreklilik, Türev - I bölümlerinde Orijinal Sorular yok (içindekiler sayfa aralıkları da 7/9/11 test ile uyuşuyor).",
+  "Tarama kusurları: Diziler'de Klasikleşmiş 6'nın 2. sayfası ile ÖSYM 1'in 1. sayfası eksik görünüyor, ÖSYM 4 üç sayfa; Türev - II Orijinal sayfaları tekrarlı; kitap Sayma - Olasılık Orijinal 1'in ilk sayfasında kesiliyor (cevap anahtarı yok). Test numarası zincirleri etkilenmedi.",
+  "Sayma - Olasılık çok konulu (Permütasyon/Olasılık) olduğu için topic bağlanmadı; Karmaşık Sayılar bu kitapta yok."
+ ]
+}

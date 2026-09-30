@@ -1,0 +1,124 @@
+{
+  "name": "Paraf İQ AYT Matematik Soru Bankası",
+  "subject": "AYT Matematik",
+  "target_grade_min": 11,
+  "target_grade_max": 12,
+  "publisher": "Paraf Yayınları",
+  "type": "soru_bankasi",
+  "target_graduate": true,
+  "sections": [
+    {
+      "label": "Fonksiyonlar",
+      "test_count": 8,
+      "page": 5,
+      "topic": "Fonksiyonlar"
+    },
+    {
+      "label": "Fonksiyon Uygulamaları",
+      "test_count": 4,
+      "page": 29,
+      "topic": "Fonksiyonlar"
+    },
+    {
+      "label": "Polinomlar",
+      "test_count": 7,
+      "page": 39,
+      "topic": "Polinomlar"
+    },
+    {
+      "label": "İkinci Dereceden Denklemler",
+      "test_count": 7,
+      "page": 55,
+      "topic": "İkinci Dereceden Denklemler"
+    },
+    {
+      "label": "Parabol",
+      "test_count": 7,
+      "page": 71,
+      "topic": "Parabol"
+    },
+    {
+      "label": "Eşitsizlikler",
+      "test_count": 6,
+      "page": 89,
+      "topic": "Eşitsizlikler"
+    },
+    {
+      "label": "Fonksiyonların Dönüşümleri",
+      "test_count": 8,
+      "page": 105,
+      "topic": "Fonksiyonlar"
+    },
+    {
+      "label": "Logaritma",
+      "test_count": 7,
+      "page": 125,
+      "topic": "Logaritma ve Üstel Fonksiyonlar"
+    },
+    {
+      "label": "Diziler",
+      "test_count": 7,
+      "page": 149,
+      "topic": "Diziler"
+    },
+    {
+      "label": "Trigonometri – 1",
+      "test_count": 7,
+      "page": 171,
+      "topic": "Trigonometri"
+    },
+    {
+      "label": "Trigonometri – 2",
+      "test_count": 6,
+      "page": 201,
+      "topic": "Trigonometri"
+    },
+    {
+      "label": "Limit - Süreklilik",
+      "test_count": 8,
+      "page": 219,
+      "topic": "Limit ve Süreklilik"
+    },
+    {
+      "label": "Türev Alma",
+      "test_count": 7,
+      "page": 241,
+      "topic": "Türev"
+    },
+    {
+      "label": "Türev Uygulamaları",
+      "test_count": 8,
+      "page": 261,
+      "topic": "Türev"
+    },
+    {
+      "label": "İntegral",
+      "test_count": 8,
+      "page": 289,
+      "topic": "İntegral"
+    },
+    {
+      "label": "Permütasyon",
+      "test_count": 8,
+      "page": 317,
+      "topic": "Permütasyon ve Kombinasyon"
+    },
+    {
+      "label": "Kombinasyon – Binom Açılımı",
+      "test_count": 8,
+      "page": 335
+    },
+    {
+      "label": "Olasılık",
+      "test_count": 8,
+      "page": 353,
+      "topic": "Olasılık"
+    }
+  ],
+  "warnings": [
+    "Hedef 15 Net serisi (IQ Yayınları / Paraf). Metin katmanından deterministik tarama: üst bantta 'TEST N'; numara bölüm başına 1'den başlar, Ön Hazırlık → İlk Hedef → Hedef 15 → ÖSYM Soruları → ÖSYM'nin İz Düşümü boyunca tek sayaçla sürer; 18 bölümün tamamında 1..N zinciri kopuksuz.",
+    "İçindekilerdeki 18 bölüm başlangıç sayfasının tamamı gövdeyle birebir (basılı sayfa = PDF indeksi + 1). İçindekiler test sayısı vermiyor; sayılar gövdeden.",
+    "DİKKAT: Her bölümün TEST 1'i 'Ön Hazırlık' (8-18 sayfalık konu özeti + seçenekli 'Alıştırma Tipi' soruları, cevap anahtarlı). Kitap bunu kendi TEST numarasıyla saydığı için dahil edildi (18 test). Konu anlatımı sayılmayacaksa her bölümden 1 düşülür → toplam 111.",
+    "Topic: Fonksiyon Uygulamaları ve Fonksiyonların Dönüşümleri → Fonksiyonlar; Türev Alma/Türev Uygulamaları → Türev; Trigonometri 1/2 → Trigonometri. Kombinasyon – Binom Açılımı iki konu → bağlanmadı. Bölüm 7 içindekilerde 'Fonksiyonların Dönüşümleri', gövde bandında 'Fonksiyonların Dönüşümü' yazıyor; içindekiler adı kullanıldı."
+  ]
+}

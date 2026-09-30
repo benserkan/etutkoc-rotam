@@ -1,0 +1,170 @@
+{
+  "name": "Paraf İQ TYT Matematik Soru Bankası",
+  "subject": "TYT Matematik",
+  "target_grade_min": 9,
+  "target_grade_max": 12,
+  "publisher": "Paraf Yayınları",
+  "type": "soru_bankasi",
+  "target_graduate": true,
+  "sections": [
+    {
+      "label": "Temel Kavramlar",
+      "test_count": 15,
+      "page": 5,
+      "topic": "Temel Kavramlar"
+    },
+    {
+      "label": "Sayı Basamakları",
+      "test_count": 7,
+      "page": 35,
+      "topic": "Sayı Basamakları"
+    },
+    {
+      "label": "Rasyonel Sayılar",
+      "test_count": 7,
+      "page": 49,
+      "topic": "Rasyonel Sayılar"
+    },
+    {
+      "label": "Bölme - Bölünebilme Kuralları",
+      "test_count": 6,
+      "page": 63,
+      "topic": "Bölme ve Bölünebilme"
+    },
+    {
+      "label": "EBOB - EKOK - Periyodik Problemler",
+      "test_count": 8,
+      "page": 73,
+      "topic": "EBOB - EKOK"
+    },
+    {
+      "label": "Denklem Çözme",
+      "test_count": 6,
+      "page": 87,
+      "topic": "Birinci Dereceden Denklemler"
+    },
+    {
+      "label": "Basit Eşitsizlikler",
+      "test_count": 7,
+      "page": 97,
+      "topic": "Basit Eşitsizlikler"
+    },
+    {
+      "label": "Mutlak Değer",
+      "test_count": 9,
+      "page": 109,
+      "topic": "Mutlak Değer"
+    },
+    {
+      "label": "Üslü İfadeler",
+      "test_count": 7,
+      "page": 127,
+      "topic": "Üslü Sayılar"
+    },
+    {
+      "label": "Köklü İfadeler",
+      "test_count": 8,
+      "page": 141,
+      "topic": "Köklü Sayılar"
+    },
+    {
+      "label": "Çarpanlara Ayırma",
+      "test_count": 9,
+      "page": 155,
+      "topic": "Çarpanlara Ayırma"
+    },
+    {
+      "label": "Oran - Orantı",
+      "test_count": 7,
+      "page": 171,
+      "topic": "Oran ve Orantı"
+    },
+    {
+      "label": "Sayı - Kesir Problemleri",
+      "test_count": 9,
+      "page": 183,
+      "topic": "Sayı - Kesir Problemleri"
+    },
+    {
+      "label": "Sayısal - Sözel - Görsel Mantık Problemleri",
+      "test_count": 8,
+      "page": 203,
+      "topic": "Sayısal Yetenek Problemleri"
+    },
+    {
+      "label": "Yaş Problemleri",
+      "test_count": 6,
+      "page": 223,
+      "topic": "Yaş Problemleri"
+    },
+    {
+      "label": "Hareket Problemleri",
+      "test_count": 6,
+      "page": 233,
+      "topic": "Hareket Problemleri"
+    },
+    {
+      "label": "Yüzde - Karışım Problemleri",
+      "test_count": 6,
+      "page": 245
+    },
+    {
+      "label": "Veri ve Verilerin Grafik ile Gösterilmesi",
+      "test_count": 6,
+      "page": 257,
+      "topic": "Veri ve İstatistik"
+    },
+    {
+      "label": "Mantık",
+      "test_count": 6,
+      "page": 269,
+      "topic": "Mantık"
+    },
+    {
+      "label": "Kümeler - Kartezyen Çarpım",
+      "test_count": 8,
+      "page": 281,
+      "topic": "Kümeler"
+    },
+    {
+      "label": "Fonksiyonlar",
+      "test_count": 10,
+      "page": 297,
+      "topic": "Fonksiyonlar"
+    },
+    {
+      "label": "Permütasyon",
+      "test_count": 8,
+      "page": 319,
+      "topic": "Permütasyon"
+    },
+    {
+      "label": "Kombinasyon - Binom Açılımı",
+      "test_count": 7,
+      "page": 333
+    },
+    {
+      "label": "Olasılık",
+      "test_count": 8,
+      "page": 347,
+      "topic": "Olasılık"
+    },
+    {
+      "label": "Polinomlar",
+      "test_count": 7,
+      "page": 361,
+      "topic": "Polinomlar"
+    },
+    {
+      "label": "2. Dereceden Denklemler",
+      "test_count": 6,
+      "page": 373
+    }
+  ],
+  "warnings": [
+    "Hedef 30 Net serisi (IQ Yayınları / Paraf). Metin katmanından deterministik tarama: üst bantta 'TEST N' (11.5pt; test başlangıç sayfasında 18pt). Numara bölüm başına 1'den başlar ve Hedef Belirleme → Hedef Yükseltme → Hedef 30 → ÖSYM'nin İz Düşümü boyunca tek sayaçla sürer; 26 bölümün tamamında 1..N zinciri kopuksuz.",
+    "Basılı sayfa = PDF sayfa indeksi + 1 (içindekilerdeki 26 başlangıcın 24'ü gövdeyle birebir). İçindekiler dizgi hataları: Rasyonel Sayılar 61 yazıyor, gövdede 49; Yüzde - Karışım 243 yazıyor, gövdede 245 — gövde esas alındı.",
+    "İçindekiler test sayısı vermiyor; sayılar gövdeden. Bazı Hedef 30 / İz Düşümü testleri tek sayfalık.",
+    "Topic bağlanmayanlar: Yüzde - Karışım (iki konu), Kombinasyon - Binom Açılımı (iki konu), 2. Dereceden Denklemler (TYT taksonomisinde yok). Kümeler - Kartezyen Çarpım → Kümeler; Denklem Çözme → Birinci Dereceden Denklemler; EBOB-EKOK-Periyodik → EBOB - EKOK."
+  ]
+}

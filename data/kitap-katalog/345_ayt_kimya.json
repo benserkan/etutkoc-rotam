@@ -9,304 +9,382 @@
  "sections": [
   {
    "label": "Atomun Kuantum Modeli",
-   "test_count": 1,
-   "source": "scan",
-   "page": 6
+   "test_count": 3,
+   "page": 6,
+   "topic": "Modern Atom Teorisi"
   },
   {
    "label": "Elektron Dizilimleri",
-   "test_count": 1,
-   "source": "scan",
-   "page": 12
+   "test_count": 2,
+   "page": 12,
+   "topic": "Modern Atom Teorisi"
   },
   {
    "label": "Periyodik Özellikler",
-   "test_count": 1,
-   "source": "scan",
-   "page": 16
+   "test_count": 3,
+   "page": 16,
+   "topic": "Modern Atom Teorisi"
   },
   {
    "label": "Elementleri Tanıyalım",
-   "test_count": 1,
-   "source": "scan",
-   "page": 22
+   "test_count": 2,
+   "page": 22,
+   "topic": "Modern Atom Teorisi"
   },
   {
    "label": "Yükseltgenme Basamakları",
-   "test_count": 7,
-   "source": "scan",
-   "page": 26
+   "test_count": 1,
+   "page": 26,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Modern Atom Teorisi — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 6,
+   "page": 28,
+   "topic": "Modern Atom Teorisi"
   },
   {
    "label": "Gazların Özellikleri",
    "test_count": 1,
-   "source": "scan",
-   "page": 40
+   "page": 40,
+   "topic": "Gazlar"
   },
   {
    "label": "Gaz Yasaları",
-   "test_count": 1,
-   "source": "scan",
-   "page": 42
+   "test_count": 2,
+   "page": 42,
+   "topic": "Gazlar"
   },
   {
    "label": "İdeal Gaz Yasası",
-   "test_count": 1,
-   "source": "scan",
-   "page": 46
+   "test_count": 2,
+   "page": 46,
+   "topic": "Gazlar"
   },
   {
    "label": "Gazlarda Kinetik Teori",
    "test_count": 1,
-   "source": "scan",
-   "page": 50
+   "page": 50,
+   "topic": "Gazlar"
   },
   {
    "label": "Gaz Karışımları",
-   "test_count": 1,
-   "source": "scan",
-   "page": 52
+   "test_count": 3,
+   "page": 52,
+   "topic": "Gazlar"
   },
   {
    "label": "Gerçek Gazlar",
-   "test_count": 7,
-   "source": "scan",
-   "page": 58
+   "test_count": 1,
+   "page": 58,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Gazlar — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 6,
+   "page": 60,
+   "topic": "Gazlar"
   },
   {
    "label": "Çözücü - Çözünen Etkileşimleri",
    "test_count": 1,
-   "source": "scan",
-   "page": 72
+   "page": 72,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
   },
   {
    "label": "Derişim Birimleri",
-   "test_count": 1,
-   "source": "scan",
-   "page": 74
+   "test_count": 4,
+   "page": 74,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
   },
   {
    "label": "Kolligatif Özellikler",
-   "test_count": 1,
-   "source": "scan",
-   "page": 82
+   "test_count": 4,
+   "page": 82,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
   },
   {
    "label": "Çözünürlük",
    "test_count": 1,
-   "source": "scan",
-   "page": 90
+   "page": 90,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
   },
   {
    "label": "Çözünürlüğe Etki Eden Faktörler",
-   "test_count": 7,
-   "source": "scan",
-   "page": 92
+   "test_count": 2,
+   "page": 92,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Sıvı Çözeltiler ve Çözünürlük — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 6,
+   "page": 96,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
   },
   {
    "label": "Tepkimelerde Isı Değişimi",
    "test_count": 1,
-   "source": "scan",
-   "page": 108
+   "page": 108,
+   "topic": "Kimyasal Tepkimelerde Enerji"
   },
   {
    "label": "Entalpi Türleri",
-   "test_count": 1,
-   "source": "scan",
-   "page": 112
+   "test_count": 2,
+   "page": 112,
+   "topic": "Kimyasal Tepkimelerde Enerji"
   },
   {
    "label": "Bağ Enerjileri",
    "test_count": 1,
-   "source": "scan",
-   "page": 116
+   "page": 116,
+   "topic": "Kimyasal Tepkimelerde Enerji"
   },
   {
    "label": "Tepkime Isılarının Toplanabilirliği",
-   "test_count": 5,
-   "source": "scan",
-   "page": 118
+   "test_count": 1,
+   "page": 118,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Enerji — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 4,
+   "page": 120,
+   "topic": "Kimyasal Tepkimelerde Enerji"
   },
   {
    "label": "Kimyasal Tepkimeler ve Çarpışma Teorisi",
    "test_count": 1,
-   "source": "scan",
-   "page": 128
+   "page": 128,
+   "topic": "Kimyasal Tepkimelerde Hız"
   },
   {
    "label": "Tepkime Hızı",
-   "test_count": 1,
-   "source": "scan",
-   "page": 130
+   "test_count": 2,
+   "page": 130,
+   "topic": "Kimyasal Tepkimelerde Hız"
   },
   {
    "label": "Tepkime Hızını Etkileyen Faktörler",
    "test_count": 5,
-   "source": "scan",
-   "page": 134
+   "page": 134,
+   "topic": "Kimyasal Tepkimelerde Hız"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Hız — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 4,
+   "page": 144,
+   "topic": "Kimyasal Tepkimelerde Hız"
   },
   {
    "label": "Kimyasal Denge",
-   "test_count": 1,
-   "source": "scan",
-   "page": 152
+   "test_count": 4,
+   "page": 152,
+   "topic": "Kimyasal Tepkimelerde Denge"
   },
   {
    "label": "Dengeyi Etkileyen Faktörler",
-   "test_count": 6,
-   "source": "scan",
-   "page": 160
+   "test_count": 3,
+   "page": 160,
+   "topic": "Kimyasal Tepkimelerde Denge"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Denge — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 5,
+   "page": 166,
+   "topic": "Kimyasal Tepkimelerde Denge"
   },
   {
    "label": "Asit - Baz",
-   "test_count": 1,
-   "source": "scan",
-   "page": 176
+   "test_count": 6,
+   "page": 176,
+   "topic": "Asit-Baz Dengesi"
   },
   {
    "label": "Çözünürlük Dengesi",
-   "test_count": 7,
-   "source": "scan",
-   "page": 188
+   "test_count": 3,
+   "page": 188,
+   "topic": "Çözünürlük Dengesi"
+  },
+  {
+   "label": "Sulu Çözelti Dengeleri — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 6,
+   "page": 194
   },
   {
    "label": "İndirgenme - Yükseltgenme Tepkimeleri",
-   "test_count": 1,
-   "source": "scan",
-   "page": 206
+   "test_count": 2,
+   "page": 206,
+   "topic": "Kimya ve Elektrik"
   },
   {
    "label": "Metalik Aktiflik",
    "test_count": 1,
-   "source": "scan",
-   "page": 212
+   "page": 212,
+   "topic": "Kimya ve Elektrik"
   },
   {
    "label": "Elektrokimyasal Hücreler ve Elektrot Potansiyelleri",
-   "test_count": 1,
-   "source": "scan",
-   "page": 214
+   "test_count": 4,
+   "page": 214,
+   "topic": "Kimya ve Elektrik"
   },
   {
    "label": "Elektroliz",
-   "test_count": 7,
-   "source": "scan",
-   "page": 226
+   "test_count": 3,
+   "page": 226,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Kimya ve Elektrik — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 6,
+   "page": 232,
+   "topic": "Kimya ve Elektrik"
   },
   {
    "label": "Organik ve Anorganik Bileşikler",
    "test_count": 1,
-   "source": "scan",
-   "page": 244
+   "page": 244,
+   "topic": "Karbon Kimyasına Giriş"
   },
   {
    "label": "Basit ve Molekül Formül",
    "test_count": 1,
-   "source": "scan",
-   "page": 246
+   "page": 246,
+   "topic": "Karbon Kimyasına Giriş"
   },
   {
    "label": "Doğada Karbon",
    "test_count": 1,
-   "source": "scan",
-   "page": 248
+   "page": 248,
+   "topic": "Karbon Kimyasına Giriş"
   },
   {
    "label": "Lewis Formülleri",
    "test_count": 1,
-   "source": "scan",
-   "page": 250
+   "page": 250,
+   "topic": "Karbon Kimyasına Giriş"
   },
   {
    "label": "Hibritleşme ve Molekül Geometrisi",
-   "test_count": 6,
-   "source": "scan",
-   "page": 252
+   "test_count": 1,
+   "page": 252,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Karbon Kimyasına Giriş — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 5,
+   "page": 256,
+   "topic": "Karbon Kimyasına Giriş"
   },
   {
    "label": "Hidrokarbonlar/Alkanlar",
-   "test_count": 1,
-   "source": "scan",
-   "page": 266
+   "test_count": 3,
+   "page": 266,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Hidrokarbonlar/Alkenler",
-   "test_count": 1,
-   "source": "scan",
-   "page": 274
+   "test_count": 3,
+   "page": 274,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Hidrokarbonlar/Alkinler",
-   "test_count": 6,
-   "source": "scan",
-   "page": 280
+   "test_count": 3,
+   "page": 280,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Organik Bileşikler - 1 — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 5,
+   "page": 286,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Aromatik Bileşikler (Arenler)",
    "test_count": 1,
-   "source": "scan",
-   "page": 296
+   "page": 296,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Fonksiyonel Gruplar",
    "test_count": 1,
-   "source": "scan",
-   "page": 298
+   "page": 298,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Alkoller",
-   "test_count": 1,
-   "source": "scan",
-   "page": 300
+   "test_count": 2,
+   "page": 300,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Eterler",
    "test_count": 1,
-   "source": "scan",
-   "page": 304
+   "page": 304,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Karbonil Bileşikleri",
-   "test_count": 1,
-   "source": "scan",
-   "page": 306
+   "test_count": 2,
+   "page": 306,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Karboksilik Asitler",
-   "test_count": 1,
-   "source": "scan",
-   "page": 310
+   "test_count": 2,
+   "page": 310,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Esterler",
-   "test_count": 6,
-   "source": "scan",
-   "page": 314
+   "test_count": 1,
+   "page": 314,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Organik Bileşikler - 2 — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 5,
+   "page": 316,
+   "topic": "Organik Bileşikler"
   },
   {
    "label": "Fosil Yakıtlar",
    "test_count": 1,
-   "source": "scan",
-   "page": 326
+   "page": 326,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
   },
   {
    "label": "Alternatif Enerji Kaynakları",
    "test_count": 1,
-   "source": "scan",
-   "page": 328
+   "page": 328,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
   },
   {
    "label": "Sürdürülebilirlik",
    "test_count": 1,
-   "source": "scan",
-   "page": 330
+   "page": 330,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
   },
   {
    "label": "Nanoteknoloji",
-   "test_count": 3,
-   "source": "scan",
-   "page": 332
+   "test_count": 1,
+   "page": 332,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
+  },
+  {
+   "label": "Enerji Kaynakları ve Bilimsel Gelişmeler — ÖSYM Tadında ve Orijinal Sorular",
+   "test_count": 2,
+   "page": 334,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
   }
  ],
- "warnings": []
+ "warnings": [
+  "2027 taraması (@MajestyPdf, 346 s.): içindekiler (bölüm adları + başlangıç sayfaları) eski kayıtla birebir aynı — aynı baskı; fark yalnız test sayılarında (eski kayıt 110, gerçek 160).",
+  "Eski kayıt (345_ayt_kimya.json) eksik saymıştı: çoğu alt konuya 1 test yazılmış, ünite sonu ÖSYM Tadında + Orijinal testleri ünitenin son alt konusuna yığılmıştı.",
+  "Sayım: üst banttaki 'KONU ADI - N' benzersiz numaraları (numarasız bant = 1 test; bazı testler 4 sayfa sürer, soru numarası kesintisiz — Tepkimelerde Isı Değişimi, Hibritleşme, İndirgenme-1, Elektrokimyasal-1/-3, Alkanlar-2 gibi) + her ünite sonunda ÖSYM Tadında Sorular 1..N + tek sayfa Orijinal Sorular 1 (1 test).",
+  "Ünite sonu ÖSYM Tadında + Orijinal testleri ayrı bölüm olarak yazıldı; Sulu Çözelti Dengeleri ünite sonu iki konuyu kapsadığı için topic'siz.",
+  "PDF'e korsan dağıtıcı 7 reklam sayfası eklemiş (pdf 77,129,142,152,170,250,310) — bantsız boşlukların tamamı bunlar; ünite başlık sayfaları da bantsız.",
+  "Ünite sonu bölüm sayfaları sayfa altındaki basılı numaradan okundu."
+ ]
 }

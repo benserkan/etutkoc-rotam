@@ -1,0 +1,93 @@
+{
+ "name": "Bilgi Sarmal TYT Biyoloji Video Ders Kitabı",
+ "subject": "TYT Biyoloji",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "type": "konu_anlatimli",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "1.-2. Gün: Yaşam Bilimi Biyoloji / Canlıların Temel Bileşenleri (İnorganik Bileşikler)",
+   "test_count": 1,
+   "page": 5,
+   "source": "toc+body_band"
+  },
+  {
+   "label": "3.-5. Gün: Canlıların Temel Bileşenleri (Karbonhidratlar, Lipitler, Proteinler, Enzimler, Hormonlar, Vitaminler, Nükleik Asitler, ATP)",
+   "test_count": 2,
+   "page": 17,
+   "source": "toc+body_band",
+   "topic": "Canlıların Temel Bileşenleri (Karma)"
+  },
+  {
+   "label": "6.-7. Gün: Hücre (Hücre Teorisi, Hücre Organelleri)",
+   "test_count": 1,
+   "page": 35,
+   "source": "toc+body_band",
+   "topic": "Hücre Organelleri"
+  },
+  {
+   "label": "8.-9. Gün: Hücre (Hücre Zarı, Zardan Madde Geçişleri, Bilimsel Yöntem)",
+   "test_count": 2,
+   "page": 48,
+   "source": "toc+body_band",
+   "topic": "Hücre Zarı ve Madde Geçişleri"
+  },
+  {
+   "label": "10.-11. Gün: Canlılar Dünyası (Sınıflandırma; Bakteriler, Arkeler, Protistalar)",
+   "test_count": 1,
+   "page": 58,
+   "source": "toc+body_band",
+   "topic": "Canlıların Sınıflandırılması (Karma)"
+  },
+  {
+   "label": "12.-13. Gün: Canlılar Dünyası (Bitkiler, Mantarlar, Hayvanlar, Virüsler)",
+   "test_count": 2,
+   "page": 67,
+   "source": "toc+body_band",
+   "topic": "Canlıların Sınıflandırılması (Karma)"
+  },
+  {
+   "label": "14.-15. Gün: Hücre Bölünmeleri (Mitoz Bölünme ve Evreleri)",
+   "test_count": 1,
+   "page": 80,
+   "source": "toc+body_band",
+   "topic": "Mitoz ve Eşeysiz Üreme"
+  },
+  {
+   "label": "16. Gün: Hücre Bölünmeleri (Eşeysiz Üreme)",
+   "test_count": 1,
+   "page": 89,
+   "source": "toc+body_band",
+   "topic": "Mitoz ve Eşeysiz Üreme"
+  },
+  {
+   "label": "17. Gün: Hücre Bölünmeleri (Mayoz Bölünme ve Eşeyli Üreme)",
+   "test_count": 2,
+   "page": 96,
+   "source": "toc+body_band",
+   "topic": "Mayoz ve Eşeyli Üreme"
+  },
+  {
+   "label": "18.-20. Gün: Kalıtım (Mendel Genetiği, Çok Alellilik, Kan Grupları, Eşeye Bağlı Kalıtım, Varyasyonlar)",
+   "test_count": 2,
+   "page": 107,
+   "source": "toc+body_band",
+   "topic": "Kalıtımın Genel İlkeleri (Karma)"
+  },
+  {
+   "label": "21.-23. Gün: Ekosistem Ekolojisi ve Güncel Çevre Sorunları",
+   "test_count": 1,
+   "page": 125,
+   "source": "toc+body_band",
+   "topic": "Ekosistem Ekolojisi (Karma)"
+  }
+ ],
+ "warnings": [
+  "Konu anlatımlı video ders kitabı (23 gün): test birimi = \"Dijital Destek Testleri – Test N\" (2 sayfa, 10-14 soru). İçindekiler (Test 1-16 + sayfa) ile gövde bandı birebir uyuştu; zincir 1..16 kopuksuz.",
+  "Testler her günün sonunda değil ünite blokları sonunda geldiği için bölümler \"test bloğu\" düzeyinde gün aralıklarıyla kuruldu (test içermeyen günler ayrı satır olsaydı 0 testle seed dışı kalırdı).",
+  "Ders içi \"Sıra Sende\" / örnek sorular test SAYILMADI.",
+  "1.-2. Gün bloğu iki üniteyi kapsıyor (Canlıların Ortak Özellikleri + İnorganik Bileşikler) -> konu bağlanmadı; diğer çok konulu bloklar ünite \"(Karma)\" konusuna bağlandı."
+ ]
+}

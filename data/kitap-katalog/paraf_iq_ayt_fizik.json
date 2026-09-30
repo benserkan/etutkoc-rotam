@@ -1,0 +1,342 @@
+{
+ "name": "Paraf İQ AYT Fizik Soru Bankası",
+ "publisher": "Paraf Yayınları",
+ "subject": "AYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Vektörler",
+   "test_count": 2,
+   "page": 9,
+   "topic": "Vektörler"
+  },
+  {
+   "label": "Kuvvet ve Kuvvet Dengesi",
+   "test_count": 3,
+   "page": 13,
+   "topic": "Kuvvet, Tork ve Denge"
+  },
+  {
+   "label": "Tork ve Tork Dengesi",
+   "test_count": 4,
+   "page": 19,
+   "topic": "Kuvvet, Tork ve Denge"
+  },
+  {
+   "label": "Kütle Merkezi",
+   "test_count": 3,
+   "page": 27,
+   "topic": "Kütle Merkezi ve Basit Makineler"
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 4,
+   "page": 33,
+   "topic": "Kütle Merkezi ve Basit Makineler"
+  },
+  {
+   "label": "Sabit İvmeli Hareket",
+   "test_count": 3,
+   "page": 41,
+   "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+  },
+  {
+   "label": "Bağıl Hareket",
+   "test_count": 3,
+   "page": 47,
+   "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+  },
+  {
+   "label": "Newton’ın Hareket Yasaları",
+   "test_count": 4,
+   "page": 53,
+   "topic": "Newton'un Hareket Yasaları"
+  },
+  {
+   "label": "Atış Hareketleri",
+   "test_count": 4,
+   "page": 61,
+   "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+  },
+  {
+   "label": "Enerji ve Hareket",
+   "test_count": 4,
+   "page": 69,
+   "topic": "İş, Güç ve Enerji"
+  },
+  {
+   "label": "İtme ve Çizgisel Momentum",
+   "test_count": 5,
+   "page": 77,
+   "topic": "İtme ve Momentum"
+  },
+  {
+   "label": "Pekiştirelim (Kuvvet ve Hareket)",
+   "test_count": 5,
+   "page": 87
+  },
+  {
+   "label": "Sınav Provası (Kuvvet ve Hareket)",
+   "test_count": 3,
+   "page": 97
+  },
+  {
+   "label": "IQ Yorum (Kuvvet ve Hareket)",
+   "test_count": 2,
+   "page": 103
+  },
+  {
+   "label": "Düzgün Çembersel Hareket",
+   "test_count": 4,
+   "page": 109,
+   "topic": "Çembersel Hareket"
+  },
+  {
+   "label": "Dönme ve Yuvarlanma Hareketi",
+   "test_count": 1,
+   "page": 117,
+   "topic": "Çembersel Hareket"
+  },
+  {
+   "label": "Açısal Momentum",
+   "test_count": 2,
+   "page": 119,
+   "topic": "Çembersel Hareket"
+  },
+  {
+   "label": "Kütle Çekim Kuvveti ve Kepler Kanunları",
+   "test_count": 2,
+   "page": 123,
+   "topic": "Çembersel Hareket"
+  },
+  {
+   "label": "Basit Harmonik Hareket",
+   "test_count": 3,
+   "page": 127,
+   "topic": "Basit Harmonik Hareket"
+  },
+  {
+   "label": "Pekiştirelim (Periyodik Hareketler)",
+   "test_count": 4,
+   "page": 133
+  },
+  {
+   "label": "Sınav Provası (Periyodik Hareketler)",
+   "test_count": 3,
+   "page": 141
+  },
+  {
+   "label": "IQ Yorum (Periyodik Hareketler)",
+   "test_count": 2,
+   "page": 147
+  },
+  {
+   "label": "Karma Testler (1. ve 2. Üniteler)",
+   "test_count": 4,
+   "page": 153
+  },
+  {
+   "label": "Elektriksel Kuvvet",
+   "test_count": 1,
+   "page": 163,
+   "topic": "Elektrik Alan ve Potansiyel"
+  },
+  {
+   "label": "Elektrik Alan",
+   "test_count": 2,
+   "page": 165,
+   "topic": "Elektrik Alan ve Potansiyel"
+  },
+  {
+   "label": "Elektriksel Potansiyel",
+   "test_count": 3,
+   "page": 169,
+   "topic": "Elektrik Alan ve Potansiyel"
+  },
+  {
+   "label": "Düzgün Elektrik Alan",
+   "test_count": 3,
+   "page": 175,
+   "topic": "Paralel Levhalar ve Sığa"
+  },
+  {
+   "label": "Sığa ve Sığaçlar",
+   "test_count": 2,
+   "page": 181,
+   "topic": "Paralel Levhalar ve Sığa"
+  },
+  {
+   "label": "Manyetik Alan ve Manyetik Kuvvet",
+   "test_count": 4,
+   "page": 185,
+   "topic": "Manyetizma ve Elektromanyetik İndüksiyon"
+  },
+  {
+   "label": "Elektromanyetik İndüksiyon",
+   "test_count": 3,
+   "page": 193,
+   "topic": "Manyetizma ve Elektromanyetik İndüksiyon"
+  },
+  {
+   "label": "Alternatif Akım",
+   "test_count": 2,
+   "page": 199,
+   "topic": "Manyetizma ve Elektromanyetik İndüksiyon"
+  },
+  {
+   "label": "Transformatörler",
+   "test_count": 2,
+   "page": 203,
+   "topic": "Manyetizma ve Elektromanyetik İndüksiyon"
+  },
+  {
+   "label": "Pekiştirelim (Elektrik ve Manyetizma)",
+   "test_count": 4,
+   "page": 207
+  },
+  {
+   "label": "Sınav Provası (Elektrik ve Manyetizma)",
+   "test_count": 2,
+   "page": 215
+  },
+  {
+   "label": "IQ Yorum (Elektrik ve Manyetizma)",
+   "test_count": 2,
+   "page": 219
+  },
+  {
+   "label": "Su Dalgalarında Kırınım ve Girişim",
+   "test_count": 3,
+   "page": 225,
+   "topic": "Dalga Mekaniği"
+  },
+  {
+   "label": "Işıkta Kırınım ve Girişim",
+   "test_count": 2,
+   "page": 231,
+   "topic": "Dalga Mekaniği"
+  },
+  {
+   "label": "Elektromanyetik Dalgalar ve Dopler Olayı",
+   "test_count": 2,
+   "page": 235,
+   "topic": "Dalga Mekaniği"
+  },
+  {
+   "label": "Pekiştirelim (Dalga Mekaniği)",
+   "test_count": 3,
+   "page": 239,
+   "topic": "Dalga Mekaniği"
+  },
+  {
+   "label": "Sınav Provası (Dalga Mekaniği)",
+   "test_count": 1,
+   "page": 245,
+   "topic": "Dalga Mekaniği"
+  },
+  {
+   "label": "IQ Yorum (Dalga Mekaniği)",
+   "test_count": 1,
+   "page": 247,
+   "topic": "Dalga Mekaniği"
+  },
+  {
+   "label": "Karma Testler (3. ve 4. Üniteler)",
+   "test_count": 3,
+   "page": 251
+  },
+  {
+   "label": "Atom Kavramının Tarihsel Gelişimi",
+   "test_count": 4,
+   "page": 259,
+   "topic": "Atom Fiziği ve Radyoaktivite"
+  },
+  {
+   "label": "Büyük Patlama ve Evrenin Oluşumu",
+   "test_count": 3,
+   "page": 267,
+   "topic": "Atom Fiziği ve Radyoaktivite"
+  },
+  {
+   "label": "Radyoaktivite",
+   "test_count": 3,
+   "page": 273,
+   "topic": "Atom Fiziği ve Radyoaktivite"
+  },
+  {
+   "label": "Pekiştirelim (Atom Fiziğine Giriş ve Radyoaktivite)",
+   "test_count": 4,
+   "page": 279,
+   "topic": "Atom Fiziği ve Radyoaktivite"
+  },
+  {
+   "label": "Sınav Provası (Atom Fiziğine Giriş ve Radyoaktivite)",
+   "test_count": 2,
+   "page": 287,
+   "topic": "Atom Fiziği ve Radyoaktivite"
+  },
+  {
+   "label": "IQ Yorum (Atom Fiziğine Giriş ve Radyoaktivite)",
+   "test_count": 1,
+   "page": 291,
+   "topic": "Atom Fiziği ve Radyoaktivite"
+  },
+  {
+   "label": "Özel Görelilik",
+   "test_count": 2,
+   "page": 295,
+   "topic": "Modern Fizik"
+  },
+  {
+   "label": "Kuantum Fiziğine Giriş ve Fotoelektrik Olay",
+   "test_count": 3,
+   "page": 299,
+   "topic": "Modern Fizik"
+  },
+  {
+   "label": "Compton Saçılması ve De Broglie Dalga Boyu",
+   "test_count": 2,
+   "page": 305,
+   "topic": "Modern Fizik"
+  },
+  {
+   "label": "Modern Fiziğin Teknolojideki Uygulamaları",
+   "test_count": 4,
+   "page": 309,
+   "topic": "Modern Fizik"
+  },
+  {
+   "label": "Pekiştirelim (Modern Fizik ve Modern Fiziğin Teknolojideki Uygulamaları)",
+   "test_count": 4,
+   "page": 317,
+   "topic": "Modern Fizik"
+  },
+  {
+   "label": "Sınav Provası (Modern Fizik ve Modern Fiziğin Teknolojideki Uygulamaları)",
+   "test_count": 2,
+   "page": 325,
+   "topic": "Modern Fizik"
+  },
+  {
+   "label": "IQ Yorum (Modern Fizik ve Modern Fiziğin Teknolojideki Uygulamaları)",
+   "test_count": 1,
+   "page": 329,
+   "topic": "Modern Fizik"
+  },
+  {
+   "label": "Karma Testler (5. ve 6. Üniteler)",
+   "test_count": 2,
+   "page": 333
+  }
+ ],
+ "warnings": [
+  "Metin katmanından deterministik gövde taraması (PyMuPDF): her sayfanın üst bandındaki kategori (KAVRAYALIM/PEKİŞTİRELİM/SINAV PROVASI/IQ YORUM/KARMA TESTLER, 18pt) + 30pt test numarası + 14pt konu adı; Kavrayalım konu başlangıç sayfası 'Test · N' bandı taşır. Her test tam 2 sayfa; test numarası ünite boyunca kategoriler arasında süren tek sayaç (ör. Kavrayalım 1-18 → Pekiştirelim 19-23 → Sınav Provası 24), Karma Testler ayrı 1..N serisi. Tüm zincirler kopuksuz; içindekilerdeki kategori başlangıç sayfalarının tamamı gövdeyle birebir (basılı sayfa = PDF indeksi + 1). Bantsız sayfalar yalnız ön sayfalar, ünite ayraçları ve Karma ayraçları.",
+  "Pekiştirelim / Sınav Provası / IQ Yorum bölümleri ünitenin tamamını kapsar; ünite tek bir sınav konusuna denk geliyorsa o konuya bağlandı, çok konulu ünitelerde topic bilinçli boş. Karma Testler çok üniteli → topic yok.",
+  "Kütle Çekim Kuvveti ve Kepler Kanunları, Dönme/Yuvarlanma, Açısal Momentum → 'Çembersel Hareket' (12. sınıf ünite kapsamı); 'Enerji ve Hareket' → 'İş, Güç ve Enerji'.",
+  "Karma Testler (5. ve 6. Üniteler) yalnız 2 test ve son test 9 soru — PDF sonu; eksik olabilir.",
+  "PDF'te cevap anahtarı yok; son Karma testi PDF'in son sayfasında bitiyor — kitapta daha fazla karma test olup olmadığı doğrulanamadı."
+ ]
+}

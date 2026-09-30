@@ -1,0 +1,125 @@
+{
+ "name": "345 All Star TYT-AYT Geometri Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "TYT Geometri",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Açılar",
+   "test_count": 11
+  },
+  {
+   "label": "Özel Üçgenler",
+   "test_count": 10
+  },
+  {
+   "label": "Alan",
+   "test_count": 7,
+   "topic": "Üçgende Alan"
+  },
+  {
+   "label": "Açıortay",
+   "test_count": 6,
+   "topic": "Üçgende Açıortay ve Kenarortay"
+  },
+  {
+   "label": "Kenarortay",
+   "test_count": 5,
+   "topic": "Üçgende Açıortay ve Kenarortay"
+  },
+  {
+   "label": "Benzerlik",
+   "test_count": 12,
+   "topic": "Üçgende Eşlik ve Benzerlik"
+  },
+  {
+   "label": "Açı - Kenar Bağıntıları",
+   "test_count": 4,
+   "topic": "Üçgende Açı-Kenar Bağıntıları"
+  },
+  {
+   "label": "Çokgenler",
+   "test_count": 9,
+   "topic": "Çokgenler"
+  },
+  {
+   "label": "Genel Dörtgenler ve Deltoid",
+   "test_count": 6
+  },
+  {
+   "label": "Paralelkenar",
+   "test_count": 11,
+   "topic": "Paralelkenar"
+  },
+  {
+   "label": "Eşkenar Dörtgen",
+   "test_count": 6,
+   "topic": "Eşkenar Dörtgen ve Deltoid"
+  },
+  {
+   "label": "Dikdörtgen",
+   "test_count": 8,
+   "topic": "Dikdörtgen"
+  },
+  {
+   "label": "Kare",
+   "test_count": 9,
+   "topic": "Kare"
+  },
+  {
+   "label": "Yamuk",
+   "test_count": 10,
+   "topic": "Yamuk"
+  },
+  {
+   "label": "Çemberde Açı",
+   "test_count": 9,
+   "topic": "Çember ve Daire"
+  },
+  {
+   "label": "Çemberde Uzunluk",
+   "test_count": 9,
+   "topic": "Çember ve Daire"
+  },
+  {
+   "label": "Dairede Alan",
+   "test_count": 7,
+   "topic": "Çember ve Daire"
+  },
+  {
+   "label": "Nokta Analitiği",
+   "test_count": 9,
+   "topic": "Analitik Geometri"
+  },
+  {
+   "label": "Doğru Analitiği",
+   "test_count": 12,
+   "topic": "Analitik Geometri"
+  },
+  {
+   "label": "Dönüşümler",
+   "test_count": 7,
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Çember Analitiği",
+   "test_count": 6
+  },
+  {
+   "label": "Katı Cisimler",
+   "test_count": 12,
+   "topic": "Katı Cisimler (Prizma, Piramit, Koni, Küre, Silindir)"
+  }
+ ],
+ "warnings": [
+  "4 cilt (GGCK-1..4) tek kayıt: cilt1 Açılar→Açı-Kenar Bağıntıları (55 test), cilt2 Çokgenler→Yamuk (59), cilt3 Çemberde Açı→Doğru Analitiği (46), cilt4 Dönüşümler→Katı Cisimler (25).",
+  "Her konu = 'Günlük Ödev 1..N' + 'ÖSYM Tadında Sorular 1..M' serileri; test_count = iki serinin toplamı. Günlük Ödev alt numaralı testler ayrı sayıldı (Çemberde Açı 2-A/2-B/2-C; Doğru Analitiği 4-A/4-B).",
+  "Taranmış PDF, içindekiler yok; sayım yalnız gövde üst bantlarından (her sayfa gözle okundu), seri zincirleri 1..N kopuksuz. Basılı sayfa numarası okunmadı (page yok).",
+  "Günlük Ödev sayısı konu içeriğini, ÖSYM Tadında sayısı sınav tipi pekiştirmeyi temsil eder; bazı testler tek sayfa (ör. her konunun son testi).",
+  "Bu ürün katalogdaki '345 TYT-AYT Geometri Soru Bankası' (17 bölüm/363 test) ile AYNI DEĞİL: All Star günlük ödev formatlı ayrı seri, 22 konu/185 test.",
+  "Topic verilmeyenler: Açılar (doğruda+üçgende açı+ikizkenar/eşkenar karma), Özel Üçgenler (dik/ikizkenar/eşkenar karma), Genel Dörtgenler ve Deltoid (karma), Çember Analitiği (TYT listesinde karşılığı yok, AYT konusu)."
+ ]
+}

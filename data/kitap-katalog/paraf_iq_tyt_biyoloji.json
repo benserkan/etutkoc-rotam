@@ -1,0 +1,334 @@
+{
+ "name": "Paraf İQ TYT Biyoloji Soru Bankası",
+ "publisher": "Paraf Yayınları",
+ "subject": "TYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Canlıların Ortak Özellikleri",
+   "test_count": 3,
+   "page": 9,
+   "topic": "Canlıların Ortak Özellikleri"
+  },
+  {
+   "label": "İnorganik Maddeler",
+   "test_count": 1,
+   "page": 15,
+   "topic": "İnorganik Bileşikler"
+  },
+  {
+   "label": "Karbonhidratlar",
+   "test_count": 2,
+   "page": 17,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Lipitler",
+   "test_count": 2,
+   "page": 21,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Proteinler",
+   "test_count": 2,
+   "page": 25,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Enzimler",
+   "test_count": 3,
+   "page": 29,
+   "topic": "Enzimler"
+  },
+  {
+   "label": "Nükleik Asitler",
+   "test_count": 3,
+   "page": 35,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Vitaminler - Hormonlar - ATP",
+   "test_count": 2,
+   "page": 41,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Pekiştirelim (Yaşam Bilimi Biyoloji)",
+   "test_count": 5,
+   "page": 45
+  },
+  {
+   "label": "Sınav Provası (Yaşam Bilimi Biyoloji)",
+   "test_count": 1,
+   "page": 55
+  },
+  {
+   "label": "Hücre Teorisi ve Hücre Zarı",
+   "test_count": 1,
+   "page": 59,
+   "topic": "Hücre Zarı ve Madde Geçişleri"
+  },
+  {
+   "label": "Bilimsel Yöntem",
+   "test_count": 2,
+   "page": 61
+  },
+  {
+   "label": "Difüzyon, Osmoz ve Aktif Taşıma",
+   "test_count": 4,
+   "page": 65,
+   "topic": "Hücre Zarı ve Madde Geçişleri"
+  },
+  {
+   "label": "Endositoz ve Ekzositoz",
+   "test_count": 1,
+   "page": 73,
+   "topic": "Hücre Zarı ve Madde Geçişleri"
+  },
+  {
+   "label": "Sitoplazma ve Organeller",
+   "test_count": 1,
+   "page": 75,
+   "topic": "Hücre Organelleri"
+  },
+  {
+   "label": "Ribozom - ER - Golgi - Lizozom",
+   "test_count": 2,
+   "page": 77,
+   "topic": "Hücre Organelleri"
+  },
+  {
+   "label": "Peroksizom - Mitokondri - Plastit - Koful",
+   "test_count": 2,
+   "page": 81,
+   "topic": "Hücre Organelleri"
+  },
+  {
+   "label": "Sentrozom - Kamçı - Hücre İskeleti",
+   "test_count": 1,
+   "page": 85,
+   "topic": "Hücre Organelleri"
+  },
+  {
+   "label": "Çekirdek, Prokaryot ve Ökaryot Hücre",
+   "test_count": 1,
+   "page": 87,
+   "topic": "Hücre Organelleri"
+  },
+  {
+   "label": "Hücre Duvarı, Bitki ve Hayvan Hücreleri",
+   "test_count": 2,
+   "page": 89,
+   "topic": "Hücre Organelleri"
+  },
+  {
+   "label": "Pekiştirelim (Hücre)",
+   "test_count": 5,
+   "page": 93
+  },
+  {
+   "label": "Sınav Provası (Hücre)",
+   "test_count": 1,
+   "page": 103
+  },
+  {
+   "label": "Karma Testler (1. - 2. Üniteler)",
+   "test_count": 3,
+   "page": 107
+  },
+  {
+   "label": "Canlıların Çeşitliliği ve Sınıflandırılması",
+   "test_count": 2,
+   "page": 115,
+   "topic": "Canlıların Sınıflandırılması (Karma)"
+  },
+  {
+   "label": "Bakteri ve Arkeler",
+   "test_count": 3,
+   "page": 119,
+   "topic": "Bakteriler ve Arkeler"
+  },
+  {
+   "label": "Protista ve Mantarlar",
+   "test_count": 1,
+   "page": 125,
+   "topic": "Protista, Bitki ve Mantarlar"
+  },
+  {
+   "label": "Bitkiler",
+   "test_count": 2,
+   "page": 127,
+   "topic": "Protista, Bitki ve Mantarlar"
+  },
+  {
+   "label": "Hayvanların Genel Özellikleri ve Omurgasızlar",
+   "test_count": 1,
+   "page": 131,
+   "topic": "Hayvanlar Âlemi"
+  },
+  {
+   "label": "Omurgalı Hayvanlar",
+   "test_count": 2,
+   "page": 133,
+   "topic": "Hayvanlar Âlemi"
+  },
+  {
+   "label": "Virüsler",
+   "test_count": 1,
+   "page": 137,
+   "topic": "Virüsler"
+  },
+  {
+   "label": "Pekiştirelim (Canlılar Dünyası)",
+   "test_count": 7,
+   "page": 139
+  },
+  {
+   "label": "Sınav Provası (Canlılar Dünyası)",
+   "test_count": 1,
+   "page": 153
+  },
+  {
+   "label": "İnterfaz ve Mitotik Evre",
+   "test_count": 3,
+   "page": 157,
+   "topic": "Mitoz ve Eşeysiz Üreme"
+  },
+  {
+   "label": "Bitki ve Hayvanlarda Bölünme",
+   "test_count": 1,
+   "page": 163,
+   "topic": "Mitoz ve Eşeysiz Üreme"
+  },
+  {
+   "label": "Hücre Döngüsünün Kontrolü",
+   "test_count": 1,
+   "page": 165,
+   "topic": "Mitoz ve Eşeysiz Üreme"
+  },
+  {
+   "label": "Eşeysiz Üreme Çeşitleri",
+   "test_count": 1,
+   "page": 167,
+   "topic": "Mitoz ve Eşeysiz Üreme"
+  },
+  {
+   "label": "Mayoz",
+   "test_count": 4,
+   "page": 169,
+   "topic": "Mayoz ve Eşeyli Üreme"
+  },
+  {
+   "label": "Eşeyli Üreme ve Genel Özellikleri",
+   "test_count": 1,
+   "page": 177,
+   "topic": "Mayoz ve Eşeyli Üreme"
+  },
+  {
+   "label": "Pekiştirelim (Hücre Bölünmeleri ve Üreme)",
+   "test_count": 5,
+   "page": 179
+  },
+  {
+   "label": "Sınav Provası (Hücre Bölünmeleri ve Üreme)",
+   "test_count": 1,
+   "page": 189
+  },
+  {
+   "label": "Karma Testler (1. - 4. Üniteler)",
+   "test_count": 3,
+   "page": 193
+  },
+  {
+   "label": "Mendel Genetiği",
+   "test_count": 4,
+   "page": 201,
+   "topic": "Mendel Genetiği ve Çaprazlamalar"
+  },
+  {
+   "label": "Bağımsız ve Bağlı Genler",
+   "test_count": 1,
+   "page": 209,
+   "topic": "Mendel Genetiği ve Çaprazlamalar"
+  },
+  {
+   "label": "Kontrol Çaprazlaması - Eş Baskınlık",
+   "test_count": 1,
+   "page": 211,
+   "topic": "Mendel Genetiği ve Çaprazlamalar"
+  },
+  {
+   "label": "Çok Alellilik",
+   "test_count": 2,
+   "page": 213,
+   "topic": "Kan Grupları ve Çok Alellilik"
+  },
+  {
+   "label": "İnsanda Eşeye Bağlı Kalıtım",
+   "test_count": 3,
+   "page": 217,
+   "topic": "Eşeye Bağlı Kalıtım ve Soyağaçları"
+  },
+  {
+   "label": "Pekiştirelim (Kalıtımın Genel İlkeleri)",
+   "test_count": 5,
+   "page": 223
+  },
+  {
+   "label": "Sınav Provası (Kalıtımın Genel İlkeleri)",
+   "test_count": 1,
+   "page": 233
+  },
+  {
+   "label": "Ekosistemin Canlı ve Cansız Bileşenleri",
+   "test_count": 1,
+   "page": 237,
+   "topic": "Ekosistemin Yapısı"
+  },
+  {
+   "label": "Ekosistemlerde Madde ve Enerji Akışı",
+   "test_count": 3,
+   "page": 239,
+   "topic": "Madde ve Enerji Akışı"
+  },
+  {
+   "label": "Madde Döngüleri",
+   "test_count": 2,
+   "page": 245,
+   "topic": "Madde Döngüleri"
+  },
+  {
+   "label": "Güncel Çevre Sorunları ve İnsan",
+   "test_count": 2,
+   "page": 249,
+   "topic": "Güncel Çevre Sorunları"
+  },
+  {
+   "label": "Pekiştirelim (Ekosistem Ekolojisi ve Güncel Çevre Sorunları)",
+   "test_count": 4,
+   "page": 253
+  },
+  {
+   "label": "Sınav Provası (Ekosistem Ekolojisi ve Güncel Çevre Sorunları)",
+   "test_count": 1,
+   "page": 261
+  },
+  {
+   "label": "Karma Testler (1. - 6. Üniteler)",
+   "test_count": 4,
+   "page": 265
+  }
+ ],
+ "warnings": [
+  "Metin katmanından deterministik gövde taraması (PyMuPDF): her sayfanın üst bandındaki kategori (KAVRAYALIM/PEKİŞTİRELİM/SINAV PROVASI/IQ YORUM/KARMA TESTLER, 18pt) + 30pt test numarası + 14pt konu adı; Kavrayalım konu başlangıç sayfası 'Test · N' bandı taşır. Her test tam 2 sayfa; test numarası ünite boyunca kategoriler arasında süren tek sayaç (ör. Kavrayalım 1-18 → Pekiştirelim 19-23 → Sınav Provası 24), Karma Testler ayrı 1..N serisi. Tüm zincirler kopuksuz; içindekilerdeki kategori başlangıç sayfalarının tamamı gövdeyle birebir (basılı sayfa = PDF indeksi + 1). Bantsız sayfalar yalnız ön sayfalar, ünite ayraçları ve Karma ayraçları.",
+  "Pekiştirelim / Sınav Provası / IQ Yorum bölümleri ünitenin tamamını kapsar; ünite tek bir sınav konusuna denk geliyorsa o konuya bağlandı, çok konulu ünitelerde topic bilinçli boş. Karma Testler çok üniteli → topic yok.",
+  "Bu baskıda 10. sınıf Enerji konuları (fotosentez/solunum/sindirim) yok (eski TYT kapsamı).",
+  "'Bilimsel Yöntem' (Hücre ünitesi içinde, 2 test) taksonomide karşılığı olmadığı için eşleşmesiz.",
+  "Karbonhidrat/Lipit/Protein/Nükleik Asit/Vitamin-Hormon-ATP → 'Organik Bileşikler'; 'Canlıların Çeşitliliği ve Sınıflandırılması' → 'Canlıların Sınıflandırılması (Karma)'.",
+  "Ünite düzeyi Pekiştirelim/Sınav Provası bölümleri istenirse ilgili '(Karma)' taksonomi konularına (ör. 'Hücre (Karma)') bağlanabilir; kurala uyularak boş bırakıldı.",
+  "PDF'te cevap anahtarı yok; son Karma testi PDF'in son sayfasında bitiyor — kitapta daha fazla karma test olup olmadığı doğrulanamadı."
+ ]
+}

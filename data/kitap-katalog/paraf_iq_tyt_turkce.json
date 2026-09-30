@@ -1,0 +1,155 @@
+{
+ "name": "Paraf İQ TYT Türkçe Soru Bankası",
+ "publisher": "Paraf Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Sözcükte Anlam",
+   "test_count": 10,
+   "page": 5,
+   "source": "toc+body_band",
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Cümle Anlamı",
+   "test_count": 11,
+   "page": 25,
+   "source": "toc+body_band",
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Paragraf: Paragrafta Anlatım Teknikleri",
+   "test_count": 9,
+   "page": 47,
+   "source": "toc+body_band",
+   "topic": "Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları"
+  },
+  {
+   "label": "Paragraf: Paragrafta Konu - Ana Düşünce",
+   "test_count": 13,
+   "page": 65,
+   "source": "toc+body_band",
+   "topic": "Paragrafta Ana Düşünce"
+  },
+  {
+   "label": "Paragraf: Paragrafın Yapısı",
+   "test_count": 14,
+   "page": 91,
+   "source": "toc+body_band",
+   "topic": "Paragrafta Yapı"
+  },
+  {
+   "label": "Paragraf: Paragrafta Yardımcı Düşünceler",
+   "test_count": 13,
+   "page": 119,
+   "source": "toc+body_band",
+   "topic": "Paragrafta Yardımcı Düşünce"
+  },
+  {
+   "label": "Sözcük Türleri",
+   "test_count": 11,
+   "page": 145,
+   "source": "toc+body_band",
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Tamlamalar",
+   "test_count": 6,
+   "page": 167,
+   "source": "toc+body_band",
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Fiil - Ek Fiil",
+   "test_count": 6,
+   "page": 179,
+   "source": "toc+body_band",
+   "topic": "Fiiller (Anlam, Çatı, Kip, Yapı)"
+  },
+  {
+   "label": "Fiilimsiler",
+   "test_count": 5,
+   "page": 191,
+   "source": "toc+body_band",
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Ekler",
+   "test_count": 5,
+   "page": 201,
+   "source": "toc+body_band",
+   "topic": "Sözcükte Yapı (Ekler)"
+  },
+  {
+   "label": "Sözcük Yapısı",
+   "test_count": 5,
+   "page": 211,
+   "source": "toc+body_band",
+   "topic": "Sözcükte Yapı (Ekler)"
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 10,
+   "page": 221,
+   "source": "toc+body_band",
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Fiil Çatısı",
+   "test_count": 5,
+   "page": 241,
+   "source": "toc+body_band",
+   "topic": "Fiiller (Anlam, Çatı, Kip, Yapı)"
+  },
+  {
+   "label": "Cümle Çeşitleri",
+   "test_count": 7,
+   "page": 251,
+   "source": "toc+body_band",
+   "topic": "Cümle Türleri"
+  },
+  {
+   "label": "Ses Bilgisi",
+   "test_count": 6,
+   "page": 265,
+   "source": "toc+body_band",
+   "topic": "Ses Bilgisi"
+  },
+  {
+   "label": "Yazım Kuralları",
+   "test_count": 11,
+   "page": 277,
+   "source": "toc+body_band",
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 11,
+   "page": 299,
+   "source": "toc+body_band",
+   "topic": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Karma Dil Bilgisi",
+   "test_count": 9,
+   "page": 321,
+   "source": "toc+body_band"
+  },
+  {
+   "label": "Anlatım Bozuklukları",
+   "test_count": 6,
+   "page": 339,
+   "source": "toc+body_band",
+   "topic": "Anlatım Bozuklukları"
+  }
+ ],
+ "warnings": [
+  "Kitap kapağında \"Hedef 40 Net TYT Türkçe\" adı da geçer; test numarası her bölümde 1'den başlar (Hedef Belirleme / Hedef Yükseltme / Hedef 40 / ÖSYM'nin İz Düşümü seviyeleri tek sayaçta).",
+  "Her test tam 2 sayfa; içindekiler bölüm aralıkları / 2 = gövde test sayısı, 20 bölümün hepsinde birebir; tüm zincirler 1..N kopuksuz.",
+  "Tamlamalar -> Sözcük Türleri, Fiil-Ek Fiil ve Fiil Çatısı -> Fiiller, Ekler ve Sözcük Yapısı -> Sözcükte Yapı eşlendi; Karma Dil Bilgisi eşleşmesiz."
+ ]
+}

@@ -1,0 +1,199 @@
+{
+ "name": "Bilgi Sarmal TYT Fizik 27 Günde Video Ders Kitabı",
+ "subject": "TYT Fizik",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "type": "konu_anlatimli",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "1. Gün: Fizik Bilimine Giriş",
+   "test_count": 1,
+   "page": 6,
+   "source": "toc+body_band",
+   "topic": "Fizik Bilimine Giriş"
+  },
+  {
+   "label": "2. Gün: Madde ve Özellikleri",
+   "test_count": 1,
+   "page": 15,
+   "source": "toc+body_band",
+   "topic": "Kütle, Hacim ve Özkütle"
+  },
+  {
+   "label": "3. Gün: Dayanıklılık - Adezyon ve Kohezyon",
+   "test_count": 1,
+   "page": 23,
+   "source": "toc+body_band",
+   "topic": "Madde ve Özellikleri (Karma)"
+  },
+  {
+   "label": "4. Gün: Katıların Basıncı",
+   "test_count": 1,
+   "page": 31,
+   "source": "toc+body_band",
+   "topic": "Basınç"
+  },
+  {
+   "label": "5. Gün: Durgun Sıvıların Basıncı",
+   "test_count": 1,
+   "page": 36,
+   "source": "toc+body_band",
+   "topic": "Basınç"
+  },
+  {
+   "label": "6. Gün: Gazların ve Akışkanların Basıncı",
+   "test_count": 1,
+   "page": 47,
+   "source": "toc+body_band",
+   "topic": "Basınç"
+  },
+  {
+   "label": "7. Gün: Sıvıların Kaldırma Kuvveti",
+   "test_count": 1,
+   "page": 58,
+   "source": "toc+body_band",
+   "topic": "Kaldırma Kuvveti"
+  },
+  {
+   "label": "8. Gün: Isı ve Sıcaklık (1. ve 2. Ders)",
+   "test_count": 1,
+   "page": 69,
+   "source": "toc+body_band",
+   "topic": "Isı ve Sıcaklık (Karma)"
+  },
+  {
+   "label": "9. Gün: Isının Yayılma Yolları ve Genleşme",
+   "test_count": 1,
+   "page": 82,
+   "source": "toc+body_band",
+   "topic": "Isı ve Sıcaklık (Karma)"
+  },
+  {
+   "label": "10. Gün: Hareket",
+   "test_count": 1,
+   "page": 92,
+   "source": "toc+body_band",
+   "topic": "Hareket"
+  },
+  {
+   "label": "11. Gün: Kuvvet",
+   "test_count": 1,
+   "page": 103,
+   "source": "toc+body_band",
+   "topic": "Hareket ve Kuvvet (Karma)"
+  },
+  {
+   "label": "12. Gün: İş - Güç - Enerji",
+   "test_count": 1,
+   "page": 111,
+   "source": "toc+body_band",
+   "topic": "İş, Güç ve Enerji (Karma)"
+  },
+  {
+   "label": "13. Gün: Elektrostatik",
+   "test_count": 1,
+   "page": 123,
+   "source": "toc+body_band",
+   "topic": "Elektrostatik"
+  },
+  {
+   "label": "14. Gün: Elektrik Akımı - I",
+   "test_count": 1,
+   "page": 136,
+   "source": "toc+body_band",
+   "topic": "Elektrik Akımı ve Ohm Yasası"
+  },
+  {
+   "label": "15. Gün: Elektrik Akımı - II",
+   "test_count": 1,
+   "page": 148,
+   "source": "toc+body_band",
+   "topic": "Elektrik (Karma)"
+  },
+  {
+   "label": "16. Gün: Manyetizma",
+   "test_count": 1,
+   "page": 158,
+   "source": "toc+body_band",
+   "topic": "Manyetizma"
+  },
+  {
+   "label": "17.-18. Gün: Aydınlanma - Gölge",
+   "test_count": 1,
+   "page": 165,
+   "source": "toc+body_band",
+   "topic": "Aydınlanma ve Gölge"
+  },
+  {
+   "label": "19. Gün: Düzlem Ayna",
+   "test_count": 1,
+   "page": 176,
+   "source": "toc+body_band",
+   "topic": "Düzlem Aynalar"
+  },
+  {
+   "label": "20. Gün: Küresel Aynalar",
+   "test_count": 1,
+   "page": 186,
+   "source": "toc+body_band",
+   "topic": "Küresel Aynalar"
+  },
+  {
+   "label": "21. Gün: Kırılma",
+   "test_count": 1,
+   "page": 197,
+   "source": "toc+body_band",
+   "topic": "Işığın Kırılması"
+  },
+  {
+   "label": "22. Gün: Mercekler",
+   "test_count": 1,
+   "page": 208,
+   "source": "toc+body_band",
+   "topic": "Mercekler"
+  },
+  {
+   "label": "23. Gün: Prizmalar ve Renkler",
+   "test_count": 1,
+   "page": 220,
+   "source": "toc+body_band",
+   "topic": "Renkler"
+  },
+  {
+   "label": "24. Gün: Dalgalara Giriş",
+   "test_count": 1,
+   "page": 231,
+   "source": "toc+body_band",
+   "topic": "Dalgalar (Karma)"
+  },
+  {
+   "label": "25. Gün: Yay Dalgaları",
+   "test_count": 1,
+   "page": 237,
+   "source": "toc+body_band",
+   "topic": "Yay Dalgaları"
+  },
+  {
+   "label": "26. Gün: Su Dalgaları",
+   "test_count": 1,
+   "page": 244,
+   "source": "toc+body_band",
+   "topic": "Su Dalgaları"
+  },
+  {
+   "label": "27. Gün: Ses ve Deprem Dalgaları",
+   "test_count": 1,
+   "page": 254,
+   "source": "toc+body_band",
+   "topic": "Dalgalar (Karma)"
+  }
+ ],
+ "warnings": [
+  "Konu anlatımlı video ders kitabı: test birimi = her gün sonundaki \"Dijital Destek Testleri – Test N\" (2 sayfa, 8 soru). İçindekiler (Test 1-26 + sayfa) ile gövde bandı birebir uyuştu; zincir 1..26 kopuksuz.",
+  "Ders içi \"Birlikte Çözelim\" ve \"Sıra Sende\" soruları test SAYILMADI (çözümlü örnek / ders içi alıştırma; kitap sonunda ayrı cevap anahtarı var).",
+  "17. Gün (Aydınlanma) ve 18. Gün (Gölge) tek test paylaştığından tek bölümde birleştirildi; 8. Gün iki ders tek bölüm.",
+  "Çok konulu günler ilgili ünitenin \"(Karma)\" konusuna bağlandı (3, 8, 9, 11, 12, 15, 24, 27. günler)."
+ ]
+}

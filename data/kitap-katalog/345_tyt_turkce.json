@@ -1,0 +1,220 @@
+{
+ "name": "345 TYT Türkçe Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Sözcükte Anlam",
+   "test_count": 11,
+   "page": 6,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Deyim ve Atasözü",
+   "test_count": 2,
+   "page": 28
+  },
+  {
+   "label": "Cümlede Kavramlar",
+   "test_count": 5,
+   "page": 32,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümle Yorumu",
+   "test_count": 8,
+   "page": 42,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Karma Sorular (Sözcük ve Cümle Anlamı)",
+   "test_count": 5,
+   "page": 58
+  },
+  {
+   "label": "Anlatım Teknikleri",
+   "test_count": 8,
+   "page": 68,
+   "topic": "Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları"
+  },
+  {
+   "label": "Paragraf Yorumu",
+   "test_count": 8,
+   "page": 84
+  },
+  {
+   "label": "Paragrafta Yardımcı Düşünce",
+   "test_count": 8,
+   "page": 100,
+   "topic": "Paragrafta Yardımcı Düşünce"
+  },
+  {
+   "label": "Paragraf Yapısı",
+   "test_count": 11,
+   "page": 116,
+   "topic": "Paragrafta Yapı"
+  },
+  {
+   "label": "Karma Sorular (Paragraf)",
+   "test_count": 5,
+   "page": 138,
+   "topic": "Paragraf (Karma)"
+  },
+  {
+   "label": "Ses Bilgisi",
+   "test_count": 6,
+   "page": 150,
+   "topic": "Ses Bilgisi"
+  },
+  {
+   "label": "Yazım Kuralları",
+   "test_count": 6,
+   "page": 162,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 6,
+   "page": 174,
+   "topic": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Karma Sorular (Ses - Yazım - Noktalama)",
+   "test_count": 5,
+   "page": 186
+  },
+  {
+   "label": "Sözcük Yapısı",
+   "test_count": 8,
+   "page": 198,
+   "topic": "Sözcükte Yapı (Ekler)"
+  },
+  {
+   "label": "İsim (Ad)",
+   "test_count": 6,
+   "page": 216,
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Sıfat (Ön Ad)",
+   "test_count": 6,
+   "page": 228,
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Zamir (Adıl)",
+   "test_count": 6,
+   "page": 240,
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Zarf (Belirteç)",
+   "test_count": 6,
+   "page": 252,
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Edat (İlgeç) - Bağlaç - Ünlem",
+   "test_count": 6,
+   "page": 264,
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Karma Sorular (İsim Soylu Sözcükler)",
+   "test_count": 5,
+   "page": 276,
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Fiil Çekimi",
+   "test_count": 4,
+   "page": 288,
+   "topic": "Fiiller (Anlam, Çatı, Kip, Yapı)"
+  },
+  {
+   "label": "Ek Fiil",
+   "test_count": 4,
+   "page": 296,
+   "topic": "Fiiller (Anlam, Çatı, Kip, Yapı)"
+  },
+  {
+   "label": "Fiilde Yapı",
+   "test_count": 4,
+   "page": 304,
+   "topic": "Fiiller (Anlam, Çatı, Kip, Yapı)"
+  },
+  {
+   "label": "Fiilimsiler",
+   "test_count": 4,
+   "page": 312,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Fiilde Çatı",
+   "test_count": 5,
+   "page": 320,
+   "topic": "Fiiller (Anlam, Çatı, Kip, Yapı)"
+  },
+  {
+   "label": "Karma Sorular (Fiiller)",
+   "test_count": 5,
+   "page": 330
+  },
+  {
+   "label": "Söz Öbekleri",
+   "test_count": 4,
+   "page": 342
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 6,
+   "page": 350,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Cümle Çeşitleri",
+   "test_count": 7,
+   "page": 362,
+   "topic": "Cümle Türleri"
+  },
+  {
+   "label": "Karma Sorular (Cümle Bilgisi)",
+   "test_count": 5,
+   "page": 376
+  },
+  {
+   "label": "Anlama Dayalı Anlatım Bozuklukları",
+   "test_count": 5,
+   "page": 388,
+   "topic": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "Dil Bilgisine Dayalı Anlatım Bozuklukları",
+   "test_count": 6,
+   "page": 398,
+   "topic": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "Karma Sorular (Anlatım Bozuklukları)",
+   "test_count": 5,
+   "page": 410,
+   "topic": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "Karma Dil Bilgisi",
+   "test_count": 6,
+   "page": 420
+  }
+ ],
+ "warnings": [
+  "2027 baskısı, taranmış PDF (440 s.). Basılı sayfa = PDF sırası + 1; içindekiler başlangıç sayfaları gövdeyle birebir.",
+  "Her konu: Kazanım Odaklı Sorular (N. Test) + ÖSYM Tadında Sorular + (bazılarında) Orijinal Sorular; hepsi test sayıldı. Orijinal Sorular, kitabın cevap anahtarındaki gruplamaya uyularak önceki konuya eklendi (Sözcükte Anlam 1, Cümle Yorumu 1, Paragraf Yapısı 3, Ses/Yazım/Noktalama/Sözcük Yapısı/İsim soylu 5 konu/Fiilde Çatı/Cümle Çeşitleri/Dil Bilgisine Dayalı AB 1'er). Orijinal setleri kısa (4-12 soru).",
+  "Ünite sonu Karma Sorular setleri ayrı bölüm yapıldı (cevap anahtarında son konunun altında listelenir); içindekilerde ayrı satır yok, sayfa gövdeden.",
+  "Doğrulama: gövde üst bant taraması (her sayfa) ile kitabın Cevaplar sayfaları (s. 432-439) test listesi birebir uyuştu.",
+  "Topic verilmeyenler: Deyim ve Atasözü, Paragraf Yorumu (ana düşünce+konu+yorum karma), Söz Öbekleri ve çok konulu karma setler. Cümlede Kavramlar ve Cümle Yorumu 'Cümlede Anlam'a bağlandı."
+ ]
+}

@@ -1,0 +1,368 @@
+{
+ "name": "Paraf İQ AYT Biyoloji Soru Bankası",
+ "publisher": "Paraf Yayınları",
+ "subject": "AYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Nöronlar, İmpuls Oluşumu ve İletimi",
+   "test_count": 3,
+   "page": 9,
+   "topic": "Sinir Sistemi"
+  },
+  {
+   "label": "Merkezi ve Çevresel Sinir Sistemi",
+   "test_count": 3,
+   "page": 15,
+   "topic": "Sinir Sistemi"
+  },
+  {
+   "label": "Endokrin Bezler (Epifiz, Hipofiz, Tiroit, Paratiroit, Timüs)",
+   "test_count": 3,
+   "page": 21,
+   "topic": "Endokrin Sistem ve Hormonlar"
+  },
+  {
+   "label": "Endokrin Bezler (Adrenal Bezler, Pankreas, Eşeysel Bezler)",
+   "test_count": 3,
+   "page": 27,
+   "topic": "Endokrin Sistem ve Hormonlar"
+  },
+  {
+   "label": "Duyu Organları (Deri ve Göz)",
+   "test_count": 3,
+   "page": 33,
+   "topic": "Duyu Organları"
+  },
+  {
+   "label": "Duyu Organları (Kulak, Dil ve Burun)",
+   "test_count": 3,
+   "page": 39,
+   "topic": "Duyu Organları"
+  },
+  {
+   "label": "Pekiştirelim (Sinir Sistemi, Hormonlar ve Duyu Organları)",
+   "test_count": 4,
+   "page": 45
+  },
+  {
+   "label": "Sınav Provası (Sinir Sistemi, Hormonlar ve Duyu Organları)",
+   "test_count": 1,
+   "page": 53
+  },
+  {
+   "label": "İskelet Sistemi",
+   "test_count": 2,
+   "page": 57,
+   "topic": "Destek ve Hareket Sistemi"
+  },
+  {
+   "label": "Kas Sistemi",
+   "test_count": 3,
+   "page": 61,
+   "topic": "Destek ve Hareket Sistemi"
+  },
+  {
+   "label": "Pekiştirelim (Destek ve Hareket Sistemi)",
+   "test_count": 4,
+   "page": 67,
+   "topic": "Destek ve Hareket Sistemi"
+  },
+  {
+   "label": "Sınav Provası (Destek ve Hareket Sistemi)",
+   "test_count": 1,
+   "page": 75,
+   "topic": "Destek ve Hareket Sistemi"
+  },
+  {
+   "label": "Sindirim Sisteminin Kısımları",
+   "test_count": 2,
+   "page": 79,
+   "topic": "Sindirim Sistemi"
+  },
+  {
+   "label": "Sindirime Yardımcı Organlar",
+   "test_count": 2,
+   "page": 83,
+   "topic": "Sindirim Sistemi"
+  },
+  {
+   "label": "Besinlerin Sindirimi ve Emilim",
+   "test_count": 2,
+   "page": 87,
+   "topic": "Sindirim Sistemi"
+  },
+  {
+   "label": "Pekiştirelim (Sindirim Sistemi)",
+   "test_count": 4,
+   "page": 91,
+   "topic": "Sindirim Sistemi"
+  },
+  {
+   "label": "Sınav Provası (Sindirim Sistemi)",
+   "test_count": 1,
+   "page": 99,
+   "topic": "Sindirim Sistemi"
+  },
+  {
+   "label": "Karma Testler (1. - 3. Üniteler)",
+   "test_count": 6,
+   "page": 103
+  },
+  {
+   "label": "Kalbin Yapısı ve Çalışması",
+   "test_count": 2,
+   "page": 117,
+   "topic": "Dolaşım ve Bağışıklık Sistemi"
+  },
+  {
+   "label": "Kan Damarları ve Kan Dolaşımı",
+   "test_count": 2,
+   "page": 121,
+   "topic": "Dolaşım ve Bağışıklık Sistemi"
+  },
+  {
+   "label": "Starling Hipotezi ve Kan Doku",
+   "test_count": 2,
+   "page": 125,
+   "topic": "Dolaşım ve Bağışıklık Sistemi"
+  },
+  {
+   "label": "Lenf ve Bağışıklık",
+   "test_count": 3,
+   "page": 129,
+   "topic": "Dolaşım ve Bağışıklık Sistemi"
+  },
+  {
+   "label": "Pekiştirelim (Dolaşım Sistemi)",
+   "test_count": 5,
+   "page": 135,
+   "topic": "Dolaşım ve Bağışıklık Sistemi"
+  },
+  {
+   "label": "Sınav Provası (Dolaşım Sistemi)",
+   "test_count": 1,
+   "page": 145,
+   "topic": "Dolaşım ve Bağışıklık Sistemi"
+  },
+  {
+   "label": "Solunum Sistemi",
+   "test_count": 3,
+   "page": 149,
+   "topic": "Solunum Sistemi"
+  },
+  {
+   "label": "Üriner Sistem",
+   "test_count": 3,
+   "page": 155,
+   "topic": "Boşaltım Sistemi"
+  },
+  {
+   "label": "Pekiştirelim (Solunum Sistemi ve Üriner Sistem)",
+   "test_count": 2,
+   "page": 161
+  },
+  {
+   "label": "Sınav Provası (Solunum Sistemi ve Üriner Sistem)",
+   "test_count": 1,
+   "page": 165
+  },
+  {
+   "label": "Erkek ve Dişi Üreme Sisteminin Yapısı",
+   "test_count": 2,
+   "page": 169,
+   "topic": "Üreme Sistemi ve Embriyonik Gelişim"
+  },
+  {
+   "label": "Eşey Hormonları ve Menstrual Döngü",
+   "test_count": 2,
+   "page": 173,
+   "topic": "Üreme Sistemi ve Embriyonik Gelişim"
+  },
+  {
+   "label": "Embriyonik Gelişim",
+   "test_count": 2,
+   "page": 177,
+   "topic": "Üreme Sistemi ve Embriyonik Gelişim"
+  },
+  {
+   "label": "Pekiştirelim (İnsanda Üreme ve Gelişme)",
+   "test_count": 3,
+   "page": 181,
+   "topic": "Üreme Sistemi ve Embriyonik Gelişim"
+  },
+  {
+   "label": "Sınav Provası (İnsanda Üreme ve Gelişme)",
+   "test_count": 1,
+   "page": 187,
+   "topic": "Üreme Sistemi ve Embriyonik Gelişim"
+  },
+  {
+   "label": "Komünite Ekolojisi",
+   "test_count": 3,
+   "page": 191,
+   "topic": "Komünite ve Popülasyon Ekolojisi"
+  },
+  {
+   "label": "Popülasyon Ekolojisi",
+   "test_count": 3,
+   "page": 197,
+   "topic": "Komünite ve Popülasyon Ekolojisi"
+  },
+  {
+   "label": "Pekiştirelim (Komünite ve Popülasyon Ekolojisi)",
+   "test_count": 5,
+   "page": 203,
+   "topic": "Komünite ve Popülasyon Ekolojisi"
+  },
+  {
+   "label": "Sınav Provası (Komünite ve Popülasyon Ekolojisi)",
+   "test_count": 1,
+   "page": 213,
+   "topic": "Komünite ve Popülasyon Ekolojisi"
+  },
+  {
+   "label": "Karma Testler (1. - 7. Üniteler)",
+   "test_count": 6,
+   "page": 217
+  },
+  {
+   "label": "Nükleik Asitlerin Keşfi ve Önemi",
+   "test_count": 2,
+   "page": 231,
+   "topic": "Genden Proteine (Nükleik Asitler, Protein Sentezi)"
+  },
+  {
+   "label": "Genetik Şifre ve Protein Sentezi",
+   "test_count": 3,
+   "page": 235,
+   "topic": "Genden Proteine (Nükleik Asitler, Protein Sentezi)"
+  },
+  {
+   "label": "Genetik Mühendisliği ve Biyoteknoloji",
+   "test_count": 2,
+   "page": 241,
+   "topic": "Genden Proteine (Nükleik Asitler, Protein Sentezi)"
+  },
+  {
+   "label": "Pekiştirelim (Genden Proteine ve Biyoteknoloji)",
+   "test_count": 4,
+   "page": 245,
+   "topic": "Genden Proteine (Nükleik Asitler, Protein Sentezi)"
+  },
+  {
+   "label": "Sınav Provası (Genden Proteine)",
+   "test_count": 1,
+   "page": 253,
+   "topic": "Genden Proteine (Nükleik Asitler, Protein Sentezi)"
+  },
+  {
+   "label": "Enerji ve Yaşam",
+   "test_count": 1,
+   "page": 257,
+   "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+  },
+  {
+   "label": "Fotosentez",
+   "test_count": 3,
+   "page": 259,
+   "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+  },
+  {
+   "label": "Kemosentez",
+   "test_count": 1,
+   "page": 265,
+   "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+  },
+  {
+   "label": "Glikoliz ve Oksijenli Solunum",
+   "test_count": 2,
+   "page": 267,
+   "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+  },
+  {
+   "label": "Fermantasyon ve Oksijensiz Solunum",
+   "test_count": 1,
+   "page": 271,
+   "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+  },
+  {
+   "label": "Pekiştirelim (Canlılarda Enerji Dönüşümleri)",
+   "test_count": 5,
+   "page": 273,
+   "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+  },
+  {
+   "label": "Sınav Provası (Canlılarda Enerji Dönüşümleri)",
+   "test_count": 1,
+   "page": 283,
+   "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+  },
+  {
+   "label": "Bitkisel Dokular",
+   "test_count": 3,
+   "page": 287,
+   "topic": "Bitki Biyolojisi"
+  },
+  {
+   "label": "Bitkisel Organlar",
+   "test_count": 3,
+   "page": 293,
+   "topic": "Bitki Biyolojisi"
+  },
+  {
+   "label": "Bitkisel Hormonlar",
+   "test_count": 2,
+   "page": 299,
+   "topic": "Bitki Biyolojisi"
+  },
+  {
+   "label": "Bitkilerde Hareket",
+   "test_count": 2,
+   "page": 303,
+   "topic": "Bitki Biyolojisi"
+  },
+  {
+   "label": "Bitkilerde Madde Taşınması",
+   "test_count": 3,
+   "page": 307,
+   "topic": "Bitki Biyolojisi"
+  },
+  {
+   "label": "Bitkilerde Eşeyli Üreme",
+   "test_count": 2,
+   "page": 313,
+   "topic": "Bitki Biyolojisi"
+  },
+  {
+   "label": "Canlılar ve Çevre",
+   "test_count": 2,
+   "page": 317,
+   "topic": "Canlılık ve Çevre"
+  },
+  {
+   "label": "Pekiştirelim (Bitki Biyolojisi, Canlılar ve Çevre)",
+   "test_count": 5,
+   "page": 321
+  },
+  {
+   "label": "Sınav Provası (Bitki Biyolojisi, Canlılar ve Çevre)",
+   "test_count": 1,
+   "page": 331
+  },
+  {
+   "label": "Karma Testler (1. - 10. Üniteler)",
+   "test_count": 9,
+   "page": 335
+  }
+ ],
+ "warnings": [
+  "Metin katmanından deterministik gövde taraması (PyMuPDF): her sayfanın üst bandındaki kategori (KAVRAYALIM/PEKİŞTİRELİM/SINAV PROVASI/IQ YORUM/KARMA TESTLER, 18pt) + 30pt test numarası + 14pt konu adı; Kavrayalım konu başlangıç sayfası 'Test · N' bandı taşır. Her test tam 2 sayfa; test numarası ünite boyunca kategoriler arasında süren tek sayaç (ör. Kavrayalım 1-18 → Pekiştirelim 19-23 → Sınav Provası 24), Karma Testler ayrı 1..N serisi. Tüm zincirler kopuksuz; içindekilerdeki kategori başlangıç sayfalarının tamamı gövdeyle birebir (basılı sayfa = PDF indeksi + 1). Bantsız sayfalar yalnız ön sayfalar, ünite ayraçları ve Karma ayraçları.",
+  "Pekiştirelim / Sınav Provası / IQ Yorum bölümleri ünitenin tamamını kapsar; ünite tek bir sınav konusuna denk geliyorsa o konuya bağlandı, çok konulu ünitelerde topic bilinçli boş. Karma Testler çok üniteli → topic yok.",
+  "İçindekiler Karma Testler için ayraç sayfasını (101/215/333) gösterir; ilk karma test 2 sayfa sonra (103/217/335) başlar.",
+  "PDF'te cevap anahtarı yok; son Karma testi PDF'in son sayfasında bitiyor — kitapta daha fazla karma test olup olmadığı doğrulanamadı."
+ ]
+}

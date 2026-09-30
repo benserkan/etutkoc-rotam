@@ -1,0 +1,592 @@
+{
+ "name": "Paraf İQ AYT Kimya Soru Bankası",
+ "publisher": "Paraf Yayınları",
+ "subject": "AYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Atomun Kuantum Modeli",
+   "test_count": 1,
+   "page": 11,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Kuantum Sayıları",
+   "test_count": 1,
+   "page": 13,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Orbitaller",
+   "test_count": 3,
+   "page": 15,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Elektron Dizilişleri",
+   "test_count": 2,
+   "page": 21,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Periyot – Grup Bulma",
+   "test_count": 1,
+   "page": 25,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Periyodik Özellikler (Atom Yarıçapı)",
+   "test_count": 1,
+   "page": 27,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Periyodik Özellikler (İyonlaşma Enerjisi)",
+   "test_count": 2,
+   "page": 29,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Periyodik Özellikler (Elektron İlgisi)",
+   "test_count": 1,
+   "page": 33,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Periyodik Özellikler (Elektronegatiflik)",
+   "test_count": 1,
+   "page": 35,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Elementlerde Asitlik – Bazlık",
+   "test_count": 1,
+   "page": 37,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Elementleri Tanıyalım",
+   "test_count": 1,
+   "page": 39,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Elementleri Tanıyalım, Yükseltgenme Basamakları",
+   "test_count": 1,
+   "page": 41,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Pekiştirelim (Modern Atom Teorisi)",
+   "test_count": 2,
+   "page": 43,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Sınav Provası (Modern Atom Teorisi)",
+   "test_count": 1,
+   "page": 47,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Gazların Özellikleri",
+   "test_count": 1,
+   "page": 51,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Gaz Yasaları",
+   "test_count": 3,
+   "page": 53,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "İdeal Gaz Yasası",
+   "test_count": 3,
+   "page": 59,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Gazlarda Kinetik Teori",
+   "test_count": 1,
+   "page": 65,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Kısmi Basınç",
+   "test_count": 1,
+   "page": 67,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Gaz Karışımları",
+   "test_count": 2,
+   "page": 69,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Gerçek Gazlar",
+   "test_count": 1,
+   "page": 73,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Pekiştirelim (Gazlar)",
+   "test_count": 2,
+   "page": 75,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Sınav Provası (Gazlar)",
+   "test_count": 1,
+   "page": 79,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Çözücü – Çözünen Etkileşimleri",
+   "test_count": 1,
+   "page": 83,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Derişim Birimleri",
+   "test_count": 5,
+   "page": 85,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 2,
+   "page": 95,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Çözünürlük",
+   "test_count": 1,
+   "page": 99,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Çözünürlüğe Etki Eden Faktörler",
+   "test_count": 1,
+   "page": 101,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Pekiştirelim (Sıvı Çözeltiler ve Çözünürlük)",
+   "test_count": 2,
+   "page": 103,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Sınav Provası (Sıvı Çözeltiler ve Çözünürlük)",
+   "test_count": 1,
+   "page": 107,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Tepkimelerde Isı Değişimi",
+   "test_count": 1,
+   "page": 111,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Entalpi Değişimleri",
+   "test_count": 1,
+   "page": 113,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Oluşum Entalpisi",
+   "test_count": 2,
+   "page": 115,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Potansiyel Enerji Grafikleri",
+   "test_count": 1,
+   "page": 119,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Entalpi Hesaplamaları",
+   "test_count": 1,
+   "page": 121,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Bağ Enerjileri",
+   "test_count": 1,
+   "page": 123,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Hess Yasası",
+   "test_count": 1,
+   "page": 125,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Pekiştirelim (Kimyasal Tepkimelerde Enerji)",
+   "test_count": 1,
+   "page": 127,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Sınav Provası (Kimyasal Tepkimelerde Enerji)",
+   "test_count": 1,
+   "page": 129,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Tepkime Hızları",
+   "test_count": 3,
+   "page": 133,
+   "topic": "Kimyasal Tepkimelerde Hız"
+  },
+  {
+   "label": "Tepkime Hız Bağıntıları",
+   "test_count": 2,
+   "page": 139,
+   "topic": "Kimyasal Tepkimelerde Hız"
+  },
+  {
+   "label": "Hıza Etki Eden Faktörler",
+   "test_count": 3,
+   "page": 143,
+   "topic": "Kimyasal Tepkimelerde Hız"
+  },
+  {
+   "label": "Kademeli Tepkimeler",
+   "test_count": 2,
+   "page": 149,
+   "topic": "Kimyasal Tepkimelerde Hız"
+  },
+  {
+   "label": "Pekiştirelim (Kimyasal Tepkimelerde Hız)",
+   "test_count": 1,
+   "page": 153,
+   "topic": "Kimyasal Tepkimelerde Hız"
+  },
+  {
+   "label": "Sınav Provası (Kimyasal Tepkimelerde Hız)",
+   "test_count": 1,
+   "page": 155,
+   "topic": "Kimyasal Tepkimelerde Hız"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Denge",
+   "test_count": 3,
+   "page": 159,
+   "topic": "Kimyasal Tepkimelerde Denge"
+  },
+  {
+   "label": "Dengeye Etki Eden Faktörler",
+   "test_count": 4,
+   "page": 165,
+   "topic": "Kimyasal Tepkimelerde Denge"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Denge (2)",
+   "test_count": 1,
+   "page": 173,
+   "topic": "Kimyasal Tepkimelerde Denge"
+  },
+  {
+   "label": "Asit – Baz Tanımları",
+   "test_count": 1,
+   "page": 175,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "Suyun Oto – İyonizasyonu",
+   "test_count": 1,
+   "page": 177,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "pH – pOH Kavramları",
+   "test_count": 1,
+   "page": 179,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "Kuvvetli Asit – Bazlarda pH",
+   "test_count": 1,
+   "page": 181,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "Zayıf Asit – Bazlarda pH",
+   "test_count": 2,
+   "page": 183,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "Tampon Çözeltiler",
+   "test_count": 1,
+   "page": 187,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "Tuz Çözeltilerinde Asitlik – Bazlık",
+   "test_count": 1,
+   "page": 189,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "Nötrleşme",
+   "test_count": 2,
+   "page": 191,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "Titrasyon",
+   "test_count": 1,
+   "page": 195,
+   "topic": "Asit-Baz Dengesi"
+  },
+  {
+   "label": "Çözünürlük Dengesi",
+   "test_count": 2,
+   "page": 197,
+   "topic": "Çözünürlük Dengesi"
+  },
+  {
+   "label": "Çözünürlüğe Sıcaklık ve pH Etkisi",
+   "test_count": 1,
+   "page": 201,
+   "topic": "Çözünürlük Dengesi"
+  },
+  {
+   "label": "Çözünürlüğe Ortak İyon Etkisi",
+   "test_count": 1,
+   "page": 203,
+   "topic": "Çözünürlük Dengesi"
+  },
+  {
+   "label": "Pekiştirelim (Kimyasal Tepkimelerde Denge)",
+   "test_count": 3,
+   "page": 205
+  },
+  {
+   "label": "Sınav Provası (Kimyasal Tepkimelerde Denge)",
+   "test_count": 2,
+   "page": 211
+  },
+  {
+   "label": "Karma Testler (1 - 6. Üniteler)",
+   "test_count": 4,
+   "page": 215
+  },
+  {
+   "label": "İndirgenme – Yükseltgenme Tepkimeleri",
+   "test_count": 2,
+   "page": 225,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Elektrot Potansiyelleri",
+   "test_count": 2,
+   "page": 229,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Elektrokimyasal Hücreler",
+   "test_count": 4,
+   "page": 233,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Elektroliz",
+   "test_count": 2,
+   "page": 241,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Elektroliz ve Korozyon",
+   "test_count": 1,
+   "page": 245,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Pekiştirelim (Kimya ve Elektrik)",
+   "test_count": 3,
+   "page": 247,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Sınav Provası (Kimya ve Elektrik)",
+   "test_count": 2,
+   "page": 253,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Anorganik ve Organik Bileşikler",
+   "test_count": 1,
+   "page": 259,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Basit Formül ve Molekül Formülü",
+   "test_count": 1,
+   "page": 261,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Doğada Karbon",
+   "test_count": 1,
+   "page": 263,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Lewis Formülleri",
+   "test_count": 1,
+   "page": 265,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Hibritleşme ve Molekül Geometrileri",
+   "test_count": 2,
+   "page": 267,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Pekiştirelim (Karbon Kimyasına Giriş)",
+   "test_count": 1,
+   "page": 271,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Sınav Provası (Karbon Kimyasına Giriş)",
+   "test_count": 1,
+   "page": 273,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Alkanlar",
+   "test_count": 2,
+   "page": 277,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Yapısal İzomerlik",
+   "test_count": 1,
+   "page": 281,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Alkenler",
+   "test_count": 2,
+   "page": 283,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Alkinler",
+   "test_count": 2,
+   "page": 287,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Aromatik Bileşikler",
+   "test_count": 2,
+   "page": 291,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Fonksiyonel Gruplar, Alkoller",
+   "test_count": 1,
+   "page": 295,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Alkoller",
+   "test_count": 2,
+   "page": 297,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Eterler",
+   "test_count": 2,
+   "page": 301,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Aldehit ve Ketonlar",
+   "test_count": 2,
+   "page": 305,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Karboksilik Asitler",
+   "test_count": 2,
+   "page": 309,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Esterler",
+   "test_count": 2,
+   "page": 313,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Pekiştirelim (Organik Bileşikler)",
+   "test_count": 2,
+   "page": 317,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Sınav Provası (Organik Bileşikler)",
+   "test_count": 3,
+   "page": 321,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Fosil Yakıtlar",
+   "test_count": 1,
+   "page": 329,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
+  },
+  {
+   "label": "Alternatif Enerji Kaynakları",
+   "test_count": 1,
+   "page": 331,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
+  },
+  {
+   "label": "Sürdürülebilirlik ve Nanoteknoloji",
+   "test_count": 1,
+   "page": 333,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
+  },
+  {
+   "label": "Pekiştirelim (Enerji Kaynakları ve Bilimsel Gelişmeler)",
+   "test_count": 1,
+   "page": 335,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
+  },
+  {
+   "label": "Sınav Provası (Enerji Kaynakları ve Bilimsel Gelişmeler)",
+   "test_count": 1,
+   "page": 337,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
+  },
+  {
+   "label": "Karma Testler (1 - 10. Üniteler)",
+   "test_count": 6,
+   "page": 339
+  }
+ ],
+ "warnings": [
+  "Dijital PDF, metin katmanı: gövde üst bandından deterministik tarama (PyMuPDF; 30pt test numarası + 18pt kategori + 14-16pt konu başlığı). Her test tam 2 sayfa, test numarası ünite içinde tek sayaçla akar (Kavrayalım 1..k → Pekiştirelim → Sınav Provası), her ünite zinciri 1..N kopuksuz.",
+  "İçindekiler (Kavrayalım/Pekiştirelim/Sınav Provası/Karma başlangıç sayfaları) gövdeyle çapraz doğrulandı.",
+  "Kavrayalım testleri sayfa üstündeki konu başlığına göre bölündü; Pekiştirelim/Sınav Provası/Karma testler ünite ya da karma satırı olarak ayrı. Ünite içi karma satırlar ilgili '(Karma)' ya da ünite konusuna bağlandı; üniteler arası Karma Testler bilinçli eşleşmesiz.",
+  "Bantsız sayfalar yalnız ünite kapakları (ve arka boş sayfaları), Karma kapak sayfası, ön sayfalar, kitap sonu notlar — kaçan test yok.",
+  "6. ünite Pekiştirelim/Sınav Provası üç resmi konuyu (Denge, Asit-Baz Dengesi, Çözünürlük Dengesi) kapsadığı için eşleşmesiz.",
+  "Gövdede 'FONSİYONEL' dizgi hatası 'Fonksiyonel' olarak düzeltildi.",
+  "'Kimyasal Tepkimelerde Denge' başlığı kitapta iki ayrı yerde geçiyor (Test 1-3 ve Test 8); ikincisine ' (2)' eki verildi."
+ ]
+}

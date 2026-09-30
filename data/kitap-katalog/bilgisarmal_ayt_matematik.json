@@ -1,0 +1,87 @@
+{
+ "name": "Bilgi Sarmal AYT Matematik Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Fonksiyonlar",
+   "test_count": 16,
+   "page": 14,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Polinomlar",
+   "test_count": 12,
+   "page": 47,
+   "topic": "Polinomlar"
+  },
+  {
+   "label": "Denklemler",
+   "test_count": 10,
+   "page": 71,
+   "topic": "İkinci Dereceden Denklemler"
+  },
+  {
+   "label": "Eşitsizlikler",
+   "test_count": 6,
+   "page": 91,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "Parabol",
+   "test_count": 9,
+   "page": 104,
+   "topic": "Parabol"
+  },
+  {
+   "label": "Trigonometri",
+   "test_count": 31,
+   "page": 124,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Logaritma",
+   "test_count": 17,
+   "page": 188,
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Diziler",
+   "test_count": 14,
+   "page": 223,
+   "topic": "Diziler"
+  },
+  {
+   "label": "Limit-Süreklilik",
+   "test_count": 11,
+   "page": 253,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Türev",
+   "test_count": 29,
+   "page": 278,
+   "topic": "Türev"
+  },
+  {
+   "label": "İntegral",
+   "test_count": 20,
+   "page": 340,
+   "topic": "İntegral"
+  },
+  {
+   "label": "Sayma ve Olasılık",
+   "test_count": 16,
+   "page": 381
+  }
+ ],
+ "warnings": [
+  "Kaynak: dijital PDF (416 s., metin katmanı). İçindekiler her testi sayfa numarasıyla listeliyor (191 test); gövde taraması (15pt 'TEST' + numara bandı) 191 test başlangıcını birebir aynı sayfalarda buldu. Basılı sayfa = PDF sayfası.",
+  "Her bölümde tek seri: Kazanım testleri + ÖSYM Tipi + Yıldızlar Yarışıyor, TEST numarası bölüm başına 1'den başlar, zincirler kopuksuz. Bu baskıda Sarmal Test / Simülasyon test serisi yok (s.9-12 'Soru Yaklaşımları' örnek sorular, sayılmadı).",
+  "'Denklemler' bölümü bir Karmaşık Sayılar testi içerir; konu İkinci Dereceden Denklemler'e bağlandı. 'Sayma ve Olasılık' (Permütasyon/Kombinasyon/Binom/Olasılık) çok konulu → topic bağlanmadı."
+ ]
+}

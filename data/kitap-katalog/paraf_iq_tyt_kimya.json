@@ -1,0 +1,404 @@
+{
+ "name": "Paraf İQ TYT Kimya Soru Bankası",
+ "publisher": "Paraf Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Simyadan Kimyaya",
+   "test_count": 3,
+   "page": 9,
+   "topic": "Kimya Bilimi"
+  },
+  {
+   "label": "Kimya Disiplinleri ve Kimyacıların Çalışma Alanları",
+   "test_count": 2,
+   "page": 15,
+   "topic": "Kimya Bilimi"
+  },
+  {
+   "label": "Kimyanın Sembolik Dili",
+   "test_count": 2,
+   "page": 19,
+   "topic": "Kimya Bilimi"
+  },
+  {
+   "label": "Kimya Uygulamalarında İş Sağlığı ve Güvenliği",
+   "test_count": 3,
+   "page": 23,
+   "topic": "Kimya Bilimi"
+  },
+  {
+   "label": "Pekiştirelim (Kimya Bilimi)",
+   "test_count": 2,
+   "page": 29,
+   "topic": "Kimya Bilimi"
+  },
+  {
+   "label": "Sınav Provası (Kimya Bilimi)",
+   "test_count": 1,
+   "page": 33,
+   "topic": "Kimya Bilimi"
+  },
+  {
+   "label": "Atom Modelleri",
+   "test_count": 3,
+   "page": 37,
+   "topic": "Atom Modelleri ve Atomun Yapısı"
+  },
+  {
+   "label": "Atomun Yapısı",
+   "test_count": 2,
+   "page": 43,
+   "topic": "Atom Modelleri ve Atomun Yapısı"
+  },
+  {
+   "label": "Periyodik Sistem",
+   "test_count": 2,
+   "page": 47,
+   "topic": "Periyodik Sistem"
+  },
+  {
+   "label": "Elementlerin Sınıflandırılması",
+   "test_count": 1,
+   "page": 51,
+   "topic": "Periyodik Sistem"
+  },
+  {
+   "label": "Periyodik Özelliklerin Değişimi",
+   "test_count": 3,
+   "page": 53,
+   "topic": "Periyodik Sistem"
+  },
+  {
+   "label": "Pekiştirelim (Atom ve Periyodik Sistem)",
+   "test_count": 2,
+   "page": 59,
+   "topic": "Atom ve Periyodik Sistem (Karma)"
+  },
+  {
+   "label": "Sınav Provası (Atom ve Periyodik Sistem)",
+   "test_count": 1,
+   "page": 63,
+   "topic": "Atom ve Periyodik Sistem (Karma)"
+  },
+  {
+   "label": "Kimyasal Türler, Etkileşimlerin Sınıflandırılması, Lewis Yapısı",
+   "test_count": 1,
+   "page": 67,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)"
+  },
+  {
+   "label": "Güçlü Etkileşimler ve İyonik Bağlı Bileşikler",
+   "test_count": 1,
+   "page": 69,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)"
+  },
+  {
+   "label": "İyonik Bağ ve İyonik Bağlı Bileşikler",
+   "test_count": 2,
+   "page": 71,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)"
+  },
+  {
+   "label": "Kovalent Bağ ve Kovalent Bağlı Bileşikler",
+   "test_count": 3,
+   "page": 75,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)"
+  },
+  {
+   "label": "Kovalent Bağ, Metalik Bağ",
+   "test_count": 1,
+   "page": 81,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)"
+  },
+  {
+   "label": "Zayıf Etkileşimler",
+   "test_count": 3,
+   "page": 83,
+   "topic": "Zayıf Etkileşimler"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 1,
+   "page": 89,
+   "topic": "Fiziksel ve Kimyasal Değişimler"
+  },
+  {
+   "label": "Pekiştirelim (Kimyasal Türler Arası Etkileşimler)",
+   "test_count": 2,
+   "page": 91,
+   "topic": "Kimyasal Türler Arası Etkileşimler (Karma)"
+  },
+  {
+   "label": "Sınav Provası (Kimyasal Türler Arası Etkileşimler)",
+   "test_count": 1,
+   "page": 95,
+   "topic": "Kimyasal Türler Arası Etkileşimler (Karma)"
+  },
+  {
+   "label": "Maddenin Fiziksel Hâlleri",
+   "test_count": 2,
+   "page": 99,
+   "topic": "Maddenin Halleri (Karma)"
+  },
+  {
+   "label": "Katılar ve Özellikleri",
+   "test_count": 1,
+   "page": 103,
+   "topic": "Katılar"
+  },
+  {
+   "label": "Katılar ve Sıvıların Özellikleri",
+   "test_count": 1,
+   "page": 105,
+   "topic": "Maddenin Halleri (Karma)"
+  },
+  {
+   "label": "Sıvılar ve Özellikleri",
+   "test_count": 1,
+   "page": 107,
+   "topic": "Sıvılar"
+  },
+  {
+   "label": "Gazlar, Hâl Değişimleri",
+   "test_count": 1,
+   "page": 109,
+   "topic": "Maddenin Halleri (Karma)"
+  },
+  {
+   "label": "Hâl Değişimleri, Plazma Hâli",
+   "test_count": 1,
+   "page": 111,
+   "topic": "Hal Değişimleri"
+  },
+  {
+   "label": "Pekiştirelim (Maddenin Hâlleri)",
+   "test_count": 2,
+   "page": 113,
+   "topic": "Maddenin Halleri (Karma)"
+  },
+  {
+   "label": "Sınav Provası (Maddenin Hâlleri)",
+   "test_count": 1,
+   "page": 117,
+   "topic": "Maddenin Halleri (Karma)"
+  },
+  {
+   "label": "Su ve Hayat",
+   "test_count": 2,
+   "page": 121
+  },
+  {
+   "label": "Çevre Kimyası",
+   "test_count": 2,
+   "page": 125
+  },
+  {
+   "label": "Pekiştirelim (Doğa ve Kimya)",
+   "test_count": 1,
+   "page": 129
+  },
+  {
+   "label": "Sınav Provası (Doğa ve Kimya)",
+   "test_count": 1,
+   "page": 131
+  },
+  {
+   "label": "Karma Testler (1 - 5. Üniteler)",
+   "test_count": 4,
+   "page": 135
+  },
+  {
+   "label": "Kütlenin Korunumu Yasası",
+   "test_count": 1,
+   "page": 145,
+   "topic": "Kimyanın Temel Kanunları"
+  },
+  {
+   "label": "Sabit Oranlar Yasası",
+   "test_count": 3,
+   "page": 147,
+   "topic": "Kimyanın Temel Kanunları"
+  },
+  {
+   "label": "Katlı Oranlar Yasası",
+   "test_count": 3,
+   "page": 153,
+   "topic": "Kimyanın Temel Kanunları"
+  },
+  {
+   "label": "Mol Kavramı",
+   "test_count": 4,
+   "page": 159,
+   "topic": "Mol Kavramı"
+  },
+  {
+   "label": "Kimyasal Tepkime Denklemleri",
+   "test_count": 4,
+   "page": 167,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Hesaplamalar",
+   "test_count": 4,
+   "page": 175,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar"
+  },
+  {
+   "label": "Pekiştirelim (Kimyasal Hesaplamalar)",
+   "test_count": 3,
+   "page": 183,
+   "topic": "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar (Karma)"
+  },
+  {
+   "label": "Sınav Provası (Kimyasal Hesaplamalar)",
+   "test_count": 1,
+   "page": 189,
+   "topic": "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar (Karma)"
+  },
+  {
+   "label": "Karışımların Sınıflandırılması",
+   "test_count": 2,
+   "page": 193,
+   "topic": "Karışımların Sınıflandırılması"
+  },
+  {
+   "label": "Çözünme Süreci",
+   "test_count": 1,
+   "page": 197,
+   "topic": "Çözünme ve Derişim"
+  },
+  {
+   "label": "Çözeltilerde Derişim",
+   "test_count": 2,
+   "page": 199,
+   "topic": "Çözünme ve Derişim"
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 1,
+   "page": 203,
+   "topic": "Çözünme ve Derişim"
+  },
+  {
+   "label": "Ayırma ve Saflaştırma Teknikleri",
+   "test_count": 4,
+   "page": 205,
+   "topic": "Ayırma ve Saflaştırma"
+  },
+  {
+   "label": "Pekiştirelim (Karışımlar)",
+   "test_count": 2,
+   "page": 213,
+   "topic": "Karışımlar (Karma)"
+  },
+  {
+   "label": "Sınav Provası (Karışımlar)",
+   "test_count": 1,
+   "page": 217,
+   "topic": "Karışımlar (Karma)"
+  },
+  {
+   "label": "Asitler ve Bazlar",
+   "test_count": 3,
+   "page": 221,
+   "topic": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Asitlerin ve Bazların Tepkimeleri",
+   "test_count": 3,
+   "page": 227,
+   "topic": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Hayatımızdaki Asitler ve Bazlar",
+   "test_count": 2,
+   "page": 233,
+   "topic": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Tuzlar",
+   "test_count": 1,
+   "page": 237,
+   "topic": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Pekiştirelim (Asitler, Bazlar ve Tuzlar)",
+   "test_count": 2,
+   "page": 239,
+   "topic": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Sınav Provası (Asitler, Bazlar ve Tuzlar)",
+   "test_count": 1,
+   "page": 243,
+   "topic": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Temizlik Maddelerinin Özellikleri",
+   "test_count": 3,
+   "page": 247,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Polimerler",
+   "test_count": 2,
+   "page": 253,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Polimerler – Kozmetikler",
+   "test_count": 1,
+   "page": 257,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Kozmetikler – İlaç Formları",
+   "test_count": 1,
+   "page": 259,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Hazır Gıdalar",
+   "test_count": 1,
+   "page": 261,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Yenilebilir Yağ Türleri",
+   "test_count": 2,
+   "page": 263,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Pekiştirelim (Kimya Her Yerde)",
+   "test_count": 1,
+   "page": 267,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Sınav Provası (Kimya Her Yerde)",
+   "test_count": 1,
+   "page": 269,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Karma Testler (1 - 9. Üniteler)",
+   "test_count": 7,
+   "page": 273
+  }
+ ],
+ "warnings": [
+  "Dijital PDF, metin katmanı: gövde üst bandından deterministik tarama (PyMuPDF; 30pt test numarası + 18pt kategori + 14-16pt konu başlığı). Her test tam 2 sayfa, test numarası ünite içinde tek sayaçla akar (Kavrayalım 1..k → Pekiştirelim → Sınav Provası), her ünite zinciri 1..N kopuksuz.",
+  "İçindekiler (Kavrayalım/Pekiştirelim/Sınav Provası/Karma başlangıç sayfaları) gövdeyle çapraz doğrulandı.",
+  "Kavrayalım testleri sayfa üstündeki konu başlığına göre bölündü; Pekiştirelim/Sınav Provası/Karma testler ünite ya da karma satırı olarak ayrı. Ünite içi karma satırlar ilgili '(Karma)' ya da ünite konusuna bağlandı; üniteler arası Karma Testler bilinçli eşleşmesiz.",
+  "Bantsız sayfalar yalnız ünite kapakları (ve arka boş sayfaları), Karma kapak sayfası, ön sayfalar, kitap sonu notlar — kaçan test yok.",
+  "İçindekiler 3. ünite Kavrayalım'ı s.69 gösteriyor; gövdede ilk Kavrayalım testi s.67'de (Test 1) — gövde esas alındı.",
+  "5. ünite 'Doğa ve Kimya' (Su ve Hayat, Çevre Kimyası) TYT Kimya taksonomisinde karşılığı olmadığından eşleşmesiz bırakıldı.",
+  "Bazı Kavrayalım başlıkları iki konuyu kapsıyor (ör. 'Gazlar, Hâl Değişimleri', 'Katılar ve Sıvıların Özellikleri') → 'Maddenin Halleri (Karma)'a bağlandı."
+ ]
+}

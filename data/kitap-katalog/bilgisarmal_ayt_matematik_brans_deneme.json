@@ -1,0 +1,106 @@
+{
+ "name": "Bilgi Sarmal AYT Matematik Branş Denemeleri",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "brans_denemesi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Deneme 1 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 3
+  },
+  {
+   "label": "Deneme 2 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 19
+  },
+  {
+   "label": "Deneme 3 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 35
+  },
+  {
+   "label": "Deneme 4 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 51
+  },
+  {
+   "label": "Deneme 5 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 67
+  },
+  {
+   "label": "Deneme 6 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 83
+  },
+  {
+   "label": "Deneme 7 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 99
+  },
+  {
+   "label": "Deneme 8 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 115
+  },
+  {
+   "label": "Deneme 9 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 131
+  },
+  {
+   "label": "Deneme 10 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 147
+  },
+  {
+   "label": "Deneme 11 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 163
+  },
+  {
+   "label": "Deneme 12 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 179
+  },
+  {
+   "label": "Deneme 13 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 195
+  },
+  {
+   "label": "Deneme 14 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 211
+  },
+  {
+   "label": "Deneme 15 (40 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 227
+  }
+ ],
+ "warnings": [
+  "15 deneme; her deneme 16 PDF sayfası (kapak + künye + 13 soru sayfası + Konu-Kazanım tablosu). 15 kapak (AYT MATEMATİK – N) ile 15 DENEME - N bandı ve \"Bu testte 40 soru vardır\" ibaresi birebir uyuştu.",
+  "page = PDF sayfa numarası (sorunun başladığı sayfa); kitap içi basılı numara deneme başına yeniden başlıyor olabilir.",
+  "Deneme kitabı: müfredat eşleşmesi bilinçli yok; hedef sınıf 11-12 + mezun (AYT)."
+ ]
+}
