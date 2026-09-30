@@ -320,13 +320,8 @@ function SubjGroupBlock({
                 {mk.ch}
               </span>
               <span className="min-w-0 flex-1 text-foreground/90">
-                {/* işaretli görevde ad KIRPILMAZ — koç aradığı görevi tam okusun */}
-                <span
-                  className={cn(
-                    "max-w-full align-bottom",
-                    hl || (t.videos?.length ?? 0) > 0 ? "break-words" : "truncate inline-block",
-                  )}
-                >
+                {/* Görev adı KIRPILMAZ ("…" yasak) — dar hücrede satır kaydırır */}
+                <span className="max-w-full align-bottom break-words">
                   {videoBadge(t) > 0 ? (
                     <span
                       className="mr-0.5 inline-block rounded bg-rose-600 px-1 text-[9px] font-bold leading-[14px] text-white"
