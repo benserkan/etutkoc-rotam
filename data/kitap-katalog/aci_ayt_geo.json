@@ -1,0 +1,164 @@
+{
+ "name": "Açı Yayınları AYT Geometri Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "AYT Geometri",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Temel Kavramlar ve Düzlemde Açılar",
+   "test_count": 4,
+   "page": 4,
+   "topic": ""
+  },
+  {
+   "label": "Üçgende Açılar",
+   "test_count": 6,
+   "page": 12,
+   "topic": "Üçgenlerde Açı ve Kenar Bağıntıları"
+  },
+  {
+   "label": "Açı-Kenar Bağıntıları",
+   "test_count": 3,
+   "page": 24,
+   "topic": "Üçgenlerde Açı ve Kenar Bağıntıları"
+  },
+  {
+   "label": "Üçgenlerin Eşliği ve Benzerliği",
+   "test_count": 8,
+   "page": 30,
+   "topic": "Üçgende Benzerlik"
+  },
+  {
+   "label": "Üçgende Açıortay",
+   "test_count": 3,
+   "page": 46,
+   "topic": "Açıortay ve Kenarortay"
+  },
+  {
+   "label": "Kenarortay",
+   "test_count": 3,
+   "page": 52,
+   "topic": "Açıortay ve Kenarortay"
+  },
+  {
+   "label": "Üçgende Merkezler",
+   "test_count": 3,
+   "page": 58,
+   "topic": "Açıortay ve Kenarortay"
+  },
+  {
+   "label": "İkizkenar Üçgen - Eşkenar Üçgen",
+   "test_count": 4,
+   "page": 64,
+   "topic": "Üçgenlerde Açı ve Kenar Bağıntıları"
+  },
+  {
+   "label": "Dik Üçgen",
+   "test_count": 6,
+   "page": 72,
+   "topic": "Üçgenlerde Açı ve Kenar Bağıntıları"
+  },
+  {
+   "label": "Üçgende Alan",
+   "test_count": 7,
+   "page": 84,
+   "topic": "Üçgende Alan"
+  },
+  {
+   "label": "Çokgenler",
+   "test_count": 3,
+   "page": 98,
+   "topic": "Çokgenler ve Dörtgenler"
+  },
+  {
+   "label": "Dörtgenler",
+   "test_count": 3,
+   "page": 104,
+   "topic": "Çokgenler ve Dörtgenler"
+  },
+  {
+   "label": "Yamuk ve Deltoid",
+   "test_count": 8,
+   "page": 110,
+   "topic": "Çokgenler ve Dörtgenler"
+  },
+  {
+   "label": "Paralelkenar ve Eşkenar Dörtgen",
+   "test_count": 8,
+   "page": 126,
+   "topic": "Çokgenler ve Dörtgenler"
+  },
+  {
+   "label": "Dikdörtgen ve Kare",
+   "test_count": 8,
+   "page": 142,
+   "topic": "Çokgenler ve Dörtgenler"
+  },
+  {
+   "label": "Çemberde Açı",
+   "test_count": 5,
+   "page": 158,
+   "topic": "Çemberde Açı, Kiriş ve Teğet"
+  },
+  {
+   "label": "Çemberde Uzunluk",
+   "test_count": 7,
+   "page": 168,
+   "topic": "Çemberde Açı, Kiriş ve Teğet"
+  },
+  {
+   "label": "Daire",
+   "test_count": 6,
+   "page": 182,
+   "topic": ""
+  },
+  {
+   "label": "Trigonometri",
+   "test_count": 15,
+   "page": 194,
+   "topic": ""
+  },
+  {
+   "label": "Analitik Geometri",
+   "test_count": 10,
+   "page": 224,
+   "topic": "Analitik Geometri (Doğru)"
+  },
+  {
+   "label": "Dönüşümler Geometrisi",
+   "test_count": 3,
+   "page": 244,
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Çemberin Analitiği",
+   "test_count": 3,
+   "page": 250,
+   "topic": "Çemberin Analitik İncelenmesi"
+  },
+  {
+   "label": "Prizma ve Piramit",
+   "test_count": 6,
+   "page": 256,
+   "topic": "Katı Cisimler"
+  },
+  {
+   "label": "Dik Dairesel Silindir",
+   "test_count": 3,
+   "page": 268,
+   "topic": "Katı Cisimler"
+  },
+  {
+   "label": "Dik Dairesel Koni ve Küre",
+   "test_count": 4,
+   "page": 274,
+   "topic": "Katı Cisimler"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 25 bölüm · 139 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

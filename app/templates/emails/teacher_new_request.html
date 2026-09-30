@@ -4,10 +4,7 @@ Subject: 📬 {{ student.full_name }} yeni bir talep gönderdi — {{ type_label
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 20px; color: #1e293b;">
-  <div style="border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px;">
-    <h1 style="margin: 0; font-size: 22px; letter-spacing: 0.1em;">ETÜTKOÇ</h1>
-    <p style="margin: 4px 0 0; font-size: 11px; color: #64748b; text-transform: uppercase;">Çalışma Takip Sistemi</p>
-  </div>
+  {% include "_brand_header.html" %}
 
   <h2 style="font-size: 16px; color: #0f172a; margin: 0 0 12px;">📬 Yeni Öğrenci Talebi</h2>
 
@@ -44,7 +41,7 @@ Subject: 📬 {{ student.full_name }} yeni bir talep gönderdi — {{ type_label
 
   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
   <p style="margin: 0; font-size: 10px; color: #94a3b8;">
-    Bu mail otomatik gönderildi · ETÜTKOÇ Rotam · {{ app_base_url }}
+    {% include "_brand_footer.html" %}
   </p>
 </body>
 </html>

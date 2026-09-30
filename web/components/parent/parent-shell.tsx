@@ -10,7 +10,8 @@ import { Bell, HeartHandshake, LayoutDashboard, LogOut, MessageSquare, Settings,
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { BrandLogo } from "@/components/brand-logo";
+import { ShellBrand } from "@/components/shell-brand";
+import type { BrandRef } from "@/lib/types/me";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
@@ -29,6 +30,8 @@ import type { UserPublic } from "@/lib/types/me";
 
 interface Props {
   user: UserPublic;
+  /** Kurumsal kimlik — çocuğun kurumu (varsa) ana marka. */
+  brand?: BrandRef | null;
   children: React.ReactNode;
 }
 
@@ -48,7 +51,7 @@ const NAV_LINKS: NavLink[] = [
   { href: "/me/account", label: "Hesabım", icon: UserCog },
 ];
 
-export function ParentShell({ user, children }: Props) {
+export function ParentShell({ user, brand, children }: Props) {
   const pathname = usePathname();
   usePanelVisitTracker();
   const logout = useLogout();
@@ -60,7 +63,7 @@ export function ParentShell({ user, children }: Props) {
       <header className="sticky top-0 z-30 bg-gradient-to-r from-[#117A86] to-[#0E5F69] text-white shadow-sm">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2 min-w-0">
-            <BrandLogo href="/parent" size={28} className="shrink-0" wordmarkClassName="text-white" />
+            <ShellBrand brand={brand ?? null} href="/parent" size={28} onDark className="shrink-0" />
             <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-white/20 text-white">
               <HeartHandshake className="size-3" aria-hidden />
               Veli

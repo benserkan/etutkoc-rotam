@@ -46,7 +46,7 @@ export default async function StudentLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader user={data.user} />
+      <SiteHeader user={data.user} brand={data.brand ?? null} />
       <ImpersonationBanner />
       <PhoneVerifyBanner phoneVerified={data.user.phone_verified ?? true} />
       <GuideWelcomeDialog

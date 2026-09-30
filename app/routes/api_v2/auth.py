@@ -172,6 +172,8 @@ class InvitationInfoOut(BaseModel):
     full_name: str | None = None
     role: str | None = None
     institution_name: str | None = None
+    # Kurumsal kimlik — davet sayfasında kurum logosu/adı
+    institution_logo_url: str | None = None
 
 
 class SignupOut(BaseModel):
@@ -1045,7 +1047,16 @@ def v2_signup_invite_info(token: str, db: Session = Depends(get_db)):
         full_name=inv.full_name,
         role=inv.role.value,
         institution_name=inv.institution.name if inv.institution else None,
+        institution_logo_url=_invite_logo(db, inv),
     )
+
+
+def _invite_logo(db: Session, inv) -> str | None:
+    if not inv.institution_id:
+        return None
+    from app.services import branding
+    b = branding.brand_for_institution_id(db, inv.institution_id)
+    return b.logo_path if b else None
 
 
 @router.post("/signup/invite/{token}", response_model=SignupOut)

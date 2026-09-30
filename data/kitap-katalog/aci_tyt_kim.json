@@ -1,0 +1,68 @@
+{
+ "name": "Açı Yayınları TYT Kimya Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Kimya Bilimi",
+   "test_count": 10,
+   "page": 4,
+   "topic": "Kimya Bilimi"
+  },
+  {
+   "label": "Atom ve Periyodik Sistem",
+   "test_count": 10,
+   "page": 24,
+   "topic": "Atom ve Periyodik Sistem (Karma)"
+  },
+  {
+   "label": "Kimyasal Türler Arası Etkileşimler",
+   "test_count": 14,
+   "page": 44,
+   "topic": "Kimyasal Türler Arası Etkileşimler (Karma)"
+  },
+  {
+   "label": "Maddenin Hâlleri",
+   "test_count": 13,
+   "page": 72,
+   "topic": "Maddenin Halleri (Karma)"
+  },
+  {
+   "label": "Doğa ve Kimya",
+   "test_count": 5,
+   "page": 98,
+   "topic": "Kimya Her Yerde"
+  },
+  {
+   "label": "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar",
+   "test_count": 20,
+   "page": 108,
+   "topic": "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar (Karma)"
+  },
+  {
+   "label": "Karışımlar",
+   "test_count": 14,
+   "page": 148,
+   "topic": "Karışımlar (Karma)"
+  },
+  {
+   "label": "Asitler, Bazlar ve Tuzlar",
+   "test_count": 14,
+   "page": 176,
+   "topic": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Kimya Her Yerde",
+   "test_count": 8,
+   "page": 204,
+   "topic": "Kimya Her Yerde"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 9 bölüm · 108 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

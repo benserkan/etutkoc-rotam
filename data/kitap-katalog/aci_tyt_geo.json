@@ -1,0 +1,134 @@
+{
+ "name": "Açı Yayınları TYT Geometri Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "TYT Geometri",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Temel Kavramlar ve Düzlemde Açılar",
+   "test_count": 4,
+   "page": 4,
+   "topic": "Temel Geometrik Kavramlar ve Doğruda Açılar"
+  },
+  {
+   "label": "Üçgende Açılar",
+   "test_count": 6,
+   "page": 12,
+   "topic": "Üçgende Açılar"
+  },
+  {
+   "label": "Açı-Kenar Bağıntıları",
+   "test_count": 3,
+   "page": 24,
+   "topic": "Üçgende Açı-Kenar Bağıntıları"
+  },
+  {
+   "label": "Üçgende Eşlik-Benzerlik",
+   "test_count": 8,
+   "page": 30,
+   "topic": "Üçgende Eşlik ve Benzerlik"
+  },
+  {
+   "label": "Üçgende Açıortay",
+   "test_count": 3,
+   "page": 46,
+   "topic": "Üçgende Açıortay ve Kenarortay"
+  },
+  {
+   "label": "Üçgende Kenarortay",
+   "test_count": 3,
+   "page": 52,
+   "topic": "Üçgende Açıortay ve Kenarortay"
+  },
+  {
+   "label": "Üçgende Merkezler",
+   "test_count": 3,
+   "page": 58,
+   "topic": "Üçgenler (Karma)"
+  },
+  {
+   "label": "İkizkenar-Eşkenar Üçgen",
+   "test_count": 4,
+   "page": 64,
+   "topic": "İkizkenar ve Eşkenar Üçgen"
+  },
+  {
+   "label": "Dik Üçgen ve Trigonometri",
+   "test_count": 7,
+   "page": 72,
+   "topic": "Dik Üçgen ve Pisagor"
+  },
+  {
+   "label": "Üçgende Alan",
+   "test_count": 7,
+   "page": 86,
+   "topic": "Üçgende Alan"
+  },
+  {
+   "label": "Çokgenler",
+   "test_count": 4,
+   "page": 100,
+   "topic": "Çokgenler"
+  },
+  {
+   "label": "Dörtgenler",
+   "test_count": 2,
+   "page": 108,
+   "topic": "Çokgenler ve Dörtgenler (Karma)"
+  },
+  {
+   "label": "Yamuk-Deltoid",
+   "test_count": 7,
+   "page": 112,
+   "topic": "Yamuk"
+  },
+  {
+   "label": "Paralelkenar-Eşkenar Dörtgen",
+   "test_count": 7,
+   "page": 126,
+   "topic": "Paralelkenar"
+  },
+  {
+   "label": "Dikdörtgen-Kare",
+   "test_count": 8,
+   "page": 140,
+   "topic": "Dikdörtgen"
+  },
+  {
+   "label": "Analitik Geometri",
+   "test_count": 7,
+   "page": 156,
+   "topic": "Analitik Geometri"
+  },
+  {
+   "label": "Çemberde Açılar",
+   "test_count": 4,
+   "page": 170,
+   "topic": "Çember ve Daire"
+  },
+  {
+   "label": "Çemberde Uzunluk",
+   "test_count": 6,
+   "page": 178,
+   "topic": "Çember ve Daire"
+  },
+  {
+   "label": "Dairenin Çevresi ve Alanı",
+   "test_count": 6,
+   "page": 190,
+   "topic": "Çember ve Daire"
+  },
+  {
+   "label": "Katı Cisimler",
+   "test_count": 9,
+   "page": 202,
+   "topic": "Katı Cisimler (Prizma, Piramit, Koni, Küre, Silindir)"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 20 bölüm · 108 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

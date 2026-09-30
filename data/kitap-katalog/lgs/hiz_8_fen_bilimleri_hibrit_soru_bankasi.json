@@ -1,0 +1,205 @@
+{
+ "name": "Hız Yayınları 8. Sınıf Fen Bilimleri Hibrit Soru Bankası",
+ "publisher": "Hız Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimlerin Oluşumu (Test 1-5)",
+   "test_count": 5,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "İklim ve Hava Hareketleri (Test 6-8)",
+   "test_count": 3,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "1. Ünite — Ünite Tekrar (Test 9-12)",
+   "test_count": 4,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "DNA ve Genetik Kod (Test 13-17)",
+   "test_count": 5,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Kalıtım (Test 18-24)",
+   "test_count": 7,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Mutasyon ve Modifikasyon (Test 25-26)",
+   "test_count": 2,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Adaptasyon (Çevreye Uyum) (Test 27-29)",
+   "test_count": 3,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Biyoteknoloji (Test 30-31)",
+   "test_count": 2,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "2. Ünite — Ünite Tekrar (Test 32-35)",
+   "test_count": 4,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Katı Basıncı (Test 36-38)",
+   "test_count": 3,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Sıvı Basıncı (Test 39-41)",
+   "test_count": 3,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Gaz Basıncı (Test 42-43)",
+   "test_count": 2,
+   "topic": "Basınç"
+  },
+  {
+   "label": "3. Ünite — Ünite Tekrar (Test 44-47)",
+   "test_count": 4,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Periyodik Sistem (Test 48-50)",
+   "test_count": 3,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler (Test 51-52)",
+   "test_count": 2,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Kimyasal Tepkimeler (Test 53-55)",
+   "test_count": 3,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Asitler ve Bazlar (Test 56-59)",
+   "test_count": 4,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "4. Ünite — Bölüm Tekrar (Test 60-64)",
+   "test_count": 5,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Maddenin Isı ile Etkileşimi (Test 65-66)",
+   "test_count": 2,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Hâl Değişimi (Test 67-68)",
+   "test_count": 2,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Hâl Değişimi Grafikleri (Test 69-70)",
+   "test_count": 2,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "4. Ünite — Bölüm Tekrar (Test 71-73)",
+   "test_count": 3,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Türkiye’de Kimya Endüstrisi (Test 74)",
+   "test_count": 1,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Makaralar (Test 75-78)",
+   "test_count": 4,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Kaldıraçlar (Test 79-81)",
+   "test_count": 3,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Eğik Düzlem (Test 82-83)",
+   "test_count": 2,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Çıkrık (Test 84-85)",
+   "test_count": 2,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Vida, Dişli Çarklar ve Kasnaklar (Test 86)",
+   "test_count": 1,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "5. Ünite — Ünite Tekrar (Test 87-90)",
+   "test_count": 4,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Besin Zinciri ve Enerji Akışı (Test 91-92)",
+   "test_count": 2,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Fotosentez (Test 93-95)",
+   "test_count": 3,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Solunum (Test 96-98)",
+   "test_count": 3,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Madde Döngüleri ve Çevre Sorunları (Test 99-101)",
+   "test_count": 3,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Sürdürülebilir Kalkınma (Test 102-103)",
+   "test_count": 2,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "6. Ünite — Ünite Tekrar (Test 104-107)",
+   "test_count": 4,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektriklenme, Elektrik Yüklü Cisimler (Test 108-111)",
+   "test_count": 4,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "Elektrik Enerjisinin Dönüşümü (Test 112-113)",
+   "test_count": 2,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "7. Ünite — Ünite Tekrar (Test 114-117)",
+   "test_count": 4,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  }
+ ],
+ "warnings": [
+  "İçindekilerden (fliphtml5 önizlemesi, s.6-7): 7 ünite · 117 test (Kazanım/Sınav Düzeyi + Bölüm/Ünite Tekrar), testler 2'şer sayfa, kitap boyunca tek sayaç 1-117. Konu anlatımı sayfaları sayılmadı."
+ ]
+}

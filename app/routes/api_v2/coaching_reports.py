@@ -204,7 +204,11 @@ def get_weekly_report_parent_html_v2(
     from app.services.weekly_parent_report import render_parent_html
 
     r = _get_owned_report(db, report_id, user.id)
-    return HTMLResponse(content=render_parent_html(wcr.load_data(r)))
+    from app.services import branding
+
+    student = db.get(User, r.student_id)
+    brand = branding.brand_for_user(db, student) if student else None
+    return HTMLResponse(content=render_parent_html(wcr.load_data(r), brand=brand))
 
 
 @router.post("/weekly-reports/{report_id}/ai-agenda", response_model=CoachingReportDetail)

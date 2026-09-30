@@ -1,0 +1,116 @@
+{
+ "name": "Açı Yayınları AYT Matematik Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "AYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Polinomlar",
+   "test_count": 9,
+   "page": 4,
+   "topic": "Polinomlar"
+  },
+  {
+   "label": "Çarpanlara Ayırma",
+   "test_count": 8,
+   "page": 22,
+   "topic": "Polinomlar"
+  },
+  {
+   "label": "II. Dereceden Denklemler ve Denklem Sistemleri",
+   "test_count": 7,
+   "page": 38,
+   "topic": "İkinci Dereceden Denklemler"
+  },
+  {
+   "label": "Karmaşık Sayılar",
+   "test_count": 2,
+   "page": 52,
+   "topic": "Karmaşık Sayılar"
+  },
+  {
+   "label": "Fonksiyonlar",
+   "test_count": 15,
+   "page": 56,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Parabol",
+   "test_count": 8,
+   "page": 86,
+   "topic": "Parabol"
+  },
+  {
+   "label": "II. Dereceden Eşitsizlikler",
+   "test_count": 6,
+   "page": 102,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "Logaritma",
+   "test_count": 11,
+   "page": 114,
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Diziler",
+   "test_count": 9,
+   "page": 136,
+   "topic": "Diziler"
+  },
+  {
+   "label": "Limit",
+   "test_count": 10,
+   "page": 154,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Türev",
+   "test_count": 19,
+   "page": 174,
+   "topic": "Türev"
+  },
+  {
+   "label": "İntegral",
+   "test_count": 16,
+   "page": 212,
+   "topic": "İntegral"
+  },
+  {
+   "label": "Permütasyon",
+   "test_count": 5,
+   "page": 244,
+   "topic": "Permütasyon ve Kombinasyon"
+  },
+  {
+   "label": "Kombinasyon",
+   "test_count": 4,
+   "page": 254,
+   "topic": "Permütasyon ve Kombinasyon"
+  },
+  {
+   "label": "Binom Açılımı",
+   "test_count": 2,
+   "page": 262,
+   "topic": "Binom Açılımı"
+  },
+  {
+   "label": "Olasılık",
+   "test_count": 5,
+   "page": 266,
+   "topic": "Olasılık"
+  },
+  {
+   "label": "Permütasyon - Kombinasyon - Olasılık (Karma)",
+   "test_count": 3,
+   "page": 276,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 17 bölüm · 139 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

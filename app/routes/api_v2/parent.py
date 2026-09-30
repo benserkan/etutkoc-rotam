@@ -1450,7 +1450,11 @@ def parent_invitation_info_v2(
         raise _invitation_error_http(result.error.value)
 
     inv = result.invitation
+    from app.services import branding as _branding
+    _b = _branding.brand_for_user(db, inv.invited_by) if inv.invited_by else None
     return ParentInvitationInfo(
+        brand_name=_b.name if _b else None,
+        brand_logo_url=_b.logo_path if _b else None,
         token=inv.token,
         invited_email=inv.invited_email,
         student_full_name=inv.student.full_name if inv.student else "—",

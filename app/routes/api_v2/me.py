@@ -40,6 +40,7 @@ from app.routes.api_v2.schemas.me import (
     DataDeleteRequestBody,
     DataDeleteResponse,
     DataRequestSummary,
+    BrandRef,
     InstitutionRef,
     KvkkStatus,
     ActiveSessionItem,
@@ -194,9 +195,18 @@ def get_me(
                 logo_url=(f"/api/v2/institution/logo/{inst.id}" if inst.has_logo else None),
             )
 
+    from app.services import branding as _branding
+
+    _b = _branding.brand_for_user(db, user)
+    brand_ref = (
+        BrandRef(institution_id=_b.institution_id, name=_b.name, logo_url=_b.logo_path)
+        if _b else None
+    )
+
     return MyAccountResponse(
         user=UserPublic.from_user(user),
         institution=institution_ref,
+        brand=brand_ref,
         parent_links=_build_parent_links(db, user),
         kvkk_status=KvkkStatus(
             has_pending_delete=pending_delete is not None,

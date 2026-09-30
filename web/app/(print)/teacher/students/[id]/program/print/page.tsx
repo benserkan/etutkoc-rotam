@@ -210,8 +210,11 @@ export default async function ProgramPrintPage({
   } catch {
     me = null;
   }
-  const inst = me?.institution ?? null;
-  const instLogoUrl = inst?.has_logo ? inst.logo_url ?? null : null;
+  // Kurumsal kimlik (me.brand): kuruma bağlı koç/öğrenci → kurum logosu, logo
+  // yoksa kurum adı; ETÜTKOÇ yalnız altyapı notu. Kurumsuz → platform amblemi.
+  const brand = me?.brand ?? null;
+  const inst = brand ? { name: brand.name } : null;
+  const instLogoUrl = brand?.logo_url ?? null;
 
   const totalCorrect = weekData.days.reduce(
     (acc, d) => acc + d.tasks.reduce(
@@ -248,6 +251,8 @@ export default async function ProgramPrintPage({
               alt={inst?.name ?? "Kurum"}
               className="h-10 w-auto max-w-[150px] object-contain"
             />
+          ) : inst ? (
+            <span className="max-w-[180px] text-base font-bold leading-tight text-stone-900">{inst.name}</span>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element -- platform amblemi (yazdırma)
             <img
@@ -272,7 +277,7 @@ export default async function ProgramPrintPage({
           <span>Çöz. <b className="text-stone-800">{weekData.total_completed}</b></span>
           <span>D <b className="text-emerald-700">{totalCorrect}</b></span>
           <span>Y <b className="text-rose-700">{totalWrong}</b></span>
-          <span className="text-stone-400">· etütkoç·rotam</span>
+          <span className="text-stone-400">{inst ? "· Altyapı: ETÜTKOÇ Rotam" : "· etütkoç·rotam"}</span>
         </div>
       </header>
 

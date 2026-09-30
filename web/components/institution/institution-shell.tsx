@@ -36,8 +36,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { BrandLogo } from "@/components/brand-logo";
-import { InstitutionBrand } from "@/components/institution-brand";
+import { ShellBrand } from "@/components/shell-brand";
+import type { BrandRef } from "@/lib/types/me";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { useLogout } from "@/lib/hooks/use-logout";
@@ -184,6 +184,8 @@ const NAV_SECTIONS: NavSection[] = [
 interface Props {
   user: UserPublic;
   institution: InstitutionRef | null;
+  /** Kurumsal kimlik — üstte kurum logosu/adı. */
+  brand?: BrandRef | null;
   children: React.ReactNode;
 }
 
@@ -195,7 +197,7 @@ interface Props {
  *   - Kurum bağlam chip'i (header — Jinja'da emerald accent)
  *   - "Yeni öğretmen ekle" ve diğer eylemler her sayfada kendi içinde
  */
-export function InstitutionShell({ user, institution, children }: Props) {
+export function InstitutionShell({ user, institution, brand, children }: Props) {
   const pathname = usePathname();
   usePanelVisitTracker();
   const logout = useLogout();
@@ -214,12 +216,9 @@ export function InstitutionShell({ user, institution, children }: Props) {
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* Sidebar (lg+) */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 lg:sticky lg:top-0 lg:h-screen border-r border-border bg-card/40">
-        <div className="px-4 h-14 flex items-center border-b border-border">
-          <BrandLogo href="/institution" size={28} />
+        <div className="px-4 min-h-14 py-2 flex items-center border-b border-border">
+          <ShellBrand brand={brand ?? null} href="/institution" size={28} />
         </div>
-        {institution ? (
-          <InstitutionChip institution={institution} />
-        ) : null}
         <nav
           className="flex-1 overflow-y-auto p-2 space-y-3"
           aria-label="Kurum yöneticisi paneli"
@@ -243,14 +242,7 @@ export function InstitutionShell({ user, institution, children }: Props) {
       {/* Topbar (lg-) */}
       <header className="lg:hidden sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
         <div className="flex h-14 items-center gap-3 px-4">
-          <BrandLogo href="/institution" size={28} className="shrink-0" />
-          {institution ? (
-            <InstitutionBrand
-              institution={institution}
-              compact
-              className="hidden sm:block max-w-[200px]"
-            />
-          ) : null}
+          <ShellBrand brand={brand ?? null} href="/institution" size={28} className="shrink-0" />
           <div className="flex-1" />
           <Button
             variant="ghost"
@@ -283,13 +275,6 @@ export function InstitutionShell({ user, institution, children }: Props) {
   );
 }
 
-function InstitutionChip({ institution }: { institution: InstitutionRef }) {
-  return (
-    <div className="px-4 py-2 border-b border-border">
-      <InstitutionBrand institution={institution} />
-    </div>
-  );
-}
 
 function NavGroup({
   section,

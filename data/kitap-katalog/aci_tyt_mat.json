@@ -1,0 +1,230 @@
+{
+ "name": "Açı Yayınları TYT Matematik Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "TYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "İşlem Yeteneği",
+   "test_count": 2,
+   "page": 4,
+   "topic": "Temel Kavramlar"
+  },
+  {
+   "label": "Temel Kavramlar",
+   "test_count": 5,
+   "page": 8,
+   "topic": "Temel Kavramlar"
+  },
+  {
+   "label": "Tek ve Çift Sayılar",
+   "test_count": 4,
+   "page": 18,
+   "topic": "Tek ve Çift Sayılar"
+  },
+  {
+   "label": "Pozitif ve Negatif Sayılar",
+   "test_count": 3,
+   "page": 26,
+   "topic": "Temel Kavramlar"
+  },
+  {
+   "label": "Ardışık Sayılar",
+   "test_count": 5,
+   "page": 32,
+   "topic": "Ardışık Sayılar"
+  },
+  {
+   "label": "Basamak Kavramı ve Çözümleme",
+   "test_count": 5,
+   "page": 42,
+   "topic": "Sayı Basamakları"
+  },
+  {
+   "label": "Bölme ve Bölünebilme Kuralları",
+   "test_count": 5,
+   "page": 52,
+   "topic": "Bölme ve Bölünebilme"
+  },
+  {
+   "label": "Faktöriyel",
+   "test_count": 3,
+   "page": 62,
+   "topic": "Faktöriyel"
+  },
+  {
+   "label": "Asal Sayılar ve Asal Çarpanlarına Ayırma",
+   "test_count": 4,
+   "page": 68,
+   "topic": "Asal Sayılar"
+  },
+  {
+   "label": "EBOB-EKOK ve Periyodik Tekrar Eden Problemler",
+   "test_count": 6,
+   "page": 76,
+   "topic": "EBOB - EKOK"
+  },
+  {
+   "label": "Rasyonel Sayılar",
+   "test_count": 5,
+   "page": 88,
+   "topic": "Rasyonel Sayılar"
+  },
+  {
+   "label": "I. Dereceden Denklemler",
+   "test_count": 5,
+   "page": 98,
+   "topic": "Birinci Dereceden Denklemler"
+  },
+  {
+   "label": "Basit Eşitsizlikler ve Sıralama",
+   "test_count": 5,
+   "page": 108,
+   "topic": "Basit Eşitsizlikler"
+  },
+  {
+   "label": "Mutlak Değer",
+   "test_count": 4,
+   "page": 118,
+   "topic": "Mutlak Değer"
+  },
+  {
+   "label": "Üslü Sayılar",
+   "test_count": 6,
+   "page": 126,
+   "topic": "Üslü Sayılar"
+  },
+  {
+   "label": "Köklü Sayılar",
+   "test_count": 7,
+   "page": 138,
+   "topic": "Köklü Sayılar"
+  },
+  {
+   "label": "Oran-Orantı",
+   "test_count": 5,
+   "page": 152,
+   "topic": "Oran ve Orantı"
+  },
+  {
+   "label": "Sayı, Kesir ve Denklem Kurma Problemleri",
+   "test_count": 7,
+   "page": 162,
+   "topic": "Sayı - Kesir Problemleri"
+  },
+  {
+   "label": "Yaş Problemleri",
+   "test_count": 3,
+   "page": 176,
+   "topic": "Yaş Problemleri"
+  },
+  {
+   "label": "Hareket (Hız) Problemleri",
+   "test_count": 6,
+   "page": 182,
+   "topic": "Hareket Problemleri"
+  },
+  {
+   "label": "İşçi Problemleri",
+   "test_count": 3,
+   "page": 194,
+   "topic": "İşçi Problemleri"
+  },
+  {
+   "label": "Yüzde Problemleri",
+   "test_count": 4,
+   "page": 200,
+   "topic": "Yüzde Problemleri"
+  },
+  {
+   "label": "Kâr-Zarar Problemleri",
+   "test_count": 4,
+   "page": 208,
+   "topic": "Kar - Zarar Problemleri"
+  },
+  {
+   "label": "Karışım Problemleri",
+   "test_count": 4,
+   "page": 216,
+   "topic": "Karışım Problemleri"
+  },
+  {
+   "label": "Mantık",
+   "test_count": 4,
+   "page": 224,
+   "topic": "Mantık"
+  },
+  {
+   "label": "Kümeler",
+   "test_count": 6,
+   "page": 232,
+   "topic": "Kümeler"
+  },
+  {
+   "label": "Fonksiyonlar",
+   "test_count": 10,
+   "page": 244,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Polinomlar",
+   "test_count": 6,
+   "page": 264,
+   "topic": "Polinomlar"
+  },
+  {
+   "label": "Çarpanlara Ayırma",
+   "test_count": 6,
+   "page": 276,
+   "topic": "Çarpanlara Ayırma"
+  },
+  {
+   "label": "II. Dereceden Denklemler",
+   "test_count": 5,
+   "page": 288,
+   "topic": ""
+  },
+  {
+   "label": "Karmaşık Sayılar",
+   "test_count": 3,
+   "page": 298,
+   "topic": ""
+  },
+  {
+   "label": "Veri - İstatistik - Grafik",
+   "test_count": 4,
+   "page": 304,
+   "topic": "Veri ve İstatistik"
+  },
+  {
+   "label": "Permütasyon",
+   "test_count": 7,
+   "page": 312,
+   "topic": "Permütasyon"
+  },
+  {
+   "label": "Kombinasyon",
+   "test_count": 5,
+   "page": 326,
+   "topic": "Kombinasyon"
+  },
+  {
+   "label": "Binom Açılımı",
+   "test_count": 2,
+   "page": 336,
+   "topic": "Binom"
+  },
+  {
+   "label": "Olasılık",
+   "test_count": 6,
+   "page": 340,
+   "topic": "Olasılık"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 36 bölüm · 174 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

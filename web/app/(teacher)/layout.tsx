@@ -42,7 +42,7 @@ export default async function TeacherLayout({
   }
 
   return (
-    <TeacherShell user={data.user} institution={data.institution}>
+    <TeacherShell user={data.user} institution={data.institution} brand={data.brand ?? null}>
       {children}
     </TeacherShell>
   );

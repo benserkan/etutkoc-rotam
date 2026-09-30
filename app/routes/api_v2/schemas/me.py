@@ -71,6 +71,17 @@ class InstitutionRef(BaseModel):
     logo_url: str | None = None  # co-branding (logo varsa serve ucu)
 
 
+class BrandRef(BaseModel):
+    """Kurumsal kimlik (co-branding): kullanıcının gördüğü ana marka.
+
+    Kuruma bağlı her rol (öğrenci/veli koç ya da çocuk üzerinden) için dolu;
+    bağımsız koç ekosisteminde None → ETÜTKOÇ markası.
+    """
+    institution_id: int
+    name: str
+    logo_url: str | None = None  # herkese açık logo yolu (yoksa ad gösterilir)
+
+
 class ParentLinkRef(BaseModel):
     """Veli ↔ öğrenci eşleşmesi (yön role'a göre).
 
@@ -110,6 +121,7 @@ class MyAccountResponse(BaseModel):
     """GET /api/v2/me — sayfanın tek istekte ihtiyacı olan her şey."""
     user: UserPublic
     institution: InstitutionRef | None = None
+    brand: BrandRef | None = None
     parent_links: list[ParentLinkRef] = []
     kvkk_status: KvkkStatus
     recent_requests: list[DataRequestSummary] = []

@@ -1,0 +1,75 @@
+{
+ "name": "Sinan Kuzucu 8. Sınıf Matematik Kazanımmatik Soru Bankası",
+ "publisher": "Sinan Kuzucu Yayınları",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "1. Konu — Çarpanlar ve Katlar",
+   "test_count": 5,
+   "topic": "Çarpanlar ve Katlar"
+  },
+  {
+   "label": "2. Konu — Üslü İfadeler",
+   "test_count": 6,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "3. Konu — Kareköklü İfadeler",
+   "test_count": 7,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "4. Konu — Veri Analizi",
+   "test_count": 2,
+   "topic": "Veri Analizi"
+  },
+  {
+   "label": "5. Konu — Basit Olayların Olasılığı",
+   "test_count": 3,
+   "topic": "Basit Olayların Olasılığı"
+  },
+  {
+   "label": "6. Konu — Cebirsel İfadeler ve Özdeşlikler",
+   "test_count": 4,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler"
+  },
+  {
+   "label": "7. Konu — Doğrusal Denklemler",
+   "test_count": 6,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "8. Konu — Eşitsizlikler",
+   "test_count": 2,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "9. Konu — Üçgenler",
+   "test_count": 4,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "10. Konu — Eşlik ve Benzerlik",
+   "test_count": 2,
+   "topic": "Eşlik ve Benzerlik"
+  },
+  {
+   "label": "11. Konu — Dönüşüm Geometrisi",
+   "test_count": 2,
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "12. Konu — Geometrik Cisimler",
+   "test_count": 3,
+   "topic": "Geometrik Cisimler"
+  }
+ ],
+ "warnings": [
+  "İçindekiler fotoğrafından (2 sayfa): 12 konu · 46 test, her test 4 sayfa (s.9-216), yanıt anahtarı s.218."
+ ]
+}

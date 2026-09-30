@@ -1,0 +1,74 @@
+{
+ "name": "Açı Yayınları AYT Kimya Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "AYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Modern Atom Teorisi",
+   "test_count": 9,
+   "page": 4,
+   "topic": "Modern Atom Teorisi"
+  },
+  {
+   "label": "Gazlar",
+   "test_count": 10,
+   "page": 22,
+   "topic": "Gazlar"
+  },
+  {
+   "label": "Sıvı Çözeltiler ve Çözünürlük",
+   "test_count": 9,
+   "page": 42,
+   "topic": "Sıvı Çözeltiler ve Çözünürlük"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Enerji",
+   "test_count": 8,
+   "page": 60,
+   "topic": "Kimyasal Tepkimelerde Enerji"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Hız",
+   "test_count": 9,
+   "page": 76,
+   "topic": "Kimyasal Tepkimelerde Hız"
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Denge",
+   "test_count": 16,
+   "page": 94,
+   "topic": "Kimyasal Tepkimelerde Denge"
+  },
+  {
+   "label": "Kimya ve Elektrik",
+   "test_count": 13,
+   "page": 126,
+   "topic": "Kimya ve Elektrik"
+  },
+  {
+   "label": "Karbon Kimyasına Giriş",
+   "test_count": 8,
+   "page": 152,
+   "topic": "Karbon Kimyasına Giriş"
+  },
+  {
+   "label": "Organik Kimya",
+   "test_count": 21,
+   "page": 168,
+   "topic": "Organik Bileşikler"
+  },
+  {
+   "label": "Enerji Kaynakları ve Bilimsel Gelişmeler",
+   "test_count": 4,
+   "page": 210,
+   "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 10 bölüm · 107 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

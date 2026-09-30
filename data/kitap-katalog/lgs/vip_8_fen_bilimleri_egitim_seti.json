@@ -1,0 +1,240 @@
+{
+ "name": "VİP Yayınları 8. Sınıf Fen Bilimleri Eğitim Seti (45 Fasikül)",
+ "publisher": "VİP Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "1. Fasikül — Mevsimlerin Oluşumu",
+   "test_count": 1,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "2. Fasikül — İklim ve Hava Hareketleri",
+   "test_count": 1,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "3. Fasikül — Ünite Tarama Testi (Mevsimler ve İklim)",
+   "test_count": 1,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "4. Fasikül — DNA ve Genetik Kod",
+   "test_count": 1,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "5. Fasikül — Kalıtım – 1",
+   "test_count": 1,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "6. Fasikül — Kalıtım – 2",
+   "test_count": 2,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "7. Fasikül — Mutasyon ve Modifikasyon",
+   "test_count": 1,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "8. Fasikül — Adaptasyon (Çevreye Uyum)",
+   "test_count": 1,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "9. Fasikül — Biyoteknoloji",
+   "test_count": 1,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "10. Fasikül — Ünite Tarama Testi (DNA ve Genetik Kod)",
+   "test_count": 1,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "11. Fasikül — Genel Tarama Testi",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "12. Fasikül — Katı Basıncı",
+   "test_count": 2,
+   "topic": "Basınç"
+  },
+  {
+   "label": "13. Fasikül — Sıvı ve Gaz Basıncı",
+   "test_count": 1,
+   "topic": "Basınç"
+  },
+  {
+   "label": "14. Fasikül — Ünite Tarama Testi (Basınç)",
+   "test_count": 1,
+   "topic": "Basınç"
+  },
+  {
+   "label": "15. Fasikül — Genel Tarama Testi",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "16. Fasikül — Periyodik Sistem",
+   "test_count": 1,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "17. Fasikül — Fiziksel ve Kimyasal Değişimler",
+   "test_count": 1,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "18. Fasikül — Kimyasal Tepkimeler",
+   "test_count": 1,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "19. Fasikül — Asitler ve Bazlar",
+   "test_count": 1,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "20. Fasikül — Maddenin Isı ile Etkileşimi",
+   "test_count": 1,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "21. Fasikül — Maddenin Isı ile Etkileşimi / Türkiye’de Kimya Endüstrisi",
+   "test_count": 1,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "22. Fasikül — Ünite Tarama Testi (Madde ve Endüstri)",
+   "test_count": 1,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "23. Fasikül — Genel Tarama Testi",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "24. Fasikül — Makaralar",
+   "test_count": 1,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "25. Fasikül — Kaldıraçlar",
+   "test_count": 1,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "26. Fasikül — Eğik Düzlem ve Çıkrık",
+   "test_count": 1,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "27. Fasikül — Dişli Çarklar, Kasnaklar, Vida ve Bileşik Makineler",
+   "test_count": 1,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "28. Fasikül — Ünite Tarama Testi (Basit Makineler)",
+   "test_count": 1,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "29. Fasikül — Genel Tarama Testi",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "30. Fasikül — Besin Zinciri ve Enerji Akışı",
+   "test_count": 1,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "31. Fasikül — Enerji Dönüşümleri (Fotosentez)",
+   "test_count": 1,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "32. Fasikül — Enerji Dönüşümleri (Solunum)",
+   "test_count": 2,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "33. Fasikül — Madde Döngüleri ve Çevre Sorunları – 1",
+   "test_count": 2,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "34. Fasikül — Madde Döngüleri ve Çevre Sorunları – 2",
+   "test_count": 1,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "35. Fasikül — Sürdürülebilir Kalkınma",
+   "test_count": 1,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "36. Fasikül — Ünite Tarama Testi (Enerji Dönüşümleri ve Çevre Bilimi)",
+   "test_count": 1,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "37. Fasikül — Genel Tarama Testi",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "38. Fasikül — Elektrik Yükleri ve Elektriklenme – 1",
+   "test_count": 1,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "39. Fasikül — Elektrik Yükleri ve Elektriklenme – 2",
+   "test_count": 1,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "40. Fasikül — Elektrik Yüklü Cisimler",
+   "test_count": 1,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "41. Fasikül — Elektrik Enerjisinin Dönüşümü – 1",
+   "test_count": 1,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "42. Fasikül — Elektrik Enerjisinin Dönüşümü – 2",
+   "test_count": 1,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "43. Fasikül — Ünite Tarama Testi (Elektrik Yükleri ve Elektrik Enerjisi)",
+   "test_count": 1,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "44. Fasikül — Genel Tarama Testi – 1",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "45. Fasikül — Genel Tarama Testi – 2",
+   "test_count": 1,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (metin katmanı yok): fasikül başlangıçları + sağ üst mavi 'TEST' sekmeleri piksel analiziyle bulundu, sekme numaraları görüntüden teyit edildi (45 fasikül · 35 konu testi + 14 tarama). Konu fasikülünde test ≈4 sayfa; Ünite/Genel Tarama fasikülünün tamamı tek test (sayfa başına 1 soru)."
+ ]
+}

@@ -5,12 +5,7 @@ Subject: ETÜTKOÇ Rotam · {{ event_title }} — {{ when_label }}
 <head><meta charset="utf-8"></head>
 <body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
   <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
-    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 20px;">
-      <img src="{{ app_base_url }}/etutkoc-mark.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
-      <span style="font-size: 18px; font-weight: 800;">
-        <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
-      </span>
-    </div>
+    {% include "_brand_header.html" %}
 
     <h2 style="font-size: 16px; color: #0f172a; margin: 0 0 6px;">{{ event_title }}</h2>
     <div style="font-size: 13px; color: #475569; margin-bottom: 16px;">
@@ -60,7 +55,7 @@ Subject: ETÜTKOÇ Rotam · {{ event_title }} — {{ when_label }}
   </div>
 
   <div style="text-align: center; font-size: 11px; color: #94a3b8; margin-top: 16px;">
-    ETÜTKOÇ Rotam · <a href="{{ app_base_url }}" style="color: #117A86;">rotam.etutkoc.com</a>
+    {% if brand %}{{ brand.name }} adına gönderildi · Altyapı: ETÜTKOÇ Rotam{% else %}ETÜTKOÇ Rotam · <a href="{{ app_base_url }}" style="color: #117A86;">rotam.etutkoc.com</a>{% endif %}
   </div>
 </body>
 </html>

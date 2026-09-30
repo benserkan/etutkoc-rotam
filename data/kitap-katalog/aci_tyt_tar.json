@@ -1,0 +1,170 @@
+{
+ "name": "Açı Yayınları TYT-AYT Tarih Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "TYT Tarih",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Tarih ve Zaman",
+   "test_count": 3,
+   "page": 4,
+   "topic": "Tarih ve Zaman"
+  },
+  {
+   "label": "İnsanlığın İlk Dönemleri",
+   "test_count": 5,
+   "page": 10,
+   "topic": "İnsanlığın İlk Dönemleri"
+  },
+  {
+   "label": "Orta Çağ’da Dünya",
+   "test_count": 2,
+   "page": 20,
+   "topic": "Orta Çağ'da Dünya"
+  },
+  {
+   "label": "İlk ve Orta Çağlarda Türk Dünyası",
+   "test_count": 5,
+   "page": 24,
+   "topic": "İlk ve Orta Çağlarda Türk Dünyası"
+  },
+  {
+   "label": "İslam Medeniyetinin Doğuşu",
+   "test_count": 4,
+   "page": 34,
+   "topic": "İslam Medeniyetinin Doğuşu"
+  },
+  {
+   "label": "Türklerin İslamiyet’i Kabulü ve İlk Türk-İslam Devletleri",
+   "test_count": 4,
+   "page": 42,
+   "topic": "İlk Türk-İslam Devletleri"
+  },
+  {
+   "label": "Yerleşme ve Devletleşme Sürecinde Selçuklu Türkiyesi",
+   "test_count": 4,
+   "page": 50,
+   "topic": "Selçuklu Türkiyesi"
+  },
+  {
+   "label": "Beylikten Devlete Osmanlı Siyaseti (1302-1453)",
+   "test_count": 4,
+   "page": 58,
+   "topic": "Beylikten Devlete Osmanlı"
+  },
+  {
+   "label": "Devletleşme Sürecinde Savaşçılar ve Askerler",
+   "test_count": 2,
+   "page": 66,
+   "topic": "Osmanlı Kültür ve Medeniyeti"
+  },
+  {
+   "label": "Beylikten Devlete Osmanlı Medeniyeti",
+   "test_count": 2,
+   "page": 70,
+   "topic": "Osmanlı Kültür ve Medeniyeti"
+  },
+  {
+   "label": "Dünya Gücü Osmanlı (1453-1595)",
+   "test_count": 5,
+   "page": 74,
+   "topic": "Dünya Gücü Osmanlı Devleti"
+  },
+  {
+   "label": "Sultan ve Osmanlı Merkez Teşkilatı",
+   "test_count": 2,
+   "page": 84,
+   "topic": "Osmanlı Kültür ve Medeniyeti"
+  },
+  {
+   "label": "Klasik Çağ’da Osmanlı Toplum Düzeni",
+   "test_count": 3,
+   "page": 88,
+   "topic": "Osmanlı Kültür ve Medeniyeti"
+  },
+  {
+   "label": "Değişen Dünya Dengeleri Karşısında Osmanlı Siyaseti (1595-1774)",
+   "test_count": 4,
+   "page": 94,
+   "topic": "Değişen Dünya Dengeleri Karşısında Osmanlı"
+  },
+  {
+   "label": "Değişim Çağında Avrupa ve Osmanlı",
+   "test_count": 5,
+   "page": 102,
+   "topic": "Değişen Dünya Dengeleri Karşısında Osmanlı"
+  },
+  {
+   "label": "Devrimler Çağında Değişen Devlet ve Toplum İlişkileri",
+   "test_count": 3,
+   "page": 112,
+   "topic": "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)"
+  },
+  {
+   "label": "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)",
+   "test_count": 7,
+   "page": 118,
+   "topic": "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)"
+  },
+  {
+   "label": "XIX ve XX. Yüzyıllarda Değişen Sosyoekonomik Hayat",
+   "test_count": 5,
+   "page": 132,
+   "topic": "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)"
+  },
+  {
+   "label": "XX. Yüzyılın Başlarında Osmanlı Devleti ve Dünya",
+   "test_count": 8,
+   "page": 142,
+   "topic": "XX. Yüzyıl Başlarında Osmanlı Devleti"
+  },
+  {
+   "label": "Millî Mücadele",
+   "test_count": 12,
+   "page": 158,
+   "topic": "Milli Mücadele"
+  },
+  {
+   "label": "Atatürkçülük ve Türk İnkılabı",
+   "test_count": 5,
+   "page": 182,
+   "topic": "Atatürkçülük ve Türk İnkılabı"
+  },
+  {
+   "label": "İki Savaş Arası Dönemde Türkiye ve Dünya",
+   "test_count": 3,
+   "page": 192,
+   "topic": "Atatürkçülük ve Türk İnkılabı"
+  },
+  {
+   "label": "II. Dünya Savaşı Sürecinde Türkiye ve Dünya",
+   "test_count": 2,
+   "page": 198,
+   "topic": ""
+  },
+  {
+   "label": "II. Dünya Savaşı Sonrasında Türkiye ve Dünya",
+   "test_count": 2,
+   "page": 202,
+   "topic": ""
+  },
+  {
+   "label": "Toplumsal Devrim Çağında Dünya ve Türkiye",
+   "test_count": 2,
+   "page": 206,
+   "topic": ""
+  },
+  {
+   "label": "XXI. Yüzyılın Eşiğinde Türkiye ve Dünya",
+   "test_count": 3,
+   "page": 210,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 26 bölüm · 106 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

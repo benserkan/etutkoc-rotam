@@ -185,8 +185,11 @@ export default async function StudentWeekPrintPage({ searchParams }: PageProps) 
     me = null;
   }
   const studentName = me?.user.full_name ?? "";
-  const inst = me?.institution ?? null;
-  const instLogoUrl = inst?.has_logo ? inst.logo_url ?? null : null;
+  // Kurumsal kimlik (me.brand): kuruma bağlı koç/öğrenci → kurum logosu, logo
+  // yoksa kurum adı; ETÜTKOÇ yalnız altyapı notu. Kurumsuz → platform amblemi.
+  const brand = me?.brand ?? null;
+  const inst = brand ? { name: brand.name } : null;
+  const instLogoUrl = brand?.logo_url ?? null;
 
   const subjects = deriveSubjects(weekData.days);
 
@@ -217,6 +220,8 @@ export default async function StudentWeekPrintPage({ searchParams }: PageProps) 
               alt={inst?.name ?? "Kurum"}
               className="h-10 w-auto max-w-[150px] object-contain"
             />
+          ) : inst ? (
+            <span className="max-w-[180px] text-base font-bold leading-tight text-stone-900">{inst.name}</span>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element -- platform amblemi (yazdırma)
             <img
@@ -241,7 +246,7 @@ export default async function StudentWeekPrintPage({ searchParams }: PageProps) 
           {weekData.total_test_planned > 0 ? (
             <span>Test <b className="text-stone-800">{weekData.total_test_completed}/{weekData.total_test_planned}</b></span>
           ) : null}
-          <span className="text-stone-400">· etütkoç·rotam</span>
+          <span className="text-stone-400">{inst ? "· Altyapı: ETÜTKOÇ Rotam" : "· etütkoç·rotam"}</span>
         </div>
       </header>
 

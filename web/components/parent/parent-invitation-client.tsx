@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import { useAcceptParentInvitation } from "@/lib/hooks/use-parent-mutations";
 import type { ParentInvitationInfo } from "@/lib/types/parent";
+import { ShellBrand } from "@/components/shell-brand";
 
 interface Props {
   invitation: ParentInvitationInfo;
@@ -147,12 +148,27 @@ export function ParentInvitationClient({ invitation }: Props) {
     <div className="min-h-screen bg-muted/20 flex items-center justify-center p-4 py-8">
       <div className="w-full max-w-2xl">
         <div className="flex flex-col items-center mb-5">
-          <div className="rounded-full bg-[#117A86]/10 text-[#117A86] p-3 mb-2">
-            <HeartHandshake className="size-8" aria-hidden />
-          </div>
-          <p className="font-display text-xl font-bold tracking-tight">
-            ETÜTKOÇ
-          </p>
+          {invitation.brand_name ? (
+            <div className="mb-2">
+              <ShellBrand
+                href="/"
+                brand={{
+                  institution_id: 0,
+                  name: invitation.brand_name,
+                  logo_url: invitation.brand_logo_url ?? null,
+                }}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="rounded-full bg-[#117A86]/10 text-[#117A86] p-3 mb-2">
+                <HeartHandshake className="size-8" aria-hidden />
+              </div>
+              <p className="font-display text-xl font-bold tracking-tight">
+                ETÜTKOÇ
+              </p>
+            </>
+          )}
           <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mt-1">
             Veli Daveti
           </p>

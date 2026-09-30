@@ -1,4 +1,5 @@
 import { apiServer } from "@/lib/api-server";
+import type { MyAccountResponse } from "@/lib/types/me";
 import { ApiError } from "@/lib/api";
 import type { TeacherStudentDetailResponse } from "@/lib/types/teacher";
 
@@ -37,12 +38,27 @@ export default async function SessionPrintPage({
   } catch (e) {
     if (!(e instanceof ApiError)) throw e;
   }
+  // Kurumsal kimlik — kuruma bağlı koçta kurum logosu/adı
+  let brand: MyAccountResponse["brand"] = null;
+  try {
+    brand = (await apiServer<MyAccountResponse>("/api/v2/me")).brand ?? null;
+  } catch {
+    brand = null;
+  }
 
   return (
     <main className="mx-auto max-w-[800px] bg-white px-10 py-8 text-stone-900">
       <style>{`@media print { @page { size: A4 portrait; margin: 16mm; } .no-print { display:none } }`}</style>
 
       <header className="mb-6 border-b-2 border-stone-800 pb-3">
+        {brand ? (
+          brand.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- kurum logosu (yazdırma)
+            <img src={brand.logo_url} alt={brand.name} className="mb-2 h-10 w-auto max-w-[200px] object-contain" />
+          ) : (
+            <div className="mb-2 text-base font-bold">{brand.name}</div>
+          )
+        ) : null}
         <h1 className="text-xl font-bold tracking-tight">Haftalık Koçluk Görüşme Formu</h1>
         <div className="mt-3 flex items-end justify-between text-sm">
           <span>Öğrenci: <b>{studentName || "______________________"}</b></span>
@@ -64,7 +80,7 @@ export default async function SessionPrintPage({
       </div>
 
       <footer className="mt-8 flex items-center justify-between text-[11px] text-stone-500">
-        <span>etütkoç · rotam</span>
+        <span>{brand ? "Altyapı: ETÜTKOÇ Rotam" : "etütkoç · rotam"}</span>
         <span>Doldurduktan sonra fotoğrafını çekip sisteme yükleyebilirsiniz (yakında).</span>
       </footer>
 

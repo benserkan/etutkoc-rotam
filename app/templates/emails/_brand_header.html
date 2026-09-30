@@ -1,0 +1,19 @@
+{# Kurumsal kimlik başlığı: kurum markası varsa kurum logosu (yoksa kurum adı);
+   yoksa ETÜTKOÇ Rotam başlığı. ETÜTKOÇ logosu kurum e-postalarında GÖRÜNMEZ. #}
+{% if brand %}
+<div style="border-bottom: 2px solid #334155; padding-bottom: 12px; margin-bottom: 20px;">
+  {% if brand.logo_url %}
+  <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" height="48" style="display: block; height: 48px; width: auto; max-width: 240px; object-fit: contain;" />
+  {% else %}
+  <div style="font-size: 20px; font-weight: 800; color: #0f172a; line-height: 1.25;">{{ brand.name }}</div>
+  {% endif %}
+</div>
+{% else %}
+<div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 20px;">
+  <img src="{{ app_base_url }}/etutkoc-mark.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
+  <span style="font-size: 20px; font-weight: 800; vertical-align: middle;">
+    <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
+  </span>
+  <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.18em; margin-top: 4px;">Çalışma Takip Sistemi</div>
+</div>
+{% endif %}

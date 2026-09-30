@@ -1,0 +1,122 @@
+{
+ "name": "Açı Yayınları AYT Edebiyat Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "AYT Edebiyat",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Edebiyat ve Güzel Sanatlar, Edebiyat ve Bilim",
+   "test_count": 2,
+   "page": 4,
+   "topic": "Güzel Sanatlar ve Edebiyat"
+  },
+  {
+   "label": "Şiir Bilgisi",
+   "test_count": 8,
+   "page": 8,
+   "topic": "Şiir Bilgisi (Nazım Biçim ve Türleri)"
+  },
+  {
+   "label": "Edebî Sanatlar",
+   "test_count": 5,
+   "page": 24,
+   "topic": "Edebi Sanatlar (Söz Sanatları)"
+  },
+  {
+   "label": "Şiir Bilgisi, Edebî Sanatlar (Karma)",
+   "test_count": 3,
+   "page": 34,
+   "topic": ""
+  },
+  {
+   "label": "Düzyazı Bilgisi",
+   "test_count": 12,
+   "page": 40,
+   "topic": "Edebi Türler"
+  },
+  {
+   "label": "İslamiyet Öncesi Türk Edebiyatı, İslami Devre Geçiş Dönemi Edebiyatı",
+   "test_count": 3,
+   "page": 64,
+   "topic": "İslamiyet Öncesi ve Geçiş Dönemi Türk Edebiyatı"
+  },
+  {
+   "label": "Halk Edebiyatı",
+   "test_count": 6,
+   "page": 70,
+   "topic": "Halk Edebiyatı"
+  },
+  {
+   "label": "Divan Edebiyatı",
+   "test_count": 9,
+   "page": 82,
+   "topic": "Divan Edebiyatı"
+  },
+  {
+   "label": "Edebî Akımlar",
+   "test_count": 4,
+   "page": 100,
+   "topic": "Edebiyat Akımları"
+  },
+  {
+   "label": "Batı Edebiyatı Sanatçı ve Eserleri",
+   "test_count": 2,
+   "page": 108,
+   "topic": "Edebiyat Akımları"
+  },
+  {
+   "label": "Edebî Akımlar, Batı Edebiyatı Sanatçı ve Eserleri (Karma)",
+   "test_count": 2,
+   "page": 112,
+   "topic": ""
+  },
+  {
+   "label": "Tanzimat Edebiyatı",
+   "test_count": 8,
+   "page": 116,
+   "topic": "Tanzimat Dönemi Edebiyatı"
+  },
+  {
+   "label": "Servetifünun Edebiyatı (Edebiyatıcedide), Fecriati Topluluğu",
+   "test_count": 8,
+   "page": 132,
+   "topic": "Servet-i Fünun ve Fecr-i Ati Edebiyatı"
+  },
+  {
+   "label": "Millî Edebiyat",
+   "test_count": 10,
+   "page": 148,
+   "topic": "Milli Edebiyat Dönemi"
+  },
+  {
+   "label": "Cumhuriyet Edebiyatı",
+   "test_count": 20,
+   "page": 168,
+   "topic": "Cumhuriyet Dönemi Edebiyatı"
+  },
+  {
+   "label": "Türkiye Dışındaki Çağdaş Türk Edebiyatları",
+   "test_count": 2,
+   "page": 208,
+   "topic": "Cumhuriyet Dönemi Edebiyatı"
+  },
+  {
+   "label": "Türk Edebiyatı Tarihi (Karma)",
+   "test_count": 5,
+   "page": 212,
+   "topic": ""
+  },
+  {
+   "label": "Genel Tekrar Testleri",
+   "test_count": 14,
+   "page": 222,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 18 bölüm · 123 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

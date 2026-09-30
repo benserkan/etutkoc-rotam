@@ -4,7 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePanelVisitTracker } from "@/lib/hooks/use-panel-visit-tracker";
-import { BrandLogo } from "@/components/brand-logo";
+import { ShellBrand } from "@/components/shell-brand";
+import type { BrandRef } from "@/lib/types/me";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
@@ -44,6 +45,8 @@ interface Props {
   user: UserPublic;
   /** Badge polling aktif edilsin mi? Default true (yalnız öğrenci sayfalarında). */
   enableBadges?: boolean;
+  /** Kurumsal kimlik — koçun kurumu (varsa) ana marka. */
+  brand?: BrandRef | null;
 }
 
 type StudentBadgeKey = "pending_count" | "today_open_count";
@@ -88,7 +91,7 @@ const STUDENT_NAV_MORE = STUDENT_NAV.slice(6);
  *
  * Mobil (< lg): hamburger drawer; aynı linkler liste şeklinde.
  */
-export function SiteHeader({ user, enableBadges = true }: Props) {
+export function SiteHeader({ user, enableBadges = true, brand }: Props) {
   const pathname = usePathname();
   usePanelVisitTracker();
   const logout = useLogout();
@@ -107,7 +110,8 @@ export function SiteHeader({ user, enableBadges = true }: Props) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
-        <BrandLogo
+        <ShellBrand
+          brand={brand ?? null}
           href={isStudent ? "/student/day" : "/me/account"}
           size={28}
           className="shrink-0"

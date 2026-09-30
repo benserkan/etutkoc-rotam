@@ -1,0 +1,98 @@
+{
+ "name": "Açı Yayınları TYT Türkçe Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Sözcüğün, Sözcük Grubunun Anlamı ve Yorumu",
+   "test_count": 12,
+   "page": 4,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Cümlenin Anlatımı, Anlamı ve Yorumu",
+   "test_count": 17,
+   "page": 28,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Paragrafın Anlatımı, Anlamı ve Yorumu",
+   "test_count": 32,
+   "page": 62,
+   "topic": "Paragraf (Karma)"
+  },
+  {
+   "label": "Ekler ve Sözcüğün Yapısı",
+   "test_count": 5,
+   "page": 126,
+   "topic": "Sözcükte Yapı (Ekler)"
+  },
+  {
+   "label": "Ses Bilgisi",
+   "test_count": 4,
+   "page": 136,
+   "topic": "Ses Bilgisi"
+  },
+  {
+   "label": "Yazım Kuralları",
+   "test_count": 6,
+   "page": 144,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 5,
+   "page": 156,
+   "topic": "Noktalama İşaretleri"
+  },
+  {
+   "label": "İsim Soylu Sözcükler",
+   "test_count": 15,
+   "page": 166,
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Fiiller",
+   "test_count": 13,
+   "page": 196,
+   "topic": "Fiiller (Anlam, Çatı, Kip, Yapı)"
+  },
+  {
+   "label": "Sözcük Grupları",
+   "test_count": 2,
+   "page": 222,
+   "topic": "Sözcük Türleri"
+  },
+  {
+   "label": "Cümlenin Ögeleri, Fiilde Çatı, Cümle Türleri",
+   "test_count": 11,
+   "page": 226,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Dil Bilgisi (Karma)",
+   "test_count": 9,
+   "page": 248,
+   "topic": ""
+  },
+  {
+   "label": "Anlatım Bozuklukları",
+   "test_count": 7,
+   "page": 266,
+   "topic": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "İletişim, Dil ve Kültür; Dillerin Sınıflandırılması ve Türkçenin Dünya Dilleri Arasındaki Yeri",
+   "test_count": 1,
+   "page": 280,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 14 bölüm · 139 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

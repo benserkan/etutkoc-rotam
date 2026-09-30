@@ -45,6 +45,17 @@ def render_template_safe(name: str, ctx: dict[str, Any]) -> tuple[str, str, str]
         return None
 
 
+def _from_header(brand) -> str:
+    """Gönderen: adres ETÜTKOÇ alan adında kalır; görünen ad kurumsa kurum adı."""
+    from email.utils import formataddr, parseaddr
+
+    raw = settings.smtp_from or settings.smtp_user or ""
+    if brand is None:
+        return raw
+    _name, addr = parseaddr(raw)
+    return formataddr((brand.name, addr or raw)) if (addr or raw) else raw
+
+
 def _render(name: str, ctx: dict[str, Any]) -> tuple[str, str, str]:
     """Şablonu render et, (subject, html, plain_fallback) döndür.
 
@@ -53,13 +64,22 @@ def _render(name: str, ctx: dict[str, Any]) -> tuple[str, str, str]:
     OK; özel layout istiyorsak sonra ayrı .txt dosyası ekleriz).
     """
     tpl = _env.get_template(f"{name}.html")
-    rendered = tpl.render(**ctx, app_base_url=settings.app_base_url, app_name=settings.app_name)
+    ctx = {"brand": None, **ctx}
+    # Kurum markalı e-postada metindeki "{{ app_name }}" da kurumdur
+    app_name = ctx["brand"]["name"] if ctx["brand"] else settings.app_name
+    rendered = tpl.render(**ctx, app_base_url=settings.app_base_url, app_name=app_name)
     lines = rendered.split("\n", 1)
     subject = ""
     body = rendered
     if lines and lines[0].lower().startswith("subject:"):
         subject = lines[0].split(":", 1)[1].strip()
         body = lines[1] if len(lines) > 1 else ""
+    brand = ctx.get("brand")
+    if brand:
+        # Konu satırında da ana marka kurum: "ETÜTKOÇ Rotam · X" → "Kurum · X"
+        for p in ("ETÜTKOÇ Rotam", settings.app_name):
+            if p and p in subject:
+                subject = subject.replace(p, brand["name"])
     # Çok basit plain text dönüşüm — HTML etiketlerini at
     import re
     plain = re.sub(r"<[^>]+>", "", body)
@@ -67,16 +87,55 @@ def _render(name: str, ctx: dict[str, Any]) -> tuple[str, str, str]:
     return subject, body.strip(), plain
 
 
-def send_email(to: str, template: str, ctx: dict[str, Any]) -> bool:
+# ETÜTKOÇ'un KENDİ adına müşteriyle (koç/kurum) ya da iç ekiple yazıştığı
+# e-postalar — kurum markası UYGULANMAZ (ticari/abonelik/güvenlik/satış).
+PLATFORM_TEMPLATES = frozenset({
+    "admin_weekly_summary", "contact_request_admin", "credit_warning", "dunning_reminder",
+    "institution_onboarding", "new_signup_admin", "offer_invitation", "renewal_overdue",
+    "renewal_reminder", "security_alarm_triggered", "security_super_admin_login",
+    "trial_expired", "trial_reminder",
+})
+
+_AUTO = object()
+
+
+def _resolve_brand(to: str, template: str, ctx: dict[str, Any], brand: Any):
+    """Alıcının kurum markası (kurumsal kimlik) — yoksa None (ETÜTKOÇ markası)."""
+    if template in PLATFORM_TEMPLATES:
+        return None
+    if brand is not _AUTO:
+        return brand
+    try:
+        from app.database import SessionLocal
+        from app.services import branding
+
+        with SessionLocal() as db:
+            iid = ctx.get("brand_institution_id")
+            if iid:
+                return branding.brand_for_institution_id(db, iid)
+            return branding.brand_for_email(db, to)
+    except Exception:  # noqa: BLE001 — marka çözümü gönderimi asla bozmaz
+        logger.exception("Email brand resolve failed for %s", template)
+        return None
+
+
+def send_email(to: str, template: str, ctx: dict[str, Any], *, brand: Any = _AUTO) -> bool:
     """Şablon adını ve bağlamı alır, gönderir veya log'lar.
+
+    Kurumsal kimlik: alıcı kuruma bağlıysa (ya da ctx'te brand_institution_id
+    varsa) başlıkta kurum logosu/adı, gönderen adı kurum, Yanıtla kurum adresi;
+    ETÜTKOÇ yalnız alt satırda altyapı olarak geçer.
 
     Returns: gönderildi mi (True) / atlandı (False).
     """
     if not to or "@" not in to:
         logger.warning(f"Email skipped — invalid recipient: {to!r}")
         return False
+    brand_obj = _resolve_brand(to, template, ctx, brand)
     try:
-        subject, html, plain = _render(template, ctx)
+        subject, html, plain = _render(
+            template, {**ctx, "brand": brand_obj.as_email_ctx() if brand_obj else None},
+        )
     except Exception as e:
         logger.exception(f"Email template render failed for {template}: {e}")
         return False
@@ -106,7 +165,9 @@ def send_email(to: str, template: str, ctx: dict[str, Any]) -> bool:
     msgid = make_msgid(domain="etutkoc.com")
     msg = EmailMessage()
     msg["Subject"] = subject or settings.app_name
-    msg["From"] = settings.smtp_from or settings.smtp_user
+    msg["From"] = _from_header(brand_obj)
+    if brand_obj is not None and brand_obj.reply_to:
+        msg["Reply-To"] = brand_obj.reply_to
     msg["To"] = to
     msg["Message-ID"] = msgid
     msg.set_content(plain)
@@ -205,6 +266,8 @@ def notify_parent_invitation(invitation, *, teacher, student, relation_label: st
             "teacher": teacher,
             "student": student,
             "relation_label": relation_label,
+            # Davet edilen veli henüz kullanıcı değil — marka koçun kurumundan
+            "brand_institution_id": getattr(teacher, "institution_id", None),
         },
     )
 
@@ -238,6 +301,7 @@ def notify_teacher_invitation(invitation, *, institution_name: str, inviter_name
             "inviter_name": inviter_name,
             "signup_url": signup_url,
             "expires_label": expires_label,
+            "brand_institution_id": invitation.institution_id,
         },
     )
 

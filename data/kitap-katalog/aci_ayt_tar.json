@@ -1,0 +1,242 @@
+{
+ "name": "Açı Yayınları AYT Tarih Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "AYT Tarih",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Tarih ve Zaman",
+   "test_count": 2,
+   "page": 4,
+   "topic": "Tarih ve Zaman"
+  },
+  {
+   "label": "İnsanlığın İlk Dönemleri",
+   "test_count": 3,
+   "page": 8,
+   "topic": "İnsanlığın İlk Dönemleri"
+  },
+  {
+   "label": "Orta Çağ’da Dünya",
+   "test_count": 2,
+   "page": 14,
+   "topic": "Orta Çağ'da Dünya"
+  },
+  {
+   "label": "Tarih ve Zaman - İnsanlığın İlk Dönemleri - Orta Çağ’da Dünya (Karma)",
+   "test_count": 1,
+   "page": 18,
+   "topic": ""
+  },
+  {
+   "label": "İlk ve Orta Çağlarda Türk Dünyası",
+   "test_count": 4,
+   "page": 20,
+   "topic": "İlk ve Orta Çağlarda Türk Dünyası"
+  },
+  {
+   "label": "İslam Medeniyetinin Doğuşu",
+   "test_count": 3,
+   "page": 28,
+   "topic": "İslam Medeniyetinin Doğuşu"
+  },
+  {
+   "label": "Türklerin İslamiyet’i Kabulü ve İlk Türk-İslam Devletleri",
+   "test_count": 5,
+   "page": 34,
+   "topic": "Türklerin İslamiyet'i Kabulü ve İlk Türk İslam Devletleri"
+  },
+  {
+   "label": "Yerleşme ve Devletleşme Sürecinde Selçuklu Türkiyesi",
+   "test_count": 4,
+   "page": 44,
+   "topic": "Yerleşme ve Devletleşme Sürecinde Selçuklu Türkiyesi"
+  },
+  {
+   "label": "Beylikten Devlete Osmanlı Siyaseti (1302-1453)",
+   "test_count": 3,
+   "page": 52,
+   "topic": "Beylikten Devlete Osmanlı Siyaseti"
+  },
+  {
+   "label": "Devletleşme Sürecinde Savaşçılar ve Askerler",
+   "test_count": 2,
+   "page": 58,
+   "topic": "Devletleşme Sürecinde Savaşçılar ve Askerler"
+  },
+  {
+   "label": "Beylikten Devlete Osmanlı Medeniyeti",
+   "test_count": 3,
+   "page": 62,
+   "topic": "Beylikten Devlete Osmanlı Medeniyeti"
+  },
+  {
+   "label": "Dünya Gücü Osmanlı (1453-1595)",
+   "test_count": 3,
+   "page": 68,
+   "topic": "Dünya Gücü Osmanlı"
+  },
+  {
+   "label": "Sultan ve Osmanlı Merkez Teşkilatı",
+   "test_count": 2,
+   "page": 74,
+   "topic": "Sultan ve Osmanlı Merkez Teşkilatı"
+  },
+  {
+   "label": "Klasik Çağ’da Osmanlı Toplum Düzeni",
+   "test_count": 2,
+   "page": 78,
+   "topic": "Klasik Çağda Osmanlı Toplum Düzeni"
+  },
+  {
+   "label": "Dünya Gücü Osmanlı - Sultan ve Osmanlı Merkez Teşkilatı (Karma)",
+   "test_count": 1,
+   "page": 82,
+   "topic": ""
+  },
+  {
+   "label": "Değişen Dünya Dengeleri Karşısında Osmanlı Siyaseti (1595-1774)",
+   "test_count": 3,
+   "page": 84,
+   "topic": "Değişen Dünya Dengeleri Karşısında Osmanlı (1595-1774)"
+  },
+  {
+   "label": "Değişim Çağında Avrupa ve Osmanlı",
+   "test_count": 3,
+   "page": 90,
+   "topic": "Değişim Çağında Avrupa ve Osmanlı"
+  },
+  {
+   "label": "Devrimler Çağında Değişen Devlet-Toplum İlişkileri",
+   "test_count": 4,
+   "page": 96,
+   "topic": "Devrimler Çağında Değişen Devlet-Toplum İlişkileri"
+  },
+  {
+   "label": "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)",
+   "test_count": 4,
+   "page": 104,
+   "topic": "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)"
+  },
+  {
+   "label": "XIX ve XX. Yüzyıllarda Değişen Sosyoekonomik Hayat",
+   "test_count": 4,
+   "page": 112,
+   "topic": "XIX. ve XX. Yüzyılda Değişen Gündelik Hayat"
+  },
+  {
+   "label": "XX. Yüzyıl Başlarında Osmanlı Devleti ve Dünya",
+   "test_count": 4,
+   "page": 120,
+   "topic": "XX. Yüzyıl Başlarında Osmanlı ve Dünya"
+  },
+  {
+   "label": "Millî Mücadele",
+   "test_count": 5,
+   "page": 128,
+   "topic": "Milli Mücadele"
+  },
+  {
+   "label": "XX. Yüzyıl Başlarında Osmanlı Devleti ve Dünya - Millî Mücadele (Karma)",
+   "test_count": 1,
+   "page": 138,
+   "topic": ""
+  },
+  {
+   "label": "Atatürkçülük ve Türk İnkılabı",
+   "test_count": 4,
+   "page": 140,
+   "topic": "Atatürkçülük ve Türk İnkılabı"
+  },
+  {
+   "label": "İki Küresel Savaş Arasında Dünya",
+   "test_count": 4,
+   "page": 148,
+   "topic": "İki Savaş Arası Dönemde Türkiye ve Dünya"
+  },
+  {
+   "label": "II. Dünya Savaşı",
+   "test_count": 4,
+   "page": 156,
+   "topic": "II. Dünya Savaşı ve Sonrası"
+  },
+  {
+   "label": "Soğuk Savaş Dönemi",
+   "test_count": 4,
+   "page": 164,
+   "topic": "Soğuk Savaş Dönemi"
+  },
+  {
+   "label": "Yumuşama Dönemi ve Sonrası",
+   "test_count": 4,
+   "page": 172,
+   "topic": "Yumuşama Dönemi ve Sonrası"
+  },
+  {
+   "label": "Küreselleşen Dünya",
+   "test_count": 3,
+   "page": 180,
+   "topic": "Küreselleşen Dünya"
+  },
+  {
+   "label": "Türklerde Devlet Teşkilatı",
+   "test_count": 2,
+   "page": 186,
+   "topic": ""
+  },
+  {
+   "label": "Türklerde Toplum Yapısı",
+   "test_count": 2,
+   "page": 190,
+   "topic": ""
+  },
+  {
+   "label": "Türklerde Devlet Teşkilatı - Türklerde Toplum Yapısı (Karma)",
+   "test_count": 1,
+   "page": 194,
+   "topic": ""
+  },
+  {
+   "label": "Türklerde Hukuk",
+   "test_count": 2,
+   "page": 196,
+   "topic": ""
+  },
+  {
+   "label": "Türklerde Ekonomi",
+   "test_count": 2,
+   "page": 200,
+   "topic": ""
+  },
+  {
+   "label": "Türklerde Eğitim ve Bilim",
+   "test_count": 2,
+   "page": 204,
+   "topic": ""
+  },
+  {
+   "label": "Türklerde Sanat",
+   "test_count": 2,
+   "page": 208,
+   "topic": ""
+  },
+  {
+   "label": "Türklerde Spor",
+   "test_count": 1,
+   "page": 212,
+   "topic": ""
+  },
+  {
+   "label": "Tarama Testi",
+   "test_count": 1,
+   "page": 214,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı, font imzası): 38 bölüm · 106 test; her test 2 sayfa, sayfa hesabı kitap sayfa sayısıyla birebir. Test = KKT (Konu Kavrama) + ÖTT (ÖSYM Tadında)."
+ ]
+}

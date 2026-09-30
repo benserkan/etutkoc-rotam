@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ApiError } from "@/lib/api";
 import { apiServer } from "@/lib/api-server";
 import { BrandLogo } from "@/components/brand-logo";
+import { ShellBrand } from "@/components/shell-brand";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignupInviteForm } from "./signup-invite-form";
 
@@ -22,6 +23,7 @@ interface InvitationInfo {
   full_name: string | null;
   role: string | null;
   institution_name: string | null;
+  institution_logo_url?: string | null;
 }
 
 const STATUS_MESSAGE: Record<string, string> = {
@@ -51,7 +53,20 @@ export default async function SignupInvitePage({
     <main className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-1.5">
-          <BrandLogo href="/" />
+          {info?.institution_name ? (
+            <div className="flex justify-center">
+              <ShellBrand
+                href="/"
+                brand={{
+                  institution_id: 0,
+                  name: info.institution_name,
+                  logo_url: info.institution_logo_url ?? null,
+                }}
+              />
+            </div>
+          ) : (
+            <BrandLogo href="/" />
+          )}
         </div>
         <Card>
           <CardHeader>

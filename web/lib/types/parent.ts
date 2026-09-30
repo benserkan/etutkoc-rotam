@@ -424,6 +424,8 @@ export interface ParentInvitationInfo {
   /** CSV toplu kayıttan gelen ön bilgi — form önceden dolu gelir. */
   invited_name?: string | null;
   invited_phone?: string | null;
+  brand_name?: string | null;
+  brand_logo_url?: string | null;
 }
 
 export interface ParentInvitationAcceptBody {

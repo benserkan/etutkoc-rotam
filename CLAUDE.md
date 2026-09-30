@@ -3472,6 +3472,24 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   değerlendirmeleri ünite konusuna eşli. (d) AI eşlemesi turdan tura değişti → gözden
   geçirilmiş eşleme JSON'a `topic` olarak SABİTLENDİ, prod `--no-map` ile deterministik
   seed edildi (Gemini çağrısı yok). Tarayıcı betikleri scratchpad'deydi (repo'da değil).
+- **LGS 8 — Hız Matematik Hibrit + VİP Fen Eğitim Seti CANLI (2026-09-29, prod id
+  215-216; JSON `data/kitap-katalog/lgs/hiz_8_matematik_hibrit_soru_bankasi.json` +
+  `vip_8_fen_bilimleri_egitim_seti.json`, commit YOK):** Hız Mat: metin katmanı; test
+  bandı TEST + KAZANIM/SINAV DÜZEYİ + 25pt küresel numara (1-106) + 14pt konu (iki
+  konulu testlerde 12pt) → 66 bölüm · 106 test, her test 2 sayfa, içindekilerle birebir;
+  eşleme test aralığından ünite konusuna deterministik (66/66). VİP Fen: TARANMIŞ
+  (metin yok) → fasikül başı (sol üst mavi üçgen) + test başı (sağ üst mavi "TEST"
+  sekmesi; tek sayfalarda sola aynalanıyor) 20 dpi piksel oranıyla bulundu, sekme
+  numaraları kırpım görüntüsüyle teyit: 45 fasikül · 49 test (konu testi ≈4 sayfa;
+  Ünite/Genel Tarama fasikülü = tek test, sayfa başına 1 soru). Genel taramalar eşsiz.
+  **Fliphtml5 indirme talebi reddedildi** (sayfa görselleri şifreli config'te; tüm
+  ticari kitabı kopyalamak = koruma aşma) — yapı içindekilerden okunabilir.
+  **Aynı gün, kullanıcı onayıyla fliphtml5'te YALNIZ içindekiler okundu:** Hız 8 Fen
+  Hibrit (prod 217) 38 bölüm · 117 test (tek sayaç 1-117, ünite/bölüm tekrarları dahil,
+  konu anlatımı sayfaları sayılmadı) + Fenomen 8 Türkçe B (prod 218) 6 ünite · 41 test
+  (her test 4 sayfa). İkisi de ünite konusuna deterministik eşli. + Sinan Kuzucu 8
+  Matematik Kazanımmatik (prod 219) kapak + 2 içindekiler fotoğrafından: 12 konu · 46
+  test (her test 4 sayfa), konular LGS ünite adlarıyla birebir → 12/12 eşli.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı

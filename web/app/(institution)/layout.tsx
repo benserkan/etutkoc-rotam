@@ -38,7 +38,7 @@ export default async function InstitutionLayout({
   }
 
   return (
-    <InstitutionShell user={data.user} institution={data.institution}>
+    <InstitutionShell user={data.user} institution={data.institution} brand={data.brand ?? null}>
       {children}
     </InstitutionShell>
   );

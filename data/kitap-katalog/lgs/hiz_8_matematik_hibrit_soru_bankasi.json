@@ -1,0 +1,345 @@
+{
+ "name": "Hız Yayınları 8. Sınıf Matematik Hibrit Soru Bankası",
+ "publisher": "Hız Yayınları",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Pozitif Tam Sayıların Pozitif Tam Sayı Çarpanları (Test 1-3)",
+   "test_count": 3,
+   "topic": "Çarpanlar ve Katlar"
+  },
+  {
+   "label": "En Küçük Ortak Kat (EKOK) ve En Büyük Ortak Bölen (EBOB) (Test 4-6)",
+   "test_count": 3,
+   "topic": "Çarpanlar ve Katlar"
+  },
+  {
+   "label": "Aralarında Asal Sayılar (Test 7-8)",
+   "test_count": 2,
+   "topic": "Çarpanlar ve Katlar"
+  },
+  {
+   "label": "Çarpanlar ve Katlar (Test 9)",
+   "test_count": 1,
+   "topic": "Çarpanlar ve Katlar"
+  },
+  {
+   "label": "Tam Sayıların Tam Sayı Kuvvetleri (Test 10-11)",
+   "test_count": 2,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "Üslü İfadelerde Temel Kurallar (Test 12-14)",
+   "test_count": 3,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "Ondalık Gösterimlerin Çözümlenmesi (Test 15-16)",
+   "test_count": 2,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "Sayıları 10’un Farklı Tam Sayı Kuvvetlerini Kullanarak Yazma (Test 17)",
+   "test_count": 1,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "Çok Büyük ve Çok Küçük Sayıların Bilimsel Gösterimi (Test 18)",
+   "test_count": 1,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "Sayıları 10’un Farklı Tam Sayı Kuvvetlerini Kullanarak Yazma, Çok Büyük ve Çok Küçük Sayıların Bilimsel Gösterimi (Test 19)",
+   "test_count": 1,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "Üslü İfadeler (Test 20)",
+   "test_count": 1,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "Tam Kare Pozitif Tam Sayılar ve Bu Sayıların Karekökleri (Test 21-22)",
+   "test_count": 2,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Tam Kare Olmayan Pozitif Tam Sayıların Karekökleri (Test 23)",
+   "test_count": 1,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Tam Kare Pozitif Tam Sayılar ve Bu Sayıların Karekökleri, Tam Kare Olmayan Pozitif Tam Sayıların Karekökleri (Test 24)",
+   "test_count": 1,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Kareköklü İfadelerin Farklı Gösterimleri (Test 25-26)",
+   "test_count": 2,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Kareköklü İfadelerde Çarpma ve Bölme İşlemleri (Test 27-28)",
+   "test_count": 2,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Kareköklü Bir İfade ile Çarpıldığında Sonucu Doğal Sayı Yapan Çarpanlar (Test 29-30)",
+   "test_count": 2,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Kareköklü İfadelerde Toplama ve Çıkarma İşlemi (Test 31-32)",
+   "test_count": 2,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Ondalık İfadelerin Karekökleri (Test 33)",
+   "test_count": 1,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Gerçek Sayılar (Test 34)",
+   "test_count": 1,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Ondalık İfadelerin Karekökleri, Gerçek Sayılar (Test 35)",
+   "test_count": 1,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Kareköklü İfadeler (Test 36)",
+   "test_count": 1,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Çizgi, Sütun ve Daire Grafiklerini Yorumlama (Test 37)",
+   "test_count": 1,
+   "topic": "Veri Analizi"
+  },
+  {
+   "label": "Verileri Uygun Grafikle Gösterme ve Grafikler Arası Dönüşüm Yapma (Test 38-39)",
+   "test_count": 2,
+   "topic": "Veri Analizi"
+  },
+  {
+   "label": "Veri Analizi (Test 40-42)",
+   "test_count": 3,
+   "topic": "Veri Analizi"
+  },
+  {
+   "label": "Olası Durumları Belirleme (Test 43-44)",
+   "test_count": 2,
+   "topic": "Basit Olayların Olasılığı"
+  },
+  {
+   "label": "Olası Durumları Karşılaştırma (Test 45-46)",
+   "test_count": 2,
+   "topic": "Basit Olayların Olasılığı"
+  },
+  {
+   "label": "Olasılık Değeri (Test 47)",
+   "test_count": 1,
+   "topic": "Basit Olayların Olasılığı"
+  },
+  {
+   "label": "Bir Olayın Olma Olasılığı (Test 48-49)",
+   "test_count": 2,
+   "topic": "Basit Olayların Olasılığı"
+  },
+  {
+   "label": "Basit Olayların Olma Olasılığı (Test 50)",
+   "test_count": 1,
+   "topic": "Basit Olayların Olasılığı"
+  },
+  {
+   "label": "Cebirsel İfadeleri Farklı Biçimlerde Yazma (Test 51)",
+   "test_count": 1,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler"
+  },
+  {
+   "label": "Cebirsel İfadelerin Çarpımı (Test 52-53)",
+   "test_count": 2,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler"
+  },
+  {
+   "label": "Özdeşlikler (Test 54)",
+   "test_count": 1,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler"
+  },
+  {
+   "label": "Cebirsel İfadeleri Çarpanlarına Ayırma (Test 55-56)",
+   "test_count": 2,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler"
+  },
+  {
+   "label": "Cebirsel İfadeler ve Özdeşlikler (Test 57)",
+   "test_count": 1,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler"
+  },
+  {
+   "label": "Birinci Dereceden Bir Bilinmeyenli Denklemler (Test 58-61)",
+   "test_count": 4,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "Koordinat Sistemi ve Sıralı İkililer (Test 62-63)",
+   "test_count": 2,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "Doğrusal İlişkiler (Test 64)",
+   "test_count": 1,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "Doğrusal Denklemlerin Grafiği (Test 65)",
+   "test_count": 1,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "Doğrusal İlişki İçeren Gerçek Hayat Durumları (Test 66-68)",
+   "test_count": 3,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "Eğim (Test 69-70)",
+   "test_count": 2,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "Doğrusal Denklemler (Test 71)",
+   "test_count": 1,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "Birinci Dereceden Bir Bilinmeyenli Eşitsizlikler (Test 72)",
+   "test_count": 1,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "Birinci Dereceden Bir Bilinmeyenli Eşitsizlikleri Sayı Doğrusunda Gösterme (Test 73)",
+   "test_count": 1,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "Birinci Dereceden Bir Bilinmeyenli Eşitsizlikler, Birinci Dereceden Bir Bilinmeyenli Eşitsizlikleri Sayı Doğrusunda Gösterme (Test 74)",
+   "test_count": 1,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "Birinci Dereceden Bir Bilinmeyenli Eşitsizlikleri Çözme (Test 75-76)",
+   "test_count": 2,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "Eşitsizlikler (Test 77)",
+   "test_count": 1,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "Üçgende Kenarortay, Açıortay ve Yükseklik (Test 78-79)",
+   "test_count": 2,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "Üçgenlerin Kenarları Arasındaki İlişkiler (Test 80-81)",
+   "test_count": 2,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "Üçgenlerin Açı ve Kenarları Arasındaki İlişkiler (Test 82)",
+   "test_count": 1,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "Üçgen Çizimi (Test 83)",
+   "test_count": 1,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "Üçgenlerin Açı ve Kenarları Arasındaki İlişkiler, Üçgen Çizimi (Test 84)",
+   "test_count": 1,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "Pisagor Bağıntısı (Test 85-87)",
+   "test_count": 3,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "Üçgenler (Test 88)",
+   "test_count": 1,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "Eşlik ve Benzerlik (Test 89-92)",
+   "test_count": 4,
+   "topic": "Eşlik ve Benzerlik"
+  },
+  {
+   "label": "Öteleme ve Yansıma (Test 93-94)",
+   "test_count": 2,
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Ardışık Öteleme ve Yansıma (Test 95-96)",
+   "test_count": 2,
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Dönüşüm Geometrisi (Test 97)",
+   "test_count": 1,
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Dik Prizmalar (Test 98-99)",
+   "test_count": 2,
+   "topic": "Geometrik Cisimler"
+  },
+  {
+   "label": "Dik Dairesel Silindir (Test 100)",
+   "test_count": 1,
+   "topic": "Geometrik Cisimler"
+  },
+  {
+   "label": "Dik Dairesel Silindirin Yüzey Alanı (Test 101)",
+   "test_count": 1,
+   "topic": "Geometrik Cisimler"
+  },
+  {
+   "label": "Dik Dairesel Silindirin Hacmi (Test 102)",
+   "test_count": 1,
+   "topic": "Geometrik Cisimler"
+  },
+  {
+   "label": "Dik Dairesel Silindirin Yüzey Alanı, Dik Dairesel Silindirin Hacmi (Test 103)",
+   "test_count": 1,
+   "topic": "Geometrik Cisimler"
+  },
+  {
+   "label": "Dik Piramit (Test 104)",
+   "test_count": 1,
+   "topic": "Geometrik Cisimler"
+  },
+  {
+   "label": "Dik Dairesel Koni (Test 105)",
+   "test_count": 1,
+   "topic": "Geometrik Cisimler"
+  },
+  {
+   "label": "Geometrik Cisimler (Test 106)",
+   "test_count": 1,
+   "topic": "Geometrik Cisimler"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması (metin katmanı): 106 test (Kazanım Düzeyi + Sınav Düzeyi), kitap boyunca tek sayaç 1-106, her test 2 sayfa; içindekilerle birebir. Bölüm = test bandındaki konu başlığı; konu anlatımı/etkinlik sayfaları sayılmadı."
+ ]
+}

@@ -34,8 +34,12 @@ def build_parent_highlights(d: dict, m: dict | None = None) -> dict:
     return {"good": good, "work": work, "next_topics": nxt, "carry": carry, "best_day": best_day}
 
 
-def render_parent_html(d: dict) -> str:
-    """Veli sürümü HTML'i — koç raporuyla aynı görsel dil, sade içerik."""
+def render_parent_html(d: dict, brand=None) -> str:
+    """Veli sürümü HTML'i — koç raporuyla aynı görsel dil, sade içerik.
+
+    brand: kurum markası (branding.Brand) — varsa başlıkta kurum logosu/adı,
+    ETÜTKOÇ yalnız alt satırda altyapı olarak geçer.
+    """
     m = derive(d)
     st = d.get("student") or {}
     summ = m["summ"]
@@ -50,8 +54,17 @@ def render_parent_html(d: dict) -> str:
         return (f'<div class="stat s-{kind}"><div class="stat-l">{_esc(label)}</div><div class="stat-v">{value}</div>'
                 f'<div class="stat-s">{_esc(sub)}</div></div>')
 
+    if brand is not None:
+        if brand.has_logo:
+            _bh = (f'<div style="margin-bottom:10px"><img src="{_esc(brand.logo_path)}" alt="{_esc(brand.name)}" '
+                   'style="max-height:44px;max-width:220px;object-fit:contain"></div>')
+        else:
+            _bh = f'<div style="margin-bottom:8px;font-size:16px;font-weight:700">{_esc(brand.name)}</div>'
+    else:
+        _bh = ""
     H.append(f"""
 <header class="top">
+  {_bh}
   <div class="eyebrow">Haftalık Veli Raporu</div>
   <h1>{_esc(st.get('full_name'))}</h1>
   <div class="meta">
@@ -195,6 +208,8 @@ def render_parent_html(d: dict) -> str:
   <p class="muted small">Bu rapor, öğrencimizin sistemine işlenen gerçek çalışma verilerinden otomatik hazırlanmıştır.</p>
 </section>""")
 
+    if brand is not None:
+        H.append(f'<p class="muted small" style="text-align:center;margin-top:18px">{_esc(brand.name)} · Altyapı: ETÜTKOÇ Rotam</p>')
     title = f"{_esc(st.get('full_name'))} · Veli Raporu · {_esc(d_tr(first, False))}–{_esc(d_tr(last, False))}"
     out = _TEMPLATE.replace("{{TITLE}}", title).replace("{{BODY}}", "\n".join(H))
     # veli sürümüne ek stil

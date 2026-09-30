@@ -1,0 +1,185 @@
+{
+ "name": "Açı Yayınları 8. Sınıf T.C. İnkılap Tarihi ve Atatürkçülük Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Uyanan Avrupa ve Sarsılan Osmanlı",
+   "test_count": 3,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "Mavi Gözlü Çocuk: Mustafa",
+   "test_count": 3,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "Buhranlar Büyük Kahramanlar Doğurur",
+   "test_count": 3,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "Adım Adım Liderliğe",
+   "test_count": 3,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "1. Ünite Değerlendirme Testleri (Bir Kahraman Doğuyor)",
+   "test_count": 2,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "I. Dünya Savaşı’na Yol Açan Gelişmeler, Osmanlı Devleti’nin Son Savaşı: I. Dünya Savaşı",
+   "test_count": 3,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "İşgal Yıllarında Anadolu Cemiyetler ve Kuvâ-yı Milliye",
+   "test_count": 3,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "İstiklal Yolculuğu",
+   "test_count": 3,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "Bir Milletin Yemini: Misakımillî",
+   "test_count": 3,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "BMM’ye Karşı Çıkan Ayaklanmalar / Geçersiz Bir Antlaşma: Sevr Antlaşması",
+   "test_count": 3,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Testleri (Millî Uyanış)",
+   "test_count": 3,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "Doğu ve Güney Cepheleri",
+   "test_count": 3,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Batı Cephesi",
+   "test_count": 3,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Maarif Kongresi / Millî Mücadele Millî Seferberlik: Tekâlif-i Milliye",
+   "test_count": 3,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Direnişten Dirilişe: Sakarya’dan Büyük Taarruz’a",
+   "test_count": 3,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Türkiye’nin Tapu Senedi: Lozan Antlaşması / Sanat ve Edebiyat Eserlerinde Millî Mücadele",
+   "test_count": 3,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "3. Ünite Değerlendirme Testleri (Millî Bir Destan)",
+   "test_count": 3,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Atatürk İlkeleri",
+   "test_count": 3,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Siyasi Alandaki Gelişmeler",
+   "test_count": 3,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Hukuk Alanındaki Gelişmeler",
+   "test_count": 3,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Eğitim ve Kültür Alanındaki Gelişmeler",
+   "test_count": 3,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Toplumsal Alandaki Gelişmeler",
+   "test_count": 3,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Ekonomi Alanındaki Gelişmeler",
+   "test_count": 3,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Sağlık Alanındaki Gelişmeler / İlelebet Cumhuriyet / Atatürk İlke ve İnkılaplarının Temel Esasları",
+   "test_count": 3,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Testleri (Atatürkçülük ve Çağdaşlaşan Türkiye)",
+   "test_count": 3,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Demokratikleşme Yolunda Atılan Adımlar / Mustafa Kemal’e Yönelik Suikast Girişimi / Türkiye Cumhuriyeti’ne Yönelik Tehditler",
+   "test_count": 3,
+   "topic": "Demokratikleşme Çabaları"
+  },
+  {
+   "label": "5. Ünite Değerlendirme Testleri (Demokratikleşme Çabaları)",
+   "test_count": 2,
+   "topic": "Demokratikleşme Çabaları"
+  },
+  {
+   "label": "Türk Dış Politikasının Temel Esasları",
+   "test_count": 3,
+   "topic": "Atatürk Dönemi Türk Dış Politikası"
+  },
+  {
+   "label": "Dış Politikada Yaşanan Gelişmeler",
+   "test_count": 3,
+   "topic": "Atatürk Dönemi Türk Dış Politikası"
+  },
+  {
+   "label": "Misakımillî’nin Son Zaferi: Hatay",
+   "test_count": 3,
+   "topic": "Atatürk Dönemi Türk Dış Politikası"
+  },
+  {
+   "label": "6. Ünite Değerlendirme Testleri (Atatürk Dönemi Türk Dış Politikası)",
+   "test_count": 2,
+   "topic": "Atatürk Dönemi Türk Dış Politikası"
+  },
+  {
+   "label": "Atatürk’ün Vefatı ve Yankıları / İnsan Eserleri ile Yaşar",
+   "test_count": 3,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  },
+  {
+   "label": "Yeniden Sarsılan Dünya / II. Dünya Savaşı’nın Türkiye’ye Etkileri / Demokrasi Yolunda Güçlü Adımlar",
+   "test_count": 3,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  },
+  {
+   "label": "7. Ünite Değerlendirme Testleri (Atatürk’ün Ölümü ve Sonrası)",
+   "test_count": 2,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması: her konu 3 test (Öğreten · Geliştiren · Sınav Tadında) + ünite sonu Ünite Değerlendirme Testleri; her test 2 sayfa."
+ ]
+}

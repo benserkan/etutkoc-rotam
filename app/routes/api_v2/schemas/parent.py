@@ -473,6 +473,9 @@ class ParentInvitationInfo(BaseModel):
     # CSV toplu kayıttan gelen ön bilgi — aktivasyon formunu önceden doldurur
     invited_name: str | None = None
     invited_phone: str | None = None
+    # Kurumsal kimlik — daveti gönderen koç kuruma bağlıysa kurum logosu/adı
+    brand_name: str | None = None
+    brand_logo_url: str | None = None
 
 
 class ParentInvitationAcceptBody(BaseModel):

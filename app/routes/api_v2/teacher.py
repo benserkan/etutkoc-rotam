@@ -11502,6 +11502,11 @@ def teacher_exam_parent_preview_html_v2(
         )
     # Veliye özel alan yok: bu çıktı koçun elinde, abonelik linki anlamsız.
     ctx["unsubscribe_token"] = ""
+    # PDF, veliye giden e-postayla aynı kurumsal kimliği taşır
+    from app.services import branding as _branding
+
+    _b = _branding.brand_for_user(db, student)
+    ctx["brand"] = _b.as_email_ctx() if _b else None
     _subject, html, _text = _render("parent_exam_result", ctx)
 
     # Kaydedilen dosyanın adı tarayıcıda <title>'dan gelir.

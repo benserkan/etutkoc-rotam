@@ -77,9 +77,18 @@ export interface KvkkStatus {
   can_export: boolean;
 }
 
+/** Kurumsal kimlik: kuruma bağlı kullanıcının gördüğü ana marka (yoksa ETÜTKOÇ). */
+export interface BrandRef {
+  institution_id: number;
+  name: string;
+  /** Herkese açık logo yolu; null → kurum adı gösterilir. */
+  logo_url: string | null;
+}
+
 export interface MyAccountResponse {
   user: UserPublic;
   institution: InstitutionRef | null;
+  brand?: BrandRef | null;
   parent_links: ParentLinkRef[];
   kvkk_status: KvkkStatus;
   recent_requests: DataRequestSummary[];

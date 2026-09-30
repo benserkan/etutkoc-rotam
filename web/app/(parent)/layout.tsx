@@ -38,7 +38,7 @@ export default async function ParentLayout({
   }
 
   return (
-    <ParentShell user={data.user}>
+    <ParentShell user={data.user} brand={data.brand ?? null}>
       <GuideWelcomeDialog
         enabled
         guideKey="parent_onboarding"
