@@ -1,0 +1,381 @@
+{
+ "name": "Bilgi Sarmal TYT Fizik Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Fizik Bilimine Giriş",
+   "test_count": 4,
+   "page": 7,
+   "topic": "Fizik Bilimine Giriş"
+  },
+  {
+   "label": "Özkütle",
+   "test_count": 4,
+   "page": 15,
+   "topic": "Kütle, Hacim ve Özkütle"
+  },
+  {
+   "label": "Dayanıklılık, Adezyon, Kohezyon",
+   "test_count": 4,
+   "page": 23,
+   "topic": "Madde ve Özellikleri (Karma)"
+  },
+  {
+   "label": "ÖSYM Tipi – 1 (Madde Bilgisi)",
+   "test_count": 1,
+   "page": 31,
+   "topic": "Madde ve Özellikleri (Karma)"
+  },
+  {
+   "label": "Katı Basıncı",
+   "test_count": 4,
+   "page": 33,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Sıvı Basıncı",
+   "test_count": 4,
+   "page": 41,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Gaz ve Akışkan Basıncı",
+   "test_count": 4,
+   "page": 49,
+   "topic": "Basınç"
+  },
+  {
+   "label": "ÖSYM Tipi – 2 (Basınç)",
+   "test_count": 1,
+   "page": 57,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Sıvıların Kaldırma Kuvveti",
+   "test_count": 4,
+   "page": 59,
+   "topic": "Kaldırma Kuvveti"
+  },
+  {
+   "label": "Sarmal Test – 1",
+   "test_count": 1,
+   "page": 67
+  },
+  {
+   "label": "ÖSYM Tipi – 3 (Basınç ve Kaldırma Kuvveti)",
+   "test_count": 1,
+   "page": 69,
+   "topic": "Basınç ve Kaldırma Kuvveti (Karma)"
+  },
+  {
+   "label": "Isı Sıcaklık",
+   "test_count": 4,
+   "page": 71,
+   "topic": "Isı, Sıcaklık ve İç Enerji"
+  },
+  {
+   "label": "Genleşme, Isı İletimi",
+   "test_count": 4,
+   "page": 79,
+   "topic": "Isı ve Sıcaklık (Karma)"
+  },
+  {
+   "label": "Sarmal Test – 2",
+   "test_count": 1,
+   "page": 87
+  },
+  {
+   "label": "ÖSYM Tipi – 4 (Isı ve Sıcaklık)",
+   "test_count": 1,
+   "page": 89,
+   "topic": "Isı ve Sıcaklık (Karma)"
+  },
+  {
+   "label": "Simülasyon Testi (1. Bölüm – Fizik Bilimine Giriş, Madde Bilgisi)",
+   "test_count": 1,
+   "page": 91
+  },
+  {
+   "label": "Hareket",
+   "test_count": 6,
+   "page": 95,
+   "topic": "Hareket"
+  },
+  {
+   "label": "Sarmal Test – 3",
+   "test_count": 1,
+   "page": 107
+  },
+  {
+   "label": "ÖSYM Tipi – 1 (Hareket)",
+   "test_count": 1,
+   "page": 109,
+   "topic": "Hareket"
+  },
+  {
+   "label": "Kuvvet ve Özellikleri",
+   "test_count": 4,
+   "page": 111,
+   "topic": "Kuvvet ve Sürtünme"
+  },
+  {
+   "label": "Dinamik",
+   "test_count": 4,
+   "page": 119,
+   "topic": "Newton'un Hareket Yasaları"
+  },
+  {
+   "label": "ÖSYM Tipi – 2 (Kuvvet ve Dinamik)",
+   "test_count": 1,
+   "page": 127,
+   "topic": "Hareket ve Kuvvet (Karma)"
+  },
+  {
+   "label": "İş Güç Enerji",
+   "test_count": 5,
+   "page": 129,
+   "topic": "İş, Güç ve Enerji (Karma)"
+  },
+  {
+   "label": "Sarmal Test – 4",
+   "test_count": 1,
+   "page": 139
+  },
+  {
+   "label": "ÖSYM Tipi – 3 (İş Güç Enerji)",
+   "test_count": 1,
+   "page": 141,
+   "topic": "İş, Güç ve Enerji (Karma)"
+  },
+  {
+   "label": "Simülasyon Testi (2. Bölüm – Hareket, Kuvvet, İş Güç Enerji)",
+   "test_count": 1,
+   "page": 143
+  },
+  {
+   "label": "Elektrik Yükleri",
+   "test_count": 3,
+   "page": 147,
+   "topic": "Elektrostatik"
+  },
+  {
+   "label": "Elektrostatik",
+   "test_count": 4,
+   "page": 153,
+   "topic": "Elektrostatik"
+  },
+  {
+   "label": "Coulomb Kuvveti ve Elektrik Alan",
+   "test_count": 3,
+   "page": 161,
+   "topic": "Elektrostatik"
+  },
+  {
+   "label": "Sarmal Test – 5",
+   "test_count": 1,
+   "page": 167
+  },
+  {
+   "label": "ÖSYM Tipi – 1 (Elektrostatik)",
+   "test_count": 1,
+   "page": 169,
+   "topic": "Elektrostatik"
+  },
+  {
+   "label": "Ohm Yasası",
+   "test_count": 6,
+   "page": 171,
+   "topic": "Elektrik Akımı ve Ohm Yasası"
+  },
+  {
+   "label": "Piller",
+   "test_count": 2,
+   "page": 183,
+   "topic": "Elektrik Devreleri"
+  },
+  {
+   "label": "Elektriksel Güç ve Enerji",
+   "test_count": 3,
+   "page": 187,
+   "topic": "Elektrik Enerjisi ve Güç"
+  },
+  {
+   "label": "Lamba Parlaklığı",
+   "test_count": 3,
+   "page": 193,
+   "topic": "Elektrik Devreleri"
+  },
+  {
+   "label": "ÖSYM Tipi – 2 (Elektrik Akımı)",
+   "test_count": 1,
+   "page": 199,
+   "topic": "Elektrik (Karma)"
+  },
+  {
+   "label": "Manyetizma",
+   "test_count": 4,
+   "page": 201,
+   "topic": "Manyetizma"
+  },
+  {
+   "label": "Sarmal Test – 6",
+   "test_count": 1,
+   "page": 209
+  },
+  {
+   "label": "ÖSYM Tipi – 3 (Manyetizma)",
+   "test_count": 1,
+   "page": 211,
+   "topic": "Manyetizma"
+  },
+  {
+   "label": "Simülasyon Testi (3. Bölüm – Elektrik ve Manyetizma)",
+   "test_count": 1,
+   "page": 213
+  },
+  {
+   "label": "Aydınlanma",
+   "test_count": 3,
+   "page": 217,
+   "topic": "Aydınlanma ve Gölge"
+  },
+  {
+   "label": "Gölge",
+   "test_count": 3,
+   "page": 223,
+   "topic": "Aydınlanma ve Gölge"
+  },
+  {
+   "label": "ÖSYM Tipi – 1 (Aydınlanma ve Gölge)",
+   "test_count": 1,
+   "page": 229,
+   "topic": "Aydınlanma ve Gölge"
+  },
+  {
+   "label": "Yansıma ve Düzlem Ayna",
+   "test_count": 4,
+   "page": 231,
+   "topic": "Düzlem Aynalar"
+  },
+  {
+   "label": "Sarmal Test – 7",
+   "test_count": 1,
+   "page": 239
+  },
+  {
+   "label": "Küresel Ayna",
+   "test_count": 4,
+   "page": 241,
+   "topic": "Küresel Aynalar"
+  },
+  {
+   "label": "Kırılma",
+   "test_count": 4,
+   "page": 249,
+   "topic": "Işığın Kırılması"
+  },
+  {
+   "label": "Mercekler",
+   "test_count": 4,
+   "page": 257,
+   "topic": "Mercekler"
+  },
+  {
+   "label": "ÖSYM Tipi – 2 (Ayna, Kırılma, Mercek)",
+   "test_count": 1,
+   "page": 265,
+   "topic": "Optik (Karma)"
+  },
+  {
+   "label": "Prizma",
+   "test_count": 4,
+   "page": 267,
+   "topic": "Işığın Kırılması"
+  },
+  {
+   "label": "Renk",
+   "test_count": 4,
+   "page": 275,
+   "topic": "Renkler"
+  },
+  {
+   "label": "ÖSYM Tipi – 3 (Prizma ve Renk)",
+   "test_count": 1,
+   "page": 283,
+   "topic": "Optik (Karma)"
+  },
+  {
+   "label": "Sarmal Test – 8",
+   "test_count": 1,
+   "page": 285
+  },
+  {
+   "label": "Simülasyon Testi (4. Bölüm – Optik)",
+   "test_count": 1,
+   "page": 287,
+   "topic": "Optik (Karma)"
+  },
+  {
+   "label": "Dalgalar ve Genel Özellikleri",
+   "test_count": 3,
+   "page": 291,
+   "topic": "Dalgalar (Karma)"
+  },
+  {
+   "label": "Yay Dalgaları",
+   "test_count": 4,
+   "page": 297,
+   "topic": "Yay Dalgaları"
+  },
+  {
+   "label": "Sarmal Test – 9",
+   "test_count": 1,
+   "page": 305
+  },
+  {
+   "label": "Su Dalgaları",
+   "test_count": 4,
+   "page": 307,
+   "topic": "Su Dalgaları"
+  },
+  {
+   "label": "Deprem ve Ses Dalgaları",
+   "test_count": 4,
+   "page": 315,
+   "topic": "Dalgalar (Karma)"
+  },
+  {
+   "label": "Sarmal Test – 10",
+   "test_count": 1,
+   "page": 323
+  },
+  {
+   "label": "ÖSYM Tipi (Dalgalar)",
+   "test_count": 1,
+   "page": 325,
+   "topic": "Dalgalar (Karma)"
+  },
+  {
+   "label": "Simülasyon Testi (5. Bölüm – Dalgalar)",
+   "test_count": 1,
+   "page": 327,
+   "topic": "Dalgalar (Karma)"
+  },
+  {
+   "label": "ÖSYM Tipi – Eğilim Kontrol Testleri",
+   "test_count": 4,
+   "page": 329
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (metin katmanı yok, 335 sayfa). Kaynak 1: içindekiler (s.4-5, test test listeli + başlangıç sayfaları). Kaynak 2: gövde üst bant taraması (tüm sayfalar, kontak föy göz kontrolü). 161 test başlangıcının tamamı içindekilerle birebir; basılı sayfa = PDF sayfa indeksi + 1, her test tam 2 sayfa.",
+  "Test numaraları BÖLÜM başına 1'den başlar (5 bölüm); ÖSYM Tipi numaraları da bölüm başına; Sarmal Test 1-10 kitap boyunca tek sayaç. Bu kitapta 'Yıldızlar Yarışıyor' ve konu anlatımı (Bilgi Alanı) sayfası yok; bölüm aralarında yalnız 2 sayfa bölüm kapağı + 'Ben'im Notlarım' (PDF 92-93, 144-145, 214-215, 288-289) test değil.",
+  "PDF'te son sayfa (basılı 336, Eğilim Kontrol Testi-4'ün 2. sayfası) eksik; test sayısını etkilemez. Cevap anahtarı sayfası PDF'te yok.",
+  "Konu eşleştirme yorumu: Dayanıklılık/Adezyon/Kohezyon ve Genleşme/Isı İletimi, Deprem ve Ses Dalgaları, Dalgalar ve Genel Özellikleri iki konuyu kapsadığı için ilgili '(Karma)' konusuna; Kuvvet ve Özellikleri → Kuvvet ve Sürtünme, Dinamik → Newton'un Hareket Yasaları, Piller + Lamba Parlaklığı → Elektrik Devreleri, Prizma → Işığın Kırılması; ÖSYM Tipi testleri önceki konu grubuna (başlıktaki parantez içi ÖSYM kapsamı yorumdur, kitapta yalnız 'ÖSYM Tipi-N' yazar). Sarmal Testler, 1-3. bölüm Simülasyon testleri ve 4 Eğilim Kontrol Testi çok üniteli → topic yok."
+ ]
+}

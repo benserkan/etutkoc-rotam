@@ -1,0 +1,140 @@
+{
+  "name": "Orijinal AYT Fizik Soru Bankası",
+  "publisher": "Orijinal Yayınları",
+  "subject": "AYT Fizik",
+  "type": "soru_bankasi",
+  "target_grade_min": 11,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "sections": [
+    {
+      "label": "Vektörler",
+      "test_count": 7,
+      "page": 9,
+      "topic": "Vektörler"
+    },
+    {
+      "label": "Bağıl Hareket",
+      "test_count": 8,
+      "page": 21,
+      "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+    },
+    {
+      "label": "Newton'ın Hareket Yasaları",
+      "test_count": 10,
+      "page": 37,
+      "topic": "Newton'un Hareket Yasaları"
+    },
+    {
+      "label": "Sabit İvmeli Doğrusal Hareket",
+      "test_count": 7,
+      "page": 57,
+      "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+    },
+    {
+      "label": "Atışlar",
+      "test_count": 12,
+      "page": 71,
+      "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+    },
+    {
+      "label": "İş ve Enerji",
+      "test_count": 10,
+      "page": 95,
+      "topic": "İş, Güç ve Enerji"
+    },
+    {
+      "label": "İtme ve Momentum",
+      "test_count": 12,
+      "page": 115,
+      "topic": "İtme ve Momentum"
+    },
+    {
+      "label": "Kuvvet, Tork ve Denge",
+      "test_count": 10,
+      "page": 139,
+      "topic": "Kuvvet, Tork ve Denge"
+    },
+    {
+      "label": "Kütle Merkezi",
+      "test_count": 7,
+      "page": 159,
+      "topic": "Kütle Merkezi ve Basit Makineler"
+    },
+    {
+      "label": "Basit Makineler",
+      "test_count": 7,
+      "page": 173,
+      "topic": "Kütle Merkezi ve Basit Makineler"
+    },
+    {
+      "label": "Elektrik",
+      "test_count": 13,
+      "page": 187,
+      "topic": "Elektrik Alan ve Potansiyel"
+    },
+    {
+      "label": "Manyetizma",
+      "test_count": 12,
+      "page": 213,
+      "topic": "Manyetizma ve Elektromanyetik İndüksiyon"
+    },
+    {
+      "label": "Alternatif Akım ve Transformatörler",
+      "test_count": 7,
+      "page": 237
+    },
+    {
+      "label": "Çembersel Hareket",
+      "test_count": 11,
+      "page": 253,
+      "topic": "Çembersel Hareket"
+    },
+    {
+      "label": "Yuvarlanma ve Açısal Momentum",
+      "test_count": 6,
+      "page": 275
+    },
+    {
+      "label": "Kütle Çekim ve Kepler Yasaları",
+      "test_count": 5,
+      "page": 285
+    },
+    {
+      "label": "Basit Harmonik Hareket",
+      "test_count": 7,
+      "page": 293,
+      "topic": "Basit Harmonik Hareket"
+    },
+    {
+      "label": "Dalga Mekaniği",
+      "test_count": 11,
+      "page": 307,
+      "topic": "Dalga Mekaniği"
+    },
+    {
+      "label": "Atom Kuramları ve Radyoaktiflik",
+      "test_count": 12,
+      "page": 329,
+      "topic": "Atom Fiziği ve Radyoaktivite"
+    },
+    {
+      "label": "Modern Fizik",
+      "test_count": 10,
+      "page": 353,
+      "topic": "Modern Fizik"
+    },
+    {
+      "label": "Modern Fiziğin Teknolojideki Uygulamaları",
+      "test_count": 5,
+      "page": 373
+    }
+  ],
+  "warnings": [
+    "Taranmış PDF (metin katmanı yok); yapı içindekiler (200 dpi) + 374 gövde sayfasının üst bant kontak föyü ile çapraz doğrulandı, 21/21 konuda test sayıları birebir. Sayfa ofseti sabit: PDF indeksi = basılı sayfa − 1.",
+    "İçindekiler dizgi hataları (gövde esas alındı): Kütle Merkezi 'Kazanım (1–2)' yazıyor, gövdede Kazanım 1-2-3 var (sayfa 159-164 de 3 test); Elektrik 'ÖSYM Tarzı (7–11)' yazıyor, gövdede 7-12 var (sayfa 199-210 da 6 test). Toplamlar gövdeye göre (7 ve 13).",
+    "Her konu tek zincir: Kazanım → ÖSYM Tarzı → ÖSYM Tarzı Orijinal, numara konu başına 1'den; tüm zincirler kopuksuz. Atom Kuramları ve Modern Fiziğin Teknolojideki Uygulamaları bölümlerinde ÖSYM Tarzı Orijinal test yok.",
+    "Numarasız 'ÖSYM'de Çıkmış Sorular' bloğu bu kitapta YOK (içindekilerde de yok, bantsız sayfa boşluğu yok). Bantsız sayfalar yalnız: s.251 boş + s.252 2. Bölüm kapağı, kitap sonu 2 not sayfası; ön sayfalar (kapak, künye, önsöz, çözüm tanıtım sayfaları, içindekiler, 1. Bölüm kapağı).",
+    "Topic bağlanmayanlar (taksonomide birebir karşılık yok): Alternatif Akım ve Transformatörler, Yuvarlanma ve Açısal Momentum, Kütle Çekim ve Kepler Yasaları, Modern Fiziğin Teknolojideki Uygulamaları. Elektrik bölümü sığa sayfalarını da içerir, 'Elektrik Alan ve Potansiyel'e bağlandı."
+  ]
+}
