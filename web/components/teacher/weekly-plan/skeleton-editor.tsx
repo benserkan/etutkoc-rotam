@@ -955,6 +955,13 @@ function RowCard({
               className={inputCls}
               aria-label="Etkinlik adı"
             />
+            <span
+              className="mt-1 block rounded bg-amber-600 px-1.5 py-0.5 text-[10.5px] font-semibold leading-snug text-white"
+              data-testid="routine-no-source"
+            >
+              Kaynak seçilmedi — bu rutin test sayılmaz, &quot;Diğer&quot; etkinliği olarak
+              yazılır. Kitap kitaplıktaysa yukarıdan seç.
+            </span>
           </Field>
         ) : null}
 

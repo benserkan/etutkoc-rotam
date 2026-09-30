@@ -366,6 +366,43 @@ def main() -> int:
         check("13. günde 13 testlik rutin önizlemede too_many",
               len(p13) == 1 and p13[0]["planned"] == 13 and p13[0]["too_many"] is True,
               r13.text[:300])
+
+        # 14 — haftadan iskelet geçen haftayı BİREBİR kopyalamaz:
+        #   · kitabı işaret eden serbest metin ("Mor Yayınları 3 Test Paragraf") kitaplı
+        #     rutine bağlanır (kitapsız "Diğer" satırı doğmaz)
+        #   · haftanın en sık günlük adedi olağandışıysa (13) rutin adedi 3 olur
+        wk = [hist_days[0] - timedelta(days=14 - i) for i in range(5)]
+        with SessionLocal() as db:
+            for i, d in enumerate(wk):
+                t = Task(student_id=ids["st"], date=d, type=TaskType.TEST, title="x",
+                         is_draft=False)
+                db.add(t)
+                db.flush()
+                if i == 4:
+                    t.type = TaskType.OTHER
+                    t.title = f"{PFX} Türkçe · Mor Yayınları 3 Test Paragraf"
+                else:
+                    for j in range(3):
+                        db.add(TaskBookItem(task_id=t.id, book_id=ids["par"],
+                                            book_section_id=S[f"p{j}"], planned_count=1))
+                t2 = Task(student_id=ids["st"], date=d, type=TaskType.TEST, title="x",
+                          is_draft=False)
+                db.add(t2)
+                db.flush()
+                db.add(TaskBookItem(task_id=t2.id, book_id=ids["prob"],
+                                    book_section_id=S["r1"], planned_count=13 if i < 3 else 2))
+            db.commit()
+        r14 = c.post(f"{base}/from-week", json={"start": wk[0].isoformat(), "end": wk[-1].isoformat()})
+        sl14 = r14.json()["data"]["slots"] if r14.status_code == 200 else []
+        lab_day = [x for x in sl14 if x["weekday"] == wk[4].weekday() and x["subject_id"] == ids["tur"]]
+        check("14a. 'Mor Yayınları 3 Test Paragraf' → Mor Paragraf kitaplı karışık rutin",
+              len(lab_day) == 1 and lab_day[0]["book_id"] == ids["par"] and lab_day[0]["is_routine"]
+              and lab_day[0]["routine_mode"] == "karma" and not lab_day[0]["label"],
+              str(lab_day))
+        prob14 = [x for x in sl14 if x["book_id"] == ids["prob"]]
+        check("14b. en sık günlük adet 13 → rutin adedi 3 (olağandışı değer kopyalanmaz)",
+              bool(prob14) and all(x["is_routine"] and x["default_count"] == 3 for x in prob14),
+              str([(x["weekday"], x["default_count"]) for x in prob14]))
     finally:
         with SessionLocal() as db:
             if ids.get("st"):

@@ -1076,6 +1076,33 @@ def _is_drill_book(ctx: _Ctx, book_id: int) -> bool:
     return sum(1 for x in secs if not x.topic_id) * 2 >= len(secs)
 
 
+# Kitap adı ↔ serbest metin eşleştirmesinde AYIRT EDİCİ sayılmayan kelimeler.
+_GENERIC_WORDS = {
+    "test", "testi", "testler", "soru", "sorular", "bankası", "bankasi", "kitabı", "kitap",
+    "yayınları", "yayinlari", "yayınevi", "tyt", "ayt", "lgs", "paragraf", "paragrafı",
+    "karma", "konu", "konulu", "deneme", "denemesi", "tüm", "her", "gün", "sınıf", "ve",
+}
+
+
+def _distinct_words(text: str | None) -> set[str]:
+    out = set()
+    for w in _norm_label(text).replace("-", " ").replace("·", " ").split():
+        w = w.strip(".,:;()'’\"")
+        if not w or w in _GENERIC_WORDS:
+            continue
+        if w.isdigit() and len(w) < 2:
+            continue
+        out.add(w)
+    return out
+
+
+def _label_points_to_book(label: str | None, book_name: str | None) -> bool:
+    """Serbest metinli görev ("Mor Yayınları 3 Test Paragraf") o kitabı mı işaret
+    ediyor ("Paraf Konsept TYT Mor Paragraf …")? Ayırt edici bir kelime ortaksa evet.
+    '345 Sıfır Risk Paragraf' ile 'Mor Paragraf' ortak yalnız 'paragraf' → hayır."""
+    return bool(_distinct_words(label) & _distinct_words(book_name))
+
+
 def slots_from_tasks(
     db: Session, *, student: User, coach_id: int, start: date, end: date,
 ) -> list[dict]:
@@ -1087,7 +1114,14 @@ def slots_from_tasks(
     yalnız alıştırma kitabıysa — konu kitabı her gün kullanılsa da konu
     ipliğidir); adet o kaynağın en sık günlük adedi. Kitaba bağlı rutinde bir günde aynı kitabın
     ≥2 bölümünden birer test verildiyse biçim 'karma', yoksa 'sirali'.
-    Aralık 7 günü aşarsa her hafta günü için İLK tarih esas alınır."""
+    Aralık 7 günü aşarsa her hafta günü için İLK tarih esas alınır.
+
+    Geçen haftayı BİREBİR kopyalamaz (2026-09-30): rutin = kaynak + sıra + günlük
+    adet. Serbest metinli rutin, adı aynı dersteki kitaplı rutinin kitabını işaret
+    ediyorsa o kitaplı rutine dönüşür (o gün aynı rutin zaten varsa tekrar
+    eklenmez); işaret etmiyorsa kitapsız kalır (düzenleyici "kaynak seç" uyarır).
+    Günlük adet haftanın en sık değeri; ROUTINE_WARN_COUNT'u aşarsa
+    ROUTINE_DEFAULT_COUNT (tek bir yoğun gün rutini bozmaz)."""
     from collections import Counter
 
     end = min(end, start + timedelta(days=MAX_RANGE_DAYS - 1))
@@ -1121,6 +1155,36 @@ def slots_from_tasks(
                     )
         d += timedelta(days=1)
 
+    def routine_of(key: tuple) -> bool:
+        if key[1][0] == "s" or len(days_of[key]) < ROUTINE_MIN_DAYS:
+            return False
+        if key[1][0] == "b" and not _is_drill_book(ctx, key[1][1]):
+            return False
+        return True
+
+    def daily_count(key: tuple) -> int | None:
+        if not counts[key]:
+            return None
+        n = counts[key].most_common(1)[0][0]
+        return n if 1 <= n <= ROUTINE_WARN_COUNT else ROUTINE_DEFAULT_COUNT
+
+    # Serbest metinli görev → aynı dersteki kitaplı rutinin kitabını işaret ediyorsa
+    # ona bağlanır. Etiket rutin sayılmasa bile (ör. yalnız 1 gün elle yazılmış)
+    # kitaplı rutinin günü olarak değerlendirilir.
+    book_routines: dict[int, list[tuple]] = defaultdict(list)
+    for key in days_of:
+        if key[1][0] in ("b", "p") and routine_of(key):
+            book_routines[key[0]].append(key)
+    label_target: dict[tuple, tuple] = {}
+    for key in days_of:
+        if key[1][0] != "l":
+            continue
+        for bkey in book_routines.get(key[0], []):
+            name = ctx.by_book[bkey[1][1]][0].book_name if ctx.by_book.get(bkey[1][1]) else ""
+            if _label_points_to_book(key[1][1], name):
+                label_target[key] = bkey
+                break
+
     # Konu satırının 2. kaynağı: aynı derste haftada kullanılan DİĞER soru bankası
     # (problem dışı görevlerden; en sık kullanılan). Yalnız SORU BANKASI.
     bank_use: dict[int, Counter] = defaultdict(Counter)
@@ -1143,23 +1207,33 @@ def slots_from_tasks(
         if wd not in seen_weekdays and items:
             seen_weekdays.add(wd)
             rows = []
+            day_keys = {(subj, src(it)) for it in items for subj in it["subjects"]}
             for it in items:
                 for subj in it["subjects"]:
                     key = (subj, src(it))
-                    routine = key[1][0] != "s" and len(days_of[key]) >= ROUTINE_MIN_DAYS
+                    label = None if it["book_ids"] else it["label"]
+                    if key in label_target:
+                        # Elle yazılmış etkinlik kitaplı rutinin kitabını işaret ediyor →
+                        # o rutinin satırı olur; o gün kitaplı rutin zaten varsa atlanır.
+                        key = label_target[key]
+                        if key in day_keys:
+                            continue
+                        day_keys.add(key)
+                        label = None
+                    # Konu kitabı her gün kullanılsa da RUTİN değil, konu ipliğidir
+                    # (Orijinal Mat: Temel Kavramlar → Oran-Orantı → …); rutin
+                    # işaretlenirse bilgili konu çiplerini kaybeder. Koç isterse
+                    # düzenleyicide elle rutin yapar.
+                    routine = routine_of(key)
                     scope = "problems" if (routine and key[1][0] == "p") else None
-                    if routine and key[1][0] == "b" and not _is_drill_book(ctx, key[1][1]):
-                        # Konu kitabı her gün kullanılsa da RUTİN değil, konu ipliğidir
-                        # (Orijinal Mat: Temel Kavramlar → Oran-Orantı → …); rutin
-                        # işaretlenirse bilgili konu çiplerini kaybeder. Koç isterse
-                        # düzenleyicide elle rutin yapar.
-                        routine = False
-                    book_id = it["book_ids"][0] if it["book_ids"] else None
+                    book_id = key[1][1] if key[1][0] in ("b", "p") else (
+                        it["book_ids"][0] if it["book_ids"] else None
+                    )
                     mode = None
                     if routine and book_id:
                         votes = karma_votes[key]
                         mode = "karma" if votes and sum(votes) * 2 > len(votes) else "sirali"
-                    dc = counts[key].most_common(1)[0][0] if routine and counts[key] else None
+                    dc = daily_count(key) if routine else None
                     second = (
                         second_for(subj, book_id)
                         if book_id and not routine and book_id in ctx.bank_books else None
@@ -1169,7 +1243,7 @@ def slots_from_tasks(
                         ctx.subject_names.get(subj, ""), it["task_id"],
                         {"weekday": wd, "period": it["period"], "subject_id": subj,
                          "is_routine": routine, "default_count": dc,
-                         "book_id": book_id, "label": None if book_id else it["label"],
+                         "book_id": book_id, "label": None if book_id else label,
                          "routine_mode": mode, "routine_scope": scope,
                          "second_book_id": second},
                     ))
