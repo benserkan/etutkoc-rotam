@@ -247,13 +247,15 @@ def main() -> int:
               not (set(tsecs) & (want | {S["o_pd"]})), str(tsecs))
         second = next((c_ for c_ in tchips if c_["kind"] == "second"), None)
         nxt = next((c_ for c_ in tchips if c_["kind"] == "next"), None)
-        check("4b. 1. kaynakta konu bitti → 2. kaynaktan aynı konu (Fen · Fonksiyonlar)",
-              bool(second and second["section_id"] == S["f_fonk"] and second["source_choice"]
-                   and "2. kaynak" in second["reason"]), str(second))
-        check("4c. … ya da kitapta sıradaki konu (Orijinal · Polinomlar), seçim işaretli",
-              bool(nxt and nxt["section_id"] == S["o_pol"] and nxt["source_choice"]), str(nxt))
-        check("4d. hayalette seçim uyarısı + 2. kaynak adı",
-              bool(tg and tg["source_choice"] and "Fen Bilimleri" in (tg["second_book_name"] or "")))
+        check("4b. 1. kaynakta konu bitti → 2. kaynakta aynı konu İLK öneri (otomatik)",
+              bool(second and second["section_id"] == S["f_fonk"] and not second.get("source_choice")
+                   and tchips and tchips[0]["kind"] == "second"
+                   and "2. kaynakta" in second["reason"]), str(second))
+        check("4c. kitapta sıradaki konu (Orijinal · Polinomlar) yalnız alternatif",
+              bool(nxt and nxt["section_id"] == S["o_pol"] and not nxt.get("source_choice")
+                   and tsecs.index(S["o_pol"]) > tsecs.index(S["f_fonk"])), str(nxt))
+        check("4d. hayalette seçim uyarısı YOK · 2. kaynak adı var",
+              bool(tg and not tg["source_choice"] and "Fen Bilimleri" in (tg["second_book_name"] or "")))
 
         # 5 — rutin kabul: kaynaklar arası → kitap başına ayrı görev
         ra = c.post(f"{base}/ghosts/accept", json={

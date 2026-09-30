@@ -40,7 +40,8 @@ CHIP_KINDS = ("thread", "next", "new", "weak", "routine", "activity")
 # Kitaba bağlı rutinin ilerleme biçimi:
 #   sirali — günlük adet kitapta sırayla alınır, bölüm biterse sıradakine taşar
 #   karma  — her gün FARKLI bölümlerden birer test, bölümler arasında döner
-ROUTINE_MODES = ("sirali", "karma")
+# iki_kaynak: sırayla + ana kaynakta biten konu 2. kaynakta (second_book_id) bitirilir
+ROUTINE_MODES = ("sirali", "karma", "iki_kaynak")
 # F2-4 rutinin kapsamı:
 #   book     — kitabın tamamı (paragraf, geometri rutini)
 #   problems — yalnız PROBLEM bölümleri (Oran-Orantı + problem konuları + Problem

@@ -133,7 +133,10 @@ function toSlots(list: Row[]): SkeletonSlotIn[] {
     is_anchor: !!r.is_anchor,
     routine_scope: r.is_routine && r.book_id && r.routine_scope === "problems" ? "problems" : null,
     second_book_id:
-      !r.is_routine && r.book_id && r.second_book_id && r.second_book_id !== r.book_id
+      (!r.is_routine || r.routine_mode === "iki_kaynak") &&
+      r.book_id &&
+      r.second_book_id &&
+      r.second_book_id !== r.book_id
         ? r.second_book_id
         : null,
   }));
@@ -240,11 +243,18 @@ export function SkeletonEditorDialog({
       return [...kept, ...clones];
     });
   }
-  function applySecond(subjectId: number, bookId: number, second: number | null) {
+  function applySecond(
+    subjectId: number,
+    bookId: number,
+    second: number | null,
+    routine = false,
+  ) {
     setRows((prev) =>
       (prev ?? []).map((r) =>
-        !r.is_routine && r.subject_id === subjectId && r.book_id === bookId
-          ? { ...r, second_book_id: second }
+        r.is_routine === routine && r.subject_id === subjectId && r.book_id === bookId
+          ? routine
+            ? { ...r, second_book_id: second, routine_mode: "iki_kaynak" as RoutineMode }
+            : { ...r, second_book_id: second }
           : r,
       ),
     );
@@ -538,7 +548,7 @@ const SECTION_META: Record<
   },
   topic: {
     title: "Konu çalışması",
-    hint: "Kitapta kalınan konudan devam eder. Konu bitince 2. kaynak tanımlıysa hangisiyle devam edileceği sana sorulur.",
+    hint: "Kitapta kalınan konudan devam eder. 2. kaynak tanımlıysa konu bitince aynı konu 2. kaynakta bitirilir, sonra sıradaki konuya geçilir.",
     icon: BookOpen,
     add: "Konu satırı",
   },
@@ -578,7 +588,12 @@ function DayPanel({
   onUpdate: (key: string, patch: Partial<Row>) => void;
   onRemove: (key: string) => void;
   onCopy: (targets: number[]) => void;
-  onApplySecond: (subjectId: number, bookId: number, second: number | null) => void;
+  onApplySecond: (
+    subjectId: number,
+    bookId: number,
+    second: number | null,
+    routine?: boolean,
+  ) => void;
   subjectName: (id: number) => string;
 }) {
   const [copyOpen, setCopyOpen] = React.useState(false);
@@ -781,7 +796,12 @@ function RowCard({
   subjectName: (id: number) => string;
   onChange: (patch: Partial<Row>) => void;
   onRemove: () => void;
-  onApplySecond: (subjectId: number, bookId: number, second: number | null) => void;
+  onApplySecond: (
+    subjectId: number,
+    bookId: number,
+    second: number | null,
+    routine?: boolean,
+  ) => void;
 }) {
   const kind = rowKind(row);
   const current = books.find((b) => b.id === row.book_id);
@@ -789,12 +809,13 @@ function RowCard({
   const nm = subjectName(row.subject_id);
   const tone = toneForKey("s", nm);
   // Aynı ders + aynı ana kaynakta 2. kaynağı farklı olan diğer konu satırları
+  const twoSource = kind === "routine" && row.routine_mode === "iki_kaynak";
   const siblings =
-    kind !== "routine" && row.book_id
+    (kind !== "routine" || twoSource) && row.book_id
       ? allRows.filter(
           (r) =>
             r.key !== row.key &&
-            !r.is_routine &&
+            r.is_routine === twoSource &&
             r.subject_id === row.subject_id &&
             r.book_id === row.book_id &&
             (r.second_book_id ?? null) !== (row.second_book_id ?? null),
@@ -975,6 +996,11 @@ function RowCard({
             >
               <option value="sirali">Sırayla — kaldığı yerden</option>
               <option value="karma">Karışık — her gün farklı bölümlerden birer test</option>
+              {current?.is_bank ? (
+                <option value="iki_kaynak">
+                  Sırayla + konuyu 2. kaynakta bitir — konu bitince aynı konu diğer kitaptan
+                </option>
+              ) : null}
             </select>
           </Field>
         ) : null}
@@ -997,8 +1023,14 @@ function RowCard({
           </Field>
         ) : null}
 
-        {kind !== "routine" && row.book_id && current?.is_bank ? (
-          <Field label="2. kaynak — konu ana kaynakta bitince">
+        {(kind !== "routine" || twoSource) && row.book_id && current?.is_bank ? (
+          <Field
+            label={
+              twoSource
+                ? "2. kaynak — konu burada da bitirilir"
+                : "2. kaynak — konu ana kaynakta bitince"
+            }
+          >
             <div className="flex flex-col gap-1">
               <select
                 value={row.second_book_id ?? ""}
@@ -1008,7 +1040,9 @@ function RowCard({
                 className={inputCls}
                 aria-label="İkinci kaynak"
               >
-                <option value="">Yok — ana kaynakta sıradaki konuya geç</option>
+                <option value="">
+                  {twoSource ? "Seç — 2. kaynak gerekli" : "Yok — ana kaynakta sıradaki konuya geç"}
+                </option>
                 {banks.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}
@@ -1019,12 +1053,18 @@ function RowCard({
                 <button
                   type="button"
                   onClick={() =>
-                    onApplySecond(row.subject_id, row.book_id!, row.second_book_id ?? null)
+                    onApplySecond(
+                      row.subject_id,
+                      row.book_id!,
+                      row.second_book_id ?? null,
+                      twoSource,
+                    )
                   }
                   className="self-start text-[11.5px] text-cyan-800 hover:underline dark:text-cyan-300"
                   data-testid="apply-second-all"
                 >
-                  Bu seçimi {nm} için diğer {siblings} konu satırına da uygula
+                  Bu seçimi {nm} için diğer {siblings} {twoSource ? "rutin" : "konu"} satırına
+                  da uygula
                 </button>
               ) : null}
             </div>
@@ -1068,6 +1108,14 @@ function rowSummary(
         row.routine_mode === "karma" ? "her gün farklı bölümlerden" : "kaldığı yerden sırayla"
       } · ${cnt}. Problemler bitince sıradaki soru bankasının problemlerine geçer.`;
     }
+    if (row.routine_mode === "iki_kaynak") {
+      const sec2 = row.second_book_id
+        ? allBooks.find((b) => b.id === row.second_book_id)?.name
+        : null;
+      return sec2
+        ? `${when}: ${book.name} kaldığı yerden sırayla · ${cnt}. Bir konu bitince aynı konu ${sec2} kitabında da bitirilir, sonra ${book.name} kitabında sıradaki konuya geçilir.`
+        : `${when}: ${book.name} · ${cnt} — konunun bitirileceği 2. kaynağı seç.`;
+    }
     return `${when}: ${book.name}, ${
       row.routine_mode === "karma"
         ? "her gün farklı bölümlerden birer test"
@@ -1081,7 +1129,7 @@ function rowSummary(
     ? `${book.name} kitabında kalınan konudan devam`
     : "kaynak serbest (öneride tüm kitaplar)";
   const tail = second
-    ? ` Konu bitince ${second} ile aynı konu mu, sıradaki konu mu diye sorulur.`
+    ? ` Konu bitince aynı konu ${second} kitabında bitirilir, sonra sıradaki konuya geçilir.`
     : book?.is_bank
       ? " Konu bitince kitapta sıradaki konuya geçer."
       : "";

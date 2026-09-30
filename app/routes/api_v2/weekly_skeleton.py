@@ -231,7 +231,8 @@ def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[d
                 raise _err(422, "book_subject_mismatch", "Kitap satırın dersine ait değil.")
         mode = s.routine_mode or None
         if mode is not None and mode not in ROUTINE_MODES:
-            raise _err(422, "bad_routine_mode", "Rutin biçimi 'sirali' ya da 'karma' olmalı.")
+            raise _err(422, "bad_routine_mode",
+                       "Rutin biçimi 'sirali', 'karma' ya da 'iki_kaynak' olmalı.")
         if not (s.is_routine and s.book_id):
             mode = None
         elif mode is None:
@@ -252,8 +253,11 @@ def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[d
                 raise _err(422, "book_subject_mismatch", "2. kaynak satırın dersine ait değil.")
             if second == s.book_id:
                 raise _err(422, "second_same_book", "2. kaynak satırın kitabıyla aynı olamaz.")
-            if s.is_routine:
+            if s.is_routine and mode != "iki_kaynak":
                 second = None
+        if mode == "iki_kaynak" and second is None:
+            raise _err(422, "second_required",
+                       "'Konuyu 2. kaynakta bitir' için 2. kaynak seçilmeli.")
         label = (s.label or "").strip()[:160] or None
         out.append({
             "weekday": s.weekday, "period": _validate_period(s.period),

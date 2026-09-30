@@ -486,8 +486,9 @@ def build_chips(
 
     exclude: bu satırda önerilmeyecek bölümler — o derste problem rutini varsa
     problem bölümleri konu satırına sızmaz (F2-4).
-    second_book: satırın 2. ana kaynağı. 1. kaynakta konu biterse "2. kaynaktan
-    aynı konu" çipi de eklenir; sistem SEÇMEZ, koç seçer."""
+    second_book: satırın 2. ana kaynağı. 1. kaynakta konu biterse aynı konu
+    2. kaynakta İLK öneri olur (2026-09-30: koç seçmez, otomatik); 2. kaynakta konu
+    bitince ana kaynakta (prefer_book) o konudan sonraki konuya dönülür."""
     taken_secs = set(ctx.day_sections.get(d, {}).get(subject_id, set()))
     taken_topics = {ctx.secs[s].topic_id for s in taken_secs if s in ctx.secs and ctx.secs[s].topic_id}
 
@@ -513,6 +514,26 @@ def build_chips(
         if src is None:
             continue
         cur, kind = ctx.advance(src, exclude)
+        back_reason = None
+        if (
+            second_book and prefer_book and src.book_id == second_book
+            and kind != "thread" and src.topic_id
+        ):
+            # 2. kaynakta bölüm bitti: aynı konunun 2. kaynakta açık bölümü varsa o,
+            # yoksa ana kaynakta konudan sonraki konu (2. kaynağın kendi sırasına kayma).
+            same = next(
+                (c for c in ctx.by_book.get(second_book, [])
+                 if c.topic_id == src.topic_id and ctx.open_(c) and c.id not in exclude),
+                None,
+            )
+            if same is not None:
+                cur, kind = same, "next"
+                back_reason = f"aynı konu 2. kaynakta sürüyor ({src.label} bitti)"
+            else:
+                cur = _primary_after_topic(ctx, prefer_book, src.topic_id, exclude)
+                kind = "next" if cur is not None else ""
+                back_reason = (f"konu iki kaynakta da bitti — ana kaynakta sıradaki konu"
+                               if cur is not None else None)
         q = default_count or last_count.get(sid) or fallback_q
         # F2-4: konu 1. kaynakta bitti → 2. kaynaktan AYNI konu da seçenek.
         alt = None
@@ -529,9 +550,8 @@ def build_chips(
         if alt is not None:
             ch = _chip(
                 ctx, alt, "second",
-                f"{src.book_name}'da {src.label} bitti — 2. kaynaktan aynı konu", q,
+                f"{src.book_name}'da {src.label} bitti — konu 2. kaynakta bitiriliyor", q,
             )
-            ch["source_choice"] = True
             thread_chips.append(ch)
             used_secs.add(alt.id)
         if cur is None or cur.id in used_secs or (cur.topic_id and cur.topic_id in used_topics):
@@ -540,11 +560,11 @@ def build_chips(
             continue
         if kind == "thread":
             reason = _continuation_reason(d, dd, cur.remaining)
+        elif back_reason:
+            reason = back_reason
         else:
             reason = f"kitapta sıradaki konu ({src.label} bitti)"
         ch = _chip(ctx, cur, kind, reason, q)
-        if alt is not None:
-            ch["source_choice"] = True
         thread_chips.append(ch)
         used_secs.add(cur.id)
         if cur.topic_id:
@@ -613,8 +633,20 @@ def build_chips(
         break
 
     if prefer_book is not None:
-        # Satırın kaynağı olan kitabın çipleri öne (sıra içi korunur).
-        chips.sort(key=lambda c: c["book_id"] != prefer_book)
+        # Satırın kaynağı olan kitabın çipleri öne (sıra içi korunur). 2. kaynakta
+        # süren/bitirilen konu (iplik çipi) en önde kalır: konu iki kaynakta bitmeden
+        # ana kaynakta yeni konuya geçilmez.
+        # Yalnız ANA kaynakta bitmiş (açık bölümü kalmamış) bir konunun 2. kaynaktaki
+        # devamı öne çıkar; 2. kaynağın konudan bağımsız iplikleri öne atlamaz.
+        prim = ctx.by_book.get(prefer_book, [])
+        prim_topics = {c.topic_id for c in prim if c.topic_id}
+        prim_open = {c.topic_id for c in prim if c.topic_id and ctx.open_(c)}
+        second_first = {
+            id(c) for c in thread_chips
+            if second_book and c["book_id"] == second_book and c.get("topic_id")
+            and c["topic_id"] in prim_topics and c["topic_id"] not in prim_open
+        }
+        chips.sort(key=lambda c: (id(c) not in second_first, c["book_id"] != prefer_book))
     for i, c in enumerate(chips, start=1):
         c["rank"] = i
     return chips
@@ -665,9 +697,44 @@ def problem_queue(ctx: _Ctx, *, subject_id: int, book_id: int | None) -> list[in
     return books
 
 
+def _two_source_chain(ctx: _Ctx, primary: int, second: int) -> list[_Sec]:
+    """İki kaynaklı konu zinciri: ana kaynak sırası; her konunun ana kaynaktaki SON
+    bölümünün hemen ardından 2. kaynakta AYNI müfredat konusuna bağlı bölümler
+    (2. kaynağın kendi sırasıyla). Konusu olmayan / ana kaynakta karşılığı olmayan
+    2. kaynak bölümleri zincire girmez."""
+    prim = ctx.by_book.get(primary, [])
+    sec_by_topic: dict[int, list[_Sec]] = defaultdict(list)
+    for c in ctx.by_book.get(second, []):
+        if c.topic_id:
+            sec_by_topic[c.topic_id].append(c)
+    last_idx = {c.topic_id: i for i, c in enumerate(prim) if c.topic_id}
+    chain: list[_Sec] = []
+    for i, c in enumerate(prim):
+        chain.append(c)
+        if c.topic_id and last_idx.get(c.topic_id) == i:
+            chain.extend(sec_by_topic.get(c.topic_id, []))
+    return chain
+
+
+def _primary_after_topic(
+    ctx: _Ctx, primary: int, topic_id: int, exclude: set[int] | frozenset = frozenset(),
+) -> _Sec | None:
+    """Ana kaynakta, verilen konunun SON bölümünden sonraki ilk açık konulu bölüm."""
+    prim = ctx.by_book.get(primary, [])
+    orders = [c.order for c in prim if c.topic_id == topic_id]
+    if not orders:
+        return None
+    mx = max(orders)
+    return next(
+        (c for c in prim if c.order > mx and c.topic_id and ctx.open_(c) and c.id not in exclude),
+        None,
+    )
+
+
 def routine_items(
     ctx: _Ctx, *, book_id: int, mode: str | None, count: int, d: date,
     scope: str | None = None, subject_id: int | None = None,
+    second_book: int | None = None,
 ) -> list[tuple[_Sec, int]]:
     """Kitaba bağlı rutinin o günkü kalemleri.
 
@@ -694,6 +761,18 @@ def routine_items(
             ctx, book_id=book_id, mode=mode, count=count, d=d, taken=taken,
             subject_id=subject_id,
         )
+    if mode == "iki_kaynak" and second_book and second_book != book_id:
+        # Konu ana kaynakta bitince aynı konu 2. kaynakta SINIRSIZ bitirilir, sonra
+        # ana kaynakta sıradaki konu. Kalınan yer iki kitabın en yeni kalemi.
+        chain = _two_source_chain(ctx, book_id, second_book)
+        ids = [c.id for c in chain]
+        last = _last_used(ctx, d, lambda s: s.book_id in (book_id, second_book) and s.id in ids)
+        start = ids.index(last.id) if last is not None else 0
+        seq = [
+            c for c in chain[start:] + chain[:start]
+            if ctx.open_(c) and c.id not in taken
+        ]
+        return _fill(seq, count)
     book = ctx.by_book.get(book_id, [])
     opens = [s for s in book if ctx.open_(s) and s.id not in taken]
     if not opens:
@@ -792,6 +871,14 @@ def _routine_reason(ctx: _Ctx, slot: WeeklySkeletonSlot, items: list[tuple[_Sec,
         )
     if slot.routine_mode == "karma":
         return f"rutin · karışık: {len(items)} farklı bölüm"
+    if slot.routine_mode == "iki_kaynak":
+        other = next((s for s, _n in items if s.book_id != first.book_id), None)
+        if other is not None:
+            return (f"rutin · konu iki kaynakta: {first.book_name} · {first.label} → "
+                    f"{other.book_name} · {other.label}")
+        if first.book_id != slot.book_id:
+            return f"rutin · konu 2. kaynakta bitiriliyor ({first.book_name} · {first.label})"
+        return "rutin · kitapta sırayla; konu bitince 2. kaynakta bitirilir"
     return "rutin · kitapta sırayla" + (
         f" ({first.label} bitince {items[-1][0].label})" if len(items) > 1 else ""
     )
@@ -802,6 +889,7 @@ def _routine_chip(ctx: _Ctx, slot: WeeklySkeletonSlot, d: date, fallback_q: int)
         ctx, book_id=slot.book_id, mode=slot.routine_mode,
         count=slot.default_count or fallback_q, d=d,
         scope=getattr(slot, "routine_scope", None), subject_id=slot.subject_id,
+        second_book=getattr(slot, "second_book_id", None),
     )
     if not items:
         return None
@@ -983,6 +1071,9 @@ def build_ghosts(
             by_subj[s.subject_id].append(s)
         ghosts = []
         for subj, slots in by_subj.items():
+            if any(s.is_routine for s in slots):
+                # Dershane konusu aynı zamanda rutinin konusu: o gün TEK görev (rutin).
+                slots = [s for s in slots if not s.is_anchor]
             items = [it for it in ctx.day_items.get(d, []) if subj in it["subjects"]]
             # 1) kaynaklı satırlar kendi kaynağıyla; 2) kalan satırlar kalan
             #    görevlerle periyot kuralına göre (kaynaksız satırlar önce).

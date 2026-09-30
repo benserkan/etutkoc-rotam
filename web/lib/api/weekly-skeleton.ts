@@ -37,11 +37,13 @@ export interface SkeletonSlotIn {
 
 export type RoutineScope = "book" | "problems";
 
-export type RoutineMode = "sirali" | "karma";
+/** iki_kaynak: sırayla; ana kaynakta biten konu 2. kaynakta (second_book_id) bitirilir. */
+export type RoutineMode = "sirali" | "karma" | "iki_kaynak";
 
 export const ROUTINE_MODE_LABELS: Record<RoutineMode, string> = {
   sirali: "sırayla",
   karma: "karışık",
+  iki_kaynak: "sırayla · konu 2. kaynakta biter",
 };
 
 export interface SkeletonSlot extends SkeletonSlotIn {

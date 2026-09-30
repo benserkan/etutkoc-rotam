@@ -9,7 +9,7 @@ bankası Fen Bilimleri. Video destekli defter kitaplıkta ama ana kaynak değil.
    2. Gün kartı: rutin "rutin · problemler" · konu satırında "konu bitti · kaynak seç"
    3. Problem rutini çipi: Orijinal'in son problem testi + Fen Bilimleri Oran-Orantı,
       kitap adlarıyla; video defter / Polinomlar yok; şeritte kırpma yok
-   4. Konu satırı: seçim uyarısı + "2. kaynak" ve "sıradaki" çipleri
+   4. Konu satırı: 2. kaynakta aynı konu İLK çip (otomatik, seçim uyarısı yok) + "sıradaki" alternatif
    5. Rutin çipine tık → iki görev (kitap başına); rutin hayaleti kalkar, konu
       hayaleti kalır (yenilemesiz)
    6. Koyu tema: hayalet bölümü okunur
@@ -250,8 +250,8 @@ def main() -> int:
             rows_txt = pg.locator(f'{GH} [data-testid="ghost-row"]').all_inner_texts()
             chk("2a. rutin rozeti 'rutin · problemler'",
                 any("rutin · problemler" in x for x in rows_txt), str(rows_txt))
-            chk("2b. konu satırında 'konu bitti · kaynak seç'",
-                pg.locator(f'{GH} [data-testid="ghost-source-choice"]').count() == 1)
+            chk("2b. konu satırında 'kaynak seç' uyarısı YOK (2. kaynak otomatik)",
+                pg.locator(f'{GH} [data-testid="ghost-source-choice"]').count() == 0)
 
             # 3. problem rutini çipi
             pg.locator(f'{GH} [data-testid="ghost-row"]', has_text="rutin · problemler").first.click()
@@ -272,13 +272,14 @@ def main() -> int:
             pg.wait_for_timeout(400)
 
             # 4. konu satırı
-            pg.locator(f'{GH} [data-testid="ghost-row"]', has_text="kaynak seç").first.click()
+            pg.locator(f'{GH} [data-testid="ghost-row"]').filter(has_not_text="rutin").first.click()
             strip = pg.locator('[data-testid="ghost-strip"]')
             strip.wait_for(timeout=5000)
             note = strip.locator('[data-testid="source-choice-note"]')
             chips_txt = strip.locator('[data-testid="ghost-chip"]').all_inner_texts()
-            chk("4a. seçim uyarısı görünür, 2. kaynağı adıyla söyler",
-                note.count() == 1 and "Fen Bilimleri" in note.inner_text(), note.inner_text() if note.count() else "")
+            chk("4a. seçim uyarısı yok · ilk çip 2. kaynakta aynı konu (Fen · Fonksiyonlar)",
+                note.count() == 0 and bool(chips_txt) and chips_txt[0].startswith("2. kaynak")
+                and "Fonksiyonlar" in chips_txt[0], str([c[:60] for c in chips_txt]))
             chk("4b. '2. kaynak' (Fen · Fonksiyonlar) + 'sıradaki' (Orijinal · Polinomlar) çipleri",
                 any(c.startswith("2. kaynak") and "Fonksiyonlar" in c for c in chips_txt)
                 and any(c.startswith("sıradaki") and "Polinomlar" in c for c in chips_txt),
@@ -314,7 +315,7 @@ def main() -> int:
             rows_after = pg.locator(f'{GH} [data-testid="ghost-row"]').all_inner_texts()
             chk("5b. rutin hayaleti kalktı · konu hayaleti kaldı (yenilemesiz)",
                 not any("rutin · problemler" in x for x in rows_after)
-                and any("kaynak seç" in x for x in rows_after), str(rows_after))
+                and any("öneri" in x and "Fonksiyonlar" in x for x in rows_after), str(rows_after))
             b.close()
     finally:
         cleanup(s)
