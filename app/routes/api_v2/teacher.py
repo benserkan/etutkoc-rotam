@@ -6907,6 +6907,9 @@ def teacher_create_student_v2(
     email = (body.email or "").strip().lower()
     if not full_name:
         raise _validation_error("full_name_required", "Ad Soyad zorunlu.")
+    from app.services.name_format import format_person_name
+
+    full_name = format_person_name(full_name) or full_name
     if "@" not in email or len(email) < 5:
         raise _validation_error("invalid_email", "Geçerli bir e-posta girin.")
     if body.grade_level is not None and not (5 <= body.grade_level <= 12):

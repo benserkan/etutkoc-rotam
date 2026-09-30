@@ -152,6 +152,8 @@ GRADUATE_MODE_ALIASES = {
 BOOL_TRUE = {"yes", "true", "1", "evet", "e", "y", "x", "✓"}
 BOOL_FALSE = {"no", "false", "0", "hayir", "hayır", "h", "n", "", "-"}
 
+from app.services.name_format import format_person_name  # noqa: E402
+
 EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
@@ -353,7 +355,7 @@ def parse_students_csv(text: str) -> ParseResult:
         if not full_name:
             parsed.errors.append("ad soyad zorunlu")
         else:
-            parsed.full_name = full_name
+            parsed.full_name = format_person_name(full_name)
 
         # email
         email = _get("email").lower()
@@ -404,7 +406,7 @@ def parse_students_csv(text: str) -> ParseResult:
 
         # Veli
         p_email = _get("parent_email").lower()
-        p_name = " ".join(_get("parent_name").split()) or None
+        p_name = format_person_name(_get("parent_name"))
         p_phone_raw = _get("parent_phone")
         if p_email:
             if not EMAIL_RE.match(p_email):

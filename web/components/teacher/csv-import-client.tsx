@@ -12,6 +12,8 @@ import {
   ClipboardPaste,
   Download,
   FileSpreadsheet,
+  GraduationCap,
+  Mail,
   Loader2,
   Upload,
   Users,
@@ -202,9 +204,46 @@ function formatBytes(n: number): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function countDataRows(text: string): number {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
-  return Math.max(0, lines.length - 1);
+/** Veli sütunu başlıkları (csv_import eşanlamlarının sade hali). */
+const PARENT_HEADER_RE = /^(parent|veli)/;
+
+function normHeader(h: string): string {
+  return h
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[\s_-]+/g, " ");
+}
+
+/**
+ * Önizleme öncesi sayım: öğrenci satırı ve veli bilgisi olan satır.
+ * Excel'in CSV'ye yazdığı içi boş satırlar (";;;;;") sayılmaz — sunucu da
+ * bunları atlar. Ayraç başlık satırından seçilir (; , sekme).
+ */
+function countRows(text: string): { students: number; parents: number; invites: number } {
+  const lines = text.split(/\r?\n/);
+  const headerIdx = lines.findIndex((l) => l.trim() !== "");
+  if (headerIdx < 0) return { students: 0, parents: 0, invites: 0 };
+  const header = lines[headerIdx];
+  const delim = [";", "\t", ","].reduce((best, d) =>
+    header.split(d).length > header.split(best).length ? d : best,
+  );
+  const cols = header.split(delim).map(normHeader);
+  const parentCols = cols
+    .map((c, i) => (PARENT_HEADER_RE.test(c) && !/(relation|yakınlık)/.test(c) ? i : -1))
+    .filter((i) => i >= 0);
+  const parentEmailCols = parentCols.filter((i) => /(mail|posta)/.test(cols[i]));
+  let students = 0;
+  let parents = 0;
+  let invites = 0;
+  for (const line of lines.slice(headerIdx + 1)) {
+    const cells = line.split(delim).map((c) => c.replace(/^"|"$/g, "").trim());
+    if (!cells.some((c) => c !== "")) continue;
+    students += 1;
+    if (parentCols.some((i) => (cells[i] ?? "") !== "")) parents += 1;
+    if (parentEmailCols.some((i) => (cells[i] ?? "") !== "")) invites += 1;
+  }
+  return { students, parents, invites };
 }
 
 function InputStep({
@@ -264,7 +303,10 @@ function InputStep({
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  const rows = countDataRows(csvText);
+  const counts = countRows(csvText);
+  const rows = counts.students;
+  const countLabel =
+    `${counts.students} öğrenci · ${counts.parents} veli (${counts.invites} veliye davet e-postası gidecek)`;
 
   return (
     <form onSubmit={onSubmit} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -348,7 +390,21 @@ function InputStep({
               </span>
               <span className="block text-xs text-emerald-800 dark:text-emerald-200/80">
                 {formatBytes(file.size)}
-                {file.sheet ? ` · “${file.sheet}” sayfası` : ""} · {rows} öğrenci satırı okundu
+                {file.sheet ? ` · “${file.sheet}” sayfası` : ""}
+              </span>
+              <span className="mt-1.5 flex flex-wrap gap-1.5" data-testid="import-counts">
+                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white">
+                  <GraduationCap className="size-3.5" aria-hidden />
+                  {counts.students} öğrenci
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-slate-700 px-2 py-0.5 text-xs font-semibold text-white">
+                  <Users className="size-3.5" aria-hidden />
+                  {counts.parents} veli
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-cyan-700 px-2 py-0.5 text-xs font-semibold text-white">
+                  <Mail className="size-3.5" aria-hidden />
+                  {counts.invites} veliye davet gidecek
+                </span>
               </span>
             </span>
             <button
@@ -408,7 +464,7 @@ function InputStep({
         <div className="flex flex-col-reverse items-stretch gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             {rows > 0
-              ? `${rows} öğrenci satırı hazır. Sonraki adımda her satırı kontrol edeceksin; henüz hiçbir hesap açılmadı.`
+              ? `${countLabel}. Sonraki adımda her satırı kontrol edeceksin; henüz hiçbir hesap açılmadı.`
               : "Önce bir dosya yükle ya da listeyi yapıştır."}
           </p>
           <Button
