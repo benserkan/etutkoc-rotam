@@ -7,7 +7,7 @@
  *   "teacher:{id}:grade-advance"
  *   "teacher:{id}:students"
  */
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type {
   AcademicYearChoicesResponse,
   AcademicYearDetailResponse,
@@ -47,4 +47,33 @@ export function getGradeAdvancePreview(): Promise<GradeAdvancePreviewResponse> {
   return api<GradeAdvancePreviewResponse>(
     "/api/v2/teacher/grade-advance/preview",
   );
+}
+
+export interface StudentsXlsxResult {
+  csv_text: string;
+  sheet: string;
+  row_count: number;
+}
+
+/** Excel (.xlsx) öğrenci listesini sunucuda CSV metnine çevirir (kayıt YAPMAZ). */
+export async function convertStudentsXlsx(file: File): Promise<StudentsXlsxResult> {
+  const fd = new FormData();
+  fd.append("file", file);
+  // eslint-disable-next-line lgs/no-bare-fetch -- multipart yükleme; api() JSON sarmalayıcısı FormData ile uyumsuz
+  const r = await fetch("/api/v2/teacher/csv/import/students/xlsx", {
+    method: "POST",
+    credentials: "include",
+    body: fd,
+  });
+  if (!r.ok) {
+    let detail = { error: "error", message: "Dosya okunamadı" };
+    try {
+      const b = await r.json();
+      if (b?.detail && typeof b.detail === "object") detail = b.detail;
+    } catch {
+      /* yoksay */
+    }
+    throw new ApiError(r.status, detail);
+  }
+  return r.json() as Promise<StudentsXlsxResult>;
 }

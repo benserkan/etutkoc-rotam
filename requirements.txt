@@ -21,3 +21,4 @@ cryptography>=42.0.0  # süper admin API anahtarı şifreleme (Fernet) — syste
 PyJWT>=2.9.0  # JWT access/refresh + BFF cookie + api_v1 mobil (jwt_auth.py)
 iyzipay>=1.0.46  # Iyzico Checkout Form (Ödeme Paket Ö1) — sandbox + prod tek SDK
 pymupdf>=1.24.0  # kitap tarama: PDF'in ilk sayfaları + kapak görseli (book-structure/scan)
+openpyxl>=3.1  # Excel (.xlsx) öğrenci listesi içe aktarma

@@ -4,6 +4,7 @@ Endpoint haritası:
   POST /teacher/csv/import/students/preview      → CsvPreviewResponse
   POST /teacher/csv/import/students/commit       → MutationResponse[CsvCommitResult]
   GET  /teacher/csv/import/students/template     → text/csv (örnek şablon)
+  POST /teacher/csv/import/students/xlsx         → Excel (.xlsx) → CSV metni
   GET  /teacher/csv/export/students              → text/csv (filtrelenmiş)
   GET  /teacher/csv/export/program?student_id=N  → text/csv (öğrenci haftalık)
 
@@ -20,7 +21,7 @@ import io
 from datetime import date, timedelta
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -121,6 +122,89 @@ def import_template(user: User = Depends(_require_teacher)) -> Response:
                 'attachment; filename="ogrenci_import_sablon.csv"',
         },
     )
+
+
+XLSX_MAX_BYTES = 5 * 1024 * 1024
+
+
+def _xlsx_cell(v) -> str:
+    """Excel hücresini CSV metnine çevirir (telefon 5412100591 → "5412100591",
+    10.0 → "10"; tarih ISO)."""
+    if v is None:
+        return ""
+    if isinstance(v, bool):
+        return "evet" if v else ""
+    if isinstance(v, float) and v.is_integer():
+        return str(int(v))
+    if hasattr(v, "isoformat"):
+        return v.isoformat()[:10]
+    return str(v).strip()
+
+
+def xlsx_to_csv_text(data: bytes) -> tuple[str, str, int]:
+    """İlk dolu sayfayı CSV metnine çevirir → (csv_text, sayfa adı, veri satırı).
+
+    Boş satırlar atılır; mevcut CSV ayrıştırıcısı (başlık eşanlamları dahil)
+    olduğu gibi kullanılır — Excel ayrı bir kural yolu açmaz.
+    """
+    import openpyxl
+
+    wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+    try:
+        for ws in wb.worksheets:
+            rows: list[list[str]] = []
+            for raw in ws.iter_rows(values_only=True):
+                cells = [_xlsx_cell(v) for v in raw]
+                while cells and cells[-1] == "":
+                    cells.pop()
+                if any(cells):
+                    rows.append(cells)
+            if rows:
+                width = max(len(r) for r in rows)
+                buf = io.StringIO()
+                w = csv.writer(buf, lineterminator="\n")
+                for r in rows:
+                    w.writerow(r + [""] * (width - len(r)))
+                return buf.getvalue(), ws.title, len(rows) - 1
+    finally:
+        wb.close()
+    return "", "", 0
+
+
+@router.post("/import/students/xlsx")
+async def import_xlsx(
+    file: UploadFile = File(...),
+    user: User = Depends(_require_teacher),
+) -> dict:
+    name = (file.filename or "").lower()
+    if not name.endswith(".xlsx"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_file_type",
+                    "message": "Yalnız .xlsx (Excel) dosyası yüklenebilir. Eski .xls dosyasını Excel'de .xlsx olarak kaydedin."},
+        )
+    data = await file.read()
+    if len(data) > XLSX_MAX_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "file_too_large",
+                    "message": "Dosya 5 MB'tan büyük olamaz."},
+        )
+    try:
+        text, sheet, count = xlsx_to_csv_text(data)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "xlsx_unreadable",
+                    "message": "Excel dosyası okunamadı. Dosyanın bozuk olmadığından emin olun."},
+        )
+    if not text:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "xlsx_empty",
+                    "message": "Excel dosyasında dolu satır bulunamadı."},
+        )
+    return {"csv_text": text, "sheet": sheet, "row_count": count}
 
 
 @router.post("/import/students/preview", response_model=CsvPreviewResponse)
