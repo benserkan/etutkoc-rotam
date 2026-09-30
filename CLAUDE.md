@@ -6,6 +6,33 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## KURUMSAL KİMLİK (co-branding) — CANLI (2026-09-30, commit `c8ad549`, migration YOK)
+
+- **Kural (kullanıcı):** kuruma bağlı her kullanıcıya (kurum yöneticisi, öğretmen,
+  öğrenci [koçu üzerinden], veli [çocuğu üzerinden]) giden e-posta + panel + yazdırma
+  KURUMUN markasını taşır: logo varsa logo, yoksa kurum adı. ETÜTKOÇ logosu görünmez;
+  yalnız altta "… adına gönderildi · Altyapı: ETÜTKOÇ Rotam". Bağımsız koç ekosistemi
+  ETÜTKOÇ markasında kalır.
+- TEK MERKEZ `app/services/branding.py` (`brand_for_user/_email/_institution_id`).
+  E-posta: `send_email` markayı alıcıdan (ya da ctx `brand_institution_id`) çözer;
+  gönderen GÖRÜNEN adı kurum, ADRES `rotam@etutkoc.com` kalır (SPF/DKIM yalnız bu
+  alan adında — kurumun kendi alan adından göndermek kurum başına ZeptoMail alan adı
+  doğrulaması ister, ileride), Reply-To = kurum `contact_email`, konu satırında
+  "ETÜTKOÇ Rotam" → kurum adı. Şablonlar `_brand_header.html`/`_brand_footer.html`.
+  `PLATFORM_TEMPLATES` (abonelik/deneme/kredi/teklif/güvenlik/satış) MARKASIZ.
+- Herkese açık logo ucu `GET /api/v2/brand/logo/{id}` (e-posta istemcisi çerezsiz
+  çeker; yalnız aktif kurum). `/me` → `brand`; web `ShellBrand` 4 rol shell'inde;
+  yazdırma (koç program, öğrenci hafta, seans formu), veli haftalık rapor HTML'i,
+  öğretmen/veli davet sayfaları kurum markalı.
+- **KURAL:** yeni e-posta şablonu header/footer include'larını kullanır; ETÜTKOÇ'un
+  kendi adına ticari yazışmasıysa `PLATFORM_TEMPLATES`'e eklenir.
+- Test `test_institution_branding.py` 23/23; regresyon davet 21 · veli davet 17 ·
+  öğrenci e-posta 17 · deneme duyuru 39 · me 13 · logo 12 · veli 20 · rapor 21 ·
+  randevu 42 · comm_log 28 · teacher_read 12. Canlı test: Açı Seçkin Kurs →
+  `benserkan+aci@gmail.com` öğretmen daveti gönderildi (sent).
+
+---
+
 ## HAFTALIK İSKELET (kalıptan program) — F1a+F1b KOD-TAMAM (2026-09-25, migration `b3c6f9g0f44b` yerelde, COMMIT/DEPLOY BEKLİYOR)
 
 **Koç ihtiyacı:** her yeni program boş ızgarayla başlıyor; oysa ders yerleşimi
