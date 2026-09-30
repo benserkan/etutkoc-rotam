@@ -119,7 +119,17 @@ const TASK_TYPE_LABEL: Record<string, string> = {
   test: "Test", video: "Video", ozet: "Özet", tekrar: "Tekrar", other: "Diğer",
 };
 function taskLabel(t: StudentTask): string {
-  const first = t.items.find((it) => it.book_id != null) ?? t.items[0];
+  const books = t.items.filter((it) => it.book_id != null);
+  const first = books[0] ?? t.items[0];
+  // Çok kalemli görev (karışık paragraf rutini vb.): HER bölüm adediyle yazılır —
+  // yalnız ilk kalemi basmak öğrencinin diğer bölümleri görmemesine yol açıyordu.
+  if (books.length > 1) {
+    const sameBook = books.every((it) => it.book_id === books[0].book_id);
+    const parts = books.map((it) =>
+      `${sameBook ? "" : `${it.book_name} · `}${it.section_label ?? ""} (${it.planned})`,
+    );
+    return (sameBook ? `${books[0].book_name} — ` : "") + parts.join(" · ");
+  }
   if (first?.book_id) {
     return first.book_name + (first.section_label ? ` · ${first.section_label}` : "");
   }

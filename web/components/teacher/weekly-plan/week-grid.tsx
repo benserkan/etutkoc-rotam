@@ -102,7 +102,10 @@ function videoBadge(t: TeacherTask): number {
 // (Kalan, koçun "bu konudan daha atayabilir miyim?" sorusunun yanıtı.)
 function taskTooltip(t: TeacherTask, dragHint: string): string {
   const lines: string[] = [];
-  if (t.title) lines.push(t.title);
+  // Kitaplı kalemler zaten kaynak · bölüm · adet satırları olarak yazılıyor;
+  // başlık (kalemlerden türetilir) aynı bilgiyi tekrar ediyordu → yalnız kalemsiz
+  // görevde (etkinlik/video) başlık gösterilir.
+  if (t.title && !t.items.some((it) => it.book_id)) lines.push(t.title);
   for (const it of t.items) {
     if (it.book_id) {
       const parts = [it.book_name];
