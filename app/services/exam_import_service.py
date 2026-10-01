@@ -897,6 +897,9 @@ def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
                         base[f] = None
                         guard_fired = True
                         base["_guard_fix"] = True
+                        # diğer okumanın değeri — karne özeti bu sorunun doğru
+                        # olduğunu söylerse geri yüklenir (reconcile_with_summary)
+                        base["_guard_alt"] = filled
                         continue
                     if f == "result" and guard_fired:
                         continue  # sonuç zaten DC/ÖC'den türetilecek — gürültü yapma
@@ -963,58 +966,149 @@ def _derive_result(row: dict) -> tuple[str | None, bool]:
     return res, False
 
 
+_CAT_LABEL = {"d": "doğru", "y": "yanlış", "b": "boş"}
+
+
+def _row_cat(r: dict) -> str | None:
+    res = r.get("result")
+    if res == EQ_RESULT_DOGRU:
+        return "d"
+    if res == EQ_RESULT_YANLIS:
+        return "y"
+    if res == EQ_RESULT_BOS:
+        return "b"
+    return None
+
+
+def _subject_label(r: dict) -> str:
+    return (r.get("display_subject") or r.get("subject_raw") or "").strip()
+
+
+def _fmt_refs(rows: list[dict]) -> str:
+    """'Fizik 7, 9 · Kimya 3' — ders başlığıyla gruplanmış soru numaraları."""
+    groups: dict[str, list[str]] = {}
+    for r in rows:
+        name = _subject_label(r).title() if _subject_label(r).isupper() else _subject_label(r)
+        groups.setdefault(name or "Soru", []).append(
+            str(r.get("question_no")) if r.get("question_no") is not None else "?")
+    return " · ".join(f"{k} {', '.join(v)}" for k, v in groups.items())
+
+
+def _summary_groups(read: dict, rows: list[dict]):
+    """Belge özetindeki her ders için (özet, o dersin satırları) çiftleri.
+
+    Satırlar (oturum, KANONİK ders) anahtarıyla eşlenir — birleşik belgede
+    TYT/AYT ayrışır; kanonik anahtar bölüm-kodu eklerine dayanıklı.
+    """
+    buckets: dict[tuple[str | None, str], list[dict]] = {}
+    for r in rows:
+        buckets.setdefault((r.get("exam_part"), _subject_key(r.get("subject_raw"))), []).append(r)
+    for s in read.get("subjects") or []:
+        key = (s.get("part"), _subject_key(s["name"]))
+        rs = buckets.get(key)
+        if rs is None and s.get("part") is None:
+            cands = [v for (p, sk2), v in buckets.items() if sk2 == _subject_key(s["name"])]
+            rs = cands[0] if len(cands) == 1 else None
+        if rs is None:
+            continue  # özetteki üst bölüm başlığı (örn. "TYT-SOSYAL") — satırlar alt derste
+        yield s, rs
+
+
+def _tally(rs: list[dict]) -> dict[str, int]:
+    t = {"n": len(rs), "d": 0, "y": 0, "b": 0}
+    for r in rs:
+        c = _row_cat(r)
+        if c:
+            t[c] += 1
+    return t
+
+
+def reconcile_with_summary(read: dict, rows: list[dict]) -> list[dict]:
+    """Boş-cevap korumasının BOŞ saydığı soruları karne özetiyle çözer.
+
+    Koruma, bir okuma ÖC'yi boş, diğeri DC'nin aynısı görünce soruyu boş sayar.
+    Belgenin kendi özet tablosu o derste tam olarak bu kadar FAZLA doğru ve
+    EKSİK boş gösteriyorsa korumanın yanıldığı kesindir → ÖC geri yüklenir.
+    Fark koruma satır sayısından küçükse hangisinin doğru olduğu bilinemez →
+    dokunulmaz (satırlar şüpheli kalır). Geri yüklenen satırları döner.
+    """
+    restored: list[dict] = []
+    for s, rs in _summary_groups(read, rows):
+        guarded = [r for r in rs if r.get("_guard_alt") is not None]
+        if not guarded or s.get("correct") is None or s.get("blank") is None:
+            continue
+        t = _tally(rs)
+        k = s["correct"] - t["d"]
+        if k <= 0 or k != t["b"] - s["blank"] or k != len(guarded):
+            continue
+        if s.get("wrong") is not None and s["wrong"] != t["y"]:
+            continue
+        for r in guarded:
+            r["student_answer"] = r.pop("_guard_alt")
+            r["_guard_alt"] = None
+            r["result"] = EQ_RESULT_DOGRU
+            restored.append(r)
+    return restored
+
+
 def run_checks(read: dict, rows: list[dict]) -> list[dict]:
     """Deterministik iç tutarlılık — format-bağımsız, KOŞULLU katmanlar.
 
     Belge özet tablosu içeriyorsa satır sayımlarıyla çapraz sağlanır (bonus);
     içermiyorsa yalnız satır-içi kontroller çalışır. Başarısız kontrol akışı
-    DURDURMAZ — önizlemede uyarı bandı olur.
+    DURDURMAZ — önizlemede uyarı bandı olur. Uyuşmazlıkta mesaj sade dille
+    ne olduğunu ve BAKILACAK soru numaralarını söyler. Satırlar şüpheli
+    İŞARETLENMEZ — "şüpheli" yalnız çift okuma çelişkisidir (sarı boyama
+    alarm körlüğü yaratıyordu: 80 boş sözel satır vakası).
     """
     checks: list[dict] = []
-
-    # satır bazlı (oturum, KANONİK ders) sayımları — birleşik belgede TYT/AYT
-    # ayrışır; kanonik anahtar bölüm-kodu eklerine dayanıklı
-    tallies: dict[tuple[str | None, str], dict[str, int]] = {}
-    for r in rows:
-        key = (r.get("exam_part"), _subject_key(r.get("subject_raw")))
-        t = tallies.setdefault(key, {"n": 0, "d": 0, "y": 0, "b": 0})
-        t["n"] += 1
-        res = r.get("result")
-        if res == EQ_RESULT_DOGRU:
-            t["d"] += 1
-        elif res == EQ_RESULT_YANLIS:
-            t["y"] += 1
-        elif res == EQ_RESULT_BOS:
-            t["b"] += 1
-
-    for s in read.get("subjects") or []:
-        key = (s.get("part"), _subject_key(s["name"]))
-        t = tallies.get(key)
-        if t is None and s.get("part") is None:
-            # özet part'sız etiketlenmiş olabilir — tek oturumlu eşleşme dene
-            cands = [v for (p, sk2), v in tallies.items()
-                     if sk2 == _subject_key(s["name"])]
-            t = cands[0] if len(cands) == 1 else None
-        if t is None:
-            continue  # özetteki üst bölüm başlığı (örn. "TYT-SOSYAL") — satırlar alt derste
-        parts = []
-        ok = True
-        if s.get("questions") is not None and t["n"] != s["questions"]:
-            ok = False
-            parts.append(f"satır {t['n']} ≠ özet soru {s['questions']}")
-        for k, dk, label in (("correct", "d", "doğru"), ("wrong", "y", "yanlış"),
-                             ("blank", "b", "boş")):
-            if s.get(k) is not None and t[dk] != s[k]:
-                ok = False
-                parts.append(f"{label}: satır {t[dk]} ≠ özet {s[k]}")
+    for s, rs in _summary_groups(read, rows):
+        t = _tally(rs)
+        name = s["name"].title() if s["name"].isupper() else s["name"]
         part_tag = f"{s.get('part')}:" if s.get("part") else ""
+        code = f"subject_counts:{part_tag}{normalize(s['name'])}"
+        sess = f" ({s['part'].upper()})" if s.get("part") else ""
+        if s.get("questions") is not None and t["n"] != s["questions"]:
+            checks.append({
+                "code": code,
+                "label": f"{name}{sess}: soru sayısı tutmuyor",
+                "ok": False,
+                "detail": (
+                    f"Karnede bu derste {s['questions']} soru var, okunan {t['n']} soru. "
+                    + ("Bazı sorular okunamamış olabilir — eksik soruları elle ekle ya da PDF'i kontrol et."
+                       if t["n"] < s["questions"] else
+                       "Fazla okunan satırlar olabilir — tekrar eden soru numaralarını kontrol et.")
+                ),
+            })
+            continue
+        diffs = {c: (s.get(k), t[c]) for c, k in (("d", "correct"), ("y", "wrong"), ("b", "blank"))
+                 if s.get(k) is not None and s.get(k) != t[c]}
+        if not diffs:
+            checks.append({"code": code, "label": f"{name}{sess}: karneyle uyumlu", "ok": True,
+                           "detail": f"{t['n']} soru · {t['d']} doğru · {t['y']} yanlış · {t['b']} boş"})
+            continue
+        doc_txt = " · ".join(f"{s.get(k)} {_CAT_LABEL[c]}" for c, k in
+                             (("d", "correct"), ("y", "wrong"), ("b", "blank")) if s.get(k) is not None)
+        read_txt = f"{t['d']} doğru · {t['y']} yanlış · {t['b']} boş"
+        # fazla okunan kategoride bir satır yanlış sınıflanmıştır → onlar adaydır
+        surplus = [c for c, (doc, got) in diffs.items() if got > doc]
+        missing = [c for c, (doc, got) in diffs.items() if got < doc]
+        cands = [r for r in rs if _row_cat(r) in surplus]
+        if 0 < len(cands) <= 8:
+            look = (f" Bakılacak sorular: {', '.join(str(r.get('question_no')) for r in cands)} "
+                    "— öğrencinin cevabını karneyle karşılaştır.")
+        else:
+            look = f" Bu dersin {', '.join(_CAT_LABEL[c] for c in surplus)} satırlarında öğrencinin cevabını karneyle karşılaştır."
+        what = ""
+        if surplus and missing:
+            what = (f" Muhtemelen {sum(diffs[c][1] - diffs[c][0] for c in surplus)} soru "
+                    f"{'/'.join(_CAT_LABEL[c] for c in missing)} olması gerekirken "
+                    f"{'/'.join(_CAT_LABEL[c] for c in surplus)} okundu.")
         checks.append({
-            "code": f"subject_counts:{part_tag}{normalize(s['name'])}",
-            "label": f"{s['name']} — özet ↔ soru satırları"
-                     + (f" ({s['part'].upper()})" if s.get("part") else ""),
-            "ok": ok,
-            "detail": "; ".join(parts) if parts else
-                      f"{t['n']} soru · {t['d']}D {t['y']}Y {t['b']}B",
+            "code": code,
+            "label": f"{name}{sess}: karnedeki özetle uyuşmuyor",
+            "ok": False,
+            "detail": f"Karnenin özetinde {doc_txt} yazıyor; okunan sorularda {read_txt} var.{what}{look}",
         })
     return checks
 
@@ -1318,7 +1412,6 @@ def analyze(
     stats_total = {"alias": 0, "auto": 0, "ai": 0, "none": 0}
     checks: list[dict] = []
     first_det: dict | None = None
-    guard_total = 0
     if merged.get("_merge_collapsed"):
         checks.append({
             "code": "reads_misaligned",
@@ -1405,9 +1498,8 @@ def analyze(
                 "student_answer": q.get("student_answer"),
                 "result": res,
                 "is_suspect": suspect,
+                "_guard_alt": q.get("_guard_alt") if q.get("_guard_fix") else None,
             })
-        guard_fixes = sum(1 for q in qlist if q.get("_guard_fix"))
-        guard_total += guard_fixes
 
         stats = normalize_topics(db, rows, universe=universe,
                                  subjects=subjects, topics=topics)
@@ -1477,16 +1569,29 @@ def analyze(
         })
         all_rows.extend(rows)
 
+    restored = reconcile_with_summary(merged, all_rows)
     checks = run_checks(merged, all_rows) + checks
-    if guard_total:
+    if restored:
+        checks.append({
+            "code": "blank_answer_restored",
+            "label": "Karnenin özetiyle düzeltildi",
+            "ok": True,
+            "detail": (
+                f"{_fmt_refs(restored)}: okumalardan biri cevabı boş görmüştü; "
+                "karnenin özet tablosu bu soruları doğru gösterdiği için doğru sayıldı."
+            ),
+        })
+    unresolved = [r for r in all_rows if r.get("_guard_alt") is not None]
+    if unresolved:
         checks.append({
             "code": "blank_answer_guard",
-            "label": "Boş cevap koruması",
+            "label": f"{len(unresolved)} soru boş sayıldı — kontrol et",
             "ok": False,
             "detail": (
-                f"{guard_total} soruda iki okuma öğrenci cevabında çelişti "
-                "(biri boş, diğeri doğru cevapla aynı) — bu sorular BOŞ kabul "
-                "edildi. Öğrenci o bölümü gerçekten çözdüyse satırları elle düzelt."
+                f"{_fmt_refs(unresolved)}: belge iki kez okundu; birinde öğrencinin "
+                "cevabı boş, diğerinde doğru cevapla aynı göründü. Emin olunamadığı "
+                "için boş sayıldı. Öğrenci bu soruları işaretlediyse "
+                "Sonuç'u “Doğru” yap."
             ),
         })
 
