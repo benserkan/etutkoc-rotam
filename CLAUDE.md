@@ -238,6 +238,26 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
     Logaritma fasikülünü yükle + Bilgi Sarmal Problemler taramasını kontrol et →
     ardından ilgili satırı düzenleyicide kitaba bağla (etkinlik rutini kitaplı
     rutine döner, testler ölçüme girer).
+- **RUTİN GÜVENCESİ — CANLI (2026-09-30, commit `1ff1eb9`, migration YOK):** Zeynep
+  #164 vakası: Cuma Geometri rutinine düzenleyicide 13 girilmişti → "Dik ve Özel
+  Üçgenler +1 · 0/13"; adedi boş karışık Türkçe rutini koçun KALEM-BAŞI alışkanlığını
+  (1) alıp günde 1 test veriyordu; Cuma Türkçe satırı eski serbest metinden kitapsız
+  kalmıştı (Diğer). Düzeltme: `ROUTINE_DEFAULT_COUNT=3` (boş adetli rutin) ·
+  `ROUTINE_WARN_COUNT=6` (düzenleyicide kırmızı uyarı + kayıt onayı) · accept-routine
+  `dry_run` (yazma döngüsü çalışır, işlem geri alınır) → iki rutin düğmesi önce gün gün
+  ÖNİZLEME penceresi açar, onaysız görev yazılmaz. Zeynep iskeleti elle düzeltildi
+  (yedek `pre_fix164_20260930_1934.dump`), 1-7 Ekim taslakları silindi; canlı
+  önizleme her gün 3 test. Aynı gün: çıktılar çok kalemli görevde tüm bölümleri basar,
+  ızgara ipucu tekrarı + ızgara ad kırpması kalktı. smoke rutin 20/20 · live 15/15 · 12/12.
+  **Haftadan iskelet (commit `7db1073`):** serbest metin, aynı derste kitaplı rutinin
+  kitabını ayırt edici kelimeyle işaret ediyorsa o rutine bağlanır (`_label_points_to_book`;
+  '345 Sıfır Risk' gibi ayrı kaynak kitapsız kalır); günlük adet en sık değer, >6 → 3;
+  düzenleyicide kitapsız rutin uyarısı. **Konuyu iki kaynakta bitir (commit `8d93439`,
+  migration YOK):** `routine_mode='iki_kaynak'` + `second_book_id` → `_two_source_chain`
+  (ana kaynak sırası, konunun son bölümünden sonra 2. kaynakta aynı topic_id bölümleri,
+  sınırsız); konu satırında 2. kaynak artık OTOMATİK ilk öneri (source_choice kalktı) ve
+  2. kaynakta konu bitince ana kaynağa döner (`_primary_after_topic`); aynı gün aynı derste
+  rutin varsa çapa (okul/dershane) hayaleti bastırılır. smoke `test_api_v2_skeleton_two_source` 8/8.
 - **Video Sepeti prod düzeltmesi (2026-09-26, commit `e025ecf`, CANLI):** Cafer SET
   (öğrenci #163) liste getiremedi (import 503) — prod'da YouTube anahtarı YOKTU.
   Anahtar prod `system_secrets`'e taşındı (değeri yazdırılmadan; prod'dan YouTube
