@@ -1,0 +1,174 @@
+{
+ "name": "Bilgi Sarmal 32'li TYT Problemler Denemesi",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Matematik",
+ "type": "brans_denemesi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Deneme 1 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 2 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 3 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 4 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 5 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 6 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 7 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 8 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 9 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 10 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 11 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 12 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 13 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 14 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 15 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 16 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 17 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 18 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 19 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 20 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 21 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 22 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 23 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 24 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 25 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 26 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 27 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 28 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 29 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 30 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 31 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 32 (12 soru)",
+   "test_count": 1,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Metin katmanından: 32 deneme (Deneme - 1..32 kesintisiz), her biri 'Bu testte 12 soru vardır'; deneme başına 3-4 sayfa; sonda cevap anahtarı. Branş denemesi → test hacmine değil deneme sayısına girer. Problemler karma → müfredat eşleştirmesi yok."
+ ]
+}

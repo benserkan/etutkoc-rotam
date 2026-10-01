@@ -43,6 +43,8 @@ class SkeletonBookOption(BaseModel):
     book_type: str | None = None
     is_bank: bool = False
     has_problems: bool = False
+    # Deneme kitabı: öneri 'sıradaki deneme' (kaldığı yerden sırayla)
+    is_deneme: bool = False
 
 
 class SkeletonPeriodItem(BaseModel):

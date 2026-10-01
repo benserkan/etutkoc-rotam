@@ -957,10 +957,10 @@ function RowCard({
               {kind === "routine" ? "Kitap yok — serbest metin" : "Belirtme — herhangi bir kaynak"}
             </option>
             {books.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-                {b.is_bank ? "" : " (soru bankası değil)"}
-              </option>
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                  {b.is_deneme ? " (deneme — sırayla)" : b.is_bank ? "" : " (soru bankası değil)"}
+                </option>
             ))}
           </select>
         </Field>
@@ -986,7 +986,7 @@ function RowCard({
           </Field>
         ) : null}
 
-        {kind === "routine" && row.book_id ? (
+        {kind === "routine" && row.book_id && !current?.is_deneme ? (
           <Field label="Nasıl ilerlesin">
             <select
               value={row.routine_mode ?? "sirali"}
@@ -1097,6 +1097,10 @@ function rowSummary(
     ? `günde ${row.default_count} test`
     : "test sayısı alışkanlığına göre otomatik";
   const kind = rowKind(row);
+  if (book?.is_deneme && kind !== "routine") {
+    const n = row.default_count || 1;
+    return `${when}: ${book.name} kitabından sıradaki deneme (kaldığı yerden) · günde ${n} deneme. Denemeler test sayısına değil deneme sayısına yazılır.`;
+  }
   if (kind === "routine") {
     if (!book) {
       return row.label?.trim()
@@ -1107,6 +1111,9 @@ function rowSummary(
       return `${when}: ${book.name} kitabından yalnız problemler, ${
         row.routine_mode === "karma" ? "her gün farklı bölümlerden" : "kaldığı yerden sırayla"
       } · ${cnt}. Problemler bitince sıradaki soru bankasının problemlerine geçer.`;
+    }
+    if (book.is_deneme) {
+      return `${when}: ${book.name} kitabından her gün sırayla ${row.default_count || 1} deneme (kaldığı yerden). Denemeler test sayısına değil deneme sayısına yazılır.`;
     }
     if (row.routine_mode === "iki_kaynak") {
       const sec2 = row.second_book_id

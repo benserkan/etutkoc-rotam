@@ -61,6 +61,8 @@ export interface SkeletonBookOption {
   /** Yalnız soru bankası ana / 2. kaynak / problem kaynağı olabilir */
   is_bank?: boolean;
   has_problems?: boolean;
+  /** Deneme kitabı: öneri "sıradaki deneme" (kaldığı yerden sırayla) */
+  is_deneme?: boolean;
 }
 
 export interface CapacityItem {

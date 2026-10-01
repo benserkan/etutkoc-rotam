@@ -46,7 +46,6 @@ from app.models.weekly_skeleton import (
     WeeklySkeletonSlot,
 )
 from app.services import topic_closure
-from app.services.gorev_stats import is_test_book
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +60,8 @@ ROUTINE_MIN_DAYS = 4
 ROUTINE_DEFAULT_COUNT = 3
 # Bu adedin üstündeki günlük rutin olağandışı sayılır (düzenleyici + önizleme uyarır).
 ROUTINE_WARN_COUNT = 6
+# Deneme kitabı rutininde adet boşsa günde 1 deneme (3 değil).
+DENEME_BOOK_TYPES = ("brans_denemesi", "genel_deneme")
 WEAK_MIN_EXAM_WRONG = 2
 # Ders başına en çok kaç 'yeni konu' çipi (her biri FARKLI kitaptan). F1c
 # backtest'iyle seçilir (scripts/backtest_skeleton_chips.py --new-chips N).
@@ -161,8 +162,8 @@ def _load_sections(db: Session, student_id: int) -> dict[int, _Sec]:
     )
     out: dict[int, _Sec] = {}
     for sid, bid, label, order, tid, tc, book, comp, res in rows:
-        if not is_test_book(book):
-            continue
+        # Deneme kitapları da yüklenir (2026-10-01): satırın kaynağı olabilir
+        # (her gün sırayla N deneme). Konu önerisi ipliklerine KARIŞMAZ (build_chips).
         out[sid] = _Sec(
             id=sid, book_id=bid, book_name=book.name, subject_id=book.subject_id,
             label=label or "", order=order or 0, topic_id=tid,
@@ -495,6 +496,7 @@ def build_chips(
     hist = [
         h for h in ctx.history.get(subject_id, [])
         if 0 <= (d - h[0]).days <= THREAD_WINDOW_DAYS and h[2] not in exclude
+        and not _is_deneme_sec(ctx, h[2])
     ]
     hist.sort(key=lambda h: (h[0], h[1]), reverse=True)
     seen_threads: set[int] = set()
@@ -650,6 +652,18 @@ def build_chips(
     for i, c in enumerate(chips, start=1):
         c["rank"] = i
     return chips
+
+
+def _is_deneme_sec(ctx: _Ctx, sid: int) -> bool:
+    sec = ctx.secs.get(sid)
+    return sec is not None and sec.book_type in DENEME_BOOK_TYPES
+
+
+def _is_deneme_book(ctx: _Ctx, book_id: int | None) -> bool:
+    return bool(
+        book_id and ctx.by_book.get(book_id)
+        and ctx.by_book[book_id][0].book_type in DENEME_BOOK_TYPES
+    )
 
 
 def _last_used(ctx: _Ctx, d: date, pred) -> _Sec | None:
@@ -869,6 +883,8 @@ def _routine_reason(ctx: _Ctx, slot: WeeklySkeletonSlot, items: list[tuple[_Sec,
         return f"{head} · {first.book_name}" + (
             f" ({first.label} bitince {items[-1][0].label})" if len(items) > 1 else ""
         )
+    if first.book_type in DENEME_BOOK_TYPES:
+        return "sıradaki deneme (kaldığı yerden sırayla)"
     if slot.routine_mode == "karma":
         return f"rutin · karışık: {len(items)} farklı bölüm"
     if slot.routine_mode == "iki_kaynak":
@@ -1096,11 +1112,14 @@ def build_ghosts(
             # hayalette sona atılır (aynı kitaptan iki satır aynı konuyu önermesin).
             shown_first: set[int] = set()
             for s in unfilled:
+                is_deneme_book = _is_deneme_book(ctx, s.book_id)
                 fallback_q = s.default_count or (
-                    ROUTINE_DEFAULT_COUNT if s.is_routine else _default_quantity(db, ctx, subj)
+                    1 if is_deneme_book
+                    else ROUTINE_DEFAULT_COUNT if s.is_routine
+                    else _default_quantity(db, ctx, subj)
                 )
                 chips: list[dict] = []
-                if s.is_routine and s.book_id:
+                if (s.is_routine or is_deneme_book) and s.book_id:
                     rc = _routine_chip(ctx, s, d, fallback_q)
                     chips = [rc] if rc else []
                 if not chips and not (s.is_routine and s.label and not s.book_id):

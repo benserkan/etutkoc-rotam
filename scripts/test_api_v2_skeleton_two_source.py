@@ -98,7 +98,9 @@ def main() -> int:
                      type=BookType.SORU_BANKASI)
             Q = Book(name=f"{PFX} 3D Geometri", teacher_id=coach.id, subject_id=geo.id,
                      type=BookType.SORU_BANKASI)
-            db.add_all([P, Q])
+            DN = Book(name=f"{PFX} 32'li Problem Denemesi", teacher_id=coach.id,
+                      subject_id=geo.id, type=BookType.BRANS_DENEMESI)
+            db.add_all([P, Q, DN])
             db.flush()
             secs = {}
             for key, book, label, n, order, topic in [
@@ -107,6 +109,8 @@ def main() -> int:
                 ("a", Q, "Dik Üçgen", 3, 0, t1),
                 ("x", Q, "Karma Tekrar", 2, 1, None),
                 ("b", Q, "İkizkenar", 2, 2, t2),
+                ("d1", DN, "Deneme 1 (12 soru)", 1, 0, None),
+                ("d2", DN, "Deneme 2 (12 soru)", 1, 1, None),
             ]:
                 sec = BookSection(book_id=book.id, label=label, order=order, test_count=n,
                                   topic_id=topic.id if topic else None)
@@ -114,7 +118,7 @@ def main() -> int:
                 db.flush()
                 secs[key] = sec
             sbs = {}
-            for book in (P, Q):
+            for book in (P, Q, DN):
                 sbs[book.id] = StudentBook(student_id=st.id, book_id=book.id)
                 db.add(sbs[book.id])
             db.flush()
@@ -129,7 +133,7 @@ def main() -> int:
             db.add(progA)
             db.commit()
             ids.update(coach=coach.id, st=st.id, geo=geo.id, P=P.id, Q=Q.id,
-                       topics=[t1.id, t2.id], books=[P.id, Q.id],
+                       topics=[t1.id, t2.id], books=[P.id, Q.id, DN.id], DN=DN.id,
                        sbs=[s.id for s in sbs.values()], S={k: v.id for k, v in secs.items()},
                        progA=progA.id, sbP=sbs[P.id].id, sbQ=sbs[Q.id].id)
 
@@ -229,6 +233,45 @@ def main() -> int:
         check("7. iki_kaynak biçimi 2. kaynaksız → 422 second_required",
               bad.status_code == 422 and bad.json()["detail"]["code"] == "second_required",
               f"{bad.status_code} {bad.text[:200]}")
+
+        # 8 — deneme kitabı: yalnız rutinde kaynak, adet boşsa günde 1 deneme, sırayla
+        opts = c.get(base).json()["books"]
+        dn_opt = next((b for b in opts if b["id"] == ids["DN"]), None)
+        check("8a. deneme kitabı kaynak listesinde (is_deneme işaretli)",
+              bool(dn_opt and dn_opt["is_deneme"]), str(dn_opt))
+        r8 = c.post(base, json={"slots": [{
+            "weekday": wd, "period": None, "subject_id": ids["geo"], "position": 0,
+            "is_routine": True, "default_count": None, "book_id": ids["DN"],
+            "routine_mode": "karma"}]})
+        p8 = preview(today, today + timedelta(days=7))
+        got8 = [secmap(x) for x in p8] if isinstance(p8, list) else p8
+        check("8b. deneme rutini kaydedilir · biçim sırayla · adet boş → günde 1 deneme",
+              r8.status_code == 200 and r8.json()["data"]["slots"][0]["routine_mode"] == "sirali"
+              and got8 == [[("Deneme 1 (12 soru)", 1)], [("Deneme 2 (12 soru)", 1)]],
+              f"{r8.status_code} {got8}")
+        r8c = c.post(base, json={"slots": [{
+            "weekday": wd, "period": None, "subject_id": ids["geo"], "position": 0,
+            "is_routine": False, "is_anchor": True, "default_count": None, "book_id": ids["DN"]}]})
+        g8 = c.get(f"{base}/ghosts", params={"start": today.isoformat(), "end": today.isoformat()}).json()
+        ch8 = (g8["days"][0]["ghosts"] or [{}])[0].get("chips", [])
+        check("8c. deneme kitabı okul/dershane (ve konu) satırında da kaynak · öneri sıradaki deneme (1)",
+              r8c.status_code == 200 and bool(ch8)
+              and [(it["section_label"], it["count"]) for it in (ch8[0].get("items") or [])]
+              == [("Deneme 1 (12 soru)", 1)] and "deneme" in ch8[0]["reason"],
+              f"{r8c.status_code} {ch8[:1]}")
+        # 8d — deneme bölümleri başka konu satırlarının önerisine sızmaz
+        with SessionLocal() as db:
+            t = Task(student_id=ids["st"], date=yday, type=TaskType.TEST, title="x", is_draft=False)
+            db.add(t)
+            db.flush()
+            db.add(TaskBookItem(task_id=t.id, book_id=ids["DN"], book_section_id=S["d1"],
+                                planned_count=1, completed_count=0))
+            db.commit()
+        save([topic_slot])
+        g8d = c.get(f"{base}/ghosts", params={"start": today.isoformat(), "end": today.isoformat()}).json()
+        ch8d = g8d["days"][0]["ghosts"][0]["chips"]
+        check("8d. deneme bölümü Orijinal konu satırının önerilerine sızmaz",
+              not any(x["book_id"] == ids["DN"] for x in ch8d), str([x["section_label"] for x in ch8d]))
     finally:
         with SessionLocal() as db:
             if ids.get("st"):

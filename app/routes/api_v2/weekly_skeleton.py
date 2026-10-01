@@ -96,14 +96,20 @@ def _subject_options(db: Session, student: User, coach_id: int) -> list[Subject]
 
 
 def _book_options(db: Session, student: User) -> list[Book]:
-    """Satıra bağlanabilecek kitaplar: öğrencinin arşivlenmemiş TEST kitapları."""
+    """Satıra bağlanabilecek kitaplar: öğrencinin arşivlenmemiş TÜM kitapları.
+    Deneme kitabı (branş/genel deneme) her satır türünde kaynak olabilir; öneri
+    'sıradaki deneme' olur (kaldığı yerden sırayla)."""
     books = (
         db.query(Book)
         .join(StudentBook, StudentBook.book_id == Book.id)
         .filter(StudentBook.student_id == student.id, StudentBook.archived_at.is_(None))
         .all()
     )
-    return sorted((b for b in books if is_test_book(b)), key=lambda b: b.name)
+    return sorted(books, key=lambda b: b.name)
+
+
+def _is_deneme(b: Book) -> bool:
+    return not is_test_book(b)
 
 
 def _is_bank(b: Book) -> bool:
@@ -164,7 +170,7 @@ def _build_response(
         SkeletonBookOption(
             id=b.id, name=b.name, subject_id=b.subject_id,
             book_type=getattr(b.type, "value", None), is_bank=_is_bank(b),
-            has_problems=b.id in prob_books,
+            has_problems=b.id in prob_books, is_deneme=_is_deneme(b),
         )
         for b in book_opts
     ]
@@ -220,6 +226,7 @@ def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[d
     opts = _book_options(db, student)
     book_subj = {b.id: b.subject_id for b in opts}
     banks = {b.id for b in opts if _is_bank(b)}
+    denemes = {b.id for b in opts if _is_deneme(b)}
     out = []
     for i, s in enumerate(slots):
         if s.subject_id not in allowed:
@@ -230,6 +237,8 @@ def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[d
             if book_subj[s.book_id] != s.subject_id:
                 raise _err(422, "book_subject_mismatch", "Kitap satırın dersine ait değil.")
         mode = s.routine_mode or None
+        if s.book_id in denemes and s.is_routine:
+            mode = "sirali"  # deneme rutini: her gün sırayla (karışık / iki kaynak yok)
         if mode is not None and mode not in ROUTINE_MODES:
             raise _err(422, "bad_routine_mode",
                        "Rutin biçimi 'sirali', 'karma' ya da 'iki_kaynak' olmalı.")
