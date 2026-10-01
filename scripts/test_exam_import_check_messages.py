@@ -78,5 +78,29 @@ c = run_checks({"subjects": [{"name": "KİMYA", "questions": 7, "correct": 7}]},
                [row("KİMYA", i, "A", "A", EQ_RESULT_DOGRU) for i in range(1, 6)])[0]
 check("4 soru sayısı mesajı", "Karnede bu derste 7 soru var, okunan 5 soru" in c["detail"], str(c))
 
-print(f"\n{9 - len(FAILS)}/9 passed")
+# 5) iptal edilen soru (anahtar X) doğru sayılır
+from app.services.exam_import_service import _derive_result
+check("5 iptal sorusu (DC=X, ÖC boş) doğru", _derive_result(
+    {"correct_answer": "X", "student_answer": None, "result": None})[0] == EQ_RESULT_DOGRU)
+
+# 6) metin katmanı: dijital PDF'te alınır, boş/taranmış PDF'te atlanır
+from app.services.ai_exam_import import pdf_text_layer
+try:
+    import pymupdf
+except ImportError:
+    import fitz as pymupdf
+doc = pymupdf.open()
+pg = doc.new_page()
+y = 40
+for i in range(1, 41):
+    pg.insert_text((40, y), f"{i}  Paragrafta Ana Dusunce  C  {'C' if i % 3 else 'a'}", fontsize=8)
+    y += 18
+digital = doc.tobytes()
+blank = pymupdf.open()
+blank.new_page()
+check("6a dijital PDF → metin katmanı alındı", (pdf_text_layer(digital) or "").count("Paragrafta") == 40)
+check("6b metinsiz PDF → None (yalnız görüntü)", pdf_text_layer(blank.tobytes()) is None)
+check("6c bozuk dosya → None", pdf_text_layer(b"not a pdf") is None)
+
+print(f"\n{13 - len(FAILS)}/13 passed")
 raise SystemExit(1 if FAILS else 0)

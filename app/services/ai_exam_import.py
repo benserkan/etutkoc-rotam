@@ -83,16 +83,73 @@ YALNIZ şu JSON nesnesini döndür:
 }"""
 
 
+_TEXT_LAYER_MAX_CHARS = 60_000
+
+_TEXT_LAYER_PROMPT = """
+
+EK KAYNAK — BU PDF'İN METİN KATMANI (aşağıda). Belge bir web sayfasından
+yazdırılmış; metin, sayfada yazan değerlerin BİREBİR kendisidir. Görüntüde satır
+kayması, sayfa sonunda kaybolan/çift görünen satır olabilir — hücre değerlerini
+(soru no, konu, doğru cevap, öğrenci cevabı) ve satır sayısını METİNDEN doğrula:
+- Metinde bir soru satırı sırasıyla gelir: soru no → konu → doğru cevap →
+  öğrenci cevabı. Öğrenci cevabı satırı YOKSA (bir sonraki satır yeni soru no'su
+  ya da başlık ise) öğrenci o soruyu BOŞ bırakmıştır → student_answer=null.
+  Boşluğu komşu satırın cevabıyla DOLDURMA.
+- Küçük harfli öğrenci cevabı (örn. "a") yanlış cevaptır; harfi büyük yaz.
+- Doğru cevap "X" ise soru iptal edilmiştir; correct_answer="X" yaz.
+- Sayfa sonu bir soruyu bölmez; her (ders, soru no) çiftini YALNIZ BİR KEZ yaz,
+  hiçbirini atlama. Ders başlıkları metinde tablonun önünde ya da arkasında
+  görünebilir; soru numarasının 1'e dönmesi yeni ders demektir — ders sırasını
+  ve soru sayılarını özet tablosundan al.
+
+--- METİN KATMANI BAŞLANGICI ---
+{text}
+--- METİN KATMANI SONU ---"""
+
+
+def pdf_text_layer(pdf_bytes: bytes) -> str | None:
+    """PDF'in metin katmanı (web'den yazdırılmış karnelerde dolu). Taranmış
+    belgede ya da okunamazsa None — okuma yalnız görüntüyle devam eder."""
+    try:
+        try:
+            import pymupdf
+        except ImportError:  # eski sürüm yalnız 'fitz' adını taşır
+            import fitz as pymupdf
+        doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+        text = "\n".join(p.get_text() for p in doc)
+        doc.close()
+    except Exception:
+        return None
+    text = "\n".join(line.strip() for line in text.splitlines() if line.strip())
+    # anlamlı metin yoksa (taranmış / yalnız başlık) kullanılmaz
+    if len(text) < 400 or sum(ch.isdigit() for ch in text) < 50:
+        return None
+    return text[:_TEXT_LAYER_MAX_CHARS]
+
+
 def read_exam_pdf(pdf_base64: str, *, prefer_fast: bool = False) -> dict[str, Any]:
     """Tek Gemini okuması → yapılandırılmış dict.
 
     prefer_fast=True → AYNI ücretli anahtarla ÖNCE flash denenir (KVKK nötr;
     yalnız model sırası değişir). AIInvalidResponse/AIServiceUnavailable fırlatır.
+
+    PDF'in metin katmanı varsa istemde EK KAYNAK olarak verilir (2026-10-01,
+    Özdebir karnesi): yalnız görüntüden okunan tablolarda boş hücre komşu satıra
+    kayıyor, sayfa sonundaki satır kayboluyordu; metin bu hataları ortadan kaldırır.
     """
+    import base64
+
+    prompt = _READ_PROMPT
+    try:
+        layer = pdf_text_layer(base64.b64decode(pdf_base64))
+    except Exception:
+        layer = None
+    if layer:
+        prompt = _READ_PROMPT + _TEXT_LAYER_PROMPT.replace("{text}", layer)
     raw = gemini.generate(
         [
             gemini.inline_part(pdf_base64, PDF_MIME),
-            gemini.text_part(_READ_PROMPT),
+            gemini.text_part(prompt),
         ],
         personal_data=True,
         json_mode=True,

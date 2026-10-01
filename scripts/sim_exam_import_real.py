@@ -48,6 +48,13 @@ def main() -> int:
         finally:
             db.rollback()
 
+    import os as _os
+    if _os.environ.get("SIM_DUMP"):
+        import json as _json
+        Path(_os.environ["SIM_DUMP"]).write_text(
+            _json.dumps({"rows": d["rows"], "checks": d["checks"]}, ensure_ascii=False, default=str),
+            encoding="utf-8")
+
     print("\n=== KİMLİK/TESPİT ===")
     print(f"  başlık   : {d['title']}")
     print(f"  tarih    : {d['exam_date']} · sınıf ipucu: {d['grade_hint']}")

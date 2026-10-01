@@ -950,12 +950,21 @@ def _summary_agreement(read: dict) -> int:
     return score
 
 
+from app.services.name_format import format_person_name  # noqa: E402
+
+IPTAL_KEYS = {"X", "İPTAL", "IPTAL"}
+
+
 def _derive_result(row: dict) -> tuple[str | None, bool]:
     """DC/ÖC'den sonucu türet — sembol okumasından DAHA güvenilir.
 
     Dönen: (nihai sonuç, sembol-türetme çelişkisi var mı).
     """
     dc, oc, res = row.get("correct_answer"), row.get("student_answer"), row.get("result")
+    # iptal edilen soru (anahtar "X"/"İPTAL") herkese doğru sayılır — ÖSYM
+    # uygulaması; yayınevi karneleri de özet tablosunda böyle sayar (Özdebir)
+    if dc is not None and dc.upper() in IPTAL_KEYS:
+        return EQ_RESULT_DOGRU, False
     if dc is not None:
         derived = EQ_RESULT_BOS if oc is None else (
             EQ_RESULT_DOGRU if oc == dc else EQ_RESULT_YANLIS
@@ -988,7 +997,8 @@ def _fmt_refs(rows: list[dict]) -> str:
     """'Fizik 7, 9 · Kimya 3' — ders başlığıyla gruplanmış soru numaraları."""
     groups: dict[str, list[str]] = {}
     for r in rows:
-        name = _subject_label(r).title() if _subject_label(r).isupper() else _subject_label(r)
+        raw = _subject_label(r)
+        name = (format_person_name(raw) or raw) if raw.isupper() else raw
         groups.setdefault(name or "Soru", []).append(
             str(r.get("question_no")) if r.get("question_no") is not None else "?")
     return " · ".join(f"{k} {', '.join(v)}" for k, v in groups.items())
@@ -1064,7 +1074,7 @@ def run_checks(read: dict, rows: list[dict]) -> list[dict]:
     checks: list[dict] = []
     for s, rs in _summary_groups(read, rows):
         t = _tally(rs)
-        name = s["name"].title() if s["name"].isupper() else s["name"]
+        name = (format_person_name(s["name"]) or s["name"]) if s["name"].isupper() else s["name"]
         part_tag = f"{s.get('part')}:" if s.get("part") else ""
         code = f"subject_counts:{part_tag}{normalize(s['name'])}"
         sess = f" ({s['part'].upper()})" if s.get("part") else ""
