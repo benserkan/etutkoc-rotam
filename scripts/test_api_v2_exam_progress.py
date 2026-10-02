@@ -10,7 +10,7 @@ from sqlalchemy import delete as sa_delete  # noqa: E402
 
 from app.database import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import AppSetting, AuditLog, ExamResult, SuspiciousIp, User, UserRole  # noqa: E402
+from app.models import AppSetting, AuditLog, ExamResult, ExamTarget, SessionAgendaItem, SuspiciousIp, User, UserRole  # noqa: E402
 from app.models.exam_result import ExamSection  # noqa: E402
 from app.services.rate_limit import get_login_limiter  # noqa: E402
 from app.services.security import hash_password  # noqa: E402
@@ -149,10 +149,31 @@ try:
     # hedef kaldır
     r = ct.post(f"/api/v2/teacher/students/{sid}/exam-targets", json={"section": "tyt", "target_net": None})
     chk("27 hedef kaldırıldı", r.status_code == 200 and "tyt" not in r.json()["targets"])
+
+    # 28-31: kalıcı tablolar + yetim koruması (2026-10-02)
+    with SessionLocal() as db:
+        kv = db.query(AppSetting).filter(AppSetting.key.like(f"%:{sid}")).count()
+        chk("28 app_settings'e öğrenci anahtarı yazılmıyor", kv == 0)
+        chk("29 kuyruk kaydı session_agenda_items tablosunda",
+            db.query(SessionAgendaItem).filter(SessionAgendaItem.student_id == sid).count() == 1)
+    fk = {c.name: list(c.foreign_keys)[0].ondelete for t in (ExamTarget.__table__, SessionAgendaItem.__table__)
+          for c in t.columns if c.name == "student_id"}
+    chk("30 iki tabloda student_id CASCADE (öğrenci silinince yetim kalmaz)", set(fk.values()) == {"CASCADE"})
+    from app.services.exam_progress import set_target
+    with SessionLocal() as db:
+        set_target(db, sid, section="tyt", target_net=60, actor=db.get(User, tid)); db.commit()
+    from app.services.demo_seed import _demo_closure  # noqa: F401 (silme yolu var mı)
+    with SessionLocal() as db:
+        # demo silme yolunun kullandığı açık silme (SQLite'ta FK kapalı)
+        db.query(SessionAgendaItem).filter(SessionAgendaItem.student_id == sid).delete()
+        db.query(ExamTarget).filter(ExamTarget.student_id == sid).delete(); db.commit()
+        chk("31 silme sonrası kayıt kalmadı",
+            db.query(ExamTarget).filter(ExamTarget.student_id == sid).count() == 0)
 finally:
     with SessionLocal() as db:
         db.execute(sa_delete(ExamResult).where(ExamResult.id.in_(exam_ids)))
-        db.execute(sa_delete(AppSetting).where(AppSetting.key.in_([f"exam_target:{sid}", f"agenda_queue:{sid}"])))
+        db.execute(sa_delete(SessionAgendaItem).where(SessionAgendaItem.student_id == sid))
+        db.execute(sa_delete(ExamTarget).where(ExamTarget.student_id == sid))
         db.execute(sa_delete(AuditLog).where(AuditLog.actor_id.in_([tid, t2id, sid])))
         db.execute(sa_delete(SuspiciousIp).where(SuspiciousIp.ip == "testclient"))
         db.execute(sa_delete(User).where(User.id.in_([sid, tid, t2id])))

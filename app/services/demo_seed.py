@@ -837,6 +837,9 @@ def delete_demo_session(db: Session, *, seed_id: str) -> dict:
             .filter(ExamResult.student_id.in_(user_ids)).all()
         ]
         counts["exams"] = len(exam_ids)
+        from app.models.exam_progress import ExamTarget as _ET, SessionAgendaItem as _SAI
+        db.execute(sa_delete(_SAI).where(_SAI.student_id.in_(user_ids)))
+        db.execute(sa_delete(_ET).where(_ET.student_id.in_(user_ids)))
         if exam_ids:
             db.execute(sa_delete(_ERQ).where(_ERQ.exam_result_id.in_(exam_ids)))
             db.execute(sa_delete(ExamResult).where(ExamResult.id.in_(exam_ids)))

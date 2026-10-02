@@ -25,6 +25,9 @@ cd "$REPO_ROOT"
 echo "==> 1/4  git pull"
 git pull --ff-only
 
+echo "    migration zinciri kontrolü (tek head olmalı)"
+python3 scripts/check_migration_heads.py || { echo "    [DUR] migration zinciri bozuk — deploy yapılmadı"; exit 1; }
+
 cd "$DEPLOY_DIR"
 
 echo "==> 2/4  DB yedeği (migration öncesi)"

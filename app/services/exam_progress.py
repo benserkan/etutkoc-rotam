@@ -6,32 +6,27 @@ Bileşenler:
   - build_progress_report : tek sınav türünde (TYT/AYT/LGS ayrı ölçek) gelişim
     özeti + ders gidişatı + hedef farkı + KURAL TABANLI yorum + aksiyon planı.
     AI YOK, kredi YOK; her cümle kayıtlı veriden türer (sayı uydurulmaz).
-  - hedef net             : öğrenci × tür başına hedef (+ tarih, ders hedefleri).
-  - seans gündem kuyruğu  : aksiyonlar "seansa ekle" ile kuyruğa düşer, yeni
-    seans formunda işaretli gelir, seans kaydedilince kuyruktan düşer.
-  - öğrenciyle paylaşım   : koçun ÖĞRENCİYE yazdığı not (koça özel `note`tan
-    AYRI) + paylaşım anı; öğrenci denemelerim ekranında görür, push gider.
+  - hedef net             : `exam_targets` (öğrenci × tür; öğrenci CASCADE).
+  - seans gündem kuyruğu  : `session_agenda_items` (öğrenci CASCADE) — "seansa
+    ekle" ile düşer, yeni seans formunda işaretli gelir, seans kaydedilince silinir.
+  - öğrenciyle paylaşım   : koçun ÖĞRENCİYE notu (koça özel `note`tan AYRI),
+    denemenin `analysis_meta["student_share"]` alanında — deneme silinince gider.
 
-Saklama (migration'sız, 2026-10-02): hedef ve kuyruk `app_settings` JSON
-anahtarlarında (`exam_target:{öğrenci}`, `agenda_queue:{öğrenci}`), paylaşım
-`exam_results.analysis_meta["student_share"]` içinde. app_settings'in 60 sn
-süreç önbelleği BURADA kullanılmaz — her okuma DB'den (çok işçili sunucuda
-koçun az önce kaydettiği hedef başka işçide eski görünmesin).
+Öğrenci silinince bu kayıtların hiçbiri yetim kalmaz (2026-10-02; ilk sürüm
+app_settings anahtarlarıydı, migration l3m6p9q0p44l taşıdı).
 """
 from __future__ import annotations
 
 import json
-import secrets
 from datetime import date, datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.models import AppSetting, ExamResult, User
+from app.models import ExamResult, User
+from app.models.exam_progress import ExamTarget, SessionAgendaItem
 from app.models.curriculum import EXAM_SECTION_LABELS, ExamSection
 from app.models.exam_result import section_penalty
 
-TARGET_KEY = "exam_target:{sid}"
-QUEUE_KEY = "agenda_queue:{sid}"
 QUEUE_MAX = 40
 SHARE_NOTE_MAX = 1000
 
@@ -43,33 +38,12 @@ WRONG_HIGH_RATIO = 0.30    # yanlış / (doğru + yanlış)
 STALE_DAYS = 21            # son deneme bu kadar eskiyse ritim uyarısı
 
 
-# ---------------------------------------------------------------- KV yardımcıları
-
-def _kv_get(db: Session, key: str, default):
-    row = db.query(AppSetting).filter(AppSetting.key == key).first()
-    if row is None:
-        return default
-    try:
-        return json.loads(row.value_json)
-    except (ValueError, TypeError):
-        return default
-
-
-def _kv_set(db: Session, key: str, value, actor_id: int | None) -> None:
-    row = db.query(AppSetting).filter(AppSetting.key == key).first()
-    if value in (None, {}, []):
-        if row is not None:
-            db.delete(row)
-        return
-    if row is None:
-        row = AppSetting(key=key)
-        db.add(row)
-    row.value_json = json.dumps(value, ensure_ascii=False)
-    row.updated_by_id = actor_id
-
-
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _iso(dt: datetime | None) -> str | None:
+    return dt.isoformat() if dt else None
 
 
 # ---------------------------------------------------------------- hedef net
@@ -87,9 +61,27 @@ def _valid_section(section: str) -> ExamSection:
         raise ProgressError(422, "invalid_section", "Geçersiz sınav türü.")
 
 
+def _target_dict(t: ExamTarget, names: dict[int, str]) -> dict:
+    try:
+        subj = json.loads(t.subject_targets) if t.subject_targets else {}
+    except ValueError:
+        subj = {}
+    return {
+        "target_net": round(t.target_net, 2),
+        "target_date": t.target_date.isoformat() if t.target_date else None,
+        "subjects": subj if isinstance(subj, dict) else {},
+        "note": t.note,
+        "set_by_id": t.set_by_id,
+        "set_by_name": names.get(t.set_by_id) if t.set_by_id else None,
+        "updated_at": _iso(t.updated_at),
+    }
+
+
 def get_targets(db: Session, student_id: int) -> dict:
-    data = _kv_get(db, TARGET_KEY.format(sid=student_id), {})
-    return data if isinstance(data, dict) else {}
+    rows = db.query(ExamTarget).filter(ExamTarget.student_id == student_id).all()
+    ids = {r.set_by_id for r in rows if r.set_by_id}
+    names = {u.id: u.full_name for u in db.query(User).filter(User.id.in_(ids)).all()} if ids else {}
+    return {r.section: _target_dict(r, names) for r in rows}
 
 
 def set_target(db: Session, student_id: int, *, section: str, target_net: float | None,
@@ -97,50 +89,61 @@ def set_target(db: Session, student_id: int, *, section: str, target_net: float 
                note: str | None = None, actor: User) -> dict:
     """Hedefi kaydet; target_net None → o türün hedefi silinir."""
     sec = _valid_section(section)
-    targets = get_targets(db, student_id)
+    row = (db.query(ExamTarget)
+           .filter(ExamTarget.student_id == student_id, ExamTarget.section == sec.value).first())
     if target_net is None:
-        targets.pop(sec.value, None)
-    else:
-        if target_net < 0 or target_net > 200:
-            raise ProgressError(422, "invalid_target", "Hedef net 0-200 arasında olmalı.")
-        if target_date:
-            try:
-                date.fromisoformat(target_date)
-            except ValueError:
-                raise ProgressError(422, "invalid_date", "Geçersiz tarih (YYYY-AA-GG).")
-        clean_subj: dict[str, float] = {}
-        for k, v in (subjects or {}).items():
-            if v is None or str(k).strip() == "":
-                continue
-            fv = float(v)
-            if fv < 0 or fv > 120:
-                raise ProgressError(422, "invalid_target", "Ders hedefi 0-120 arasında olmalı.")
-            clean_subj[str(k).strip()[:80]] = round(fv, 2)
-        targets[sec.value] = {
-            "target_net": round(float(target_net), 2),
-            "target_date": target_date or None,
-            "subjects": clean_subj,
-            "note": (note or "").strip()[:300] or None,
-            "set_by_id": actor.id,
-            "set_by_name": actor.full_name,
-            "updated_at": _now_iso(),
-        }
-    _kv_set(db, TARGET_KEY.format(sid=student_id), targets, actor.id)
-    return targets
+        if row is not None:
+            db.delete(row)
+        db.flush()
+        return get_targets(db, student_id)
+    if target_net < 0 or target_net > 200:
+        raise ProgressError(422, "invalid_target", "Hedef net 0-200 arasında olmalı.")
+    td = None
+    if target_date:
+        try:
+            td = date.fromisoformat(target_date)
+        except ValueError:
+            raise ProgressError(422, "invalid_date", "Geçersiz tarih (YYYY-AA-GG).")
+    clean_subj: dict[str, float] = {}
+    for k, v in (subjects or {}).items():
+        if v is None or str(k).strip() == "":
+            continue
+        fv = float(v)
+        if fv < 0 or fv > 120:
+            raise ProgressError(422, "invalid_target", "Ders hedefi 0-120 arasında olmalı.")
+        clean_subj[str(k).strip()[:80]] = round(fv, 2)
+    if row is None:
+        row = ExamTarget(student_id=student_id, section=sec.value, target_net=0)
+        db.add(row)
+    row.target_net = round(float(target_net), 2)
+    row.target_date = td
+    row.subject_targets = json.dumps(clean_subj, ensure_ascii=False)
+    row.note = (note or "").strip()[:300] or None
+    row.set_by_id = actor.id
+    row.updated_at = datetime.now(timezone.utc)
+    db.flush()
+    return get_targets(db, student_id)
 
 
 # ---------------------------------------------------------------- seans gündem kuyruğu
 
+def _item_dict(q: SessionAgendaItem) -> dict:
+    return {"id": str(q.id), "key": q.item_key, "text": q.text, "source": q.source,
+            "exam_id": q.exam_id, "created_at": _iso(q.created_at)}
+
+
 def get_queue(db: Session, student_id: int) -> list[dict]:
-    data = _kv_get(db, QUEUE_KEY.format(sid=student_id), [])
-    return data if isinstance(data, list) else []
+    rows = (db.query(SessionAgendaItem).filter(SessionAgendaItem.student_id == student_id)
+            .order_by(SessionAgendaItem.id).all())
+    return [_item_dict(q) for q in rows]
 
 
 def add_to_queue(db: Session, student_id: int, items: list[dict], *, actor: User) -> tuple[list[dict], int]:
     """Kuyruğa ekle; aynı `key` (ya da aynı metin) zaten varsa tekrar eklenmez."""
-    queue = get_queue(db, student_id)
-    keys = {q.get("key") for q in queue if q.get("key")}
-    texts = {q.get("text") for q in queue}
+    existing = db.query(SessionAgendaItem).filter(SessionAgendaItem.student_id == student_id).all()
+    keys = {q.item_key for q in existing if q.item_key}
+    texts = {q.text for q in existing}
+    count = len(existing)
     added = 0
     for it in items:
         text = (it.get("text") or "").strip()[:400]
@@ -149,30 +152,32 @@ def add_to_queue(db: Session, student_id: int, items: list[dict], *, actor: User
         key = (it.get("key") or "").strip()[:80] or None
         if (key and key in keys) or text in texts:
             continue
-        if len(queue) >= QUEUE_MAX:
+        if count >= QUEUE_MAX:
             break
-        queue.append({
-            "id": secrets.token_hex(4),
-            "key": key,
-            "text": text,
-            "source": (it.get("source") or "exam")[:20],
-            "exam_id": it.get("exam_id"),
-            "created_at": _now_iso(),
-            "created_by_id": actor.id,
-        })
+        exam_id = it.get("exam_id")
+        if exam_id is not None:
+            ok = db.query(ExamResult.id).filter(
+                ExamResult.id == exam_id, ExamResult.student_id == student_id).first()
+            exam_id = exam_id if ok else None
+        db.add(SessionAgendaItem(student_id=student_id, created_by_id=actor.id, item_key=key,
+                                 text=text, source=(it.get("source") or "exam")[:20], exam_id=exam_id))
         added += 1
+        count += 1
         if key:
             keys.add(key)
         texts.add(text)
-    _kv_set(db, QUEUE_KEY.format(sid=student_id), queue, actor.id)
-    return queue, added
+    db.flush()
+    return get_queue(db, student_id), added
 
 
 def remove_from_queue(db: Session, student_id: int, ids: list[str], *, actor: User) -> list[dict]:
-    drop = set(ids)
-    queue = [q for q in get_queue(db, student_id) if q.get("id") not in drop]
-    _kv_set(db, QUEUE_KEY.format(sid=student_id), queue, actor.id)
-    return queue
+    int_ids = [int(i) for i in ids if str(i).isdigit()]
+    if int_ids:
+        (db.query(SessionAgendaItem)
+         .filter(SessionAgendaItem.student_id == student_id, SessionAgendaItem.id.in_(int_ids))
+         .delete(synchronize_session=False))
+    db.flush()
+    return get_queue(db, student_id)
 
 
 # ---------------------------------------------------------------- öğrenciyle paylaşım

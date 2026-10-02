@@ -276,6 +276,7 @@ from app.models.contact_request import (
     CONTACT_STATUS_NEW,
     ContactRequest,
 )
+from app.models.exam_progress import ExamTarget, SessionAgendaItem
 from app.models.exam_result import (
     ALIAS_SOURCE_AI,
     ALIAS_SOURCE_COACH,
@@ -926,4 +927,6 @@ __all__ = [
     "CoachGoogleAccount",
     "CoachingAppointment",
     "CoachingAppointmentSeries",
+    "ExamTarget",
+    "SessionAgendaItem",
 ]
