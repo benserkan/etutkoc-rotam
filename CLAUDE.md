@@ -6,6 +6,65 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## DENEME ANALİZİ Faz 1-3 — CANLI (2026-10-02)
+
+- **Faz 1** (`7b3c43a`): alt sekmeler (Genel Bakış/Net Gelişimi/Konu Analizi/Sınav Davranışı/Tüm
+  Denemeler) + deneme detayı (soru soru) + A4 karne + WhatsApp. **#169 Zeynep Ela** karne
+  satırlarıyla düzeltildi (`scripts/fix_exam_from_truth.py`, 83D 16Y 21B · 79 net) +
+  TYT Matematik **"Problemler (Karma)"** konusu (geniş "…problemler çözer" etiketi alias'la).
+- **Faz 2** (`a5f3929` + `a787b85`, migration **`l3m6p9q0p44l`**): `app/services/exam_progress.py`
+  — gelişim raporu (kural tabanlı yorum + aksiyon planı, kredisiz) · hedef net (`exam_targets`)
+  · "Seansa ekle" kuyruğu (`session_agenda_items`; yeni seans formunda işaretli gelir, kayıtta
+  silinir) · öğrenciyle paylaş (koçun ÖĞRENCİYE notu `analysis_meta.student_share`; koça özel
+  `note` öğrenciye artık hiç gitmez) · A4 gelişim raporu `/teacher/students/[id]/exams/report/print`
+  · öğrenci Denemelerim sekmeli. İlk sürüm app_settings KV'deydi (yetim kalıyordu) → tablolar,
+  öğrenci CASCADE; migration KV'yi taşıyıp siler. Test exam_progress 31/31 · canlı 25/25.
+- **Faz 3** (`70d83a2`): `app/services/exam_faz3.py` — **genel ortalama** (karne okuması
+  `subjects[].avg_net` → `score_info.averages`, ham ders adı soru satırlarından eşlenir; koç elle
+  girebilir `analysis_meta.averages_manual`, öncelikli; gerçek Gemini: ÜçDörtBeş AYT birebir,
+  ortalamasız karnede uydurma yok) · **çeldirici** (şık eğilimi, yanlışlarda şık, üst üste
+  işaretleme; koçun aynı denemeye giren öğrencileri [aynı tür + ±3 gün + normalize ad] arasında
+  soru bazında en çok seçilen yanlış; öğrenciye isim yok) · **puan tahmini** (TYT 100+net×3,3/3,4;
+  alan puanı TYT×0,4 + AYT katsayıları; LGS ağırlıklı/270×400+100; karne puanıyla kıyas —
+  Zeynep'in Özdebir karnelerinde birebir tuttu). Test exam_faz3 24/24 · canlı 13/13.
+- **Mobil Faz 2+3** (`a97e933`, OTA `45e0879c`, runtime 1.0.0): `mobile/src/lib/exam-progress.ts` +
+  `components/exams/{progress-report-card,score-estimate-card,exam-detail-sheet}.tsx`; öğrenci
+  Denemeler ekranı (koç değerlendirmesi kartı, gelişim/hedef, puan tahmini, deneme detayı +
+  çeldirici) ve koç Denemeler sekmesi (tür seçici, hedef belirle, seansa ekle, öğrenciyle paylaş,
+  genel ortalama girişi). CORS'a `X-Device-Id` eklendi (Expo web önizlemesi preflight'ta
+  düşüyordu; native etkilenmez). Canlı test Expo web 390px + gerçek backend 12/12.
+  **TEST DERSİ:** Expo web'i `EXPO_PUBLIC_API_BASE=http://localhost:8081` + backend
+  `CORS_ORIGINS`'e `http://localhost:8095` ile aç; deneme adı Puan Tahmini satırında da geçer →
+  seçici `exact=True`.
+- **Veli paneli** (`c6f3f06`, OTA `5e24037e`, migration YOK): yeni veli uçları
+  (`exam_progress.py`, `assert_parent_can_view` → bağsız 404): `/parent/students/{sid}/
+  exam-progress · score-estimate · exam-topic-analysis · exams/{eid}/questions · exams/{eid}/
+  distractors` (akran kıyası YOK, `include_peers=False`). Web `/parent/students/[id]/exams`
+  7 sekme (Genel Bakış … Puan Tahmini · Tüm Denemeler) + deneme detayı (paylaşılan
+  `ExamDetailDialog parentStudentId`); mobil `parent-child-exams` aynı kartlar. Koça özel not
+  ve öğrenciye paylaşım notu veliye gitmez, "Seansa ekle"/paylaş/ortalama girişi gizli.
+  Test exam_faz3 32/32 · canlı web+mobil 22/22.
+- **Faz 4 (2026-10-02, migration YOK):** (1) **veli deneme maili** hedef net · genel ortalama ·
+  tahmini puan kutuları + ders tablosunda "Ort." sütunu + 3 yorum cümlesi
+  (`exam_parent_summary._goal_block/_goal_lines`; puan yalnız deneme o türün SON denemesiyse;
+  koç önizlemede `include_goal` ile kapatır; duyuru sonrası gönderilen `goal` korunur).
+  (2) **Rota** deneme paketi + sohbet: `targets` (hedef + son denemenin uzaklığı) ·
+  `general_average_net` · `karne_score` · `score_estimate`; yeni bölüm "Hedefe ne kadar yakın";
+  imzaya hedef eklendi (hedef değişince yorum bayatlar; hedefsiz öğrencide eski biçim).
+  (3) **Eşleştirme:** karma havuzda aynı adlı konu (24 çift: Basınç, Mol Kavramı…) okul
+  müfredatına çevrilir (`_prefer_school_topics`, sözlük/koç kararına dokunmaz) + TYT Türkçe/
+  AYT Edebiyat "Dil Bilgisi (Karma)" + `scripts/rematch_unmatched_exam_rows.py` (kuru çalışma
+  varsayılan; eski eşleşmemiş satırları "Satırları düzelt" yoluyla yeniden dener, elle
+  düzeltilene dokunmaz). AYT Edebiyat dil-anlatım konuları 2026-07-19'dan beri VARDI.
+  Test: `test_exam_parent_goal` 19/19 · `test_exam_import_prefer_school` 7/7 · notify 39 ·
+  commentary 20 · chat 20 · exam_import 76 · maarif 22 · faz3 32 · progress 31.
+  (`exam_wrong_bridge` 10/11 — senaryo 10 değişiklikten ÖNCE de kırmızı, ayrı iş.)
+- **ÖNLEM — `scripts/check_migration_heads.py`**: çoklu head / kopuk down_revision varsa
+  `deploy/redeploy.sh` durur (iki oturumun aynı tabana migration yazması prod açılışını düşürür).
+  **KURAL: yeni migration'ın down_revision'ı daima `alembic heads` çıktısı; deploy'dan önce bekçi.**
+
+---
+
 ## KURUMSAL KİMLİK (co-branding) — CANLI (2026-09-30, commit `c8ad549`, migration YOK)
 
 - **Kural (kullanıcı):** kuruma bağlı her kullanıcıya (kurum yöneticisi, öğretmen,
@@ -3537,6 +3596,18 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   (her test 4 sayfa). İkisi de ünite konusuna deterministik eşli. + Sinan Kuzucu 8
   Matematik Kazanımmatik (prod 219) kapak + 2 içindekiler fotoğrafından: 12 konu · 46
   test (her test 4 sayfa), konular LGS ünite adlarıyla birebir → 12/12 eşli.
+- **APOTEMİ + LİMİT — 8 KİTAP CANLI (2026-10-01, prod id 239-246; JSON'lar
+  `data/kitap-katalog/{apotemi_*,limit_tyt_turkce_15x40_deneme}.json`, commit YOK):**
+  Limit TYT Türkçe 15x40 (15 deneme × 40, 16 sayfa/deneme) · Apotemi TYT Türkçe 15'li
+  (15×40) · Apotemi TYT Mat SB 11 bölüm/120 (bölümler ÇOK KONULU "Deneme - N" testleri →
+  ana konuya bağlı, Problemler bağsız) · Problemler fasikülü 24/67 · Fonksiyonlar 19/46
+  (TYT — müfredat sayfası 9-10) · Trigonometri 26/74 · Limit ve Süreklilik (2023) 12/39 ·
+  Türev 17/77. Hepsi TARANMIŞ → 6 paralel alt ajan görerek okudu (Apotemi fasikül deseni:
+  ADIM konu anlatımı + mor "Adım Pekiştirme Testi" + yeşil "Adım Güçlendirme Testi-N"
+  zinciri + turuncu "Maraton Testi-N"; açık mor "Adım Pekiştirme" kutusu ve "(Çözümler)"
+  sayfaları test DEĞİL). Eşleme elle sabit, prod `--no-map`. **YÜKLENMEDİ:** İntegral
+  (PDF yarım tarama, yalnız 1. bölüm 30 test okunabildi — tam PDF istendi) ve eski
+  Limit baskısı (maratonlar taranmamış + 2023 baskısının tekrarı).
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı

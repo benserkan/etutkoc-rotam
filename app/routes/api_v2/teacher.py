@@ -119,6 +119,7 @@ from app.routes.api_v2.schemas.common import task_video_refs, MutationResponse
 from app.routes.api_v2.schemas.teacher import (
     ExamNotifyParentsBody,
     ExamNotifyParentsResult,
+    ExamParentPreviewGoal,
     ExamParentPreviewHistory,
     ExamParentPreviewHistoryExam,
     ExamParentPreviewHistoryRow,
@@ -11458,7 +11459,7 @@ def teacher_exam_parent_preview_v2(
     sent = _sent_exam_payload(db, exam) if exam.parent_notified_at else None
     if sent:
         for key in ("narrative", "subjects", "opportunities", "history",
-                    "opportunity_total_text", "opportunity_exam_count"):
+                    "opportunity_total_text", "opportunity_exam_count", "goal"):
             if key in sent:
                 summary[key] = sent[key]
     recipients = _exam_notify_recipients(db, student.id)
@@ -11494,6 +11495,7 @@ def teacher_exam_parent_preview_v2(
                 net=float(s.get("net", 0.0)),
                 questions=int(s.get("questions", 0)),
                 unmatched=bool(s.get("unmatched", False)),
+                avg=s.get("avg"),
             )
             for s in summary.get("subjects", [])
         ],
@@ -11519,6 +11521,7 @@ def teacher_exam_parent_preview_v2(
             )
             if summary.get("history") else None
         ),
+        goal=(ExamParentPreviewGoal(**summary["goal"]) if summary.get("goal") else None),
         recipients=[ExamParentPreviewRecipient(**r) for r in recipients],
         deliverable_count=sum(1 for r in recipients if not r["blocked"]),
         already_notified=exam.parent_notified_at is not None,
@@ -11599,6 +11602,7 @@ def teacher_exam_parent_preview_html_v2(
             include_subjects=(body.include_subjects if body else True),
             include_history=(body.include_history if body else True),
             include_opportunities=(body.include_opportunities if body else True),
+            include_goal=(body.include_goal if body else True),
         )
     # Veliye özel alan yok: bu çıktı koçun elinde, abonelik linki anlamsız.
     ctx["unsubscribe_token"] = ""
@@ -11649,6 +11653,7 @@ def teacher_notify_parents_exam_v2(
     include_subjects = body.include_subjects if body else True
     include_history = body.include_history if body else True
     include_opportunities = body.include_opportunities if body else True
+    include_goal = body.include_goal if body else True
 
     if exam.parent_notified_at is not None:
         raise HTTPException(
@@ -11689,6 +11694,7 @@ def teacher_notify_parents_exam_v2(
                 narrative=narrative, include_subjects=include_subjects,
                 include_history=include_history,
                 include_opportunities=include_opportunities,
+                include_goal=include_goal,
             )
             # DİKKAT: enqueue_notification, veli tercihi kapalıyken de satır
             # yazar (status=SUPPRESSED, denetim izi). Bunu "gönderildi" saymak

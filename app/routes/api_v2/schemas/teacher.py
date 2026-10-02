@@ -2962,6 +2962,8 @@ class ExamNotifyParentsBody(BaseModel):
     include_history: bool = True
     #: "Nerede net kazanabilir?" — net fırsatı tablosu.
     include_opportunities: bool = True
+    #: Hedef net · genel ortalama · tahmini puan kutuları (2026-10-02).
+    include_goal: bool = True
 
 
 class ExamParentPreviewSubject(BaseModel):
@@ -2973,6 +2975,24 @@ class ExamParentPreviewSubject(BaseModel):
     questions: int
     #: Müfredata bağlanmamış satır (ham belge başlığı) — koç uyarılır.
     unmatched: bool = False
+    #: Denemenin bu dersteki genel ortalaması (karneden / koç girişi).
+    avg: float | None = None
+
+
+class ExamParentPreviewGoal(BaseModel):
+    """Hedef net · genel ortalama · tahmini puan (veri yoksa alan None)."""
+    target_net_text: str | None = None
+    target_reached: bool = False
+    target_gap_text: str | None = None
+    target_progress_pct: float | None = None
+    target_date_tr: str | None = None
+    avg_label: str | None = None
+    avg_total_text: str | None = None
+    avg_diff_text: str | None = None
+    avg_direction: str | None = None      # above | below | equal
+    score_label: str | None = None
+    score_text: str | None = None
+    karne_score_text: str | None = None
 
 
 class ExamParentPreviewOpportunity(BaseModel):
@@ -3048,6 +3068,8 @@ class ExamParentPreviewResponse(BaseModel):
     opportunity_exam_count: int = 0
     #: Geçmiş denemelerle karşılaştırma (aynı tür; <2 deneme varsa boş).
     history: ExamParentPreviewHistory | None = None
+    #: Hedef · ortalama · tahmini puan kutuları (yoksa None).
+    goal: ExamParentPreviewGoal | None = None
 
     recipients: list[ExamParentPreviewRecipient] = []
     #: Gerçekten gidecek veli sayısı (bastırılanlar hariç).

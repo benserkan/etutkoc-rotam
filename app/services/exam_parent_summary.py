@@ -333,6 +333,121 @@ def _subject_history(db: Session, exam: ExamResult) -> dict:
     }
 
 
+
+def _goal_block(db: Session, exam: ExamResult, subjects: list[dict]) -> dict | None:
+    """Hedef net · genel ortalama · tahmini puan (2026-10-02, koç isteği).
+
+    Veli mailinde "çocuğum nerede duruyor?" sorusunun üç cevabı:
+      · Koçun bu sınav türü için koyduğu HEDEF NET ve bu denemenin ona uzaklığı.
+      · Denemeye giren herkesin GENEL ORTALAMASI (karneden okunur / koç girer).
+      · Bu denemenin netlerinden TAHMİNİ PUAN — yalnız bu deneme o türün EN
+        SON denemesiyse (puan tahmini her türün son denemesinden hesaplanır;
+        eski bir denemenin mailine bugünün puanını yazmak yanıltır).
+    Hepsi panelde koçun/velinin gördüğü servislerden gelir (tek kaynak).
+    Hiçbiri yoksa None → mailde bölüm görünmez. Subjects'e ders ortalaması
+    (`avg`) yerinde eklenir.
+    """
+    from app.services import exam_faz3
+    from app.services.exam_progress import get_targets
+
+    out: dict = {}
+    net = float(exam.net or 0)
+
+    # --- hedef
+    try:
+        target = get_targets(db, exam.student_id).get(exam.section.value)
+    except Exception:  # noqa: BLE001 — mail hedefsiz de üretilir
+        target = None
+    if target and target.get("target_net"):
+        tnet = float(target["target_net"])
+        gap = round(tnet - net, 2)
+        out["target_net_text"] = _fmt(tnet)
+        out["target_reached"] = gap <= 0
+        out["target_gap_text"] = _fmt(abs(gap))
+        out["target_progress_pct"] = round(min(100.0, max(0.0, net / tnet * 100)), 1)
+        out["target_date_tr"] = (
+            format_tr_date(target["target_date"]) if target.get("target_date") else None
+        )
+
+    # --- genel ortalama (toplam + ders bazında)
+    try:
+        avgs = exam_faz3.averages_for_exam(exam)
+    except Exception:  # noqa: BLE001
+        avgs = None
+    if avgs:
+        by_name = avgs.get("subjects") or {}
+        for s in subjects:
+            v = by_name.get(s["name"])
+            if v is not None:
+                s["avg"] = float(v)
+                s["avg_text"] = _fmt(float(v))
+        total = avgs.get("total")
+        if total is not None:
+            diff = round(net - float(total), 2)
+            out["avg_label"] = avgs.get("label") or "Genel ortalama"
+            out["avg_total_text"] = _fmt(float(total))
+            out["avg_diff_text"] = _fmt(abs(diff))
+            out["avg_direction"] = "above" if diff > 0.25 else ("below" if diff < -0.25 else "equal")
+
+    # --- tahmini puan
+    try:
+        est = exam_faz3.score_estimate(db, exam.student) if exam.student else None
+    except Exception:  # noqa: BLE001
+        est = None
+    if est and est.get("scores"):
+        mine = [s for s in est["scores"] if exam.id in (s.get("based_on") or [])]
+        # Öğrencinin alan puanı öne; yoksa bu denemenin kendi puanı (TYT/LGS).
+        mine.sort(key=lambda s: (not s.get("is_student_track"), s.get("key") != "TYT"))
+        if mine:
+            sc = mine[0]
+            out["score_label"] = sc["label"]
+            out["score_text"] = _fmt(float(sc["score"]))
+    try:
+        karne = exam_faz3._karne_score(exam)
+    except Exception:  # noqa: BLE001
+        karne = None
+    if karne is not None:
+        out["karne_score_text"] = _fmt(float(karne))
+
+    return out or None
+
+
+def _goal_lines(name: str, goal: dict | None) -> list[str]:
+    """Hedef/ortalama/puan için konuşma dilinde cümleler (koç düzenleyebilir)."""
+    if not goal:
+        return []
+    lines: list[str] = []
+    if goal.get("target_net_text"):
+        if goal.get("target_reached"):
+            lines.append(
+                f"Bu sınav türünde birlikte koyduğumuz {goal['target_net_text']} net "
+                "hedefine bu denemede ulaştı."
+            )
+        else:
+            lines.append(
+                f"Bu sınav türü için hedefimiz {goal['target_net_text']} net; "
+                f"bu denemede hedefe {goal['target_gap_text']} net kaldı."
+            )
+    if goal.get("avg_total_text"):
+        d = goal.get("avg_direction")
+        if d == "above":
+            tail = f"{name} ortalamanın {goal['avg_diff_text']} net üzerinde."
+        elif d == "below":
+            tail = f"{name} ortalamanın {goal['avg_diff_text']} net altında."
+        else:
+            tail = f"{name} ortalamayla aynı seviyede."
+        lines.append(
+            f"Bu denemede {goal.get('avg_label') or 'Genel ortalama'}: "
+            f"{goal['avg_total_text']} net; {tail}"
+        )
+    if goal.get("score_text"):
+        lines.append(
+            f"Bu netlerle tahmini {goal['score_label']} yaklaşık {goal['score_text']}. "
+            "Bu kesin puan değil, gidişatı göstermek için hesaplanan bir tahmindir."
+        )
+    return lines
+
+
 def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
     """Veli e-postasının içeriği: sayılar + konuşma dilinde cümleler."""
     subjects = _subjects(exam)
@@ -374,6 +489,10 @@ def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
             "Bir önceki denemesine göre neti aşağı yukarı aynı — "
             "istikrarlı bir tablo."
         )
+
+    # --- Hedef · genel ortalama · tahmini puan (2026-10-02)
+    goal = _goal_block(db, exam, subjects)
+    lines.extend(_goal_lines(name, goal))
 
     # --- Odak ALANA GÖRE daralır: sayısal öğrenciye "Coğrafya'ya ağırlık
     # vereceğiz" demek koçluk değil. Alan-dışı ders tabloda görünür, cümleye
@@ -508,6 +627,7 @@ def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
         "opportunity_total_text": opportunities.get("total_gain_text"),
         "opportunity_exam_count": opportunities.get("exam_count", 0),
         "history": history,
+        "goal": goal,
         "narrative": lines,
     }
 
@@ -520,6 +640,7 @@ def build_email_context(
     include_subjects: bool = True,
     include_history: bool = True,
     include_opportunities: bool = True,
+    include_goal: bool = True,
 ) -> dict:
     """Deneme sonucu mailinin ŞABLON BAĞLAMI — tek kaynak.
 
@@ -540,6 +661,11 @@ def build_email_context(
         summary["history"] = {"exams": [], "rows": [], "has_data": False}
     if not include_opportunities:
         summary["opportunities"] = []
+    if not include_goal:
+        summary["goal"] = None
+        for sub in summary.get("subjects") or []:
+            sub.pop("avg", None)
+            sub.pop("avg_text", None)
     return {
         "__template": "parent_exam_result",
         # Gönderilen mailin HANGİ denemeye ait olduğu — duyuru sonrası

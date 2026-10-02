@@ -101,6 +101,8 @@ export function ExamParentAnnounceDialog({
   // Geçmişle karşılaştırma + net fırsatı bölümleri (koç isteği 2026-09-10)
   const [includeHistory, setIncludeHistory] = React.useState(true);
   const [includeOpportunities, setIncludeOpportunities] = React.useState(true);
+  // Hedef net · genel ortalama · tahmini puan kutuları (2026-10-02)
+  const [includeGoal, setIncludeGoal] = React.useState(true);
   const [printing, setPrinting] = React.useState(false);
 
   const seedKey = data ? `${data.exam_id}:${data.is_sent_snapshot}` : null;
@@ -116,6 +118,7 @@ export function ExamParentAnnounceDialog({
     setIncludeOpportunities(
       !data.already_notified || data.opportunities.length > 0,
     );
+    setIncludeGoal(!data.already_notified || Boolean(data.goal));
   }
 
   // Duyurulmuş deneme: içerik veliye GİDEN mailden okunur, düzenlenmez —
@@ -127,7 +130,8 @@ export function ExamParentAnnounceDialog({
   const edited =
     data != null &&
     (JSON.stringify(lines) !== JSON.stringify(data.narrative) ||
-      !includeSubjects || !includeHistory || !includeOpportunities);
+      !includeSubjects || !includeHistory || !includeOpportunities ||
+      !includeGoal);
 
   function setLine(i: number, value: string) {
     setLines(lines.map((l, idx) => (idx === i ? value.slice(0, maxLen) : l)));
@@ -149,6 +153,7 @@ export function ExamParentAnnounceDialog({
       include_subjects: includeSubjects,
       include_history: includeHistory,
       include_opportunities: includeOpportunities,
+      include_goal: includeGoal,
     };
   }
 
@@ -157,6 +162,7 @@ export function ExamParentAnnounceDialog({
     setIncludeSubjects(true);
     setIncludeHistory(true);
     setIncludeOpportunities(true);
+    setIncludeGoal(true);
   }
 
   /** Modaldaki güncel içerikle mailin yazdırılabilir hâlini aç.
@@ -306,6 +312,83 @@ export function ExamParentAnnounceDialog({
                   ) : null}
                 </div>
 
+                {/* Hedef net · genel ortalama · tahmini puan (2026-10-02) */}
+                {data.goal ? (
+                  <div className="mt-3">
+                    <label className="flex cursor-pointer items-center gap-2 text-[12.5px] font-semibold text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={includeGoal}
+                        disabled={sentMode}
+                        onChange={(e) => setIncludeGoal(e.target.checked)}
+                        className="size-3.5 accent-teal-600"
+                      />
+                      Hedef, genel ortalama ve tahmini puanı da gönder
+                    </label>
+                    {includeGoal ? (
+                      <div className="mt-1.5 grid gap-2 sm:grid-cols-3">
+                        {data.goal.target_net_text ? (
+                          <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-2 dark:border-indigo-500/30 dark:bg-indigo-500/10">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+                              Hedef net
+                            </p>
+                            <p className="text-lg font-extrabold tabular-nums text-indigo-950 dark:text-indigo-100">
+                              {data.goal.target_net_text}
+                            </p>
+                            <p className="text-[11px] text-indigo-800 dark:text-indigo-200">
+                              {data.goal.target_reached
+                                ? "Hedefe ulaştı"
+                                : `Hedefe ${data.goal.target_gap_text} net kaldı`}
+                              {data.goal.target_date_tr ? ` · ${data.goal.target_date_tr}` : ""}
+                            </p>
+                          </div>
+                        ) : null}
+                        {data.goal.avg_total_text ? (
+                          <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-500/30 dark:bg-slate-500/10">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                              {data.goal.avg_label ?? "Genel ortalama"}
+                            </p>
+                            <p className="text-lg font-extrabold tabular-nums text-slate-900 dark:text-slate-100">
+                              {data.goal.avg_total_text}
+                            </p>
+                            <p
+                              className={cn(
+                                "text-[11px]",
+                                data.goal.avg_direction === "above"
+                                  ? "text-emerald-700 dark:text-emerald-300"
+                                  : data.goal.avg_direction === "below"
+                                    ? "text-amber-700 dark:text-amber-300"
+                                    : "text-slate-600 dark:text-slate-300",
+                              )}
+                            >
+                              {data.goal.avg_direction === "above"
+                                ? `Ortalamanın ${data.goal.avg_diff_text} net üzerinde`
+                                : data.goal.avg_direction === "below"
+                                  ? `Ortalamanın ${data.goal.avg_diff_text} net altında`
+                                  : "Ortalamayla aynı seviyede"}
+                            </p>
+                          </div>
+                        ) : null}
+                        {data.goal.score_text || data.goal.karne_score_text ? (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 dark:border-amber-500/30 dark:bg-amber-500/10">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                              {data.goal.score_text ? "Tahmini puan" : "Karne puanı"}
+                            </p>
+                            <p className="text-lg font-extrabold tabular-nums text-amber-950 dark:text-amber-100">
+                              {data.goal.score_text ? `~${data.goal.score_text}` : data.goal.karne_score_text}
+                            </p>
+                            <p className="text-[11px] text-amber-800 dark:text-amber-200">
+                              {data.goal.score_text
+                                ? `${data.goal.score_label ?? ""}${data.goal.karne_score_text ? ` · karnede ${data.goal.karne_score_text}` : ""}`
+                                : "deneme karnesinde yazan"}
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 {/* Koç yorumu — DÜZENLENEBİLİR bölüm */}
                 <div className="mt-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -405,6 +488,9 @@ export function ExamParentAnnounceDialog({
                           <th className="py-0.5 text-right font-medium">Y</th>
                           <th className="py-0.5 text-right font-medium">B</th>
                           <th className="py-0.5 text-right font-medium">Net</th>
+                          {includeGoal && data.subjects.some((x) => x.avg != null) ? (
+                            <th className="py-0.5 text-right font-medium">Ort.</th>
+                          ) : null}
                         </tr>
                       </thead>
                       <tbody>
@@ -435,6 +521,11 @@ export function ExamParentAnnounceDialog({
                             <td className="py-1 text-right font-semibold tabular-nums text-foreground">
                               {s.net.toFixed(2).replace(".", ",")}
                             </td>
+                            {includeGoal && data.subjects.some((x) => x.avg != null) ? (
+                              <td className="py-1 text-right tabular-nums text-muted-foreground">
+                                {s.avg != null ? s.avg.toFixed(2).replace(".", ",") : "—"}
+                              </td>
+                            ) : null}
                           </tr>
                         ))}
                       </tbody>

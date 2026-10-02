@@ -2537,6 +2537,25 @@ export interface ExamNotifyParentsBody {
   include_history?: boolean;
   /** "Nerede net kazanabilir?" — net fırsatı tablosu */
   include_opportunities?: boolean;
+  /** Hedef net · genel ortalama · tahmini puan kutuları */
+  include_goal?: boolean;
+}
+
+/** Hedef net · genel ortalama · tahmini puan (veri yoksa alan null). */
+export interface ExamParentPreviewGoal {
+  target_net_text: string | null;
+  target_reached: boolean;
+  target_gap_text: string | null;
+  target_progress_pct: number | null;
+  target_date_tr: string | null;
+  avg_label: string | null;
+  avg_total_text: string | null;
+  avg_diff_text: string | null;
+  /** above | below | equal */
+  avg_direction: string | null;
+  score_label: string | null;
+  score_text: string | null;
+  karne_score_text: string | null;
 }
 
 /** Bir konu kapanırsa deneme başına kazanılacak net. */
@@ -2580,6 +2599,8 @@ export interface ExamParentPreviewSubject {
   questions: number;
   /** Müfredata bağlanmamış satır — koç uyarılır */
   unmatched: boolean;
+  /** Denemenin bu dersteki genel ortalaması */
+  avg?: number | null;
 }
 
 export interface ExamParentPreviewRecipient {
@@ -2620,6 +2641,8 @@ export interface ExamParentPreviewResponse {
   opportunity_total_text: string | null;
   opportunity_exam_count: number;
   history: ExamParentPreviewHistory | null;
+  /** Hedef · ortalama · tahmini puan (yoksa null) */
+  goal?: ExamParentPreviewGoal | null;
 
   recipients: ExamParentPreviewRecipient[];
   deliverable_count: number;

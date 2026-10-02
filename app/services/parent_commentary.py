@@ -144,6 +144,75 @@ def _recent_exams(db: Session, student_id: int, limit: int = 8) -> list[ExamResu
     )
 
 
+def _exam_extras(e: ExamResult) -> dict:
+    """Denemenin genel ortalaması + karnede yazan puan (varsa)."""
+    from app.services import exam_faz3
+
+    out: dict[str, Any] = {}
+    try:
+        avgs = exam_faz3.averages_for_exam(e)
+    except Exception:  # noqa: BLE001
+        avgs = None
+    if avgs and avgs.get("total") is not None:
+        out["general_average_net"] = avgs["total"]
+        out["general_average_label"] = avgs.get("label") or "Genel ortalama"
+    try:
+        karne = exam_faz3._karne_score(e)
+    except Exception:  # noqa: BLE001
+        karne = None
+    if karne is not None:
+        out["karne_score"] = karne
+    return out
+
+
+def _targets_brief(db: Session, student_id: int, exams: list[ExamResult]) -> list[dict]:
+    """Koçun sınav türü başına koyduğu hedef net + son denemenin ona uzaklığı."""
+    from app.models.exam_result import ExamSection
+    from app.services.exam_progress import get_targets
+
+    try:
+        targets = get_targets(db, student_id)
+    except Exception:  # noqa: BLE001
+        return []
+    out: list[dict] = []
+    for sec_value, t in targets.items():
+        try:
+            sec = ExamSection(sec_value)
+        except ValueError:
+            continue
+        last = next((e for e in exams if e.section == sec), None)
+        row: dict[str, Any] = {
+            "section": EXAM_SECTION_LABELS.get(sec, sec_value),
+            "target_net": t.get("target_net"),
+            "target_date": t.get("target_date"),
+        }
+        if last is not None and t.get("target_net"):
+            row["last_net"] = last.net
+            row["gap_to_target"] = round(float(t["target_net"]) - float(last.net), 2)
+        out.append(row)
+    return out
+
+
+def _score_brief(db: Session, student: User) -> dict | None:
+    """Tahmini puan (koçun/öğrencinin panelindeki puan tahminiyle aynı servis)."""
+    from app.services import exam_faz3
+
+    try:
+        est = exam_faz3.score_estimate(db, student)
+    except Exception:  # noqa: BLE001
+        return None
+    if not est or not est.get("scores"):
+        return None
+    return {
+        "scores": [
+            {"label": s["label"], "score": s["score"], "max": s["max"],
+             "student_track": bool(s.get("is_student_track"))}
+            for s in est["scores"]
+        ],
+        "note": "Tahmini ham puandır; gerçek puan o yılın ortalamasına göre belirlenir.",
+    }
+
+
 def _deneme_bundle(db: Session, parent: User, student: User, today: date) -> dict:
     exams = _recent_exams(db, student.id)
     bundle: dict[str, Any] = {
@@ -159,10 +228,19 @@ def _deneme_bundle(db: Session, parent: User, student: User, today: date) -> dic
                 "wrong": e.total_wrong,
                 "blank": e.total_blank,
                 "questions": (e.total_correct or 0) + (e.total_wrong or 0) + (e.total_blank or 0),
+                **_exam_extras(e),
             }
             for e in exams
         ],
     }
+    # Hedef net + tahmini puan (2026-10-02) — veli "hedefe ne kadar yakın,
+    # bu netlerle kaç puan" sorusunu sorar; panelle aynı servisler.
+    targets = _targets_brief(db, student.id, exams)
+    if targets:
+        bundle["targets"] = targets
+    score = _score_brief(db, student)
+    if score:
+        bundle["score_estimate"] = score
     # Aynı türde son iki deneme arası net değişimi (basit trend)
     by_section: dict[Any, list[ExamResult]] = {}
     for e in exams:
@@ -229,7 +307,16 @@ def compute_signature(db: Session, student_id: int, kind: str, today: date | Non
         done = q.filter(Task.status == TaskStatus.COMPLETED).count()
         return {"week": monday.isoformat(), "total": total, "done": done}
     ids = [e.id for e in _recent_exams(db, student_id)]
-    return {"exam_ids": ids}
+    sig: dict[str, Any] = {"exam_ids": ids}
+    try:
+        from app.services.exam_progress import get_targets
+
+        tg = {k: v.get("target_net") for k, v in get_targets(db, student_id).items()}
+    except Exception:  # noqa: BLE001
+        tg = {}
+    if tg:
+        sig["targets"] = tg
+    return sig
 
 
 def is_stale(db: Session, row: ParentCommentary, today: date | None = None) -> bool:
@@ -291,8 +378,14 @@ _PROGRAM_SECTIONS = (
     '"Evde nasıl destek olursunuz"'
 )
 _DENEME_SECTIONS = (
-    '"Son denemeler ne söylüyor" · "Nereden puan kazanılır" · '
-    '"Unutulmaya başlayan konular" · "Evde nasıl destek olursunuz"'
+    '"Son denemeler ne söylüyor" · "Hedefe ne kadar yakın" · '
+    '"Nereden puan kazanılır" · "Unutulmaya başlayan konular" · '
+    '"Evde nasıl destek olursunuz"\n'
+    'HEDEF VE PUAN: veride "targets" (koçun koyduğu hedef net) varsa son '
+    'denemenin hedefe uzaklığını moral bozmadan söyle; "general_average_net" '
+    'varsa çocuğun denemeye girenlerin ortalamasına göre yerini söyle; '
+    '"score_estimate" varsa tahmini puanı ver ve KESİN PUAN OLMADIĞINI belirt. '
+    'Bunların hiçbiri yoksa "Hedefe ne kadar yakın" bölümünü yazma.'
 )
 
 _SPEECH_RULES = """

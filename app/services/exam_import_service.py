@@ -745,7 +745,48 @@ def normalize_topics(
                 rows[ridx]["topic_name"] = None
                 rows[ridx]["topic_source"] = "none"
                 stats["none"] += 1
+    _prefer_school_topics(rows, topics, subj_by_id)
     return stats
+
+
+def _prefer_school_topics(rows: list[dict], topics: list[Topic],
+                          subj_by_id: dict[int, Subject]) -> int:
+    """KARMA havuzda aynı adlı konu hem okul müfredatında hem sınav
+    taksonomisinde varsa OKUL konusunu seç (2026-10-02).
+
+    Okul-müfredat sınavında (Maarif / sınıf izleme) öncelik okul listesidir;
+    AI istemi "listede önce geleni seç" dese de aynı adlı iki adaydan bazen
+    TYT/AYT karşılığını seçiyordu (gerçek Maarif karnesinde 2 "Fonksiyonlar"
+    TYT Matematik'e gitti). Bu son adım deterministik: yalnız AYNI ADLI ve
+    AYNI DERSTEKİ (kanonik ders anahtarı) okul konusuna çevirir — farklı
+    derslerdeki eş adlı konular ("Enerji": Fizik ↔ Biyoloji) dokunulmaz.
+    Sözlük (alias) eşleşmeleri koç kararı olabileceğinden çevrilmez.
+    Saf sınav havuzunda (okul dersi yok) ve saf okul havuzunda no-op.
+    """
+    school_sids = {sid for sid, s in subj_by_id.items() if s.curriculum_model is not None}
+    if not school_sids or len(school_sids) == len(subj_by_id):
+        return 0
+    school_by_key: dict[tuple[str, str], Topic] = {}
+    for t in topics:
+        if t.subject_id not in school_sids:
+            continue
+        subj = subj_by_id.get(t.subject_id)
+        k = (_subject_key(subj.name) if subj else "", _topic_key(t.name))
+        school_by_key.setdefault(k, t)
+    topic_by_id = {t.id: t for t in topics}
+    changed = 0
+    for row in rows:
+        if row.get("topic_source") not in ("auto", "ai"):
+            continue
+        tp = topic_by_id.get(row.get("topic_id"))
+        if tp is None or tp.subject_id in school_sids:
+            continue
+        subj = subj_by_id.get(tp.subject_id)
+        alt = school_by_key.get((_subject_key(subj.name) if subj else "", _topic_key(tp.name)))
+        if alt is not None:
+            _assign_topic(row, alt, subj_by_id, source=row["topic_source"])
+            changed += 1
+    return changed
 
 
 def _assign_topic(row: dict, tp: Topic, subj_by_id: dict[int, Subject], *, source: str) -> None:

@@ -795,6 +795,7 @@ def produce_exam_result(
     include_subjects: bool = True,
     include_history: bool = True,
     include_opportunities: bool = True,
+    include_goal: bool = True,
 ) -> list[NotificationLog]:
     """Koç "Veliye duyur" düğmesine bastı — deneme sonucu e-postası.
 
@@ -822,6 +823,7 @@ def produce_exam_result(
             include_subjects=include_subjects,
             include_history=include_history,
             include_opportunities=include_opportunities,
+            include_goal=include_goal,
         ),
         "student_id": student.id,
         "student_name": student.full_name,

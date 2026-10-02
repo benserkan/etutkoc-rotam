@@ -53,6 +53,50 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} · {{ exam_title }} sonucu
       </tr>
     </table>
 
+    {# --- HEDEF · GENEL ORTALAMA · TAHMİNİ PUAN (2026-10-02) ---
+       Koçun hedefi, denemeye girenlerin ortalaması ve bu netlerle tahmini
+       puan. Veri yoksa ilgili hücre hiç basılmaz. #}
+    {% if goal %}
+    <table style="width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: -4px 0 16px; table-layout: fixed;">
+      <tr>
+        {% if goal.target_net_text %}
+        <td style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 11px 12px; vertical-align: top;">
+          <div style="font-size: 10.5px; color: #4338ca; text-transform: uppercase; letter-spacing: .04em;">Hedef net</div>
+          <div style="font-size: 20px; font-weight: 800; color: #312e81; margin-top: 2px;">{{ goal.target_net_text }}</div>
+          <div style="font-size: 11.5px; color: #3730a3; margin-top: 3px;">
+            {% if goal.target_reached %}Hedefe ulaştı{% else %}Hedefe {{ goal.target_gap_text }} net kaldı{% endif %}
+          </div>
+          {% if goal.target_date_tr %}<div style="font-size: 10.5px; color: #6366f1; margin-top: 2px;">Hedef tarihi: {{ goal.target_date_tr }}</div>{% endif %}
+        </td>
+        {% endif %}
+        {% if goal.avg_total_text %}
+        <td style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 11px 12px; vertical-align: top;">
+          <div style="font-size: 10.5px; color: #475569; text-transform: uppercase; letter-spacing: .04em;">{{ goal.avg_label }}</div>
+          <div style="font-size: 20px; font-weight: 800; color: #0f172a; margin-top: 2px;">{{ goal.avg_total_text }}</div>
+          <div style="font-size: 11.5px; margin-top: 3px; {% if goal.avg_direction == 'above' %}color: #047857;{% elif goal.avg_direction == 'below' %}color: #b45309;{% else %}color: #475569;{% endif %}">
+            {% if goal.avg_direction == 'above' %}Ortalamanın {{ goal.avg_diff_text }} net üzerinde{% elif goal.avg_direction == 'below' %}Ortalamanın {{ goal.avg_diff_text }} net altında{% else %}Ortalamayla aynı seviyede{% endif %}
+          </div>
+        </td>
+        {% endif %}
+        {% if goal.score_text or goal.karne_score_text %}
+        <td style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 11px 12px; vertical-align: top;">
+          <div style="font-size: 10.5px; color: #92400e; text-transform: uppercase; letter-spacing: .04em;">{% if goal.score_text %}Tahmini puan{% else %}Karne puanı{% endif %}</div>
+          <div style="font-size: 20px; font-weight: 800; color: #78350f; margin-top: 2px;">{% if goal.score_text %}~{{ goal.score_text }}{% else %}{{ goal.karne_score_text }}{% endif %}</div>
+          <div style="font-size: 11.5px; color: #92400e; margin-top: 3px;">
+            {% if goal.score_text %}{{ goal.score_label }}{% if goal.karne_score_text %} · karnede {{ goal.karne_score_text }}{% endif %}{% else %}deneme karnesinde yazan{% endif %}
+          </div>
+        </td>
+        {% endif %}
+      </tr>
+    </table>
+    {% if goal.score_text %}
+    <p style="margin: -8px 0 16px; font-size: 10.5px; color: #94a3b8; line-height: 1.5;">
+      Tahmini puan, netlerden ÖSYM/MEB katsayılarıyla hesaplanır; gerçek puan o yılın
+      ortalamasına göre belirlenir. Gidişatı göstermek içindir.
+    </p>
+    {% endif %}
+    {% endif %}
+
     {# --- Koç yorumu: konuşma dili, suçlayıcı değil --- #}
     {% if narrative %}
     <h3 style="font-size: 14px; color: #0f172a; margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
@@ -75,6 +119,7 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} · {{ exam_title }} sonucu
         <td style="padding: 4px 6px; text-align: right;">Y</td>
         <td style="padding: 4px 6px; text-align: right;">B</td>
         <td style="padding: 4px 6px; text-align: right;">Net</td>
+        {% if subjects|selectattr("avg_text")|list %}<td style="padding: 4px 6px; text-align: right;">Ort.</td>{% endif %}
       </tr>
       {% for s in subjects %}
       <tr>
@@ -83,6 +128,7 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} · {{ exam_title }} sonucu
         <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; color: #e11d48;">{{ s.wrong }}</td>
         <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; color: #94a3b8;">{{ s.blank }}</td>
         <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; font-weight: 700;">{{ ("%.2f"|format(s.net))|replace(".", ",") }}</td>
+        {% if subjects|selectattr("avg_text")|list %}<td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; color: #64748b;">{{ s.avg_text or "—" }}</td>{% endif %}
       </tr>
       {% endfor %}
     </table>

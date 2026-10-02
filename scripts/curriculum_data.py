@@ -1146,6 +1146,7 @@ EXAM_CURRICULUM: dict[str, dict] = {
             ("Fiiller (Anlam, Çatı, Kip, Yapı)", 10), ("Fiilimsiler", 10),
             ("Cümlenin Ögeleri", 10), ("Cümle Türleri", 10),
             ("Anlatım Bozuklukları", 10),
+            ("Dil Bilgisi (Karma)", 10),
         ],
     },
     "TYT Geometri": {
@@ -1396,6 +1397,7 @@ EXAM_CURRICULUM: dict[str, dict] = {
             ("Sözcük Türleri", 10), ("Fiiller (Anlam, Çatı, Kip, Yapı)", 10),
             ("Fiilimsiler", 10), ("Cümlenin Ögeleri", 10),
             ("Cümle Türleri", 10), ("Anlatım Bozuklukları", 10),
+            ("Dil Bilgisi (Karma)", 10),
             ("Türk Edebiyatının Dönemleri", 9),
             ("Güzel Sanatlar ve Edebiyat", 9), ("Edebi Türler", 10),
             ("Edebi Sanatlar (Söz Sanatları)", 10),
