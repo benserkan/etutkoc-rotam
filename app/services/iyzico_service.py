@@ -202,6 +202,22 @@ def init_checkout(
                 "plan_code + cycle zorunlu (self-serve akış)",
             )
         amount = _compute_price(user, plan_code, cycle)
+        # Kapasite (2026-10-02 A1): bağımsız koç, aktif öğrenci sayısına
+        # yetmeyen paketi satın alamaz ("25 öğrencin var, Rota gerekir").
+        if user.institution_id is None:
+            from app.services import plans as _plans
+            if plan_code in _plans._VALID_SOLO_PAID_TIERS:
+                n = _plans.count_solo_students(db, teacher_id=user.id)
+                if not _plans.plan_fits_students(plan_code, n):
+                    need = _plans.fitting_solo_tier(n)
+                    raise PaymentError(
+                        "plan_capacity_insufficient",
+                        f"{n} aktif öğrencin var; {_plans.plan_label(plan_code)} paketi "
+                        f"{_plans.solo_student_limit(plan_code)} öğrenci içindir. "
+                        f"{need['label']} paketi gerekir.",
+                        {"student_count": n, "required_plan": need["code"],
+                         "required_label": need["label"]},
+                    )
 
     conversation_id = uuid.uuid4().hex  # bizim taraftan referans
     basket_id = f"PLAN-{plan_code}-{cycle}-{user.id}"

@@ -1705,6 +1705,22 @@ class PlanChangeItem(BaseModel):
     to_plan: str | None = None
     reason: str
     occurred_at: datetime | None = None
+    # Görünen adlar (2026-10-02): Keşif/Patika/Rota/Zirve/14 gün deneme + "kayıt"
+    from_plan_label: str | None = None
+    to_plan_label: str | None = None
+    reason_label: str | None = None
+    note: str | None = None
+
+
+class RelatedAccountItem(BaseModel):
+    """Aynı kişiye ait olabilecek diğer bağımsız koç hesabı (free_tier_guard)."""
+    id: int
+    full_name: str
+    email: str
+    plan_label: str
+    active_students: int
+    reason: str            # device | phone | email
+    reason_label: str
 
 
 # ---------------------------- Sağlık skoru 2.0 ----------------------------
@@ -1850,6 +1866,11 @@ class OwnerBrief(BaseModel):
     is_active: bool
     monthly_price_try: int
     trial_ends_at: datetime | None = None
+    plan_label: str | None = None           # Keşif/Patika/Rota/Zirve/14 gün deneme
+    intended_plan: str | None = None        # kayıtta seçilen paket (bağımsız koç)
+    intended_plan_label: str | None = None
+    trial_denied_reason: str | None = None  # deneme verilmediyse nedeni
+    student_limit: int | None = None        # pakete göre aktif öğrenci kapasitesi (-1 sınırsız)
 
 
 class StudentHealthCounts(BaseModel):
@@ -1893,6 +1914,8 @@ class UserRevenue360Response(BaseModel):
     offers: list["OfferItem"] = []
     invoices: list["InvoiceItem"] = []
     meta: CrmMeta
+    # Aynı kişiye ait olabilecek diğer hesaplar (ücretsiz paket tekilliği)
+    related_accounts: list[RelatedAccountItem] = []
 
 
 # ---------------------------- Mutation gövdeleri ----------------------------

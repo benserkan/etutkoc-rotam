@@ -611,6 +611,7 @@ def compute_health_score_v2(
     score = sum(c.contribution for c in components)
     score = max(0, min(100, score))
     band = band_for_score(score)
+    band = _new_member_band(band, institution, now)
 
     # Aktif sayılar (snapshot için)
     cutoff_7d = now - timedelta(days=7)
@@ -649,6 +650,20 @@ def compute_health_score_v2(
     )
 
 
+NEW_MEMBER_DAYS = 14
+
+
+def _new_member_band(band: str, owner, now: datetime) -> str:
+    """Yeni hesap (NEW_MEMBER_DAYS'ten genç) henüz sağlıklı/şampiyon değilse
+    'new_member' — veri birikmeden "kayıp eşiğinde" denmez."""
+    if band in ("champion", "healthy"):
+        return band
+    ca = _aware(getattr(owner, "created_at", None))
+    if ca is not None and (now - ca).days < NEW_MEMBER_DAYS:
+        return "new_member"
+    return band
+
+
 def compute_health_score_v2_for_user(
     db: Session, *, user_obj: User, now: datetime | None = None,
 ) -> HealthScoreV2:
@@ -680,6 +695,7 @@ def compute_health_score_v2_for_user(
     score = sum(c.contribution for c in components)
     score = max(0, min(100, score))
     band = band_for_score(score)
+    band = _new_member_band(band, user_obj, now)
 
     # Aktif öğrenci sayısı (snapshot için, trigger algılama)
     cutoff_7d = now - timedelta(days=7)

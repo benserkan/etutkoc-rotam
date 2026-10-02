@@ -2694,6 +2694,14 @@ class TrialStatusResponse(BaseModel):
     # Faz 2D — deneme değer sayacı: "değeri gördün" anlatımı (yalnız trial_active
     # iken dolar; hepsi 0 ise banner satır basmaz)
     trial_value: dict | None = None  # {karne, veli, etiket, icgoru, toplam_kredi}
+    # 2026-10-02: ücretli paketin kapasitesi aşıldı (uyarı + kısıtlama + teklif)
+    capacity_exceeded: bool = False
+    recommended_plan: str | None = None     # öğrenci sayısına yeten en küçük paket
+    recommended_label: str | None = None
+    recommended_monthly: int = 0
+    # Kayıtta deneme verilmediyse nedeni (device | phone | email)
+    trial_denied_reason: str | None = None
+    subscription_platform: str | None = None  # iyzico | app_store | manual
 
 
 # =============================================================================

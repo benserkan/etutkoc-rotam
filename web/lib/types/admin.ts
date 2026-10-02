@@ -1497,6 +1497,23 @@ export interface PlanChangeItem {
   to_plan: string | null;
   reason: string;
   occurred_at: string | null;
+  /** Görünen adlar: Keşif/Patika/Rota/Zirve/14 Gün Ücretsiz Deneme */
+  from_plan_label?: string | null;
+  to_plan_label?: string | null;
+  /** "kayıt" | "deneme bitti" | "yükseltme" ... */
+  reason_label?: string | null;
+  note?: string | null;
+}
+
+/** Aynı kişiye ait olabilecek diğer bağımsız koç hesabı */
+export interface RelatedAccountItem {
+  id: number;
+  full_name: string;
+  email: string;
+  plan_label: string;
+  active_students: number;
+  reason: string;
+  reason_label: string;
 }
 
 export interface HealthComponentItem {
@@ -1631,6 +1648,12 @@ export interface OwnerBrief {
   is_active: boolean;
   monthly_price_try: number;
   trial_ends_at: string | null;
+  plan_label?: string | null;
+  intended_plan?: string | null;
+  intended_plan_label?: string | null;
+  trial_denied_reason?: string | null;
+  /** Pakete göre aktif öğrenci kapasitesi (-1 sınırsız) */
+  student_limit?: number | null;
 }
 
 export interface StudentHealthCounts {
@@ -1673,6 +1696,7 @@ export interface UserRevenue360Response {
   offers: OfferItem[];
   invoices: InvoiceItem[];
   meta: CrmMeta;
+  related_accounts?: RelatedAccountItem[];
 }
 
 export interface CrmNoteBody {

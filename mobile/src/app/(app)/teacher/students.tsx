@@ -79,17 +79,21 @@ export default function TeacherStudentsScreen() {
     onError: (e) => {
       const code = e instanceof ApiError ? e.code : null;
       // Paket öğrenci limiti doldu → Paketim (IAP) yönlendirmesi.
-      if (code === "plan_quota_exceeded" || code === "paywall_active") {
-        setError(
-          code === "paywall_active"
-            ? "Deneme bitti / abonelik yenilenmedi — yeni öğrenci için paketini yükselt."
-            : "Paketinin öğrenci limiti doldu — daha yüksek pakete geçerek ekleyebilirsin.",
-        );
+      // Ücretsiz paket kişi başına bir hesap / kısıtlama: sunucunun mesajı
+      // sebebi ve gereken paketi söyler ("12 aktif öğrencin var, Rota gerekir").
+      if (
+        code === "plan_quota_exceeded" ||
+        code === "paywall_active" ||
+        code === "free_tier_duplicate_account"
+      ) {
+        const msg =
+          e instanceof ApiError && e.message
+            ? e.message
+            : "Paketinin öğrenci limiti doldu — daha yüksek pakete geçerek ekleyebilirsin.";
+        setError(msg);
         showCoachUpgradeAlert(
-          "Öğrenci limiti",
-          code === "paywall_active"
-            ? "Deneme bitti veya aboneliğin yenilenmedi. Paketini seçtiğinde kaldığın yerden devam edersin."
-            : "Bu paketin öğrenci limiti doldu. Daha yüksek pakete geçerek yeni öğrenci ekleyebilirsin.",
+          code === "free_tier_duplicate_account" ? "Ücretsiz paket" : "Öğrenci limiti",
+          msg,
         );
         return;
       }

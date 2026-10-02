@@ -15,6 +15,9 @@ import type { TrialStatusResponse } from "@/lib/types/teacher";
  * ödeme duvarı. Diğer zamanlarda bant gösterilmez (gürültü olmasın).
  *  - paywall (ücretsiz + limit aşıldı): kırmızı, KAPATILAMAZ → yükselt/arşivle.
  *  - trial_critical (≤3 gün): amber, kapatılabilir geri-sayım.
+ *  - capacity_exceeded (ücretli paket + öğrenci sayısı kapasiteyi aştı): kırmızı,
+ *    KAPATILAMAZ → tek tıkla uygun pakete geç (ödeme penceresi açık gelir) ya da
+ *    fazla öğrenciyi pasife al.
  *  - payment_pending (deneme bitti + signup'ta ücretli paket seçilmişti +
  *    henüz ödenmedi): amber "ödemeni tamamla" hatırlatması — günlük
  *    kapatılabilir, ertesi gün yeniden görünür (Google tarzı ödeme daveti).
@@ -80,17 +83,64 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
         </div>
       );
     }
+    const recLabel = data.recommended_label ?? "Uygun paket";
+    const checkoutHref = data.recommended_plan
+      ? `/teacher/plan?plan=${data.recommended_plan}&checkout=1`
+      : "/teacher/plan";
+    if (data.capacity_exceeded) {
+      const extra = Math.max(0, data.student_count - data.student_limit);
+      const appStore = data.subscription_platform === "app_store";
+      return (
+        <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5 text-sm text-rose-900 dark:text-rose-200">
+              <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
+              <span>
+                <strong>
+                  {data.student_count} aktif öğrencin var, {recLabel} gerekir.
+                </strong>{" "}
+                {data.plan_label} paketin {data.student_limit} öğrenci içindir; program
+                yazma ve yeni öğrenci ekleme şimdilik kapalı.{" "}
+                {appStore
+                  ? `Paketini App Store aboneliklerinden ${recLabel} paketine yükselt `
+                  : `Tek tıkla ${recLabel} paketine geç `}
+                <em>ya da</em> {extra} öğrenciyi pasif duruma al.
+              </span>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Link
+                href="/teacher/students"
+                className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+              >
+                Öğrencileri yönet
+              </Link>
+              {appStore ? null : (
+                <Link
+                  href={checkoutHref}
+                  className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700"
+                >
+                  {recLabel} paketine geç
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-2.5 text-sm text-rose-900 dark:text-rose-200">
             <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
             <span>
-              <strong>Deneme süreniz bitti.</strong> {data.student_count} öğrenciniz var;
-              ücretsiz sürüm {data.student_limit} öğrenci destekler. Koçluğa devam etmek
-              için paketi yükseltin <em>ya da</em> {data.student_limit} öğrenci tutup
-              gerisini pasif duruma geçirin. Paketi yükselttiğinizde pasif
-              öğrencileriniz otomatik olarak yeniden aktif olur.
+              <strong>
+                {data.trial_denied_reason ? "Ücretsiz paket sınırı." : "Deneme süreniz bitti."}
+              </strong>{" "}
+              {data.student_count} öğrenciniz var; ücretsiz Keşif paketi{" "}
+              {data.student_limit} öğrenci destekler. Koçluğa devam etmek için{" "}
+              {recLabel} paketine geçin <em>ya da</em> {data.student_limit} öğrenci tutup
+              gerisini pasif duruma geçirin. Pakete geçtiğinizde pasif öğrencileriniz
+              paketin kapasitesi kadar otomatik yeniden aktif olur.
             </span>
           </div>
           <div className="flex shrink-0 gap-2">
@@ -101,10 +151,10 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
               Öğrencileri yönet
             </Link>
             <Link
-              href="/teacher/plan"
+              href={checkoutHref}
               className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700"
             >
-              Paketi yükselt
+              {recLabel} paketine geç
             </Link>
           </div>
         </div>
@@ -151,22 +201,43 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
     );
   }
 
-  // 3) Deneme bitti + seçilen paket ödenmedi (kapatılabilir, her gün döner)
-  if (data.payment_pending && !payDismissed) {
+  // 3) Deneme bitti + seçilen paket ödenmedi (kapatılabilir, her gün döner).
+  //    Deneme hiç verilmediyse (aynı kişinin önceki hesabı) metin bunu söyler.
+  if ((data.payment_pending || data.trial_denied_reason) && !payDismissed) {
+    const denied = !!data.trial_denied_reason;
+    const reasonText =
+      data.trial_denied_reason === "device"
+        ? "bu cihazda"
+        : data.trial_denied_reason === "phone"
+          ? "bu telefon numarasıyla"
+          : "bu e-posta adresiyle";
     return (
       <div className="border-b border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <Clock className="size-4 shrink-0 text-amber-600" aria-hidden />
           <p className="flex-1 text-sm text-amber-900 dark:text-amber-200">
-            <strong>Denemen bitti — ödemen bekleniyor.</strong>{" "}
-            {data.intended_plan_label ?? "Seçtiğin paket"} ile kaldığın yerden
-            devam etmek için ödemeni tamamla; öğrencilerin ve verilerin duruyor.
+            {denied ? (
+              <>
+                <strong>Ücretsiz deneme kişi başına bir kez verilir.</strong>{" "}
+                {reasonText} daha önce bir koç hesabı açıldığı için bu hesap ücretsiz Keşif
+                paketiyle ({data.student_limit} öğrenci) başladı.{" "}
+                {data.intended_plan_label
+                  ? `${data.intended_plan_label} paketine geçerek tüm özellikleri hemen açabilirsin.`
+                  : "Bir pakete geçerek tüm özellikleri hemen açabilirsin."}
+              </>
+            ) : (
+              <>
+                <strong>Denemen bitti — ödemen bekleniyor.</strong>{" "}
+                {data.intended_plan_label ?? "Seçtiğin paket"} ile kaldığın yerden
+                devam etmek için ödemeni tamamla; öğrencilerin ve verilerin duruyor.
+              </>
+            )}
           </p>
           <Link
             href="/teacher/plan"
             className="inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-950 transition hover:bg-amber-400"
           >
-            Ödemeyi tamamla
+            {denied ? "Paketleri gör" : "Ödemeyi tamamla"}
           </Link>
           <button
             type="button"

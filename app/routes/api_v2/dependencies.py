@@ -297,6 +297,14 @@ def assert_active_coaching(db: Session, user: User) -> None:
         if st.get("past_due"):
             msg = ("Aboneliğinizin yenileme zamanı geldi. Koçluğa devam etmek için "
                    "ödeme yapıp aboneliğinizi yenileyin.")
+        elif st.get("capacity_exceeded"):
+            extra = st["student_count"] - st["student_limit"]
+            msg = (
+                f"{st['plan_label']} paketin {st['student_limit']} öğrenci içindir; "
+                f"{st['student_count']} aktif öğrencin var. Devam etmek için "
+                f"{st['recommended_label']} paketine geç ya da {extra} öğrenciyi "
+                "pasif duruma al."
+            )
         else:
             msg = (
                 f"Deneme süreniz bitti ve {st['student_count']} öğrenciniz var; "
@@ -307,7 +315,18 @@ def assert_active_coaching(db: Session, user: User) -> None:
             )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={"error": "forbidden", "code": "paywall_active", "message": msg},
+            detail={
+                "error": "forbidden", "code": "paywall_active", "message": msg,
+                "details": {
+                    "recommended_plan": st.get("recommended_plan"),
+                    "recommended_label": st.get("recommended_label"),
+                    "upgrade_url": (
+                        f"/teacher/plan?plan={st.get('recommended_plan')}&checkout=1"
+                        if st.get("recommended_plan") and not st.get("past_due")
+                        else "/teacher/plan"
+                    ),
+                },
+            },
         )
 
 

@@ -73,7 +73,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
               {owner.name}
             </span>
             <StatusBadge label={owner.is_active ? "Aktif" : "Pasif"} tone={owner.is_active ? "emerald" : "slate"} />
-            <StatusBadge label={owner.plan} tone="sky" />
+            <StatusBadge label={owner.plan_label ?? owner.plan} tone="sky" />
             <StatusBadge label="Bağımsız Öğretmen" tone="indigo" />
           </h1>
           <div className="mt-1 text-sm text-muted-foreground">{owner.email ?? "—"}</div>
@@ -197,11 +197,62 @@ export function AdminUser360Client({ initial, userId }: Props) {
           <Card className="p-4">
             <h2 className="mb-3 text-sm font-semibold">Mevcut Plan</h2>
             <dl className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
-              <Field label="Plan" value={owner.plan} />
+              <Field label="Paket" value={owner.plan_label ?? owner.plan} />
               <Field label="Aylık fiyat" value={tl(owner.monthly_price_try)} />
               {owner.trial_ends_at ? <Field label="Deneme bitiş" value={fmtDate(owner.trial_ends_at)} /> : null}
+              {owner.intended_plan_label ? (
+                <Field label="Kayıtta seçilen paket" value={`${owner.intended_plan_label} (ödeme bekleniyor)`} />
+              ) : null}
+              {owner.student_limit != null ? (
+                <Field
+                  label="Öğrenci kapasitesi"
+                  value={
+                    owner.student_limit === -1
+                      ? `${d.student_count} aktif · sınırsız`
+                      : `${d.student_count} / ${owner.student_limit} aktif`
+                  }
+                />
+              ) : null}
             </dl>
+            {owner.trial_denied_reason ? (
+              <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                Bu hesaba ücretsiz deneme verilmedi: aynı kişiye ait önceki bir hesap bulundu (
+                {owner.trial_denied_reason === "device"
+                  ? "aynı cihaz"
+                  : owner.trial_denied_reason === "phone"
+                    ? "aynı telefon"
+                    : "aynı e-posta"}
+                ). Hesap ücretsiz Keşif paketiyle açıldı.
+              </p>
+            ) : null}
           </Card>
+          {d.related_accounts && d.related_accounts.length > 0 ? (
+            <Card className="p-4">
+              <h2 className="mb-1 text-sm font-semibold">Aynı kişiye ait olabilecek hesaplar</h2>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Ücretsiz paket ve deneme kişi başına birdir. Aynı cihaz, telefon ya da e-posta ile
+                açılmış diğer koç hesapları:
+              </p>
+              <ul className="divide-y divide-border text-sm">
+                {d.related_accounts.map((a) => (
+                  <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <Link href={`/admin/revenue/users/${a.id}`} className="font-medium hover:underline">
+                      {a.full_name} <span className="text-xs text-muted-foreground">{a.email}</span>
+                    </Link>
+                    <span className="flex flex-wrap items-center gap-1.5 text-xs">
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">{a.plan_label}</span>
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">
+                        {a.active_students} aktif öğrenci
+                      </span>
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800">
+                        {a.reason_label}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
           <Card className="p-4">
             <h2 className="mb-3 text-sm font-semibold">Plan Değişiklik Geçmişi</h2>
             <PlanChangesTimeline changes={d.plan_changes} />

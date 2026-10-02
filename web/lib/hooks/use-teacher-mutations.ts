@@ -157,7 +157,9 @@ function errorTitle(e: unknown, fallback: string): string {
     case "plan_quota_exceeded":
       return "Plan kotası dolu";
     case "paywall_active":
-      return "Deneme bitti — paketi yükseltin";
+      return "Koçluk şimdilik kısıtlı";
+    case "free_tier_duplicate_account":
+      return "Ücretsiz paket kişi başına bir hesaptır";
     case "track_required":
     case "graduate_mode_required":
     case "full_name_required":
@@ -194,6 +196,27 @@ function showWarnings(res: { warnings?: string[] }, successTitle: string): void 
 }
 
 function showError(e: unknown, fallbackTitle: string) {
+  const code = errorCode(e);
+  // Kısıtlama / ücretsiz hesap tekilliği: sebep + TEK TIK çözüm (paket sayfası,
+  // uygun paket seçili ve ödeme penceresi açık gelir).
+  if (code === "paywall_active" || code === "free_tier_duplicate_account") {
+    const details =
+      e instanceof ApiError
+        ? (e.detail as { details?: { upgrade_url?: string; recommended_label?: string } })?.details
+        : undefined;
+    const url = details?.upgrade_url || "/teacher/plan";
+    toast.error(errorTitle(e, fallbackTitle), {
+      description: errorMessage(e, "Paketini kontrol et."),
+      action: {
+        label: details?.recommended_label ? `${details.recommended_label} paketine geç` : "Paketleri gör",
+        onClick: () => {
+          if (typeof window !== "undefined") window.location.href = url;
+        },
+      },
+      duration: 10000,
+    });
+    return;
+  }
   toast.error(errorTitle(e, fallbackTitle), {
     description: errorMessage(e, "Sunucu hatası."),
   });
@@ -2022,9 +2045,7 @@ export function useApplyTaskTemplate(studentId: number) {
         { method: "POST", body: JSON.stringify(body) },
       ),
     onError: (e) => {
-      const code = errorCode(e);
-      if (code === "paywall_active") toast.error("Deneme bitti — paketi yükseltin");
-      else showError(e, "Şablon uygulanamadı");
+      showError(e, "Şablon uygulanamadı");
     },
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);

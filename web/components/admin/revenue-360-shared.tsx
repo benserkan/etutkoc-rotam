@@ -235,10 +235,17 @@ export function PlanChangesTimeline({ changes }: { changes: PlanChangeItem[] }) 
         <li key={pc.id} className="flex items-baseline gap-2 text-sm">
           <span className="whitespace-nowrap text-xs text-muted-foreground">{fmtDate(pc.occurred_at)}</span>
           <span>
-            {pc.from_plan ? <span className="font-mono text-muted-foreground">{pc.from_plan}</span> : null}
-            {pc.from_plan ? " → " : ""}
-            <span className="font-mono">{pc.to_plan ?? "—"}</span>
-            <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{pc.reason}</span>
+            <span className="text-muted-foreground">
+              {pc.from_plan ? (pc.from_plan_label ?? pc.from_plan) : "—"}
+            </span>
+            {" → "}
+            <span className="font-medium">{pc.to_plan_label ?? pc.to_plan ?? "—"}</span>
+            <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              {pc.reason_label ?? pc.reason}
+            </span>
+            {pc.note ? (
+              <span className="mt-0.5 block text-xs text-muted-foreground">{pc.note}</span>
+            ) : null}
           </span>
         </li>
       ))}

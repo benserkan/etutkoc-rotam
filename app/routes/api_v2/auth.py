@@ -552,6 +552,14 @@ def _complete_login(
         )
     except Exception:
         logger.exception("active_session v2 record fail user=%s", user.id)
+    # Ücretsiz paket tekilliği (free_tier_guard): bağımsız koçun cihazını kaydet.
+    # Web: kalıcı etk_dev çerezi; mobil: X-Device-Id başlığı.
+    try:
+        from app.services import free_tier_guard as ftg
+        did = ftg.ensure_device_id(request, response if set_cookies else None)
+        ftg.record_device(db, user, did)
+    except Exception:
+        logger.exception("device link record fail user=%s", user.id)
     db.commit()
 
     if user.role.value == "super_admin":
@@ -973,14 +981,36 @@ def v2_signup_teacher(
     )
     db.add(new_user)
     db.flush()
+    # Ücretsiz deneme kişi başına bir kez (free_tier_guard): aynı cihaz /
+    # telefon / e-posta ile önceki bir koç hesabı varsa deneme verilmez, hesap
+    # Keşif ile açılır (seçtiği paket ödeme ekranında hazır bekler).
+    from app.services import free_tier_guard as ftg
+    from app.services.plans import start_solo_without_trial
+    device_id = None
     try:
-        start_solo_trial(
-            db, user=new_user,
-            intended_plan=(payload.intended_plan or None),
-            autocommit=False,
-        )
+        device_id = ftg.ensure_device_id(request, None if payload.mobile else response)
+        denied = ftg.trial_denial_reason(db, new_user, device_id=device_id)
+    except Exception:
+        logger.exception("free tier guard signup fail user=%s", new_user.id)
+        denied = None
+    try:
+        if denied:
+            start_solo_without_trial(
+                db, user=new_user, reason=denied,
+                intended_plan=(payload.intended_plan or None), autocommit=False,
+            )
+        else:
+            start_solo_trial(
+                db, user=new_user,
+                intended_plan=(payload.intended_plan or None),
+                autocommit=False, new_account=True,
+            )
     except Exception:
         logger.exception("solo trial start fail user=%s", new_user.id)
+    try:
+        ftg.record_device(db, new_user, device_id)
+    except Exception:
+        logger.exception("device link record fail user=%s", new_user.id)
     log_action(
         db,
         action=AuditAction.USER_CREATE,

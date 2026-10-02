@@ -44,9 +44,11 @@ function studentCapLabel(max: number | null): string {
 export function TeacherPlanClient({
   initial,
   initialPlan = null,
+  autoCheckout = false,
 }: {
   initial: TeacherPlanResponse;
   initialPlan?: string | null;
+  autoCheckout?: boolean;
 }) {
   const q = useQuery<TeacherPlanResponse>({
     queryKey: teacherKeys.plan(),
@@ -166,11 +168,11 @@ export function TeacherPlanClient({
               CTA'sı (?plan=) burada karşılık bulur. App Store abonesi hariç
               (paket değişikliği Apple'da). */}
           {data.subscription_platform !== "app_store" ? (
-            <SoloUpgradeCard data={data} initialPlan={initialPlan} />
+            <SoloUpgradeCard data={data} initialPlan={initialPlan} autoCheckout={autoCheckout} />
           ) : null}
         </>
       ) : (
-        <SoloUpgradeCard data={data} initialPlan={initialPlan} />
+        <SoloUpgradeCard data={data} initialPlan={initialPlan} autoCheckout={autoCheckout} />
       )}
 
       {/* Krediler ne yapar + paket karşılaştırma + SSS (public /pricing ile ortak) */}
@@ -579,12 +581,13 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
 function SoloUpgradeCard({
   data,
   initialPlan = null,
+  autoCheckout = false,
 }: {
   data: TeacherPlanResponse;
   initialPlan?: string | null;
+  autoCheckout?: boolean;
 }) {
   const [yearly, setYearly] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
   const months = data.annual_paid_months || 10;
   // Paket özellik bullet dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200'ları TEK KAYNAK: /api/v2/pricing plan_features
   // (hardcoded TIER_DETAILS.features yerine; pazarlama dili + vitrinle tutarlı).
@@ -600,17 +603,33 @@ function SoloUpgradeCard({
   // Öncelik: signup'ta seçilen paket (post_trial_plan) > recommended (öğrenci
   // sayısı) > tier önerisi > solo_pro. Kullanıcının kasıtlı seçimi kaybolmaz.
   const tiers = data.options.filter((o) => o.code !== "solo_free");
+  // Kapasite: aktif öğrenci sayısına yetmeyen paket seçilemez / ödenemez
+  // ("25 öğrencin var, Rota gerekir"). Sunucu da aynı kuralı uygular.
+  const fits = (t: { max_students: number | null }) =>
+    t.max_students == null || data.student_count <= t.max_students;
+  const firstFit = tiers.find((t) => fits(t));
   const intendedFromSignup =
     data.post_trial_plan && data.post_trial_plan !== "solo_free"
       ? data.post_trial_plan
       : "";
-  const recommended =
+  const preferred =
     (initialPlan && tiers.some((t) => t.code === initialPlan) ? initialPlan : "") ||
     intendedFromSignup ||
     data.recommended_plan ||
     tiers.find((t) => t.is_recommended)?.code ||
     tiers[0]?.code ||
     "solo_pro";
+  const preferredTier = tiers.find((t) => t.code === preferred);
+  // Tercih edilen paket öğrenci sayısına yetmiyorsa yeten en küçük paket seçili gelir.
+  const recommended =
+    preferredTier && !fits(preferredTier) ? (firstFit?.code ?? preferred) : preferred;
+  const capacityNote =
+    preferredTier && !fits(preferredTier) && firstFit
+      ? `${data.student_count} aktif öğrencin var — ${preferredTier.label} paketi ${preferredTier.max_students} öğrenci içindir, ${firstFit.label} gerekir.`
+      : null;
+  const [open, setOpen] = React.useState(
+    () => autoCheckout && !!tiers.find((t) => t.code === recommended && fits(t)),
+  );
   const [selected, setSelected] = React.useState(recommended);
   // recommended değişirse (öğrenci sayısı tier sınırı aştığında) seçimi senkronla
   // — effect yerine "prop değişince state ayarla" render deseni.
@@ -682,6 +701,11 @@ function SoloUpgradeCard({
           ) : null}
           {" "}{cycleLabel}.
         </div>
+        {capacityNote ? (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+            {capacityNote}
+          </div>
+        ) : null}
 
         {/* 3 BÜYÜK detaylı paket kartı yan yana */}
         <div className="grid gap-4 lg:grid-cols-3">
@@ -692,6 +716,7 @@ function SoloUpgradeCard({
             const tierYearlyTotal = t.price_monthly_try * months;
             const isIntended = data.post_trial_plan === t.code;
             const isRecommended = t.is_recommended;
+            const tierFits = fits(t);
             return (
               <div
                 key={t.code}
@@ -700,6 +725,7 @@ function SoloUpgradeCard({
                   isSel
                     ? "border-cyan-600 shadow-lg ring-2 ring-cyan-100"
                     : "border-slate-200 hover:border-cyan-300",
+                  !tierFits && "opacity-70",
                 )}
               >
                 {/* Üst rozetler */}
@@ -776,7 +802,14 @@ function SoloUpgradeCard({
 
                 {/* CTA — plan adı kart başlığında zaten büyük; buton sadeleşti */}
                 <div className="mt-auto">
+                  {!tierFits ? (
+                    <p className="mb-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs font-medium text-amber-900">
+                      {data.student_count} aktif öğrencin var — bu paket {t.max_students} öğrenci
+                      içindir.
+                    </p>
+                  ) : null}
                   <Button
+                    disabled={!tierFits}
                     className={cn(
                       "w-full whitespace-normal text-sm",
                       isSel
@@ -788,7 +821,11 @@ function SoloUpgradeCard({
                       if (isSel) setOpen(true);
                     }}
                   >
-                    {isSel ? "Bu pakete geç (öde)" : "Bu paketi seç"}
+                    {!tierFits
+                      ? "Öğrenci sayına yetmiyor"
+                      : isSel
+                        ? "Bu pakete geç (öde)"
+                        : "Bu paketi seç"}
                   </Button>
                 </div>
               </div>

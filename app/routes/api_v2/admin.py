@@ -43,6 +43,7 @@ from app.models import (
 )
 from app.routes.api_v2.dependencies import _auth_error, get_current_user_v2
 from app.routes.api_v2.schemas.admin import (
+    RelatedAccountItem,
     AccountArchiveBody,
     AccountArchiveResult,
     AccountBulkArchiveBody,
@@ -1936,8 +1937,20 @@ def admin_create_user_v2(
         password_changed_at=datetime.now(timezone.utc),
         must_change_password=True,
     )
+    # Bağımsız koç Keşif ile başlar (eski 'free' varsayılan kodu kullanılmaz).
+    if role_enum == UserRole.TEACHER and iid is None:
+        new_user.plan = "solo_free"
     db.add(new_user)
     db.flush()
+    if role_enum == UserRole.TEACHER and iid is None:
+        from app.models.plan_history import (
+            PlanChangeHistory as _PCH2, PlanChangeReason as _PCR, PlanOwnerType as _POT2,
+        )
+        db.add(_PCH2(
+            owner_type=_POT2.USER, owner_id=new_user.id, from_plan=None,
+            to_plan="solo_free", reason=_PCR.ADMIN_OVERRIDE,
+            actor_user_id=user.id, note="Hesap süper admin tarafından açıldı",
+        ))
     # Load institution relationship for response
     if iid is not None:
         new_user.institution = db.get(Institution, iid)
@@ -5766,11 +5779,29 @@ def _owner_contact_data(c) -> OwnerContactData | None:
     )
 
 
+_PLAN_REASON_LABELS_TR = {
+    "signup": "kayıt",
+    "trial_expired": "deneme bitti",
+    "upgrade": "yükseltme",
+    "downgrade": "düşürme",
+    "admin_override": "yönetici değişikliği",
+    "pause": "yaz duraklatma",
+    "resume": "duraklatmadan dönüş",
+    "guarantee_extend": "garanti uzatması",
+    "academic_year_renewal": "akademik yıl yenileme",
+}
+
+
 def _plan_change_item(pc) -> PlanChangeItem:
+    from app.services.plans import plan_label
     reason = pc.reason.value if hasattr(pc.reason, "value") else str(pc.reason)
     return PlanChangeItem(
         id=pc.id, from_plan=pc.from_plan, to_plan=pc.to_plan,
         reason=reason, occurred_at=pc.occurred_at,
+        from_plan_label=plan_label(pc.from_plan) if pc.from_plan else None,
+        to_plan_label=plan_label(pc.to_plan) if pc.to_plan else None,
+        reason_label=_PLAN_REASON_LABELS_TR.get(reason, reason),
+        note=pc.note,
     )
 
 
@@ -6025,11 +6056,33 @@ def admin_revenue_user_360_v2(
     offers = list_offers_for_owner(db, user_id=user_id, limit=50)
     invoices = invoices_for_owner(db, user_id=user_id, limit=100)
 
+    from app.services import free_tier_guard as _ftg
+    from app.services.plans import (
+        _VALID_SOLO_PAID_TIERS, plan_label as _plan_label, solo_student_limit,
+    )
+    related: list[RelatedAccountItem] = []
+    try:
+        for other, why in _ftg.find_related_accounts(db, u):
+            related.append(RelatedAccountItem(
+                id=other.id, full_name=other.full_name or "", email=other.email or "",
+                plan_label=_plan_label(other.plan),
+                active_students=_ftg._active_student_count(db, other.id),
+                reason=why, reason_label=_ftg.REASON_LABELS_TR.get(why, why),
+            ))
+    except Exception:  # noqa: BLE001 — yardımcı bilgi, sayfayı kırmaz
+        related = []
+    intended = u.post_trial_plan if u.post_trial_plan in _VALID_SOLO_PAID_TIERS else None
+
     return UserRevenue360Response(
         owner=OwnerBrief(
             owner_type=owner.owner_type, owner_id=owner.owner_id, name=owner.name,
             email=owner.email, plan=owner.plan, is_active=owner.is_active,
             monthly_price_try=owner.monthly_price_try, trial_ends_at=owner.trial_ends_at,
+            plan_label=_plan_label(owner.plan),
+            intended_plan=intended,
+            intended_plan_label=_plan_label(intended) if intended else None,
+            trial_denied_reason=u.trial_denied_reason,
+            student_limit=solo_student_limit(u.plan or "solo_free"),
         ),
         teacher_band=teacher_band,
         teacher_login_label=teacher_label,
@@ -6051,6 +6104,7 @@ def admin_revenue_user_360_v2(
         offers=[_offer_item(o) for o in offers],
         invoices=[_invoice_item(r) for r in invoices],
         meta=_crm_meta(),
+        related_accounts=related,
     )
 
 

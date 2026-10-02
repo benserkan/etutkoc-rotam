@@ -341,6 +341,7 @@ from app.models.video_basket import VideoBasketItem, VideoSource
 from app.models.weekly_skeleton import SkeletonGhostAction, WeeklySkeleton, WeeklySkeletonSlot
 from app.models.warning_state import WarningState
 from app.models.moment_event import MomentEvent
+from app.models.coach_device import CoachDeviceLink
 from app.models.panel_behavior import PanelRouteStat, PanelVisitEvent
 from app.models.guide import UserGuideState
 from app.models.owner_contact import OwnerContact
@@ -622,6 +623,7 @@ __all__ = [
     "WarningState",
     "PanelRouteStat",
     "MomentEvent",
+    "CoachDeviceLink",
     "PanelVisitEvent",
     "UserGuideState",
     "TaskTemplate",

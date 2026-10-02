@@ -6907,6 +6907,18 @@ def _check_student_creation_quota(
 
     # Solo
     if teacher.institution_id is None and teacher.role == UserRole.TEACHER:
+        # Ücretsiz paket kişi başına bir hesap (free_tier_guard): aynı kişinin
+        # başka bir ücretsiz hesabında öğrenci varsa burada öğrenci eklenemez.
+        from app.services.free_tier_guard import (
+            FreeSeatTaken, check_free_seat, free_seat_error_detail,
+        )
+        try:
+            check_free_seat(db, teacher)
+        except FreeSeatTaken as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=free_seat_error_detail(exc),
+            )
         from app.services.plans import check_solo_student_quota
         result = check_solo_student_quota(db, teacher=teacher, extra_count=1)
         if not result.ok:

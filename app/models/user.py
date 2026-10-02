@@ -258,6 +258,9 @@ class User(Base):
     # Bağımsız öğretmenlere uygulanır; kurum kullanıcılarında Institution.trial_*
     # kullanılır. NULL = trial geçerli değil (zaten free veya başka bir plana
     # geçmiş).
+    # Kayıtta deneme verilmediyse nedeni: device | phone | email (aynı kişinin
+    # önceki hesabı bulundu — free_tier_guard). NULL = deneme verildi / eski kayıt.
+    trial_denied_reason: Mapped[str | None] = mapped_column(String(20), nullable=True)
     trial_ends_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

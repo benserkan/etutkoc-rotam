@@ -47,6 +47,9 @@ HEALTH_BAND_LABELS_TR: dict[str, str] = {
     "at_risk": "Risk altında",
     "critical": "Kritik",
     "lost_imminent": "Kayıp eşiğinde",
+    # 2026-10-02: hesap NEW_MEMBER_DAYS günden yeni ve henüz sağlıklı değil →
+    # veri birikmediği için "kayıp riski" değil "yeni üye".
+    "new_member": "Yeni üye",
 }
 
 HEALTH_BAND_COLORS: dict[str, str] = {
@@ -55,6 +58,7 @@ HEALTH_BAND_COLORS: dict[str, str] = {
     "at_risk": "amber",
     "critical": "orange",
     "lost_imminent": "rose",
+    "new_member": "sky",
 }
 
 HEALTH_BAND_EMOJIS: dict[str, str] = {
@@ -63,6 +67,7 @@ HEALTH_BAND_EMOJIS: dict[str, str] = {
     "at_risk": "🟡",
     "critical": "🟠",
     "lost_imminent": "🔴",
+    "new_member": "🆕",
 }
 
 

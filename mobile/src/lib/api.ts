@@ -11,6 +11,27 @@ export const API_BASE =
 
 const ACCESS_KEY = "etk_access_token";
 const REFRESH_KEY = "etk_refresh_token";
+// Kurulum kimliği (çıkışta SİLİNMEZ): ücretsiz paket / deneme kişi başına bir
+// kez kuralı için backend cihaz kanıtı olarak kullanır (X-Device-Id, ham değer
+// sunucuda saklanmaz — özeti tutulur).
+const DEVICE_KEY = "etk_device_id";
+let deviceIdCache: string | null = null;
+
+async function getDeviceId(): Promise<string | null> {
+  if (deviceIdCache) return deviceIdCache;
+  try {
+    let id = await storageGet(DEVICE_KEY);
+    if (!id || !/^[A-Za-z0-9_-]{16,128}$/.test(id)) {
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      id = Array.from({ length: 32 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+      await storageSet(DEVICE_KEY, id);
+    }
+    deviceIdCache = id;
+    return id;
+  } catch {
+    return null;
+  }
+}
 
 export async function setTokens(access: string, refresh?: string | null): Promise<void> {
   await storageSet(ACCESS_KEY, access);
@@ -48,6 +69,8 @@ interface RequestOptions {
 async function rawRequest(path: string, opts: RequestOptions, token: string | null): Promise<Response> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (opts.auth !== false && token) headers["authorization"] = `Bearer ${token}`;
+  const deviceId = await getDeviceId();
+  if (deviceId) headers["x-device-id"] = deviceId;
   return fetch(`${API_BASE}${path}`, {
     method: opts.method ?? "GET",
     headers,

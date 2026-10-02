@@ -181,7 +181,7 @@ def _champion_owners(
             if u is None:
                 continue
             try:
-                hs = compute_health_score_v2_for_user(db, u)
+                hs = compute_health_score_v2_for_user(db, user_obj=u)
                 user_health[o.owner_id] = hs.band
             except Exception:
                 logger.exception("user health fail user=%s", o.owner_id)
@@ -241,7 +241,7 @@ def _paying_at_risk_owners(
             if u is None:
                 continue
             try:
-                hs = compute_health_score_v2_for_user(db, u)
+                hs = compute_health_score_v2_for_user(db, user_obj=u)
                 user_health[o.owner_id] = hs.band
             except Exception:
                 pass

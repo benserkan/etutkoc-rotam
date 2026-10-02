@@ -2382,6 +2382,16 @@ export interface TrialStatusResponse {
   intended_plan_label: string | null;
   /** Deneme değer sayacı — {karne, veli, etiket, icgoru, toplam_kredi}; 0'sa yok */
   trial_value: Record<string, number> | null;
+  /** Ücretli paketin kapasitesi aşıldı → uyarı + kısıtlama + yükseltme teklifi */
+  capacity_exceeded?: boolean;
+  /** Aktif öğrenci sayısına yeten en küçük paket */
+  recommended_plan?: string | null;
+  recommended_label?: string | null;
+  recommended_monthly?: number;
+  /** Kayıtta deneme verilmediyse nedeni: device | phone | email */
+  trial_denied_reason?: string | null;
+  /** iyzico | app_store | manual */
+  subscription_platform?: string | null;
 }
 
 export interface SessionDraftResponse {

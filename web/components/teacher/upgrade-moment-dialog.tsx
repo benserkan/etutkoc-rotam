@@ -110,7 +110,7 @@ export function UpgradeMomentDialog({
             className="bg-cyan-700 text-white hover:bg-cyan-800"
             onClick={() => {
               onClose();
-              router.push(`/teacher/plan?plan=${encodeURIComponent(p.recommended_plan)}`);
+              router.push(`/teacher/plan?plan=${encodeURIComponent(p.recommended_plan)}&checkout=1`);
             }}
           >
             {p.recommended_label}&apos;ya geç

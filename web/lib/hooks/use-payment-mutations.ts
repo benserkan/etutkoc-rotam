@@ -51,6 +51,8 @@ function errorTitle(e: unknown, fallback: string): string {
       return "Kurum kredisi panelden yönetilir";
     case "app_store_managed":
       return "Abonelik App Store'da yönetiliyor";
+    case "plan_capacity_insufficient":
+      return "Bu paket öğrenci sayına yetmiyor";
     case "link_owner_invalid":
       return "Hedef türü geçersiz";
     case "link_target_not_found":

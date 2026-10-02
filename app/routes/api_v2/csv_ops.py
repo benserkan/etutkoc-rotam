@@ -283,6 +283,13 @@ def import_commit(
         from app.routes.api_v2.dependencies import assert_active_coaching
         assert_active_coaching(db, user)
     if user.institution_id is None and valid_rows:
+        from app.services.free_tier_guard import (
+            FreeSeatTaken, check_free_seat, free_seat_error_detail,
+        )
+        try:
+            check_free_seat(db, user)
+        except FreeSeatTaken as exc:
+            raise HTTPException(status_code=403, detail=free_seat_error_detail(exc))
         from app.services.plans import check_solo_student_quota
         q = check_solo_student_quota(db, teacher=user, extra_count=len(valid_rows))
         if not q.ok:

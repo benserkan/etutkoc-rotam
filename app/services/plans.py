@@ -410,8 +410,43 @@ SOLO_STUDENT_LIMITS: dict[str, int] = {
 
 
 def solo_student_limit(plan_code: str) -> int:
-    """Solo plana göre aktif öğrenci limiti. Tanımsız plan → SOLO_FREE."""
+    """Solo plana göre aktif öğrenci limiti. Tanımsız plan → SOLO_FREE.
+
+    Ücretli kademelerin kapasitesi TEK KAYNAK pricing.solo_tiers'tan okunur
+    (süper admin fiyat panelinden değişirse kota da değişir); okunamazsa sabit."""
+    if plan_code in _VALID_SOLO_PAID_TIERS:
+        try:
+            from app.services.pricing import _cfg
+            for t in _cfg()["solo_tiers"]:
+                if t.get("code") == plan_code:
+                    mx = t.get("max_students")
+                    return -1 if mx is None else int(mx)
+        except Exception:  # noqa: BLE001
+            pass
     return SOLO_STUDENT_LIMITS.get(plan_code, SOLO_STUDENT_LIMITS[SOLO_FREE])
+
+
+def plan_label(plan_code: str | None) -> str:
+    """Görünen paket adı (Keşif/Patika/Rota/Zirve/14 gün deneme). Eski 'free'
+    kodu bağımsız koçta Keşif'tir. Bilinmeyen kod olduğu gibi döner."""
+    if not plan_code:
+        return "—"
+    if plan_code == "free":
+        plan_code = SOLO_FREE
+    info = PLAN_CATALOG.get(plan_code)
+    return info.label if info else plan_code
+
+
+def fitting_solo_tier(student_count: int) -> dict:
+    """Bu kadar aktif öğrenciyi taşıyan EN KÜÇÜK ücretli kademe
+    ({code, label, max_students, monthly}). 0 öğrenci → ilk kademe."""
+    from app.services.pricing import solo_tier_for_students
+    return solo_tier_for_students(max(0, int(student_count)))
+
+
+def plan_fits_students(plan_code: str, student_count: int) -> bool:
+    lim = solo_student_limit(plan_code)
+    return lim == -1 or student_count <= lim
 
 
 def count_solo_students(db: Session, *, teacher_id: int) -> int:
@@ -435,22 +470,32 @@ def reactivate_solo_students(db: Session, coach: User, *, autocommit: bool = Fal
     Paket yükseltme / abonelik aktivasyonunda çağrılır: ödeme duvarındayken
     (ücretsiz + limit aşımı / past_due) koç limite inmek için öğrencilerini
     pasifleştirmiş olabilir; ücretli/aktif duruma geçince banner'da verilen söz
-    gereği bunlar OTOMATİK geri açılır. Ücretli planda öğrenci limiti yok
-    (band-fiyatlı) → kota engeli oluşmaz. Aktif öğrenciye dokunmaz (idempotent).
+    gereği bunlar OTOMATİK geri açılır — paketin KAPASİTESİ kadar; fazlası pasif
+    kalır (koç öğrenci listesinden seçerek açar). Aktif öğrenciye dokunmaz.
     Kaç öğrencinin yeniden aktifleştiğini döndürür.
     """
     if coach.role != UserRole.TEACHER or coach.institution_id is not None:
         return 0
-    passive = (
+    # 2026-10-02: kapasiteli paketler (Patika ≤10, Rota ≤25) — yalnız paketin
+    # kapasitesi kadar öğrenci geri açılır; en son giriş yapanlar önce.
+    limit = solo_student_limit(coach.plan or SOLO_FREE)
+    room = None
+    if limit != -1:
+        room = max(0, limit - count_solo_students(db, teacher_id=coach.id))
+        if room == 0:
+            return 0
+    q = (
         db.query(User)
         .filter(
             User.role == UserRole.STUDENT,
             User.is_active.is_(False),
             User.institution_id.is_(None),
             User.teacher_id == coach.id,
+            ~User.email.like("%@kvkk.local"),
         )
-        .all()
+        .order_by(User.last_login_at.desc().nullslast(), User.id.desc())
     )
+    passive = q.limit(room).all() if room is not None else q.all()
     for s in passive:
         s.is_active = True
     if autocommit and passive:
@@ -493,10 +538,11 @@ def check_solo_student_quota(
 
     after = current + extra_count
     target = None
-    if plan_code == SOLO_FREE:
-        target = SOLO_PRO
-    elif plan_code == SOLO_PRO:
-        target = SOLO_ELITE
+    try:
+        tcode = fitting_solo_tier(after)["code"]
+        target = tcode if tcode != plan_code else None
+    except Exception:  # noqa: BLE001
+        target = SOLO_PRO if plan_code in (SOLO_FREE, "free") else None
     return SoloQuotaCheckResult(
         ok=(after <= limit),
         plan_code=plan_code, plan_label=plan_label,
@@ -516,8 +562,12 @@ def start_solo_trial(
     actor_user_id: int | None = None,
     intended_plan: str | None = None,
     autocommit: bool = True,
+    new_account: bool = False,
 ) -> User:
     """Bağımsız öğretmen için 14 günlük reverse trial başlat.
+
+    new_account=True (kayıt): geçmişe "önceki paket" yazılmaz — hesap hiçbir
+    paketi seçmedi; ilk kayıt "— → 14 gün deneme (seçilen paket: X) · kayıt".
 
     plan='solo_trial' set edilir, trial_ends_at=now+14d.
     post_trial_plan: intended_plan geçerli bir ücretli tier ise oraya;
@@ -530,7 +580,7 @@ def start_solo_trial(
             f"start_solo_trial: kurumlu kullanıcı (#{user.id}) — bireysel trial uygun değil"
         )
     now = datetime.now(timezone.utc)
-    from_plan = user.plan
+    from_plan = None if new_account else user.plan
     user.plan = SOLO_TRIAL
     user.trial_ends_at = now + timedelta(days=days)
     # Niyetli tier varsa ona, yoksa free
@@ -539,8 +589,9 @@ def start_solo_trial(
     )
 
     note = (
-        f"{days} günlük reverse trial başlatıldı (Solo Pro özellikleri)"
-        + (f" · sonra: {intended_plan}" if user.post_trial_plan != SOLO_FREE else "")
+        f"{days} gün ücretsiz deneme başladı"
+        + (f" · seçilen paket: {plan_label(intended_plan)}"
+           if user.post_trial_plan != SOLO_FREE else "")
     )
     _log_change(
         db, owner_type=PlanOwnerType.USER, owner_id=user.id,
@@ -548,6 +599,39 @@ def start_solo_trial(
         reason=PlanChangeReason.SIGNUP,
         actor_user_id=actor_user_id or user.id,
         note=note,
+    )
+    if autocommit:
+        db.commit()
+    else:
+        db.flush()
+    return user
+
+
+def start_solo_without_trial(
+    db: Session, *, user: User, reason: str,
+    intended_plan: str | None = None, autocommit: bool = True,
+) -> User:
+    """Kayıt — aynı kişinin önceki hesabı bulundu (free_tier_guard): deneme
+    VERİLMEZ, hesap Keşif ile açılır. Seçtiği paket ödeme ekranında hazır bekler."""
+    if user.institution_id is not None:
+        raise ValueError("start_solo_without_trial: kurumlu kullanıcı")
+    user.plan = SOLO_FREE
+    user.trial_ends_at = None
+    user.trial_denied_reason = reason
+    user.post_trial_plan = (
+        intended_plan if intended_plan in _VALID_SOLO_PAID_TIERS else SOLO_FREE
+    )
+    from app.services.free_tier_guard import REASON_LABELS_TR
+    note = (
+        "Kayıt · ücretsiz deneme verilmedi (bu kişiye ait önceki hesap: "
+        f"{REASON_LABELS_TR.get(reason, reason)})"
+        + (f" · seçilen paket: {plan_label(intended_plan)}"
+           if user.post_trial_plan != SOLO_FREE else "")
+    )
+    _log_change(
+        db, owner_type=PlanOwnerType.USER, owner_id=user.id,
+        from_plan=None, to_plan=SOLO_FREE,
+        reason=PlanChangeReason.SIGNUP, actor_user_id=user.id, note=note,
     )
     if autocommit:
         db.commit()
@@ -822,6 +906,8 @@ def solo_trial_status(
             "over_limit": False, "paywall": False, "upgrade_target": None,
         }
     plan = user.plan or SOLO_FREE
+    if plan == "free":
+        plan = SOLO_FREE
     info = get_plan_info(plan)
     active = is_trial_active(user, now)
     days_left = trial_days_left(owner=user, now=now)
@@ -830,8 +916,16 @@ def solo_trial_status(
     over_limit = (limit != -1 and count > limit)
     sub_status = getattr(user, "subscription_status", None)
     past_due = (sub_status == "past_due")
-    # Ödeme duvarı: ücretsiz + limit aşıldı VEYA abonelik yenilenmedi (past_due).
-    paywall = (plan == SOLO_FREE and over_limit) or past_due
+    # Ücretli paket ama öğrenci sayısı kapasiteyi aşıyor (2026-10-02 A2):
+    # uyarı + kısıtlama + tek tık yükseltme teklifi.
+    capacity_exceeded = (plan in _VALID_SOLO_PAID_TIERS and over_limit and not past_due)
+    # Ödeme duvarı: ücretsiz + limit aşıldı VEYA abonelik yenilenmedi (past_due)
+    # VEYA ücretli paketin kapasitesi aşıldı.
+    paywall = (plan == SOLO_FREE and over_limit) or past_due or capacity_exceeded
+    try:
+        rec = fitting_solo_tier(count)
+    except Exception:  # noqa: BLE001
+        rec = {"code": SOLO_PRO, "label": plan_label(SOLO_PRO), "monthly": 0}
     trial_critical = (active and days_left is not None and days_left <= 3)
     # Deneme bitti + signup'ta ücretli paket seçilmişti + hâlâ ödenmedi →
     # "ödemen bekleniyor" hatırlatma bandı (paywall değilse amber, kapatılabilir).
@@ -841,7 +935,7 @@ def solo_trial_status(
     return {
         "is_solo": True,
         "plan_code": plan,
-        "plan_label": info.label if info else plan,
+        "plan_label": plan_label(plan),
         "trial_active": active,
         "days_left": days_left,
         "trial_critical": trial_critical,
@@ -851,7 +945,15 @@ def solo_trial_status(
         "paywall": paywall,
         "subscription_status": sub_status,
         "past_due": past_due,
-        "upgrade_target": SOLO_PRO if plan in (SOLO_FREE, SOLO_TRIAL) else None,
+        "upgrade_target": (
+            rec["code"] if (plan in (SOLO_FREE, SOLO_TRIAL) or capacity_exceeded) else None
+        ),
+        "capacity_exceeded": capacity_exceeded,
+        "recommended_plan": rec["code"],
+        "recommended_label": rec["label"],
+        "recommended_monthly": int(rec.get("monthly") or 0),
+        "trial_denied_reason": getattr(user, "trial_denied_reason", None),
+        "subscription_platform": getattr(user, "subscription_platform", None),
         "payment_pending": payment_pending,
         "intended_plan": intended,
         "intended_plan_label": (
