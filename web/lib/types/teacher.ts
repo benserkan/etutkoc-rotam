@@ -2085,6 +2085,8 @@ export interface ExamResultRow {
   parent_notified_at?: string | null;
   /** Karneden okunan puan/sıralama (yalnız PDF içe aktarımında). */
   score?: ExamScoreInfo | null;
+  /** Faz 3: katılımcı genel ortalaması (karneden ya da koç girişi). */
+  averages?: ExamAverages | null;
 }
 
 export interface ExamScoreInfo {
@@ -2637,4 +2639,13 @@ export interface TaskVideoRef {
   url: string;
   duration_min: number | null;
   role: string;
+}
+
+
+/** Deneme genel ortalaması — ders adı → ortalama net (Faz 3). */
+export interface ExamAverages {
+  label: string;
+  total: number | null;
+  source: "auto" | "manual";
+  subjects: Record<string, number>;
 }

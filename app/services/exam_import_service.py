@@ -1642,9 +1642,30 @@ def analyze(
         "match_stats": stats_total,
         "duplicate_exam_id": dup_id,
         "duplicate": dup_match.as_details() if dup_match else None,
-        "score_info": merged.get("score_info"),
+        "score_info": _score_info_with_averages(merged),
         "topic_choices": topic_choices,
     }
+
+
+def _score_info_with_averages(merged: dict) -> dict | None:
+    """Karnedeki GENEL ortalama netleri score_info.averages'a taşı.
+
+    Anahtar belgedeki HAM ders adıdır (öğrencinin ders adlarıyla eşlemesi
+    gösterimde soru satırlarından yapılır — exam_averages.averages_for_exam).
+    score_info önizlemeden onaya aynen geri gelir; ayrı alan gerekmez.
+    """
+    info = dict(merged.get("score_info") or {})
+    subs = {s["name"]: s["avg_net"] for s in merged.get("subjects") or []
+            if s.get("name") and s.get("avg_net") is not None}
+    total = info.pop("avg_net", None)
+    try:
+        total = round(float(str(total).replace(",", ".")), 2) if total is not None else None
+    except (TypeError, ValueError):
+        total = None
+    if subs or total is not None:
+        info["averages"] = {"label": "Genel ortalama", "subjects": subs, "total": total,
+                            "source": "auto"}
+    return info or None
 
 
 def _parse_date(v: str | None) -> date | None:

@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DistractorPanel } from "@/components/shared/exam-faz3";
 import { api } from "@/lib/api";
 import { getTeacherExamQuestions, teacherKeys } from "@/lib/api/teacher";
 import type { ExamQuestionsResponse, ExamResultRow } from "@/lib/types/teacher";
@@ -261,6 +262,11 @@ export function ExamDetailDialog({
                   </div>
                 )}
               </ExamSection>
+              <DistractorPanel
+                examId={row.id}
+                source={studentId == null ? "student" : "teacher"}
+                enabled={open && hasQuestions}
+              />
             </>
           )}
         </div>

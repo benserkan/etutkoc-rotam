@@ -49,6 +49,11 @@ KURALLAR (çok önemli):
 - Sonuç: belge +/- benzeri işaret veriyorsa onu kullan ("dogru"/"yanlis"); öğrenci cevabı boşsa "bos". İşaret yoksa doğru cevap ile öğrenci cevabını karşılaştır. Hiçbiri çıkarılamıyorsa null.
 - Belgede ders bazlı ÖZET tablosu (soru/doğru/yanlış/boş/net) varsa "subjects" içine aynen yaz; yoksa boş liste.
 - Puan/sıralama/katılımcı bilgisi varsa "score_info" içine yaz; yoksa null.
+- GENEL ORTALAMA: özet tablosunda öğrencinin netinin yanında katılımcıların
+  ortalaması (sütun adı "Genel", "Türkiye", "Genel Ort." vb.) yazıyorsa, o dersin
+  GENEL ortalama NETİNİ "avg_net" alanına yaz. İl/ilçe/kurum/şube ortalamasını
+  YAZMA — yalnız en geniş (genel/Türkiye) olanı. Toplam net için genel ortalama
+  varsa "score_info.avg_net" içine yaz. Belgede yoksa null; ASLA tahmin etme.
 - Sınav adı, tarihi, öğrencinin sınıfı (örn. "12-D" → 12) belgede varsa yaz.
 - ÇOK ÖNEMLİ — BİRLEŞİK BELGELER: Bazı belgeler AYNI dosyada İKİ AYRI sınav
   oturumunun SORU SATIRLARINI içerir (örn. hem TYT hem AYT bölümleri olan "TG"
@@ -74,12 +79,12 @@ YALNIZ şu JSON nesnesini döndür:
   "grade_hint": 5-12 arası tam sayı | null,
   "type_hints": ["TYT","AYT","LGS","MSÜ","BRANŞ","OKUL", sınıf ibaresi vb. belgede geçen tür ipuçları],
   "subjects": [
-    {"name": "ders adı", "part": "tyt"|"ayt"|null, "questions": int|null, "correct": int|null, "wrong": int|null, "blank": int|null, "net": float|null}
+    {"name": "ders adı", "part": "tyt"|"ayt"|null, "questions": int|null, "correct": int|null, "wrong": int|null, "blank": int|null, "net": float|null, "avg_net": float|null}
   ],
   "questions": [
     {"subject": "ders adı", "part": "tyt"|"ayt"|null, "no": int|null, "topic": "konu adı (aynen)", "correct_answer": "A-E"|null, "student_answer": "A-E"|null, "result": "dogru"|"yanlis"|"bos"|null}
   ],
-  "score_info": {"score": float|null, "rank_overall": int|null, "participants": int|null, "extra": "diğer puan/sıralama notları"|null} | null
+  "score_info": {"score": float|null, "rank_overall": int|null, "participants": int|null, "avg_net": float|null, "extra": "diğer puan/sıralama notları"|null} | null
 }"""
 
 
@@ -228,14 +233,16 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
                     return int(v) if v is not None else None
                 except (TypeError, ValueError):
                     return None
-            net = s.get("net")
-            try:
-                # TR belgeleri ondalıkta virgül kullanır ("14,67")
-                if isinstance(net, str):
-                    net = net.replace(",", ".")
-                net = round(float(net), 2) if net is not None else None
-            except (TypeError, ValueError):
-                net = None
+            def _f(k: str) -> float | None:
+                v = s.get(k)
+                try:
+                    # TR belgeleri ondalıkta virgül kullanır ("14,67")
+                    if isinstance(v, str):
+                        v = v.replace(",", ".")
+                    return round(float(v), 2) if v is not None else None
+                except (TypeError, ValueError):
+                    return None
+            net = _f("net")
             out["subjects"].append({
                 "name": str(s["name"]).strip()[:120],
                 "part": _part(s.get("part")),
@@ -244,6 +251,7 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
                 "wrong": _i("wrong"),
                 "blank": _i("blank"),
                 "net": net,
+                "avg_net": _f("avg_net"),
             })
 
     qs = data.get("questions")

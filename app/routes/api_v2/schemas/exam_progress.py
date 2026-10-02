@@ -171,3 +171,89 @@ class ExamShareResult(BaseModel):
     share: ExamShareInfo | None = None
     notified: bool = False
     invalidate: list[str] = Field(default_factory=list)
+
+
+# ================================================================ Faz 3
+
+class ExamAveragesBody(BaseModel):
+    label: str | None = Field(default=None, max_length=60)
+    total: float | None = None
+    subjects: dict[str, float | None] | None = None
+
+
+class ExamAveragesResult(BaseModel):
+    exam_id: int
+    averages: dict | None = None
+    invalidate: list[str] = Field(default_factory=list)
+
+
+class DistractorLetter(BaseModel):
+    letter: str
+    chosen: int
+    key: int
+    wrong_chosen: int
+    chosen_pct: float
+    key_pct: float
+
+
+class DistractorQuestion(BaseModel):
+    subject: str
+    question_no: int | None = None
+    topic: str | None = None
+    correct_answer: str | None = None
+    student_answer: str | None = None
+    result: str
+    peer_count: int
+    peer_correct_pct: int
+    top_wrong_option: str | None = None
+    top_wrong_count: int = 0
+    same_as_student: bool = False
+
+
+class DistractorResponse(BaseModel):
+    exam_id: int
+    answered: int
+    wrong_count: int
+    letters: list[DistractorLetter]
+    notes: list[str] = Field(default_factory=list)
+    peer_count: int = 0
+    peer_min: int = 2
+    questions: list[DistractorQuestion] = Field(default_factory=list)
+
+
+class ScoreItem(BaseModel):
+    key: str
+    label: str
+    score: float
+    max: int = 500
+    based_on: list[int] = Field(default_factory=list)
+    detail: str | None = None
+    is_student_track: bool = False
+
+
+class ScoreInput(BaseModel):
+    id: int
+    title: str
+    exam_date: str
+    section_label: str
+    net: float
+    karne_score: float | None = None
+
+
+class ScoreCalibration(BaseModel):
+    exam_id: int
+    title: str
+    exam_date: str
+    karne_score: float
+    estimate: float
+    diff: float
+
+
+class ScoreEstimateResponse(BaseModel):
+    generated_at: str
+    kind: str | None = None  # lgs | yks | None
+    scores: list[ScoreItem] = Field(default_factory=list)
+    inputs: list[ScoreInput] = Field(default_factory=list)
+    calibration: list[ScoreCalibration] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    disclaimer: str

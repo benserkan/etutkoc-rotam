@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { ExamAveragesButton } from "@/components/teacher/exams/exam-averages-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -322,7 +323,12 @@ export function OverviewTab({
       {last.subjects.length ? (
         <ExamSection
           title="Ders bazında sonuç"
-          description="Son denemede her dersin doğru, yanlış, boş ve neti; son sütun önceki aynı tür denemeye göre net farkı."
+          description={
+            last.averages
+              ? `Son denemede her dersin doğru, yanlış, boş ve neti; ${last.averages.label.toLocaleLowerCase("tr-TR")} ile fark ve önceki aynı tür denemeye göre fark.`
+              : "Son denemede her dersin doğru, yanlış, boş ve neti; son sütun önceki aynı tür denemeye göre net farkı."
+          }
+          actions={studentId != null ? <ExamAveragesButton row={last} /> : null}
         >
           <SubjectTable row={last} prev={prev} />
         </ExamSection>
@@ -386,9 +392,11 @@ export function DybBar({ d, y, b }: { d: number; y: number; b: number }) {
 }
 
 export function SubjectTable({ row, prev }: { row: ExamResultRow; prev: ExamResultRow | null }) {
+  const av = row.averages ?? null;
+  const hasAvg = !!av && (Object.keys(av.subjects).length > 0 || av.total != null);
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[520px] text-sm">
+    <div className="relative overflow-x-auto">
+      <table className={cn("w-full text-sm", hasAvg ? "min-w-[680px]" : "min-w-[520px]")}>
         <thead>
           <tr className="border-b border-border text-left text-xs text-muted-foreground">
             <th className="py-2 pr-2 font-medium">Ders</th>
@@ -396,6 +404,14 @@ export function SubjectTable({ row, prev }: { row: ExamResultRow; prev: ExamResu
             <th className="px-2 py-2 text-right font-medium">Yanlış</th>
             <th className="px-2 py-2 text-right font-medium">Boş</th>
             <th className="px-2 py-2 text-right font-medium">Net</th>
+            {hasAvg ? (
+              <>
+                <th className="px-2 py-2 text-right font-medium" title={av!.label}>
+                  {av!.label}
+                </th>
+                <th className="px-2 py-2 text-right font-medium">Ortalamaya göre</th>
+              </>
+            ) : null}
             <th className="py-2 pl-2 text-right font-medium">Önceki denemeye göre</th>
           </tr>
         </thead>
@@ -413,6 +429,16 @@ export function SubjectTable({ row, prev }: { row: ExamResultRow; prev: ExamResu
                 </td>
                 <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{s.blank}</td>
                 <td className="px-2 py-2 text-right font-semibold tabular-nums">{fmtNet(s.net)}</td>
+                {hasAvg ? (
+                  <>
+                    <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
+                      {fmtNet(av!.subjects[s.name])}
+                    </td>
+                    <td className="px-2 py-2 text-right text-xs">
+                      <Delta value={av!.subjects[s.name] == null ? null : s.net - av!.subjects[s.name]} />
+                    </td>
+                  </>
+                ) : null}
                 <td className="py-2 pl-2 text-right text-xs">
                   <Delta value={p == null ? null : s.net - p} />
                 </td>
@@ -425,6 +451,14 @@ export function SubjectTable({ row, prev }: { row: ExamResultRow; prev: ExamResu
             <td className="px-2 py-2 text-right tabular-nums">{row.total_wrong}</td>
             <td className="px-2 py-2 text-right tabular-nums">{row.total_blank}</td>
             <td className="px-2 py-2 text-right tabular-nums">{fmtNet(row.net)}</td>
+            {hasAvg ? (
+              <>
+                <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{fmtNet(av!.total)}</td>
+                <td className="px-2 py-2 text-right text-xs">
+                  <Delta value={av!.total == null ? null : row.net - av!.total} />
+                </td>
+              </>
+            ) : null}
             <td className="py-2 pl-2 text-right text-xs">
               <Delta value={prev ? row.net - prev.net : null} />
             </td>

@@ -1370,7 +1370,19 @@ def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamRes
         created_by_name=created_by_name,
         import_source=exam.import_source,
         score=_exam_score(exam),
+        averages=_exam_averages(exam),
     )
+
+
+def _exam_averages(exam: ExamResult) -> "ExamAverages | None":
+    """Genel ortalama (Faz 3) — karne okuması ya da koç girişi; yoksa None."""
+    from app.routes.api_v2.schemas.teacher import ExamAverages
+    from app.services.exam_faz3 import averages_for_exam
+    try:
+        a = averages_for_exam(exam)
+    except Exception:  # noqa: BLE001 — liste hiçbir zaman ortalama yüzünden düşmez
+        return None
+    return ExamAverages(**a) if a else None
 
 
 def _exam_score(exam: ExamResult) -> "ExamScoreInfo | None":

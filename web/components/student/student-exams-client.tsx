@@ -6,6 +6,7 @@ import { ChevronDown, Eye, FileUp, MessageSquareQuote, TrendingDown, TrendingUp 
 
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
+import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 import {
@@ -33,13 +34,14 @@ import { cn } from "@/lib/utils";
  * Hedef" (hedef net, yorum, çalışma öncelikleri) + koçun öğrenciye notu.
  */
 
-type Tab = "overview" | "progress" | "topics" | "behavior" | "report" | "list";
+type Tab = "overview" | "progress" | "topics" | "behavior" | "report" | "score" | "list";
 const TABS: { key: Tab; label: string }[] = [
   { key: "overview", label: "Genel Bakış" },
   { key: "progress", label: "Net Gelişimi" },
   { key: "topics", label: "Konu Analizi" },
   { key: "behavior", label: "Sınav Davranışı" },
   { key: "report", label: "Gelişim ve Hedef" },
+  { key: "score", label: "Puan Tahmini" },
   { key: "list", label: "Tüm Denemeler" },
 ];
 
@@ -174,7 +176,7 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
                 </button>
               ))}
             </div>
-            {tab !== "list" && sectionsInfo.length > 1 ? (
+            {tab !== "list" && tab !== "score" && sectionsInfo.length > 1 ? (
               <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
                 Sınav türü
                 <select
@@ -205,6 +207,8 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
               <ExamTopicAnalysis section={activeSection} />
             ) : tab === "behavior" ? (
               <BehaviorTab rows={sectionRows} />
+            ) : tab === "score" ? (
+              <ScoreEstimatePanel source={{ kind: "student" }} />
             ) : tab === "report" ? (
               <ExamProgressReport source={{ kind: "student" }} section={activeSection} />
             ) : (

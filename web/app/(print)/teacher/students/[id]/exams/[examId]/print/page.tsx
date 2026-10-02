@@ -154,6 +154,12 @@ export default async function ExamReportPrintPage({
           <span className="text-[11px] text-stone-600">
             {prev ? `önceki: ${fmtNet(prev.net)} (${fmtSigned(row.net - prev.net)})` : "bu türde ilk deneme"}
           </span>
+          {row.averages?.total != null ? (
+            <span className="text-[11px] text-stone-600">
+              {row.averages.label.toLocaleLowerCase("tr-TR")}: {fmtNet(row.averages.total)} (
+              {fmtSigned(row.net - row.averages.total)})
+            </span>
+          ) : null}
         </Box>
         <Box label="Doğru · Yanlış · Boş">
           <span className="text-lg font-bold tabular-nums">
@@ -190,6 +196,9 @@ export default async function ExamReportPrintPage({
                 <th className="px-2 py-1 text-right">Yanlış</th>
                 <th className="px-2 py-1 text-right">Boş</th>
                 <th className="px-2 py-1 text-right">Net</th>
+                {row.averages ? (
+                  <th className="px-2 py-1 text-right">{row.averages.label}</th>
+                ) : null}
                 <th className="py-1 pl-2 text-right">Önceki denemeye göre</th>
               </tr>
             </thead>
@@ -203,6 +212,11 @@ export default async function ExamReportPrintPage({
                     <td className="px-2 py-1 text-right tabular-nums text-rose-700">{s.wrong}</td>
                     <td className="px-2 py-1 text-right tabular-nums text-stone-500">{s.blank}</td>
                     <td className="px-2 py-1 text-right font-semibold tabular-nums">{fmtNet(s.net)}</td>
+                    {row.averages ? (
+                      <td className="px-2 py-1 text-right tabular-nums text-stone-600">
+                        {fmtNet(row.averages.subjects[s.name])}
+                      </td>
+                    ) : null}
                     <td className={`py-1 pl-2 text-right tabular-nums ${p == null ? "text-stone-400" : s.net - p >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
                       {p == null ? "—" : fmtSigned(s.net - p)}
                     </td>

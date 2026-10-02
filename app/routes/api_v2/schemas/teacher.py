@@ -2203,6 +2203,14 @@ class ExamQuestionsResponse(BaseModel):
     items: list[ExamQuestionItem]
 
 
+class ExamAverages(BaseModel):
+    """Katılımcı genel ortalaması — ders adı → ortalama net (Faz 3)."""
+    label: str = "Genel ortalama"
+    total: float | None = None
+    source: str = "auto"   # auto (karneden) | manual (koç girdi)
+    subjects: dict[str, float] = {}
+
+
 class ExamResultRow(BaseModel):
     id: int
     title: str
@@ -2223,6 +2231,7 @@ class ExamResultRow(BaseModel):
     # karneden okunan puan/sıralama (yalnız PDF içe aktarımında; yoksa None)
     score: ExamScoreInfo | None = None
     import_source: str | None = None       # "pdf_import" → satır-düzeyi düzenleme açılır
+    averages: "ExamAverages | None" = None  # Faz 3: genel ortalama (karne / koç girişi)
 
 
 class ExamListSummary(BaseModel):

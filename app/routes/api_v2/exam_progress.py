@@ -18,6 +18,10 @@ from app.routes.api_v2.schemas.exam_progress import (
     AgendaQueueIdsBody,
     AgendaQueueItem,
     AgendaQueueResponse,
+    DistractorResponse,
+    ExamAveragesBody,
+    ExamAveragesResult,
+    ScoreEstimateResponse,
     ExamProgressResponse,
     ExamShareBody,
     ExamShareInfo,
@@ -29,6 +33,7 @@ from app.routes.api_v2.schemas.exam_progress import (
 )
 from app.routes.api_v2.student import _require_student
 from app.routes.api_v2.teacher import _get_owned_exam, _get_owned_student, _require_teacher
+from app.services import exam_faz3
 from app.services import exam_progress as svc
 
 logger = logging.getLogger(__name__)
@@ -200,3 +205,51 @@ def student_exam_progress(section: str | None = None, period: str | None = None,
 def student_exam_shares(user: User = Depends(_require_student), db: Session = Depends(get_db)):
     """Koçun öğrenciyle paylaştığı denemeler + öğrenciye yazdığı notlar."""
     return ExamSharesResponse(shares=_shares_for(db, user.id))
+
+
+# ================================================================ Faz 3
+
+@router.post("/teacher/exams/{exam_id}/averages", response_model=ExamAveragesResult)
+def teacher_set_exam_averages(exam_id: int, body: ExamAveragesBody,
+                              user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
+    """Genel ortalamayı elle gir/düzelt (karnede yoksa). Boş gövde → elle girişi kaldırır."""
+    exam = _get_owned_exam(db, exam_id, user.id)
+    try:
+        av = exam_faz3.set_manual_averages(exam, label=body.label, total=body.total, subjects=body.subjects)
+    except exam_faz3.Faz3Error as e:
+        raise HTTPException(status_code=e.status,
+                            detail={"error": "validation", "code": e.code, "message": e.message})
+    db.commit()
+    return ExamAveragesResult(exam_id=exam.id, averages=av,
+                              invalidate=[_k(user.id, exam.student_id, "exams"), "student:exams"])
+
+
+@router.get("/teacher/exams/{exam_id}/distractors", response_model=DistractorResponse)
+def teacher_exam_distractors(exam_id: int, user: User = Depends(_require_teacher),
+                             db: Session = Depends(get_db)):
+    """Çeldirici analizi: şık eğilimi + koçun aynı denemeye giren öğrencileri."""
+    exam = _get_owned_exam(db, exam_id, user.id)
+    return DistractorResponse(**exam_faz3.distractor_analysis(db, exam, coach_id=user.id))
+
+
+@router.get("/student/exams/{exam_id}/distractors", response_model=DistractorResponse)
+def student_exam_distractors(exam_id: int, user: User = Depends(_require_student),
+                             db: Session = Depends(get_db)):
+    """Öğrencinin kendi denemesi — akran verisi yalnız toplu oran olarak (isim yok)."""
+    exam = db.query(ExamResult).filter(ExamResult.id == exam_id, ExamResult.student_id == user.id).first()
+    if exam is None:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "exam_not_found",
+                                                     "message": "Deneme bulunamadı."})
+    return DistractorResponse(**exam_faz3.distractor_analysis(db, exam, coach_id=user.teacher_id))
+
+
+@router.get("/teacher/students/{student_id}/score-estimate", response_model=ScoreEstimateResponse)
+def teacher_score_estimate(student_id: int, user: User = Depends(_require_teacher),
+                           db: Session = Depends(get_db)):
+    student = _get_owned_student(db, student_id, user.id)
+    return ScoreEstimateResponse(**exam_faz3.score_estimate(db, student))
+
+
+@router.get("/student/score-estimate", response_model=ScoreEstimateResponse)
+def student_score_estimate(user: User = Depends(_require_student), db: Session = Depends(get_db)):
+    return ScoreEstimateResponse(**exam_faz3.score_estimate(db, user))

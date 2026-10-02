@@ -32,6 +32,7 @@ import {
 } from "@/components/teacher/exams/exam-analytics";
 import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
 import { ExamStudentShareButton } from "@/components/teacher/exams/exam-student-share";
+import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
 import { examProgressKeys, getExamShares } from "@/lib/api/exam-progress";
 import type { ExamShareInfo } from "@/lib/types/exam-progress";
@@ -93,7 +94,7 @@ function formatTRDate(iso: string): string {
   return `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}.${y}`;
 }
 
-type ExamTab = "overview" | "progress" | "topics" | "behavior" | "report" | "list";
+type ExamTab = "overview" | "progress" | "topics" | "behavior" | "report" | "score" | "list";
 
 const EXAM_TABS: { key: ExamTab; label: string; hint: string }[] = [
   { key: "overview", label: "Genel Bakış", hint: "Son deneme, puan, öne çıkanlar" },
@@ -101,6 +102,7 @@ const EXAM_TABS: { key: ExamTab; label: string; hint: string }[] = [
   { key: "topics", label: "Konu Analizi", hint: "Net fırsatı, zayıf konular" },
   { key: "behavior", label: "Sınav Davranışı", hint: "Boş, yanlış, işaretleme eğilimi" },
   { key: "report", label: "Gelişim Raporu", hint: "Hedef net, otomatik yorum, aksiyon planı" },
+  { key: "score", label: "Puan Tahmini", hint: "Son netlerden yaklaşık TYT/AYT/LGS puanı" },
   { key: "list", label: "Tüm Denemeler", hint: "Tüm denemeler ve işlemler" },
 ];
 
@@ -241,7 +243,7 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
                 </button>
               ))}
             </div>
-            {tab !== "list" && sectionsInfo.length > 1 ? (
+            {tab !== "list" && tab !== "score" && sectionsInfo.length > 1 ? (
               <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
                 Sınav türü
                 <select
@@ -277,6 +279,8 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
               <ExamTopicAnalysis studentId={studentId} section={activeSection} />
             ) : tab === "behavior" ? (
               <BehaviorTab rows={sectionRows} />
+            ) : tab === "score" ? (
+              <ScoreEstimatePanel source={{ kind: "teacher", studentId }} />
             ) : tab === "report" ? (
               <ExamProgressReport
                 source={{ kind: "teacher", studentId }}
