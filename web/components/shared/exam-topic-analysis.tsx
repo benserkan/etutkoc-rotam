@@ -57,38 +57,71 @@ export function ExamTopicAnalysis({
     staleTime: 30_000,
   });
   const d = q.data;
+  const [subj, setSubj] = React.useState<string>("");
   if (!d || d.exams.length === 0) return null;
 
+  const subjectsAll = [...new Set(d.topics.map((t) => t.subject_name))];
+  const activeSubj = subjectsAll.includes(subj) ? subj : "";
+  const bySubj = <T extends { subject_name: string }>(arr: T[]) =>
+    activeSubj ? arr.filter((x) => x.subject_name === activeSubj) : arr;
   const examById = new Map(d.exams.map((e, i) => [e.id, i]));
-  const heatTopics = d.topics.slice(0, 14);
-  const maxGain = d.opportunities[0]?.net_gain_per_exam ?? 0;
+  const heatTopics = bySubj(d.topics).slice(0, 20);
+  const opps = bySubj(d.opportunities).slice(0, 10);
+  const forgotten = bySubj(d.forgotten);
+  const improved = bySubj(d.improved);
+  const maxGain = opps[0]?.net_gain_per_exam ?? 0;
 
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-card p-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+    <section className="space-y-4">
+      <div className="rounded-xl border border-border bg-card px-4 py-3">
         <h4 className="text-sm font-semibold text-foreground">
           Konu Analizi{" "}
           <span className="font-normal text-muted-foreground">
-            · {d.section_label} · {d.exams.length} deneme ·{" "}
-            {d.analyzed_question_count} soru
+            · {d.section_label} · {d.exams.length} deneme · {d.analyzed_question_count} soru
           </span>
         </h4>
-        <p className="text-[11px] text-muted-foreground">
-          PDF&apos;ten aktarılan denemelerin soru satırlarından hesaplanır.
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+          PDF&apos;ten aktarılan denemelerin soru satırlarından hesaplanır: her soru karnedeki
+          konusuyla müfredat konusuna bağlanır, konu konu toplanır. Elle girilen denemeler
+          (soru satırı yok) bu analize girmez.
         </p>
+        {subjectsAll.length > 1 ? (
+          <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Ders süzgeci">
+            {["", ...subjectsAll].map((sn) => (
+              <button
+                key={sn || "all"}
+                type="button"
+                onClick={() => setSubj(sn)}
+                aria-pressed={activeSubj === sn}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs font-medium",
+                  activeSubj === sn
+                    ? "border-cyan-700 bg-cyan-700 text-white"
+                    : "border-border bg-background text-foreground hover:bg-muted",
+                )}
+              >
+                {sn || "Tüm dersler"}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
-      {d.opportunities.length > 0 ? (
-        <div>
-          <h5 className="mb-1.5 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Target className="size-3.5 text-rose-600" aria-hidden />
-            Net fırsatı — bu konular kapanırsa deneme başına kazanç
+      {opps.length > 0 ? (
+        <div className="rounded-xl border border-border bg-card px-4 py-3">
+          <h5 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <Target className="size-4 text-rose-600" aria-hidden />
+            Net fırsatı
           </h5>
-          <ul className="space-y-1">
-            {d.opportunities.slice(0, 6).map((o: AnalysisOpportunity) => (
-              <li key={o.topic_id} className="text-xs">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="min-w-0 truncate">
+          <p className="mb-3 mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            Bu konulardaki yanlış ve boşlar doğru olsaydı deneme başına kazanılacak net.
+            En büyük fırsat en üstte — programda öncelik bu konulara verilir.
+          </p>
+          <ul className="space-y-2">
+            {opps.map((o: AnalysisOpportunity) => (
+              <li key={o.topic_id} className="text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="min-w-0 break-words">
                     <b className="text-foreground">{o.topic_name}</b>{" "}
                     <span className="text-muted-foreground">
                       · {o.subject_name}
@@ -107,8 +140,8 @@ export function ExamTopicAnalysis({
                       }}
                     />
                   </div>
-                  <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                    {o.wrong}Y {o.blank}B / {o.total} soru · doğruluk {pct(o.accuracy)}
+                  <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                    {o.wrong} yanlış · {o.blank} boş / {o.total} soru · doğruluk {pct(o.accuracy)}
                   </span>
                 </div>
               </li>
@@ -117,16 +150,16 @@ export function ExamTopicAnalysis({
         </div>
       ) : null}
 
-      {(d.forgotten.length > 0 || d.improved.length > 0) ? (
+      {(forgotten.length > 0 || improved.length > 0) ? (
         <div className="grid gap-2 sm:grid-cols-2">
-          {d.forgotten.length > 0 ? (
+          {forgotten.length > 0 ? (
             <div className="rounded-md border border-rose-200 bg-rose-50 px-2.5 py-2 dark:border-rose-500/30 dark:bg-rose-500/10">
               <h5 className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-rose-900 dark:text-rose-200">
                 <TrendingDown className="size-3.5" aria-hidden />
-                Unutulan konular (önce biliyordu, son denemelerde düştü)
+                Unutulan konular — ilk denemelerde biliyordu, son denemelerde doğruluğu düştü; tekrar planlanmalı
               </h5>
               <ul className="space-y-0.5 text-[11px] text-rose-800 dark:text-rose-300">
-                {d.forgotten.map((t: AnalysisTrendTopic) => (
+                {forgotten.map((t: AnalysisTrendTopic) => (
                   <li key={t.topic_id}>
                     <b>{t.topic_name}</b> · {t.subject_name} —{" "}
                     {pct(t.first_accuracy)} → {pct(t.last_accuracy)}
@@ -135,14 +168,14 @@ export function ExamTopicAnalysis({
               </ul>
             </div>
           ) : null}
-          {d.improved.length > 0 ? (
+          {improved.length > 0 ? (
             <div className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-2 dark:border-emerald-500/30 dark:bg-emerald-500/10">
               <h5 className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-900 dark:text-emerald-200">
                 <TrendingUp className="size-3.5" aria-hidden />
-                Gelişen konular
+                Gelişen konular — ilk denemelere göre doğruluğu belirgin arttı
               </h5>
               <ul className="space-y-0.5 text-[11px] text-emerald-800 dark:text-emerald-300">
-                {d.improved.map((t: AnalysisTrendTopic) => (
+                {improved.map((t: AnalysisTrendTopic) => (
                   <li key={t.topic_id}>
                     <b>{t.topic_name}</b> · {t.subject_name} —{" "}
                     {pct(t.first_accuracy)} → {pct(t.last_accuracy)}
@@ -163,13 +196,13 @@ export function ExamTopicAnalysis({
       ) : null}
 
       {d.exams.length >= 2 && heatTopics.length > 0 ? (
-        <div>
-          <h5 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Konu × deneme ısı haritası{" "}
-            <span className="font-normal normal-case">
-              (hücre = o denemedeki doğru/soru; yeşil iyi, kırmızı kötü)
-            </span>
-          </h5>
+        <div className="rounded-xl border border-border bg-card px-4 py-3">
+          <h5 className="text-sm font-semibold text-foreground">Konu × deneme ısı haritası</h5>
+          <p className="mb-3 mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            Her satır bir konu, her sütun bir deneme. Hücrede o denemede o konudan kaç sorunun
+            kaçını doğru yaptığı yazar; yeşil iyi, kırmızı zayıf. Satır boyunca kırmızı kalan
+            konu kalıcı zayıflıktır. En çok soru gelen {heatTopics.length} konu gösterilir.
+          </p>
           <div className="overflow-x-auto rounded-md border border-border">
             <table className="w-full min-w-[480px] text-[11px]">
               <thead>
@@ -197,7 +230,7 @@ export function ExamTopicAnalysis({
                   return (
                     <tr key={t.topic_id} className="border-b border-border/60 last:border-0">
                       <td
-                        className="max-w-44 truncate px-2 py-1 text-foreground"
+                        className="min-w-40 px-2 py-1 text-foreground"
                         title={`${t.topic_name} · ${t.subject_name}`}
                       >
                         {t.topic_name}

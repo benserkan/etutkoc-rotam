@@ -38,6 +38,7 @@ import type {
   SubjectListResponse,
   StudentBookListResponse,
   StudentExamListResponse,
+  ExamQuestionsResponse,
   WorkBlockListResponse,
   StudentSessionListResponse,
   SessionPrefillResponse,
@@ -243,6 +244,9 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "work-blocks"] as const,
   studentExams: (id: number, period?: string) =>
     ["teacher", "me", "students", String(id), "exams", period ?? "current"] as const,
+  /** Denemenin soru satırları (salt okuma) — deneme detayı / karne. */
+  examQuestions: (examId: number) =>
+    ["teacher", "me", "exams", String(examId), "questions"] as const,
   /** Deneme duyurusu önizlemesi — gönderim öncesi salt-okuma içerik. */
   examParentPreview: (examId: number) =>
     ["teacher", "me", "exams", String(examId), "parent-preview"] as const,
@@ -325,6 +329,10 @@ export function getTeacherStudentExams(
   return api<StudentExamListResponse>(
     `/api/v2/teacher/students/${studentId}/exams${q}`,
   );
+}
+
+export function getTeacherExamQuestions(examId: number): Promise<ExamQuestionsResponse> {
+  return api<ExamQuestionsResponse>(`/api/v2/teacher/exams/${examId}/questions`);
 }
 
 export function getTeacherWorkBlocks(

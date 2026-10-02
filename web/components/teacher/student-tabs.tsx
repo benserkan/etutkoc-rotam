@@ -258,7 +258,9 @@ export function StudentTabs({ studentId, initial }: Props) {
           <div
             key={gi}
             className={cn(
-              "flex shrink-0 flex-col",
+              // dar ekranda tek grup (Akademik: 4 sekme) 390px'i aşıyordu →
+              // grup ekrandan geniş olamaz, sekmeleri alt satıra sarar
+              "flex min-w-0 max-w-full shrink-0 flex-col",
               gi > 0 && "ml-1.5 border-l border-border pl-1.5",
             )}
             data-tab-group={g.label ?? "genel"}
@@ -266,7 +268,7 @@ export function StudentTabs({ studentId, initial }: Props) {
             <span className="px-2 text-[9.5px] font-semibold uppercase leading-none tracking-wider text-muted-foreground/70">
               {g.label ?? "\u00a0"}
             </span>
-            <div className="-mb-px flex items-center gap-0.5">
+            <div className="-mb-px flex flex-wrap items-center gap-0.5">
               {g.tabs.map((t) => {
                 const isActive = active === t.key;
                 const Icon = t.icon;
@@ -406,7 +408,7 @@ export function StudentTabs({ studentId, initial }: Props) {
 
       {active === "exams" ? (
         <div role="tabpanel" id="tab-panel-exams" aria-labelledby="tab-exams">
-          <StudentExamsPanel studentId={studentId} />
+          <StudentExamsPanel studentId={studentId} studentName={s.full_name} />
         </div>
       ) : null}
 

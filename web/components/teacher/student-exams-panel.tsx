@@ -3,26 +3,15 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
   Mail,
   MailCheck,
   ChevronDown,
+  Eye,
   FileCog,
   FileUp,
   Loader2,
-  Minus,
   Pencil,
   Plus,
-  TrendingDown,
-  TrendingUp,
   Trash2,
   X,
 } from "lucide-react";
@@ -35,6 +24,13 @@ import {
 } from "@/components/shared/period-switcher";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 import { ExamParentAnnounceDialog } from "@/components/teacher/exam-parent-announce-dialog";
+import {
+  BehaviorTab,
+  OverviewTab,
+  ProgressTab,
+  previousExam,
+} from "@/components/teacher/exams/exam-analytics";
+import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
 
 import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
 import {
@@ -93,11 +89,22 @@ function formatTRDate(iso: string): string {
   return `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}.${y}`;
 }
 
+type ExamTab = "overview" | "progress" | "topics" | "behavior" | "list";
+
+const EXAM_TABS: { key: ExamTab; label: string; hint: string }[] = [
+  { key: "overview", label: "Genel Bakış", hint: "Son deneme, puan, öne çıkanlar" },
+  { key: "progress", label: "Net Gelişimi", hint: "Ders ders net değişimi" },
+  { key: "topics", label: "Konu Analizi", hint: "Net fırsatı, zayıf konular" },
+  { key: "behavior", label: "Sınav Davranışı", hint: "Boş, yanlış, işaretleme eğilimi" },
+  { key: "list", label: "Tüm Denemeler", hint: "Tüm denemeler ve işlemler" },
+];
+
 interface Props {
   studentId: number;
+  studentName?: string | null;
 }
 
-export function StudentExamsPanel({ studentId }: Props) {
+export function StudentExamsPanel({ studentId, studentName }: Props) {
   // P3: varsayılan GÜNCEL dönem — geçen yılın denemeleri "bu yılın gidişatı"
   // tablosunu bozmaz; seçiciyle geri getirilir (veri hiçbir zaman silinmez).
   const [period, setPeriod] = React.useState<string | undefined>(undefined);
@@ -109,9 +116,11 @@ export function StudentExamsPanel({ studentId }: Props) {
   const periodMeta = q.data?.period ?? null;
   const [addOpen, setAddOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
+  const [tab, setTab] = React.useState<ExamTab>("overview");
+  const [detailId, setDetailId] = React.useState<number | null>(null);
   const data = q.data;
 
-  // Sınav türleri farklı ölçekte (TYT/120·AYT/80·LGS) → özet + grafik tek TÜRE
+  // Sınav türleri farklı ölçekte (TYT/120·AYT/80·LGS) → analizler tek TÜRE
   // göre hesaplanır; karıştırma yok. En çok denemesi olan tür varsayılan seçili.
   const rows = React.useMemo(() => data?.rows ?? [], [data]);
   const sectionsInfo = React.useMemo(() => {
@@ -134,17 +143,20 @@ export function StudentExamsPanel({ studentId }: Props) {
     () => rows.filter((r) => r.section === activeSection),
     [rows, activeSection],
   );
-  const activeLabel =
-    sectionsInfo.find((s) => s.value === activeSection)?.label ?? "";
+  // detay penceresi: satır + aynı türde bir önceki deneme
+  const detailRow = detailId != null ? rows.find((r) => r.id === detailId) ?? null : null;
+  const detailPrev = detailRow
+    ? previousExam(rows.filter((r) => r.section === detailRow.section), detailRow)
+    : null;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-base font-medium">Deneme Sonuçları</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Net, sınav türüne göre hesaplanır (LGS: doğru − yanlış/3 · YKS:
-            doğru − yanlış/4).
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold">Deneme Analizi</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Netler sınav türüne göre hesaplanır (LGS: doğru − yanlış/3 · YKS: doğru − yanlış/4).
+            Farklı sınav türleri ayrı ölçekte olduğu için analizler seçili türe göredir.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -192,44 +204,97 @@ export function StudentExamsPanel({ studentId }: Props) {
         </Card>
       ) : (
         <>
-          {sectionsInfo.length > 1 ? (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                Net istatistikleri ve grafik <b>{activeLabel}</b> türüne göre —
-                farklı sınav türleri ayrı ölçektedir, karıştırılmaz.
-              </p>
-              <select
-                value={activeSection ?? ""}
-                onChange={(e) => setSelSection(e.target.value as ExamSectionValue)}
-                aria-label="Sınav türü"
-                className={cn(
-                  "h-8 rounded-md border border-input bg-background px-2 text-xs",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                )}
-              >
-                {sectionsInfo.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label} ({s.count})
-                  </option>
-                ))}
-              </select>
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
+            <div role="tablist" aria-label="Deneme analizi bölümleri" className="-mb-px flex flex-wrap gap-1">
+              {EXAM_TABS.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  onClick={() => setTab(t.key)}
+                  title={t.hint}
+                  className={cn(
+                    "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                    tab === t.key
+                      ? "border-cyan-700 text-foreground dark:border-cyan-400"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t.label}
+                  {t.key === "list" ? (
+                    <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[11px] tabular-nums">
+                      {rows.length}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
             </div>
-          ) : null}
-          <SummaryStrip rows={sectionRows} />
-          {sectionRows.length >= 2 ? <NetTrendChart rows={sectionRows} /> : null}
-          <ExamTopicAnalysis studentId={studentId} section={activeSection} />
-          <ul className="space-y-2">
-            {data.rows.map((row) => (
-              <ExamRow
-                key={row.id}
-                row={row}
+            {tab !== "list" && sectionsInfo.length > 1 ? (
+              <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                Sınav türü
+                <select
+                  value={activeSection ?? ""}
+                  onChange={(e) => setSelSection(e.target.value as ExamSectionValue)}
+                  aria-label="Sınav türü"
+                  className={cn(
+                    "h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
+                >
+                  {sectionsInfo.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label} ({s.count})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
+
+          <div role="tabpanel">
+            {tab === "overview" ? (
+              <OverviewTab
+                rows={sectionRows}
                 studentId={studentId}
-                sectionOptions={data.section_options ?? []}
+                studentName={studentName}
+                onOpenDetail={(r) => setDetailId(r.id)}
               />
-            ))}
-          </ul>
+            ) : tab === "progress" ? (
+              <ProgressTab rows={sectionRows} />
+            ) : tab === "topics" ? (
+              <ExamTopicAnalysis studentId={studentId} section={activeSection} />
+            ) : tab === "behavior" ? (
+              <BehaviorTab rows={sectionRows} />
+            ) : (
+              <ul className="space-y-2">
+                {data.rows.map((row) => (
+                  <ExamRow
+                    key={row.id}
+                    row={row}
+                    studentId={studentId}
+                    sectionOptions={data.section_options ?? []}
+                    onOpenDetail={() => setDetailId(row.id)}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
         </>
       )}
+
+      {detailRow ? (
+        <ExamDetailDialog
+          row={detailRow}
+          prev={detailPrev}
+          studentId={studentId}
+          studentName={studentName}
+          open
+          onOpenChange={(v) => {
+            if (!v) setDetailId(null);
+          }}
+        />
+      ) : null}
 
       <p className="text-[11px] text-muted-foreground leading-relaxed">
         Deneme adı, tarihi ve netler veli paneli ile haftalık veli raporunda da
@@ -252,130 +317,16 @@ export function StudentExamsPanel({ studentId }: Props) {
   );
 }
 
-function SummaryStrip({ rows }: { rows: ExamResultRow[] }) {
-  // rows: TEK sınav türü, DESC (en yeni ilk) — özet o türe göre hesaplanır.
-  const count = rows.length;
-  const nets = rows.map((r) => r.net);
-  const avg = count ? nets.reduce((a, b) => a + b, 0) / count : 0;
-  const best = count ? Math.max(...nets) : 0;
-  const last = count ? rows[0].net : null;
-  const first = count ? rows[count - 1].net : null;
-  const delta = count >= 2 && last != null && first != null ? last - first : null;
-  return (
-    <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <StatCard label="Deneme Sayısı" value={String(count)} />
-      <StatCard label="Ortalama Net" value={avg.toFixed(2)} />
-      <StatCard label="En İyi Net" value={best.toFixed(2)} emphasize="good" />
-      <StatCard
-        label="Son Net"
-        value={last != null ? last.toFixed(2) : "—"}
-        delta={delta}
-      />
-    </section>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  emphasize,
-  delta,
-}: {
-  label: string;
-  value: string;
-  emphasize?: "good";
-  delta?: number | null;
-}) {
-  return (
-    <Card>
-      <CardContent className="p-4 space-y-1">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p
-          className={cn(
-            "text-2xl font-semibold tabular-nums",
-            emphasize === "good" && "text-emerald-600",
-          )}
-        >
-          {value}
-        </p>
-        {delta != null && Math.abs(delta) > 0.001 ? (
-          <p
-            className={cn(
-              "text-xs inline-flex items-center gap-1 tabular-nums",
-              delta > 0 ? "text-emerald-600" : "text-rose-600",
-            )}
-          >
-            {delta > 0 ? (
-              <TrendingUp className="size-3.5" aria-hidden />
-            ) : (
-              <TrendingDown className="size-3.5" aria-hidden />
-            )}
-            {delta > 0 ? "+" : ""}
-            {delta.toFixed(2)} (ilk denemeye göre)
-          </p>
-        ) : delta != null ? (
-          <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
-            <Minus className="size-3.5" aria-hidden />
-            değişim yok
-          </p>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-function NetTrendChart({ rows }: { rows: ExamResultRow[] }) {
-  // rows: TEK sınav türü (panel seviyesinde filtrelendi), DESC → kronolojik için ters
-  const points = React.useMemo(
-    () =>
-      [...rows].reverse().map((r) => ({
-        date: formatTRDate(r.exam_date).slice(0, 5),
-        net: r.net,
-        title: r.title,
-      })),
-    [rows],
-  );
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm font-medium mb-3">Net Gelişimi</p>
-        <div className="h-48 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={points} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-              <Tooltip
-                formatter={(v) => [Number(v).toFixed(2), "Net"]}
-                labelFormatter={(_l, p) => p?.[0]?.payload?.title ?? ""}
-                contentStyle={{ fontSize: 12, borderRadius: 8 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="net"
-                stroke="#4f46e5"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function ExamRow({
   row,
   studentId,
   sectionOptions,
+  onOpenDetail,
 }: {
   row: ExamResultRow;
   studentId: number;
   sectionOptions: StudentExamListResponse["section_options"];
+  onOpenDetail: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
@@ -401,7 +352,7 @@ function ExamRow({
     <li>
       <Card>
         <CardContent className="p-3">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {/* Net kutusu: "120.00" 6 haneye kadar çıkar — dar sabit genişlikte
                 başlığa yapışıyordu (saha, 2026-09-05). */}
             <div className="text-center shrink-0 w-24">
@@ -412,9 +363,16 @@ function ExamRow({
                 net
               </p>
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1 basis-48">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium truncate">{row.title}</span>
+                <button
+                  type="button"
+                  onClick={onOpenDetail}
+                  className="text-left font-medium break-words hover:underline"
+                  title="Deneme detayını aç"
+                >
+                  {row.title}
+                </button>
                 <span
                   className={cn(
                     "inline-flex items-center text-[10px] px-1.5 py-0.5 rounded border",
@@ -438,7 +396,17 @@ function ExamRow({
                 </p>
               ) : null}
             </div>
-            <div className="flex items-center gap-1 shrink-0">
+            {/* dar ekranda işlemler alt satıra iner (390px'te satırı taşırıyordu) */}
+            <div className="flex w-full flex-wrap items-center justify-end gap-1 sm:w-auto sm:shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onOpenDetail}
+                aria-label="Deneme detayı"
+                title="Deneme detayı: karne, soru soru tablo, yazdır ve paylaş"
+              >
+                <Eye className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+              </Button>
               {hasSubjects ? (
                 <Button
                   variant="ghost"

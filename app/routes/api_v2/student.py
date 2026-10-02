@@ -909,6 +909,22 @@ def _exam_period_query(db: Session, student_id: int, period: str | None):
     return q
 
 
+@router.get("/exams/{exam_id}/questions")
+def student_exam_questions_v2(
+    exam_id: int,
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin KENDİ denemesinin soru satırları (salt okuma). Başkasınınki 404."""
+    from app.routes.api_v2.teacher import build_exam_questions
+
+    exam = db.get(ExamResult, exam_id)
+    if exam is None or exam.student_id != user.id:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "exam_not_found", "message": "Deneme kaydı bulunamadı."})
+    return build_exam_questions(db, exam)
+
+
 @router.get("/exams", response_model=StudentExamsResponse)
 def student_exams_v2(
     period: str | None = None,

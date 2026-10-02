@@ -2179,6 +2179,30 @@ class ExamSubjectRow(BaseModel):
     unmatched: bool = False
 
 
+class ExamScoreInfo(BaseModel):
+    """Karneden okunan puan / sıralama (PDF içe aktarmada saklanır)."""
+    score: float | None = None
+    rank_overall: int | None = None
+    participants: int | None = None
+    extra: str | None = None
+
+
+class ExamQuestionItem(BaseModel):
+    """Denemenin bir soru satırı — salt okuma (deneme detayı / karne)."""
+    subject: str                     # belgedeki ders başlığı (karne gruplaması)
+    question_no: int | None = None
+    topic_label: str | None = None   # belgede yazan konu
+    topic_name: str | None = None    # bağlanan müfredat konusu
+    correct_answer: str | None = None
+    student_answer: str | None = None
+    result: str                      # dogru | yanlis | bos
+
+
+class ExamQuestionsResponse(BaseModel):
+    exam_id: int
+    items: list[ExamQuestionItem]
+
+
 class ExamResultRow(BaseModel):
     id: int
     title: str
@@ -2196,6 +2220,8 @@ class ExamResultRow(BaseModel):
     note: str | None = None
     created_at: datetime
     created_by_name: str | None = None
+    # karneden okunan puan/sıralama (yalnız PDF içe aktarımında; yoksa None)
+    score: ExamScoreInfo | None = None
     import_source: str | None = None       # "pdf_import" → satır-düzeyi düzenleme açılır
 
 

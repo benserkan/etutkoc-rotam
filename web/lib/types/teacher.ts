@@ -2083,6 +2083,31 @@ export interface ExamResultRow {
   import_source: string | null;
   /** Koç veliye duyurduysa damga — düğme 'Duyuruldu'ya döner. */
   parent_notified_at?: string | null;
+  /** Karneden okunan puan/sıralama (yalnız PDF içe aktarımında). */
+  score?: ExamScoreInfo | null;
+}
+
+export interface ExamScoreInfo {
+  score: number | null;
+  rank_overall: number | null;
+  participants: number | null;
+  extra: string | null;
+}
+
+/** Denemenin bir soru satırı (salt okuma — deneme detayı / karne). */
+export interface ExamQuestionItem {
+  subject: string;
+  question_no: number | null;
+  topic_label: string | null;
+  topic_name: string | null;
+  correct_answer: string | null;
+  student_answer: string | null;
+  result: "dogru" | "yanlis" | "bos" | string;
+}
+
+export interface ExamQuestionsResponse {
+  exam_id: number;
+  items: ExamQuestionItem[];
 }
 
 export interface ExamListSummary {

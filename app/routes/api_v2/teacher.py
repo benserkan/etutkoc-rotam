@@ -143,7 +143,10 @@ from app.routes.api_v2.schemas.teacher import (
     DnaSubjectRow,
     ExamCreateBody,
     ExamListSummary,
+    ExamQuestionItem,
+    ExamQuestionsResponse,
     ExamResultRow,
+    ExamScoreInfo,
     ExamSectionOption,
     ExamSubjectRow,
     StudentExamListResponse,
@@ -1366,6 +1369,62 @@ def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamRes
         created_at=exam.created_at,
         created_by_name=created_by_name,
         import_source=exam.import_source,
+        score=_exam_score(exam),
+    )
+
+
+def _exam_score(exam: ExamResult) -> "ExamScoreInfo | None":
+    """analysis_meta.score_info → ExamScoreInfo (boş/bozuk → None)."""
+    if not exam.analysis_meta:
+        return None
+    try:
+        info = (json.loads(exam.analysis_meta) or {}).get("score_info") or {}
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(info, dict):
+        return None
+
+    def _num(v, cast):
+        try:
+            return cast(v) if v is not None and v != "" else None
+        except (TypeError, ValueError):
+            return None
+
+    out = ExamScoreInfo(
+        score=_num(info.get("score"), float),
+        rank_overall=_num(info.get("rank_overall"), int),
+        participants=_num(info.get("participants"), int),
+        extra=(str(info["extra"])[:300] if info.get("extra") else None),
+    )
+    if out.score is None and out.rank_overall is None and out.participants is None and not out.extra:
+        return None
+    return out
+
+
+def build_exam_questions(db: Session, exam: ExamResult) -> "ExamQuestionsResponse":
+    """Denemenin soru satırları (salt okuma) — koç ve öğrenci uçları ortak."""
+    from app.models.exam_result import ExamResultQuestion
+
+    qs = (
+        db.query(ExamResultQuestion)
+        .filter(ExamResultQuestion.exam_result_id == exam.id)
+        .order_by(ExamResultQuestion.id)
+        .all()
+    )
+    return ExamQuestionsResponse(
+        exam_id=exam.id,
+        items=[
+            ExamQuestionItem(
+                subject=(q.subject_name_raw or (q.subject.name if q.subject else "") or "Diğer"),
+                question_no=q.question_no,
+                topic_label=q.topic_label_raw,
+                topic_name=q.topic.name if q.topic else None,
+                correct_answer=q.correct_answer,
+                student_answer=q.student_answer,
+                result=q.result,
+            )
+            for q in qs
+        ],
     )
 
 
@@ -1781,6 +1840,20 @@ def teacher_create_exam_v2(
             f"teacher:{user.id}:students:{student.id}",
         ],
     )
+
+
+@router.get("/exams/{exam_id}/questions", response_model=ExamQuestionsResponse)
+def teacher_exam_questions_v2(
+    exam_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Denemenin soru satırları (salt okuma) — deneme detayı ve karne çıktısı.
+
+    Elle girilen denemede soru satırı yoktur → boş liste. Sahiplik 404.
+    """
+    exam = _get_owned_exam(db, exam_id, user.id)
+    return build_exam_questions(db, exam)
 
 
 @router.post(
