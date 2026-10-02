@@ -111,6 +111,12 @@ _ALIAS: dict[str, str] = {
     "hucre bolunmeleri mitoz mayoz": "hucre bolunmeleri",
     "hucre organeller": "hucre organelleri",
     "yerin sekillenmesi ic dis kuvvetler": "yerin sekillenmesi",
+    # Deneme karnelerinin ünite düzeyi geniş problem etiketi (Özdebir/MEB kazanım
+    # dili) → TYT Matematik "Problemler (Karma)" (2026-10-02, Zeynep Ela #169: 12 soru).
+    # Hedef anahtar yalnız TYT Matematik'te var; başka derste zararsız.
+    "denklemler esitsizlikler ilgili problemler cozer": "problemler",
+    "denklemler esitsizliklerle ilgili problemler cozer": "problemler",
+    "denklem esitsizlik problemleri": "problemler",
     # NOT: yalın "esitsizlikler" alias'ı BİLİNÇLİ YOK — Maarif/AYT'de birebir
     # "Eşitsizlikler" konusu var; alias exact eşleşmeyi bozardı (2026-08-11 taraması).
 }

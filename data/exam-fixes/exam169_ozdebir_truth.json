@@ -1,0 +1,1029 @@
+{
+ "subjects": [
+  {
+   "name": "TÜRKÇE",
+   "questions": 40,
+   "correct": 33,
+   "wrong": 4,
+   "blank": 3
+  },
+  {
+   "name": "TARİH",
+   "questions": 5,
+   "correct": 4,
+   "wrong": 0,
+   "blank": 1
+  },
+  {
+   "name": "COĞRAFYA",
+   "questions": 5,
+   "correct": 2,
+   "wrong": 2,
+   "blank": 1
+  },
+  {
+   "name": "FELSEFE",
+   "questions": 5,
+   "correct": 5,
+   "wrong": 0,
+   "blank": 0
+  },
+  {
+   "name": "DİN KÜLTÜRÜ VE AHLAK BİLGİSİ",
+   "questions": 5,
+   "correct": 4,
+   "wrong": 1,
+   "blank": 0
+  },
+  {
+   "name": "MATEMATİK",
+   "questions": 40,
+   "correct": 23,
+   "wrong": 5,
+   "blank": 12
+  },
+  {
+   "name": "FİZİK",
+   "questions": 7,
+   "correct": 3,
+   "wrong": 3,
+   "blank": 1
+  },
+  {
+   "name": "KİMYA",
+   "questions": 7,
+   "correct": 5,
+   "wrong": 0,
+   "blank": 2
+  },
+  {
+   "name": "BİYOLOJİ",
+   "questions": 6,
+   "correct": 4,
+   "wrong": 1,
+   "blank": 1
+  }
+ ],
+ "rows": [
+  {
+   "no": 1,
+   "topic": "Sözcük Anlamı",
+   "dc": "C",
+   "oc": "C",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 2,
+   "topic": "Sözcük Anlamı",
+   "dc": "A",
+   "oc": "A",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 3,
+   "topic": "Sözcük Anlamı",
+   "dc": "A",
+   "oc": "A",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 4,
+   "topic": "Sözcük Anlamı",
+   "dc": "B",
+   "oc": "B",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 5,
+   "topic": "Metindeki cümlelerin ögeleri bulunur.",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 6,
+   "topic": "Paragrafta Yardımcı Düşünceler",
+   "dc": "E",
+   "oc": null,
+   "subject": "TÜRKÇE",
+   "result": "bos"
+  },
+  {
+   "no": 7,
+   "topic": "Metindeki cümlelerin ögeleri bulunur.",
+   "dc": "B",
+   "oc": "B",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 8,
+   "topic": "Cümle Anlamı",
+   "dc": "X",
+   "oc": null,
+   "subject": "TÜRKÇE",
+   "result": "iptal"
+  },
+  {
+   "no": 9,
+   "topic": "NOKTALAMA İŞARETLERİ",
+   "dc": "B",
+   "oc": "B",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 10,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "C",
+   "oc": "C",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 11,
+   "topic": "Dünden Bugüne - Zarf",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 12,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "C",
+   "oc": "a",
+   "subject": "TÜRKÇE",
+   "result": "yanlis"
+  },
+  {
+   "no": 13,
+   "topic": "NOKTALAMA İŞARETLERİ",
+   "dc": "B",
+   "oc": "B",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 14,
+   "topic": "Paragrafta Yardımcı Düşünceler",
+   "dc": "A",
+   "oc": "A",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 15,
+   "topic": "Paragrafın Yapısı",
+   "dc": "E",
+   "oc": "E",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 16,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 17,
+   "topic": "Yazım Kuralları",
+   "dc": "C",
+   "oc": "C",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 18,
+   "topic": "Paragrafın Yapısı",
+   "dc": "C",
+   "oc": "C",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 19,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "E",
+   "oc": "E",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 20,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "A",
+   "oc": "A",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 21,
+   "topic": "Ekler",
+   "dc": "B",
+   "oc": "B",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 22,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "E",
+   "oc": "E",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 23,
+   "topic": "Paragrafın Yapısı",
+   "dc": "B",
+   "oc": "c",
+   "subject": "TÜRKÇE",
+   "result": "yanlis"
+  },
+  {
+   "no": 24,
+   "topic": "Paragrafta Yardımcı Düşünceler",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 25,
+   "topic": "Anlatım Teknikleri",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 26,
+   "topic": "Paragrafta Yardımcı Düşünceler",
+   "dc": "E",
+   "oc": null,
+   "subject": "TÜRKÇE",
+   "result": "bos"
+  },
+  {
+   "no": 27,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 28,
+   "topic": "Paragrafın Yapısı",
+   "dc": "A",
+   "oc": "c",
+   "subject": "TÜRKÇE",
+   "result": "yanlis"
+  },
+  {
+   "no": 29,
+   "topic": "Cümle Anlamı",
+   "dc": "C",
+   "oc": null,
+   "subject": "TÜRKÇE",
+   "result": "bos"
+  },
+  {
+   "no": 30,
+   "topic": "Sözcük Anlamı",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 31,
+   "topic": "Yazım Kuralları",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 32,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "B",
+   "oc": "B",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 33,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "C",
+   "oc": "C",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 34,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "A",
+   "oc": "A",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 35,
+   "topic": "Paragrafta Yardımcı Düşünceler",
+   "dc": "E",
+   "oc": "E",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 36,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 37,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "B",
+   "oc": "B",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 38,
+   "topic": "Paragrafta Yardımcı Düşünceler",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 39,
+   "topic": "Paragrafta Yardımcı Düşünceler",
+   "dc": "A",
+   "oc": "d",
+   "subject": "TÜRKÇE",
+   "result": "yanlis"
+  },
+  {
+   "no": 40,
+   "topic": "Paragrafta Konu ve Ana Düşünce",
+   "dc": "E",
+   "oc": "E",
+   "subject": "TÜRKÇE",
+   "result": "dogru"
+  },
+  {
+   "no": 1,
+   "topic": "İLK VE ORTA ÇAĞLARDA TÜRK DÜNYASI",
+   "dc": "A",
+   "oc": "A",
+   "subject": "TARİH",
+   "result": "dogru"
+  },
+  {
+   "no": 2,
+   "topic": "Değişim Çağında Avrupa ve Osmanlı",
+   "dc": "C",
+   "oc": "C",
+   "subject": "TARİH",
+   "result": "dogru"
+  },
+  {
+   "no": 3,
+   "topic": "Türklerin İslamiyet’i Kabulü ve İlk Türk İslam Devletleri",
+   "dc": "B",
+   "oc": null,
+   "subject": "TARİH",
+   "result": "bos"
+  },
+  {
+   "no": 4,
+   "topic": "Millî Mücadele",
+   "dc": "E",
+   "oc": "E",
+   "subject": "TARİH",
+   "result": "dogru"
+  },
+  {
+   "no": 5,
+   "topic": "Millî Mücadele",
+   "dc": "D",
+   "oc": "D",
+   "subject": "TARİH",
+   "result": "dogru"
+  },
+  {
+   "no": 1,
+   "topic": "Bitki topluluklarının dağılışı ile iklim ve yer şekillerini ilişkilendirir.",
+   "dc": "B",
+   "oc": "a",
+   "subject": "COĞRAFYA",
+   "result": "yanlis"
+  },
+  {
+   "no": 2,
+   "topic": "İklim elemanlarının oluşumunu ve dağılışını açıklar.",
+   "dc": "D",
+   "oc": "e",
+   "subject": "COĞRAFYA",
+   "result": "yanlis"
+  },
+  {
+   "no": 3,
+   "topic": "Dünyadaki farklı bölge örneklerini, özellikleri ve bölge belirlemede kullanılan kriterler açısından değerlendirir.",
+   "dc": "A",
+   "oc": null,
+   "subject": "COĞRAFYA",
+   "result": "bos"
+  },
+  {
+   "no": 4,
+   "topic": "Nüfus piramitlerinden hareketle nüfusun yapısıyla ilgili çıkarımlarda bulunur.",
+   "dc": "E",
+   "oc": "E",
+   "subject": "COĞRAFYA",
+   "result": "dogru"
+  },
+  {
+   "no": 5,
+   "topic": "Afetlerden korunma yöntemlerini açıklar.",
+   "dc": "D",
+   "oc": "D",
+   "subject": "COĞRAFYA",
+   "result": "dogru"
+  },
+  {
+   "no": 1,
+   "topic": "MÖ 6. yüzyıl-MS 2. yüzyıl felsefesinin karakteristik özelliklerini açıklar.",
+   "dc": "C",
+   "oc": "C",
+   "subject": "FELSEFE",
+   "result": "dogru"
+  },
+  {
+   "no": 2,
+   "topic": "Bilgi felsefesinin konusunu ve problemlerini açıklar.",
+   "dc": "B",
+   "oc": "B",
+   "subject": "FELSEFE",
+   "result": "dogru"
+  },
+  {
+   "no": 3,
+   "topic": "Felsefenin anlamını açıklar.",
+   "dc": "D",
+   "oc": "D",
+   "subject": "FELSEFE",
+   "result": "dogru"
+  },
+  {
+   "no": 4,
+   "topic": "Ahlak felsefesinin konusunu ve problemlerini açıklar.",
+   "dc": "A",
+   "oc": "A",
+   "subject": "FELSEFE",
+   "result": "dogru"
+  },
+  {
+   "no": 5,
+   "topic": "MS 2. yüzyıl-MS 15. yüzyıl felsefesindeki örnek düşünce ve argümanları felsefi açıdan değerlendirir.",
+   "dc": "E",
+   "oc": "E",
+   "subject": "FELSEFE",
+   "result": "dogru"
+  },
+  {
+   "no": 1,
+   "topic": "İslam medeniyetinin, dünyanın farklı bölgelerindeki etkilerini fark eder.",
+   "dc": "C",
+   "oc": "C",
+   "subject": "DİN KÜLTÜRÜ VE AHLAK BİLGİSİ",
+   "result": "dogru"
+  },
+  {
+   "no": 2,
+   "topic": "Kaynağı ve unsurları bakımından din tanımlarını karşılaştırır.",
+   "dc": "D",
+   "oc": "D",
+   "subject": "DİN KÜLTÜRÜ VE AHLAK BİLGİSİ",
+   "result": "dogru"
+  },
+  {
+   "no": 3,
+   "topic": "İslam medeniyetinde öne çıkan eğitim ve bilim kurumlarını tanır.",
+   "dc": "A",
+   "oc": "A",
+   "subject": "DİN KÜLTÜRÜ VE AHLAK BİLGİSİ",
+   "result": "dogru"
+  },
+  {
+   "no": 4,
+   "topic": "Din ve dinin yorumu arasındaki farkı ayırt eder.",
+   "dc": "C",
+   "oc": "d",
+   "subject": "DİN KÜLTÜRÜ VE AHLAK BİLGİSİ",
+   "result": "yanlis"
+  },
+  {
+   "no": 5,
+   "topic": "İslam inancında imanın mahiyetini araştırır.",
+   "dc": "E",
+   "oc": "E",
+   "subject": "DİN KÜLTÜRÜ VE AHLAK BİLGİSİ",
+   "result": "dogru"
+  },
+  {
+   "no": 1,
+   "topic": "Sayı Kümeleri",
+   "dc": "D",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 2,
+   "topic": "Bölünebilme Kuralları",
+   "dc": "C",
+   "oc": "C",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 3,
+   "topic": "Denklemler ve Eşitsizliklerle İlgili Uygulamalar",
+   "dc": "B",
+   "oc": "B",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 4,
+   "topic": "Köklü ifadeleri içeren denklemleri çözer.",
+   "dc": "A",
+   "oc": "A",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 5,
+   "topic": "Mutlak değer içeren birinci dereceden bir bilinmeyenli denklem ve eşitsizliklerin çözüm kümelerini bulur.",
+   "dc": "B",
+   "oc": "d",
+   "subject": "MATEMATİK",
+   "result": "yanlis"
+  },
+  {
+   "no": 6,
+   "topic": "Sayı Kümeleri",
+   "dc": "D",
+   "oc": "D",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 7,
+   "topic": "SAYILAR VE CEBİR - Denklemler ve Eşitsizlikler",
+   "dc": "B",
+   "oc": "e",
+   "subject": "MATEMATİK",
+   "result": "yanlis"
+  },
+  {
+   "no": 8,
+   "topic": "Birinci Dereceden Denklemler ve Eşitsizlikler",
+   "dc": "B",
+   "oc": "B",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 9,
+   "topic": "Üslü İfadeler ve Denklemler",
+   "dc": "D",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 10,
+   "topic": "Sayı kümelerini birbiriyle ilişkilendirir.",
+   "dc": "E",
+   "oc": "E",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 11,
+   "topic": "Gerçek hayatta periyodik olarak tekrar eden durumları içeren problemleri çözer.",
+   "dc": "B",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 12,
+   "topic": "Birinci Dereceden Denklemler ve Eşitsizlikler",
+   "dc": "B",
+   "oc": "B",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 13,
+   "topic": "Bileşik önermeyi örneklerle açıklar, ‘‘ve, veya, ya da’’ bağlaçları ile kurulan bileşik önermelerin özelliklerini ve De Morgan kurallarını doğruluk ta",
+   "dc": "D",
+   "oc": "e",
+   "subject": "MATEMATİK",
+   "result": "yanlis"
+  },
+  {
+   "no": 14,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "A",
+   "oc": "A",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 15,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "B",
+   "oc": "B",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 16,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "D",
+   "oc": "D",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 17,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "C",
+   "oc": "C",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 18,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "C",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 19,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "C",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 20,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "B",
+   "oc": "B",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 21,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "E",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 22,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "D",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 23,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "C",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 24,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "B",
+   "oc": "B",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 25,
+   "topic": "Denklemler ve eşitsizlikler ile ilgili problemler çözer.",
+   "dc": "E",
+   "oc": "E",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 26,
+   "topic": "Merkezî Eğilim ve Yayılım Ölçüleri",
+   "dc": "A",
+   "oc": "A",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 27,
+   "topic": "Fonksiyonların grafiklerini yorumlar.",
+   "dc": "C",
+   "oc": "C",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 28,
+   "topic": "Kümelerde birleşim, kesişim, fark, tümleme işlemleri yardımıyla problemler çözer",
+   "dc": "E",
+   "oc": "E",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 29,
+   "topic": "Sıralama ve Seçme",
+   "dc": "C",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 30,
+   "topic": "Basit Olayların Olasılıkları",
+   "dc": "E",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 31,
+   "topic": "Çokgenler",
+   "dc": "B",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 32,
+   "topic": "Özel dörtgenlerin açı, kenar, köşegen ve alan özelliklerini açıklayarak problemler çözer.",
+   "dc": "C",
+   "oc": "C",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 33,
+   "topic": "Dik prizmalar ve dik piramitlerin uzunluk, alan ve hacim bağıntılarını oluşturur.",
+   "dc": "C",
+   "oc": "C",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 34,
+   "topic": "Çokgenler",
+   "dc": "C",
+   "oc": null,
+   "subject": "MATEMATİK",
+   "result": "bos"
+  },
+  {
+   "no": 35,
+   "topic": "Dik prizmalar ve dik piramitlerin uzunluk, alan ve hacim bağıntılarını oluşturur.",
+   "dc": "A",
+   "oc": "A",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 36,
+   "topic": "Çokgenler",
+   "dc": "D",
+   "oc": "D",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 37,
+   "topic": "Özel dörtgenlerin açı, kenar, köşegen ve alan özelliklerini açıklayarak problemler çözer.",
+   "dc": "C",
+   "oc": "d",
+   "subject": "MATEMATİK",
+   "result": "yanlis"
+  },
+  {
+   "no": 38,
+   "topic": "Dik prizmalar ve dik piramitlerin uzunluk, alan ve hacim bağıntılarını oluşturur.",
+   "dc": "D",
+   "oc": "a",
+   "subject": "MATEMATİK",
+   "result": "yanlis"
+  },
+  {
+   "no": 39,
+   "topic": "Özel dörtgenlerin açı, kenar, köşegen ve alan özelliklerini açıklayarak problemler çözer.",
+   "dc": "B",
+   "oc": "B",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 40,
+   "topic": "Özel dörtgenlerin açı, kenar, köşegen ve alan özelliklerini açıklayarak problemler çözer.",
+   "dc": "B",
+   "oc": "B",
+   "subject": "MATEMATİK",
+   "result": "dogru"
+  },
+  {
+   "no": 1,
+   "topic": "KALDIRMA KUVVETİ",
+   "dc": "C",
+   "oc": "e",
+   "subject": "FİZİK",
+   "result": "yanlis"
+  },
+  {
+   "no": 2,
+   "topic": "Elektrik Yüklü Cisimler Arasındaki Etkileşimi Açıklar.",
+   "dc": "D",
+   "oc": null,
+   "subject": "FİZİK",
+   "result": "bos"
+  },
+  {
+   "no": 3,
+   "topic": "Ortalama hız kavramını açıklar.",
+   "dc": "A",
+   "oc": "A",
+   "subject": "FİZİK",
+   "result": "dogru"
+  },
+  {
+   "no": 4,
+   "topic": "Özkütleyi, Kütle Ve Hacimle İlişkilendirerek Açıklar.",
+   "dc": "C",
+   "oc": "a",
+   "subject": "FİZİK",
+   "result": "yanlis"
+  },
+  {
+   "no": 5,
+   "topic": "Isıl denge kavramının sıcaklık farkı ve ısı kavramı ile olan ilişkisini analiz eder.",
+   "dc": "B",
+   "oc": "B",
+   "subject": "FİZİK",
+   "result": "dogru"
+  },
+  {
+   "no": 6,
+   "topic": "Ses dalgaları ile ilgili temel kavramları örneklerle açıklar.",
+   "dc": "D",
+   "oc": "b",
+   "subject": "FİZİK",
+   "result": "yanlis"
+  },
+  {
+   "no": 7,
+   "topic": "Küresel aynalarda görüntü oluşumunu ve özelliklerini açıklar.",
+   "dc": "E",
+   "oc": "E",
+   "subject": "FİZİK",
+   "result": "dogru"
+  },
+  {
+   "no": 1,
+   "topic": "Kimya Disiplinleri ve Kimyacıların Çalışma Alanları",
+   "dc": "A",
+   "oc": "A",
+   "subject": "KİMYA",
+   "result": "dogru"
+  },
+  {
+   "no": 2,
+   "topic": "Maddenin Fiziksel Hâlleri",
+   "dc": "B",
+   "oc": "B",
+   "subject": "KİMYA",
+   "result": "dogru"
+  },
+  {
+   "no": 3,
+   "topic": "Atomun Yapısı",
+   "dc": "C",
+   "oc": "C",
+   "subject": "KİMYA",
+   "result": "dogru"
+  },
+  {
+   "no": 4,
+   "topic": "GÜÇLÜ ETKİLEŞİMLER",
+   "dc": "A",
+   "oc": "A",
+   "subject": "KİMYA",
+   "result": "dogru"
+  },
+  {
+   "no": 5,
+   "topic": "Kimyasal Tepkimelerde Hesaplamalar",
+   "dc": "D",
+   "oc": null,
+   "subject": "KİMYA",
+   "result": "bos"
+  },
+  {
+   "no": 6,
+   "topic": "KARIŞIMLAR",
+   "dc": "E",
+   "oc": null,
+   "subject": "KİMYA",
+   "result": "bos"
+  },
+  {
+   "no": 7,
+   "topic": "Asitlerin ve Bazların Tepkimeleri",
+   "dc": "D",
+   "oc": "D",
+   "subject": "KİMYA",
+   "result": "dogru"
+  },
+  {
+   "no": 1,
+   "topic": "Canlıların yapısını oluşturan organik ve inorganik bileşikleri açıklar.",
+   "dc": "D",
+   "oc": "D",
+   "subject": "BİYOLOJİ",
+   "result": "dogru"
+  },
+  {
+   "no": 2,
+   "topic": "Hücresel yapıları ve görevlerini açıklar.",
+   "dc": "D",
+   "oc": "e",
+   "subject": "BİYOLOJİ",
+   "result": "yanlis"
+  },
+  {
+   "no": 3,
+   "topic": "Canlıların sınıflandırılmasında kullanılan âlemleri ve bu âlemlerin genel özelliklerini açıklar.",
+   "dc": "C",
+   "oc": null,
+   "subject": "BİYOLOJİ",
+   "result": "bos"
+  },
+  {
+   "no": 4,
+   "topic": "Mayozu açıklar.",
+   "dc": "C",
+   "oc": "C",
+   "subject": "BİYOLOJİ",
+   "result": "dogru"
+  },
+  {
+   "no": 5,
+   "topic": "Kalıtımın genel esaslarını açıklar.",
+   "dc": "A",
+   "oc": "A",
+   "subject": "BİYOLOJİ",
+   "result": "dogru"
+  },
+  {
+   "no": 6,
+   "topic": "Güncel çevre sorunlarının sebeplerini ve olası sonuçlarını değerlendirir.",
+   "dc": "E",
+   "oc": "E",
+   "subject": "BİYOLOJİ",
+   "result": "dogru"
+  }
+ ]
+}

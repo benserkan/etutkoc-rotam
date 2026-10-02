@@ -1076,6 +1076,9 @@ EXAM_CURRICULUM: dict[str, dict] = {
             ("Hareket Problemleri", 9),
             ("Grafik Problemleri", 9),
             ("Sayısal Yetenek Problemleri", 9),
+            # Karnelerin ünite düzeyi geniş etiketi ("Denklemler ve eşitsizlikler
+            # ile ilgili problemler çözer.") tek problem türüne bağlanamaz (2026-10-02).
+            ("Problemler (Karma)", 9),
             ("Kümeler", 9),
             ("Mantık", 9),
             ("Fonksiyonlar", 10),
