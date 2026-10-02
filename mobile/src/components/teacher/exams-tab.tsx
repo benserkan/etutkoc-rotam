@@ -4,7 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from "react-native";
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
+import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
 import { ExamImportFlow } from "@/components/exams/exam-import-flow";
+import { ProgressReportCard } from "@/components/exams/progress-report-card";
+import { ScoreEstimateCard } from "@/components/exams/score-estimate-card";
+import { examProgressKeys, getExamShares } from "@/lib/exam-progress";
 import { TopicAnalysisCard } from "@/components/exams/topic-analysis-card";
 import { FormSheet } from "@/components/ui/form-sheet";
 import {
@@ -305,6 +309,27 @@ export function ExamsTabView({
 }) {
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
+  const [detailId, setDetailId] = React.useState<number | null>(null);
+  const qc = useQueryClient();
+  const sharesQ = useQuery({
+    queryKey: examProgressKeys.shares(studentId ?? -1),
+    queryFn: () => getExamShares(studentId ?? -1),
+    enabled: studentId != null,
+  });
+  const shares = sharesQ.data?.shares ?? {};
+  const detail = data.rows.find((r) => r.id === detailId) ?? null;
+  // tür seçici: en çok denemesi olan tür varsayılan (ölçekler karışmasın)
+  const sectionCounts = React.useMemo(() => {
+    const m = new Map<string, { label: string; n: number }>();
+    for (const r of data.rows) {
+      const e = m.get(r.section);
+      if (e) e.n += 1;
+      else m.set(r.section, { label: r.section_label, n: 1 });
+    }
+    return [...m.entries()].map(([value, v]) => ({ value, ...v })).sort((a, b) => b.n - a.n);
+  }, [data.rows]);
+  const [sel, setSel] = React.useState<string | null>(null);
+  const activeSection = sel && sectionCounts.some((x) => x.value === sel) ? sel : sectionCounts[0]?.value ?? null;
   const s = data.summary;
 
   function handleAdd(body: TeacherExamCreateBody) {
@@ -354,7 +379,33 @@ export function ExamsTabView({
         </Pressable>
       ) : null}
 
-      {studentId != null ? <TopicAnalysisCard studentId={studentId} section={null} /> : null}
+      {studentId != null && sectionCounts.length > 1 ? (
+        <View className="flex-row flex-wrap gap-1.5">
+          {sectionCounts.map((g) => {
+            const active = g.value === activeSection;
+            const tn = tone(g.value);
+            return (
+              <Pressable
+                key={g.value}
+                onPress={() => setSel(g.value)}
+                className={cn("rounded-full border px-3 py-1.5", active ? cn(tn.bg, "border-transparent") : "border-slate-200 bg-white")}
+              >
+                <Text className={cn("text-xs font-medium", active ? tn.text : "text-slate-500")}>
+                  {g.label} ({g.n})
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {studentId != null ? <TopicAnalysisCard studentId={studentId} section={activeSection} /> : null}
+      {studentId != null && data.rows.length ? (
+        <>
+          <ProgressReportCard studentId={studentId} section={activeSection} />
+          <ScoreEstimateCard studentId={studentId} />
+        </>
+      ) : null}
 
       {data.rows.length === 0 ? (
         <View className="mt-6 items-center gap-2 px-6">
@@ -370,6 +421,7 @@ export function ExamsTabView({
             return (
               <Pressable
                 key={e.id}
+                onPress={studentId != null ? () => setDetailId(e.id) : undefined}
                 onLongPress={
                   onDelete
                     ? () =>
@@ -403,6 +455,12 @@ export function ExamsTabView({
                     <Text className="text-slate-400">B {e.total_blank}</Text>
                   </Text>
                 </View>
+                {shares[String(e.id)] ? (
+                  <View className="mt-2 flex-row items-center gap-1">
+                    <Ionicons name="person-circle-outline" size={14} color="#0e7490" />
+                    <Text className="text-[11px] font-medium text-cyan-800">Öğrenciyle paylaşıldı</Text>
+                  </View>
+                ) : null}
                 {studentId != null && e.import_source === "pdf_import" && e.total_wrong > 0 ? (
                   <View className="mt-2 flex-row justify-end">
                     <ArchiveWrongsButton
@@ -417,7 +475,9 @@ export function ExamsTabView({
             );
           })}
           {onDelete ? (
-            <Text className="px-1 text-[11px] text-slate-400">Bir denemeyi silmek için basılı tut.</Text>
+            <Text className="px-1 text-[11px] text-slate-400">
+              Detay, paylaşım ve çeldirici için dokun; silmek için basılı tut.
+            </Text>
           ) : null}
         </View>
       )}
@@ -433,6 +493,15 @@ export function ExamsTabView({
           }}
         />
       </FormSheet>
+      {studentId != null ? (
+        <ExamDetailSheet
+          exam={detail}
+          studentId={studentId}
+          share={detail ? shares[String(detail.id)] ?? null : null}
+          onClose={() => setDetailId(null)}
+          onChanged={() => qc.invalidateQueries({ queryKey: teacherDetailKeys.exams(studentId) })}
+        />
+      ) : null}
       {studentId != null ? (
         <ExamImportFlow
           visible={importOpen}

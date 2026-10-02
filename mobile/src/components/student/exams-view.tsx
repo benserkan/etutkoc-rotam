@@ -1,10 +1,15 @@
 import * as React from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
+import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
 import { ExamImportFlow } from "@/components/exams/exam-import-flow";
+import { ProgressReportCard } from "@/components/exams/progress-report-card";
+import { ScoreEstimateCard } from "@/components/exams/score-estimate-card";
+import { examProgressKeys, getExamShares, type ExamShareInfo } from "@/lib/exam-progress";
 import { TopicAnalysisCard } from "@/components/exams/topic-analysis-card";
 import type { ExamRow, StudentExamsResponse } from "@/lib/student";
 import { cn } from "@/lib/utils";
@@ -100,10 +105,10 @@ function NetTrend({ group }: { group: SectionGroup }) {
   );
 }
 
-function ExamCard({ exam }: { exam: ExamRow }) {
+function ExamCard({ exam, share, onOpen }: { exam: ExamRow; share: ExamShareInfo | null; onOpen: () => void }) {
   const t = tone(exam.section);
   return (
-    <View className="rounded-2xl border border-slate-200 bg-white p-4">
+    <Pressable onPress={onOpen} className="rounded-2xl border border-slate-200 bg-white p-4 active:bg-slate-50">
       <View className="flex-row items-start justify-between gap-2">
         <Text className="flex-1 text-[15px] font-semibold text-slate-900" numberOfLines={2}>
           {exam.title}
@@ -134,7 +139,16 @@ function ExamCard({ exam }: { exam: ExamRow }) {
           <ArchiveWrongsButton examId={exam.id} wrongCount={exam.total_wrong} compact />
         </View>
       ) : null}
-    </View>
+      {share?.note ? (
+        <View className="mt-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2">
+          <Text className="text-xs text-cyan-950">
+            <Text className="font-semibold">Koçunun notu: </Text>
+            {share.note}
+          </Text>
+        </View>
+      ) : null}
+      <Text className="mt-2 text-right text-[11px] font-medium text-brand-700">Detay ve çeldirici analizi ›</Text>
+    </Pressable>
   );
 }
 
@@ -151,6 +165,21 @@ export function ExamsView({
   const [sel, setSel] = React.useState<string | null>(groups[0]?.section ?? null);
   const selGroup = groups.find((g) => g.section === sel) ?? groups[0];
   const [importOpen, setImportOpen] = React.useState(false);
+  const [detailId, setDetailId] = React.useState<number | null>(null);
+  const qc = useQueryClient();
+  const sharesQ = useQuery({ queryKey: examProgressKeys.shares(null), queryFn: () => getExamShares(null) });
+  const shares = sharesQ.data?.shares ?? {};
+  const detail = data.rows.find((r) => r.id === detailId) ?? null;
+  const latestShare = data.rows
+    .map((r) => ({ row: r, share: shares[String(r.id)] }))
+    .filter((x) => x.share?.note)
+    .sort((a, b) => (a.share!.shared_at < b.share!.shared_at ? 1 : -1))[0];
+  const refresh = onRefresh
+    ? () => {
+        qc.invalidateQueries({ queryKey: examProgressKeys.all(null) });
+        onRefresh();
+      }
+    : undefined;
 
   const s = data.summary;
   const trendUp = (s.trend_delta ?? 0) >= 0;
@@ -170,7 +199,7 @@ export function ExamsView({
       <ScrollView
         contentContainerClassName="px-4 py-4 gap-4"
         refreshControl={
-          onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined
+          refresh ? <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#0e7490" /> : undefined
         }
       >
         {s.count === 0 ? (
@@ -187,6 +216,20 @@ export function ExamsView({
           </View>
         ) : (
           <>
+            {latestShare ? (
+              <Pressable
+                onPress={() => setDetailId(latestShare.row.id)}
+                className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 active:bg-cyan-100"
+              >
+                <View className="flex-row items-center gap-1.5">
+                  <Ionicons name="chatbox-ellipses-outline" size={16} color="#155e75" />
+                  <Text className="text-sm font-semibold text-cyan-950">Koçunun değerlendirmesi</Text>
+                </View>
+                <Text className="mt-0.5 text-[11px] text-cyan-800">{latestShare.row.title}</Text>
+                <Text className="mt-1.5 text-sm text-cyan-950">{latestShare.share!.note}</Text>
+              </Pressable>
+            ) : null}
+
             {/* Özet */}
             <View className="rounded-2xl bg-brand-700 p-5">
               <Text className="text-xs font-semibold uppercase tracking-wider text-brand-100">
@@ -237,19 +280,34 @@ export function ExamsView({
             {/* Konu × deneme analizi (Faz 4) — seçili türe göre */}
             <TopicAnalysisCard section={selGroup?.section ?? null} />
 
+            {/* Faz 2 + 3 — gelişim ve hedef, puan tahmini */}
+            <ProgressReportCard studentId={null} section={selGroup?.section ?? null} />
+            <ScoreEstimateCard studentId={null} />
+
             {importButton}
 
             {/* Liste */}
             <Text className="px-1 pt-1 text-sm font-semibold text-slate-700">Tüm denemeler</Text>
             <View className="gap-2.5">
               {data.rows.map((e) => (
-                <ExamCard key={e.id} exam={e} />
+                <ExamCard
+                  key={e.id}
+                  exam={e}
+                  share={shares[String(e.id)] ?? null}
+                  onOpen={() => setDetailId(e.id)}
+                />
               ))}
             </View>
           </>
         )}
       </ScrollView>
       <ExamImportFlow visible={importOpen} onClose={() => setImportOpen(false)} />
+      <ExamDetailSheet
+        exam={detail}
+        studentId={null}
+        share={detail ? shares[String(detail.id)] ?? null : null}
+        onClose={() => setDetailId(null)}
+      />
     </SafeAreaView>
   );
 }

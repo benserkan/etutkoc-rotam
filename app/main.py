@@ -272,7 +272,7 @@ app.add_middleware(
     allow_origins=_allow_origins,
     allow_credentials=_allow_credentials,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Device-Id"],
     expose_headers=["Retry-After"],
     max_age=600,
 )

@@ -159,6 +159,9 @@ export interface ExamRow {
   created_by_name: string | null;
   /** "pdf_import" → PDF'ten aktarılmış (yanlışları arşive köprüsü açılır) */
   import_source?: string | null;
+  /** Faz 3: katılımcı genel ortalaması (karneden ya da koç girişi) */
+  averages?: { label: string; total: number | null; source: "auto" | "manual"; subjects: Record<string, number> } | null;
+  score?: { score: number | null; rank_overall: number | null; participants: number | null } | null;
 }
 export interface ExamSummary {
   count: number;
