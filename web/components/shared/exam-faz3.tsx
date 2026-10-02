@@ -23,7 +23,7 @@ export function DistractorPanel({
   enabled,
 }: {
   examId: number;
-  source: "teacher" | "student";
+  source: ProgressSource;
   enabled: boolean;
 }) {
   const q = useQuery({
@@ -95,7 +95,7 @@ export function DistractorPanel({
         {d.peer_count ? (
           <>
             <p className="mb-2 text-xs font-medium text-muted-foreground">
-              Aynı denemeye giren {d.peer_count} öğrenci{source === "teacher" ? "n" : ""} — öğrencinin yanlış/boş
+              Aynı denemeye giren {d.peer_count} öğrenci{source.kind === "teacher" ? "n" : ""} — öğrencinin yanlış/boş
               bıraktığı sorular (en zor olandan)
             </p>
             <div className="relative overflow-x-auto">
@@ -141,7 +141,7 @@ export function DistractorPanel({
               </table>
             </div>
           </>
-        ) : (
+        ) : source.kind === "parent" ? null : (
           <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
             <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             Soru bazında çeldirici karşılaştırması için aynı denemeye giren en az {d.peer_min} öğrenci daha

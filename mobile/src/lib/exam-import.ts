@@ -323,12 +323,15 @@ export function confirmExamImport(
 export function getExamTopicAnalysis(
   studentId: number | null,
   section?: string | null,
+  parentStudentId?: number | null,
 ): Promise<ExamTopicAnalysisResponse> {
   const qs = section ? `?section=${encodeURIComponent(section)}` : "";
   return apiRequest<ExamTopicAnalysisResponse>(
-    studentId != null
-      ? `/api/v2/teacher/students/${studentId}/exam-topic-analysis${qs}`
-      : `/api/v2/student/exam-topic-analysis${qs}`,
+    parentStudentId != null
+      ? `/api/v2/parent/students/${parentStudentId}/exam-topic-analysis${qs}`
+      : studentId != null
+        ? `/api/v2/teacher/students/${studentId}/exam-topic-analysis${qs}`
+        : `/api/v2/student/exam-topic-analysis${qs}`,
   );
 }
 

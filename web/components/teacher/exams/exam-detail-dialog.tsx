@@ -47,6 +47,7 @@ export function ExamDetailDialog({
   row,
   prev,
   studentId,
+  parentStudentId = null,
   studentName,
   open,
   onOpenChange,
@@ -55,19 +56,25 @@ export function ExamDetailDialog({
   prev: ExamResultRow | null;
   /** null → öğrenci kendi denemesine bakıyor (öğrenci ucu, paylaş/yazdır yok). */
   studentId: number | null;
+  /** Veli görünümü: çocuğun id'si (studentId null olmalı) — salt okuma, paylaş yok. */
+  parentStudentId?: number | null;
   studentName?: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
   const hasQuestions = row.import_source === "pdf_import";
   const q = useQuery({
-    queryKey: studentId == null
-      ? (["student", "exams", String(row.id), "questions"] as const)
-      : teacherKeys.examQuestions(row.id),
+    queryKey: parentStudentId != null
+      ? (["parent", "students", String(parentStudentId), "exams", String(row.id), "questions"] as const)
+      : studentId == null
+        ? (["student", "exams", String(row.id), "questions"] as const)
+        : teacherKeys.examQuestions(row.id),
     queryFn: () =>
-      studentId == null
-        ? api<ExamQuestionsResponse>(`/api/v2/student/exams/${row.id}/questions`)
-        : getTeacherExamQuestions(row.id),
+      parentStudentId != null
+        ? api<ExamQuestionsResponse>(`/api/v2/parent/students/${parentStudentId}/exams/${row.id}/questions`)
+        : studentId == null
+          ? api<ExamQuestionsResponse>(`/api/v2/student/exams/${row.id}/questions`)
+          : getTeacherExamQuestions(row.id),
     enabled: open && hasQuestions,
     staleTime: 60_000,
   });
@@ -264,7 +271,13 @@ export function ExamDetailDialog({
               </ExamSection>
               <DistractorPanel
                 examId={row.id}
-                source={studentId == null ? "student" : "teacher"}
+                source={
+                  parentStudentId != null
+                    ? { kind: "parent", studentId: parentStudentId }
+                    : studentId == null
+                      ? { kind: "student" }
+                      : { kind: "teacher", studentId }
+                }
                 enabled={open && hasQuestions}
               />
             </>

@@ -7,10 +7,16 @@ import { examProgressKeys, fmtNet, fmtSigned, getScoreEstimate } from "@/lib/exa
 import { cn } from "@/lib/utils";
 
 /** Deneme Faz 3 (mobil) — tahmini YKS/LGS puanı (koç + öğrenci). */
-export function ScoreEstimateCard({ studentId }: { studentId: number | null }) {
+export function ScoreEstimateCard({
+  studentId,
+  parentStudentId = null,
+}: {
+  studentId: number | null;
+  parentStudentId?: number | null;
+}) {
   const q = useQuery({
-    queryKey: examProgressKeys.score(studentId),
-    queryFn: () => getScoreEstimate(studentId),
+    queryKey: examProgressKeys.score(studentId, parentStudentId),
+    queryFn: () => getScoreEstimate(studentId, parentStudentId),
   });
   const d = q.data;
   if (!d || !d.scores.length) return null;
@@ -32,7 +38,7 @@ export function ScoreEstimateCard({ studentId }: { studentId: number | null }) {
               <Text className="text-xs text-slate-500">{s.label}</Text>
               {s.is_student_track ? (
                 <Text className="overflow-hidden rounded bg-brand-700 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  alanın
+                  {parentStudentId != null ? "çocuğunuzun alanı" : studentId != null ? "öğrencinin alanı" : "alanın"}
                 </Text>
               ) : null}
             </View>

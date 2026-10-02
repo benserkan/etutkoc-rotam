@@ -11,7 +11,10 @@ import type {
   ExamSharesResponse,
 } from "@/lib/types/exam-progress";
 
-export type ProgressSource = { kind: "teacher"; studentId: number } | { kind: "student" };
+export type ProgressSource =
+  | { kind: "teacher"; studentId: number }
+  | { kind: "parent"; studentId: number }
+  | { kind: "student" };
 
 export const examProgressKeys = {
   progress: (src: ProgressSource, section: string | null, period?: string) =>
@@ -20,7 +23,9 @@ export const examProgressKeys = {
           "teacher", "me", "students", String(src.studentId), "exam-progress",
           section ?? "auto", period ?? "current",
         ] as const)
-      : (["student", "exams", "progress", section ?? "auto", period ?? "current"] as const),
+      : src.kind === "parent"
+        ? (["parent", "students", String(src.studentId), "exam-progress", section ?? "auto", period ?? "current"] as const)
+        : (["student", "exams", "progress", section ?? "auto", period ?? "current"] as const),
   shares: (src: ProgressSource) =>
     src.kind === "teacher"
       ? (["teacher", "me", "students", String(src.studentId), "exam-shares"] as const)
@@ -45,7 +50,9 @@ export function getExamProgress(
   return api<ExamProgressResponse>(
     src.kind === "teacher"
       ? `/api/v2/teacher/students/${src.studentId}/exam-progress${q}`
-      : `/api/v2/student/exam-progress${q}`,
+      : src.kind === "parent"
+        ? `/api/v2/parent/students/${src.studentId}/exam-progress${q}`
+        : `/api/v2/student/exam-progress${q}`,
   );
 }
 

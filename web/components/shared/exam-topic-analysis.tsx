@@ -40,8 +40,11 @@ function cellTone(acc: number): string {
 
 export function ExamTopicAnalysis({
   studentId = null,
+  parentStudentId = null,
   section,
 }: {
+  /** Veli yüzeyi: çocuğun id'si (salt okuma). */
+  parentStudentId?: number | null;
   /** Koç yüzeyi: öğrenci id; öğrenci yüzeyi: null (kendi verisi). */
   studentId?: number | null;
   /** Panelin seçili sınav türü (tek türe filtreli analiz). */
@@ -49,11 +52,13 @@ export function ExamTopicAnalysis({
 }) {
   const q = useQuery<ExamTopicAnalysisResponse>({
     queryKey:
-      studentId != null
-        ? ["teacher", "me", "students", String(studentId), "exams",
-           "topic-analysis", section ?? "auto"]
-        : ["student", "exams", "topic-analysis", section ?? "auto"],
-    queryFn: () => getExamTopicAnalysis(studentId, section),
+      parentStudentId != null
+        ? ["parent", "students", String(parentStudentId), "topic-analysis", section ?? "auto"]
+        : studentId != null
+          ? ["teacher", "me", "students", String(studentId), "exams",
+             "topic-analysis", section ?? "auto"]
+          : ["student", "exams", "topic-analysis", section ?? "auto"],
+    queryFn: () => getExamTopicAnalysis(studentId, section, parentStudentId),
     staleTime: 30_000,
   });
   const d = q.data;

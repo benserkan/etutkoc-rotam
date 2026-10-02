@@ -71,21 +71,27 @@ export interface ScoreEstimateResponse {
 }
 
 export const faz3Keys = {
-  distractors: (src: "teacher" | "student", examId: number) =>
-    src === "teacher"
+  distractors: (src: ProgressSource, examId: number) =>
+    src.kind === "teacher"
       ? (["teacher", "me", "exams", String(examId), "distractors"] as const)
-      : (["student", "exams", String(examId), "distractors"] as const),
+      : src.kind === "parent"
+        ? (["parent", "students", String(src.studentId), "exams", String(examId), "distractors"] as const)
+        : (["student", "exams", String(examId), "distractors"] as const),
   score: (src: ProgressSource) =>
     src.kind === "teacher"
       ? (["teacher", "me", "students", String(src.studentId), "exams", "score-estimate"] as const)
-      : (["student", "exams", "score-estimate"] as const),
+      : src.kind === "parent"
+        ? (["parent", "students", String(src.studentId), "score-estimate"] as const)
+        : (["student", "exams", "score-estimate"] as const),
 };
 
-export function getDistractors(src: "teacher" | "student", examId: number): Promise<DistractorResponse> {
+export function getDistractors(src: ProgressSource, examId: number): Promise<DistractorResponse> {
   return api<DistractorResponse>(
-    src === "teacher"
+    src.kind === "teacher"
       ? `/api/v2/teacher/exams/${examId}/distractors`
-      : `/api/v2/student/exams/${examId}/distractors`,
+      : src.kind === "parent"
+        ? `/api/v2/parent/students/${src.studentId}/exams/${examId}/distractors`
+        : `/api/v2/student/exams/${examId}/distractors`,
   );
 }
 
@@ -93,6 +99,8 @@ export function getScoreEstimate(src: ProgressSource): Promise<ScoreEstimateResp
   return api<ScoreEstimateResponse>(
     src.kind === "teacher"
       ? `/api/v2/teacher/students/${src.studentId}/score-estimate`
-      : `/api/v2/student/score-estimate`,
+      : src.kind === "parent"
+        ? `/api/v2/parent/students/${src.studentId}/score-estimate`
+        : `/api/v2/student/score-estimate`,
   );
 }

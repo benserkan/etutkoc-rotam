@@ -103,24 +103,35 @@ export interface ScoreEstimateResponse {
 
 // ---------------------------------------------------------------- anahtarlar
 
-const who = (studentId: number | null) => (studentId == null ? "me" : String(studentId));
+/** parentId verilirse veli görünümü (salt okuma); studentId koç; ikisi de yoksa öğrenci. */
+const who = (studentId: number | null, parentId?: number | null) =>
+  parentId != null ? `parent-${parentId}` : studentId == null ? "me" : String(studentId);
 
 export const examProgressKeys = {
-  all: (studentId: number | null) => ["exam-progress", who(studentId)] as const,
-  progress: (studentId: number | null, section: string | null) =>
-    ["exam-progress", who(studentId), "report", section ?? "auto"] as const,
+  all: (studentId: number | null, parentId?: number | null) => ["exam-progress", who(studentId, parentId)] as const,
+  progress: (studentId: number | null, section: string | null, parentId?: number | null) =>
+    ["exam-progress", who(studentId, parentId), "report", section ?? "auto"] as const,
   shares: (studentId: number | null) => ["exam-progress", who(studentId), "shares"] as const,
-  score: (studentId: number | null) => ["exam-progress", who(studentId), "score"] as const,
-  distractors: (studentId: number | null, examId: number) =>
-    ["exam-progress", who(studentId), "distractors", examId] as const,
+  score: (studentId: number | null, parentId?: number | null) =>
+    ["exam-progress", who(studentId, parentId), "score"] as const,
+  distractors: (studentId: number | null, examId: number, parentId?: number | null) =>
+    ["exam-progress", who(studentId, parentId), "distractors", examId] as const,
 };
 
 // ---------------------------------------------------------------- okuma
 
-export function getExamProgress(studentId: number | null, section: string | null): Promise<ExamProgressResponse> {
+export function getExamProgress(
+  studentId: number | null,
+  section: string | null,
+  parentId?: number | null,
+): Promise<ExamProgressResponse> {
   const q = section ? `?section=${encodeURIComponent(section)}` : "";
   return apiRequest<ExamProgressResponse>(
-    studentId == null ? `/api/v2/student/exam-progress${q}` : `/api/v2/teacher/students/${studentId}/exam-progress${q}`,
+    parentId != null
+      ? `/api/v2/parent/students/${parentId}/exam-progress${q}`
+      : studentId == null
+        ? `/api/v2/student/exam-progress${q}`
+        : `/api/v2/teacher/students/${studentId}/exam-progress${q}`,
   );
 }
 
@@ -130,15 +141,27 @@ export function getExamShares(studentId: number | null): Promise<{ shares: Recor
   );
 }
 
-export function getScoreEstimate(studentId: number | null): Promise<ScoreEstimateResponse> {
+export function getScoreEstimate(studentId: number | null, parentId?: number | null): Promise<ScoreEstimateResponse> {
   return apiRequest<ScoreEstimateResponse>(
-    studentId == null ? "/api/v2/student/score-estimate" : `/api/v2/teacher/students/${studentId}/score-estimate`,
+    parentId != null
+      ? `/api/v2/parent/students/${parentId}/score-estimate`
+      : studentId == null
+        ? "/api/v2/student/score-estimate"
+        : `/api/v2/teacher/students/${studentId}/score-estimate`,
   );
 }
 
-export function getDistractors(studentId: number | null, examId: number): Promise<DistractorResponse> {
+export function getDistractors(
+  studentId: number | null,
+  examId: number,
+  parentId?: number | null,
+): Promise<DistractorResponse> {
   return apiRequest<DistractorResponse>(
-    studentId == null ? `/api/v2/student/exams/${examId}/distractors` : `/api/v2/teacher/exams/${examId}/distractors`,
+    parentId != null
+      ? `/api/v2/parent/students/${parentId}/exams/${examId}/distractors`
+      : studentId == null
+        ? `/api/v2/student/exams/${examId}/distractors`
+        : `/api/v2/teacher/exams/${examId}/distractors`,
   );
 }
 

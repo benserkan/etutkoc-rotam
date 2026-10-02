@@ -28,12 +28,15 @@ import { cn } from "@/lib/utils";
 export function ExamDetailSheet({
   exam,
   studentId,
+  parentStudentId = null,
   share,
   onClose,
   onChanged,
 }: {
   exam: ExamRow | null;
   studentId: number | null;
+  /** Veli görünümü: çocuğun id'si (studentId null) — salt okuma, akran kıyası yok. */
+  parentStudentId?: number | null;
   share: ExamShareInfo | null;
   onClose: () => void;
   /** koç işleminden sonra liste/paylaşımlar tazelensin */
@@ -56,7 +59,13 @@ export function ExamDetailSheet({
         ) : mode === "averages" && studentId != null ? (
           <AveragesForm exam={exam} onDone={() => { setMode("view"); onChanged?.(); }} />
         ) : (
-          <DetailBody exam={exam} studentId={studentId} share={share} onMode={setMode} />
+          <DetailBody
+            exam={exam}
+            studentId={studentId}
+            parentStudentId={parentStudentId}
+            share={share}
+            onMode={setMode}
+          />
         )
       ) : null}
     </FormSheet>
@@ -66,11 +75,13 @@ export function ExamDetailSheet({
 function DetailBody({
   exam,
   studentId,
+  parentStudentId,
   share,
   onMode,
 }: {
   exam: ExamRow;
   studentId: number | null;
+  parentStudentId: number | null;
   share: ExamShareInfo | null;
   onMode: (m: "share" | "averages") => void;
 }) {
@@ -157,15 +168,25 @@ function DetailBody({
         </View>
       ) : null}
 
-      {exam.import_source === "pdf_import" ? <Distractors examId={exam.id} studentId={studentId} /> : null}
+      {exam.import_source === "pdf_import" ? (
+        <Distractors examId={exam.id} studentId={studentId} parentStudentId={parentStudentId} />
+      ) : null}
     </View>
   );
 }
 
-function Distractors({ examId, studentId }: { examId: number; studentId: number | null }) {
+function Distractors({
+  examId,
+  studentId,
+  parentStudentId,
+}: {
+  examId: number;
+  studentId: number | null;
+  parentStudentId: number | null;
+}) {
   const q = useQuery({
-    queryKey: examProgressKeys.distractors(studentId, examId),
-    queryFn: () => getDistractors(studentId, examId),
+    queryKey: examProgressKeys.distractors(studentId, examId, parentStudentId),
+    queryFn: () => getDistractors(studentId, examId, parentStudentId),
   });
   if (q.isLoading) return <ActivityIndicator color="#0e7490" />;
   const d = q.data;
@@ -224,7 +245,7 @@ function Distractors({ examId, studentId }: { examId: number; studentId: number 
             </View>
           ))}
         </View>
-      ) : (
+      ) : parentStudentId != null ? null : (
         <Text className="text-[11px] text-slate-400">
           Soru bazında karşılaştırma için aynı denemeye giren en az {d.peer_min} öğrenci daha gerekir.
         </Text>

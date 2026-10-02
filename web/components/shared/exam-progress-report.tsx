@@ -119,7 +119,12 @@ export function ExamProgressReport({
         <ReportShare data={d} studentName={studentName ?? d.student_name} studentId={studentId} />
       </div>
 
-      <TargetSection data={d} isTeacher={isTeacher} onEdit={() => setTargetOpen(true)} />
+      <TargetSection
+        data={d}
+        isTeacher={isTeacher}
+        isParent={source.kind === "parent"}
+        onEdit={() => setTargetOpen(true)}
+      />
 
       <ExamSection
         icon={TrendingUp}
@@ -160,7 +165,7 @@ export function ExamProgressReport({
         </ExamSection>
       ) : null}
 
-      <ActionPlan data={d} isTeacher={isTeacher} studentId={studentId} />
+      <ActionPlan data={d} isTeacher={isTeacher} isParent={source.kind === "parent"} studentId={studentId} />
 
       {d.subjects.length ? <SubjectTrend subjects={d.subjects} hasTarget={!!d.target} /> : null}
 
@@ -209,10 +214,12 @@ function Stat({
 function TargetSection({
   data,
   isTeacher,
+  isParent = false,
   onEdit,
 }: {
   data: ExamProgressResponse;
   isTeacher: boolean;
+  isParent?: boolean;
   onEdit: () => void;
 }) {
   const t = data.target;
@@ -223,7 +230,9 @@ function TargetSection({
       description={
         isTeacher
           ? "Koçun belirlediği hedef; fark son 3 denemenin ortalamasıyla ölçülür. Öğrenci de görür."
-          : "Koçunun senin için belirlediği hedef; fark son 3 denemenin ortalamasıyla ölçülür."
+          : isParent
+            ? "Koçun çocuğunuz için belirlediği hedef; fark son 3 denemenin ortalamasıyla ölçülür."
+            : "Koçunun senin için belirlediği hedef; fark son 3 denemenin ortalamasıyla ölçülür."
       }
       actions={
         isTeacher ? (
@@ -238,7 +247,9 @@ function TargetSection({
         <p className="text-sm text-muted-foreground">
           {isTeacher
             ? `${data.section_label} için hedef net belirlenmedi. Hedef girilince fark, gereken tempo ve ders hedefleri bu rapora eklenir.`
-            : "Koçun henüz bu deneme türü için hedef belirlemedi."}
+            : isParent
+              ? "Koç henüz bu deneme türü için hedef belirlemedi."
+              : "Koçun henüz bu deneme türü için hedef belirlemedi."}
         </p>
       ) : (
         <div className="space-y-3">
@@ -452,10 +463,12 @@ function TargetForm({
 function ActionPlan({
   data,
   isTeacher,
+  isParent = false,
   studentId,
 }: {
   data: ExamProgressResponse;
   isTeacher: boolean;
+  isParent?: boolean;
   studentId: number | null;
 }) {
   const [picked, setPicked] = React.useState<Set<string>>(() => new Set());
@@ -479,11 +492,13 @@ function ActionPlan({
   return (
     <ExamSection
       icon={ListChecks}
-      title={isTeacher ? "Aksiyon planı" : "Çalışma önceliklerin"}
+      title={isTeacher ? "Aksiyon planı" : isParent ? "Çalışma öncelikleri" : "Çalışma önceliklerin"}
       description={
         isTeacher
           ? "Net fırsatı, unutulan konular, ders düşüşleri, boş/yanlış davranışı ve hedef farkından türetilir. Seçtiklerini sıradaki seansın gündemine ekleyebilirsin."
-          : "Deneme sonuçlarından çıkan, öncelik sırasına göre çalışma önerileri."
+          : isParent
+            ? "Deneme sonuçlarından çıkan, öncelik sırasına göre çalışma önerileri — koçunuz programı buna göre şekillendirir."
+            : "Deneme sonuçlarından çıkan, öncelik sırasına göre çalışma önerileri."
       }
       actions={
         isTeacher && selectable.length ? (

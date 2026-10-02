@@ -45,14 +45,20 @@ export function analysisQueryKey(
 
 export function TopicAnalysisCard({
   studentId = null,
+  parentStudentId = null,
   section,
 }: {
   studentId?: number | null;
+  /** Veli görünümü: çocuğun id'si (salt okuma). */
+  parentStudentId?: number | null;
   section: string | null;
 }) {
   const q = useQuery<ExamTopicAnalysisResponse>({
-    queryKey: analysisQueryKey(studentId, section),
-    queryFn: () => getExamTopicAnalysis(studentId, section),
+    queryKey:
+      parentStudentId != null
+        ? (["parent", "student", parentStudentId, "topic-analysis", section ?? "auto"] as const)
+        : analysisQueryKey(studentId, section),
+    queryFn: () => getExamTopicAnalysis(studentId, section, parentStudentId),
     staleTime: 30_000,
   });
   const d = q.data;

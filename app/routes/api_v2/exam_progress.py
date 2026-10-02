@@ -31,6 +31,7 @@ from app.routes.api_v2.schemas.exam_progress import (
     ExamTargetsResponse,
     ProgressTarget,
 )
+from app.routes.api_v2.parent import _require_parent
 from app.routes.api_v2.student import _require_student
 from app.routes.api_v2.teacher import _get_owned_exam, _get_owned_student, _require_teacher
 from app.services import exam_faz3
@@ -253,3 +254,64 @@ def teacher_score_estimate(student_id: int, user: User = Depends(_require_teache
 @router.get("/student/score-estimate", response_model=ScoreEstimateResponse)
 def student_score_estimate(user: User = Depends(_require_student), db: Session = Depends(get_db)):
     return ScoreEstimateResponse(**exam_faz3.score_estimate(db, user))
+
+
+# ================================================================ veli (salt okuma)
+
+def _parent_child(db: Session, parent: User, student_id: int) -> User:
+    from app.services.parent_view import ParentAccessDenied, assert_parent_can_view
+    try:
+        return assert_parent_can_view(db, parent, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "student_not_found",
+                                                     "message": "Öğrenci bulunamadı."})
+
+
+def _parent_exam(db: Session, parent: User, student_id: int, exam_id: int) -> ExamResult:
+    child = _parent_child(db, parent, student_id)
+    exam = db.query(ExamResult).filter(ExamResult.id == exam_id, ExamResult.student_id == child.id).first()
+    if exam is None:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "exam_not_found",
+                                                     "message": "Deneme bulunamadı."})
+    return exam
+
+
+@router.get("/parent/students/{student_id}/exam-progress", response_model=ExamProgressResponse)
+def parent_exam_progress(student_id: int, section: str | None = None, period: str | None = None,
+                         user: User = Depends(_require_parent), db: Session = Depends(get_db)):
+    """Veli: çocuğun gelişim raporu (hedef, yorum, çalışma öncelikleri) — salt okuma."""
+    child = _parent_child(db, user, student_id)
+    return _report(db, child, section, period)
+
+
+@router.get("/parent/students/{student_id}/score-estimate", response_model=ScoreEstimateResponse)
+def parent_score_estimate(student_id: int, user: User = Depends(_require_parent),
+                          db: Session = Depends(get_db)):
+    child = _parent_child(db, user, student_id)
+    return ScoreEstimateResponse(**exam_faz3.score_estimate(db, child))
+
+
+@router.get("/parent/students/{student_id}/exams/{exam_id}/distractors", response_model=DistractorResponse)
+def parent_exam_distractors(student_id: int, exam_id: int, user: User = Depends(_require_parent),
+                            db: Session = Depends(get_db)):
+    """Veli: yalnız çocuğun kendi işaretleme eğilimi — diğer öğrencilerle kıyas veliye kapalı."""
+    exam = _parent_exam(db, user, student_id, exam_id)
+    return DistractorResponse(**exam_faz3.distractor_analysis(db, exam, coach_id=None, include_peers=False))
+
+
+@router.get("/parent/students/{student_id}/exams/{exam_id}/questions")
+def parent_exam_questions(student_id: int, exam_id: int, user: User = Depends(_require_parent),
+                          db: Session = Depends(get_db)):
+    from app.routes.api_v2.teacher import build_exam_questions
+    exam = _parent_exam(db, user, student_id, exam_id)
+    return build_exam_questions(db, exam)
+
+
+@router.get("/parent/students/{student_id}/exam-topic-analysis")
+def parent_exam_topic_analysis(student_id: int, section: str | None = None, period: str | None = None,
+                               user: User = Depends(_require_parent), db: Session = Depends(get_db)):
+    from app.routes.api_v2.schemas.exam_import import ExamTopicAnalysisResponse
+    from app.services import exam_topic_analysis
+    child = _parent_child(db, user, student_id)
+    return ExamTopicAnalysisResponse(**exam_topic_analysis.build_exam_topic_analysis(
+        db, child, section=section, period=period))

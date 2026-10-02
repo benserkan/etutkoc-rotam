@@ -56,11 +56,21 @@ function Card({ title, icon, children, right }: {
   );
 }
 
-export function ProgressReportCard({ studentId, section }: { studentId: number | null; section: string | null }) {
+export function ProgressReportCard({
+  studentId,
+  section,
+  parentStudentId = null,
+}: {
+  studentId: number | null;
+  section: string | null;
+  /** Veli görünümü: çocuğun id'si (studentId null) — salt okuma. */
+  parentStudentId?: number | null;
+}) {
   const isTeacher = studentId != null;
+  const isParent = parentStudentId != null;
   const q = useQuery({
-    queryKey: examProgressKeys.progress(studentId, section),
-    queryFn: () => getExamProgress(studentId, section),
+    queryKey: examProgressKeys.progress(studentId, section, parentStudentId),
+    queryFn: () => getExamProgress(studentId, section, parentStudentId),
   });
   const [targetOpen, setTargetOpen] = React.useState(false);
 
@@ -95,7 +105,11 @@ export function ProgressReportCard({ studentId, section }: { studentId: number |
       >
         {!t ? (
           <Text className="text-sm text-slate-500">
-            {isTeacher ? "Bu tür için hedef net belirlenmedi." : "Koçun henüz hedef belirlemedi."}
+            {isTeacher
+              ? "Bu tür için hedef net belirlenmedi."
+              : isParent
+                ? "Koç henüz hedef belirlemedi."
+                : "Koçun henüz hedef belirlemedi."}
           </Text>
         ) : (
           <View className="gap-2">
@@ -162,7 +176,7 @@ export function ProgressReportCard({ studentId, section }: { studentId: number |
         </Card>
       ) : null}
 
-      <ActionPlan data={d} studentId={studentId} />
+      <ActionPlan data={d} studentId={studentId} isParent={isParent} />
 
       {d.subjects.length ? (
         <Card title="Ders gidişatı" icon="list-outline">
@@ -196,7 +210,15 @@ export function ProgressReportCard({ studentId, section }: { studentId: number |
   );
 }
 
-function ActionPlan({ data, studentId }: { data: ExamProgressResponse; studentId: number | null }) {
+function ActionPlan({
+  data,
+  studentId,
+  isParent = false,
+}: {
+  data: ExamProgressResponse;
+  studentId: number | null;
+  isParent?: boolean;
+}) {
   const isTeacher = studentId != null;
   const qc = useQueryClient();
   const [picked, setPicked] = React.useState<string[]>([]);
@@ -222,7 +244,10 @@ function ActionPlan({ data, studentId }: { data: ExamProgressResponse; studentId
   });
   if (!data.actions.length) return null;
   return (
-    <Card title={isTeacher ? "Aksiyon planı" : "Çalışma önceliklerin"} icon="checkbox-outline">
+    <Card
+      title={isTeacher ? "Aksiyon planı" : isParent ? "Çalışma öncelikleri" : "Çalışma önceliklerin"}
+      icon="checkbox-outline"
+    >
       <View className="gap-2">
         {data.actions.map((a) => {
           const p = PRIORITY[a.priority] ?? PRIORITY[3];

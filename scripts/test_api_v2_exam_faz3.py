@@ -12,6 +12,7 @@ from app.database import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import AuditLog, ExamResult, Subject, SuspiciousIp, User, UserRole  # noqa: E402
 from app.models.exam_result import ExamResultQuestion, ExamSection  # noqa: E402
+from app.models.parent import ParentRelation, ParentStudentLink  # noqa: E402
 from app.models.user import Track  # noqa: E402
 from app.services.rate_limit import get_login_limiter  # noqa: E402
 from app.services.security import hash_password  # noqa: E402
@@ -67,6 +68,9 @@ with SessionLocal() as db:
     p1 = mk(db, f"{PFX}_p1@test.invalid", UserRole.STUDENT, teacher_id=t.id, grade_level=12)
     p2 = mk(db, f"{PFX}_p2@test.invalid", UserRole.STUDENT, teacher_id=t.id, grade_level=12)
     lg = mk(db, f"{PFX}_l@test.invalid", UserRole.STUDENT, teacher_id=t.id, grade_level=8)
+    pa = mk(db, f"{PFX}_pa@test.invalid", UserRole.PARENT)
+    pb = mk(db, f"{PFX}_pb@test.invalid", UserRole.PARENT)
+    db.add(ParentStudentLink(parent_id=pa.id, student_id=s.id, relation=ParentRelation.ANNE, is_primary=True))
     tyt_nets = [
         {"name": "TYT Türkçe", "correct": 30, "wrong": 8, "blank": 2, "net": 28.0},
         {"name": "TYT Tarih", "correct": 4, "wrong": 1, "blank": 0, "net": 3.75},
@@ -98,7 +102,7 @@ with SessionLocal() as db:
            {"name": "İngilizce", "correct": 8, "wrong": 0, "blank": 2, "net": 8.0}]
     add_exam(db, lg.id, t.id, "LGS Deneme", ExamSection.LGS, lgs)
     db.commit()
-    ids = dict(t=t.id, t2=t2.id, s=s.id, p1=p1.id, p2=p2.id, lg=lg.id, e1=e1.id)
+    ids = dict(t=t.id, t2=t2.id, s=s.id, p1=p1.id, p2=p2.id, lg=lg.id, e1=e1.id, pa=pa.id, pb=pb.id)
 
 
 def login(email):
@@ -170,6 +174,29 @@ try:
     chk("23 öğrenci kendi tahmini", cs.get("/api/v2/student/score-estimate").json()["scores"][0]["key"] == "TYT")
     np_ = ct.get(f"/api/v2/teacher/students/{ids['p1']}/score-estimate").json()
     chk("24 AYT'siz öğrencide alan puanı uyarısı", len(np_["scores"]) == 1 and any("AYT" in w for w in np_["warnings"]))
+
+    # ---------- veli (salt okuma)
+    cpa, cpb = login(f"{PFX}_pa@test.invalid"), login(f"{PFX}_pb@test.invalid")
+    base = f"/api/v2/parent/students/{ids['s']}"
+    r = cpa.get(f"{base}/exam-progress?section=tyt&period=all")
+    chk("25 veli gelişim raporu", r.status_code == 200 and r.json()["stats"]["count"] == 1, r.text[:150])
+    chk("26 veli puan tahmini", cpa.get(f"{base}/score-estimate").json()["scores"][0]["key"] == "TYT")
+    dd = cpa.get(f"{base}/exams/{ids['e1']}/distractors").json()
+    chk("27 veli çeldirici: kendi eğilimi var, akran kıyası YOK", dd["answered"] == 16 and dd["peer_count"] == 0
+        and dd["questions"] == [] and "diğer öğrencilerin" not in " ".join(dd["notes"]))
+    qq = cpa.get(f"{base}/exams/{ids['e1']}/questions")
+    chk("28 veli soru soru", qq.status_code == 200 and len(qq.json()["items"]) == 20)
+    chk("29 veli konu analizi", cpa.get(f"{base}/exam-topic-analysis?section=tyt&period=all").status_code == 200)
+    ct.post(f"/api/v2/teacher/exams/{ids['e1']}/share-student", json={"note": "GIZLI-OGRENCI-NOTU", "notify": False})
+    lst = cpa.get(f"{base}/exams?period=all").json()["rows"]
+    chk("30 veli listesinde ortalama var, öğrenci notu yok",
+        any(x.get("averages") for x in lst) and "GIZLI-OGRENCI-NOTU" not in json.dumps(lst))
+    bad = [cpb.get(u).status_code for u in (f"{base}/exam-progress", f"{base}/score-estimate",
+                                            f"{base}/exams/{ids['e1']}/distractors", f"{base}/exams/{ids['e1']}/questions",
+                                            f"{base}/exam-topic-analysis")]
+    chk("31 bağlı olmayan veli her uçta 404", bad == [404] * 5, bad)
+    other = cpa.get(f"/api/v2/parent/students/{ids['p1']}/exams/{ids['e1']}/questions").status_code
+    chk("32 başka çocuğun yolu üzerinden deneme 404", other == 404)
 finally:
     with SessionLocal() as db:
         sids = [ids["s"], ids["p1"], ids["p2"], ids["lg"]]
@@ -178,7 +205,8 @@ finally:
         db.execute(sa_delete(ExamResult).where(ExamResult.id.in_(eids)))
         db.execute(sa_delete(AuditLog).where(AuditLog.actor_id.in_(list(ids.values()))))
         db.execute(sa_delete(SuspiciousIp).where(SuspiciousIp.ip == "testclient"))
-        db.execute(sa_delete(User).where(User.id.in_(sids + [ids["t"], ids["t2"]])))
+        db.execute(sa_delete(ParentStudentLink).where(ParentStudentLink.parent_id.in_([ids["pa"], ids["pb"]])))
+        db.execute(sa_delete(User).where(User.id.in_(sids + [ids["t"], ids["t2"], ids["pa"], ids["pb"]])))
         db.commit()
 
 print(f"\n=== {sum(ok)} passed, {len(ok) - sum(ok)} failed ===")
