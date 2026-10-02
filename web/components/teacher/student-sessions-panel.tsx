@@ -3,6 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { examProgressKeys, getAgendaQueue } from "@/lib/api/exam-progress";
+import { useRemoveAgendaItems } from "@/lib/hooks/use-exam-progress-mutations";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -740,6 +742,19 @@ function SessionForm({
     staleTime: 60_000,
   });
 
+  // Deneme analizi "Seansa ekle" kuyruğu — varsayılan hepsi işaretli gelir;
+  // seans kaydedilince kullanılan maddeler kuyruktan düşer.
+  const queue = useQuery({
+    queryKey: examProgressKeys.queue(studentId),
+    queryFn: () => getAgendaQueue(studentId),
+    enabled: !isEdit,
+    staleTime: 30_000,
+  });
+  const queueItems = queue.data?.items ?? [];
+  const [skippedQueue, setSkippedQueue] = React.useState<string[]>([]);
+  const usedQueue = queueItems.filter((q) => !skippedQueue.includes(q.id));
+  const removeQueue = useRemoveAgendaItems(studentId);
+
   const pending = create.isPending || update.isPending;
 
   function cleanupStream() {
@@ -834,7 +849,9 @@ function SessionForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!agenda.trim()) {
+    const queueText = !isEdit ? usedQueue.map((q) => `• ${q.text}`).join("\n") : "";
+    const fullAgenda = [agenda.trim(), queueText].filter(Boolean).join("\n");
+    if (!fullAgenda) {
       setError("Gündem (konuşulacaklar) zorunlu.");
       return;
     }
@@ -843,7 +860,7 @@ function SessionForm({
       status: stat,
       duration_min: duration ? Number(duration) : null,
       channel: channel || null,
-      agenda: agenda.trim(),
+      agenda: fullAgenda,
       coach_note: note.trim() || null,
       next_change: nextChange.trim() || null,
       mood,
@@ -857,7 +874,16 @@ function SessionForm({
       update.mutate({ sessionId: editing.id, body }, { onSuccess: () => onDone() });
     } else {
       const cap = captureSource !== "manual" ? { capture_source: captureSource } : {};
-      create.mutate({ body: { ...body, ...cap } }, { onSuccess: () => onDone() });
+      const consumed = usedQueue.map((q) => q.id);
+      create.mutate(
+        { body: { ...body, ...cap } },
+        {
+          onSuccess: () => {
+            if (consumed.length) removeQueue.mutate({ ids: consumed, silent: true });
+            onDone();
+          },
+        },
+      );
     }
   }
 
@@ -938,6 +964,37 @@ function SessionForm({
         </div>
       ) : null}
 
+      {!isEdit && queueItems.length > 0 ? (
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 text-xs dark:border-cyan-500/30 dark:bg-cyan-500/10">
+          <p className="mb-1.5 font-semibold text-cyan-950 dark:text-cyan-100">
+            Deneme analizinden eklenen gündem ({usedQueue.length}/{queueItems.length} seçili)
+          </p>
+          <ul className="max-h-44 space-y-1 overflow-y-auto pr-1">
+            {queueItems.map((q) => {
+              const on = !skippedQueue.includes(q.id);
+              return (
+                <li key={q.id}>
+                  <label className="flex cursor-pointer items-start gap-2">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 accent-cyan-700"
+                      checked={on}
+                      onChange={() =>
+                        setSkippedQueue((prev) => (on ? [...prev, q.id] : prev.filter((x) => x !== q.id)))
+                      }
+                    />
+                    <span className="text-cyan-950 dark:text-cyan-100">{q.text}</span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-1.5 text-[11px] text-cyan-900/80 dark:text-cyan-200/70">
+            İşaretli maddeler kaydederken gündemin sonuna eklenir ve listeden düşer; işaretsizler sonraki seansa kalır.
+          </p>
+        </div>
+      ) : null}
+
       {/* Fotoğraftan doldur — tüm formu okur (kâğıt görüşme formu) */}
       <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border px-3 py-2">
         <span className="text-xs text-muted-foreground">
@@ -996,7 +1053,7 @@ function SessionForm({
             onToggle={() => toggleDictation("agenda")}
           />
         </div>
-        <textarea id="se-agenda" value={agenda} onChange={(e) => setAgenda(e.target.value)} rows={2} required
+        <textarea id="se-agenda" value={agenda} onChange={(e) => setAgenda(e.target.value)} rows={2} required={isEdit || usedQueue.length === 0}
           placeholder="Bu seansta konuşulan / konuşulacak ana konular"
           className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30" />
       </div>

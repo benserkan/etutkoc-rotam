@@ -88,6 +88,7 @@ export function hrefForNotificationData(data: NotifData): string | null {
     if (screen === "surveys") return "/student-surveys";
     if (screen === "wrong_questions") return "/student-wrong-questions";
     if (screen === "books") return "/student-books";
+    if (screen === "exams") return "/(app)/student/exams"; // koç denemeyi paylaştı
     return "/(app)/student/today";
   }
 

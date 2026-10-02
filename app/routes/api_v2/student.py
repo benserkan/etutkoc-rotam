@@ -945,6 +945,8 @@ def student_exams_v2(
         .all()
     )
     rows = [_build_exam_row(e, created_by_name=None) for e in exams]
+    for r in rows:
+        r.note = None  # koça özel not öğrenciye gitmez — öğrenciye not exam-shares ile
     nets = [e.net for e in exams]
     count = len(nets)
     last_net = nets[0] if nets else None  # DESC → ilk = en yeni

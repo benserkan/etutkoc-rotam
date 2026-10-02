@@ -20,8 +20,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { api } from "@/lib/api";
 import { getTeacherExamQuestions, teacherKeys } from "@/lib/api/teacher";
-import type { ExamResultRow } from "@/lib/types/teacher";
+import type { ExamQuestionsResponse, ExamResultRow } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
 
 import {
@@ -51,15 +52,21 @@ export function ExamDetailDialog({
 }: {
   row: ExamResultRow;
   prev: ExamResultRow | null;
-  studentId: number;
+  /** null → öğrenci kendi denemesine bakıyor (öğrenci ucu, paylaş/yazdır yok). */
+  studentId: number | null;
   studentName?: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
   const hasQuestions = row.import_source === "pdf_import";
   const q = useQuery({
-    queryKey: teacherKeys.examQuestions(row.id),
-    queryFn: () => getTeacherExamQuestions(row.id),
+    queryKey: studentId == null
+      ? (["student", "exams", String(row.id), "questions"] as const)
+      : teacherKeys.examQuestions(row.id),
+    queryFn: () =>
+      studentId == null
+        ? api<ExamQuestionsResponse>(`/api/v2/student/exams/${row.id}/questions`)
+        : getTeacherExamQuestions(row.id),
     enabled: open && hasQuestions,
     staleTime: 60_000,
   });
@@ -90,9 +97,11 @@ export function ExamDetailDialog({
           <DialogDescription>
             {row.section_label} · {fmtTRDate(row.exam_date)} · {row.total_questions} soru
           </DialogDescription>
-          <div className="pt-2">
-            <ExamShareMenu row={row} prev={prev} studentId={studentId} studentName={studentName} />
-          </div>
+          {studentId != null ? (
+            <div className="pt-2">
+              <ExamShareMenu row={row} prev={prev} studentId={studentId} studentName={studentName} />
+            </div>
+          ) : null}
         </DialogHeader>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">

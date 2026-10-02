@@ -31,6 +31,10 @@ import {
   previousExam,
 } from "@/components/teacher/exams/exam-analytics";
 import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
+import { ExamStudentShareButton } from "@/components/teacher/exams/exam-student-share";
+import { ExamProgressReport } from "@/components/shared/exam-progress-report";
+import { examProgressKeys, getExamShares } from "@/lib/api/exam-progress";
+import type { ExamShareInfo } from "@/lib/types/exam-progress";
 
 import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
 import {
@@ -89,13 +93,14 @@ function formatTRDate(iso: string): string {
   return `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}.${y}`;
 }
 
-type ExamTab = "overview" | "progress" | "topics" | "behavior" | "list";
+type ExamTab = "overview" | "progress" | "topics" | "behavior" | "report" | "list";
 
 const EXAM_TABS: { key: ExamTab; label: string; hint: string }[] = [
   { key: "overview", label: "Genel Bakış", hint: "Son deneme, puan, öne çıkanlar" },
   { key: "progress", label: "Net Gelişimi", hint: "Ders ders net değişimi" },
   { key: "topics", label: "Konu Analizi", hint: "Net fırsatı, zayıf konular" },
   { key: "behavior", label: "Sınav Davranışı", hint: "Boş, yanlış, işaretleme eğilimi" },
+  { key: "report", label: "Gelişim Raporu", hint: "Hedef net, otomatik yorum, aksiyon planı" },
   { key: "list", label: "Tüm Denemeler", hint: "Tüm denemeler ve işlemler" },
 ];
 
@@ -119,6 +124,12 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
   const [tab, setTab] = React.useState<ExamTab>("overview");
   const [detailId, setDetailId] = React.useState<number | null>(null);
   const data = q.data;
+  const sharesQ = useQuery({
+    queryKey: examProgressKeys.shares({ kind: "teacher", studentId }),
+    queryFn: () => getExamShares({ kind: "teacher", studentId }),
+    staleTime: 30_000,
+  });
+  const shares = sharesQ.data?.shares ?? {};
 
   // Sınav türleri farklı ölçekte (TYT/120·AYT/80·LGS) → analizler tek TÜRE
   // göre hesaplanır; karıştırma yok. En çok denemesi olan tür varsayılan seçili.
@@ -266,6 +277,13 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
               <ExamTopicAnalysis studentId={studentId} section={activeSection} />
             ) : tab === "behavior" ? (
               <BehaviorTab rows={sectionRows} />
+            ) : tab === "report" ? (
+              <ExamProgressReport
+                source={{ kind: "teacher", studentId }}
+                section={activeSection}
+                period={period}
+                studentName={studentName}
+              />
             ) : (
               <ul className="space-y-2">
                 {data.rows.map((row) => (
@@ -274,6 +292,7 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
                     row={row}
                     studentId={studentId}
                     sectionOptions={data.section_options ?? []}
+                    share={shares[String(row.id)] ?? null}
                     onOpenDetail={() => setDetailId(row.id)}
                   />
                 ))}
@@ -297,8 +316,8 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
       ) : null}
 
       <p className="text-[11px] text-muted-foreground leading-relaxed">
-        Deneme adı, tarihi ve netler veli paneli ile haftalık veli raporunda da
-        görünür; koça özel notlar ve soru-satırı detayları paylaşılmaz.
+        Deneme adı, tarihi ve netler öğrenci ve veli panelinde de görünür; koça özel
+        notlar paylaşılmaz. Öğrenciye özel değerlendirme için “Öğrenciyle paylaş”.
       </p>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
@@ -321,11 +340,13 @@ function ExamRow({
   row,
   studentId,
   sectionOptions,
+  share,
   onOpenDetail,
 }: {
   row: ExamResultRow;
   studentId: number;
   sectionOptions: StudentExamListResponse["section_options"];
+  share: ExamShareInfo | null;
   onOpenDetail: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -440,6 +461,7 @@ function ExamRow({
                   <FileCog className="size-4 text-violet-600" aria-hidden />
                 </Button>
               ) : null}
+              <ExamStudentShareButton row={row} share={share} />
               {/* Veliye duyur — duyurulduysa düğme "Duyuruldu"ya döner (2026-09-05) */}
               {row.parent_notified_at ? (
                 /* Duyurulmuş olsa da TIKLANABİLİR: koç gönderdiği maili

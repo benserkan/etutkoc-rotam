@@ -51,6 +51,7 @@ from app.routes.api_v2 import quick_access as v2_quick_access
 from app.routes.api_v2 import guides as v2_guides
 from app.routes.api_v2 import settings as v2_settings
 from app.routes.api_v2 import exam_import as v2_exam_import
+from app.routes.api_v2 import exam_progress as v2_exam_progress
 from app.routes.api_v2 import self_study as v2_self_study
 from app.routes.api_v2 import video_basket as v2_video_basket
 from app.routes.api_v2 import weekly_skeleton as v2_weekly_skeleton
@@ -96,6 +97,7 @@ router.include_router(v2_guides.router)
 router.include_router(v2_surveys.router)
 router.include_router(v2_wrong_questions.router)
 router.include_router(v2_exam_import.router)
+router.include_router(v2_exam_progress.router)
 router.include_router(v2_self_study.router)
 router.include_router(v2_video_basket.router)
 router.include_router(v2_weekly_skeleton.router)

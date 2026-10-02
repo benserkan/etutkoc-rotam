@@ -225,7 +225,8 @@ export function OverviewTab({
   onOpenDetail,
 }: {
   rows: ExamResultRow[];
-  studentId: number;
+  /** null → öğrenci yüzeyi (paylaş/yazdır menüsü gizli). */
+  studentId: number | null;
   studentName?: string | null;
   onOpenDetail: (row: ExamResultRow) => void;
 }) {
@@ -254,7 +255,9 @@ export function OverviewTab({
               <Eye className="size-4" aria-hidden />
               Deneme detayı
             </Button>
-            <ExamShareMenu row={last} prev={prev} studentId={studentId} studentName={studentName} />
+            {studentId != null ? (
+              <ExamShareMenu row={last} prev={prev} studentId={studentId} studentName={studentName} />
+            ) : null}
           </>
         }
       >

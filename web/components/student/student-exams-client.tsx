@@ -2,11 +2,21 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, FileUp, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronDown, Eye, FileUp, MessageSquareQuote, TrendingDown, TrendingUp } from "lucide-react";
 
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
+import { ExamProgressReport } from "@/components/shared/exam-progress-report";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
+import {
+  BehaviorTab,
+  OverviewTab,
+  ProgressTab,
+  previousExam,
+} from "@/components/teacher/exams/exam-analytics";
+import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
+import { examProgressKeys, getExamShares } from "@/lib/api/exam-progress";
+import type { ExamShareInfo } from "@/lib/types/exam-progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getStudentExams, studentKeys } from "@/lib/api/student";
@@ -18,7 +28,20 @@ import { cn } from "@/lib/utils";
  * Denemelerim (Faz 2b) — öğrenci yüzeyi: deneme listesi (salt-okuma) +
  * PDF'ten aktarma (kredi/paket KOÇUN — YSA deseni) + konu × deneme analizi
  * (paylaşılan ExamTopicAnalysis, öğrenci ucu). Düzeltme/silme koçta.
+ *
+ * Faz 2 (2026-10-02): koç ekranıyla AYNI sekmeler (salt okuma) + "Gelişim ve
+ * Hedef" (hedef net, yorum, çalışma öncelikleri) + koçun öğrenciye notu.
  */
+
+type Tab = "overview" | "progress" | "topics" | "behavior" | "report" | "list";
+const TABS: { key: Tab; label: string }[] = [
+  { key: "overview", label: "Genel Bakış" },
+  { key: "progress", label: "Net Gelişimi" },
+  { key: "topics", label: "Konu Analizi" },
+  { key: "behavior", label: "Sınav Davranışı" },
+  { key: "report", label: "Gelişim ve Hedef" },
+  { key: "list", label: "Tüm Denemeler" },
+];
 
 const SECTION_TONE: Record<string, string> = {
   lgs: "border-cyan-200 bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200",
@@ -72,9 +95,26 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
     () => rows.filter((r) => r.section === activeSection),
     [rows, activeSection],
   );
+  const [tab, setTab] = React.useState<Tab>("overview");
+  const [detailId, setDetailId] = React.useState<number | null>(null);
+  const sharesQ = useQuery({
+    queryKey: examProgressKeys.shares({ kind: "student" }),
+    queryFn: () => getExamShares({ kind: "student" }),
+    staleTime: 30_000,
+  });
+  const shares = sharesQ.data?.shares ?? {};
+  const detailRow = detailId != null ? rows.find((r) => r.id === detailId) ?? null : null;
+  const detailPrev = detailRow
+    ? previousExam(rows.filter((r) => r.section === detailRow.section), detailRow)
+    : null;
+  // en son paylaşılan değerlendirme (koçun öğrenciye notu)
+  const latestShare = rows
+    .map((r) => ({ row: r, share: shares[String(r.id)] }))
+    .filter((x) => x.share?.note)
+    .sort((a, b) => (a.share!.shared_at < b.share!.shared_at ? 1 : -1))[0];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
+    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-foreground">Denemelerim</h1>
@@ -112,35 +152,86 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
         </Card>
       ) : (
         <>
-          {sectionsInfo.length > 1 ? (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                Özet ve analiz seçili sınav türüne göre — türler ayrı
-                ölçektedir, karıştırılmaz.
-              </p>
-              <select
-                value={activeSection ?? ""}
-                onChange={(e) => setSelSection(e.target.value as ExamSectionValue)}
-                aria-label="Sınav türü"
-                className="h-8 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {sectionsInfo.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label} ({s.count})
-                  </option>
-                ))}
-              </select>
+          {latestShare ? <CoachNoteCard row={latestShare.row} share={latestShare.share!} /> : null}
+
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
+            <div role="tablist" aria-label="Deneme bölümleri" className="-mb-px flex flex-wrap gap-1">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  onClick={() => setTab(t.key)}
+                  className={cn(
+                    "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                    tab === t.key
+                      ? "border-cyan-700 text-foreground dark:border-cyan-400"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
+            {tab !== "list" && sectionsInfo.length > 1 ? (
+              <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                Sınav türü
+                <select
+                  value={activeSection ?? ""}
+                  onChange={(e) => setSelSection(e.target.value as ExamSectionValue)}
+                  aria-label="Sınav türü"
+                  className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {sectionsInfo.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label} ({s.count})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
+
+          <div role="tabpanel">
+            {tab === "overview" ? (
+              <div className="space-y-4">
+                <SummaryStrip rows={sectionRows} />
+                <OverviewTab rows={sectionRows} studentId={null} onOpenDetail={(r) => setDetailId(r.id)} />
+              </div>
+            ) : tab === "progress" ? (
+              <ProgressTab rows={sectionRows} />
+            ) : tab === "topics" ? (
+              <ExamTopicAnalysis section={activeSection} />
+            ) : tab === "behavior" ? (
+              <BehaviorTab rows={sectionRows} />
+            ) : tab === "report" ? (
+              <ExamProgressReport source={{ kind: "student" }} section={activeSection} />
+            ) : (
+              <ul className="space-y-2">
+                {rows.map((row) => (
+                  <StudentExamRow
+                    key={row.id}
+                    row={row}
+                    share={shares[String(row.id)] ?? null}
+                    onOpenDetail={() => setDetailId(row.id)}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {detailRow ? (
+            <ExamDetailDialog
+              row={detailRow}
+              prev={detailPrev}
+              studentId={null}
+              open
+              onOpenChange={(v) => {
+                if (!v) setDetailId(null);
+              }}
+            />
           ) : null}
-
-          <SummaryStrip rows={sectionRows} />
-          <ExamTopicAnalysis section={activeSection} />
-
-          <ul className="space-y-2">
-            {rows.map((row) => (
-              <StudentExamRow key={row.id} row={row} />
-            ))}
-          </ul>
         </>
       )}
 
@@ -206,7 +297,31 @@ function SummaryStrip({ rows }: { rows: ExamResultRow[] }) {
   );
 }
 
-function StudentExamRow({ row }: { row: ExamResultRow }) {
+function CoachNoteCard({ row, share }: { row: ExamResultRow; share: ExamShareInfo }) {
+  return (
+    <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-500/30 dark:bg-cyan-500/10">
+      <p className="flex items-center gap-2 text-sm font-semibold text-cyan-950 dark:text-cyan-100">
+        <MessageSquareQuote className="size-4" aria-hidden />
+        Koçunun değerlendirmesi
+      </p>
+      <p className="mt-0.5 text-xs text-cyan-900/80 dark:text-cyan-200/80">
+        {row.title} · {formatTRDate(row.exam_date)}
+        {share.shared_by_name ? ` · ${share.shared_by_name}` : ""}
+      </p>
+      <p className="mt-2 whitespace-pre-line text-sm text-cyan-950 dark:text-cyan-50">{share.note}</p>
+    </section>
+  );
+}
+
+function StudentExamRow({
+  row,
+  share,
+  onOpenDetail,
+}: {
+  row: ExamResultRow;
+  share: ExamShareInfo | null;
+  onOpenDetail: () => void;
+}) {
   const [open, setOpen] = React.useState(false);
   const hasSubjects = row.subjects.length > 0;
   return (
@@ -224,7 +339,13 @@ function StudentExamRow({ row }: { row: ExamResultRow }) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="truncate font-medium">{row.title}</span>
+                <button
+                  type="button"
+                  onClick={onOpenDetail}
+                  className="text-left font-medium break-words hover:underline"
+                >
+                  {row.title}
+                </button>
                 <span
                   className={cn(
                     "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px]",
@@ -243,6 +364,9 @@ function StudentExamRow({ row }: { row: ExamResultRow }) {
                 {row.total_questions} soru
               </p>
             </div>
+            <Button variant="ghost" size="sm" onClick={onOpenDetail} aria-label="Deneme detayı">
+              <Eye className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+            </Button>
             {row.import_source === "pdf_import" ? (
               <ArchiveExamWrongsButton
                 examId={row.id}
@@ -265,6 +389,12 @@ function StudentExamRow({ row }: { row: ExamResultRow }) {
               </Button>
             ) : null}
           </div>
+          {share?.note ? (
+            <p className="mt-2 whitespace-pre-line rounded-md border border-cyan-200 bg-cyan-50 px-2.5 py-1.5 text-xs text-cyan-950 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+              <span className="font-semibold">Koçunun notu: </span>
+              {share.note}
+            </p>
+          ) : null}
           {open && hasSubjects ? (
             <div className="mt-2 overflow-x-auto rounded-md border border-border">
               <table className="w-full min-w-[360px] text-xs">
