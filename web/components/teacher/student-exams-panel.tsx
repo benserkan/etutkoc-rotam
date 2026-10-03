@@ -276,7 +276,7 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
             ) : tab === "progress" ? (
               <ProgressTab rows={sectionRows} />
             ) : tab === "topics" ? (
-              <ExamTopicAnalysis studentId={studentId} section={activeSection} />
+              <ExamTopicAnalysis studentId={studentId} section={activeSection} period={period} />
             ) : tab === "behavior" ? (
               <BehaviorTab rows={sectionRows} />
             ) : tab === "score" ? (

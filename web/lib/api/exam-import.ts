@@ -50,8 +50,12 @@ export function getExamTopicAnalysis(
   studentId: number | null,
   section?: string | null,
   parentStudentId?: number | null,
+  period?: string,
 ): Promise<ExamTopicAnalysisResponse> {
-  const qs = section ? `?section=${encodeURIComponent(section)}` : "";
+  const p = new URLSearchParams();
+  if (section) p.set("section", section);
+  if (period) p.set("period", period);
+  const qs = p.toString() ? `?${p}` : "";
   return api<ExamTopicAnalysisResponse>(
     parentStudentId != null
       ? `/api/v2/parent/students/${parentStudentId}/exam-topic-analysis${qs}`

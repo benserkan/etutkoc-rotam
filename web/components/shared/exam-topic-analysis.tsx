@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Target, TrendingDown, TrendingUp } from "lucide-react";
+import { Target } from "lucide-react";
+
+import { ExamTrendTopics } from "@/components/shared/exam-trend-topics";
 
 import { getExamTopicAnalysis } from "@/lib/api/exam-import";
 import type {
   AnalysisOpportunity,
-  AnalysisTrendTopic,
   ExamTopicAnalysisResponse,
 } from "@/lib/types/exam-import";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ export function ExamTopicAnalysis({
   studentId = null,
   parentStudentId = null,
   section,
+  period,
 }: {
   /** Veli yüzeyi: çocuğun id'si (salt okuma). */
   parentStudentId?: number | null;
@@ -49,21 +51,30 @@ export function ExamTopicAnalysis({
   studentId?: number | null;
   /** Panelin seçili sınav türü (tek türe filtreli analiz). */
   section: string | null;
+  /** Panelin dönem seçimi (koç: "Tümü" / önceki dönem). Yoksa güncel dönem. */
+  period?: string;
 }) {
   const q = useQuery<ExamTopicAnalysisResponse>({
     queryKey:
       parentStudentId != null
-        ? ["parent", "students", String(parentStudentId), "topic-analysis", section ?? "auto"]
+        ? ["parent", "students", String(parentStudentId), "topic-analysis", section ?? "auto", period ?? "current"]
         : studentId != null
           ? ["teacher", "me", "students", String(studentId), "exams",
-             "topic-analysis", section ?? "auto"]
-          : ["student", "exams", "topic-analysis", section ?? "auto"],
-    queryFn: () => getExamTopicAnalysis(studentId, section, parentStudentId),
+             "topic-analysis", section ?? "auto", period ?? "current"]
+          : ["student", "exams", "topic-analysis", section ?? "auto", period ?? "current"],
+    queryFn: () => getExamTopicAnalysis(studentId, section, parentStudentId, period),
     staleTime: 30_000,
   });
   const d = q.data;
   const [subj, setSubj] = React.useState<string>("");
-  if (!d || d.exams.length === 0) return null;
+  if (!d) return null;
+  if (d.exams.length === 0)
+    return (
+      <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+        Bu dönemde konu analizine girecek deneme yok. Analiz, PDF&apos;ten aktarılan (soru soru
+        okunan) denemelerden hesaplanır; elle girilen denemeler buraya girmez.
+      </p>
+    );
 
   const subjectsAll = [...new Set(d.topics.map((t) => t.subject_name))];
   const activeSubj = subjectsAll.includes(subj) ? subj : "";
@@ -155,42 +166,7 @@ export function ExamTopicAnalysis({
         </div>
       ) : null}
 
-      {(forgotten.length > 0 || improved.length > 0) ? (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {forgotten.length > 0 ? (
-            <div className="rounded-md border border-rose-200 bg-rose-50 px-2.5 py-2 dark:border-rose-500/30 dark:bg-rose-500/10">
-              <h5 className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-rose-900 dark:text-rose-200">
-                <TrendingDown className="size-3.5" aria-hidden />
-                Unutulan konular — ilk denemelerde biliyordu, son denemelerde doğruluğu düştü; tekrar planlanmalı
-              </h5>
-              <ul className="space-y-0.5 text-[11px] text-rose-800 dark:text-rose-300">
-                {forgotten.map((t: AnalysisTrendTopic) => (
-                  <li key={t.topic_id}>
-                    <b>{t.topic_name}</b> · {t.subject_name} —{" "}
-                    {pct(t.first_accuracy)} → {pct(t.last_accuracy)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-          {improved.length > 0 ? (
-            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-2 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-              <h5 className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-900 dark:text-emerald-200">
-                <TrendingUp className="size-3.5" aria-hidden />
-                Gelişen konular — ilk denemelere göre doğruluğu belirgin arttı
-              </h5>
-              <ul className="space-y-0.5 text-[11px] text-emerald-800 dark:text-emerald-300">
-                {improved.map((t: AnalysisTrendTopic) => (
-                  <li key={t.topic_id}>
-                    <b>{t.topic_name}</b> · {t.subject_name} —{" "}
-                    {pct(t.first_accuracy)} → {pct(t.last_accuracy)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      <ExamTrendTopics forgotten={forgotten} improved={improved} studentId={studentId} />
 
       {d.exams.length < 2 ? (
         <p className="rounded-md bg-muted/40 px-2.5 py-2 text-[11px] text-muted-foreground">

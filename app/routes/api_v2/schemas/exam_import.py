@@ -185,13 +185,50 @@ class AnalysisOpportunity(BaseModel):
     net_gain_per_exam: float
 
 
+class AnalysisEvidenceQuestion(BaseModel):
+    question_id: int
+    question_no: int | None = None
+    result: str                            # dogru | yanlis | bos
+    student_answer: str | None = None
+    correct_answer: str | None = None
+    label_raw: str | None = None           # karnedeki konu etiketi
+    subject_raw: str | None = None
+
+
+class AnalysisEvidenceExam(BaseModel):
+    """Kanıt: bir denemede bu konudan gelen sorular (sorulmadıysa asked=False)."""
+    exam_id: int
+    title: str
+    exam_date: str
+    half: str                              # first | last
+    asked: bool
+    correct: int
+    wrong: int
+    blank: int
+    total: int
+    questions: list[AnalysisEvidenceQuestion]
+
+
 class AnalysisTrendTopic(BaseModel):
-    """Unutulan/gelişen konu — ilk yarı ↔ son yarı doğruluk kıyası."""
+    """Unutulan/gelişen konu — ilk yarı ↔ son yarı doğruluk kıyası + kanıtı."""
     topic_id: int
     topic_name: str
     subject_name: str
     first_accuracy: float
     last_accuracy: float
+    first_correct: int = 0
+    first_total: int = 0
+    last_correct: int = 0
+    last_total: int = 0
+    last_wrong: int = 0
+    last_blank: int = 0
+    first_exam_count: int = 0
+    last_exam_count: int = 0
+    evidence_level: str = "zayif"          # zayif | orta | guclu
+    latest_exam_date: str | None = None
+    latest_correct: int = 0
+    latest_total: int = 0
+    evidence: list[AnalysisEvidenceExam] = []
 
 
 class ExamTopicAnalysisResponse(BaseModel):

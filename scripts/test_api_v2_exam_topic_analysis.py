@@ -181,6 +181,21 @@ def main() -> int:
         check("6. UNUTULAN yakalandı (Rasyonel: ilk yarı %100 → son %0)",
               ids["rasyonel"] in fg, str(d.get("forgotten"))[:200])
 
+        fr = next((t for t in d.get("forgotten", []) if t["topic_id"] == ids["rasyonel"]), {})
+        ev = fr.get("evidence", [])
+        check("6b. kanıt: ilk 2 deneme 4/4 · son 1 deneme 0/2 (2 yanlış) · az veri",
+              fr.get("first_correct") == 4 and fr.get("first_total") == 4
+              and fr.get("last_correct") == 0 and fr.get("last_total") == 2
+              and fr.get("last_wrong") == 2 and fr.get("first_exam_count") == 2
+              and fr.get("last_exam_count") == 1 and fr.get("evidence_level") == "orta"
+              and fr.get("latest_exam_date") == "2026-05-01", str(fr)[:300])
+        check("6c. kanıt satırları: 3 deneme · yarı etiketi · soru no + sonuç",
+              [e["half"] for e in ev] == ["first", "first", "last"]
+              and all(e["asked"] for e in ev)
+              and [q["result"] for q in ev[2]["questions"]] == ["yanlis", "yanlis"]
+              and [q["question_no"] for q in ev[2]["questions"]] == [1, 2]
+              and ev[0]["questions"][0]["label_raw"] == "etiket", str(ev)[:300])
+
         r = ct.get(url + "?section=ayt_say")
         d2 = r.json() if r.status_code == 200 else {}
         check("7. tür filtresi: ayt_say → 1 deneme · Trigonometri satırı",

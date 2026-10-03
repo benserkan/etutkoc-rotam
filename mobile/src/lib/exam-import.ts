@@ -166,12 +166,44 @@ export interface AnalysisOpportunity {
   accuracy: number;
   net_gain_per_exam: number;
 }
+export interface AnalysisEvidenceQuestion {
+  question_id: number;
+  question_no: number | null;
+  result: string;
+  student_answer: string | null;
+  correct_answer: string | null;
+  label_raw: string | null;
+  subject_raw: string | null;
+}
+export interface AnalysisEvidenceExam {
+  exam_id: number;
+  title: string;
+  exam_date: string;
+  half: "first" | "last";
+  asked: boolean;
+  correct: number;
+  wrong: number;
+  blank: number;
+  total: number;
+  questions: AnalysisEvidenceQuestion[];
+}
 export interface AnalysisTrendTopic {
   topic_id: number;
   topic_name: string;
   subject_name: string;
   first_accuracy: number;
   last_accuracy: number;
+  // kanıt (2026-10-03) — eski sunucuda yok, opsiyonel
+  first_correct?: number;
+  first_total?: number;
+  last_correct?: number;
+  last_total?: number;
+  last_wrong?: number;
+  last_blank?: number;
+  first_exam_count?: number;
+  last_exam_count?: number;
+  evidence_level?: "zayif" | "orta" | "guclu";
+  evidence?: AnalysisEvidenceExam[];
 }
 export interface ExamTopicAnalysisResponse {
   section: string | null;

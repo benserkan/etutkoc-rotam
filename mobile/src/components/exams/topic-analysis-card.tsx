@@ -10,6 +10,8 @@ import {
 } from "@/lib/exam-import";
 import { cn } from "@/lib/utils";
 
+import { TrendTopics } from "./trend-topics";
+
 /**
  * Konu × deneme analizi (Faz 4 mobil) — web ExamTopicAnalysis paritesi:
  * net fırsat listesi + unutulan/gelişen + ısı haritası (yatay kaydırmalı).
@@ -114,39 +116,7 @@ export function TopicAnalysisCard({
         </View>
       ) : null}
 
-      {d.forgotten.length > 0 ? (
-        <View className="mt-3 rounded-xl bg-rose-50 p-2.5">
-          <View className="flex-row items-center gap-1">
-            <Ionicons name="trending-down" size={14} color="#be123c" />
-            <Text className="text-[11px] font-semibold text-rose-900">
-              Unutulan konular
-            </Text>
-          </View>
-          {d.forgotten.map((t) => (
-            <Text key={t.topic_id} className="mt-0.5 text-[11px] text-rose-800">
-              <Text className="font-semibold">{t.topic_name}</Text> ·{" "}
-              {t.subject_name} — {pct(t.first_accuracy)} → {pct(t.last_accuracy)}
-            </Text>
-          ))}
-        </View>
-      ) : null}
-
-      {d.improved.length > 0 ? (
-        <View className="mt-2 rounded-xl bg-emerald-50 p-2.5">
-          <View className="flex-row items-center gap-1">
-            <Ionicons name="trending-up" size={14} color="#047857" />
-            <Text className="text-[11px] font-semibold text-emerald-900">
-              Gelişen konular
-            </Text>
-          </View>
-          {d.improved.map((t) => (
-            <Text key={t.topic_id} className="mt-0.5 text-[11px] text-emerald-800">
-              <Text className="font-semibold">{t.topic_name}</Text> ·{" "}
-              {t.subject_name} — {pct(t.first_accuracy)} → {pct(t.last_accuracy)}
-            </Text>
-          ))}
-        </View>
-      ) : null}
+      <TrendTopics forgotten={d.forgotten} improved={d.improved} studentId={studentId} />
 
       {d.exams.length < 2 ? (
         <View className="mt-3 rounded-xl bg-slate-100 px-2.5 py-2">

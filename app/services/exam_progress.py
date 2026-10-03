@@ -484,7 +484,9 @@ def _actions(stats, series, subjects, tinfo, opps, forgotten, last_exam_id) -> l
     for f in forgotten[:2]:
         add(f"forgot:{f['topic_id']}", "review", 2, f"{f['topic_name']} tekrar edilmeli",
             f"{f['subject_name']} · doğruluk %{round(f['first_accuracy'] * 100)} → "
-            f"%{round(f['last_accuracy'] * 100)} düştü (unutulma işareti).",
+            f"%{round(f['last_accuracy'] * 100)} düştü (ilk denemelerde "
+            f"{f.get('first_correct', 0)}/{f.get('first_total', 0)}, son denemelerde "
+            f"{f.get('last_correct', 0)}/{f.get('last_total', 0)} doğru — unutulma işareti).",
             f["subject_name"], f["topic_id"])
     for s in subjects:
         if s["slope"] is not None and s["slope"] <= SUBJECT_DROP_SLOPE:

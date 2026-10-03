@@ -42,6 +42,71 @@ def _acc(c: int, n: int) -> float:
     return round(c / n, 3) if n else 0.0
 
 
+def _evidence_level(n: int) -> str:
+    """Kıyasın dayandığı soru sayısına göre kanıt gücü."""
+    if n <= 4:
+        return "zayif"
+    if n <= 8:
+        return "orta"
+    return "guclu"
+
+
+def _trend_evidence(exams: list, a: dict, first: tuple[int, int],
+                    last: tuple[int, int]) -> dict:
+    """Unutulan/gelişen kararının KANITI (2026-10-03).
+
+    Koç "%100 → %0 nasıl oldu?" sorusunun cevabını tıklayınca görür:
+    kıyas hangi denemeler arasında yapıldı (ilk yarı / son yarı), her
+    denemede bu konudan hangi soru geldi, öğrencinin cevabı ve doğru cevap.
+    Konunun sorulmadığı denemeler de listede (asked=False) — yarı sınırı
+    görünür kalsın.
+    """
+    half_at = len(exams) / 2
+    rows = []
+    for ei, e in enumerate(exams):
+        qs = sorted(a["qs"].get(e.id, []), key=lambda q: (q.question_no or 0, q.id))
+        rows.append({
+            "exam_id": e.id,
+            "title": e.title,
+            "exam_date": e.exam_date.isoformat(),
+            "half": "first" if ei < half_at else "last",
+            "asked": bool(qs),
+            "correct": sum(1 for q in qs if q.result == EQ_RESULT_DOGRU),
+            "wrong": sum(1 for q in qs if q.result == EQ_RESULT_YANLIS),
+            "blank": sum(1 for q in qs if q.result == EQ_RESULT_BOS),
+            "total": len(qs),
+            "questions": [
+                {
+                    "question_id": q.id,
+                    "question_no": q.question_no,
+                    "result": q.result,
+                    "student_answer": q.student_answer,
+                    "correct_answer": q.correct_answer,
+                    "label_raw": q.topic_label_raw,
+                    "subject_raw": q.subject_name_raw,
+                }
+                for q in qs
+            ],
+        })
+    last_rows = [r for r in rows if r["half"] == "last" and r["asked"]]
+    last_wrong = sum(r["wrong"] for r in last_rows)
+    last_blank = sum(r["blank"] for r in last_rows)
+    seen = [r for r in rows if r["asked"]]
+    latest = seen[-1] if seen else None
+    return {
+        "first_correct": first[0], "first_total": first[1],
+        "last_correct": last[0], "last_total": last[1],
+        "last_wrong": last_wrong, "last_blank": last_blank,
+        "first_exam_count": sum(1 for r in rows if r["half"] == "first"),
+        "last_exam_count": sum(1 for r in rows if r["half"] == "last"),
+        "evidence_level": _evidence_level(first[1] + last[1]),
+        "latest_exam_date": latest["exam_date"] if latest else None,
+        "latest_correct": latest["correct"] if latest else 0,
+        "latest_total": latest["total"] if latest else 0,
+        "evidence": rows,
+    }
+
+
 def build_exam_topic_analysis(
     db: Session, student: User, *, section: str | None = None,
     period: str | None = None,
@@ -132,6 +197,7 @@ def build_exam_topic_analysis(
                 "cells": {},  # exam_id → sayaçlar
                 "halves": [[0, 0], [0, 0]],  # [ilk yarı, son yarı] → [doğru, toplam]
                 "exam_idx": set(),
+                "qs": {},  # exam_id → soru satırları (kanıt)
             })
             cell = a["cells"].setdefault(e.id, {"total": 0, "correct": 0,
                                                 "wrong": 0, "blank": 0})
@@ -140,6 +206,7 @@ def build_exam_topic_analysis(
             half = 0 if ei < len(exams) / 2 else 1
             a["halves"][half][1] += 1
             a["exam_idx"].add(ei)
+            a["qs"].setdefault(e.id, []).append(q)
             if q.result == EQ_RESULT_DOGRU:
                 a["correct"] += 1
                 cell["correct"] += 1
@@ -196,11 +263,12 @@ def build_exam_topic_analysis(
         (c1, n1), (c2, n2) = a["halves"]
         if len(exams) >= 2 and n1 >= _TREND_MIN_SIDE and n2 >= _TREND_MIN_SIDE:
             a1, a2 = _acc(c1, n1), _acc(c2, n2)
-            item = {**base, "first_accuracy": a1, "last_accuracy": a2}
-            if a1 - a2 >= _TREND_DELTA and a1 >= 0.5:
-                forgotten.append(item)
-            elif a2 - a1 >= _TREND_DELTA and a2 >= 0.5:
-                improved.append(item)
+            is_forgot = a1 - a2 >= _TREND_DELTA and a1 >= 0.5
+            is_impr = (not is_forgot) and a2 - a1 >= _TREND_DELTA and a2 >= 0.5
+            if is_forgot or is_impr:
+                item = {**base, "first_accuracy": a1, "last_accuracy": a2,
+                        **_trend_evidence(exams, a, (c1, n1), (c2, n2))}
+                (forgotten if is_forgot else improved).append(item)
 
     topics_out.sort(key=lambda t: (-t["total"], t["subject_name"], t["topic_name"]))
     opportunities.sort(key=lambda o: -o["net_gain_per_exam"])

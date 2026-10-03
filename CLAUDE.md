@@ -59,6 +59,17 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   Test: `test_exam_parent_goal` 19/19 · `test_exam_import_prefer_school` 7/7 · notify 39 ·
   commentary 20 · chat 20 · exam_import 76 · maarif 22 · faz3 32 · progress 31.
   (`exam_wrong_bridge` 10/11 — senaryo 10 değişiklikten ÖNCE de kırmızı, ayrı iş.)
+- **Unutulan/Gelişen konular — KANIT + yeni tasarım (2026-10-03, migration YOK):** koç "%100 → %0
+  nasıl oldu?" sorusunun cevabını göremiyordu. `exam_topic_analysis._trend_evidence`: her öğe artık
+  ilk/son yarı D/toplam + son yarı yanlış/boş + yarıdaki deneme sayısı + kanıt gücü (≤4 soru az veri ·
+  ≤8 orta · güçlü) + `evidence[]` (dönemdeki HER deneme: yarı etiketi, sorulmadıysa asked=false, soru
+  no · sonuç · öğrenci/doğru cevap · karnedeki etiket). Web `shared/exam-trend-topics.tsx`: kart başına
+  "İlk N deneme %X (a/b) → Son M deneme %Y" + deneme deneme nokta şeridi (yarı sınırı) + "Kanıtı gör"
+  penceresi + koçta "Seansa ekle" (agenda key `forgot:{tid}` — aksiyon planıyla aynı, mükerrer yok).
+  Mobil `exams/trend-topics.tsx` aynı (dokun → alttan kanıt sayfası; OTA). Aksiyon planı metni sayıları
+  taşır. **Yakalanan hata:** Konu Analizi dönem seçicisini (Tümü/önceki dönem) yok sayıyordu, veri
+  yoksa bölüm sessizce kayboluyordu → `period` iletildi + boş durum metni. analysis smoke 12/12 ·
+  progress 31 · faz3 32 · skeleton 27.
 - **ÖNLEM — `scripts/check_migration_heads.py`**: çoklu head / kopuk down_revision varsa
   `deploy/redeploy.sh` durur (iki oturumun aynı tabana migration yazması prod açılışını düşürür).
   **KURAL: yeni migration'ın down_revision'ı daima `alembic heads` çıktısı; deploy'dan önce bekçi.**
