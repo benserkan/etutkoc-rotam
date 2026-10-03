@@ -157,9 +157,12 @@ export function ExamImportDialog({
   onOpenChange,
   studentId,
   editExamId,
+  initialFile,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** Panelde sürükle-bırak ile gelen dosya: seçim adımında hazır bekler. */
+  initialFile?: File | null;
   /** Verilirse koç yüzeyi (o öğrenci adına); verilmezse öğrenci kendi adına. */
   studentId?: number;
   /** Verilirse DÜZENLEME modu: kayıtlı içe-aktarım satır satır açılır (PDF
@@ -173,6 +176,7 @@ export function ExamImportDialog({
       onClose={() => onOpenChange(false)}
       studentId={studentId}
       editExamId={editExamId}
+      initialFile={initialFile ?? null}
     />
   );
 }
@@ -181,10 +185,12 @@ function ImportFlow({
   onClose,
   studentId,
   editExamId,
+  initialFile,
 }: {
   onClose: () => void;
   studentId?: number;
   editExamId?: number;
+  initialFile: File | null;
 }) {
   const qc = useQueryClient();
   const editMode = editExamId != null;
@@ -402,6 +408,7 @@ function ImportFlow({
             <PickStep
               fileRef={fileRef}
               onPick={(f) => void analyze(f)}
+              pendingFile={analyzeDup ? null : initialFile}
               analyzeDup={analyzeDup}
               declGrade={declGrade}
               declSection={declSection}
@@ -542,6 +549,7 @@ function ImportFlow({
 function PickStep({
   fileRef,
   onPick,
+  pendingFile,
   analyzeDup,
   declGrade,
   declSection,
@@ -550,6 +558,7 @@ function PickStep({
 }: {
   fileRef: React.RefObject<HTMLInputElement | null>;
   onPick: (f: File) => void;
+  pendingFile: File | null;
   analyzeDup: ImportDuplicate | null;
   declGrade: string;
   declSection: string;
@@ -624,6 +633,22 @@ function PickStep({
           e.target.value = "";
         }}
       />
+      {pendingFile ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-violet-500 bg-violet-600 px-4 py-3 text-white">
+          <span className="min-w-0 break-words text-sm">
+            <FileUp className="mr-1.5 inline size-4" aria-hidden />
+            <b>{pendingFile.name}</b> hazır
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            className="bg-white text-violet-800 hover:bg-violet-50"
+            onClick={() => onPick(pendingFile)}
+          >
+            Okumaya başla
+          </Button>
+        </div>
+      ) : null}
       <button
         type="button"
         onClick={() => fileRef.current?.click()}
