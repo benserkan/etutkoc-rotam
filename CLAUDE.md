@@ -102,6 +102,37 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   `web/components/pricing/plan-ui.tsx` (CycleSwitch · PlanOption · annualOf) → /pricing (`solo-plans.tsx`:
   seçilebilir kartlar + seçilenin içeriği + tek eylem) ve Paketim AYNI dil; /pricing'den yapay zekâ notu
   ve bayat "manuel aktivasyon" cümlesi kaldırıldı, karşılaştırma/kredi tablosu katlanır.
+- **ROTA — SİTENİN TEK YAPAY ZEKÂ ASİSTANI — CANLI (2026-10-03, commit `8681609`, migration
+  `m4n7q0r1q55m` prod head):** kullanıcı kararları: serbest yapay zekâ AÇIK · tek asistan (ziyaretçi
+  dahil her yerde aynı balon) · çözemezse ekibe + WhatsApp (0505 673 85 61; `pricing.contact.whatsapp`
+  boşsa `site_assistant.DEFAULT_WHATSAPP`).
+  - **Bilgi tabanı** `app/assistant_kb/`: `public|teacher|student|parent|institution|common.md`
+    (elle yazılmış; `## Başlık` + `chip:` / `rule:` / `pages:` / `link: /yol | Etiket` meta satırları)
+    + `guide_*.json` (Rota rehber anlatımlarından, `scripts/build_assistant_kb.py` ile üretilir —
+    rehber değişince yeniden koş). **KURAL: yeni özellik/ekran eklenince ilgili rolün .md'sine bölüm
+    eklenir; asistan yalnız bilgi tabanını bilir.**
+  - `app/services/site_assistant.py`: rol + sayfa → karşılama + hazır sorular (yapay zekâsız; koçta
+    paket soruları `plan_assistant.rule_answer`'dan, `rule:` meta ile) · serbest soru: anahtar kelime
+    aramasıyla en yakın 6 bölüm + kişisel-olmayan hesap özeti → Gemini (ücretsiz anahtar, prefer_fast,
+    kredi DÜŞMEZ); bağlantı yalnız seçilen bölümlerin linklerinden kabul edilir · günlük sınır
+    kullanıcı 40 / ziyaretçi oturumu 15 / IP özeti 60 (`assistant_messages` tablosundan sayılır;
+    dolunca yapay zekâsız en yakın bölüm) · Gemini düşerse en yakın bölüm.
+  - Uçlar `api_v2/site_assistant.py` (giriş İSTEĞE BAĞLI; ziyaretçi `session_key` = tarayıcı
+    localStorage kimliği): GET `/assistant` · POST `/assistant/ask` · POST `/assistant/handoff`
+    (koç/kurum yöneticisi → destek talebi [üyelik konusuysa billing] + muhataba e-posta; ziyaretçi/
+    öğrenci/veli → `ContactRequest source=assistant` + ziyaretçide satış adayı [kurum kelimesi →
+    institution] + süper yönetici/satış e-postası + push; bal küpü `website`; 5/10dk sınır) ·
+    GET `/admin/assistant/messages` (süper yönetici: en çok sorulanlar + son sorular).
+    E-posta şablonu `support_billing_handoff` genelleşti (topic_label/origin/heading/iletişim).
+  - Web: `components/assistant/site-assistant.tsx` kök layout'ta (yazdırma + rehber sayfalarında
+    gizli; ana sayfada mobil yapışkan düğmenin üstünde); konuşma sekme boyunca sessionStorage'da;
+    fiyat sayfasında 15 sn sonra bir kez "yardım edeyim mi" baloncuğu; `openRotaAssistant(soru,
+    chip)` ile sayfalardan açılır; Paketim'de `rota:select-plan` / `rota:open-section` olayları.
+    **Paketim'deki ayrı paket asistanı balonu KALDIRILDI** (`plan-assistant.tsx` silindi; backend
+    `/teacher/plan-assistant` uçları mobil için duruyor). `/admin/assistant` sayfası + menü.
+  - Test: `test_api_v2_site_assistant` 33/33 · `live_site_assistant.py` 12/12 (gerçek tarayıcı +
+    gerçek Gemini, 390px + koyu tema) · plan_assistant 23 · contact 13 · support 54 · quick_access 16.
+  - **SIRADA:** mobil uygulamada aynı tek asistan (şu an mobilde yalnız koçun paket asistanı var).
 - **KOYU/AÇIK TEMA OKUNABİLİRLİĞİ — CANLI (2026-10-03, commit `a0b9e7f`, migration YOK):**
   ölçüm `scripts/audit_dark_theme_pages.py [--light]` (144 sayfa, Playwright + lib_live_contrast):
   koyu tema okunmaz metin **1958 → 30**, açık tema 272 → 156 (kalanlar koyu üst şerit / gradyan
