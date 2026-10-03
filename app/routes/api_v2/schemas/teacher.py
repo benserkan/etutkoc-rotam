@@ -2617,6 +2617,16 @@ class TeacherPlanOption(BaseModel):
     is_recommended: bool = False  # öğrenci sayısına en uygun tier
 
 
+class PlanPaymentIssue(BaseModel):
+    kind: str                    # failed | abandoned
+    title: str
+    detail: str
+    plan_code: str | None = None
+    plan_label: str | None = None
+    cycle: str | None = None     # monthly | academic_year | one_time
+    occurred_at: str
+
+
 class TeacherPlanResponse(BaseModel):
     plan_code: str
     plan_label: str
@@ -2657,6 +2667,11 @@ class TeacherPlanResponse(BaseModel):
     # status=new). True ise UI "Ödeme talebi gönder" butonunu pasifleştirir +
     # "Talebin alındı" gösterir (tekrar gönderim engellenir).
     has_pending_subscription_request: bool = False
+    # Son ödeme denemesi sorunluysa (başarısız / 3D Secure yarım kaldı) sade
+    # dille ne olduğu + ne yapılacağı (2026-10-03). Sorun yoksa None.
+    last_payment_issue: PlanPaymentIssue | None = None
+    # Aktif (iptal edilmemiş) aboneliğin bitişine kalan gün — yenileme çağrısı.
+    renewal_days_left: int | None = None
 
 
 class SubscriptionRequestBody(BaseModel):

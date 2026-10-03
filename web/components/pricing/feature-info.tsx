@@ -44,11 +44,13 @@ export function FeatureLine({
 }: {
   text: string;
   glossary?: GlossaryMap;
-  tone?: "light" | "onColor";
+  /** light: beyaz sabit kart · onColor: koyu dolgu · theme: tema zemini (açık/koyu). */
+  tone?: "light" | "onColor" | "theme";
 }) {
   const [open, setOpen] = React.useState(false);
   const [full, setFull] = React.useState(false); // tam kare büyütme
   const onColor = tone === "onColor";
+  const themed = tone === "theme";
   const i = text.indexOf(" — ");
   const title = i < 0 ? text : text.slice(0, i);
   const detail = i < 0 ? null : text.slice(i + 3);
@@ -76,10 +78,10 @@ export function FeatureLine({
     // "light" tonu BEYAZ KART zemininde kullanılır → renkler EXPLICIT (tema
     // token'ı YASAK: koyu temada foreground beyaza döner, beyaz kartta
     // görünmez olur — 2026-08-04 /teacher/plan kontrast hatasının kök nedeni).
-    <span className={onColor ? "text-white/95" : "text-slate-800"}>
+    <span className={onColor ? "text-white/95" : themed ? "text-foreground" : "text-slate-800"}>
       {titleEl}
       {detail ? (
-        <span className={cn("ml-1 text-xs", onColor ? "text-white/60" : "text-slate-500")}>
+        <span className={cn("ml-1 text-xs", onColor ? "text-white/60" : themed ? "text-muted-foreground" : "text-slate-500")}>
           {detail}
         </span>
       ) : null}

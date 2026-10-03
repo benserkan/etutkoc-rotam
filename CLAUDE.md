@@ -70,6 +70,28 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   taşır. **Yakalanan hata:** Konu Analizi dönem seçicisini (Tümü/önceki dönem) yok sayıyordu, veri
   yoksa bölüm sessizce kayboluyordu → `period` iletildi + boş durum metni. analysis smoke 12/12 ·
   progress 31 · faz3 32 · skeleton 27.
+- **/teacher/plan "Paketim" yeniden tasarım + Paket asistanı + 2 ödeme hatası (2026-10-03, migration YOK):**
+  Sayfa üç blok (mobil öncelikli, max-w-3xl): DURUM (renkli etiket: yeşil aktif · kehribar deneme/iptal ·
+  kırmızı süre doldu/ödeme bekliyor; plan adı, tek cümle, Öğrenci/Yapay zekâ/tarih kartları, TEK ana
+  eylem) → PAKETLER (radyo kartları, öğrenci sayısına yetmeyen seçilemez, aktif abone yalnız mevcut +
+  üst paketleri görür; seçilen paketin içeriği + "kartla öde"; ödeme onay penceresi Paket/Dönem/Başlangıç/
+  Tutar) → DİĞER İŞLEMLER (katlanır: kredi dökümü, AI onayı, iptal). Kaldırılan: kredi maliyet tablosu,
+  karşılaştırma matrisi, SSS, dipnotlar (→ /pricing linki + asistan). **Ödeme sorunu kartı** (kırmızı):
+  `plan_assistant.payment_issue_for` son 7 günün son denemesi failed / 15 dk+ yarım 3DS ise iyzico
+  hatasını sade dile çevirir + "Tekrar dene". **Paket asistanı** (`app/services/plan_assistant.py` +
+  `api_v2/plan_assistant.py`): hazır sorular hesabın durumundan YAPAY ZEKÂSIZ anında; serbest soru
+  Gemini (ücretsiz anahtar, prefer_fast, kredi DÜŞMEZ, `UsageKind.AI_PLAN_ASSISTANT` 0 kredilik ölçüm,
+  günde 30); yetmeyen paket önerisi düşürülür; Gemini yoksa anahtar kelimeyle hazır cevaba düşer; "Bize
+  yaz" → "billing" destek talebi + konuşma dökümü. **Kanal** web/ios/android: uygulamada kart/iyzico/web
+  ödemesinden HİÇ söz edilmez (App Store 3.1.1; test 9b). **Hatalar:** (1) erken yenileme/dönem içi
+  yükseltme kalan günleri yakıyordu → yeni dönem mevcut bitişin ÜSTÜNE eklenir (`iyzico_service`;
+  lifecycle 7c); (2) süresi dolan Rota abonesine öğrenci sayısına göre daha ucuz paket ön-seçili
+  geliyordu → mevcut paket öncelikli. Mobil: Paketim aynı dil (durum + kredi + iOS'ta StoreKit paketleri
+  + asistan girişi), YENİ `teacher-plan-assistant` sohbet ekranı; Android'de yanlış "App Store'dan
+  güncelle" metni düzeltildi. Mobil deneme PDF kutusu (`exams/exam-add-actions.tsx`). Test:
+  `test_api_v2_plan_assistant` 19/19 · YENİ `live_plan_flows.py` 51/51 (9 durum × telefon+masaüstü,
+  iyzico sandbox'a kadar) · lifecycle 23 · iyzico 29 · credit_packs 19 · IAP 23 · renewal 12 ·
+  support 54 · moment checks yeşil.
 - **ÖNLEM — `scripts/check_migration_heads.py`**: çoklu head / kopuk down_revision varsa
   `deploy/redeploy.sh` durur (iki oturumun aynı tabana migration yazması prod açılışını düşürür).
   **KURAL: yeni migration'ın down_revision'ı daima `alembic heads` çıktısı; deploy'dan önce bekçi.**

@@ -64,6 +64,7 @@ class UsageKind(str, enum.Enum):
     AI_WRONG_TAG = "ai_wrong_tag"           # Gemini vision — yanlış soru foto → konu/zorluk/Sokratik ipucu (YSA Faz 3)
     AI_EXAM_IMPORT = "ai_exam_import"       # Gemini — deneme sonuç PDF'i → soru/konu analizi (çift okuma + normalizasyon)
     AI_BOOK_READ = "ai_book_read"           # Gemini vision — içindekiler foto/PDF → ünite+test yapısı (0 kredi, yalnız ölçüm+tavan)
+    AI_PLAN_ASSISTANT = "ai_plan_assistant"  # Gemini — /teacher/plan paket asistanı serbest sorusu (0 kredi, ölçüm+tavan)
     EMAIL_SEND = "email_send"               # SMTP/SendGrid e-posta
     WHATSAPP_SEND = "whatsapp_send"         # Meta Cloud API mesaj
     OTHER = "other"
@@ -87,6 +88,7 @@ USAGE_KIND_LABELS_TR: dict[UsageKind, str] = {
     UsageKind.AI_WRONG_TAG: "AI Yanlış Soru Etiketleme",
     UsageKind.AI_EXAM_IMPORT: "AI Deneme Analizi (PDF)",
     UsageKind.AI_BOOK_READ: "Kitap İçindekiler Okuma",
+    UsageKind.AI_PLAN_ASSISTANT: "Paket Asistanı",
     UsageKind.EMAIL_SEND: "E-posta",
     UsageKind.WHATSAPP_SEND: "WhatsApp Mesajı",
     UsageKind.OTHER: "Diğer",

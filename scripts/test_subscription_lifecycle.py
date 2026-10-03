@@ -258,6 +258,16 @@ def main() -> int:
         check("7b. koçluk yeniden açık → publish-day 200", r.status_code == 200,
               f"status={r.status_code} {r.text[:120]}")
 
+        # ── 7c. Erken yenileme gün yakmaz: dönem bitişine 3 gün kala ödeme ──
+        from datetime import datetime as _dt, timedelta as _td
+        early_end = _dt.utcnow() + _td(days=3)
+        _set_coach(subscription_period_end=early_end)
+        st = _pay(c, "solo_pro")
+        new_end = _coach_field("subscription_period_end")
+        gap = (new_end.replace(tzinfo=None) - early_end).total_seconds() / 86400 if new_end else -1
+        check("7c. erken yenileme: yeni bitiş = eski bitiş + 30 gün (kalan 3 gün korunur)",
+              st == 200 and 29.9 < gap < 30.1, f"init={st} gap_days={gap:.2f}")
+
         # ── 8. Defensive: ödeme kayıtsız ücretli plan → payment_required ──
         _set_coach(subscription_status=None, subscription_period_end=None,
                    subscription_cycle=None, subscription_platform=None)

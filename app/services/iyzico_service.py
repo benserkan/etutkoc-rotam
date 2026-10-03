@@ -555,6 +555,20 @@ def verify_callback(
             from app.models import User as UserModel
             owner = db.get(UserModel, target_owner_id)
             if owner is not None:
+                # Erken yenileme / dönem içi yükseltme GÜN YAKMAZ (2026-10-03):
+                # aktif ya da iptal edilmiş (dönemi süren) abonelikte yeni dönem
+                # mevcut dönemin SONUNDAN eklenir. Eskiden D-3 hatırlatmasıyla
+                # ödeyen koçun kalan 3 günü yanıyordu. past_due / ilk ödeme →
+                # bugünden.
+                now_utc = datetime.utcnow()
+                prev_end = owner.subscription_period_end
+                period_base = now_utc
+                if (
+                    prev_end is not None
+                    and getattr(owner, "subscription_status", None) in ("active", "canceled")
+                    and prev_end.replace(tzinfo=None) > now_utc
+                ):
+                    period_base = prev_end.replace(tzinfo=None)
                 owner.subscription_status = "active"
                 # Sistem genelinde subscription_cycle 'academic_year' standartını
                 # kullanır (manuel akış, process_renewals cron, frontend gösterim).
@@ -564,7 +578,7 @@ def verify_callback(
                 )
                 days = 365 if tx.cycle == "annual" else 30
                 from datetime import timedelta
-                owner.subscription_period_end = datetime.utcnow() + timedelta(days=days)
+                owner.subscription_period_end = period_base + timedelta(days=days)
                 # Kanal işareti (w7x0a3b4a66w): web kart ödemesi = iyzico.
                 owner.subscription_platform = "iyzico"
                 # Ödeme duvarında pasifleştirilen öğrenciler geri açılır

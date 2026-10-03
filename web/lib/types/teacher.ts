@@ -2351,6 +2351,20 @@ export interface TeacherPlanResponse {
   ai_credits_allocated: number;
   // Bekleyen ödeme/abonelik talebi (true → buton pasif + "Talebin alındı")
   has_pending_subscription_request: boolean;
+  /** Son ödeme denemesi sorunluysa sade dille ne oldu + ne yapılacak. */
+  last_payment_issue?: PlanPaymentIssue | null;
+  /** Aktif (iptal edilmemiş) aboneliğin bitişine kalan gün. */
+  renewal_days_left?: number | null;
+}
+
+export interface PlanPaymentIssue {
+  kind: "failed" | "abandoned";
+  title: string;
+  detail: string;
+  plan_code: string | null;
+  plan_label: string | null;
+  cycle: "monthly" | "academic_year" | "one_time" | null;
+  occurred_at: string;
 }
 
 export interface SubscriptionRequestBody {

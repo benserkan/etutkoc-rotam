@@ -2999,7 +2999,17 @@ def _build_plan_response(db: Session, user: User):
             is not None
         )
 
+    # Ödeme sorunu + yenileme günü (kullanıcı dili; plan sayfası + asistan)
+    last_issue = None
+    renewal_left = None
+    if is_solo:
+        from app.services.plan_assistant import payment_issue_for, renewal_days_left
+        last_issue = payment_issue_for(db, user)
+        renewal_left = renewal_days_left(user)
+
     return TeacherPlanResponse(
+        last_payment_issue=last_issue,
+        renewal_days_left=renewal_left,
         plan_code=effective,
         plan_label=info.label if info else effective,
         is_solo=is_solo,

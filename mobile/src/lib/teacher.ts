@@ -524,6 +524,9 @@ export interface TeacherPlanResponse {
   post_trial_plan_label: string | null;
   ai_credits_used: number;
   ai_credits_allocated: number;
+  recommended_plan?: string;
+  post_trial_plan_credits?: number | null;
+  renewal_days_left?: number | null;
 }
 export const teacherPlanKeys = {
   plan: ["teacher", "plan"] as const,

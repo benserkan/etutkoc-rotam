@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from "reac
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
+import { ExamAddActions } from "@/components/exams/exam-add-actions";
 import { ExamImportFlow } from "@/components/exams/exam-import-flow";
 import { ProgressReportCard } from "@/components/exams/progress-report-card";
 import { ScoreEstimateCard } from "@/components/exams/score-estimate-card";
@@ -359,25 +360,10 @@ export function ExamsTabView({
         </View>
       </View>
 
-      <Pressable
-        onPress={() => setSheetOpen(true)}
-        className="flex-row items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 py-3.5 active:bg-brand-100"
-      >
-        <Ionicons name="add-circle-outline" size={20} color="#0e7490" />
-        <Text className="text-base font-semibold text-brand-700">Deneme sonucu gir</Text>
-      </Pressable>
-
-      {studentId != null ? (
-        <Pressable
-          onPress={() => setImportOpen(true)}
-          className="flex-row items-center justify-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 py-3.5 active:bg-violet-100"
-        >
-          <Ionicons name="document-attach-outline" size={20} color="#7c3aed" />
-          <Text className="text-base font-semibold text-violet-700">
-            PDF&apos;ten aktar (konu konu okunur)
-          </Text>
-        </Pressable>
-      ) : null}
+      <ExamAddActions
+        onImport={studentId != null ? () => setImportOpen(true) : undefined}
+        onManual={() => setSheetOpen(true)}
+      />
 
       {studentId != null && sectionCounts.length > 1 ? (
         <View className="flex-row flex-wrap gap-1.5">

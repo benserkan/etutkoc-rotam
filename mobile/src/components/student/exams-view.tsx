@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
+import { ExamAddActions } from "@/components/exams/exam-add-actions";
 import { ExamImportFlow } from "@/components/exams/exam-import-flow";
 import { ProgressReportCard } from "@/components/exams/progress-report-card";
 import { ScoreEstimateCard } from "@/components/exams/score-estimate-card";
@@ -185,13 +186,7 @@ export function ExamsView({
   const trendUp = (s.trend_delta ?? 0) >= 0;
 
   const importButton = (
-    <Pressable
-      onPress={() => setImportOpen(true)}
-      className="flex-row items-center justify-center gap-2 rounded-xl border border-violet-300 bg-white px-4 py-3 active:bg-violet-50"
-    >
-      <Ionicons name="document-attach-outline" size={18} color="#7c3aed" />
-      <Text className="font-semibold text-violet-700">PDF&apos;ten aktar</Text>
-    </Pressable>
+    <ExamAddActions onImport={() => setImportOpen(true)} note="Koçun kaydı kontrol edip düzeltebilir." />
   );
 
   return (
