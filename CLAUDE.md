@@ -102,6 +102,17 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   `web/components/pricing/plan-ui.tsx` (CycleSwitch · PlanOption · annualOf) → /pricing (`solo-plans.tsx`:
   seçilebilir kartlar + seçilenin içeriği + tek eylem) ve Paketim AYNI dil; /pricing'den yapay zekâ notu
   ve bayat "manuel aktivasyon" cümlesi kaldırıldı, karşılaştırma/kredi tablosu katlanır.
+- **KOYU/AÇIK TEMA OKUNABİLİRLİĞİ — CANLI (2026-10-03, commit `a0b9e7f`, migration YOK):**
+  ölçüm `scripts/audit_dark_theme_pages.py [--light]` (144 sayfa, Playwright + lib_live_contrast):
+  koyu tema okunmaz metin **1958 → 30**, açık tema 272 → 156 (kalanlar koyu üst şerit / gradyan
+  başlık üstündeki rozet = ölçüm yanlış-pozitifi). İki kodmod `scripts/fix_dark_theme_classes.py`
+  (+`_pass2`): açık kutuya `dark:bg-<c>-500/15`, beyaz kart → `bg-card`, koyu ton yazıya
+  `dark:text-<c>-300/200`, kehribar dolguya koyu yazı, `/NN` açık zemine koyu karşılık, solid
+  kehribar rozetten hatalı dark:text silme. Yeni eslint **`lgs/no-dark-text-without-variant`**
+  (force-light/yazdırma/pazarlama hariç; `--max-warnings 0`). **KURAL:** `text-<c>-600+` daima
+  `dark:text-` karşılığıyla yazılır. + Paket asistanı "Bize yaz" artık muhataba **e-posta** da
+  atar (`support_billing_handoff`; kurum öğretmeni → kurum yöneticileri, bağımsız koç → süper
+  yöneticiler + satış adresi; commit `a9ff990`).
 - **ÖNLEM — `scripts/check_migration_heads.py`**: çoklu head / kopuk down_revision varsa
   `deploy/redeploy.sh` durur (iki oturumun aynı tabana migration yazması prod açılışını düşürür).
   **KURAL: yeni migration'ın down_revision'ı daima `alembic heads` çıktısı; deploy'dan önce bekçi.**
