@@ -50,6 +50,8 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--exam", type=int)
     ap.add_argument("--no-prefer-school", action="store_true")
+    ap.add_argument("--skip-qid", type=int, action="append", default=[],
+                    help="Bu soru satırı id'sini yeniden eşleme (yanlış AI önerisi)")
     args = ap.parse_args()
 
     db = SessionLocal()
@@ -73,7 +75,7 @@ def main() -> int:
                 draft = None
             if draft is not None:
                 for row_q, r in zip(qs, draft["rows"]):
-                    if row_q.manually_edited or row_q.topic_id is not None:
+                    if row_q.manually_edited or row_q.topic_id is not None or row_q.id in args.skip_qid:
                         continue
                     if r.get("topic_id"):
                         details.append(f"  + S{row_q.question_no} '{row_q.topic_label_raw}' -> {r.get('topic_name')}")
