@@ -167,6 +167,36 @@ try:
           r.status_code == 200 and req is not None and req.category == "billing"
           and "Son ödeme" in body and "Konuşma" in body, f"{r.status_code} {r.text[:200]}")
 
+    # 7b — muhataba e-posta: bağımsız koç → süper yönetici(ler); şablon render
+    from app.routes.api_v2 import plan_assistant as pa_route
+    from app.services.email_service import _render
+    with SessionLocal() as db:
+        fu = db.query(User).filter(User.email == f"{PFX}_fail@test.invalid").one()
+        rec, path = pa_route._handoff_recipients(db, fu)
+        iu = db.query(User).filter(User.email == f"{PFX}_inst@test.invalid").one()
+        rec_i, path_i = pa_route._handoff_recipients(db, iu)
+    check("7b bağımsız koç → süper yönetici gelen kutusu + en az bir alıcı", path == "/admin/support" and len(rec) >= 1,
+          f"{path} {rec}")
+    check("7c kurum öğretmeni → kurum yöneticisi gelen kutusu", path_i == "/institution/support-inbox", path_i)
+    subj, html, _ = _render("support_billing_handoff", {
+        "requester_name": "Ada", "institution_name": None, "plan_label": "Patika", "status_label": "ücretsiz",
+        "student_count": 3, "payment_issue": "3D Secure doğrulaması tamamlanmadı", "message": "Kartım geçmiyor",
+        "transcript": [{"who": "Koç", "text": "ödemem neden geçmedi"}], "inbox_path": "/admin/support",
+        "request_id": 1, "unsubscribe_token": ""})
+    check("7d e-posta şablonu: konu + mesaj + ödeme sorunu + panel bağlantısı",
+          "Üyelik talebi" in subj and "Kartım geçmiyor" in html and "3D Secure" in html and "/admin/support" in html,
+          subj)
+    sent = []
+    orig_send = pa_route._send_handoff_mails
+    pa_route._send_handoff_mails = lambda r, c: sent.append((r, c))
+    try:
+        r = cb.post("/api/v2/teacher/plan-assistant/handoff", json={"message": "Paketimi yükseltmek istiyorum"})
+    finally:
+        pa_route._send_handoff_mails = orig_send
+    check("7e 'Bize yaz' → e-posta işi kuyruğa alındı (talep no + mesaj)",
+          r.status_code == 200 and sent and sent[0][1]["message"] == "Paketimi yükseltmek istiyorum"
+          and sent[0][1]["request_id"] == r.json()["request_id"], str(sent)[:200])
+
     # 9 — uygulama kanalı: web ödemesinden hiç söz edilmez (App Store 3.1.1)
     s = cf.get("/api/v2/teacher/plan-assistant?channel=ios").json()
     ids_ = [c["id"] for c in s["chips"]]

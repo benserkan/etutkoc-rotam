@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -138,8 +138,42 @@ def plan_assistant_ask(body: PAAskBody, user: User = Depends(_require_teacher),
     return PAAnswer(answer=res["answer"], action=res["action"], source=source, daily_left=left)
 
 
+def _handoff_recipients(db: Session, user: User) -> tuple[list[str], str]:
+    """Talebin düştüğü muhatap(lar): kurum öğretmeni → kurumunun aktif yöneticileri;
+    bağımsız koç → aktif süper yöneticiler + satış adresi. (adresler, panel yolu)"""
+    from app.models import UserRole
+    if user.institution_id:
+        admins = (db.query(User.email)
+                  .filter(User.role == UserRole.INSTITUTION_ADMIN,
+                          User.institution_id == user.institution_id,
+                          User.is_active.is_(True)).all())
+        return sorted({e for (e,) in admins if e}), "/institution/support-inbox"
+    supers = (db.query(User.email)
+              .filter(User.role == UserRole.SUPER_ADMIN, User.is_active.is_(True)).all())
+    emails = {e for (e,) in supers if e}
+    try:
+        from app.services import pricing
+        sales = str(pricing.get_pricing_catalog().get("contact", {}).get("sales_email") or "")
+        if "@" in sales:
+            emails.add(sales)
+    except Exception:  # noqa: BLE001
+        pass
+    return sorted(emails), "/admin/support"
+
+
+def _send_handoff_mails(recipients: list[str], ctx: dict) -> None:
+    """Arka planda: her muhataba e-posta (best-effort; biri düşerse diğerleri gider)."""
+    from app.services.email_service import send_email
+    for to in recipients:
+        try:
+            send_email(to, "support_billing_handoff", dict(ctx))
+        except Exception:  # noqa: BLE001
+            logger.warning("handoff mail failed to=%s", to, exc_info=True)
+
+
 @router.post("/plan-assistant/handoff", response_model=PAHandoffResult)
-def plan_assistant_handoff(body: PAHandoffBody, user: User = Depends(_require_teacher),
+def plan_assistant_handoff(body: PAHandoffBody, background: BackgroundTasks,
+                           user: User = Depends(_require_teacher),
                            db: Session = Depends(get_db)):
     from app.services import support_request_service as srs
 
@@ -161,6 +195,27 @@ def plan_assistant_handoff(body: PAHandoffBody, user: User = Depends(_require_te
     except srs.SupportError as exc:
         raise HTTPException(status_code=422, detail={"code": exc.code, "message": str(exc)}) from exc
     db.commit()
+
+    # Üyelik talebi muhataba e-postayla da duyurulur (kullanıcı kararı 2026-10-03).
+    recipients, inbox_path = _handoff_recipients(db, user)
+    if recipients:
+        inst = getattr(user, "institution", None)
+        ctx = {
+            "requester_name": user.full_name or user.email,
+            "institution_name": getattr(inst, "name", None),
+            "plan_label": p["plan_label"],
+            "status_label": _STATUS_TR.get(p["status"], p["status"]),
+            "student_count": p["student_count"],
+            "payment_issue": (p.get("last_payment_issue") or {}).get("title"),
+            "message": body.message.strip(),
+            "transcript": [
+                {"who": "Koç" if m.role == "user" else "Asistan", "text": m.text[:400]}
+                for m in body.transcript[-8:]
+            ],
+            "inbox_path": inbox_path,
+            "request_id": req.id,
+        }
+        background.add_task(_send_handoff_mails, recipients, ctx)
     who = "kurum yöneticine" if user.institution_id else "ekibimize"
     return PAHandoffResult(ok=True, request_id=req.id,
                            message=f"Mesajın {who} iletildi. Cevabı Destek sayfandan takip edebilirsin.")
