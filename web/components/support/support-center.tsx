@@ -49,24 +49,27 @@ import type {
 } from "@/lib/types/support";
 
 const FIELD =
-  "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+  "flex w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500";
 
-// Durum tonları — açık zemin + koyu metin (koyu temada da okunur, purge-safe)
-const STATUS_TONE: Record<SupportStatus, string> = {
-  open: "border-sky-300 bg-sky-50 text-sky-900",
-  under_review: "border-amber-300 bg-amber-50 text-amber-900",
-  answered: "border-violet-300 bg-violet-50 text-violet-900",
-  resolved: "border-emerald-300 bg-emerald-50 text-emerald-900",
-  withdrawn: "border-slate-300 bg-slate-100 text-slate-700",
+// Durum renkleri (2026-10-03, Paketim diliyle): DOLGULU rozet + beyaz yazı —
+// açık ve koyu temada aynı okunur. Camgöbeği açık · kehribar inceleniyor ·
+// mor cevap geldi (dikkat) · yeşil çözüldü · gri geri çekildi.
+const STATUS_TONE: Record<SupportStatus, { chip: string; bar: string }> = {
+  open: { chip: "bg-cyan-700 text-white", bar: "bg-cyan-600" },
+  under_review: { chip: "bg-amber-500 text-white", bar: "bg-amber-500" },
+  answered: { chip: "bg-violet-600 text-white", bar: "bg-violet-600" },
+  resolved: { chip: "bg-emerald-600 text-white", bar: "bg-emerald-600" },
+  withdrawn: { chip: "bg-slate-500 text-white", bar: "bg-slate-400" },
 };
 
-// Gönderen rolüne göre mesaj balonu tonu (kim yazdı bir bakışta — purge-safe)
-const ROLE_TONE: Record<string, { bubble: string; name: string }> = {
-  teacher: { bubble: "border-sky-200 bg-sky-50 text-sky-950 dark:bg-sky-500/10 dark:border-sky-500/30", name: "text-sky-800" },
-  institution_admin: { bubble: "border-amber-200 bg-amber-50 text-amber-950 dark:bg-amber-500/10 dark:border-amber-500/30", name: "text-amber-800" },
-  super_admin: { bubble: "border-violet-200 bg-violet-50 text-violet-950 dark:bg-violet-500/10 dark:border-violet-500/30", name: "text-violet-800" },
+// Gönderenin rolü küçük dolgulu nokta + etiketle; balon rengi yalnız "ben / karşı taraf".
+const ROLE_DOT: Record<string, string> = {
+  teacher: "bg-cyan-600",
+  institution_admin: "bg-amber-500",
+  super_admin: "bg-violet-600",
+  parent: "bg-emerald-600",
+  student: "bg-sky-500",
 };
-const ROLE_TONE_DEFAULT = { bubble: "border-border bg-muted text-foreground", name: "text-foreground" };
 
 const ROLE_LABEL: Record<string, string> = {
   teacher: "Koç / Öğretmen",
@@ -105,8 +108,8 @@ function StatusBadge({ status, label }: { status: SupportStatus; label: string }
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold",
-        STATUS_TONE[status],
+        "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+        STATUS_TONE[status].chip,
       )}
     >
       {label}
@@ -141,14 +144,14 @@ export function SupportCenter({ view, initial, title, description, canCreate }: 
   const categories = listQuery.data?.categories ?? initial.categories;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold">{title}</h1>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold text-foreground">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
         {canCreate ? (
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={() => setCreateOpen(true)} className="h-11 bg-cyan-700 px-5 text-white hover:bg-cyan-800">
             <MessageSquarePlus className="size-4" aria-hidden />
             Yeni Talep
           </Button>
@@ -156,17 +159,19 @@ export function SupportCenter({ view, initial, title, description, canCreate }: 
       </div>
 
       {/* Durum filtreleri */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1 rounded-2xl border border-border bg-muted/50 p-1 sm:inline-flex sm:rounded-full" role="radiogroup" aria-label="Durum">
         {STATUS_FILTERS.map((f) => (
           <button
             key={f.value || "all"}
             type="button"
+            role="radio"
+            aria-checked={statusFilter === f.value}
             onClick={() => setStatusFilter(f.value)}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition",
+              "rounded-full px-3.5 py-1.5 text-sm font-semibold transition",
               statusFilter === f.value
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-card text-muted-foreground hover:bg-muted",
+                ? "bg-cyan-700 text-white"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {f.label}
@@ -174,7 +179,7 @@ export function SupportCenter({ view, initial, title, description, canCreate }: 
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
         {/* Liste */}
         <div className={cn(selectedId != null ? "hidden lg:block" : "block")}>
           {listQuery.isLoading ? (
@@ -184,7 +189,7 @@ export function SupportCenter({ view, initial, title, description, canCreate }: 
           ) : items.length === 0 ? (
             <EmptyList view={view} />
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {items.map((it) => (
                 <li key={it.id}>
                   <RequestRow
@@ -202,8 +207,9 @@ export function SupportCenter({ view, initial, title, description, canCreate }: 
         {/* Detay */}
         <div className={cn(selectedId == null ? "hidden lg:block" : "block")}>
           {selectedId == null ? (
-            <div className="hidden h-full min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground lg:flex">
-              Görüntülemek için bir talep seçin.
+            <div className="hidden h-full min-h-[280px] flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-border text-sm text-muted-foreground lg:flex">
+              <Inbox className="size-8" aria-hidden />
+              Görüntülemek için soldan bir talep seç.
             </div>
           ) : (
             <RequestDetail
@@ -231,7 +237,7 @@ export function SupportCenter({ view, initial, title, description, canCreate }: 
 
 function EmptyList({ view }: { view: "mine" | "inbox" }) {
   return (
-    <div className="rounded-lg border border-dashed border-border p-8 text-center">
+    <div className="rounded-3xl border border-dashed border-border p-10 text-center">
       <Inbox className="mx-auto size-8 text-muted-foreground" aria-hidden />
       <p className="mt-2 text-sm text-muted-foreground">
         {view === "mine"
@@ -258,26 +264,27 @@ function RequestRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        "w-full rounded-lg border p-3 text-left transition",
-        active ? "border-foreground bg-muted" : "border-border bg-card hover:bg-muted/60",
+        "relative w-full overflow-hidden rounded-2xl border-2 bg-card py-3.5 pl-5 pr-4 text-left transition",
+        active ? "border-cyan-600 shadow-md" : "border-border hover:border-cyan-600/50",
       )}
     >
+      <span className={cn("absolute inset-y-0 left-0 w-1.5", STATUS_TONE[item.status].bar)} aria-hidden />
       <div className="flex items-start justify-between gap-2">
-        <p className="line-clamp-1 text-sm font-semibold">{item.subject}</p>
-        <div className="flex shrink-0 items-center gap-1">
+        <p className="min-w-0 break-words text-sm font-semibold text-foreground">{item.subject}</p>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
           {item.escalated ? (
-            <span className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-900">
+            <span className="inline-flex items-center rounded-full bg-violet-600 px-2 py-0.5 text-[11px] font-semibold text-white">
               Yönlendirildi
             </span>
           ) : null}
           <StatusBadge status={item.status} label={item.status_label} />
         </div>
       </div>
-      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+      <p className="mt-1.5 line-clamp-2 break-words text-sm text-muted-foreground">
         {item.last_message_preview ?? "—"}
       </p>
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-        <span className="rounded bg-muted px-1.5 py-0.5">{item.category_label}</span>
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground">{item.category_label}</span>
         {view === "inbox" ? (
           <span className="truncate">
             {item.requester_name}
@@ -333,8 +340,8 @@ function RequestDetail({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="flex items-start gap-2 border-b border-border p-3">
+    <div className="overflow-hidden rounded-3xl border border-border bg-card">
+      <div className="flex items-start gap-2 border-b border-border px-5 py-4">
         <Button
           variant="ghost"
           size="icon"
@@ -350,15 +357,15 @@ function RequestDetail({
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-semibold">{data.subject}</h2>
+                <h2 className="break-words font-display text-lg font-semibold text-foreground">{data.subject}</h2>
                 <StatusBadge status={data.status} label={data.status_label} />
                 {data.escalated ? (
-                  <span className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-900">
+                  <span className="inline-flex items-center rounded-full bg-violet-600 px-2.5 py-0.5 text-xs font-semibold text-white">
                     Süper yöneticiye yönlendirildi
                   </span>
                 ) : null}
               </div>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {data.category_label} · {data.requester_name}
                 {data.institution_name ? ` · ${data.institution_name}` : ""} ·{" "}
                 {fmt(data.created_at)}
@@ -373,34 +380,32 @@ function RequestDetail({
       </div>
 
       {/* Thread — balon rengi GÖNDEREN ROLÜNE göre */}
-      <div className="max-h-[420px] space-y-3 overflow-y-auto p-3">
+      <div className="max-h-[520px] space-y-4 overflow-y-auto px-5 py-5">
         {(data?.messages ?? []).map((m) => {
-          const tone = (m.sender_role && ROLE_TONE[m.sender_role]) || ROLE_TONE_DEFAULT;
           const roleLabel = m.sender_role ? ROLE_LABEL[m.sender_role] ?? "" : "";
+          const dot = (m.sender_role && ROLE_DOT[m.sender_role]) || "bg-slate-400";
           return (
-            <div key={m.id} className={cn("flex", m.is_me ? "justify-end" : "justify-start")}>
-              <div className={cn("max-w-[85%] rounded-lg border px-3 py-2 text-sm", tone.bubble)}>
-                <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                  {m.sender_profile_url ? (
-                    <Link
-                      href={m.sender_profile_url}
-                      className={cn("font-semibold underline-offset-2 hover:underline", tone.name)}
-                    >
-                      {m.sender_name}
-                    </Link>
-                  ) : (
-                    <span className={cn("font-semibold", tone.name)}>{m.sender_name}</span>
-                  )}
-                  {roleLabel ? (
-                    <span className="rounded-full bg-black/5 px-1.5 py-0.5 text-[9px] font-medium">
-                      {roleLabel}
-                    </span>
-                  ) : null}
-                  {m.is_me ? <span className="text-[9px] opacity-60">(siz)</span> : null}
-                </div>
-                <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                <p className="mt-1 text-[10px] opacity-60">{fmt(m.created_at)}</p>
+            <div key={m.id} className={cn("flex flex-col gap-1", m.is_me ? "items-end" : "items-start")}>
+              <div className={cn("flex flex-wrap items-center gap-1.5 px-1 text-xs", m.is_me && "justify-end")}>
+                <span className={cn("size-2 rounded-full", dot)} aria-hidden />
+                {m.sender_profile_url ? (
+                  <Link href={m.sender_profile_url} className="font-semibold text-foreground underline-offset-2 hover:underline">
+                    {m.sender_name}
+                  </Link>
+                ) : (
+                  <span className="font-semibold text-foreground">{m.sender_name}</span>
+                )}
+                {roleLabel ? <span className="text-muted-foreground">· {roleLabel}</span> : null}
+                <span className="text-muted-foreground">· {fmt(m.created_at)}</span>
               </div>
+              <p
+                className={cn(
+                  "max-w-[88%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                  m.is_me ? "rounded-tr-md bg-cyan-700 text-white" : "rounded-tl-md bg-muted text-foreground",
+                )}
+              >
+                {m.body}
+              </p>
             </div>
           );
         })}
@@ -408,7 +413,7 @@ function RequestDetail({
 
       {/* Ekler */}
       {data && (data.attachments?.length ?? 0) > 0 ? (
-        <div className="border-t border-border p-3">
+        <div className="border-t border-border px-5 py-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Ekler ({data.attachments.length})
           </p>
@@ -448,18 +453,18 @@ function RequestDetail({
       ) : null}
 
       {/* Aksiyonlar + yanıt */}
-      <div className="space-y-2 border-t border-border p-3">
+      <div className="space-y-3 border-t border-border bg-muted/30 px-5 py-4">
         {data && !terminal ? (
           <>
             <textarea
-              className={cn(FIELD, "min-h-[64px] resize-y")}
-              placeholder="Mesaj yazın…"
+              className={cn(FIELD, "min-h-[88px] resize-y")}
+              placeholder="Mesajını yaz…"
               value={replyBody}
               onChange={(e) => setReplyBody(e.target.value)}
               maxLength={5000}
             />
             {isEscalator && !canManage ? (
-              <p className="rounded-md border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs text-violet-900 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
+              <p className="rounded-xl bg-violet-600 px-3 py-2 text-sm text-white">
                 Bu talebi süper yöneticiye yönlendirdiniz; süper yönetici yanıtladığında
                 cevap burada görünür.
               </p>
@@ -532,7 +537,7 @@ function RequestDetail({
                   )}
                   Dosya
                 </Button>
-                <Button size="sm" onClick={submitReply} disabled={reply.isPending || !replyBody.trim()}>
+                <Button onClick={submitReply} disabled={reply.isPending || !replyBody.trim()} className="bg-cyan-700 text-white hover:bg-cyan-800">
                   {reply.isPending ? (
                     <Loader2 className="size-4 animate-spin" aria-hidden />
                   ) : (
@@ -544,7 +549,7 @@ function RequestDetail({
             </div>
           </>
         ) : data ? (
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             Bu talep {data.status_label.toLowerCase()}; yeni mesaj eklenemez.
           </p>
         ) : null}

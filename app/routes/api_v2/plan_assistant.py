@@ -72,6 +72,12 @@ class PAHandoffResult(BaseModel):
     message: str
 
 
+_STATUS_TR = {
+    "trialing": "deneme sürüyor", "active": "aktif", "past_due": "süresi doldu",
+    "payment_required": "ödeme bekleniyor", "free": "ücretsiz", "managed": "kurum yönetiyor",
+}
+
+
 def _ch(channel: str | None) -> str:
     return channel if channel in pa.CHANNELS else "web"
 
@@ -140,7 +146,8 @@ def plan_assistant_handoff(body: PAHandoffBody, user: User = Depends(_require_te
     state = pa.build_state(db, user)
     p = state["plan"]
     lines = [body.message.strip(), "", "— Paket asistanından aktarıldı —",
-             f"Paket: {p['plan_label']} · durum: {p['status']} · aktif öğrenci: {p['student_count']}"]
+             f"Paket: {p['plan_label']} · durum: {_STATUS_TR.get(p['status'], p['status'])} · "
+             f"aktif öğrenci: {p['student_count']}"]
     if p.get("last_payment_issue"):
         lines.append(f"Son ödeme: {p['last_payment_issue']['title']}")
     if body.transcript:
