@@ -281,7 +281,10 @@ def build_exam_topic_analysis(
         "section_options": section_options,
         "exams": exams_out,
         "topics": topics_out,
-        "opportunities": opportunities[:10],
+        # TAMAMI (sıralı) — ekran ders süzgecini SONRA uygular; burada 10'a
+        # kesmek, küçük kazançlı derslerin (ör. 6 soruluk Biyoloji) fırsatlarını
+        # süzgeçte hiç göstermiyordu (2026-10-03). Tüketiciler kendi keser.
+        "opportunities": opportunities,
         "forgotten": forgotten,
         "improved": improved,
         "unmatched_questions": unmatched,

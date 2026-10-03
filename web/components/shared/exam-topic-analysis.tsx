@@ -166,7 +166,21 @@ export function ExamTopicAnalysis({
         </div>
       ) : null}
 
+      {activeSubj && opps.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border px-4 py-3 text-xs text-muted-foreground">
+          <b className="text-foreground">{activeSubj}</b> için net fırsatı yok — bu denemelerde bu dersten yanlış
+          ya da boş bırakılan soru (en az 2 soru gelen konularda) bulunmuyor.
+        </p>
+      ) : null}
+
       <ExamTrendTopics forgotten={forgotten} improved={improved} studentId={studentId} />
+      {activeSubj && d.exams.length >= 2 && forgotten.length === 0 && improved.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border px-4 py-3 text-xs text-muted-foreground">
+          <b className="text-foreground">{activeSubj}</b> için belirgin unutulan ya da gelişen konu yok. Bir konunun
+          işaretlenmesi için ilk ve son denemelerin her birinde o konudan en az 2 soru gelmesi ve doğruluğun en
+          az 34 puan değişmesi gerekir.
+        </p>
+      ) : null}
 
       {d.exams.length < 2 ? (
         <p className="rounded-md bg-muted/40 px-2.5 py-2 text-[11px] text-muted-foreground">

@@ -177,6 +177,10 @@ def main() -> int:
               and abs(opp[0]["net_gain_per_exam"] - 2.0) < 0.01,
               str(opp[:2])[:250])
 
+        elig = [t for t in d.get("topics", []) if t["total"] >= 2 and (t["wrong"] or t["blank"])]
+        check("5b. fırsat listesi KESİLMEZ (ders süzgeci sonradan uygulanır)",
+              len(opp) == len(elig), f"{len(opp)} vs {len(elig)}")
+
         fg = {t["topic_id"] for t in d.get("forgotten", [])}
         check("6. UNUTULAN yakalandı (Rasyonel: ilk yarı %100 → son %0)",
               ids["rasyonel"] in fg, str(d.get("forgotten"))[:200])
