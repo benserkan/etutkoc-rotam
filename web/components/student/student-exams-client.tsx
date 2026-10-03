@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Eye, FileUp, MessageSquareQuote, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronDown, Eye, MessageSquareQuote, TrendingDown, TrendingUp } from "lucide-react";
 
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
+import { ExamAddActions } from "@/components/shared/exam-add-actions";
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
 import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
@@ -74,6 +75,7 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
     staleTime: 30_000,
   });
   const [importOpen, setImportOpen] = React.useState(false);
+  const [importFile, setImportFile] = React.useState<File | null>(null);
   const rows = React.useMemo(() => q.data?.rows ?? [], [q.data]);
 
   // türler farklı ölçekte (TYT/120 · AYT/80 · LGS) → özet + analiz TEK türe göre
@@ -117,39 +119,37 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Denemelerim</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Deneme sonuçların ve konu analizin — sonuç PDF&apos;ini kendin de
-            yükleyebilirsin, koçun kontrol edip düzeltebilir.
-          </p>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
-          onClick={() => setImportOpen(true)}
-          title="Yayınevi/okul sonuç PDF'ini yükle — sorular konu konu okunur"
-        >
-          <FileUp className="size-4" aria-hidden />
-          PDF&apos;ten aktar
-        </Button>
+      <div>
+        <h1 className="text-lg font-semibold text-foreground">Denemelerim</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Deneme sonuçların ve konu analizin. Sonuç PDF&apos;ini kendin de yükleyebilirsin.
+        </p>
       </div>
 
-      <ExamImportDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ExamAddActions
+        onImport={(f) => {
+          setImportFile(f);
+          setImportOpen(true);
+        }}
+        note="Koçun kaydı kontrol edip düzeltebilir."
+      />
+
+      <ExamImportDialog
+        open={importOpen}
+        onOpenChange={(v) => {
+          setImportOpen(v);
+          if (!v) setImportFile(null);
+        }}
+        initialFile={importFile}
+      />
 
       {rows.length === 0 ? (
         <Card>
           <CardContent className="space-y-2 p-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Henüz deneme sonucun yok. Deneme sonuç PDF&apos;ini yüklersen
+              Henüz deneme sonucun yok. Yukarıdan deneme sonuç PDF&apos;ini yüklersen
               sorular konu konu okunur ve analizin burada oluşur.
             </p>
-            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
-              <FileUp className="size-4" aria-hidden />
-              İlk denemeni aktar
-            </Button>
           </CardContent>
         </Card>
       ) : (
