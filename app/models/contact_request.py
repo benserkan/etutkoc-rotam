@@ -37,6 +37,7 @@ CONTACT_SOURCE_LABELS_TR: dict[str, str] = {
     "iletisim_destek": "İletişim — Destek",
     "iletisim_kurumsal": "İletişim — Kurumsal",
     "iletisim_isbirligi": "İletişim — İş birliği",
+    "assistant": "Site asistanı",
     "other": "Diğer",
 }
 

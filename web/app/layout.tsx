@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { MetaPixel } from "@/components/meta-pixel";
+import { SiteAssistant } from "@/components/assistant/site-assistant";
 import "./globals.css";
 
 // Türkçe karakter için latin-ext zorunlu.
@@ -89,6 +90,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <QueryProvider>
             {children}
             <Toaster />
+            {/* Rota — sitenin her yerinde tek yapay zekâ asistanı (ziyaretçi dahil) */}
+            <SiteAssistant />
             {metaPixelId ? <MetaPixel pixelId={metaPixelId} /> : null}
           </QueryProvider>
         </ThemeProvider>

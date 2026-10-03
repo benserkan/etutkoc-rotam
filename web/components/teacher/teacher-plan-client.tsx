@@ -19,7 +19,11 @@ import { cn } from "@/lib/utils";
 import { applyInvalidate } from "@/lib/invalidate";
 import { ApiError } from "@/lib/api";
 import { AiConsentCard, AiUsageCard } from "@/components/teacher/ai-usage-card";
-import { PlanAssistant } from "@/components/teacher/plan-assistant";
+import {
+  openRotaAssistant,
+  ROTA_OPEN_SECTION,
+  ROTA_SELECT_PLAN,
+} from "@/lib/api/site-assistant";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -130,7 +134,6 @@ export function TeacherPlanClient({
   const [checkout, setCheckout] = React.useState<{ plan: string; cycle: Cycle } | null>(() =>
     autoCheckout && suggested && fits(suggested) ? { plan: suggested.code, cycle: "monthly" } : null,
   );
-  const [assistantOpen, setAssistantOpen] = React.useState(false);
   const [moreOpen, setMoreOpen] = React.useState(false);
   const [cancelOpen, setCancelOpen] = React.useState(false);
 
@@ -153,6 +156,30 @@ export function TeacherPlanClient({
     }, 50);
   }
 
+  // Rota asistanı (sitenin tek asistanı) bu sayfada paket seçtirir / bölüm açar.
+  const selectRef = React.useRef(selectPlan);
+  const sectionRef = React.useRef(openSection);
+  React.useEffect(() => {
+    selectRef.current = selectPlan;
+    sectionRef.current = openSection;
+  });
+  React.useEffect(() => {
+    const onSel = (e: Event) => {
+      const plan = (e as CustomEvent<{ plan?: string }>).detail?.plan;
+      if (plan) selectRef.current(plan);
+    };
+    const onSec = (e: Event) => {
+      const sec = (e as CustomEvent<{ section?: "ai" | "cancel" }>).detail?.section;
+      if (sec) sectionRef.current(sec);
+    };
+    window.addEventListener(ROTA_SELECT_PLAN, onSel);
+    window.addEventListener(ROTA_OPEN_SECTION, onSec);
+    return () => {
+      window.removeEventListener(ROTA_SELECT_PLAN, onSel);
+      window.removeEventListener(ROTA_OPEN_SECTION, onSec);
+    };
+  }, []);
+
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 pb-28 pt-6 sm:px-6">
       <header>
@@ -173,7 +200,7 @@ export function TeacherPlanClient({
             const i = data.last_payment_issue!;
             setCheckout({ plan: i.plan_code!, cycle: i.cycle === "academic_year" ? "academic_year" : "monthly" });
           }}
-          onAsk={() => setAssistantOpen(true)}
+          onAsk={() => openRotaAssistant("Ödemem neden geçmedi?", "pa:payment_failed")}
         />
       ) : null}
 
@@ -290,10 +317,10 @@ export function TeacherPlanClient({
           Kafana takılan bir şey mi var?{" "}
           <button
             type="button"
-            onClick={() => setAssistantOpen(true)}
+            onClick={() => openRotaAssistant()}
             className="font-semibold text-cyan-800 underline-offset-2 hover:underline dark:text-cyan-300"
           >
-            Paket asistanına sor
+            Rota&apos;ya sor
           </button>{" "}
           — hangi paketin uygun olduğunu, ödemenin neden geçmediğini, krediyi anında anlatır.
         </p>
@@ -307,16 +334,10 @@ export function TeacherPlanClient({
         onClose={() => setCheckout(null)}
         onAsk={() => {
           setCheckout(null);
-          setAssistantOpen(true);
+          openRotaAssistant();
         }}
       />
 
-      <PlanAssistant
-        open={assistantOpen}
-        onOpenChange={setAssistantOpen}
-        onSelectPlan={selectPlan}
-        onOpenSection={openSection}
-      />
     </div>
   );
 }

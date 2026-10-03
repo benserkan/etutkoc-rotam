@@ -989,6 +989,14 @@ def panel_events_purge(db: Session, *, now: datetime) -> dict:
     QA-1 saklama politikası."""
     from app.services.panel_behavior import purge_old_events
     counts = purge_old_events(db, now=now)
+    # Site asistanı soru-cevap kayıtları da 180 gün tutulur (2026-10-03).
+    try:
+        from app.services.site_assistant import purge_old
+        counts = {**(counts or {}), "assistant_messages": purge_old(db, now=now)}
+        db.commit()
+    except Exception:  # noqa: BLE001
+        db.rollback()
+        logger.warning("assistant purge failed", exc_info=True)
     logger.info("panel_events_purge: %s", counts)
     return counts
 

@@ -277,6 +277,7 @@ from app.models.contact_request import (
     ContactRequest,
 )
 from app.models.exam_progress import ExamTarget, SessionAgendaItem
+from app.models.assistant_message import AssistantMessage
 from app.models.exam_result import (
     ALIAS_SOURCE_AI,
     ALIAS_SOURCE_COACH,
@@ -695,6 +696,7 @@ __all__ = [
     "ExamTopicAlias",
     "ExamSection",
     "ExamTarget",
+    "AssistantMessage",
     "compute_net",
     "section_penalty",
     "ALIAS_SOURCE_AI",
@@ -928,5 +930,6 @@ __all__ = [
     "CoachingAppointment",
     "CoachingAppointmentSeries",
     "ExamTarget",
+    "AssistantMessage",
     "SessionAgendaItem",
 ]

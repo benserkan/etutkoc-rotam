@@ -24,6 +24,7 @@ from app.routes.api_v2 import admin as v2_admin
 from app.routes.api_v2 import admin_book_catalog as v2_admin_book_catalog
 from app.routes.api_v2 import admin_conversion as v2_admin_conversion
 from app.routes.api_v2 import plan_assistant as v2_plan_assistant
+from app.routes.api_v2 import site_assistant as v2_site_assistant
 from app.routes.api_v2 import admin_membership as v2_admin_membership
 from app.routes.api_v2 import admin_prospects as v2_admin_prospects
 from app.routes.api_v2 import admin_campaign_links as v2_admin_campaign_links
@@ -108,6 +109,7 @@ router.include_router(v2_testimonials_public.router)
 router.include_router(v2_admin_testimonials.router)
 router.include_router(v2_admin_conversion.router)
 router.include_router(v2_plan_assistant.router)
+router.include_router(v2_site_assistant.router)
 
 
 @router.get("/ping", include_in_schema=False)
