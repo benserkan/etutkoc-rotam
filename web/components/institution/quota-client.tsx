@@ -57,11 +57,11 @@ export function QuotaClient({ initial }: Props) {
         >
           ← Panel
         </Link>
-        <p className="text-[11px] uppercase tracking-wider text-emerald-700 mt-1 font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mt-1 font-semibold">
           Üyelik
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-0.5 flex items-center gap-2">
-          <Gauge className="size-6 text-emerald-700" aria-hidden />
+          <Gauge className="size-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
           Kurum Limitleri
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -225,13 +225,13 @@ function PlanComparison({
                 <tr
                   key={p.plan}
                   className={cn(
-                    isCurrent ? "bg-emerald-50/50 font-medium" : undefined,
+                    isCurrent ? "bg-emerald-50/50 dark:bg-emerald-500/10 font-medium" : undefined,
                   )}
                 >
                   <td className="px-4 py-2">
                     {institutionPlanLabel(p.plan)}
                     {isCurrent && (
-                      <span className="ml-2 text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      <span className="ml-2 text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
                         <CheckCircle2 className="size-2.5" aria-hidden />
                         sizin planınız
                       </span>

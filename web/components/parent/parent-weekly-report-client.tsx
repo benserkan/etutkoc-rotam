@@ -108,7 +108,7 @@ export function ParentWeeklyReportClient({
           Önceki hafta
         </Button>
         <span className="text-sm font-medium inline-flex items-center gap-1.5">
-          <CalendarRange className="size-4 text-[#117A86]" aria-hidden />
+          <CalendarRange className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
           {fmtRange(data.start, data.end)}
         </span>
         <Button
@@ -167,22 +167,22 @@ function mondayOfToday(): string {
 function verdictTone(level: WeeklyVerdictLevel) {
   if (level === "good")
     return {
-      wrap: "border-emerald-300 bg-emerald-50",
-      text: "text-emerald-900",
-      sub: "text-emerald-800",
+      wrap: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30",
+      text: "text-emerald-900 dark:text-emerald-200",
+      sub: "text-emerald-800 dark:text-emerald-200",
       label: "Yolunda",
     };
   if (level === "warn")
     return {
-      wrap: "border-amber-300 bg-amber-50",
-      text: "text-amber-900",
-      sub: "text-amber-800",
+      wrap: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30",
+      text: "text-amber-900 dark:text-amber-200",
+      sub: "text-amber-800 dark:text-amber-200",
       label: "Dikkat",
     };
   return {
-    wrap: "border-rose-300 bg-rose-50",
-    text: "text-rose-900",
-    sub: "text-rose-800",
+    wrap: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30",
+    text: "text-rose-900 dark:text-rose-200",
+    sub: "text-rose-800 dark:text-rose-200",
     label: "Acil",
   };
 }
@@ -222,7 +222,7 @@ function ComparisonHero({ data }: { data: WeeklyReportResponse }) {
     <Card>
       <CardContent className="p-5">
         <h2 className="font-semibold inline-flex items-center gap-1.5 mb-1">
-          <TrendingUp className="size-4 text-[#117A86]" aria-hidden />
+          <TrendingUp className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
           Geçen Haftaya Göre
         </h2>
         <p className="text-xs text-muted-foreground mb-4">
@@ -281,9 +281,9 @@ function CompareStat({
   const Icon = dir === "up" ? TrendingUp : dir === "down" ? TrendingDown : Minus;
   const tone =
     dir === "up"
-      ? "text-emerald-700"
+      ? "text-emerald-700 dark:text-emerald-300"
       : dir === "down"
-        ? "text-rose-700"
+        ? "text-rose-700 dark:text-rose-300"
         : "text-muted-foreground";
   return (
     <div className="text-center">
@@ -340,22 +340,22 @@ function SubjectSection({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               {mostCompleted && (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 dark:bg-emerald-500/10 dark:border-emerald-500/30">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-800">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-200">
                     <Trophy className="size-3.5" aria-hidden />
                     En çok çözülen
                   </div>
-                  <div className="text-base font-bold text-emerald-900 mt-0.5">
+                  <div className="text-base font-bold text-emerald-900 dark:text-emerald-200 mt-0.5">
                     {mostCompleted}
                   </div>
                 </div>
               )}
               {mostNeglected && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 dark:bg-amber-500/10 dark:border-amber-500/30">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-800">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-200">
                     <AlertTriangle className="size-3.5" aria-hidden />
                     En çok aksatılan
                   </div>
-                  <div className="text-base font-bold text-amber-900 mt-0.5">
+                  <div className="text-base font-bold text-amber-900 dark:text-amber-200 mt-0.5">
                     {mostNeglected}
                     {mostNeglectedPct != null && (
                       <span className="text-sm font-semibold ml-1">
@@ -417,7 +417,7 @@ function ExamSection({
       <Card>
         <CardContent className="p-5">
           <h2 className="font-semibold inline-flex items-center gap-1.5 mb-1">
-            <GraduationCap className="size-4 text-[#117A86]" aria-hidden />
+            <GraduationCap className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
             Deneme Performansı
           </h2>
           <p className="text-xs text-muted-foreground italic mt-1">
@@ -440,16 +440,16 @@ function ExamSection({
     trendDelta == null
       ? "text-muted-foreground"
       : trendDelta > 0
-        ? "text-emerald-700"
+        ? "text-emerald-700 dark:text-emerald-300"
         : trendDelta < 0
-          ? "text-rose-700"
+          ? "text-rose-700 dark:text-rose-300"
           : "text-muted-foreground";
 
   return (
     <Card>
       <CardContent className="p-5">
         <h2 className="font-semibold inline-flex items-center gap-1.5 mb-3">
-          <GraduationCap className="size-4 text-[#117A86]" aria-hidden />
+          <GraduationCap className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
           Deneme Performansı
         </h2>
 
@@ -474,7 +474,7 @@ function ExamSection({
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
               Net
             </div>
-            <div className="text-3xl font-extrabold tabular-nums text-[#117A86] leading-none">
+            <div className="text-3xl font-extrabold tabular-nums text-[#117A86] dark:text-teal-300 leading-none">
               {latest.net.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
             </div>
             {trendDelta != null && trendSection && (
@@ -598,7 +598,7 @@ function NotesSection({
     <Card>
       <CardContent className="p-5">
         <h2 className="font-semibold inline-flex items-center gap-1.5 mb-3">
-          <MessageSquare className="size-4 text-[#117A86]" aria-hidden />
+          <MessageSquare className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
           Koçtan Notlar
         </h2>
         <div className="space-y-3">

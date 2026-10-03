@@ -63,28 +63,28 @@ export function SpamGuardBanner() {
       className={cn(
         "rounded-md border px-3 py-3 flex items-start gap-3",
         tone === "rose"
-          ? "border-rose-300 bg-rose-50"
-          : "border-amber-300 bg-amber-50",
+          ? "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30"
+          : "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30",
       )}
       role="alert"
     >
       <div
         className={cn(
           "rounded-full p-1.5 shrink-0",
-          tone === "rose" ? "bg-rose-200" : "bg-amber-200",
+          tone === "rose" ? "bg-rose-200 dark:bg-rose-500/15" : "bg-amber-200 dark:bg-amber-500/15",
         )}
       >
         {tone === "rose" ? (
-          <Flame className="size-4 text-rose-800" aria-hidden />
+          <Flame className="size-4 text-rose-800 dark:text-rose-200" aria-hidden />
         ) : (
-          <AlertTriangle className="size-4 text-amber-800" aria-hidden />
+          <AlertTriangle className="size-4 text-amber-800 dark:text-amber-200" aria-hidden />
         )}
       </div>
       <div className="flex-1 min-w-0 text-sm">
         <div
           className={cn(
             "font-semibold",
-            tone === "rose" ? "text-rose-900" : "text-amber-900",
+            tone === "rose" ? "text-rose-900 dark:text-rose-200" : "text-amber-900 dark:text-amber-200",
           )}
         >
           {tone === "rose"
@@ -104,7 +104,7 @@ export function SpamGuardBanner() {
         <div
           className={cn(
             "text-[11px] mt-1",
-            tone === "rose" ? "text-rose-700" : "text-amber-700",
+            tone === "rose" ? "text-rose-700 dark:text-rose-300" : "text-amber-700 dark:text-amber-300",
           )}
         >
           Bu hafta toplam: <strong>{week_count}</strong> mesaj

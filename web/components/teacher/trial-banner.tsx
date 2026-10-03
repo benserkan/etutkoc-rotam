@@ -67,7 +67,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
         <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
           <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-2.5 text-sm text-rose-900 dark:text-rose-200">
-              <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
+              <Lock className="mt-0.5 size-4 shrink-0 text-rose-600 dark:text-rose-300" aria-hidden />
               <span>
                 <strong>Aboneliğin yenilenmedi.</strong> Öğrencilerin ve verilerin
                 duruyor; aktif koçluğa devam etmek için aboneliğini yenile.
@@ -94,7 +94,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
         <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
           <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-2.5 text-sm text-rose-900 dark:text-rose-200">
-              <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
+              <Lock className="mt-0.5 size-4 shrink-0 text-rose-600 dark:text-rose-300" aria-hidden />
               <span>
                 <strong>
                   {data.student_count} aktif öğrencin var, {recLabel} gerekir.
@@ -110,7 +110,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
             <div className="flex shrink-0 gap-2">
               <Link
                 href="/teacher/students"
-                className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+                className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-card px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition hover:bg-rose-50"
               >
                 Öğrencileri yönet
               </Link>
@@ -131,7 +131,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
       <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-2.5 text-sm text-rose-900 dark:text-rose-200">
-            <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
+            <Lock className="mt-0.5 size-4 shrink-0 text-rose-600 dark:text-rose-300" aria-hidden />
             <span>
               <strong>
                 {data.trial_denied_reason ? "Ücretsiz paket sınırı." : "Deneme süreniz bitti."}
@@ -146,7 +146,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
           <div className="flex shrink-0 gap-2">
             <Link
               href="/teacher/students"
-              className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
+              className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-card px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition hover:bg-rose-50"
             >
               Öğrencileri yönet
             </Link>
@@ -169,7 +169,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
     return (
       <div className="border-b border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
-          <Clock className="size-4 shrink-0 text-amber-600" aria-hidden />
+          <Clock className="size-4 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
           <p className="flex-1 text-sm text-amber-900 dark:text-amber-200">
             <strong>Denemen {left} bitiyor.</strong>{" "}
             <TrialValueLine value={data.trial_value} />
@@ -192,7 +192,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
               }
               setDismissTick((t) => t + 1);
             }}
-            className="shrink-0 rounded p-1 text-amber-700 transition hover:bg-amber-100"
+            className="shrink-0 rounded p-1 text-amber-700 dark:text-amber-300 transition hover:bg-amber-100"
           >
             <X className="size-4" aria-hidden />
           </button>
@@ -214,7 +214,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
     return (
       <div className="border-b border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
-          <Clock className="size-4 shrink-0 text-amber-600" aria-hidden />
+          <Clock className="size-4 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
           <p className="flex-1 text-sm text-amber-900 dark:text-amber-200">
             {denied ? (
               <>
@@ -250,7 +250,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
               }
               setDismissTick((t) => t + 1);
             }}
-            className="shrink-0 rounded p-1 text-amber-700 transition hover:bg-amber-100"
+            className="shrink-0 rounded p-1 text-amber-700 dark:text-amber-300 transition hover:bg-amber-100"
           >
             <X className="size-4" aria-hidden />
           </button>

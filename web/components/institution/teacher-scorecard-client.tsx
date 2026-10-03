@@ -19,16 +19,16 @@ interface Props {
 }
 
 const SCORE_TEXT: Record<string, string> = {
-  emerald: "text-emerald-700",
-  sky: "text-sky-700",
-  amber: "text-amber-700",
-  rose: "text-rose-700",
+  emerald: "text-emerald-700 dark:text-emerald-300",
+  sky: "text-sky-700 dark:text-sky-300",
+  amber: "text-amber-700 dark:text-amber-300",
+  rose: "text-rose-700 dark:text-rose-300",
 };
 const SCORE_BADGE: Record<string, string> = {
-  emerald: "bg-emerald-100 text-emerald-800",
-  sky: "bg-sky-100 text-sky-800",
-  amber: "bg-amber-100 text-amber-800",
-  rose: "bg-rose-100 text-rose-800",
+  emerald: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-200",
+  sky: "bg-sky-100 dark:bg-sky-500/15 text-sky-800 dark:text-sky-200",
+  amber: "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-200",
+  rose: "bg-rose-100 dark:bg-rose-500/15 text-rose-800 dark:text-rose-200",
 };
 const BAR: Record<string, string> = {
   emerald: "bg-emerald-500",
@@ -55,7 +55,7 @@ export function TeacherScorecardClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <GraduationCap className="size-6 text-indigo-700" aria-hidden />
+          <GraduationCap className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Öğretmen Etkililik Karnesi
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -79,14 +79,14 @@ export function TeacherScorecardClient({ initial }: Props) {
           <div className="text-[11px] text-muted-foreground">{s.teacher_count} öğretmen</div>
         </Card>
         <Card className="p-4 sm:col-span-2 border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30">
-          <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-emerald-700">
+          <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-emerald-700 dark:text-emerald-300">
             <Trophy className="size-3.5" aria-hidden />
             <ColumnHint label="En etkili koç" hint="Etkililik skoru en yüksek olan koç ve skoru (0–100)." />
           </div>
           {s.top_name ? (
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-lg font-semibold">{s.top_name}</span>
-              <span className="text-sm text-emerald-700">skor {s.top_score}</span>
+              <span className="text-sm text-emerald-700 dark:text-emerald-300">skor {s.top_score}</span>
             </div>
           ) : (
             <div className="mt-1 text-sm text-muted-foreground">Henüz veri yok.</div>
@@ -157,7 +157,7 @@ export function TeacherScorecardClient({ initial }: Props) {
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-16 overflow-hidden rounded bg-slate-100">
+                        <div className="h-2 w-16 overflow-hidden rounded bg-slate-100 dark:bg-slate-500/15">
                           <div className={cn("h-full rounded", BAR[t.score_color] ?? BAR.amber)} style={{ width: `${t.score}%` }} />
                         </div>
                         <span className={cn("text-sm font-bold tabular-nums", SCORE_TEXT[t.score_color] ?? "")}>{t.score}</span>
@@ -170,9 +170,9 @@ export function TeacherScorecardClient({ initial }: Props) {
                     <td className="px-3 py-2 text-right tabular-nums text-muted-foreground" title="Öğrenci başına haftada planlanan test">{t.discipline_per_student_week} test/hafta</td>
                     <td className="px-3 py-2 text-right">
                       {t.risk_students > 0 ? (
-                        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">{t.risk_students}</span>
+                        <span className="rounded-full bg-rose-100 dark:bg-rose-500/15 px-2 py-0.5 text-[11px] font-medium text-rose-700 dark:text-rose-300">{t.risk_students}</span>
                       ) : (
-                        <span className="text-[11px] text-emerald-600">0</span>
+                        <span className="text-[11px] text-emerald-600 dark:text-emerald-300">0</span>
                       )}
                     </td>
                   </tr>

@@ -92,7 +92,7 @@ export function AdminInstitutionsClient({
             ← Panel
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-            <Building2 className="size-6 text-indigo-700" aria-hidden />
+            <Building2 className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
             Kurumlar
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -225,10 +225,10 @@ function HealthKpi({
     rose: "border-rose-200",
   }[tone];
   const textClass = {
-    emerald: "text-emerald-700",
-    yellow: "text-yellow-700",
-    amber: "text-amber-700",
-    rose: "text-rose-700",
+    emerald: "text-emerald-700 dark:text-emerald-300",
+    yellow: "text-yellow-700 dark:text-yellow-300",
+    amber: "text-amber-700 dark:text-amber-300",
+    rose: "text-rose-700 dark:text-rose-300",
   }[tone];
   return (
     <Card className={cn("border", borderClass)}>
@@ -306,7 +306,7 @@ function InstitutionRow({ item }: { item: InstitutionListItem }) {
             <ul className="mt-1 text-[11px] text-foreground/80 space-y-0.5 pl-1">
               {item.indicators.map((ind) => (
                 <li key={ind.code} title={ind.detail}>
-                  <span className="text-rose-600">●</span> {ind.title}
+                  <span className="text-rose-600 dark:text-rose-300">●</span> {ind.title}
                   <span className="text-muted-foreground/70 ml-1">
                     +{ind.weight} puan
                   </span>
@@ -366,7 +366,7 @@ function InstitutionRow({ item }: { item: InstitutionListItem }) {
             Aktif
           </span>
         ) : (
-          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200">
             Pasif
           </span>
         )}
@@ -374,7 +374,7 @@ function InstitutionRow({ item }: { item: InstitutionListItem }) {
       <td className="px-4 py-3 text-right whitespace-nowrap align-top">
         <Link
           href={`/admin/revenue/institutions/${inst.id}`}
-          className="text-xs text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-0.5"
+          className="text-xs text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 inline-flex items-center gap-0.5"
         >
           Ticari 360
           <ArrowRight className="size-3" aria-hidden />
@@ -586,7 +586,7 @@ function CreateInstitutionDialog({
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-muted-foreground">Geçici şifre:</span>
                   <code
-                    className="rounded bg-amber-100 px-2 py-1 font-mono font-semibold text-amber-900"
+                    className="rounded bg-amber-100 dark:bg-amber-500/15 px-2 py-1 font-mono font-semibold text-amber-900 dark:text-amber-200"
                     data-testid="admin-temp-password"
                   >
                     {done.res.temp_password}
@@ -790,7 +790,7 @@ function CreateInstitutionDialog({
                   <p className="text-xs text-muted-foreground">
                     PNG, JPEG veya WebP · en fazla 2 MB
                   </p>
-                  {logoError ? <p className="text-xs text-rose-600">{logoError}</p> : null}
+                  {logoError ? <p className="text-xs text-rose-600 dark:text-rose-300">{logoError}</p> : null}
                 </div>
               </div>
             </fieldset>

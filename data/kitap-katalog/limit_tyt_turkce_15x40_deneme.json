@@ -1,0 +1,93 @@
+{
+ "name": "Limit TYT Türkçe 15x40 Denemeleri",
+ "publisher": "Limit Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "brans_denemesi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Deneme 1 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 2 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 3 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 4 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 5 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 6 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 7 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 8 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 9 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 10 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 11 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 12 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 13 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 14 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 15 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF, 241 sayfa; kontak föyleriyle görerek okundu (AI yok). İçindekiler sayfası yok.",
+  "Yapı birebir düzenli: s.0 kitap kapağı + her deneme 16 sayfa (kapak 'TÜRKÇE DENEME SINAVI-N' + Teknodeneme sanal optik sayfası + 12 soru sayfası + Konu Analiz Tablosu + Sınavda Uyulacak Kurallar). 1 + 15×16 = 241 — sayfa hesabı tam tutuyor.",
+  "15 deneme kapağının hepsi (pdf s.1,17,33,...,225) görüntüyle teyit edildi; numaralar 1..15 kesintisiz.",
+  "40 soru: kapak/başlık '15x40' + Deneme 1 ve 15'in son soru sayfası 39-40. sorularla bitiyor + Konu Analiz Tablosu 40 satır. page = deneme kapağının indeksi (sorular kapak+2'de başlar).",
+  "PDF'te cevap anahtarı/çözüm sayfası YOK (her denemede QR kodlu analiz tablosu var; çözümler muhtemelen dijital)."
+ ]
+}

@@ -262,10 +262,10 @@ function MonthsTable({ months }: { months: ParentBillingMonth[] }) {
           {[...months].reverse().map((m) => {
             const balanceTone =
               m.balance > 0
-                ? "text-rose-700"
+                ? "text-rose-700 dark:text-rose-300"
                 : m.balance < 0
-                  ? "text-sky-700"
-                  : "text-emerald-700";
+                  ? "text-sky-700 dark:text-sky-300"
+                  : "text-emerald-700 dark:text-emerald-300";
             return (
               <tr key={m.period_month} className="border-b border-border/50 last:border-0">
                 <td className="px-3 py-2 font-medium">{m.period_label}</td>
@@ -363,7 +363,7 @@ function PaymentsList({ payments }: { payments: ParentPaymentItem[] }) {
               <Icon className="size-4" aria-hidden />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-emerald-700 tabular-nums">
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 tabular-nums">
                 {fmtTL(p.amount)}
               </p>
               <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center flex-wrap gap-x-2">

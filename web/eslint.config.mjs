@@ -174,6 +174,47 @@ const lgsPlugin = {
         };
       },
     },
+
+    // 5. no-dark-text-without-variant (2026-10-03 sistem geneli koyu tema
+    //    denetimi — 144 sayfada 1958 okunmaz metin) → koyu ton yazı
+    //    (text-<renk>-600…950) koyu tema karşılığı (dark:text-…) olmadan.
+    //    Koyu temada zemin koyulaşır, koyu yazı kaybolur. Aynı öğe koyu temada
+    //    da açık zeminli kalıyorsa (bg-*-50..200 / bg-white ve dark:bg- yok)
+    //    sorun yok. Her zaman açık temada kalan sayfalar (force-light) hariç.
+    "no-dark-text-without-variant": {
+      meta: {
+        type: "problem",
+        docs: { description: "Koyu ton yazı, koyu tema karşılığı olmadan okunmaz" },
+        schema: [],
+        messages: {
+          missing:
+            "Koyu temada okunmaz: {{cls}} için dark:text-… karşılığı yok (600/700 → dark:text-<renk>-300, 800+ → dark:text-<renk>-200).",
+        },
+      },
+      create(context) {
+        const src = context.sourceCode?.getText?.() ?? "";
+        if (src.includes("force-light")) return {};
+        const C =
+          "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
+        const TEXT_DARK = new RegExp(`(?<![:\\w/-])text-(?:${C})-(?:600|700|800|900|950)(?![\\w/])`);
+        const LIGHT_BG = new RegExp(`(?<![:\\w/-])bg-(?:${C})-(?:50|100|200)(?![\\w/])|(?<![:\\w/-])bg-white(?![\\w/])|(?<![:\\w/-])bg-(?:amber|yellow|lime)-(?:300|400|500)(?![\\w/])`);
+        function check(node, value) {
+          if (typeof value !== "string" || /\bdark:text-/.test(value)) return;
+          const m = value.match(TEXT_DARK);
+          if (!m) return;
+          if (LIGHT_BG.test(value) && !/\bdark:bg-/.test(value)) return;
+          context.report({ node, messageId: "missing", data: { cls: m[0] } });
+        }
+        return {
+          Literal(node) {
+            if (typeof node.value === "string") check(node, node.value);
+          },
+          TemplateElement(node) {
+            check(node, node.value?.cooked ?? node.value?.raw);
+          },
+        };
+      },
+    },
   },
 };
 
@@ -200,7 +241,26 @@ const eslintConfig = defineConfig([
       "lgs/missing-invalidate": "warn",
       "lgs/no-bare-jargon": "warn",
       "lgs/no-unsafe-contrast": "warn",
+      "lgs/no-dark-text-without-variant": "warn",
     },
+  },
+
+  // Daima açık temada kalan yüzeyler (yazdırma, e-posta önizleme, pazarlama)
+  {
+    files: [
+      "app/(print)/**",
+      "**/*print*.tsx",
+      "components/landing/**",
+      "components/pricing/**",
+      "app/page.tsx",
+      "app/login/**",
+      "app/signup/**",
+      "app/membership/**",
+      "app/kampanya/**",
+      "app/payment/**",
+      "app/pricing/**",
+    ],
+    rules: { "lgs/no-dark-text-without-variant": "off" },
   },
 
   // İstisnalar: lib/api.ts, lib/api-server.ts, BFF route'ları fetch kullanır

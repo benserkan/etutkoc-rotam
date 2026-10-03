@@ -80,7 +80,7 @@ export function ParentAnnounceDialog({
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="inline-flex items-center gap-2">
-            <Megaphone className="size-5 text-emerald-600" aria-hidden />
+            <Megaphone className="size-5 text-emerald-600 dark:text-emerald-300" aria-hidden />
             Veliye duyur — önizleme
           </DialogTitle>
           <DialogDescription>
@@ -135,7 +135,7 @@ export function ParentAnnounceDialog({
                         ) : null}
                       </span>
                       {r.recently_notified ? (
-                        <span className="text-amber-700">· son 24 saatte duyuruldu, atlanacak</span>
+                        <span className="text-amber-700 dark:text-amber-300">· son 24 saatte duyuruldu, atlanacak</span>
                       ) : null}
                     </li>
                   ))}
@@ -176,7 +176,7 @@ export function ParentAnnounceDialog({
                               {g.items.map((it, ii) => (
                                 <li
                                   key={ii}
-                                  className="flex items-baseline justify-between gap-2 pl-3 text-xs text-slate-700"
+                                  className="flex items-baseline justify-between gap-2 pl-3 text-xs text-slate-700 dark:text-slate-300"
                                 >
                                   <span>
                                     {it.section || it.book}
@@ -194,12 +194,12 @@ export function ParentAnnounceDialog({
                         ))}
                         {d.denemeler.length > 0 ? (
                           <div>
-                            <div className="text-xs font-semibold text-violet-700">Denemeler</div>
+                            <div className="text-xs font-semibold text-violet-700 dark:text-violet-300">Denemeler</div>
                             <ul className="mt-0.5 space-y-0.5">
                               {d.denemeler.map((dn, di) => (
                                 <li
                                   key={di}
-                                  className="flex items-baseline justify-between gap-2 pl-3 text-xs text-slate-700"
+                                  className="flex items-baseline justify-between gap-2 pl-3 text-xs text-slate-700 dark:text-slate-300"
                                 >
                                   <span>{dn.title}</span>
                                   <span className="shrink-0 tabular-nums text-muted-foreground">
@@ -215,8 +215,8 @@ export function ParentAnnounceDialog({
                             <div className="text-xs font-semibold text-foreground">Diğer çalışmalar</div>
                             <ul className="mt-0.5 space-y-0.5">
                               {d.activities.map((a, ai) => (
-                                <li key={ai} className="pl-3 text-xs italic text-slate-600">
-                                  <span className="mr-1 rounded bg-slate-100 px-1 text-[10px] font-medium not-italic text-slate-600">
+                                <li key={ai} className="pl-3 text-xs italic text-slate-600 dark:text-slate-300">
+                                  <span className="mr-1 rounded bg-slate-100 dark:bg-slate-500/15 px-1 text-[10px] font-medium not-italic text-slate-600 dark:text-slate-300">
                                     {TYPE_LABEL[a.type] ?? a.type}
                                   </span>
                                   {a.title || "Etkinlik"}
@@ -239,7 +239,7 @@ export function ParentAnnounceDialog({
                 <ul className="space-y-1">
                   {data.recent_exams.map((e, i) => (
                     <li key={i} className="flex items-baseline justify-between gap-2 text-xs">
-                      <span className="text-slate-700">
+                      <span className="text-slate-700 dark:text-slate-300">
                         {e.date_iso ? (
                           <span className="text-muted-foreground">{e.date_iso} · </span>
                         ) : null}
@@ -248,7 +248,7 @@ export function ParentAnnounceDialog({
                           <span className="text-muted-foreground"> · {e.section}</span>
                         ) : null}
                       </span>
-                      <span className="shrink-0 font-semibold tabular-nums text-cyan-700">
+                      <span className="shrink-0 font-semibold tabular-nums text-cyan-700 dark:text-cyan-300">
                         {e.net != null ? `net ${e.net.toFixed(2)}` : "—"}
                       </span>
                     </li>

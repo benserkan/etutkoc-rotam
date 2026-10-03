@@ -1,0 +1,141 @@
+{
+ "name": "Apotemi TYT Matematik Problemler Fasikülü",
+ "publisher": "Apotemi Yayınları",
+ "subject": "TYT Matematik",
+ "type": "konu_anlatimli",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Genel Yetenek Problemleri",
+   "test_count": 8,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Doğru Orantı",
+   "test_count": 1,
+   "topic": "Oran ve Orantı"
+  },
+  {
+   "label": "Ters Orantı",
+   "test_count": 1,
+   "topic": "Oran ve Orantı"
+  },
+  {
+   "label": "Sayı Problemleri",
+   "test_count": 5,
+   "topic": "Sayı - Kesir Problemleri"
+  },
+  {
+   "label": "Denklem Kurarak Çözülebilecek Sayısal Mantık Problemleri",
+   "test_count": 2,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Yaş Üzüm - Yaş Sabun Problemleri",
+   "test_count": 1,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Mum Problemleri",
+   "test_count": 1,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Özel Sayı Türü Problemleri",
+   "test_count": 1,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Tekrar Eden Durum Problemleri",
+   "test_count": 1,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Kesir Problemleri",
+   "test_count": 1,
+   "topic": "Sayı - Kesir Problemleri"
+  },
+  {
+   "label": "Boş Kap Ağırlığı İstenen Problemler",
+   "test_count": 1,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Maliyetteki Artış İstenen Problemler",
+   "test_count": 1,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Tel - Çubuk Kesilen Problemler",
+   "test_count": 1,
+   "topic": "Sayısal Yetenek Problemleri"
+  },
+  {
+   "label": "Teknik Problemler-I Adım Güçlendirme Testleri",
+   "test_count": 7,
+   "topic": ""
+  },
+  {
+   "label": "Yaş Problemleri",
+   "test_count": 2,
+   "topic": "Yaş Problemleri"
+  },
+  {
+   "label": "İşçi Problemleri",
+   "test_count": 1,
+   "topic": "İşçi Problemleri"
+  },
+  {
+   "label": "Hız Problemleri",
+   "test_count": 2,
+   "topic": "Hareket Problemleri"
+  },
+  {
+   "label": "Yüzde Problemleri",
+   "test_count": 1,
+   "topic": "Yüzde Problemleri"
+  },
+  {
+   "label": "Kâr-Zarar Problemleri",
+   "test_count": 1,
+   "topic": "Kar - Zarar Problemleri"
+  },
+  {
+   "label": "Karışım Problemleri",
+   "test_count": 1,
+   "topic": "Karışım Problemleri"
+  },
+  {
+   "label": "Grafik Problemleri",
+   "test_count": 1,
+   "topic": "Grafik Problemleri"
+  },
+  {
+   "label": "Teknik Problemler-II Adım Güçlendirme Testleri",
+   "test_count": 7,
+   "topic": ""
+  },
+  {
+   "label": "Sayısal Mantık Problemleri Adım Güçlendirme Testleri",
+   "test_count": 9,
+   "topic": ""
+  },
+  {
+   "label": "Maraton Testleri",
+   "test_count": 10,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (metin katmanı yok); yapı içindekiler (s.1) + tüm 240 sayfanın üst şerit taramasıyla gözle çıkarıldı, Gemini kullanılmadı.",
+  "Ofset: basılı sayfa = PDF indeksi + 1 (Doğru Orantı 31→30, Sayı 37→36, Kesir 75→74, Yaş 111→110, Grafik 158→157, Bölüm 3/4/Maraton ayraçları birebir). İçindekilerdeki 'Bölüm 1 → 9' ADIM sayfasını gösterir (ayraç idx 6).",
+  "Test = mor 'ADIM PEKİŞTİRME TESTİ' / yeşil 'ADIM GÜÇLENDİRME TESTİ' / kırmızı 'MARATON TESTİ' bant başlangıçları. Pembe 'ADIM PEKİŞTİRME' (Örnek+Çözüm) ve 'ADIM' konu anlatımı sayfaları test sayılmadı.",
+  "Numaralı seriler zincirleri kesintisiz: Genel Yetenek 1-8, Sayı 1-5, Denklem 1-2, Hız 1-2, Güçlendirme B2 1-7, B3 1-7, B4 1-9, Maraton 1-10. Diğer konu testleri numarasız tek test.",
+  "Test uzunluğu değişken (1-3 sayfa): Doğru/Ters Orantı testleri tek sayfa (32, 35); çoğu 2 sayfa; bazı numarasız testler 3 sayfa (ör. Kesir 77-79).",
+  "Güçlendirme Testi-1 ve -2 (Bölüm 2) ile Testi-1 (Bölüm 3) 'ÇÖZÜMLÜ' — arkasındaki 'ÇÖZÜMLER' sayfaları (91-93, 96-97, 165-166) ayrı test sayılmadı.",
+  "Bölüm 4 (Sayısal Mantık) alt konuları (Sayı Paylaşımı, Sayı Tabloları, Sayı-Şekil Örüntüleri, Özel Tanımlama, Permütasyon; s.182-195) yalnız konu anlatımı + örnek içeriyor, kendi pekiştirme testi YOK → katalog satırı yapılmadı; testleri Bölüm 4 Güçlendirme 1-9'da.",
+  "Yaş Problemleri 2 test: 112 (Yaş Problemleri) + 115 ('İki kişiden birinin diğerinin yaşına...' alt başlığı)."
+ ]
+}

@@ -170,7 +170,7 @@ function MenuItem({
       role="menuitem"
       onClick={onClick}
       className={`flex w-full items-center gap-2 px-2.5 py-1.5 rounded-sm text-left hover:bg-muted ${
-        danger ? "text-rose-700 hover:text-rose-800" : ""
+        danger ? "text-rose-700 dark:text-rose-300 hover:text-rose-800" : ""
       }`}
     >
       {icon}

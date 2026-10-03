@@ -68,7 +68,7 @@ export function AdminDigestListClient({ initial }: Props) {
             ← Panel
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 flex items-center gap-2">
-            <Mail className="size-6 text-emerald-700" aria-hidden />
+            <Mail className="size-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
             Haftalık Yönetici Özeti
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -185,7 +185,7 @@ export function SendStatusLabel({ status }: { status: AdminDigestStatus }) {
   switch (status) {
     case "sent":
       return (
-        <span className="text-emerald-700 font-medium inline-flex items-center gap-1">
+        <span className="text-emerald-700 dark:text-emerald-300 font-medium inline-flex items-center gap-1">
           <CheckCircle2 className="size-3.5" aria-hidden />
           Gönderildi
         </span>
@@ -202,7 +202,7 @@ export function SendStatusLabel({ status }: { status: AdminDigestStatus }) {
       );
     case "failed":
       return (
-        <span className="text-rose-700 font-medium inline-flex items-center gap-1">
+        <span className="text-rose-700 dark:text-rose-300 font-medium inline-flex items-center gap-1">
           <AlertTriangle className="size-3.5" aria-hidden />
           Gönderilemedi
         </span>
@@ -210,7 +210,7 @@ export function SendStatusLabel({ status }: { status: AdminDigestStatus }) {
     case "skipped_no_admin":
       return (
         <span
-          className="text-amber-700 inline-flex items-center gap-1"
+          className="text-amber-700 dark:text-amber-300 inline-flex items-center gap-1"
           title="Bu kurumda alıcı yönetici yok"
         >
           <SkipForward className="size-3.5" aria-hidden />

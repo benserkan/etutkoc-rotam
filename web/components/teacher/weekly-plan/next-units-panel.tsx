@@ -90,14 +90,14 @@ export function NextUnitsPanel({
       {(
         <>
           <div className="flex items-center justify-between gap-2 px-4 pb-2">
-            <p className="text-[11px] text-cyan-800">
+            <p className="text-[11px] text-cyan-800 dark:text-cyan-200">
               Müfredat sırasındaki atanabilir konular. “Ata” ile göreve çevir.
             </p>
             <button
               type="button"
               onClick={() => aiMut.mutate()}
               disabled={aiMut.isPending}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-300 px-2 py-1 text-[11px] font-medium text-violet-700 transition hover:bg-violet-50"
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-300 px-2 py-1 text-[11px] font-medium text-violet-700 dark:text-violet-300 transition hover:bg-violet-50"
             >
               {aiMut.isPending ? (
                 <Loader2 className="size-3 animate-spin" aria-hidden />
@@ -109,7 +109,7 @@ export function NextUnitsPanel({
           </div>
 
           {data?.ai_used && data.ai_summary ? (
-            <p className="mx-3 mb-2 rounded-md bg-violet-50 px-2.5 py-1.5 text-[11px] text-violet-800">
+            <p className="mx-3 mb-2 rounded-md bg-violet-50 dark:bg-violet-500/15 px-2.5 py-1.5 text-[11px] text-violet-800 dark:text-violet-200">
               <Sparkles className="mr-1 inline size-3" aria-hidden />
               {data.ai_summary}
             </p>
@@ -119,13 +119,13 @@ export function NextUnitsPanel({
             {units.map((u) => (
               <li
                 key={u.topic_id}
-                className="rounded-md border border-cyan-200 bg-white px-2.5 py-2 text-xs"
+                className="rounded-md border border-cyan-200 bg-card px-2.5 py-2 text-xs"
               >
                 <div className="flex items-start gap-2">
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium text-slate-900">
+                    <span className="block font-medium text-slate-900 dark:text-slate-200">
                       {u.ai_priority ? (
-                        <span className="mr-1 rounded bg-violet-100 px-1 text-[10px] font-bold text-violet-700">
+                        <span className="mr-1 rounded bg-violet-100 dark:bg-violet-500/15 px-1 text-[10px] font-bold text-violet-700 dark:text-violet-300">
                           {u.ai_priority}
                         </span>
                       ) : null}
@@ -135,7 +135,7 @@ export function NextUnitsPanel({
                       {u.status === "devam" ? `devam · ${u.completed}/${u.test_total} test` : "başlanmadı"}
                     </span>
                     {u.ai_reason ? (
-                      <span className="mt-0.5 block text-[11px] text-violet-700">↳ {u.ai_reason}</span>
+                      <span className="mt-0.5 block text-[11px] text-violet-700 dark:text-violet-300">↳ {u.ai_reason}</span>
                     ) : null}
                   </span>
                   <button
@@ -264,12 +264,12 @@ function AssignDialog({
                   className={cn(
                     "rounded-md border px-2 py-1.5 text-left text-xs transition",
                     day === d.date
-                      ? "border-cyan-500 bg-cyan-100 font-semibold text-cyan-900"
+                      ? "border-cyan-500 bg-cyan-100 dark:bg-cyan-500/15 dark:border-cyan-500/30 font-semibold text-cyan-900 dark:text-cyan-200"
                       : "border-border bg-card hover:bg-muted/50",
                   )}
                 >
                   {d.dow_label} · {fmtDate(d.date)}
-                  {d.is_today ? <span className="ml-1 text-cyan-600">bugün</span> : null}
+                  {d.is_today ? <span className="ml-1 text-cyan-600 dark:text-cyan-300">bugün</span> : null}
                 </button>
               ))}
             </div>

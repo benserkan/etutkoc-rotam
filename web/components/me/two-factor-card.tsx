@@ -108,7 +108,7 @@ export function TwoFactorCard() {
     <Card className="p-5">
       <div className="mb-1 flex items-center gap-2">
         {status.enabled ? (
-          <ShieldCheck className="size-5 text-emerald-600" aria-hidden />
+          <ShieldCheck className="size-5 text-emerald-600 dark:text-emerald-300" aria-hidden />
         ) : (
           <ShieldOff className="size-5 text-muted-foreground" aria-hidden />
         )}
@@ -159,10 +159,10 @@ export function TwoFactorCard() {
           </div>
 
           <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:bg-amber-500/10 dark:border-amber-500/30">
-            <p className="text-xs font-medium text-amber-900">
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
               Yedek kodlarınızı güvenli bir yere kaydedin (bir kez gösterilir):
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-1 font-mono text-xs text-amber-900">
+            <div className="mt-2 grid grid-cols-2 gap-1 font-mono text-xs text-amber-900 dark:text-amber-200">
               {setup.backup_codes.map((c) => (
                 <span key={c}>{c}</span>
               ))}

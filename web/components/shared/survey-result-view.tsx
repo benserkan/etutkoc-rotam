@@ -37,16 +37,16 @@ const BAR_TONE: Record<string, string> = {
 };
 
 const PILL_TONE: Record<string, string> = {
-  good: "border-emerald-300 bg-emerald-50 text-emerald-900",
-  warn: "border-amber-300 bg-amber-50 text-amber-900",
-  bad: "border-rose-300 bg-rose-50 text-rose-900",
+  good: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-900 dark:text-emerald-200",
+  warn: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200",
+  bad: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-900 dark:text-rose-200",
 };
 
 const QUADRANT_TONE: Record<string, { card: string; title: string }> = {
-  guclu: { card: "border-emerald-300 bg-emerald-50", title: "text-emerald-900" },
-  zayif: { card: "border-amber-300 bg-amber-50", title: "text-amber-900" },
-  firsat: { card: "border-sky-300 bg-sky-50", title: "text-sky-900" },
-  tehdit: { card: "border-rose-300 bg-rose-50", title: "text-rose-900" },
+  guclu: { card: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30", title: "text-emerald-900 dark:text-emerald-200" },
+  zayif: { card: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30", title: "text-amber-900 dark:text-amber-200" },
+  firsat: { card: "border-sky-300 bg-sky-50 dark:bg-sky-500/15 dark:border-sky-500/30", title: "text-sky-900 dark:text-sky-200" },
+  tehdit: { card: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30", title: "text-rose-900 dark:text-rose-200" },
 };
 
 export function SurveyResultView({ result }: { result: SurveyResultModel }) {
@@ -96,7 +96,7 @@ export function SurveyResultView({ result }: { result: SurveyResultModel }) {
                   <span className="font-medium inline-flex items-center gap-1.5 min-w-0">
                     <span className="truncate">{d.label}</span>
                     {topSet.has(d.key) && result.scoring_type === "dimensions" ? (
-                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded border border-cyan-300 bg-cyan-50 text-cyan-900">
+                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded border border-cyan-300 bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 text-cyan-900 dark:text-cyan-200">
                         öne çıkan
                       </span>
                     ) : null}
@@ -147,13 +147,13 @@ export function SurveyResultView({ result }: { result: SurveyResultModel }) {
               <div key={b.key} className={cn("rounded-lg border p-3", t.card)}>
                 <p className={cn("text-sm font-semibold", t.title)}>{b.label}</p>
                 {b.description ? (
-                  <p className="mt-0.5 text-[11px] text-slate-600">{b.description}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-300">{b.description}</p>
                 ) : null}
                 <ul className="mt-2 space-y-2">
                   {b.entries.map((e, i) => (
                     <li key={i} className="text-xs">
                       <p className="text-slate-500">{e.question}</p>
-                      <p className="mt-0.5 whitespace-pre-wrap text-slate-900">
+                      <p className="mt-0.5 whitespace-pre-wrap text-slate-900 dark:text-slate-200">
                         {e.answer || <span className="italic text-slate-400">— boş bırakıldı</span>}
                       </p>
                     </li>

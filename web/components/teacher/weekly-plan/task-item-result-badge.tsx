@@ -76,11 +76,11 @@ export function TaskItemResultBadge({
           className={`${wrapClass} gap-1.5 ml-2 text-[11px] tabular-nums hover:underline`}
           title="Sonucu düzelt"
         >
-          <span className="text-emerald-700 font-medium">
+          <span className="text-emerald-700 dark:text-emerald-300 font-medium">
             {item.correct_count ?? 0}D
           </span>
           <span className="text-muted-foreground/60">·</span>
-          <span className="text-rose-700 font-medium">
+          <span className="text-rose-700 dark:text-rose-300 font-medium">
             {item.wrong_count ?? 0}Y
           </span>
           {(item.blank_count ?? 0) > 0 ? (

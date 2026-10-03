@@ -106,7 +106,7 @@ export function SurveyFillClient({
         >
           <ArrowLeft className="size-4" aria-hidden /> Anketlerim
         </Link>
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900 inline-flex items-center gap-2 w-full">
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 p-3 text-sm text-emerald-900 dark:text-emerald-200 inline-flex items-center gap-2 w-full">
           <CheckCircle2 className="size-4 shrink-0" aria-hidden />
           Bu anketi tamamladın — işte sonucun. Koçun da görüyor; birlikte
           değerlendireceksiniz.
@@ -197,7 +197,7 @@ export function SurveyFillClient({
             </button>
           </div>
           {missing.size > 0 ? (
-            <p className="text-xs text-rose-700">
+            <p className="text-xs text-rose-700 dark:text-rose-300">
               {missing.size} soru eksik kaldı — kırmızı işaretli soruları
               cevaplayıp tekrar tamamla.
             </p>
@@ -228,7 +228,7 @@ function QuestionCard({
       id={`survey-q-${question.id}`}
       className={cn(
         "rounded-lg border p-3.5 space-y-3 scroll-mt-24",
-        missing ? "border-rose-400 bg-rose-50/50" : "border-border bg-card",
+        missing ? "border-rose-400 bg-rose-50/50 dark:bg-rose-500/10" : "border-border bg-card",
       )}
     >
       <p className="text-sm leading-relaxed">

@@ -53,7 +53,7 @@ export function AdminQuotaClient({ initial }: Props) {
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <Gauge className="size-6 text-indigo-700" aria-hidden />
+          <Gauge className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Kurum Limitleri
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -161,7 +161,7 @@ function QuotaCellView({ cell }: { cell: QuotaCell }) {
           {cell.current} / <strong>∞</strong>
         </span>
       ) : cell.limit === 0 ? (
-        <span className="font-mono text-rose-700">
+        <span className="font-mono text-rose-700 dark:text-rose-300">
           {cell.current} / <strong>KAPALI</strong>
         </span>
       ) : (
@@ -170,9 +170,9 @@ function QuotaCellView({ cell }: { cell: QuotaCell }) {
             className={cn(
               "font-mono",
               cell.is_at_limit
-                ? "text-rose-700 font-bold"
+                ? "text-rose-700 dark:text-rose-300 font-bold"
                 : cell.pct >= 80
-                  ? "text-amber-700 font-semibold"
+                  ? "text-amber-700 dark:text-amber-300 font-semibold"
                   : "text-foreground/80",
             )}
           >
@@ -244,7 +244,7 @@ function SetOverrideButton({
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="text-xs border-violet-200 text-violet-700 hover:bg-violet-50"
+        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50"
       >
         <Sparkles className="size-3" aria-hidden />
         Özel Limit

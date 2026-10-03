@@ -2,7 +2,9 @@
 @import "tw-animate-css";
 
 /* Dark mode için class-based variant — next-themes "class" attribute kullanır */
-@custom-variant dark (&:is(.dark *));
+/* Koyu tema yalnız uygulama içinde: her zaman açık kalan sayfalar (.force-light:
+   anasayfa, fiyatlar, giriş, kayıt, ödeme) dark: sınıflarından MUAF (2026-10-03). */
+@custom-variant dark (&:where(.dark *):not(:where(.force-light, .force-light *)));
 
 /* ============================================================================
    ETÜTKOÇ TASARIM SİSTEMİ — Lacivert (primary) + Haki (secondary) + Antrasit
@@ -60,7 +62,7 @@
     --muted-foreground: 220 7% 74%;      /* L65→L74: koyu panellerde soluk metin okunabilirliği (global) */
     --accent: 215 40% 56%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 60% 50%;
+    --destructive: 0 72% 60%;            /* L50→L60: koyu zeminde kırmızı yazı okunsun (2,9→4,5) */
     --destructive-foreground: 0 0% 100%;
     --border: 220 7% 30%;                /* L25→L30: panel/satır ayraçları belirginleşsin */
     --input: 220 7% 30%;

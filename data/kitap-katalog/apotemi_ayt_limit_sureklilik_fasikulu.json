@@ -1,0 +1,79 @@
+{
+ "publisher": "Apotemi Yayınları",
+ "subject": "AYT Matematik",
+ "type": "konu_anlatimli",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "name": "Apotemi AYT Matematik Limit ve Süreklilik Fasikülü (2023)",
+ "sections": [
+  {
+   "label": "Limit Tanımı",
+   "test_count": 3,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit İşleminin Özellikleri",
+   "test_count": 4,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Parçalı Fonksiyonların Limiti",
+   "test_count": 1,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Mutlak Değerli Fonksiyonların Limiti",
+   "test_count": 1,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit Güçlendirme Testleri (1-6)",
+   "test_count": 6,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Trigonometrik Fonksiyonların Limiti",
+   "test_count": 1,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limitte Belirsizlik Durumları",
+   "test_count": 2,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limitte Belirsizlik Güçlendirme Testleri (1-5)",
+   "test_count": 5,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Süreklilik Tanımı",
+   "test_count": 2,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Sürekli Fonksiyonların Özellikleri",
+   "test_count": 1,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Süreklilik Güçlendirme Testleri (1-3)",
+   "test_count": 3,
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Maraton Testleri",
+   "test_count": 10,
+   "topic": "Limit ve Süreklilik"
+  }
+ ],
+ "warnings": [
+  "Dosya adında 'SB' geçse de içerik KONU ANLATIMLI FASİKÜL: 'ADIM' konu anlatımı + Örnek/Çözüm + 'ADIM PEKİŞTİRME TESTİ' / 'ADIM GÜÇLENDİRME TESTİ' blokları; type=konu_anlatimli.",
+  "Taranmış PDF (metin katmanı yok). Testler gövdedeki renkli şerit bantlarından (mor=Pekiştirme, yeşil=Güçlendirme, turuncu=Maraton) otomatik bant tespiti + görsel okuma ile sayıldı; her bant 1 test. Numarasız 'ADIM PEKİŞTİRME' (açık leylak, testsiz, çözümlü alıştırma) test SAYILMADI.",
+  "Ofset: basılı sayfa = pdf indeksi + 1 (alt bilgi ile doğrulandı). İçindekiler başlangıçları (7,18,33,35,55,57,83,92,107) gövdeyle tutarlı; testler bu aralıklara göre bölümlere atandı.",
+  "Güçlendirme testleri konu karmasıdır (kümülatif) — ayrı satır yapıldı. Güçlendirme-6 (s.48) ve Güçlendirme-5 (s.75) ve Süreklilik Güçlendirme-3 (s.100) '(ÇÖZÜMLÜ)' test: soruları ayrı, çözümleri ayrı 'ÇÖZÜMLER' sayfalarında (s.51-53, 78-81, 103-105); test olarak 1'er sayıldı, çözüm sayfaları sayılmadı.",
+  "Pekiştirme testleri 0.5-3 sayfa arası değişken uzunlukta (ör. s.16 sağ sütunda yarım sayfalık test); her biri 1 test sayıldı.",
+  "Maraton Testleri 1-10 eksiksiz (s.108-127, her biri 2 sayfa). Cevap anahtarı taramada yok."
+ ]
+}

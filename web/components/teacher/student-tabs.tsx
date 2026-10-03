@@ -516,15 +516,15 @@ function BadgeRow({
   activePhase: TeacherStudentDetailResponse["active_phase"];
 }) {
   const phaseTone: Record<string, string> = {
-    winter_break: "border-sky-200 bg-sky-50 text-sky-700",
-    summer_camp: "border-amber-200 bg-amber-50 text-amber-800",
-    exam_prep: "border-rose-200 bg-rose-50 text-rose-700",
+    winter_break: "border-sky-200 bg-sky-50 dark:bg-sky-500/15 dark:border-sky-500/30 text-sky-700 dark:text-sky-300",
+    summer_camp: "border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200",
+    exam_prep: "border-rose-200 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300",
     regular: "border-border bg-muted text-muted-foreground",
   };
   const curriculumTone: Record<string, string> = {
-    lgs: "border-sky-200 bg-sky-50 text-sky-700",
-    klasik_lise: "border-amber-200 bg-amber-50 text-amber-800",
-    maarif_lise: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    lgs: "border-sky-200 bg-sky-50 dark:bg-sky-500/15 dark:border-sky-500/30 text-sky-700 dark:text-sky-300",
+    klasik_lise: "border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200",
+    maarif_lise: "border-emerald-200 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300",
   };
   return (
     <div className="text-sm text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
@@ -619,11 +619,11 @@ function Pill({
   children: React.ReactNode;
 }) {
   const toneClass: Record<PillTone, string> = {
-    indigo: "border-indigo-200 bg-indigo-50 text-indigo-700",
-    violet: "border-violet-200 bg-violet-50 text-violet-700",
-    rose: "border-rose-200 bg-rose-50 text-rose-700",
-    amber: "border-amber-200 bg-amber-50 text-amber-800",
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    indigo: "border-indigo-200 bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300",
+    violet: "border-violet-200 bg-violet-50 dark:bg-violet-500/15 dark:border-violet-500/30 text-violet-700 dark:text-violet-300",
+    rose: "border-rose-200 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300",
+    amber: "border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200",
+    emerald: "border-emerald-200 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300",
     muted: "border-border bg-muted text-muted-foreground",
   };
   return (
@@ -779,9 +779,9 @@ function QuickActions({
 
 // Açık-zemin ton sınıfları (koyu temada da okunur — explicit, purge-safe)
 const SUMMARY_TONE: Record<string, { card: string; title: string; text: string; icon: string }> = {
-  red: { card: "border-rose-300 bg-rose-50 hover:bg-rose-100", title: "text-rose-900", text: "text-rose-800", icon: "text-rose-600" },
-  amber: { card: "border-amber-300 bg-amber-50 hover:bg-amber-100", title: "text-amber-900", text: "text-amber-800", icon: "text-amber-600" },
-  green: { card: "border-emerald-300 bg-emerald-50 hover:bg-emerald-100", title: "text-emerald-900", text: "text-emerald-800", icon: "text-emerald-600" },
+  red: { card: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 hover:bg-rose-100", title: "text-rose-900 dark:text-rose-200", text: "text-rose-800 dark:text-rose-200", icon: "text-rose-600 dark:text-rose-300" },
+  amber: { card: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 hover:bg-amber-100", title: "text-amber-900 dark:text-amber-200", text: "text-amber-800 dark:text-amber-200", icon: "text-amber-600 dark:text-amber-300" },
+  green: { card: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 hover:bg-emerald-100", title: "text-emerald-900 dark:text-emerald-200", text: "text-emerald-800 dark:text-emerald-200", icon: "text-emerald-600 dark:text-emerald-300" },
 };
 
 interface SummaryRow {
@@ -844,10 +844,10 @@ function StatusSummary({
   const extras: SummaryRow[] = [...items.slice(3), ...(data.extra_items ?? [])].map(toRow);
 
   const verdict = {
-    red: { cls: "border-rose-300 bg-rose-50 text-rose-900", title: "Acil müdahale gerekiyor" },
-    amber: { cls: "border-amber-300 bg-amber-50 text-amber-900", title: "Dikkat gerekiyor" },
-    green: { cls: "border-emerald-300 bg-emerald-50 text-emerald-900", title: "Program yolunda" },
-  }[lvl] ?? { cls: "border-slate-300 bg-slate-50 text-slate-900", title: "Durum" };
+    red: { cls: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-900 dark:text-rose-200", title: "Acil müdahale gerekiyor" },
+    amber: { cls: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200", title: "Dikkat gerekiyor" },
+    green: { cls: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-900 dark:text-emerald-200", title: "Program yolunda" },
+  }[lvl] ?? { cls: "border-slate-300 bg-slate-50 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-900 dark:text-slate-200", title: "Durum" };
 
   return (
     <Card>
@@ -856,7 +856,7 @@ function StatusSummary({
       </CardHeader>
       <CardContent className="space-y-3">
         {paused ? (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900">
+          <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-amber-900 dark:text-amber-200">
             <p className="font-semibold flex items-center gap-1.5">
               <PauseCircle className="size-4" aria-hidden /> Yaz molasında — takip duraklatıldı
             </p>
@@ -1071,10 +1071,10 @@ function GorevBreakdownCard({
                     <strong
                       className={cn(
                         s.pct >= 70
-                          ? "text-emerald-700"
+                          ? "text-emerald-700 dark:text-emerald-300"
                           : s.pct >= 40
-                            ? "text-amber-700"
-                            : "text-rose-700",
+                            ? "text-amber-700 dark:text-amber-300"
+                            : "text-rose-700 dark:text-rose-300",
                       )}
                     >
                       {s.gorev_done}/{s.gorev_total} görev
@@ -1213,9 +1213,9 @@ function Kpi({
   href?: string;
 }) {
   const valueClass = {
-    good: "text-emerald-600",
-    warn: "text-amber-600",
-    bad: "text-rose-600",
+    good: "text-emerald-600 dark:text-emerald-300",
+    warn: "text-amber-600 dark:text-amber-300",
+    bad: "text-rose-600 dark:text-rose-300",
   }[emphasize ?? ("none" as never)];
   const inner = (
     <CardContent className="p-4 space-y-1">

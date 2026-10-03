@@ -408,8 +408,8 @@ function ExamRow({
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {formatTRDate(row.exam_date)} ·{" "}
-                <span className="text-emerald-600">{row.total_correct}D</span>{" "}
-                <span className="text-rose-600">{row.total_wrong}Y</span>{" "}
+                <span className="text-emerald-600 dark:text-emerald-300">{row.total_correct}D</span>{" "}
+                <span className="text-rose-600 dark:text-rose-300">{row.total_wrong}Y</span>{" "}
                 <span className="text-muted-foreground">{row.total_blank}B</span>
                 {" · "}
                 {row.total_questions} soru
@@ -461,7 +461,7 @@ function ExamRow({
                   aria-label="İçe aktarılan satırları düzenle"
                   title="Soru satırlarını düzelt (konu/sonuç) — net yeniden hesaplanır, kredi düşmez"
                 >
-                  <FileCog className="size-4 text-violet-600" aria-hidden />
+                  <FileCog className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
                 </Button>
               ) : null}
               <ExamStudentShareButton row={row} share={share} />
@@ -488,7 +488,7 @@ function ExamRow({
                   aria-label="Sonucu veliye duyur"
                   title="Veliye gidecek maili önizle, düzenle ve gönder"
                 >
-                  <Mail className="size-4 text-teal-600" aria-hidden />
+                  <Mail className="size-4 text-teal-600 dark:text-teal-300" aria-hidden />
                 </Button>
               )}
               <Button
@@ -573,10 +573,10 @@ function ExamRow({
                           </span>
                         ) : null}
                       </td>
-                      <td className="py-1 text-right tabular-nums text-emerald-600">
+                      <td className="py-1 text-right tabular-nums text-emerald-600 dark:text-emerald-300">
                         {s.correct}
                       </td>
-                      <td className="py-1 text-right tabular-nums text-rose-600">
+                      <td className="py-1 text-right tabular-nums text-rose-600 dark:text-rose-300">
                         {s.wrong}
                       </td>
                       <td className="py-1 text-right tabular-nums text-muted-foreground">
@@ -831,7 +831,7 @@ function ExamForm({
       {mode === "total" ? (
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1">
-            <Label htmlFor="ex-c" className="text-emerald-700">Doğru</Label>
+            <Label htmlFor="ex-c" className="text-emerald-700 dark:text-emerald-300">Doğru</Label>
             <Input
               id="ex-c"
               type="number"
@@ -842,7 +842,7 @@ function ExamForm({
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="ex-w" className="text-rose-700">Yanlış</Label>
+            <Label htmlFor="ex-w" className="text-rose-700 dark:text-rose-300">Yanlış</Label>
             <Input
               id="ex-w"
               type="number"

@@ -34,8 +34,8 @@ function pct(v: number): string {
 // ısı haritası hücre tonu — purge-safe statik sınıflar, iki temada okunur
 function cellTone(acc: number): string {
   if (acc >= 0.75) return "bg-emerald-500/85 text-white";
-  if (acc >= 0.5) return "bg-emerald-300/70 text-emerald-950";
-  if (acc > 0) return "bg-amber-300/75 text-amber-950";
+  if (acc >= 0.5) return "bg-emerald-300/70 text-emerald-950 dark:text-emerald-200";
+  if (acc > 0) return "bg-amber-300/75 text-amber-950 dark:text-amber-200";
   return "bg-rose-400/85 text-white";
 }
 
@@ -126,7 +126,7 @@ export function ExamTopicAnalysis({
       {opps.length > 0 ? (
         <div className="rounded-xl border border-border bg-card px-4 py-3">
           <h5 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-            <Target className="size-4 text-rose-600" aria-hidden />
+            <Target className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
             Net fırsatı
           </h5>
           <p className="mb-3 mt-0.5 text-xs leading-relaxed text-muted-foreground">

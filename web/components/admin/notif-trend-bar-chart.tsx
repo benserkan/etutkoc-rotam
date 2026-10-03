@@ -97,9 +97,9 @@ function TrendTooltip({
     <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md">
       <div className="mb-1 font-medium">{d.label}</div>
       <div className="space-y-0.5">
-        <div className="flex justify-between gap-3"><span className="text-emerald-600">Gönderildi</span><span className="tabular-nums">{d.sent}</span></div>
-        <div className="flex justify-between gap-3"><span className="text-rose-600">Başarısız</span><span className="tabular-nums">{d.failed}</span></div>
-        <div className="flex justify-between gap-3"><span className="text-amber-600">Kuyrukta</span><span className="tabular-nums">{d.queued}</span></div>
+        <div className="flex justify-between gap-3"><span className="text-emerald-600 dark:text-emerald-300">Gönderildi</span><span className="tabular-nums">{d.sent}</span></div>
+        <div className="flex justify-between gap-3"><span className="text-rose-600 dark:text-rose-300">Başarısız</span><span className="tabular-nums">{d.failed}</span></div>
+        <div className="flex justify-between gap-3"><span className="text-amber-600 dark:text-amber-300">Kuyrukta</span><span className="tabular-nums">{d.queued}</span></div>
         <div className="flex justify-between gap-3"><span className="text-slate-500">Engellendi</span><span className="tabular-nums">{d.suppressed}</span></div>
         <div className="mt-0.5 flex justify-between gap-3 border-t border-border pt-0.5 font-medium"><span>Toplam</span><span className="tabular-nums">{total}</span></div>
       </div>

@@ -50,7 +50,7 @@ export function AdminFeatureFlagsClient({ initial }: Props) {
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <Sparkles className="size-6 text-indigo-700" aria-hidden />
+          <Sparkles className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Özellik Anahtarları
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -126,7 +126,7 @@ function FlagRow({ flag }: { flag: FeatureFlagItem }) {
         ) : (
           <>
             {flag.override_enabled_count > 0 && (
-              <span className="text-emerald-700">
+              <span className="text-emerald-700 dark:text-emerald-300">
                 {flag.override_enabled_count} açık
               </span>
             )}
@@ -135,7 +135,7 @@ function FlagRow({ flag }: { flag: FeatureFlagItem }) {
                 {flag.override_enabled_count > 0 && (
                   <span className="text-muted-foreground/40 mx-1">·</span>
                 )}
-                <span className="text-rose-700">
+                <span className="text-rose-700 dark:text-rose-300">
                   {flag.override_disabled_count} kapalı
                 </span>
               </>
@@ -146,7 +146,7 @@ function FlagRow({ flag }: { flag: FeatureFlagItem }) {
       <td className="px-4 py-3 text-right">
         <Link
           href={`/admin/feature-flags/${flag.id}`}
-          className="text-xs text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-0.5"
+          className="text-xs text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 inline-flex items-center gap-0.5"
         >
           Kuruma özel ayar
           <ArrowRight className="size-3" aria-hidden />
@@ -172,8 +172,8 @@ function ToggleButton({ flag }: { flag: FeatureFlagItem }) {
         className={cn(
           "text-xs px-3 py-1 rounded font-medium border",
           flag.enabled_globally
-            ? "bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200"
-            : "bg-rose-100 text-rose-700 border-rose-300 hover:bg-rose-200",
+            ? "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border-emerald-300 hover:bg-emerald-200"
+            : "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 border-rose-300 hover:bg-rose-200",
         )}
       >
         {flag.enabled_globally ? "● Açık" : "○ Kapalı"}

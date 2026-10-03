@@ -19,13 +19,13 @@ const BADGE_TONES: Record<string, string> = {
   indigo: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
   blue: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200",
   teal: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-500/10 dark:border-teal-500/30 dark:text-teal-200",
-  stone: "bg-stone-100 text-stone-600 border-stone-200",
+  stone: "bg-stone-100 dark:bg-stone-500/15 dark:border-stone-500/30 text-stone-600 dark:text-slate-300 border-stone-200",
 };
 
 const SOLID_TONES: Record<string, string> = {
-  slate: "bg-slate-100 text-slate-700",
+  slate: "bg-slate-100 dark:bg-slate-500/15 text-slate-700 dark:text-slate-300",
   emerald: "bg-emerald-600 text-white",
-  amber: "bg-amber-500 text-white",
+  amber: "bg-amber-500 text-amber-950",
   rose: "bg-rose-600 text-white",
   indigo: "bg-indigo-600 text-white",
 };
@@ -38,16 +38,16 @@ const ANOMALY_TONES: Record<string, string> = {
   emerald: "border-emerald-200 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30",
 };
 const ANOMALY_TITLE: Record<string, string> = {
-  rose: "text-rose-800",
-  amber: "text-amber-800",
-  slate: "text-slate-800",
-  emerald: "text-emerald-800",
+  rose: "text-rose-800 dark:text-rose-200",
+  amber: "text-amber-800 dark:text-amber-200",
+  slate: "text-slate-800 dark:text-slate-200",
+  emerald: "text-emerald-800 dark:text-emerald-200",
 };
 const ANOMALY_HINT: Record<string, string> = {
-  rose: "text-rose-700",
-  amber: "text-amber-700",
-  slate: "text-slate-600",
-  emerald: "text-emerald-700",
+  rose: "text-rose-700 dark:text-rose-300",
+  amber: "text-amber-700 dark:text-amber-300",
+  slate: "text-slate-600 dark:text-slate-300",
+  emerald: "text-emerald-700 dark:text-emerald-300",
 };
 
 export function badgeTone(tone: string): string {

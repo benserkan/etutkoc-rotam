@@ -68,7 +68,7 @@ export function BurnoutClient({ initial }: Props) {
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 flex items-center gap-2">
-          <Activity className="size-6 text-rose-600" aria-hidden />
+          <Activity className="size-6 text-rose-600 dark:text-rose-300" aria-hidden />
           Kurum Tükenmişlik Panosu
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -209,7 +209,7 @@ function EmptyState() {
     <Card>
       <CardContent className="p-12 text-center">
         <PartyPopper
-          className="size-12 mx-auto text-emerald-600 mb-3"
+          className="size-12 mx-auto text-emerald-600 dark:text-emerald-300 mb-3"
           aria-hidden
         />
         <p className="text-sm text-muted-foreground">

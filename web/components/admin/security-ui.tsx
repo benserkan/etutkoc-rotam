@@ -25,9 +25,9 @@ const SEVERITY_BADGE: Record<string, string> = {
   info: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
 };
 const SEVERITY_CARD: Record<string, string> = {
-  critical: "border-l-rose-500 bg-rose-50/40",
-  warn: "border-l-amber-500 bg-amber-50/40",
-  info: "border-l-sky-500 bg-sky-50/40",
+  critical: "border-l-rose-500 bg-rose-50/40 dark:bg-rose-500/10",
+  warn: "border-l-amber-500 bg-amber-50/40 dark:bg-amber-500/10",
+  info: "border-l-sky-500 bg-sky-50/40 dark:bg-sky-500/10",
 };
 const SEVERITY_ICON: Record<string, LucideIcon> = {
   critical: ShieldAlert,
@@ -35,9 +35,9 @@ const SEVERITY_ICON: Record<string, LucideIcon> = {
   info: Info,
 };
 const SEVERITY_ICON_COLOR: Record<string, string> = {
-  critical: "text-rose-600",
-  warn: "text-amber-600",
-  info: "text-sky-600",
+  critical: "text-rose-600 dark:text-rose-300",
+  warn: "text-amber-600 dark:text-amber-300",
+  info: "text-sky-600 dark:text-sky-300",
 };
 export const SEVERITY_LABEL: Record<string, string> = {
   critical: "Kritik",
@@ -52,9 +52,9 @@ const LEVEL_BADGE: Record<string, string> = {
   critical: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
   error: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
   pending: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-  never: "bg-slate-100 text-slate-600 border-slate-200",
-  disabled: "bg-slate-100 text-slate-500 border-slate-200",
-  unknown: "bg-slate-100 text-slate-600 border-slate-200",
+  never: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border-slate-200",
+  disabled: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-500 border-slate-200",
+  unknown: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border-slate-200",
 };
 export const LEVEL_LABEL: Record<string, string> = {
   ok: "Sağlıklı",
@@ -143,9 +143,9 @@ export function fmtPct(v: number | null | undefined): string {
 /** Başarı yüzdesine göre metin rengi. */
 export function successPctColor(v: number | null | undefined): string {
   if (v == null) return "text-muted-foreground";
-  if (v >= 95) return "text-emerald-600";
-  if (v >= 80) return "text-amber-600";
-  return "text-rose-600";
+  if (v >= 95) return "text-emerald-600 dark:text-emerald-300";
+  if (v >= 80) return "text-amber-600 dark:text-amber-300";
+  return "text-rose-600 dark:text-rose-300";
 }
 
 // =============================================================================
@@ -170,35 +170,35 @@ const TONE_DOT: Record<string, string> = {
 };
 
 const TONE_BADGE: Record<string, string> = {
-  emerald: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  amber: "bg-amber-100 text-amber-800 border-amber-200",
-  rose: "bg-rose-100 text-rose-800 border-rose-200",
-  slate: "bg-slate-100 text-slate-700 border-slate-200",
-  yellow: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  indigo: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  sky: "bg-sky-100 text-sky-800 border-sky-200",
-  purple: "bg-purple-100 text-purple-800 border-purple-200",
-  blue: "bg-blue-100 text-blue-800 border-blue-200",
-  cyan: "bg-cyan-100 text-cyan-800 border-cyan-200",
-  violet: "bg-violet-100 text-violet-800 border-violet-200",
-  fuchsia: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200",
-  orange: "bg-orange-100 text-orange-800 border-orange-200",
+  emerald: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-200",
+  amber: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-200",
+  rose: "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 border-rose-200",
+  slate: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-700 dark:text-slate-300 border-slate-200",
+  yellow: "bg-yellow-100 dark:bg-yellow-500/15 dark:border-yellow-500/30 text-yellow-800 dark:text-yellow-200 border-yellow-200",
+  indigo: "bg-indigo-100 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-800 dark:text-indigo-200 border-indigo-200",
+  sky: "bg-sky-100 dark:bg-sky-500/15 dark:border-sky-500/30 text-sky-800 dark:text-sky-200 border-sky-200",
+  purple: "bg-purple-100 dark:bg-purple-500/15 dark:border-purple-500/30 text-purple-800 dark:text-purple-200 border-purple-200",
+  blue: "bg-blue-100 dark:bg-blue-500/15 dark:border-blue-500/30 text-blue-800 dark:text-blue-200 border-blue-200",
+  cyan: "bg-cyan-100 dark:bg-cyan-500/15 dark:border-cyan-500/30 text-cyan-800 dark:text-cyan-200 border-cyan-200",
+  violet: "bg-violet-100 dark:bg-violet-500/15 dark:border-violet-500/30 text-violet-800 dark:text-violet-200 border-violet-200",
+  fuchsia: "bg-fuchsia-100 dark:bg-fuchsia-500/15 dark:border-fuchsia-500/30 text-fuchsia-800 dark:text-fuchsia-200 border-fuchsia-200",
+  orange: "bg-orange-100 dark:bg-orange-500/15 dark:border-orange-500/30 text-orange-800 dark:text-orange-200 border-orange-200",
 };
 
 const TONE_TEXT: Record<string, string> = {
-  emerald: "text-emerald-700",
-  amber: "text-amber-700",
-  rose: "text-rose-700",
-  slate: "text-slate-600",
-  yellow: "text-yellow-700",
-  indigo: "text-indigo-700",
-  sky: "text-sky-700",
-  purple: "text-purple-700",
-  blue: "text-blue-700",
-  cyan: "text-cyan-700",
-  violet: "text-violet-700",
-  fuchsia: "text-fuchsia-700",
-  orange: "text-orange-700",
+  emerald: "text-emerald-700 dark:text-emerald-300",
+  amber: "text-amber-700 dark:text-amber-300",
+  rose: "text-rose-700 dark:text-rose-300",
+  slate: "text-slate-600 dark:text-slate-300",
+  yellow: "text-yellow-700 dark:text-yellow-300",
+  indigo: "text-indigo-700 dark:text-indigo-300",
+  sky: "text-sky-700 dark:text-sky-300",
+  purple: "text-purple-700 dark:text-purple-300",
+  blue: "text-blue-700 dark:text-blue-300",
+  cyan: "text-cyan-700 dark:text-cyan-300",
+  violet: "text-violet-700 dark:text-violet-300",
+  fuchsia: "text-fuchsia-700 dark:text-fuchsia-300",
+  orange: "text-orange-700 dark:text-orange-300",
 };
 
 export function toneDot(color: string): string {

@@ -66,7 +66,7 @@ export function MembershipActions({
       {/* Hesabı olmayan: kaydol ve öde */}
       <a
         href={signupHref}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-700 px-5 py-3 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-700 px-5 py-3 text-sm font-semibold text-cyan-800 dark:text-cyan-200 transition hover:bg-cyan-50"
       >
         <UserPlus className="size-4" aria-hidden />
         Hesabım yok — Kaydol ve öde

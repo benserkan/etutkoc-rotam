@@ -54,7 +54,7 @@ const CATEGORY_TONE: Record<string, string> = {
   kurum_veli: "bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
   kurum_ogrenci: "bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
   admin_yonetici: "bg-fuchsia-50 text-fuchsia-900 border-fuchsia-200 dark:bg-fuchsia-500/10 dark:border-fuchsia-500/30 dark:text-fuchsia-200",
-  admin_sistem: "bg-slate-100 text-slate-900 border-slate-300",
+  admin_sistem: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-900 dark:text-slate-200 border-slate-300",
 };
 
 export function WhatsAppTemplatesClient({ initial }: Props) {
@@ -88,7 +88,7 @@ export function WhatsAppTemplatesClient({ initial }: Props) {
     <div className="space-y-5">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-[#117A86] font-semibold">
+          <p className="text-[11px] uppercase tracking-wider text-[#117A86] dark:text-teal-300 font-semibold">
             <MessageSquare className="inline size-3.5 mr-1" aria-hidden />
             Manuel WhatsApp şablonları
           </p>
@@ -223,7 +223,7 @@ function Stat({
 }) {
   const cls =
     tone === "emerald"
-      ? "text-emerald-700"
+      ? "text-emerald-700 dark:text-emerald-300"
       : "text-foreground";
   return (
     <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
@@ -291,7 +291,7 @@ function TemplateRow({
             {template.key}
           </span>
           {!template.is_active && (
-            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded">
+            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200 px-1.5 py-0.5 rounded">
               <CircleSlash className="size-3" aria-hidden />
               Pasif
             </span>
@@ -337,7 +337,7 @@ function TemplateRow({
           disabled={toggleMut.isPending}
           aria-label={template.is_active ? "Pasife al" : "Aktif et"}
           title={template.is_active ? "Pasife al" : "Aktif et"}
-          className={template.is_active ? "text-amber-700" : "text-emerald-700"}
+          className={template.is_active ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}
         >
           {template.is_active ? (
             <CircleSlash className="size-3.5" aria-hidden />
@@ -352,7 +352,7 @@ function TemplateRow({
           disabled={template.is_active}
           title={template.is_active ? "Önce pasife alın" : "Sil"}
           aria-label="Sil"
-          className="text-rose-700 disabled:opacity-30"
+          className="text-rose-700 dark:text-rose-300 disabled:opacity-30"
         >
           <Trash2 className="size-3.5" aria-hidden />
         </Button>
@@ -649,7 +649,7 @@ function TemplateFormDialog({
                       size="sm"
                       variant="ghost"
                       onClick={() => removeVar(i)}
-                      className="text-rose-700"
+                      className="text-rose-700 dark:text-rose-300"
                     >
                       <Trash2 className="size-3.5" aria-hidden />
                     </Button>
@@ -772,7 +772,7 @@ function PreviewBlock({
             {previewMut.data.rendered}
           </div>
           {previewMut.data.warnings.length > 0 ? (
-            <ul className="text-[11px] text-amber-800 list-disc pl-4 space-y-0.5">
+            <ul className="text-[11px] text-amber-800 dark:text-amber-200 list-disc pl-4 space-y-0.5">
               {previewMut.data.warnings.slice(0, 5).map((w, i) => (
                 <li key={i}>{w}</li>
               ))}

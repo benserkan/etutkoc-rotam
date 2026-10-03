@@ -74,7 +74,7 @@ const STATUS_OPTIONS: { value: SessionStatus; label: string }[] = [
 const STATUS_TONE: Record<SessionStatus, string> = {
   done: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
   postponed: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-  cancelled: "border-slate-200 bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30",
+  cancelled: "border-slate-200 bg-slate-50 text-slate-600 dark:text-slate-300 dark:bg-slate-500/10 dark:border-slate-500/30",
   no_show: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
 };
 const CHANNEL_OPTIONS: { value: SessionChannel; label: string }[] = [
@@ -224,7 +224,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           <Button
             size="sm"
             variant="outline"
-            className="border-violet-200 text-violet-700 hover:bg-violet-50 hover:text-violet-800"
+            className="border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50 hover:text-violet-800"
             onClick={() => setInsightOpen(true)}
             disabled={!hasSessions || aiLocked}
             title={aiLocked ? "Ücretli pakette kullanılabilir" : hasSessions ? "Seans geçmişinden bir sonraki seans için AI önerisi" : "Önce en az bir seans kaydı gerekir"}
@@ -234,7 +234,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           <Button
             size="sm"
             variant="outline"
-            className="border-cyan-200 text-cyan-700 hover:bg-cyan-50 hover:text-cyan-800"
+            className="border-cyan-200 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
             onClick={() => {
               if (reports.length === 0) createReport.mutate({}, { onSuccess: () => setReportsOpen(true) });
               else setReportsOpen((v) => !v);
@@ -256,7 +256,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           <Lock className="size-4 shrink-0" aria-hidden />
           Yapay zekâ özellikleri (sesli dikte, fotoğraftan doldurma, koçluk içgörüsü) ücretli
           pakette açıktır.
-          <Link href="/teacher/plan" className="ml-auto font-medium text-amber-900 underline">
+          <Link href="/teacher/plan" className="ml-auto font-medium text-amber-900 dark:text-amber-200 underline">
             Paketi görüntüle
           </Link>
         </div>
@@ -380,7 +380,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="size-5 text-cyan-600" aria-hidden /> Yapay zekâ özellikleri onayı
+              <ShieldCheck className="size-5 text-cyan-600 dark:text-cyan-300" aria-hidden /> Yapay zekâ özellikleri onayı
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
@@ -390,10 +390,10 @@ export function StudentSessionsPanel({ studentId }: Props) {
               Devam etmek için onayınız gerekir.
             </p>
             <ul className="space-y-1.5 text-xs">
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Fotoğraf / ses <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Yalnızca <strong>siz</strong> görürsünüz; öğrenci ve veli erişemez.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Çıkan sonuç bir taslaktır; kaydetmeden önce kontrol edip düzeltebilirsiniz.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Fotoğraf / ses <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Yalnızca <strong>siz</strong> görürsünüz; öğrenci ve veli erişemez.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Çıkan sonuç bir taslaktır; kaydetmeden önce kontrol edip düzeltebilirsiniz.</li>
             </ul>
             <p className="text-[11px]">Bu onayı dilediğinizde geri çekebilirsiniz; bu özellikleri kullanmadan da seansları elle girebilirsiniz.</p>
           </div>
@@ -413,7 +413,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Lightbulb className="size-5 text-violet-600" aria-hidden /> Koçluk içgörüsü
+              <Lightbulb className="size-5 text-violet-600 dark:text-violet-300" aria-hidden /> Koçluk içgörüsü
             </DialogTitle>
           </DialogHeader>
 
@@ -455,21 +455,21 @@ export function StudentSessionsPanel({ studentId }: Props) {
               {cachedInsight.agenda_suggestions.length > 0 ? (
                 <InsightList
                   title="Bir sonraki seansta konuş"
-                  icon={<CalendarCheck className="size-4 text-cyan-600" aria-hidden />}
+                  icon={<CalendarCheck className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />}
                   items={cachedInsight.agenda_suggestions}
                 />
               ) : null}
               {cachedInsight.psychological_tips.length > 0 ? (
                 <InsightList
                   title="Yaklaşım ipuçları"
-                  icon={<Sparkles className="size-4 text-violet-600" aria-hidden />}
+                  icon={<Sparkles className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />}
                   items={cachedInsight.psychological_tips}
                 />
               ) : null}
               {cachedInsight.watch_outs.length > 0 ? (
                 <InsightList
                   title="Dikkat"
-                  icon={<AlertTriangle className="size-4 text-amber-600" aria-hidden />}
+                  icon={<AlertTriangle className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />}
                   items={cachedInsight.watch_outs}
                   tone="warn"
                 />
@@ -531,7 +531,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "go
     <Card>
       <CardContent className="space-y-1 p-4">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className={cn("text-2xl font-semibold tabular-nums", tone === "good" && "text-emerald-600")}>{value}</p>
+        <p className={cn("text-2xl font-semibold tabular-nums", tone === "good" && "text-emerald-600 dark:text-emerald-300")}>{value}</p>
       </CardContent>
     </Card>
   );
@@ -669,7 +669,7 @@ function DictateButton({
       className={cn(
         "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium transition",
         recording
-          ? "border-rose-300 bg-rose-50 text-rose-700"
+          ? "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300"
           : "border-border hover:bg-muted disabled:opacity-50",
       )}
       title="Konuşarak yazdır (sesli dikte)"
@@ -904,7 +904,7 @@ function SessionForm({
 
       {!isEdit ? (
         <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3 text-xs dark:bg-cyan-500/10 dark:border-cyan-500/30">
-          <p className="mb-1.5 font-semibold text-cyan-900">Bu haftanın verisi (otomatik)</p>
+          <p className="mb-1.5 font-semibold text-cyan-900 dark:text-cyan-200">Bu haftanın verisi (otomatik)</p>
           {prefill.isLoading ? (
             <p className="text-muted-foreground">Hesaplanıyor…</p>
           ) : prefill.data ? (

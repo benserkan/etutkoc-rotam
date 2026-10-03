@@ -30,9 +30,9 @@ const INTERVALS = [
 ];
 
 function severityMeta(sev: string): { dot: string; badge: string; Icon: typeof Circle } {
-  if (sev === "critical") return { dot: "bg-rose-100 text-rose-700", badge: "bg-rose-50 text-rose-700", Icon: AlertTriangle };
-  if (sev === "warn") return { dot: "bg-amber-100 text-amber-700", badge: "bg-amber-50 text-amber-700", Icon: AlertTriangle };
-  return { dot: "bg-slate-100 text-slate-600", badge: "bg-slate-50 text-slate-600", Icon: Circle };
+  if (sev === "critical") return { dot: "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300", badge: "bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300", Icon: AlertTriangle };
+  if (sev === "warn") return { dot: "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300", badge: "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300", Icon: AlertTriangle };
+  return { dot: "bg-slate-100 dark:bg-slate-500/15 text-slate-600 dark:text-slate-300", badge: "bg-slate-50 dark:bg-slate-500/15 text-slate-600 dark:text-slate-300", Icon: Circle };
 }
 
 export function SecurityLiveClient({ initial }: Props) {
@@ -56,7 +56,7 @@ export function SecurityLiveClient({ initial }: Props) {
             ← Güvenlik Kamarası
           </Link>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Radio className="size-6 text-rose-600" aria-hidden />
+            <Radio className="size-6 text-rose-600 dark:text-rose-300" aria-hidden />
             Canlı Olay Akışı
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">

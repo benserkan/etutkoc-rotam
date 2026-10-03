@@ -215,7 +215,7 @@ function ShareDialog({
             </span>
           </label>
 
-          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+          {error ? <p className="text-sm text-rose-600 dark:text-rose-300">{error}</p> : null}
         </div>
 
         <DialogFooter>

@@ -160,7 +160,7 @@ export function InlineSuggestions({
       {trackRequired && trackMissing ? (
         <div className="px-5 py-2.5 border-b border-border/60 flex items-start gap-2.5 text-xs">
           <AlertTriangle
-            className="size-4 text-amber-600 flex-shrink-0 mt-0.5"
+            className="size-4 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-0.5"
             aria-hidden
           />
           <div className="flex-1">

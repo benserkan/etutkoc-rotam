@@ -60,7 +60,7 @@ export default async function MeAccountPage() {
       <div>
         <Link
           href={panelHome}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#117A86] hover:text-[#0E5F69] transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#117A86] dark:text-teal-300 hover:text-[#0E5F69] transition-colors"
         >
           <ArrowLeft className="size-3.5" aria-hidden />
           {panelHomeLabel}

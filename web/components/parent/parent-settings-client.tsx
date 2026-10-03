@@ -145,7 +145,7 @@ export function ParentSettingsClient({ initial }: Props) {
     <div className="space-y-5">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight font-display inline-flex items-center gap-2">
-          <SettingsIcon className="size-6 text-[#117A86]" aria-hidden />
+          <SettingsIcon className="size-6 text-[#117A86] dark:text-teal-300" aria-hidden />
           Bildirim Tercihleri
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -183,7 +183,7 @@ export function ParentSettingsClient({ initial }: Props) {
 
 function UnsubscribedBanner({ unsubscribedAt }: { unsubscribedAt: string }) {
   return (
-    <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start gap-2">
+    <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-200 flex items-start gap-2">
       <VolumeX className="size-5 shrink-0 mt-0.5" aria-hidden />
       <div>
         <strong>Tüm bildirimler kapalı.</strong> Aşağıdan yeniden tercihlerinizi
@@ -252,7 +252,7 @@ function PreferencesForm({
       <form onSubmit={onSubmit}>
         <div className="px-5 py-3 border-b border-border">
           <h2 className="font-semibold inline-flex items-center gap-1.5">
-            <BellRing className="size-4 text-[#117A86]" aria-hidden />
+            <BellRing className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
             Bildirim Türleri
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -286,7 +286,7 @@ function PreferencesForm({
             <label
               className={cn(
                 "inline-flex items-center justify-center px-3 py-1.5 cursor-pointer rounded",
-                state.appointment ? "text-[#117A86]" : "text-muted-foreground",
+                state.appointment ? "text-[#117A86] dark:text-teal-300" : "text-muted-foreground",
               )}
               aria-label="Görüşme bildirimi — E-posta ve uygulama"
             >
@@ -317,7 +317,7 @@ function PreferencesForm({
               <label
                 className={cn(
                   "inline-flex items-center justify-center px-3 py-1.5 cursor-pointer rounded",
-                  state[row.emailKey] ? "text-[#117A86]" : "text-muted-foreground",
+                  state[row.emailKey] ? "text-[#117A86] dark:text-teal-300" : "text-muted-foreground",
                 )}
                 aria-label={`${row.title} — E-posta`}
               >
@@ -333,7 +333,7 @@ function PreferencesForm({
               <label
                 className={cn(
                   "inline-flex items-center justify-center px-3 py-1.5 cursor-pointer rounded",
-                  state[row.waKey] ? "text-[#117A86]" : "text-muted-foreground",
+                  state[row.waKey] ? "text-[#117A86] dark:text-teal-300" : "text-muted-foreground",
                 )}
                 aria-label={`${row.title} — WhatsApp`}
               >
@@ -402,7 +402,7 @@ function PreferencesForm({
             />
             <div className="flex-1 text-xs">
               <div className="font-semibold text-foreground mb-0.5 inline-flex items-center gap-1.5">
-                <ShieldCheck className="size-3.5 text-[#117A86]" aria-hidden />
+                <ShieldCheck className="size-3.5 text-[#117A86] dark:text-teal-300" aria-hidden />
                 Çocuğum WhatsApp mesajı alabilir
               </div>
               <p className="text-muted-foreground leading-relaxed">
@@ -416,7 +416,7 @@ function PreferencesForm({
 
         <div className="px-5 py-4 border-t border-border bg-muted/30">
           <h3 className="text-sm font-medium mb-3 inline-flex items-center gap-1.5">
-            <Moon className="size-4 text-[#117A86]" aria-hidden />
+            <Moon className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
             Sessiz saatler
           </h3>
           <div className="flex items-center gap-3 flex-wrap">
@@ -482,7 +482,7 @@ function ChildrenMuteCard({ childLinks }: { childLinks: ParentChildLink[] }) {
     <Card>
       <div className="px-5 py-3 border-b border-border">
         <h2 className="font-semibold inline-flex items-center gap-1.5">
-          <Users className="size-4 text-[#117A86]" aria-hidden />
+          <Users className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
           Çocuk Başına Bildirim
         </h2>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -530,7 +530,7 @@ function ChildMuteRow({ child }: { child: ParentChildLink }) {
       <div className="flex items-center gap-2 shrink-0">
         {child.muted ? (
           <>
-            <span className="text-[10px] uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
+            <span className="text-[10px] uppercase tracking-wider bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border border-amber-200 px-2 py-0.5 rounded">
               Susturulmuş
             </span>
             <Button
@@ -538,7 +538,7 @@ function ChildMuteRow({ child }: { child: ParentChildLink }) {
               variant="outline"
               onClick={toggle}
               disabled={mut.isPending}
-              className="text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+              className="text-emerald-700 dark:text-emerald-300 border-emerald-200 hover:bg-emerald-50"
             >
               {mut.isPending ? (
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -548,7 +548,7 @@ function ChildMuteRow({ child }: { child: ParentChildLink }) {
           </>
         ) : (
           <>
-            <span className="text-[10px] uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded">
+            <span className="text-[10px] uppercase tracking-wider bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border border-emerald-200 px-2 py-0.5 rounded">
               Aktif
             </span>
             <Button
@@ -556,7 +556,7 @@ function ChildMuteRow({ child }: { child: ParentChildLink }) {
               variant="outline"
               onClick={toggle}
               disabled={mut.isPending}
-              className="text-rose-700 border-rose-200 hover:bg-rose-50"
+              className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50"
             >
               Sustur
             </Button>
@@ -608,7 +608,7 @@ function WhatsAppCard({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
       <div className="px-5 py-3 border-b border-border flex items-start justify-between gap-3">
         <div>
           <h2 className="font-semibold inline-flex items-center gap-1.5">
-            <MessageCircle className="size-4 text-[#117A86]" aria-hidden />
+            <MessageCircle className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
             WhatsApp Bildirimleri
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -640,7 +640,7 @@ function WhatsAppCard({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
 function WhatsAppStatusBadge({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
   if (whatsapp.enabled) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
         <CheckCircle2 className="size-3" aria-hidden />
         Aktif
       </span>
@@ -648,14 +648,14 @@ function WhatsAppStatusBadge({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
   }
   if (whatsapp.pending_verify) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-200">
         <Clock className="size-3" aria-hidden />
         Kod bekleniyor
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200">
       Kapalı
     </span>
   );
@@ -688,7 +688,7 @@ function WhatsAppActivePanel({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
         size="sm"
         variant="outline"
         onClick={() => setConfirmOpen(true)}
-        className="text-rose-700 border-rose-200 hover:bg-rose-50"
+        className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50"
       >
         WhatsApp&apos;ı kapat
       </Button>
@@ -754,10 +754,10 @@ function WhatsAppPendingPanel({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
 
       {whatsapp.dev_test_code && (
         <div className="rounded-md border border-slate-300 bg-slate-100 p-2 text-xs flex items-center gap-2 text-slate-800 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200">
-          <ShieldCheck className="size-4 text-slate-600 shrink-0" aria-hidden />
+          <ShieldCheck className="size-4 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden />
           <span className="font-semibold">DEV:</span>
           <span>WhatsApp gönderimi devre dışı (stub). Test kodu:</span>
-          <code className="bg-white px-2 py-0.5 rounded border border-slate-300 font-mono text-slate-900">
+          <code className="bg-card px-2 py-0.5 rounded border border-slate-300 font-mono text-slate-900 dark:text-slate-200">
             {whatsapp.dev_test_code}
           </code>
         </div>
@@ -801,7 +801,7 @@ function WhatsAppPendingPanel({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
             size="sm"
             onClick={resend}
             disabled={startMut.isPending}
-            className="text-[#117A86]"
+            className="text-[#117A86] dark:text-teal-300"
           >
             ↻ Yeni kod gönder
           </Button>

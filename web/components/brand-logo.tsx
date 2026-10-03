@@ -35,7 +35,7 @@ export function BrandLogo({
       aria-label="ETÜTKOÇ Rotam"
       className={cn("group inline-flex items-center gap-2.5", className)}
     >
-      <span className="inline-flex items-center justify-center rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-black/5 transition group-hover:-translate-y-0.5">
+      <span className="inline-flex items-center justify-center rounded-xl bg-card p-1.5 shadow-sm ring-1 ring-black/5 transition group-hover:-translate-y-0.5">
         <Image
           src="/etutkoc-mark.svg"
           alt="ETÜTKOÇ"
@@ -55,7 +55,7 @@ export function BrandLogo({
             wordmarkClassName,
           )}
         >
-          etütkoç<span className="text-amber-500">·</span>rotam
+          etütkoç<span className="text-amber-600 dark:text-amber-400">·</span>rotam
         </span>
       ) : null}
     </Link>

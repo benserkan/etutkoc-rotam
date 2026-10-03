@@ -283,14 +283,14 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
                       ) : null}
                       {it.coach_note ? (
                         <MessageSquarePlus
-                          className="size-3.5 text-cyan-600"
+                          className="size-3.5 text-cyan-600 dark:text-cyan-300"
                           aria-hidden
                         />
                       ) : null}
                       {it.status === "kapandi" ? (
-                        <CheckCircle2 className="size-4 text-emerald-600" aria-hidden />
+                        <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
                       ) : it.is_due ? (
-                        <RotateCcw className="size-4 text-amber-600" aria-hidden />
+                        <RotateCcw className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
                       ) : (
                         <span className="text-[10px] tabular-nums text-muted-foreground">
                           {it.correct_streak}/2
@@ -320,7 +320,7 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="size-5 text-cyan-600" aria-hidden /> Yapay zekâ özellikleri onayı
+              <ShieldCheck className="size-5 text-cyan-600 dark:text-cyan-300" aria-hidden /> Yapay zekâ özellikleri onayı
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
@@ -330,10 +330,10 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
               Devam etmek için onayınız gerekir.
             </p>
             <ul className="space-y-1.5 text-xs">
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Fotoğraf <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Sonuç yalnızca <strong>siz ve öğrenci</strong> tarafından görülür; veli erişemez.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Yapay zekâ çözümü vermez, yalnızca yol gösterir.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Fotoğraf <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Sonuç yalnızca <strong>siz ve öğrenci</strong> tarafından görülür; veli erişemez.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Yapay zekâ çözümü vermez, yalnızca yol gösterir.</li>
             </ul>
             <p className="text-[11px]">Bu onayı dilediğinizde geri çekebilirsiniz; onaysız da soruları elle etiketleyebilirsiniz.</p>
           </div>

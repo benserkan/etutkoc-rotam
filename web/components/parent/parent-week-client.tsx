@@ -117,7 +117,7 @@ export function ParentWeekClient({ initial, studentId, startParam }: Props) {
       </div>
 
       <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground flex items-start gap-2">
-        <Info className="size-4 shrink-0 mt-0.5 text-[#117A86]" aria-hidden />
+        <Info className="size-4 shrink-0 mt-0.5 text-[#117A86] dark:text-teal-300" aria-hidden />
         <p className="leading-relaxed">
           Bu görünüm salt-okunurdur. Görevler öğretmen tarafından planlanır,
           öğrenci tarafından tamamlandı olarak işaretlenir.
@@ -137,10 +137,10 @@ function DayAccordion({ day }: { day: ParentWeekDay }) {
     day.gorev_total === 0
       ? "text-muted-foreground"
       : ratio >= 0.8
-        ? "text-emerald-700"
+        ? "text-emerald-700 dark:text-emerald-300"
         : ratio >= 0.4
-          ? "text-amber-700"
-          : "text-rose-700";
+          ? "text-amber-700 dark:text-amber-300"
+          : "text-rose-700 dark:text-rose-300";
 
   const isoDate = new Date(day.date);
   const dd = isoDate.getDate();
@@ -261,10 +261,10 @@ function TaskRow({ task }: { task: ParentWeekTask }) {
             )}
             <span className="text-sm font-medium">{task.title}</span>
             {isCompleted && (
-              <span className="text-xs text-emerald-600">✓ tamamlandı</span>
+              <span className="text-xs text-emerald-600 dark:text-emerald-300">✓ tamamlandı</span>
             )}
             {isPartial && (
-              <span className="text-xs text-amber-600">kısmen</span>
+              <span className="text-xs text-amber-600 dark:text-amber-300">kısmen</span>
             )}
           </div>
 

@@ -34,7 +34,7 @@ export function GuideClient({ guideKey, title, description }: Props) {
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-2 w-28 overflow-hidden rounded-full bg-slate-200">
+          <div className="h-2 w-28 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-500/15">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all"
               style={{ width: `${pct}%` }}

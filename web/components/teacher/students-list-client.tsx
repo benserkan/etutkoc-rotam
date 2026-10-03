@@ -726,10 +726,10 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
             </DialogDescription>
           </DialogHeader>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Veliye bildirim (haftalık rapor, uyarılar) <b className="text-foreground">gönderilmez</b>.</span></li>
-            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Öğrenci <b className="text-foreground">giriş yapamaz</b> (erişimi kapanır).</span></li>
-            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Koç ve kurum <b className="text-foreground">istatistiklerinden çıkar</b> — ortalamanı düşürmez.</span></li>
-            <li className="flex gap-2"><span className="text-emerald-600">•</span><span>Tüm verisi <b className="text-foreground">korunur</b>; istediğin an &ldquo;Koçluğu yeniden başlat&rdquo; ile geri açılır.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-600 dark:text-cyan-300">•</span><span>Veliye bildirim (haftalık rapor, uyarılar) <b className="text-foreground">gönderilmez</b>.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-600 dark:text-cyan-300">•</span><span>Öğrenci <b className="text-foreground">giriş yapamaz</b> (erişimi kapanır).</span></li>
+            <li className="flex gap-2"><span className="text-cyan-600 dark:text-cyan-300">•</span><span>Koç ve kurum <b className="text-foreground">istatistiklerinden çıkar</b> — ortalamanı düşürmez.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-600 dark:text-emerald-300">•</span><span>Tüm verisi <b className="text-foreground">korunur</b>; istediğin an &ldquo;Koçluğu yeniden başlat&rdquo; ile geri açılır.</span></li>
           </ul>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEndOpen(false)} disabled={deactivate.isPending}>Vazgeç</Button>
@@ -995,7 +995,7 @@ function ClassGroupBar({
                 Yine de bu şubeye al
               </button>
               <button type="button" onClick={() => setMismatch(null)}
-                className="h-8 rounded-md px-3 font-medium text-slate-950 hover:bg-amber-400">
+                className="h-8 rounded-md px-3 font-medium text-slate-950 dark:text-slate-200 hover:bg-amber-400">
                 Vazgeç
               </button>
             </div>

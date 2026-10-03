@@ -147,9 +147,9 @@ function Metric({
 }) {
   const color =
     accent === "yolunda"
-      ? "text-emerald-600"
+      ? "text-emerald-600 dark:text-emerald-300"
       : accent === "dikkat"
-        ? "text-amber-600"
+        ? "text-amber-600 dark:text-amber-300"
         : "text-foreground";
   return (
     <div className="flex items-baseline gap-1.5">

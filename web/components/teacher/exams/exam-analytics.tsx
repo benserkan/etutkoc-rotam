@@ -174,7 +174,7 @@ export function ExamShareMenu({
               window.open(`https://wa.me/?text=${encodeURIComponent(text())}`, "_blank", "noopener")
             }
           >
-            <MessageCircle className="size-4 text-emerald-600" aria-hidden />
+            <MessageCircle className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
             <span>
               WhatsApp ile gönder
               <span className="block text-[11px] text-muted-foreground">

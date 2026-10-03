@@ -16,9 +16,9 @@ interface Props {
 
 function convTone(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 20) return "text-emerald-700";
-  if (pct >= 10) return "text-amber-700";
-  return "text-rose-700";
+  if (pct >= 20) return "text-emerald-700 dark:text-emerald-300";
+  if (pct >= 10) return "text-amber-700 dark:text-amber-300";
+  return "text-rose-700 dark:text-rose-300";
 }
 
 export function AdminCampaignsClient({ initial }: Props) {
@@ -36,7 +36,7 @@ export function AdminCampaignsClient({ initial }: Props) {
         <div>
           <span className="text-sm text-muted-foreground">Ticari Pano</span>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Megaphone className="size-6 text-indigo-700" aria-hidden />
+            <Megaphone className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
             Toplu Kampanyalar
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -57,7 +57,7 @@ export function AdminCampaignsClient({ initial }: Props) {
       {data.campaigns.length === 0 ? (
         <Card className="p-12 text-center text-sm text-muted-foreground">
           Henüz kampanya yok.{" "}
-          <Link href="/admin/revenue/campaigns/new" className="text-indigo-600 hover:text-indigo-800">
+          <Link href="/admin/revenue/campaigns/new" className="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800">
             Yeni kampanya oluştur →
           </Link>
         </Card>
@@ -85,7 +85,7 @@ export function AdminCampaignsClient({ initial }: Props) {
                         {c.name}
                       </Link>
                       {c.has_variant_b ? (
-                        <span className="ml-1 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">A/B</span>
+                        <span className="ml-1 rounded bg-indigo-100 dark:bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">A/B</span>
                       ) : null}
                       {c.description ? (
                         <div className="max-w-xs truncate text-xs text-muted-foreground">{c.description}</div>
@@ -97,7 +97,7 @@ export function AdminCampaignsClient({ initial }: Props) {
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-muted-foreground">{c.funnel.total}</td>
                     <td className="px-4 py-3 text-right font-mono text-muted-foreground">{c.funnel.sent_total}</td>
-                    <td className="px-4 py-3 text-right font-mono text-emerald-700">{c.funnel.accepted}</td>
+                    <td className="px-4 py-3 text-right font-mono text-emerald-700 dark:text-emerald-300">{c.funnel.accepted}</td>
                     <td className={cn("px-4 py-3 text-right font-mono font-semibold", convTone(c.funnel.accepted_pct))}>
                       {c.funnel.accepted_pct != null ? `%${c.funnel.accepted_pct}` : "—"}
                     </td>

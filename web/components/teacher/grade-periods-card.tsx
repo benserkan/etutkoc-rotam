@@ -85,7 +85,7 @@ export function GradePeriodsCard({ studentId }: { studentId: number }) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <CalendarRange className="size-4 text-cyan-600" aria-hidden />
+          <CalendarRange className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
           Sınıf dönemleri
         </CardTitle>
         <p className="text-xs text-muted-foreground">

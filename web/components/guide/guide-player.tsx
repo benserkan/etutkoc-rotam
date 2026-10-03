@@ -341,7 +341,7 @@ export function GuidePlayer({ guide, content, busy, refreshing, onProgress, onRe
 
       {/* Sahne + kontroller (tam ekranda birlikte büyür) */}
       <div ref={fsRef} className="guide-fs order-1 min-w-0 lg:order-2">
-        <div className="guide-stage relative aspect-[1440/900] w-full overflow-hidden rounded-xl border bg-slate-100 shadow-sm">
+        <div className="guide-stage relative aspect-[1440/900] w-full overflow-hidden rounded-xl border bg-slate-100 dark:bg-slate-500/15 shadow-sm">
           <Stage
             chapter={chapter}
             stepIdx={stepIdx}
@@ -453,13 +453,13 @@ export function GuidePlayer({ guide, content, busy, refreshing, onProgress, onRe
                       >
                         <div className="flex items-center gap-2">
                           {fresh ? (
-                            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
                           ) : already ? (
-                            <CheckCircle2 className="h-5 w-5 shrink-0 text-sky-600" />
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-sky-600 dark:text-sky-300" />
                           ) : (
                             <RefreshCw
                               className={cn(
-                                "h-5 w-5 shrink-0 text-amber-600",
+                                "h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300",
                                 refreshing && "animate-spin",
                               )}
                             />
@@ -674,7 +674,7 @@ function Stage({
               {cursorAtTarget ? (
                 <span className="guide-click-ripple absolute -left-3 -top-3 h-9 w-9 rounded-full bg-cyan-400/50" />
               ) : null}
-              <MousePointer2 className="relative h-7 w-7 fill-white text-slate-900 drop-shadow-lg" />
+              <MousePointer2 className="relative h-7 w-7 fill-white text-slate-900 dark:text-slate-200 drop-shadow-lg" />
             </div>
           ) : null}
         </div>

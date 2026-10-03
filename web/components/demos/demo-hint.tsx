@@ -35,13 +35,13 @@ export function DemoHint({
       rel="noopener noreferrer"
       title={`${demo.title} · ${demo.durationLabel}`}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100 hover:text-cyan-900",
+        "inline-flex items-center gap-1.5 rounded-full border border-cyan-300 bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 px-3 py-1 text-xs font-medium text-cyan-800 dark:text-cyan-200 transition hover:bg-cyan-100 hover:text-cyan-900",
         className,
       )}
     >
       <PlayCircle className="size-3.5" aria-hidden />
       {label}
-      <span className="text-cyan-600">· {demo.durationLabel}</span>
+      <span className="text-cyan-600 dark:text-cyan-300">· {demo.durationLabel}</span>
     </a>
   );
 }

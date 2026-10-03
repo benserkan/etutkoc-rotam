@@ -43,7 +43,7 @@ export function GuideAvatar({
         draggable={false}
       />
       {speaking ? (
-        <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-end justify-center gap-[2.5px] rounded-full border border-cyan-200 bg-white p-1.5 shadow">
+        <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-end justify-center gap-[2.5px] rounded-full border border-cyan-200 bg-card p-1.5 shadow">
           <span className="guide-eq-bar h-full w-[3px] rounded-full bg-cyan-500" />
           <span className="guide-eq-bar h-full w-[3px] rounded-full bg-cyan-600 [animation-delay:0.15s]" />
           <span className="guide-eq-bar h-full w-[3px] rounded-full bg-amber-500 [animation-delay:0.3s]" />

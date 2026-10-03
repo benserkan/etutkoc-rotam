@@ -73,14 +73,14 @@ export function ProjectionCard({ projection: p }: Props) {
           </p>
           <div className="flex items-center gap-1.5">
             {isPositive ? (
-              <TrendingUp className="size-5 text-emerald-600" aria-hidden="true" />
+              <TrendingUp className="size-5 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
             ) : (
               <TrendingDown className="size-5 text-destructive" aria-hidden="true" />
             )}
             <span
               className={cn(
                 "font-display text-2xl font-bold tabular-nums",
-                isPositive ? "text-emerald-600" : "text-destructive",
+                isPositive ? "text-emerald-600 dark:text-emerald-300" : "text-destructive",
               )}
             >
               {gapAbs.toLocaleString("tr-TR")}

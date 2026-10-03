@@ -70,7 +70,7 @@ export function DispatchLogClient({ initial }: Props) {
   return (
     <div className="space-y-5">
       <header>
-        <p className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 font-semibold">
           <MessageSquare className="inline size-3.5 mr-1" aria-hidden />
           Click-to-WhatsApp Audit
         </p>
@@ -88,22 +88,22 @@ export function DispatchLogClient({ initial }: Props) {
       {/* KPI'lar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard
-          icon={<Calendar className="size-4 text-sky-700" aria-hidden />}
+          icon={<Calendar className="size-4 text-sky-700 dark:text-sky-300" aria-hidden />}
           label="Bugün"
           value={data.summary.total_today}
         />
         <KpiCard
-          icon={<Activity className="size-4 text-emerald-700" aria-hidden />}
+          icon={<Activity className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden />}
           label="Bu hafta"
           value={data.summary.total_week}
         />
         <KpiCard
-          icon={<TrendingUp className="size-4 text-violet-700" aria-hidden />}
+          icon={<TrendingUp className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />}
           label={`Son ${data.days} gün`}
           value={data.summary.total_period}
         />
         <KpiCard
-          icon={<Users className="size-4 text-amber-700" aria-hidden />}
+          icon={<Users className="size-4 text-amber-700 dark:text-amber-300" aria-hidden />}
           label="En aktif (gönderen)"
           value={data.summary.top_senders[0]?.count ?? 0}
           sub={data.summary.top_senders[0]?.sender_name ?? "—"}
@@ -140,9 +140,9 @@ export function DispatchLogClient({ initial }: Props) {
 
             {/* Aktif sender filter göstergesi — yalnız filter varsa görünür */}
             {senderFilter ? (
-              <div className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 border border-emerald-400 px-2.5 py-1 text-xs">
-                <Filter className="size-3 text-emerald-800" aria-hidden />
-                <span className="text-emerald-900">
+              <div className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 border border-emerald-400 px-2.5 py-1 text-xs">
+                <Filter className="size-3 text-emerald-800 dark:text-emerald-200" aria-hidden />
+                <span className="text-emerald-900 dark:text-emerald-200">
                   <strong>Gönderen filtresi:</strong>{" "}
                   <span className="font-medium">{senderFilter.name}</span>
                 </span>
@@ -152,7 +152,7 @@ export function DispatchLogClient({ initial }: Props) {
                   className="ml-1 rounded-full hover:bg-emerald-200 p-0.5"
                   aria-label="Filtreyi temizle"
                 >
-                  <X className="size-3 text-emerald-800" aria-hidden />
+                  <X className="size-3 text-emerald-800 dark:text-emerald-200" aria-hidden />
                 </button>
               </div>
             ) : (
@@ -191,14 +191,14 @@ export function DispatchLogClient({ initial }: Props) {
                         active
                           // Açık emerald zemin + explicit koyu emerald metin
                           // (hem light hem dark temada okunur — CLAUDE.md kontrast kuralı)
-                          ? "bg-emerald-100 border-emerald-400"
+                          ? "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 border-emerald-400"
                           : "bg-background border-border hover:bg-muted",
                       )}
                     >
                       <span
                         className={cn(
                           "w-5 text-center text-xs font-semibold",
-                          active ? "text-emerald-800" : "text-muted-foreground",
+                          active ? "text-emerald-800 dark:text-emerald-200" : "text-muted-foreground",
                         )}
                       >
                         {i + 1}.
@@ -207,7 +207,7 @@ export function DispatchLogClient({ initial }: Props) {
                         <span
                           className={cn(
                             "block text-sm font-medium truncate",
-                            active && "text-emerald-900",
+                            active && "text-emerald-900 dark:text-emerald-200",
                           )}
                         >
                           {s.sender_name}
@@ -215,7 +215,7 @@ export function DispatchLogClient({ initial }: Props) {
                         <span
                           className={cn(
                             "text-[10px]",
-                            active ? "text-emerald-700" : "text-muted-foreground",
+                            active ? "text-emerald-700 dark:text-emerald-300" : "text-muted-foreground",
                           )}
                         >
                           {ROLE_LABELS_TR[s.sender_role] ?? s.sender_role}
@@ -224,7 +224,7 @@ export function DispatchLogClient({ initial }: Props) {
                       <span
                         className={cn(
                           "text-sm font-semibold tabular-nums",
-                          active && "text-emerald-900",
+                          active && "text-emerald-900 dark:text-emerald-200",
                         )}
                       >
                         {s.count}
@@ -242,7 +242,7 @@ export function DispatchLogClient({ initial }: Props) {
       <Card>
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
           <h2 className="font-semibold inline-flex items-center gap-1.5">
-            <MessageSquare className="size-4 text-emerald-700" aria-hidden />
+            <MessageSquare className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden />
             Son {data.items.length} kayıt
             <span className="text-xs text-muted-foreground font-normal ml-1">
               · toplam {data.total}

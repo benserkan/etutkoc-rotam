@@ -57,7 +57,7 @@ export function AdminSystemHealthClient({ initial }: Props) {
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <Stethoscope className="size-6 text-emerald-700" aria-hidden />
+          <Stethoscope className="size-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
           Altyapı Sağlığı
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -92,25 +92,25 @@ function OverallStatus({
 }) {
   const map = {
     crit: {
-      bg: "bg-rose-50 border-rose-300",
-      text: "text-rose-900",
+      bg: "bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 border-rose-300",
+      text: "text-rose-900 dark:text-rose-200",
       label: "Sistem dikkat istiyor — kritik bileşen var",
       Icon: XCircle,
-      iconColor: "text-rose-600",
+      iconColor: "text-rose-600 dark:text-rose-300",
     },
     warn: {
-      bg: "bg-amber-50 border-amber-300",
-      text: "text-amber-900",
+      bg: "bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 border-amber-300",
+      text: "text-amber-900 dark:text-amber-200",
       label: "Sistem genel iyi — gözlem altında bileşen var",
       Icon: AlertCircle,
-      iconColor: "text-amber-600",
+      iconColor: "text-amber-600 dark:text-amber-300",
     },
     ok: {
-      bg: "bg-emerald-50 border-emerald-300",
-      text: "text-emerald-900",
+      bg: "bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 border-emerald-300",
+      text: "text-emerald-900 dark:text-emerald-200",
       label: "Sistem sağlıklı",
       Icon: CheckCircle2,
-      iconColor: "text-emerald-600",
+      iconColor: "text-emerald-600 dark:text-emerald-300",
     },
   };
   const tone = map[health];
@@ -201,12 +201,12 @@ function CronRow({ cron }: { cron: CronStatusItem }) {
       </td>
       <td className="px-4 py-2 text-xs">
         {cron.last_status === "success" ? (
-          <span className="text-emerald-700 inline-flex items-center gap-0.5">
+          <span className="text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-0.5">
             <CheckCircle2 className="size-3" aria-hidden />
             {cron.last_status}
           </span>
         ) : cron.last_status === "failed" ? (
-          <span className="text-rose-700 inline-flex items-center gap-0.5">
+          <span className="text-rose-700 dark:text-rose-300 inline-flex items-center gap-0.5">
             <XCircle className="size-3" aria-hidden />
             {cron.last_status}
           </span>
@@ -217,10 +217,10 @@ function CronRow({ cron }: { cron: CronStatusItem }) {
         )}
         {cron.last_error && (
           <details className="mt-1">
-            <summary className="cursor-pointer text-[10px] text-rose-600 list-none">
+            <summary className="cursor-pointer text-[10px] text-rose-600 dark:text-rose-300 list-none">
               hata detay ▾
             </summary>
-            <pre className="mt-1 text-[10px] text-rose-800 whitespace-pre-wrap font-mono">
+            <pre className="mt-1 text-[10px] text-rose-800 dark:text-rose-200 whitespace-pre-wrap font-mono">
               {cron.last_error.slice(0, 300)}
             </pre>
           </details>
@@ -244,11 +244,11 @@ function HealthBadge({ band }: { band: HealthBand }) {
       label: "🟡 Gecikmiş",
     },
     never: {
-      cls: "bg-slate-100 text-slate-600 border-slate-200",
+      cls: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border-slate-200",
       label: "⚪ Hiç çalışmadı",
     },
     disabled: {
-      cls: "bg-slate-100 text-slate-500 border-slate-200",
+      cls: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-500 border-slate-200",
       label: "⏸ Kapalı",
     },
     ok: {
@@ -275,9 +275,9 @@ function DispatcherCard({
   dispatcher: DispatcherStatusInfo;
 }) {
   const healthMap = {
-    crit: "text-rose-700",
-    warn: "text-amber-700",
-    ok: "text-emerald-700",
+    crit: "text-rose-700 dark:text-rose-300",
+    warn: "text-amber-700 dark:text-amber-300",
+    ok: "text-emerald-700 dark:text-emerald-300",
   };
   return (
     <Card>
@@ -360,9 +360,9 @@ function DispatcherCard({
 
 function DatabaseCard({ database }: { database: DatabaseStatusInfo }) {
   const healthMap = {
-    crit: "text-rose-700",
-    warn: "text-amber-700",
-    ok: "text-emerald-700",
+    crit: "text-rose-700 dark:text-rose-300",
+    warn: "text-amber-700 dark:text-amber-300",
+    ok: "text-emerald-700 dark:text-emerald-300",
   };
   return (
     <Card>
@@ -418,7 +418,7 @@ function DatabaseCard({ database }: { database: DatabaseStatusInfo }) {
                     </td>
                     <td className="py-1 text-right font-semibold tabular-nums">
                       {cnt < 0 ? (
-                        <span className="text-rose-600">hata</span>
+                        <span className="text-rose-600 dark:text-rose-300">hata</span>
                       ) : (
                         new Intl.NumberFormat("tr-TR").format(cnt)
                       )}
@@ -436,9 +436,9 @@ function DatabaseCard({ database }: { database: DatabaseStatusInfo }) {
 
 function BackupCard({ backup }: { backup: BackupStatusInfo }) {
   const healthMap = {
-    crit: "text-rose-700",
-    warn: "text-amber-700",
-    ok: "text-emerald-700",
+    crit: "text-rose-700 dark:text-rose-300",
+    warn: "text-amber-700 dark:text-amber-300",
+    ok: "text-emerald-700 dark:text-emerald-300",
   };
   const healthLabel = {
     crit: backup.total_count === 0 ? "Yedek bulunamadı" : "48 saatten eski",
@@ -505,9 +505,9 @@ function BackupCard({ backup }: { backup: BackupStatusInfo }) {
 
 function PaymentCard({ payment }: { payment: PaymentStatusInfo }) {
   const healthMap = {
-    crit: "text-rose-700",
-    warn: "text-amber-700",
-    ok: "text-emerald-700",
+    crit: "text-rose-700 dark:text-rose-300",
+    warn: "text-amber-700 dark:text-amber-300",
+    ok: "text-emerald-700 dark:text-emerald-300",
   };
   const problem = payment.failed_24h + payment.stuck_24h;
   return (
@@ -517,7 +517,7 @@ function PaymentCard({ payment }: { payment: PaymentStatusInfo }) {
           <CreditCard className="size-4 text-muted-foreground" aria-hidden />
           Ödeme (iyzico kartlı ödeme)
           {payment.sandbox ? (
-            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+            <span className="rounded bg-amber-100 dark:bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
               TEST modu
             </span>
           ) : null}
@@ -525,7 +525,7 @@ function PaymentCard({ payment }: { payment: PaymentStatusInfo }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <div className="text-xs text-muted-foreground mb-2">Sağlayıcı</div>
-            <div className={cn("text-2xl font-bold", payment.provider_available ? "text-emerald-700" : "text-rose-700")}>
+            <div className={cn("text-2xl font-bold", payment.provider_available ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300")}>
               {payment.provider_available ? "Erişilebilir" : "KAPALI"}
             </div>
             <div className="text-[11px] text-muted-foreground mt-1">
@@ -536,7 +536,7 @@ function PaymentCard({ payment }: { payment: PaymentStatusInfo }) {
           </div>
           <div>
             <div className="text-xs text-muted-foreground mb-2">Son 24 saat başarılı</div>
-            <div className="text-2xl font-bold tabular-nums text-emerald-700">
+            <div className="text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
               {payment.succeeded_24h}
             </div>
             <div className="text-[11px] text-muted-foreground mt-1">tamamlanan kart ödemesi</div>

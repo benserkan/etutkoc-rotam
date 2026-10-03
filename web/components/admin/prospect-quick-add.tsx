@@ -207,7 +207,7 @@ export function ProspectQuickAdd() {
           <button
             type="button"
             onClick={() => { setAdded(null); nameRef.current?.focus(); }}
-            className="mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white text-sm font-medium text-emerald-800 active:bg-emerald-50"
+            className="mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-card text-sm font-medium text-emerald-800 dark:text-emerald-200 active:bg-emerald-50"
           >
             <Plus className="size-4" aria-hidden /> Yeni kişi ekle
           </button>

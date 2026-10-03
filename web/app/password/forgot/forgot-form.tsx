@@ -94,7 +94,7 @@ export function ForgotPasswordForm({ turnstileEnabled, turnstileSiteKey }: Props
   if (sentMessage) {
     return (
       <div className="space-y-3 text-center">
-        <CheckCircle2 className="mx-auto size-10 text-emerald-600" aria-hidden />
+        <CheckCircle2 className="mx-auto size-10 text-emerald-600 dark:text-emerald-300" aria-hidden />
         <p className="text-sm text-muted-foreground">{sentMessage}</p>
       </div>
     );

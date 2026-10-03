@@ -329,7 +329,7 @@ function CompleteSheetInner({
             </p>
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <span className="block text-[11px] text-emerald-700 font-medium mb-1">
+                <span className="block text-[11px] text-emerald-700 dark:text-emerald-300 font-medium mb-1">
                   Doğru
                 </span>
                 <input
@@ -339,11 +339,11 @@ function CompleteSheetInner({
                   value={correctStr}
                   onChange={(e) => onCorrectChange(e.target.value)}
                   placeholder="—"
-                  className="w-full text-2xl font-bold text-center tabular-nums py-2.5 border border-emerald-200 bg-emerald-50/50 rounded-lg text-emerald-900 placeholder:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full text-2xl font-bold text-center tabular-nums py-2.5 border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-500/10 rounded-lg text-emerald-900 dark:text-emerald-200 placeholder:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
               <div>
-                <span className="block text-[11px] text-rose-700 font-medium mb-1">
+                <span className="block text-[11px] text-rose-700 dark:text-rose-300 font-medium mb-1">
                   Yanlış
                 </span>
                 <input
@@ -353,11 +353,11 @@ function CompleteSheetInner({
                   value={wrongStr}
                   onChange={(e) => onWrongChange(e.target.value)}
                   placeholder="—"
-                  className="w-full text-2xl font-bold text-center tabular-nums py-2.5 border border-rose-200 bg-rose-50/50 rounded-lg text-rose-900 placeholder:text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  className="w-full text-2xl font-bold text-center tabular-nums py-2.5 border border-rose-200 bg-rose-50/50 dark:bg-rose-500/10 rounded-lg text-rose-900 dark:text-rose-200 placeholder:text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
                 />
               </div>
               <div>
-                <span className="block text-[11px] text-slate-600 font-medium mb-1">
+                <span className="block text-[11px] text-slate-600 dark:text-slate-300 font-medium mb-1">
                   Boş
                 </span>
                 <input
@@ -367,16 +367,16 @@ function CompleteSheetInner({
                   value={blankStr}
                   onChange={(e) => setBlankStr(e.target.value)}
                   placeholder="—"
-                  className="w-full text-2xl font-bold text-center tabular-nums py-2.5 border border-slate-200 bg-slate-50/50 rounded-lg text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  className="w-full text-2xl font-bold text-center tabular-nums py-2.5 border border-slate-200 bg-slate-50/50 dark:bg-slate-500/10 rounded-lg text-slate-900 dark:text-slate-200 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400"
                 />
               </div>
             </div>
             {negativeInput ? (
-              <p className="text-[11px] text-rose-700 mt-2 text-center font-medium">
+              <p className="text-[11px] text-rose-700 dark:text-rose-300 mt-2 text-center font-medium">
                 Doğru, yanlış ve boş sayıları negatif olamaz
               </p>
             ) : denemeOverflow ? (
-              <p className="text-[11px] text-rose-700 mt-2 text-center font-medium">
+              <p className="text-[11px] text-rose-700 dark:text-rose-300 mt-2 text-center font-medium">
                 Doğru + Yanlış + Boş ({totalAnswered}) çözdüğünden ({completed} soru) fazla olamaz
               </p>
             ) : null}

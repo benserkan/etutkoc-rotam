@@ -94,7 +94,7 @@ export function AccountHistoryClient({
           {backLabel}
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <CalendarRange className="size-6 text-indigo-700" aria-hidden />
+          <CalendarRange className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Hesap Hareketleri — {data.owner_name ?? "Bilinmiyor"}
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -191,12 +191,12 @@ function HelpDetails({
 }) {
   return (
     <details className="rounded-md border border-sky-200 bg-sky-50/40 dark:bg-sky-500/10 dark:border-sky-500/30">
-      <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-sky-900 hover:bg-sky-100/60 inline-flex items-center gap-1.5 w-full">
+      <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-sky-900 dark:text-sky-200 hover:bg-sky-100/60 inline-flex items-center gap-1.5 w-full">
         <Info className="size-4" aria-hidden />
         Bu sayfada ne yazıyor? (terim açıklamaları)
         <ChevronDown className="size-3 ml-auto" aria-hidden />
       </summary>
-      <div className="px-4 py-3 text-sm text-sky-900 space-y-2 border-t border-sky-200">
+      <div className="px-4 py-3 text-sm text-sky-900 dark:text-sky-200 space-y-2 border-t border-sky-200">
         <div>
           <strong>Hesap hareketi</strong> — bu kurum / kullanıcı için yapılan
           plan değişikliği veya kesilen fatura. Her satır bir olay.
@@ -244,9 +244,9 @@ function Kpi({
   };
   const valueColor = {
     default: "text-foreground",
-    amber: "text-amber-900",
-    slate: "text-slate-900",
-    indigo: "text-indigo-900",
+    amber: "text-amber-900 dark:text-amber-200",
+    slate: "text-slate-900 dark:text-slate-200",
+    indigo: "text-indigo-900 dark:text-indigo-200",
   }[tone];
   return (
     <Card className={cn("border", map[tone])}>
@@ -451,7 +451,7 @@ function EventRow({ event }: { event: AccountHistoryEvent }) {
               {event.record_type}#{event.record_id}
             </span>
             {event.archived && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 border border-amber-200">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border border-amber-200">
                 <Archive className="size-2.5 mr-0.5" aria-hidden />
                 arşivli
               </span>
@@ -464,7 +464,7 @@ function EventRow({ event }: { event: AccountHistoryEvent }) {
             </div>
           )}
           {event.archived && event.archive_note && (
-            <div className="text-[11px] text-amber-700 mt-1 italic">
+            <div className="text-[11px] text-amber-700 dark:text-amber-300 mt-1 italic">
               Arşiv notu: {event.archive_note}
               {event.archived_at &&
                 ` · ${formatDateTime(event.archived_at)}`}
@@ -540,7 +540,7 @@ function UnarchiveButton({
         );
       }}
       disabled={mut.isPending}
-      className="text-xs text-emerald-700 hover:text-emerald-900 underline underline-offset-2 inline-flex items-center gap-0.5"
+      className="text-xs text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 underline underline-offset-2 inline-flex items-center gap-0.5"
     >
       {mut.isPending ? (
         <Loader2 className="size-3 animate-spin" aria-hidden />
@@ -586,7 +586,7 @@ function EmptyState({
                 <br />
                 <Link
                   href={showArchivedUrl}
-                  className="text-indigo-700 hover:underline mt-2 inline-block"
+                  className="text-indigo-700 dark:text-indigo-300 hover:underline mt-2 inline-block"
                 >
                   Arşivli {archivedCount} kaydı göster →
                 </Link>
@@ -605,14 +605,14 @@ function EmptyState({
 
 function badgeColorClass(color: string): string {
   const map: Record<string, string> = {
-    emerald: "bg-emerald-100 text-emerald-800",
-    rose: "bg-rose-100 text-rose-800",
-    amber: "bg-amber-100 text-amber-800",
-    violet: "bg-violet-100 text-violet-800",
-    indigo: "bg-indigo-100 text-indigo-800",
-    slate: "bg-slate-100 text-slate-800",
+    emerald: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-200",
+    rose: "bg-rose-100 dark:bg-rose-500/15 text-rose-800 dark:text-rose-200",
+    amber: "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-200",
+    violet: "bg-violet-100 dark:bg-violet-500/15 text-violet-800 dark:text-violet-200",
+    indigo: "bg-indigo-100 dark:bg-indigo-500/15 text-indigo-800 dark:text-indigo-200",
+    slate: "bg-slate-100 dark:bg-slate-500/15 text-slate-800 dark:text-slate-200",
   };
-  return map[color] ?? "bg-slate-100 text-slate-800";
+  return map[color] ?? "bg-slate-100 dark:bg-slate-500/15 text-slate-800 dark:text-slate-200";
 }
 
 function formatDate(iso: string): string {

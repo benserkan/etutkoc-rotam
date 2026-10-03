@@ -623,8 +623,8 @@ function PreviewStep({
                       className={cn(
                         "text-xs font-mono",
                         r.is_valid
-                          ? "text-emerald-600"
-                          : "text-rose-600",
+                          ? "text-emerald-600 dark:text-emerald-300"
+                          : "text-rose-600 dark:text-rose-300",
                       )}
                     >
                       {r.is_valid ? "✓" : "✗"} #{r.row_num}
@@ -658,12 +658,12 @@ function PreviewStep({
                     </p>
                   ) : null}
                   {r.errors.length > 0 ? (
-                    <p className="text-xs text-rose-600 mt-0.5">
+                    <p className="text-xs text-rose-600 dark:text-rose-300 mt-0.5">
                       {r.errors.join(" · ")}
                     </p>
                   ) : null}
                   {r.warnings.length > 0 ? (
-                    <p className="text-xs text-amber-600 mt-0.5">
+                    <p className="text-xs text-amber-600 dark:text-amber-300 mt-0.5">
                       uyarı: {r.warnings.join(" · ")}
                     </p>
                   ) : null}
@@ -850,7 +850,7 @@ function ResultStep({
                   <span className="font-medium">
                     #{r.row_num} {r.full_name ?? "—"}
                   </span>
-                  <p className="text-xs text-rose-600 mt-0.5">
+                  <p className="text-xs text-rose-600 dark:text-rose-300 mt-0.5">
                     {r.errors.join(" · ")}
                   </p>
                 </li>
@@ -892,9 +892,9 @@ function Stat({
         className={cn(
           "text-2xl font-semibold tabular-nums",
           tone === "success"
-            ? "text-emerald-600"
+            ? "text-emerald-600 dark:text-emerald-300"
             : tone === "warn"
-              ? "text-amber-600"
+              ? "text-amber-600 dark:text-amber-300"
               : "",
         )}
       >

@@ -1,0 +1,74 @@
+{
+ "name": "Apotemi TYT Matematik Soru Bankası",
+ "publisher": "Apotemi Yayınları",
+ "subject": "TYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Bölüm 1 — Temel Kavramlar, Tek ve Çift Sayılar, Pozitif ve Negatif Sayılar, Asal Sayılar, Ardışık Sayılar, Faktöriyel, Sayı Basamakları",
+   "test_count": 15,
+   "topic": "Temel Kavramlar"
+  },
+  {
+   "label": "Bölüm 2 — Bölme - Bölünebilme, Asal Çarpanlara Ayırma, Özel Sayı Problemleri, EBOB - EKOK",
+   "test_count": 5,
+   "topic": "Bölme ve Bölünebilme"
+  },
+  {
+   "label": "Bölüm 3 — Rasyonel Sayılar, Sıralama, 1. Dereceden Denklem ve Eşitsizlikler, Mutlak Değer",
+   "test_count": 14,
+   "topic": "Rasyonel Sayılar"
+  },
+  {
+   "label": "Bölüm 4 — Üslü Sayılar, Köklü Sayılar",
+   "test_count": 10,
+   "topic": "Üslü Sayılar"
+  },
+  {
+   "label": "Bölüm 5 — Çarpanlara Ayırma, Denklem Çözme",
+   "test_count": 6,
+   "topic": "Çarpanlara Ayırma"
+  },
+  {
+   "label": "Bölüm 6 — Oran - Orantı, Orantı Problemleri, Ortalamalar",
+   "test_count": 7,
+   "topic": "Oran ve Orantı"
+  },
+  {
+   "label": "Bölüm 7 — Problemler",
+   "test_count": 24,
+   "topic": ""
+  },
+  {
+   "label": "Bölüm 8 — Kümeler, Küme Problemleri, Kartezyen Çarpım",
+   "test_count": 8,
+   "topic": "Kümeler"
+  },
+  {
+   "label": "Bölüm 9 — Fonksiyonlar, Fonksiyon Grafikleri",
+   "test_count": 9,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Bölüm 10 — Permütasyon, Kombinasyon, Binom, Olasılık, İstatistik",
+   "test_count": 14,
+   "topic": "Permütasyon"
+  },
+  {
+   "label": "Bölüm 11 — Polinomlar, İkinci Dereceden Denklemler, Karmaşık Sayılar",
+   "test_count": 8,
+   "topic": "Polinomlar"
+  }
+ ],
+ "warnings": [
+  "Kitap konu bazlı değil BÖLÜM bazlı: her bölümde birden çok konu karışık 'Deneme - N' testleri halinde (bölüm başına 1'den numaralı). Bu yüzden 11 bölüm satırı yazıldı; etiket bölümdeki konuları sıralar (içindekilerden). Konu bazlı eşleştirme çok-konulu satırlarda tek konuya bağlanamayabilir (Bölüm 4, 7 hariç çoğu karma).",
+  "Test sayıları İKİ bağımsız kaynakla birebir: (a) her bölüm kapağından sonraki 'Doğru/Yanlış/Net' takip tablosundaki DENEME satır sayısı, (b) 302 test sayfasının tamamının üst bandındaki 'Deneme - N' etiketleri + başlangıç sayfasındaki süre saati. Zincirler kopuksuz: 15+5+14+10+6+7+24+8+9+14+8 = 120 test.",
+  "Test uzunluğu bölüme göre değişiyor: Bölüm 1/3/6/8/9/10/11 2 sayfa; Bölüm 2, 4, 5 çoğunlukla 3 sayfa (Bölüm 2 Deneme 5 = 4 sayfa); Bölüm 7 karışık 2-3 sayfa. Sayfa hesabı tutuyor (ör. Bölüm 7: pdf 153-220 = 68 sayfa, 24 test).",
+  "Ofset: basılı sayfa = pdf indeksi + 4 (içindekiler Bölüm 1=7 → kapak pdf 3; Bölüm 11=293 → 289; Cevap anahtarları 311 → 307). 'page' = bölümün ilk test sayfasının 0-tabanlı pdf indeksi. Bölüm kapakları + takip tabloları ve cevap anahtarı (pdf 307-314) sayılmadı.",
+  "İçindekilerde test sayısı yok; kitapta konu anlatımı sayfası yok (tüm gövde test). Taranmış PDF, metin katmanı yok — tamamen görsel okuma.",
+  "Bölümler çok konulu: müfredat bağı bölümün ANA konusuna (ilk konu); Bölüm 7 Problemler karma → bağsız."
+ ]
+}

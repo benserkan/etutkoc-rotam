@@ -86,7 +86,7 @@ export function AdminFeatureCatalogClient({ initial }: Props) {
             ← Panel
           </Link>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Lightbulb className="size-6 text-indigo-700" aria-hidden />
+            <Lightbulb className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
             Vitrin Kartları
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -112,7 +112,7 @@ export function AdminFeatureCatalogClient({ initial }: Props) {
           {data.discovery_pending > 0 ? (
             <Link
               href="/admin/feature-catalog/discovery-queue"
-              className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
+              className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-3 py-2 text-sm font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-100"
             >
               Onay Bekleyenler
               <span className="inline-flex h-5 min-w-[1.4em] items-center justify-center rounded-full bg-amber-600 px-1.5 text-[11px] font-bold text-white">
@@ -237,7 +237,7 @@ export function AdminFeatureCatalogClient({ initial }: Props) {
           Filtreye uyan kart bulunamadı.{" "}
           <Link
             href="/admin/feature-catalog/new"
-            className="text-indigo-600 hover:text-indigo-800"
+            className="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
           >
             Yeni kart oluştur →
           </Link>
@@ -306,9 +306,9 @@ function HealthStat({
       <div
         className={cn(
           "mt-1 text-2xl font-semibold leading-none",
-          tone === "emerald" && "text-emerald-700",
-          tone === "amber" && "text-amber-700",
-          tone === "rose" && "text-rose-700",
+          tone === "emerald" && "text-emerald-700 dark:text-emerald-300",
+          tone === "amber" && "text-amber-700 dark:text-amber-300",
+          tone === "rose" && "text-rose-700 dark:text-rose-300",
         )}
       >
         {value}
@@ -338,7 +338,7 @@ function ScoreCell({ c }: { c: FeatureCardListItem }) {
         ) : null}
         {c.is_landing && c.neighbor_sim != null && c.neighbor_sim > 0 ? (
           <span
-            className="inline-flex items-center gap-0.5 rounded border border-stone-200 bg-stone-100 px-1 text-stone-600"
+            className="inline-flex items-center gap-0.5 rounded border border-stone-200 bg-stone-100 dark:bg-stone-500/15 dark:border-stone-500/30 px-1 text-stone-600 dark:text-slate-300"
             title="Üst kartla tema farklılığı (yüksek = çeşitli)."
           >
             <Palette className="size-3" aria-hidden />%
@@ -365,7 +365,7 @@ function VisitCell({ c }: { c: FeatureCardListItem }) {
         <span className="text-[10px] text-muted-foreground">gösterim</span>
       </div>
       {totalClicks > 0 ? (
-        <div className="text-[11px] font-medium text-indigo-700">{totalClicks} tıklama</div>
+        <div className="text-[11px] font-medium text-indigo-700 dark:text-indigo-300">{totalClicks} tıklama</div>
       ) : null}
     </div>
   );
@@ -390,7 +390,7 @@ function CardRow({ c }: { c: FeatureCardListItem }) {
             {c.title}
           </Link>
           {c.manual_pin ? (
-            <Pin className="size-3 text-amber-600" aria-label="Sabitlendi" />
+            <Pin className="size-3 text-amber-600 dark:text-amber-300" aria-label="Sabitlendi" />
           ) : null}
           {c.is_landing ? (
             <StatusBadge label="Anasayfada" tone="emerald" className="!text-[10px]" />
@@ -405,7 +405,7 @@ function CardRow({ c }: { c: FeatureCardListItem }) {
       <td className="px-3 py-3 align-top">
         <StatusBadge label={c.status_label} tone={c.status_badge} />
         {c.manual_hide ? (
-          <div className="mt-1 text-[10px] text-rose-600">gizli</div>
+          <div className="mt-1 text-[10px] text-rose-600 dark:text-rose-300">gizli</div>
         ) : null}
       </td>
       <td className="px-3 py-3 text-center align-top">
@@ -423,7 +423,7 @@ function CardRow({ c }: { c: FeatureCardListItem }) {
       <td className="px-3 py-3 text-right align-top">
         <Link
           href={`/admin/feature-catalog/${c.id}`}
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+          className="text-xs font-medium text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
         >
           Düzenle →
         </Link>
@@ -444,7 +444,7 @@ function MobileCard({ c }: { c: FeatureCardListItem }) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-1.5">
               <span className="font-medium">{c.title}</span>
-              {c.manual_pin ? <Pin className="size-3 text-amber-600" aria-hidden /> : null}
+              {c.manual_pin ? <Pin className="size-3 text-amber-600 dark:text-amber-300" aria-hidden /> : null}
             </div>
             <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{c.slug}</div>
             <div className="mt-2 flex flex-wrap items-center gap-2">

@@ -53,9 +53,9 @@ import { cn } from "@/lib/utils";
  */
 
 const STATUS_TONE: Record<string, string> = {
-  pending: "border-amber-300 bg-amber-50 text-amber-900",
-  in_progress: "border-sky-300 bg-sky-50 text-sky-900",
-  completed: "border-emerald-300 bg-emerald-50 text-emerald-900",
+  pending: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200",
+  in_progress: "border-sky-300 bg-sky-50 dark:bg-sky-500/15 dark:border-sky-500/30 text-sky-900 dark:text-sky-200",
+  completed: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-900 dark:text-emerald-200",
   cancelled: "border-border bg-muted text-muted-foreground",
 };
 
@@ -166,7 +166,7 @@ export function StudentSurveysPanel({ studentId }: { studentId: number }) {
                       </div>
                       <div className="mt-auto">
                         {open ? (
-                          <span className="inline-flex items-center gap-1.5 text-xs text-amber-800">
+                          <span className="inline-flex items-center gap-1.5 text-xs text-amber-800 dark:text-amber-200">
                             <Clock className="size-3.5" aria-hidden />
                             Öğrencide bekliyor
                           </span>
@@ -243,7 +243,7 @@ function CareerSynthesisCard({ studentId }: { studentId: number }) {
     <Card className="border-cyan-200">
       <CardHeader>
         <CardTitle className="text-base inline-flex items-center gap-2">
-          <Compass className="size-4 text-cyan-700" aria-hidden />
+          <Compass className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
           Kariyer Keşif — AI Sentezi
         </CardTitle>
         <p className="text-xs text-muted-foreground">
@@ -260,24 +260,24 @@ function CareerSynthesisCard({ studentId }: { studentId: number }) {
         ) : !data ? (
           <p className="text-sm text-muted-foreground">Yüklenemedi — sayfayı yenileyin.</p>
         ) : !data.ready && !data.insight ? (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-            <p className="text-sm font-semibold text-amber-900 inline-flex items-center gap-1.5">
+          <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5">
               <AlertTriangle className="size-4" aria-hidden />
               Önce şu anketler tamamlanmalı
             </p>
-            <ul className="mt-1.5 list-disc pl-5 text-xs text-amber-800 space-y-0.5">
+            <ul className="mt-1.5 list-disc pl-5 text-xs text-amber-800 dark:text-amber-200 space-y-0.5">
               {data.missing_surveys.map((t) => (
                 <li key={t}>{t}</li>
               ))}
             </ul>
-            <p className="mt-1.5 text-xs text-amber-800">
+            <p className="mt-1.5 text-xs text-amber-800 dark:text-amber-200">
               Aşağıdaki katalogdan gönderin; öğrenci tamamlayınca sentez
               oluşturulabilir.
             </p>
           </div>
         ) : !data.insight ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
-            <p className="text-sm text-cyan-900">
+            <p className="text-sm text-cyan-900 dark:text-cyan-200">
               Anketler hazır — öğrencinin beceri × ilgi × akademik profili
               sentezlenebilir.
             </p>
@@ -325,8 +325,8 @@ function CareerSynthesisResult({
   return (
     <div className="space-y-3">
       {isStale ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5">
-          <p className="text-xs text-amber-900 inline-flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-2.5">
+          <p className="text-xs text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5">
             <AlertTriangle className="size-3.5" aria-hidden />
             Yeni anket sonucu var — sentez güncel değil.
           </p>
@@ -334,7 +334,7 @@ function CareerSynthesisResult({
             type="button"
             onClick={onRefresh}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-md border border-amber-400 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1.5 rounded-md border border-amber-400 bg-card px-2.5 py-1 text-xs font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100 disabled:opacity-50 transition"
           >
             {busy ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -352,22 +352,22 @@ function CareerSynthesisResult({
         {ins.career_suggestions.map((s, i) => (
           <div key={i} className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-cyan-950">{s.title}</p>
+              <p className="text-sm font-semibold text-cyan-950 dark:text-cyan-200">{s.title}</p>
               {s.field ? (
-                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded border border-cyan-300 bg-white text-cyan-900">
+                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded border border-cyan-300 bg-card text-cyan-900 dark:text-cyan-200">
                   {s.field}
                 </span>
               ) : null}
             </div>
             {s.why ? (
-              <p className="mt-1 text-xs leading-relaxed text-cyan-900">{s.why}</p>
+              <p className="mt-1 text-xs leading-relaxed text-cyan-900 dark:text-cyan-200">{s.why}</p>
             ) : null}
             {s.example_departments.length > 0 ? (
               <div className="mt-1.5 flex flex-wrap gap-1">
                 {s.example_departments.map((d) => (
                   <span
                     key={d}
-                    className="text-[10px] px-1.5 py-0.5 rounded-full border border-cyan-200 bg-white text-cyan-800"
+                    className="text-[10px] px-1.5 py-0.5 rounded-full border border-cyan-200 bg-card text-cyan-800 dark:text-cyan-200"
                   >
                     {d}
                   </span>
@@ -387,7 +387,7 @@ function CareerSynthesisResult({
             {ins.strengths.map((s) => (
               <span
                 key={s}
-                className="text-xs px-2 py-0.5 rounded-full border border-emerald-300 bg-emerald-50 text-emerald-900"
+                className="text-xs px-2 py-0.5 rounded-full border border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-900 dark:text-emerald-200"
               >
                 {s}
               </span>
@@ -410,9 +410,9 @@ function CareerSynthesisResult({
       ) : null}
 
       {ins.watch_outs.length > 0 ? (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-          <p className="text-xs font-semibold text-amber-900">Dikkat noktaları</p>
-          <ul className="mt-1 list-disc pl-5 text-xs text-amber-800 space-y-0.5">
+        <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3">
+          <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">Dikkat noktaları</p>
+          <ul className="mt-1 list-disc pl-5 text-xs text-amber-800 dark:text-amber-200 space-y-0.5">
             {ins.watch_outs.map((w, i) => (
               <li key={i}>{w}</li>
             ))}
@@ -488,7 +488,7 @@ function AssignmentRow({
         <button
           type="button"
           onClick={onOpenResult}
-          className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-800 px-2.5 py-1 text-xs font-medium hover:bg-emerald-100 transition"
+          className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 px-2.5 py-1 text-xs font-medium hover:bg-emerald-100 transition"
         >
           Sonucu Gör
         </button>

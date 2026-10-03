@@ -13,8 +13,8 @@ import type { HeatmapCellData } from "@/lib/types/institution";
  * kısaltması alt eksende. Renk: aktivite skoru (slate-100 → emerald-700).
  */
 const LEVEL_COLORS: Record<number, string> = {
-  0: "bg-slate-100",
-  1: "bg-emerald-100",
+  0: "bg-slate-100 dark:bg-slate-500/15",
+  1: "bg-emerald-100 dark:bg-emerald-500/15",
   2: "bg-emerald-300",
   3: "bg-emerald-500",
   4: "bg-emerald-700",
@@ -112,8 +112,8 @@ export function HeatmapLegend() {
   return (
     <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
       <span>Az aktif</span>
-      <div className="size-[13px] rounded-[2px] bg-slate-100" />
-      <div className="size-[13px] rounded-[2px] bg-emerald-100" />
+      <div className="size-[13px] rounded-[2px] bg-slate-100 dark:bg-slate-500/15" />
+      <div className="size-[13px] rounded-[2px] bg-emerald-100 dark:bg-emerald-500/15" />
       <div className="size-[13px] rounded-[2px] bg-emerald-300" />
       <div className="size-[13px] rounded-[2px] bg-emerald-500" />
       <div className="size-[13px] rounded-[2px] bg-emerald-700" />

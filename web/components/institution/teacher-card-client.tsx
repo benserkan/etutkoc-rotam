@@ -389,7 +389,7 @@ function AiAccessCard({ teacherId, enabled }: { teacherId: number; enabled: bool
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Sparkles className="size-4 text-violet-600" aria-hidden />
+            <Sparkles className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
             Yapay zekâ kullanımı
             {!enabled ? (
               <span className="rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-900 dark:bg-amber-500/30 dark:text-amber-200">

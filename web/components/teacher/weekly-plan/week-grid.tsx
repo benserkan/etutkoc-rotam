@@ -746,7 +746,7 @@ export function WeekGrid({
                             className={cn(
                               "ml-auto rounded px-1 font-semibold",
                               vmin > VIDEO_WARN_MIN
-                                ? "bg-amber-500 text-white"
+                                ? "bg-amber-500 text-amber-950"
                                 : "text-cyan-800 dark:text-cyan-300",
                             )}
                             title={
@@ -903,7 +903,7 @@ export function WeekGrid({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-sm rounded-lg border border-border bg-card p-4 shadow-xl">
             <p className="font-semibold flex items-center gap-2">
-              <Trash2 className="size-4 text-rose-600" aria-hidden />
+              <Trash2 className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
               Görevi sil
             </p>
             <p className="mt-2 text-sm text-muted-foreground">

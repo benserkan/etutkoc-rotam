@@ -163,9 +163,9 @@ function PhoneCardShell({
         <div>
           <h2 className="font-semibold inline-flex items-center gap-1.5">
             {slot === "secondary" ? (
-              <Phone className="size-4 text-[#117A86]" aria-hidden />
+              <Phone className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
             ) : (
-              <Smartphone className="size-4 text-[#117A86]" aria-hidden />
+              <Smartphone className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
             )}
             {title}
           </h2>
@@ -201,7 +201,7 @@ function PhoneVerifiedPanel({
     <PhoneCardShell
       slot={slot}
       badge={
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
           <CheckCircle2 className="size-3" aria-hidden />
           Doğrulandı
         </span>
@@ -223,7 +223,7 @@ function PhoneVerifiedPanel({
         variant="outline"
         onClick={doDelete}
         disabled={mut.isPending}
-        className="text-rose-700 border-rose-200 hover:bg-rose-50"
+        className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50"
       >
         {mut.isPending ? (
           <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -268,7 +268,7 @@ function PhonePendingPanel({
     <PhoneCardShell
       slot={slot}
       badge={
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-200">
           <Clock className="size-3" aria-hidden />
           Kod bekleniyor
         </span>
@@ -284,11 +284,11 @@ function PhonePendingPanel({
         </div>
 
         {phone.devTestCode && (
-          <div className="rounded-md border border-slate-300 bg-slate-100 p-2 text-xs flex items-center gap-2">
-            <ShieldCheck className="size-4 text-slate-600 shrink-0" aria-hidden />
+          <div className="rounded-md border border-slate-300 bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 p-2 text-xs flex items-center gap-2">
+            <ShieldCheck className="size-4 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden />
             <span className="font-semibold">DEV:</span>
             <span>SMS gönderim devre dışı (stub). Test kodu:</span>
-            <code className="bg-white px-2 py-0.5 rounded border border-slate-300 font-mono">
+            <code className="bg-card px-2 py-0.5 rounded border border-slate-300 font-mono">
               {phone.devTestCode}
             </code>
           </div>
@@ -332,7 +332,7 @@ function PhonePendingPanel({
               size="sm"
               onClick={resend}
               disabled={startMut.isPending}
-              className="text-[#117A86]"
+              className="text-[#117A86] dark:text-teal-300"
             >
               ↻ Yeni kod gönder
             </Button>
@@ -362,7 +362,7 @@ function PhoneStartPanel({ slot }: { slot: "primary" | "secondary" }) {
     <PhoneCardShell
       slot={slot}
       badge={
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200">
           Kapalı
         </span>
       }
@@ -442,12 +442,12 @@ function PhoneSoftPanel({
       slot={slot}
       badge={
         phone.number ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
             <CheckCircle2 className="size-3" aria-hidden />
             Kayıtlı
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200">
             <Phone className="size-3" aria-hidden />
             Numara ekleyin
           </span>
@@ -484,7 +484,7 @@ function PhoneSoftPanel({
                 variant="outline"
                 onClick={() => delMut.mutate()}
                 disabled={delMut.isPending}
-                className="text-rose-700 border-rose-200 hover:bg-rose-50"
+                className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50"
               >
                 {delMut.isPending ? (
                   <Loader2 className="size-3.5 animate-spin" aria-hidden />

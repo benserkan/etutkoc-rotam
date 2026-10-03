@@ -54,10 +54,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_TONE: Record<string, string> = {
-  active: "bg-amber-100 text-amber-800 border-amber-200",
-  consumed: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  cancelled: "bg-slate-200 text-slate-700 border-slate-300",
-  expired: "bg-rose-100 text-rose-800 border-rose-200",
+  active: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-200",
+  consumed: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-200",
+  cancelled: "bg-slate-200 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-700 dark:text-slate-300 border-slate-300",
+  expired: "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 border-rose-200",
 };
 
 export function AdminPaymentLinksClient({ initial }: Props) {
@@ -203,7 +203,7 @@ function FilterChip({
       className={cn(
         "rounded-full border px-3 py-1 text-xs font-medium transition",
         active
-          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300"
           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
       )}
     >
@@ -220,7 +220,7 @@ function LinkRow({ item }: { item: PaymentLinkItem }) {
 
   return (
     <>
-      <tr className={cn(item.status === "active" && "bg-amber-50/20")}>
+      <tr className={cn(item.status === "active" && "bg-amber-50/20 dark:bg-amber-500/10")}>
         <td className="px-4 py-3">
           <div className="flex items-center gap-2">
             {isInst ? (
@@ -239,7 +239,7 @@ function LinkRow({ item }: { item: PaymentLinkItem }) {
           </div>
         </td>
         <td className="px-4 py-3 text-xs">
-          <div className="font-medium text-slate-800">{item.plan_code}</div>
+          <div className="font-medium text-slate-800 dark:text-slate-200">{item.plan_code}</div>
           <div className="text-muted-foreground">
             {item.cycle === "annual" ? "Yıllık" : "Aylık"}
           </div>
@@ -253,7 +253,7 @@ function LinkRow({ item }: { item: PaymentLinkItem }) {
           <span
             className={cn(
               "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-              STATUS_TONE[item.status] ?? "bg-slate-100 text-slate-700",
+              STATUS_TONE[item.status] ?? "bg-slate-100 dark:bg-slate-500/15 text-slate-700 dark:text-slate-300",
             )}
           >
             {item.status === "consumed" && <CheckCircle2 className="size-3" aria-hidden />}
@@ -262,7 +262,7 @@ function LinkRow({ item }: { item: PaymentLinkItem }) {
             {item.status_label}
           </span>
           {item.status === "consumed" && item.consumed_by_user_name ? (
-            <div className="mt-1 text-xs text-emerald-700">
+            <div className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
               {item.consumed_by_user_name}
             </div>
           ) : null}
@@ -277,7 +277,7 @@ function LinkRow({ item }: { item: PaymentLinkItem }) {
               <Button
                 size="sm"
                 variant="outline"
-                className="text-rose-700"
+                className="text-rose-700 dark:text-rose-300"
                 onClick={() => setConfirmCancel(true)}
               >
                 <X className="size-3" aria-hidden /> İptal
@@ -342,7 +342,7 @@ function CopyButton({ url, disabled }: { url: string; disabled: boolean }) {
     >
       {copied ? (
         <>
-          <CheckCircle2 className="size-3 text-emerald-600" aria-hidden /> Kopyalandı
+          <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-300" aria-hidden /> Kopyalandı
         </>
       ) : (
         <>
@@ -556,7 +556,7 @@ function OwnerTypeButton({
       className={cn(
         "flex flex-1 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition",
         active
-          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300"
           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
       )}
     >

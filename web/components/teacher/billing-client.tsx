@@ -39,7 +39,7 @@ const STATUS_META: Record<BillingStatus, { label: string; cls: string }> = {
   paid: { label: "Ödendi", cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200" },
   partial: { label: "Kısmi", cls: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200" },
   pending: { label: "Bekliyor", cls: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200" },
-  no_rate: { label: "Ücret yok", cls: "border-slate-200 bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30" },
+  no_rate: { label: "Ücret yok", cls: "border-slate-200 bg-slate-50 text-slate-600 dark:text-slate-300 dark:bg-slate-500/10 dark:border-slate-500/30" },
 };
 
 export function BillingClient({
@@ -67,7 +67,7 @@ export function BillingClient({
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Wallet className="size-6 text-cyan-700" aria-hidden /> Tahsilat
+            <Wallet className="size-6 text-cyan-700 dark:text-cyan-300" aria-hidden /> Tahsilat
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Yapılan seans × ücret − ödenen = kalan alacak. Ertelenen/iptal seans sayılmaz.
@@ -138,14 +138,14 @@ export function BillingClient({
                       <button
                         type="button"
                         onClick={() => setRateFor(r)}
-                        className={cn("rounded px-1.5 py-0.5 hover:bg-muted", r.session_fee == null && "text-cyan-700 underline underline-offset-2")}
+                        className={cn("rounded px-1.5 py-0.5 hover:bg-muted", r.session_fee == null && "text-cyan-700 dark:text-cyan-300 underline underline-offset-2")}
                       >
                         {r.session_fee != null ? lira(r.session_fee) : "Ücret belirle"}
                       </button>
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{r.accrued != null ? lira(r.accrued) : "—"}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-emerald-700">{r.paid > 0 ? lira(r.paid) : "—"}</td>
-                    <td className={cn("px-3 py-2 text-right font-semibold tabular-nums", r.balance && r.balance > 0 ? "text-rose-700" : "")}>
+                    <td className="px-3 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-300">{r.paid > 0 ? lira(r.paid) : "—"}</td>
+                    <td className={cn("px-3 py-2 text-right font-semibold tabular-nums", r.balance && r.balance > 0 ? "text-rose-700 dark:text-rose-300" : "")}>
                       {r.balance != null ? lira(r.balance) : "—"}
                     </td>
                     <td className="px-3 py-2">
@@ -261,7 +261,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "go
     <Card>
       <CardContent className="space-y-1 p-4">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className={cn("text-2xl font-bold tabular-nums", tone === "good" && "text-emerald-600", tone === "warn" && "text-rose-600")}>{value}</p>
+        <p className={cn("text-2xl font-bold tabular-nums", tone === "good" && "text-emerald-600 dark:text-emerald-300", tone === "warn" && "text-rose-600 dark:text-rose-300")}>{value}</p>
       </CardContent>
     </Card>
   );
@@ -359,7 +359,7 @@ function PaymentDialog({
             <Input id="pnote" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
           {row.balance != null && row.balance > 0 ? (
-            <p className="text-xs text-muted-foreground">Bu ay kalan: <b className="text-rose-700">{lira(row.balance)}</b></p>
+            <p className="text-xs text-muted-foreground">Bu ay kalan: <b className="text-rose-700 dark:text-rose-300">{lira(row.balance)}</b></p>
           ) : null}
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose} disabled={mut.isPending}>İptal</Button>

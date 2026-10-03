@@ -111,19 +111,19 @@ function RiskCallout({
   return (
     <Link
       href="/institution/at-risk"
-      className="group block rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 hover:border-rose-400 hover:bg-rose-100/60 transition"
+      className="group block rounded-lg border border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 px-4 py-3 hover:border-rose-400 hover:bg-rose-100/60 transition"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <AlertTriangle
-            className="size-7 shrink-0 text-rose-600"
+            className="size-7 shrink-0 text-rose-600 dark:text-rose-300"
             aria-hidden
           />
           <div className="min-w-0">
-            <div className="font-semibold text-rose-900">
+            <div className="font-semibold text-rose-900 dark:text-rose-200">
               {count} öğrenci risk altında
             </div>
-            <div className="text-xs text-rose-700 mt-0.5">
+            <div className="text-xs text-rose-700 dark:text-rose-300 mt-0.5">
               {critical > 0 && (
                 <>
                   <span className="mr-1 inline-block size-2 rounded-full bg-rose-600 align-middle" aria-hidden />
@@ -135,7 +135,7 @@ function RiskCallout({
           </div>
         </div>
         <ArrowRight
-          className="size-5 shrink-0 text-rose-700 transition-transform group-hover:translate-x-0.5"
+          className="size-5 shrink-0 text-rose-700 dark:text-rose-300 transition-transform group-hover:translate-x-0.5"
           aria-hidden
         />
       </div>
@@ -154,23 +154,23 @@ function InactiveCallout({
   return (
     <Link
       href="/institution/activity-heatmap"
-      className="group block rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 hover:border-amber-400 hover:bg-amber-100/60 transition"
+      className="group block rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-4 py-3 hover:border-amber-400 hover:bg-amber-100/60 transition"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Moon className="size-7 shrink-0 text-amber-600" aria-hidden />
+          <Moon className="size-7 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
           <div className="min-w-0">
-            <div className="font-semibold text-amber-900">
+            <div className="font-semibold text-amber-900 dark:text-amber-200">
               {count} öğretmen 7+ gündür sistemde hareketsiz
             </div>
-            <div className="text-xs text-amber-700 mt-0.5 break-words">
+            <div className="text-xs text-amber-700 dark:text-amber-300 mt-0.5 break-words">
               Giriş, görev ya da veli notu yok: {names.join(" · ")}
               {remaining > 0 ? ` +${remaining} daha` : ""}
             </div>
           </div>
         </div>
         <ArrowRight
-          className="size-5 shrink-0 text-amber-700 transition-transform group-hover:translate-x-0.5"
+          className="size-5 shrink-0 text-amber-700 dark:text-amber-300 transition-transform group-hover:translate-x-0.5"
           aria-hidden
         />
       </div>

@@ -66,7 +66,7 @@ export function AdminUsageClient({ initial, initialTab }: Props) {
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <Wallet className="size-6 text-indigo-700" aria-hidden />
+          <Wallet className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Kredi Kullanımı — Sistem Geneli
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -121,7 +121,7 @@ export function AdminUsageClient({ initial, initialTab }: Props) {
           className={cn(
             "px-4 py-2 text-sm font-medium border-b-2 inline-flex items-center gap-1.5",
             tab === "institutions"
-              ? "border-indigo-500 text-indigo-700"
+              ? "border-indigo-500 text-indigo-700 dark:text-indigo-300"
               : "border-transparent text-muted-foreground hover:text-foreground",
           )}
         >
@@ -134,7 +134,7 @@ export function AdminUsageClient({ initial, initialTab }: Props) {
           className={cn(
             "px-4 py-2 text-sm font-medium border-b-2 inline-flex items-center gap-1.5",
             tab === "independents"
-              ? "border-indigo-500 text-indigo-700"
+              ? "border-indigo-500 text-indigo-700 dark:text-indigo-300"
               : "border-transparent text-muted-foreground hover:text-foreground",
           )}
         >
@@ -178,8 +178,8 @@ function SummaryCard({
   };
   const textMap = {
     default: "text-foreground",
-    indigo: "text-indigo-700",
-    violet: "text-violet-700",
+    indigo: "text-indigo-700 dark:text-indigo-300",
+    violet: "text-violet-700 dark:text-violet-300",
   };
   return (
     <Card className={cn("border", borderMap[tone])}>
@@ -218,10 +218,10 @@ function UsageBar({ account }: { account: UsageAccountInfo }) {
       <div className="text-[10px] text-muted-foreground mt-0.5">
         {account.used_credits} / {account.total_allocated}
         {(account.purchased_credits ?? 0) > 0 && (
-          <span className="text-cyan-600"> (+{account.purchased_credits} satın alınan)</span>
+          <span className="text-cyan-600 dark:text-cyan-300"> (+{account.purchased_credits} satın alınan)</span>
         )}
         {account.bonus_credits > 0 && (
-          <span className="text-violet-600"> (+{account.bonus_credits} bonus)</span>
+          <span className="text-violet-600 dark:text-violet-300"> (+{account.bonus_credits} bonus)</span>
         )}
       </div>
     </div>
@@ -231,9 +231,9 @@ function UsageBar({ account }: { account: UsageAccountInfo }) {
 function RemainingCell({ account }: { account: UsageAccountInfo }) {
   const tone =
     account.usage_pct >= 100
-      ? "text-rose-700 font-semibold"
+      ? "text-rose-700 dark:text-rose-300 font-semibold"
       : account.usage_pct >= 80
-        ? "text-amber-700 font-semibold"
+        ? "text-amber-700 dark:text-amber-300 font-semibold"
         : "text-foreground/80";
   return <span className={cn("tabular-nums", tone)}>{account.remaining_credits}</span>;
 }
@@ -358,8 +358,8 @@ function InstActions({
         className={cn(
           "text-xs",
           hardBlocked
-            ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-            : "border-rose-200 text-rose-700 hover:bg-rose-50",
+            ? "border-emerald-200 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50"
+            : "border-rose-200 text-rose-700 dark:text-rose-300 hover:bg-rose-50",
         )}
       >
         {hardBlocked ? "Aç" : "Durdur"}
@@ -368,7 +368,7 @@ function InstActions({
         size="sm"
         variant="outline"
         onClick={() => setBonusOpen(true)}
-        className="text-xs border-violet-200 text-violet-700 hover:bg-violet-50"
+        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50"
       >
         +Bonus
       </Button>
@@ -515,7 +515,7 @@ function IndepRow({ row }: { row: UsageIndependentRow }) {
       </td>
       <td className="px-4 py-2 text-xs">
         {row.account.blocked_until ? (
-          <span className="text-rose-700 font-medium inline-flex items-center gap-0.5">
+          <span className="text-rose-700 dark:text-rose-300 font-medium inline-flex items-center gap-0.5">
             <Clock className="size-3" aria-hidden />
             {formatDateTime(row.account.blocked_until)}
           </span>
@@ -556,7 +556,7 @@ function IndepBonus({ userId }: { userId: number }) {
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="text-xs border-violet-200 text-violet-700 hover:bg-violet-50"
+        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50"
       >
         +Bonus
       </Button>

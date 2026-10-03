@@ -73,7 +73,7 @@ export function StudentAiCard({ studentId }: { studentId: number }) {
   return (
     <section className="rounded-lg border border-border bg-card p-4">
       <h2 className="flex items-center gap-2 text-sm font-semibold">
-        <Sparkles className="size-4 text-violet-600" aria-hidden />
+        <Sparkles className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
         Yapay zekâ erişimi
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">

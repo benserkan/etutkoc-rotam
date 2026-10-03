@@ -64,7 +64,7 @@ export function AdminActionTemplatesClient({ initial }: Props) {
           ← Ticari Pano
         </Link>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <ClipboardList className="size-6 text-indigo-700" aria-hidden />
+          <ClipboardList className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Aksiyon Şablonları
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -146,7 +146,7 @@ function NewTemplateForm({ kinds }: { kinds: EnumOption[] }) {
                     className={cn(fieldClass, "mt-1 font-mono text-xs")} />
         </label>
         {hasSingleBrace(subject) || hasSingleBrace(body) ? (
-          <p className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
+          <p className="rounded border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-2 py-1 text-[11px] text-amber-800 dark:text-amber-200">
             ⚠ Tek süslü {"{...}"} render edilmez. Çift süslü <strong>{"{{...}}"}</strong> kullan
             (ör. {"{{trial_ends_at}}"}).
           </p>
@@ -187,7 +187,7 @@ function TemplateCard({ t, kinds }: { t: ActionTemplateItem; kinds: EnumOption[]
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold">{t.name}</span>
             <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{t.kind_label}</span>
-            {!t.is_active ? <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] text-rose-700">Pasif</span> : null}
+            {!t.is_active ? <span className="rounded bg-rose-100 dark:bg-rose-500/15 px-1.5 py-0.5 text-[10px] text-rose-700 dark:text-rose-300">Pasif</span> : null}
           </div>
           {t.subject ? <div className="mt-1 text-xs text-muted-foreground">Konu: {t.subject}</div> : null}
           {t.description ? <div className="mt-0.5 text-xs italic text-muted-foreground">{t.description}</div> : null}

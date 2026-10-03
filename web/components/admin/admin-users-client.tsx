@@ -114,7 +114,7 @@ export function AdminUsersClient({
             ← Panel
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-            <Users className="size-6 text-indigo-700" aria-hidden />
+            <Users className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
             Kullanıcılar
           </h1>
         </div>
@@ -122,7 +122,7 @@ export function AdminUsersClient({
           <Button
             variant="outline"
             onClick={() => setDemoOpen(true)}
-            className="border-amber-300 text-amber-900 hover:bg-amber-50"
+            className="border-amber-300 text-amber-900 dark:text-amber-200 hover:bg-amber-50"
             title="Tanıtım için hazır kurum/koç/öğrenci/veli ekosistemi oluştur"
           >
             <FlaskConical className="size-4" aria-hidden />
@@ -298,7 +298,7 @@ function UserRow({ user }: { user: AdminUserListItem }) {
         </Link>
         {user.is_demo ? (
           <span
-            className="ml-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-900"
+            className="ml-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200"
             title={user.demo_label ? `Demo: ${user.demo_label}` : "Demo hesap"}
           >
             <FlaskConical className="size-2.5" aria-hidden />
@@ -334,7 +334,7 @@ function UserRow({ user }: { user: AdminUserListItem }) {
             kilitli
           </span>
         ) : user.is_active ? (
-          <span className="text-emerald-700 text-[10px]">●</span>
+          <span className="text-emerald-700 dark:text-emerald-300 text-[10px]">●</span>
         ) : (
           <span className="text-muted-foreground/70 text-[10px]">pasif</span>
         )}
@@ -342,7 +342,7 @@ function UserRow({ user }: { user: AdminUserListItem }) {
       <td className="px-4 py-2 text-right">
         <Link
           href={`/admin/users/${user.id}`}
-          className="text-xs text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-0.5"
+          className="text-xs text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 inline-flex items-center gap-0.5"
         >
           Detay
           <ArrowRight className="size-3" aria-hidden />
@@ -475,7 +475,7 @@ function CreateUserDialog({
               ))}
             </select>
           </div>
-          <div className="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-900">
+          <div className="rounded-md border border-amber-200 bg-amber-50/60 dark:bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
             🔐 <strong>Şifre güvenliği:</strong> Sistem rol-bazlı güçlü geçici
             şifre üretir. Kullanıcı <strong>ilk girişte kendi şifresini
             belirlemek zorundadır</strong>.
@@ -547,15 +547,15 @@ export function TempPasswordDialog({
         <p className="text-sm text-muted-foreground">
           <strong>{fullName}</strong> için tek seferlik geçici şifre:
         </p>
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-4 my-2 flex items-center justify-between gap-3">
-          <code className="font-mono text-lg font-semibold text-amber-900 tracking-wider break-all">
+        <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-4 my-2 flex items-center justify-between gap-3">
+          <code className="font-mono text-lg font-semibold text-amber-900 dark:text-amber-200 tracking-wider break-all">
             {pwd}
           </code>
           <Button
             size="sm"
             variant="outline"
             onClick={copy}
-            className="border-amber-300 text-amber-800 hover:bg-amber-100"
+            className="border-amber-300 text-amber-800 dark:text-amber-200 hover:bg-amber-100"
           >
             {copied ? (
               <>
@@ -658,7 +658,7 @@ function DemoEcosystemDialogInner({ onClose }: { onClose: () => void }) {
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FlaskConical className="size-5 text-amber-700" aria-hidden />
+            <FlaskConical className="size-5 text-amber-700 dark:text-amber-300" aria-hidden />
             Demo Ekosistem Oluştur
           </DialogTitle>
         </DialogHeader>
@@ -683,7 +683,7 @@ function DemoEcosystemDialogInner({ onClose }: { onClose: () => void }) {
                     className={cn(
                       "w-full text-left px-4 py-3 rounded-lg border-2 transition",
                       active
-                        ? "border-amber-500 bg-amber-50"
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30"
                         : "border-border bg-card hover:bg-muted/50",
                     )}
                   >
@@ -751,14 +751,14 @@ function DemoResultPanel({
 }) {
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-3">
-        <p className="text-sm font-semibold text-emerald-900">
+      <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 p-3">
+        <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
           <CheckCircle2 className="inline size-4 mr-1" aria-hidden />
           Demo ekosistem hazır!
         </p>
-        <p className="text-xs text-emerald-800 mt-1">{result.summary}</p>
+        <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-1">{result.summary}</p>
         {result.institution_name ? (
-          <p className="text-[11px] text-emerald-700 mt-1">
+          <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1">
             Kurum: <b>{result.institution_name}</b>
           </p>
         ) : null}
@@ -805,7 +805,7 @@ function DemoCredentialCard({
   return (
     <div className="rounded-lg border border-border bg-card p-3">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+        <span className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">
           {cred.role_label}
         </span>
         <span className="text-[11px] text-muted-foreground">
@@ -827,7 +827,7 @@ function DemoCredentialCard({
             title="Email dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200'i panoya kopyala"
           >
             {copied === "email" ? (
-              <CheckCircle2 className="size-3 text-emerald-600" aria-hidden />
+              <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-300" aria-hidden />
             ) : (
               <Clipboard className="size-3" aria-hidden />
             )}
@@ -847,7 +847,7 @@ function DemoCredentialCard({
             className="px-2 py-1 text-[11px] rounded border border-border hover:bg-muted transition inline-flex items-center gap-1"
           >
             {copied === "password" ? (
-              <CheckCircle2 className="size-3 text-emerald-600" aria-hidden />
+              <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-300" aria-hidden />
             ) : (
               <Clipboard className="size-3" aria-hidden />
             )}

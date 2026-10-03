@@ -55,11 +55,11 @@ export function AdminKvkkClient({ initial }: Props) {
         >
           ← Panel
         </Link>
-        <p className="text-[11px] uppercase tracking-wider text-rose-700 font-semibold mt-1">
+        <p className="text-[11px] uppercase tracking-wider text-rose-700 dark:text-rose-300 font-semibold mt-1">
           Süper Admin
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-0.5 inline-flex items-center gap-2">
-          <Scale className="size-6 text-rose-700" aria-hidden />
+          <Scale className="size-6 text-rose-700 dark:text-rose-300" aria-hidden />
           KVKK Denetim Paneli
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
@@ -111,10 +111,10 @@ function StatCard({
 }) {
   const map = {
     default: { border: "border-border", text: "text-foreground" },
-    amber: { border: "border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30", text: "text-amber-900" },
-    sky: { border: "border-sky-200 bg-sky-50/40 dark:bg-sky-500/10 dark:border-sky-500/30", text: "text-sky-900" },
-    emerald: { border: "border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30", text: "text-emerald-900" },
-    slate: { border: "border-slate-200 bg-slate-50/40 dark:bg-slate-500/10 dark:border-slate-500/30", text: "text-slate-900" },
+    amber: { border: "border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30", text: "text-amber-900 dark:text-amber-200" },
+    sky: { border: "border-sky-200 bg-sky-50/40 dark:bg-sky-500/10 dark:border-sky-500/30", text: "text-sky-900 dark:text-sky-200" },
+    emerald: { border: "border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30", text: "text-emerald-900 dark:text-emerald-200" },
+    slate: { border: "border-slate-200 bg-slate-50/40 dark:bg-slate-500/10 dark:border-slate-500/30", text: "text-slate-900 dark:text-slate-200" },
   };
   const m = map[tone];
   return (
@@ -173,9 +173,9 @@ function PendingRequestsCard({ rows }: { rows: KvkkRequestItem[] }) {
 function PendingRow({ req }: { req: KvkkRequestItem }) {
   const kindTone =
     req.kind === "delete"
-      ? "text-rose-700"
+      ? "text-rose-700 dark:text-rose-300"
       : req.kind === "export"
-        ? "text-sky-700"
+        ? "text-sky-700 dark:text-sky-300"
         : "text-foreground";
   return (
     <tr>
@@ -233,7 +233,7 @@ function ApplyButton({ id }: { id: number }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-rose-600 hover:text-rose-800 font-medium px-2 inline-flex items-center gap-0.5"
+        className="text-xs text-rose-600 dark:text-rose-300 hover:text-rose-800 font-medium px-2 inline-flex items-center gap-0.5"
       >
         <ShieldCheck className="size-3" aria-hidden />
         Hemen Uygula
@@ -477,7 +477,7 @@ function StatusBadge({
     completed: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
     processing: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
     pending: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-    cancelled: "bg-slate-100 text-slate-600 border-slate-200",
+    cancelled: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border-slate-200",
     rejected: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
   };
   return (

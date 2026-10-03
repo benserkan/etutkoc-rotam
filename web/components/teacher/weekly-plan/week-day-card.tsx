@@ -229,7 +229,7 @@ export function WeekDayCard({
                 <span
                   className={cn(
                     "inline-flex items-center gap-1.5 tabular-nums font-medium",
-                    day.pct >= 0.7 ? "text-emerald-600" : day.pct >= 0.4 ? "text-amber-600" : "text-rose-600",
+                    day.pct >= 0.7 ? "text-emerald-600 dark:text-emerald-300" : day.pct >= 0.4 ? "text-amber-600 dark:text-amber-300" : "text-rose-600 dark:text-rose-300",
                   )}
                   title={`Görev tamamlama %${Math.round(day.pct * 100)}`}
                 >
@@ -246,7 +246,7 @@ export function WeekDayCard({
                 </span>
               ) : null}
               {draftCount > 0 ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200">
                   <Pencil className="size-3" aria-hidden />
                   {draftCount} taslak
                 </span>
@@ -383,9 +383,9 @@ function DayPublishBanner({
     publishDay.mutate({ body: { task_date: dayDate } });
   }
   return (
-    <div className="px-5 py-2.5 border-t border-border bg-amber-50/60 flex items-center justify-between gap-3">
-      <p className="inline-flex items-center gap-2 text-xs text-amber-900">
-        <FileEdit className="size-3.5 text-amber-700" aria-hidden />
+    <div className="px-5 py-2.5 border-t border-border bg-amber-50/60 dark:bg-amber-500/10 flex items-center justify-between gap-3">
+      <p className="inline-flex items-center gap-2 text-xs text-amber-900 dark:text-amber-200">
+        <FileEdit className="size-3.5 text-amber-700 dark:text-amber-300" aria-hidden />
         <span>
           <span className="font-semibold">{draftCount} taslak görev</span> —
           öğrenci henüz göremiyor.
@@ -453,7 +453,7 @@ function SubjectChip({
           {ent.tests > 0 ? (
             <>
               <span className="text-muted-foreground/40">·</span>
-              <span className="text-emerald-700 whitespace-nowrap tabular-nums">
+              <span className="text-emerald-700 dark:text-emerald-300 whitespace-nowrap tabular-nums">
                 {ent.tests} test
               </span>
             </>
@@ -461,7 +461,7 @@ function SubjectChip({
           {ent.denemeler > 0 ? (
             <>
               <span className="text-muted-foreground/40">·</span>
-              <span className="text-indigo-700 whitespace-nowrap tabular-nums">
+              <span className="text-indigo-700 dark:text-indigo-300 whitespace-nowrap tabular-nums">
                 {ent.denemeler} deneme
               </span>
             </>
@@ -1181,13 +1181,13 @@ function SortableTaskRow({
               {task.planned_count} {task.work_block_unit ?? "test"}
             </span>
           ) : isDeneme && task.planned_count > 0 ? (
-            <span className="text-[11px] text-indigo-700 font-medium tabular-nums">
+            <span className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium tabular-nums">
               {task.planned_count} soru
             </span>
           ) : null}
           {task.is_draft ? (
             <span
-              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800"
+              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200"
               title="Henüz yayınlanmadı — öğrenci paneline inmez"
             >
               <Pencil className="size-2.5" aria-hidden />
@@ -1198,7 +1198,7 @@ function SortableTaskRow({
             {primaryText}
           </span>
           {task.completed_count > 0 ? (
-            <span className="text-xs text-emerald-700 tabular-nums">
+            <span className="text-xs text-emerald-700 dark:text-emerald-300 tabular-nums">
               · {task.completed_count}/{task.planned_count}
             </span>
           ) : null}
@@ -1212,12 +1212,12 @@ function SortableTaskRow({
             />
           ) : null}
           {task.status === "completed" ? (
-            <span className="inline-flex items-center gap-0.5 text-xs text-emerald-700">
+            <span className="inline-flex items-center gap-0.5 text-xs text-emerald-700 dark:text-emerald-300">
               <Check className="size-3" aria-hidden />
               tamam
             </span>
           ) : task.status === "partial" ? (
-            <span className="text-xs text-amber-700">kısmen</span>
+            <span className="text-xs text-amber-700 dark:text-amber-300">kısmen</span>
           ) : null}
         </div>
         {task.items.length > 1 ? (
@@ -1234,7 +1234,7 @@ function SortableTaskRow({
                   ) : null}
                   : <span className="font-medium tabular-nums">{it.planned_count}</span>
                   {it.completed_count > 0 ? (
-                    <span className="text-emerald-700 tabular-nums">
+                    <span className="text-emerald-700 dark:text-emerald-300 tabular-nums">
                       {" "}({it.completed_count} çöz.)
                     </span>
                   ) : null}
@@ -1583,7 +1583,7 @@ function TaskRichEditForm({
               className={cn(
                 "rounded-md border px-2.5 py-1 text-xs transition",
                 period === p.k
-                  ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
+                  ? "border-amber-500 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 font-semibold text-amber-900 dark:text-amber-200"
                   : "border-input bg-background hover:bg-muted/50",
               )}
             >
@@ -1856,7 +1856,7 @@ function TaskQuickEditForm({
               className={cn(
                 "rounded-md border px-2.5 py-1 text-xs transition",
                 period === p.k
-                  ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
+                  ? "border-amber-500 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 font-semibold text-amber-900 dark:text-amber-200"
                   : "border-input bg-background hover:bg-muted/50",
               )}
             >

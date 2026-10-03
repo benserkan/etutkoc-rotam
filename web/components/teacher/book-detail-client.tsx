@@ -347,12 +347,12 @@ function SectionsTab({
             size="sm"
             variant="outline"
             onClick={() => setMapOpen(true)}
-            className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+            className="border-indigo-300 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50"
           >
             <Wand2 className="size-4" aria-hidden />
             Müfredata eşleştir
             {unmappedCount > 0 ? (
-              <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+              <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-amber-950">
                 {unmappedCount}
               </span>
             ) : null}

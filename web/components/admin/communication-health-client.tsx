@@ -30,29 +30,29 @@ const CHANNEL_ICON: Record<string, typeof Mail> = {
 function statusTone(s: string): string {
   switch (s) {
     case "delivered":
-      return "bg-emerald-100 text-emerald-900 ring-1 ring-inset ring-emerald-300";
+      return "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-900 dark:text-emerald-200 ring-1 ring-inset ring-emerald-300";
     case "sent":
-      return "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200";
+      return "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 ring-1 ring-inset ring-emerald-200";
     case "bounced":
-      return "bg-rose-100 text-rose-900 ring-1 ring-inset ring-rose-300";
+      return "bg-rose-100 dark:bg-rose-500/15 text-rose-900 dark:text-rose-200 ring-1 ring-inset ring-rose-300";
     case "complained":
-      return "bg-orange-100 text-orange-900 ring-1 ring-inset ring-orange-300";
+      return "bg-orange-100 dark:bg-orange-500/15 text-orange-900 dark:text-orange-200 ring-1 ring-inset ring-orange-300";
     case "failed":
-      return "bg-rose-50 text-rose-800 ring-1 ring-inset ring-rose-200";
+      return "bg-rose-50 dark:bg-rose-500/15 text-rose-800 dark:text-rose-200 ring-1 ring-inset ring-rose-200";
     case "queued":
-      return "bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200";
+      return "bg-sky-50 dark:bg-sky-500/15 text-sky-800 dark:text-sky-200 ring-1 ring-inset ring-sky-200";
     case "suppressed":
-      return "bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-300";
+      return "bg-slate-100 dark:bg-slate-500/15 text-slate-700 dark:text-slate-300 ring-1 ring-inset ring-slate-300";
     default:
-      return "bg-slate-100 text-slate-700";
+      return "bg-slate-100 dark:bg-slate-500/15 text-slate-700 dark:text-slate-300";
   }
 }
 
 function pctColor(p: number | null): string {
-  if (p === null) return "text-slate-400";
-  if (p >= 95) return "text-emerald-600";
-  if (p >= 80) return "text-amber-600";
-  return "text-rose-600";
+  if (p === null) return "text-slate-500 dark:text-slate-400";
+  if (p >= 95) return "text-emerald-600 dark:text-emerald-300";
+  if (p >= 80) return "text-amber-600 dark:text-amber-300";
+  return "text-rose-600 dark:text-rose-300";
 }
 
 function fmt(iso: string): string {
@@ -172,12 +172,12 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
       )}
 
       {/* Drill-down */}
-      <div className="rounded-xl border border-slate-200 bg-white">
+      <div className="rounded-xl border border-slate-200 bg-card">
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-3">
           <span className="text-sm font-semibold text-foreground">
             Gönderim kayıtları
             {channel && (
-              <span className="ml-1 text-cyan-700">
+              <span className="ml-1 text-cyan-700 dark:text-cyan-300">
                 · {ov?.channels.find((c) => c.channel === channel)?.label}
               </span>
             )}
@@ -230,17 +230,17 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
                 const Icon = CHANNEL_ICON[it.channel] ?? Mail;
                 return (
                   <tr key={it.id} className="border-b border-slate-50 align-top">
-                    <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-2 text-slate-600 dark:text-slate-300">
                       {fmt(it.created_at)}
                     </td>
                     <td className="px-3 py-2">
-                      <span className="inline-flex items-center gap-1 text-slate-700">
+                      <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300">
                         <Icon className="size-3.5 text-slate-400" />
                         {it.channel_label}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-slate-500">{it.category ?? "—"}</td>
-                    <td className="px-3 py-2 text-slate-700">
+                    <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
                       {it.to_user_name ? (
                         <span>
                           {it.to_user_name}
@@ -252,7 +252,7 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
                         it.to_address ?? "—"
                       )}
                     </td>
-                    <td className="max-w-[220px] truncate px-3 py-2 text-slate-600" title={it.subject ?? ""}>
+                    <td className="max-w-[220px] truncate px-3 py-2 text-slate-600 dark:text-slate-300" title={it.subject ?? ""}>
                       {it.subject ?? "—"}
                     </td>
                     <td className="px-3 py-2">
@@ -324,30 +324,30 @@ function ChannelCard({
       onClick={onClick}
       className={`rounded-xl border p-4 text-left transition ${
         active
-          ? "border-cyan-500 ring-2 ring-cyan-200 bg-cyan-50/40"
+          ? "border-cyan-500 ring-2 ring-cyan-200 bg-cyan-50/40 dark:bg-cyan-500/10"
           : "border-slate-200 bg-white hover:border-slate-300"
       }`}
     >
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-2 font-semibold text-foreground">
-          <Icon className="size-4 text-cyan-700" /> {c.label}
+          <Icon className="size-4 text-cyan-700 dark:text-cyan-300" /> {c.label}
         </span>
         <span className={`text-lg font-bold ${pctColor(w.success_pct)}`}>
           {w.success_pct === null ? "—" : `%${w.success_pct}`}
         </span>
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-slate-600">
-        <span>Toplam: <b className="text-slate-800">{w.total}</b></span>
-        <span>Gönderildi: <b className="text-emerald-700">{w.sent}</b></span>
-        {w.delivered > 0 && <span>Ulaştı: <b className="text-emerald-700">{w.delivered}</b></span>}
+      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-slate-600 dark:text-slate-300">
+        <span>Toplam: <b className="text-slate-800 dark:text-slate-200">{w.total}</b></span>
+        <span>Gönderildi: <b className="text-emerald-700 dark:text-emerald-300">{w.sent}</b></span>
+        {w.delivered > 0 && <span>Ulaştı: <b className="text-emerald-700 dark:text-emerald-300">{w.delivered}</b></span>}
         {(w.bounced > 0 || w.failed > 0) && (
-          <span>Hata: <b className="text-rose-600">{w.bounced + w.failed}</b></span>
+          <span>Hata: <b className="text-rose-600 dark:text-rose-300">{w.bounced + w.failed}</b></span>
         )}
-        {w.complained > 0 && <span>Şikayet: <b className="text-orange-600">{w.complained}</b></span>}
+        {w.complained > 0 && <span>Şikayet: <b className="text-orange-600 dark:text-orange-300">{w.complained}</b></span>}
         {w.suppressed > 0 && <span>Gönderilmedi: <b className="text-slate-500">{w.suppressed}</b></span>}
-        {w.queued > 0 && <span>Kuyrukta: <b className="text-sky-700">{w.queued}</b></span>}
+        {w.queued > 0 && <span>Kuyrukta: <b className="text-sky-700 dark:text-sky-300">{w.queued}</b></span>}
       </div>
-      <p className="mt-2 text-[11px] text-slate-400">
+      <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
         Son 24s: {c.last24h.total} gönderim
         {c.last24h.failed > 0 && ` · ${c.last24h.failed} hata`}
       </p>

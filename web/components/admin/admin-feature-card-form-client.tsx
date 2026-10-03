@@ -196,10 +196,10 @@ export function AdminFeatureCardFormClient({ initial, mode }: Props) {
 
           <Card className="border-2 border-indigo-200 bg-indigo-50/40 p-5 dark:bg-indigo-500/10 dark:border-indigo-500/30">
             <div className="mb-3 flex items-baseline justify-between">
-              <h2 className="text-sm font-semibold text-indigo-900">
+              <h2 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200">
                 🏠 2. Anasayfa Kart Görünümü
               </h2>
-              <span className="text-[10px] italic text-indigo-700">
+              <span className="text-[10px] italic text-indigo-700 dark:text-indigo-300">
                 tümü anasayfada görünür
               </span>
             </div>
@@ -390,15 +390,15 @@ export function AdminFeatureCardFormClient({ initial, mode }: Props) {
           {/* Canlı anasayfa önizlemesi — yayın öncesi "nasıl görünecek" simülasyonu */}
           <Card className="overflow-hidden border-2 border-cyan-200 bg-cyan-50/40 p-0 dark:bg-cyan-500/10 dark:border-cyan-500/30">
             <div className="flex items-baseline justify-between px-4 pb-2 pt-4">
-              <h2 className="text-sm font-semibold text-cyan-900">
+              <h2 className="text-sm font-semibold text-cyan-900 dark:text-cyan-200">
                 🏠 Anasayfa önizlemesi
               </h2>
-              <span className="text-[10px] italic text-cyan-700">canlı</span>
+              <span className="text-[10px] italic text-cyan-700 dark:text-cyan-300">canlı</span>
             </div>
-            <p className="px-4 pb-3 text-[11px] text-cyan-800">
+            <p className="px-4 pb-3 text-[11px] text-cyan-800 dark:text-cyan-200">
               Kart anasayfada bu şekilde görünür. Yazdıkça güncellenir.
             </p>
-            <div className="bg-slate-100 p-4">
+            <div className="bg-slate-100 dark:bg-slate-500/15 p-4">
               <LandingCardPreview
                 data={{
                   title,
@@ -414,15 +414,15 @@ export function AdminFeatureCardFormClient({ initial, mode }: Props) {
             </div>
             <div className="px-4 pb-4 pt-3">
               {status === "published" && !manualHide ? (
-                <p className="rounded-md bg-emerald-100 px-3 py-2 text-[11px] font-medium text-emerald-900">
+                <p className="rounded-md bg-emerald-100 dark:bg-emerald-500/15 px-3 py-2 text-[11px] font-medium text-emerald-900 dark:text-emerald-200">
                   ✓ Yayında — anasayfada görünür (skor/A-B sıralamasına göre).
                 </p>
               ) : status === "published" && manualHide ? (
-                <p className="rounded-md bg-amber-100 px-3 py-2 text-[11px] font-medium text-amber-900">
+                <p className="rounded-md bg-amber-100 dark:bg-amber-500/15 px-3 py-2 text-[11px] font-medium text-amber-900 dark:text-amber-200">
                   Yayında ama “Manuel gizle” açık → anasayfada gösterilmiyor.
                 </p>
               ) : (
-                <p className="rounded-md bg-slate-200 px-3 py-2 text-[11px] font-medium text-slate-700">
+                <p className="rounded-md bg-slate-200 dark:bg-slate-500/15 px-3 py-2 text-[11px] font-medium text-slate-700 dark:text-slate-300">
                   Henüz yayında değil (durum:{" "}
                   {meta.statuses.find((s) => s.value === status)?.label ?? status}).
                   Anasayfada göstermek için sağ alttaki{" "}
@@ -584,7 +584,7 @@ export function AdminFeatureCardFormClient({ initial, mode }: Props) {
 
       {isEdit ? (
         <Card className="border-rose-200 bg-rose-50 p-4 dark:bg-rose-500/10 dark:border-rose-500/30">
-          <h3 className="mb-2 text-sm font-medium text-rose-900">⚠ Tehlikeli Aksiyonlar</h3>
+          <h3 className="mb-2 text-sm font-medium text-rose-900 dark:text-rose-200">⚠ Tehlikeli Aksiyonlar</h3>
           <Button
             type="button"
             onClick={() => setDelOpen(true)}

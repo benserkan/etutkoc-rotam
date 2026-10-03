@@ -163,7 +163,7 @@ export function ParentInvitationClient({ invitation }: Props) {
             </div>
           ) : (
             <>
-              <div className="rounded-full bg-[#117A86]/10 text-[#117A86] p-3 mb-2">
+              <div className="rounded-full bg-[#117A86]/10 text-[#117A86] dark:text-teal-300 p-3 mb-2">
                 <HeartHandshake className="size-8" aria-hidden />
               </div>
               <p className="font-display text-xl font-bold tracking-tight">
@@ -203,7 +203,7 @@ export function ParentInvitationClient({ invitation }: Props) {
                 <strong className="text-foreground">İlişki:</strong>{" "}
                 {invitation.relation_label}
                 {invitation.is_primary && (
-                  <span className="ml-1 inline-block bg-[#117A86]/10 text-[#117A86] px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold">
+                  <span className="ml-1 inline-block bg-[#117A86]/10 text-[#117A86] dark:text-teal-300 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold">
                     Birincil veli
                   </span>
                 )}
@@ -316,7 +316,7 @@ export function ParentInvitationClient({ invitation }: Props) {
 
                 <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
                   <h3 className="text-xs font-semibold text-foreground inline-flex items-center gap-1.5">
-                    <Clock className="size-3.5 text-[#117A86]" aria-hidden />
+                    <Clock className="size-3.5 text-[#117A86] dark:text-teal-300" aria-hidden />
                     Sessiz saatler
                   </h3>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -381,7 +381,7 @@ export function ParentInvitationClient({ invitation }: Props) {
                     <Link
                       href="/legal/kvkk-veli"
                       target="_blank"
-                      className="text-[#117A86] hover:underline inline-flex items-center gap-0.5"
+                      className="text-[#117A86] dark:text-teal-300 hover:underline inline-flex items-center gap-0.5"
                     >
                       <ShieldCheck className="size-3" aria-hidden />
                       Veli Aydınlatma Metni
@@ -536,7 +536,7 @@ function ChannelCheck({
     <label
       className={cn(
         "inline-flex items-center justify-center px-3 py-1.5 cursor-pointer rounded transition-colors",
-        checked ? "text-[#117A86]" : "text-muted-foreground hover:text-foreground",
+        checked ? "text-[#117A86] dark:text-teal-300" : "text-muted-foreground hover:text-foreground",
       )}
       aria-label={label}
     >

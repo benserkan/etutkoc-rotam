@@ -31,7 +31,7 @@ type Status = CurriculumTopicItem["status"];
 // Dolgulu rozet + bar tonları (küçük rozette ton+dark çifti yerine dolgu — kontrast).
 const STATUS: Record<Status, { label: string; badge: string; bar: string; Icon: React.ElementType }> = {
   tamamlandi: { label: "Tamamlandı", badge: "bg-emerald-600 text-white", bar: "bg-emerald-500", Icon: CheckCircle2 },
-  devam: { label: "Devam ediyor", badge: "bg-amber-500 text-white", bar: "bg-amber-400", Icon: Clock },
+  devam: { label: "Devam ediyor", badge: "bg-amber-500 text-amber-950", bar: "bg-amber-400", Icon: Clock },
   planlandi: { label: "Planlandı", badge: "bg-sky-600 text-white", bar: "bg-sky-500", Icon: CircleDashed },
   baslanmadi: { label: "Başlanmadı", badge: "bg-slate-500 text-white", bar: "bg-slate-300 dark:bg-slate-600", Icon: CircleDashed },
   kaynak_yok: { label: "Kaynak yok", badge: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200", bar: "bg-slate-100 dark:bg-slate-800", Icon: CircleSlash },
@@ -235,7 +235,7 @@ function Overview({ data, totals }: { data: CurriculumProgressResponse; totals: 
 
 const VERDICT: Record<CurriculumProjectionItem["verdict"], { label: string; badge: string; bar: string }> = {
   yetisir: { label: "Yetişir", badge: "bg-emerald-600 text-white", bar: "bg-emerald-500" },
-  risk: { label: "Riskli — tempo artmalı", badge: "bg-amber-500 text-white", bar: "bg-amber-500" },
+  risk: { label: "Riskli — tempo artmalı", badge: "bg-amber-500 text-amber-950", bar: "bg-amber-500" },
   yetismez: { label: "Yetişmez — hızlanma gerek", badge: "bg-rose-600 text-white", bar: "bg-rose-500" },
   sinav_yok: { label: "Sınav tarihi girilmemiş", badge: "bg-slate-500 text-white", bar: "bg-slate-400" },
   veri_yok: { label: "Veri yetersiz", badge: "bg-slate-500 text-white", bar: "bg-slate-400" },

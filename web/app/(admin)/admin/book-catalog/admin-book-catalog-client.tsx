@@ -773,7 +773,7 @@ export function AdminBookCatalogClient({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 text-rose-600 hover:text-rose-700"
+                      className="h-8 text-rose-600 dark:text-rose-300 hover:text-rose-700"
                       disabled={action.isPending || e.usage_count > 0}
                       title={
                         e.usage_count > 0

@@ -607,7 +607,7 @@ function BulkComposer({ planOptions }: { planOptions: MembershipPlanOption[] }) 
                   <span className="text-foreground">{m.full_name}</span>
                   <span className="text-xs text-muted-foreground">{m.email}</span>
                   {!m.phone ? (
-                    <span className="ml-auto text-[10px] text-amber-600">telefon yok</span>
+                    <span className="ml-auto text-[10px] text-amber-600 dark:text-amber-300">telefon yok</span>
                   ) : null}
                 </label>
               ))}
@@ -719,7 +719,7 @@ function BulkResults({
           <div key={it.token} className="flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-sm dark:bg-slate-900">
             <span className="min-w-0 flex-1 truncate text-slate-800 dark:text-slate-200">
               {it.full_name ?? "Koç"}
-              {!it.phone ? <span className="ml-1 text-[10px] text-amber-600">telefon yok</span> : null}
+              {!it.phone ? <span className="ml-1 text-[10px] text-amber-600 dark:text-amber-300">telefon yok</span> : null}
             </span>
             <CopyButton value={it.public_url} label="Link" />
             <a

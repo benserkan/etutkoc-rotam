@@ -10,17 +10,17 @@ import type { BurnoutLevel, RiskLevel } from "@/lib/types/institution";
  */
 
 const RISK_CLASSES: Record<RiskLevel, string> = {
-  critical: "bg-rose-100 text-rose-800 border-rose-200",
-  high: "bg-orange-100 text-orange-800 border-orange-200",
-  medium: "bg-amber-100 text-amber-800 border-amber-200",
-  ok: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  critical: "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 border-rose-200",
+  high: "bg-orange-100 dark:bg-orange-500/15 dark:border-orange-500/30 text-orange-800 dark:text-orange-200 border-orange-200",
+  medium: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-200",
+  ok: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-200",
 };
 
 const BURNOUT_CLASSES: Record<BurnoutLevel, string> = {
-  critical: "bg-rose-100 text-rose-800 border-rose-200",
-  warn: "bg-amber-100 text-amber-800 border-amber-200",
-  watch: "bg-sky-100 text-sky-800 border-sky-200",
-  healthy: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  critical: "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 border-rose-200",
+  warn: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-200",
+  watch: "bg-sky-100 dark:bg-sky-500/15 dark:border-sky-500/30 text-sky-800 dark:text-sky-200 border-sky-200",
+  healthy: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-200",
 };
 
 const BURNOUT_LABELS: Record<BurnoutLevel, { label: string; emoji: string }> = {
@@ -79,22 +79,22 @@ export function BurnoutLevelBadge({
 
 /** Skor (0-100) renk classı — Jinja `at_risk_list.html:117` koşulları. */
 export function riskScoreColorClass(score: number): string {
-  if (score >= 80) return "text-rose-700";
-  if (score >= 60) return "text-orange-700";
-  return "text-amber-700";
+  if (score >= 80) return "text-rose-700 dark:text-rose-300";
+  if (score >= 60) return "text-orange-700 dark:text-orange-300";
+  return "text-amber-700 dark:text-amber-300";
 }
 
 /** Burnout skor (0-100) renk classı — Jinja `burnout.html:35-39` koşulları. */
 export function burnoutScoreColorClass(level: BurnoutLevel): string {
   switch (level) {
     case "critical":
-      return "text-rose-700";
+      return "text-rose-700 dark:text-rose-300";
     case "warn":
-      return "text-amber-700";
+      return "text-amber-700 dark:text-amber-300";
     case "watch":
-      return "text-sky-700";
+      return "text-sky-700 dark:text-sky-300";
     case "healthy":
-      return "text-emerald-700";
+      return "text-emerald-700 dark:text-emerald-300";
   }
 }
 
@@ -104,8 +104,8 @@ export function riskRowBgClass(
   isPaused: boolean,
 ): string {
   if (isPaused) return "bg-muted/40 opacity-60 grayscale-[40%]";
-  if (level === "critical") return "bg-rose-50/40";
-  if (level === "high") return "bg-orange-50/30";
+  if (level === "critical") return "bg-rose-50/40 dark:bg-rose-500/10";
+  if (level === "high") return "bg-orange-50/30 dark:bg-orange-500/10";
   return "";
 }
 
@@ -125,7 +125,7 @@ export function PauseBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center rounded border bg-amber-50 text-amber-800 border-amber-300",
+          "inline-flex items-center rounded border bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-300",
           cls,
         )}
         title="Otomatik pasif — uyarılar susturulmuş"

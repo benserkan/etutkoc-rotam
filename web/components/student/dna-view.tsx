@@ -302,7 +302,7 @@ function TrendCard({ trend }: { trend: DnaTrend }) {
     dir === "up" ? TrendingUp : dir === "down" ? TrendingDown : TrendingDown;
   const tone =
     dir === "up"
-      ? "text-emerald-600"
+      ? "text-emerald-600 dark:text-emerald-300"
       : dir === "down"
         ? "text-destructive"
         : "text-muted-foreground";

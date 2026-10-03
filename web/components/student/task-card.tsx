@@ -195,7 +195,7 @@ function ToggleButton({
     status === "completed" ? CheckCircle2 : status === "partial" ? Hourglass : CircleDashed;
   const color =
     status === "completed"
-      ? "text-emerald-600"
+      ? "text-emerald-600 dark:text-emerald-300"
       : status === "partial"
         ? "text-amber-500"
         : "text-muted-foreground";
@@ -428,7 +428,7 @@ function ItemRow({
             <SlidersHorizontal
               className={cn(
                 "size-3.5",
-                hasResult ? "text-emerald-600" : "text-muted-foreground",
+                hasResult ? "text-emerald-600 dark:text-emerald-300" : "text-muted-foreground",
               )}
               aria-hidden="true"
             />
@@ -503,9 +503,9 @@ function ResultBadge({
       className="inline-flex items-center gap-1.5 mt-0.5 text-[11px] tabular-nums hover:underline disabled:opacity-40"
       title="Sonucu düzelt"
     >
-      <span className="text-emerald-700 font-medium">{c} doğru</span>
+      <span className="text-emerald-700 dark:text-emerald-300 font-medium">{c} doğru</span>
       <span className="text-muted-foreground/60">·</span>
-      <span className="text-rose-700 font-medium">{w} yanlış</span>
+      <span className="text-rose-700 dark:text-rose-300 font-medium">{w} yanlış</span>
       {b > 0 ? (
         <>
           <span className="text-muted-foreground/60">·</span>

@@ -39,7 +39,7 @@ export function ConversionClient({ initial }: { initial: ConversionResponse }) {
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
               <TrendingDown className="size-5" aria-hidden />
             </span>
             <div>
@@ -71,9 +71,9 @@ export function ConversionClient({ initial }: { initial: ConversionResponse }) {
 
         {/* Üst KPI */}
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Kpi icon={Users} label="Ziyaretçi" value={f.visitors} tone="text-sky-700" />
-          <Kpi icon={UserPlus} label="Üye (anasayfadan)" value={f.signups_landing} tone="text-emerald-700" />
-          <Kpi icon={CreditCard} label="Ücretli" value={f.paid_landing} tone="text-amber-700" />
+          <Kpi icon={Users} label="Ziyaretçi" value={f.visitors} tone="text-sky-700 dark:text-sky-300" />
+          <Kpi icon={UserPlus} label="Üye (anasayfadan)" value={f.signups_landing} tone="text-emerald-700 dark:text-emerald-300" />
+          <Kpi icon={CreditCard} label="Ücretli" value={f.paid_landing} tone="text-amber-700 dark:text-amber-300" />
           <Kpi
             icon={TrendingDown}
             label="Genel dönüşüm"
@@ -134,7 +134,7 @@ export function ConversionClient({ initial }: { initial: ConversionResponse }) {
       {/* A/B varyant kırılımı */}
       <div className="mt-4 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-center gap-2">
-          <FlaskConical className="size-4 text-violet-600" aria-hidden />
+          <FlaskConical className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
           <h2 className="text-sm font-semibold">A/B varyant dönüşümü</h2>
           {data.has_experiment && data.experiment_name ? (
             <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
@@ -168,7 +168,7 @@ export function ConversionClient({ initial }: { initial: ConversionResponse }) {
                       <td className="py-2 pr-3 font-medium">
                         {v.slug}
                         {idx === 0 && v.signups > 0 ? (
-                          <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                          <span className="ml-2 rounded-full bg-emerald-100 dark:bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                             en iyi
                           </span>
                         ) : null}

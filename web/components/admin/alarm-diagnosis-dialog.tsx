@@ -89,7 +89,7 @@ function Icerik({
     <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldQuestion className="size-5 text-cyan-600" aria-hidden />
+            <ShieldQuestion className="size-5 text-cyan-600 dark:text-cyan-300" aria-hidden />
             {event.rule_name}
           </DialogTitle>
         </DialogHeader>

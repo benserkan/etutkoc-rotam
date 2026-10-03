@@ -327,15 +327,15 @@ const SEVERITY_META: Record<
   BurnoutSeverity,
   { tone: string; pill: string; icon: LucideIcon }
 > = {
-  low: { tone: "text-sky-500", pill: "bg-sky-500/10 text-sky-500", icon: Info },
+  low: { tone: "text-sky-500", pill: "bg-sky-500/10 text-sky-700 dark:text-sky-300", icon: Info },
   medium: {
     tone: "text-amber-500",
-    pill: "bg-amber-500/10 text-amber-500",
+    pill: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
     icon: AlertCircle,
   },
   high: {
     tone: "text-rose-500",
-    pill: "bg-rose-500/10 text-rose-500",
+    pill: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
     icon: AlertTriangle,
   },
 };

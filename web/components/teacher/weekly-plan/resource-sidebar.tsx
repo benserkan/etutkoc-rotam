@@ -141,7 +141,7 @@ export function ResourceSidebar({
           <button
             type="button"
             onClick={onClearFocus}
-            className="text-[11px] text-indigo-600 hover:text-indigo-800 underline"
+            className="text-[11px] text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 underline"
           >
             Tümü
           </button>
@@ -151,8 +151,8 @@ export function ResourceSidebar({
       <p className="px-4 pb-1 text-xs text-muted-foreground">Ders bazında kitap ilerlemesi</p>
 
       {focusedSubjectId !== null && data && data.subjects.length > 0 ? (
-        <div className="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] flex items-center justify-between gap-2">
-          <span className="text-indigo-700 truncate">
+        <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 border-b border-indigo-100 text-[11px] flex items-center justify-between gap-2">
+          <span className="text-indigo-700 dark:text-indigo-300 truncate">
             Filtre: <b>{data.subjects[0].name}</b>
           </span>
           <span className="text-muted-foreground">diğer dersler gizli</span>
@@ -187,8 +187,8 @@ export function ResourceSidebar({
       </div>
 
       <div className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border flex gap-3 bg-card sticky bottom-0">
-        <span className="text-emerald-600">✓ çöz.</span>
-        <span className="text-amber-600">⏳ rez.</span>
+        <span className="text-emerald-600 dark:text-emerald-300">✓ çöz.</span>
+        <span className="text-amber-600 dark:text-amber-300">⏳ rez.</span>
         <span className="text-foreground">⎯ kalan</span>
       </div>
     </PinnableSection>
@@ -259,8 +259,8 @@ function SubjectRow({
           />
         </div>
         <div className="mt-1 text-[11px] text-muted-foreground flex gap-2 ml-5">
-          <span className="text-emerald-600">✓{completed}</span>
-          <span className="text-amber-600">⏳{reserved}</span>
+          <span className="text-emerald-600 dark:text-emerald-300">✓{completed}</span>
+          <span className="text-amber-600 dark:text-amber-300">⏳{reserved}</span>
           <span className="font-medium text-foreground">⎯{remaining}</span>
           <span className="text-muted-foreground/60 ml-auto">/ {total}</span>
         </div>
@@ -346,8 +346,8 @@ function BookRow({
             />
           </div>
           <div className="mt-0.5 text-[11px] text-muted-foreground flex gap-1.5 ml-4">
-            <span className="text-emerald-600">✓{book.completed}</span>
-            <span className="text-amber-600">⏳{book.reserved}</span>
+            <span className="text-emerald-600 dark:text-emerald-300">✓{book.completed}</span>
+            <span className="text-amber-600 dark:text-amber-300">⏳{book.reserved}</span>
             <span className="font-medium text-foreground ml-auto">
               kalan {book.remaining}
             </span>
@@ -425,8 +425,8 @@ function SectionRow({
           ) : null}
         </span>
         <span className="text-muted-foreground whitespace-nowrap tabular-nums">
-          <span className="text-emerald-600">✓{section.completed}</span>{" "}
-          <span className="text-amber-600">⏳{section.reserved}</span>{" "}
+          <span className="text-emerald-600 dark:text-emerald-300">✓{section.completed}</span>{" "}
+          <span className="text-amber-600 dark:text-amber-300">⏳{section.reserved}</span>{" "}
           <b className="text-foreground">⎯{section.remaining}</b>
           <span className="text-muted-foreground/60"> / {section.total}</span>
         </span>

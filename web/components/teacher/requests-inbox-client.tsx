@@ -40,7 +40,7 @@ const TYPE_ICON: Record<RequestType, React.ComponentType<{ className?: string }>
 };
 
 const STATUS_TONE: Record<string, string> = {
-  pending: "bg-amber-500 text-white",
+  pending: "bg-amber-500 text-amber-950",
   approved: "bg-emerald-600 text-white",
   rejected: "bg-rose-600 text-white",
   withdrawn: "bg-slate-500 text-white",
@@ -100,7 +100,7 @@ export function RequestsInbox({ items, status }: Props) {
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-10 text-center">
-        <CheckCheck className="mx-auto size-8 text-emerald-600" aria-hidden />
+        <CheckCheck className="mx-auto size-8 text-emerald-600 dark:text-emerald-300" aria-hidden />
         <p className="mt-2 text-sm font-medium">Bu filtrede talep yok.</p>
         {status === "pending" ? (
           <p className="text-xs text-muted-foreground">Bekleyen işin kalmadı.</p>
@@ -247,7 +247,7 @@ function ApprovalCard({ r }: { r: TeacherRequestListItem }) {
     <CardShell r={r} accent="border-l-amber-500">
       {proposal ? (
         <p className="mt-2 flex items-center gap-1.5 text-sm font-medium">
-          <ArrowRight className="size-4 text-amber-600" aria-hidden />
+          <ArrowRight className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
           {proposal}
         </p>
       ) : null}

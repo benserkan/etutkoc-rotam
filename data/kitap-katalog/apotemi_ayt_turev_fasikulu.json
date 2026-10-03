@@ -1,0 +1,103 @@
+{
+ "name": "Apotemi AYT Matematik Türev Fasikülü",
+ "publisher": "Apotemi Yayınları",
+ "subject": "AYT Matematik",
+ "type": "konu_anlatimli",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Ortalama Değişim Oranı",
+   "test_count": 1,
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Tanımı",
+   "test_count": 1,
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev Alma Kuralları",
+   "test_count": 11,
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev Süreklilik İlişkisi",
+   "test_count": 1,
+   "topic": "Türev"
+  },
+  {
+   "label": "Özel Tanımlı Fonksiyonların Türevi",
+   "test_count": 1,
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev Alma Kuralları Güçlendirme Testleri",
+   "test_count": 9,
+   "topic": "Türev"
+  },
+  {
+   "label": "Limit Problemlerinde Pratik Olarak Türev Kullanımı",
+   "test_count": 5,
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Geometrik Yorumu · Birinci Türevin Geometrik Yorumu",
+   "test_count": 3,
+   "topic": "Türev"
+  },
+  {
+   "label": "Rolle Teoremi",
+   "test_count": 1,
+   "topic": "Türev"
+  },
+  {
+   "label": "Fonksiyonların Artanlığının ve Azalanlığının İncelenmesi",
+   "test_count": 1,
+   "topic": "Türev"
+  },
+  {
+   "label": "Fonksiyonların Artan-Azalan Olduğu Bölgelerin Türev Yardımıyla Bulunması",
+   "test_count": 11,
+   "topic": "Türev"
+  },
+  {
+   "label": "Fonksiyonların Ekstremum Noktalarının İncelenmesi",
+   "test_count": 1,
+   "topic": "Türev"
+  },
+  {
+   "label": "Fonksiyonların Ekstremum Noktalarının Bulunmasında Türevden Yararlanma",
+   "test_count": 4,
+   "topic": "Türev"
+  },
+  {
+   "label": "Maksimum Minimum Problemleri",
+   "test_count": 15,
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Fiziksel Anlamı",
+   "test_count": 1,
+   "topic": "Türev"
+  },
+  {
+   "label": "Fonksiyon Grafikleri",
+   "test_count": 1,
+   "topic": "Fonksiyon Grafikleri ve Uygulamaları"
+  },
+  {
+   "label": "Maraton Testleri",
+   "test_count": 10,
+   "topic": "Türev"
+  }
+ ],
+ "warnings": [
+  "Yöntem: içindekiler (basılı = pdf indeks + 1; tüm sayfaların altbilgi sayfa no/konu adıyla doğrulandı) + 224 sayfanın tam genişlik üst bandı tarandı; test başlangıcı = koyu 'ADIM PEKİŞTİRME TESTİ(-N)', 'ADIM GÜÇLENDİRME TESTİ-N', 'MARATON TESTİ-N' bandı (sağ sütunda başlayanlar dahil: idx 10, 11, 100, 132). Açık renkli 'ADIM PEKİŞTİRME' (örnek kutusu), ADIM konu anlatımı, ÖRNEK/Çözüm sayfaları sayılmadı.",
+  "Güçlendirme setleri: Bölüm 1 sonu 1-9 (idx 40-56), Bölüm 2 1-4, Artan-Azalan 1-8, Maks-Min 1-10; her '(ÇÖZÜMLÜ)' soru testi 1 test, ayrı '(ÇÖZÜMLER)' sayfaları (idx 58, 74, 182) sayılmadı. Zincirler kesintisiz; Maraton 1-10 kesintisiz.",
+  "Bölüm 1 Güçlendirme 1-9 (idx 40-58) altbilgide 'Türev Alma Kuralları' yazıyor ama Süreklilik + Özel Tanımlı'dan sonra kümeleniyor → ayrı bölüm yapıldı (Bölüm 1 karması olabilir).",
+  "Türevin Geometrik Yorumu (basılı 79-81) kendi testi yok; Birinci Türevin Geometrik Yorumu ile birleştirildi (P-1, P-2, P).",
+  "Testler kısa: 4-16 soru, 1-3 sayfa. Tek testli bölümler (Ortalama Değişim, Tanım, Süreklilik, Özel Tanımlı, Rolle, Artanlık, Ekstremum İnceleme, Fiziksel, Grafikler) gövdeyle doğrulandı."
+ ]
+}

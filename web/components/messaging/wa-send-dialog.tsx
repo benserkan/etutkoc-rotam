@@ -77,7 +77,7 @@ export function WaSendDialog({
       <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="inline-flex items-center gap-2">
-            <MessageSquare className="size-5 text-emerald-700" aria-hidden />
+            <MessageSquare className="size-5 text-emerald-700 dark:text-emerald-300" aria-hidden />
             {title}
           </DialogTitle>
           <DialogDescription>
@@ -229,7 +229,7 @@ function DialogBody({
     return (
       <>
         <TargetHeader target={target} />
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900 inline-flex items-start gap-2">
+        <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-3 py-3 text-sm text-amber-900 dark:text-amber-200 inline-flex items-start gap-2">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
           <div>
             {target.sms_verification_live ? (
@@ -263,7 +263,7 @@ function DialogBody({
 
       {/* Soft mod: numara var ama SMS doğrulama henüz açık değil */}
       {verificationPending ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 inline-flex items-start gap-2">
+        <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-200 inline-flex items-start gap-2">
           <AlertTriangle className="size-3.5 shrink-0 mt-0.5" aria-hidden />
           <span>
             Numara henüz SMS ile doğrulanmadı (SMS doğrulama yakında açılacak).
@@ -281,7 +281,7 @@ function DialogBody({
             onChange={(e) => setTestMode(e.target.checked)}
             className="accent-emerald-600"
           />
-          <TestTube2 className="size-3.5 text-emerald-700" aria-hidden />
+          <TestTube2 className="size-3.5 text-emerald-700 dark:text-emerald-300" aria-hidden />
           <span>
             <strong>Önce kendime test gönder</strong> — hedefe değil, kendi
             telefonuma git
@@ -440,7 +440,7 @@ function TargetHeader({ target }: { target: WaTargetBrief }) {
       <ShieldCheck
         className={cn(
           "size-5 shrink-0",
-          target.phone_verified ? "text-emerald-700" : "text-amber-700",
+          target.phone_verified ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300",
         )}
         aria-hidden
       />
@@ -537,20 +537,20 @@ function PreviewPanel({
       </div>
       {result ? (
         <>
-          <div className="rounded border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-sm whitespace-pre-wrap text-emerald-900">
+          <div className="rounded border border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 px-3 py-2 text-sm whitespace-pre-wrap text-emerald-900 dark:text-emerald-200">
             {result.rendered_text}
           </div>
           <div className="text-[10px] text-muted-foreground flex items-center gap-2">
             <span>{result.character_count} karakter</span>
             {result.long_text ? (
-              <span className="text-amber-700 inline-flex items-center gap-1">
+              <span className="text-amber-700 dark:text-amber-300 inline-flex items-center gap-1">
                 <AlertTriangle className="size-3" aria-hidden />
                 Uzun mesaj uyarısı
               </span>
             ) : null}
           </div>
           {result.warnings.length > 0 ? (
-            <ul className="text-[11px] text-amber-800 list-disc pl-4 space-y-0.5">
+            <ul className="text-[11px] text-amber-800 dark:text-amber-200 list-disc pl-4 space-y-0.5">
               {result.warnings.slice(0, 3).map((w, i) => (
                 <li key={i}>{w}</li>
               ))}
@@ -578,7 +578,7 @@ function ErrorState({
 }) {
   return (
     <>
-      <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-3 text-sm text-rose-900 inline-flex items-start gap-2">
+      <div className="rounded-md border border-rose-200 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 px-3 py-3 text-sm text-rose-900 dark:text-rose-200 inline-flex items-start gap-2">
         <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
         <div>
           <strong>{title}</strong>

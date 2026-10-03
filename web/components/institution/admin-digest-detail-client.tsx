@@ -209,10 +209,10 @@ function CompletionKpi({
             rt == null
               ? "text-muted-foreground"
               : rt >= 70
-                ? "text-emerald-700"
+                ? "text-emerald-700 dark:text-emerald-300"
                 : rt >= 40
-                  ? "text-amber-700"
-                  : "text-rose-700",
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-rose-700 dark:text-rose-300",
           )}
         >
           {rt == null ? "—" : `%${rt}`}
@@ -222,9 +222,9 @@ function CompletionKpi({
             className={cn(
               "text-[11px] mt-1 inline-flex items-center gap-0.5 tabular-nums",
               completion.direction === "up"
-                ? "text-emerald-700"
+                ? "text-emerald-700 dark:text-emerald-300"
                 : completion.direction === "down"
-                  ? "text-rose-700"
+                  ? "text-rose-700 dark:text-rose-300"
                   : "text-muted-foreground",
             )}
           >
@@ -271,13 +271,13 @@ function RiskKpi({
         <div
           className={cn(
             "text-3xl font-semibold mt-1 tabular-nums",
-            atRisk.total > 0 ? "text-rose-700" : "text-emerald-700",
+            atRisk.total > 0 ? "text-rose-700 dark:text-rose-300" : "text-emerald-700 dark:text-emerald-300",
           )}
         >
           {atRisk.total}
         </div>
         {atRisk.critical > 0 ? (
-          <div className="text-[11px] text-rose-700 mt-1 inline-flex items-center gap-1">
+          <div className="text-[11px] text-rose-700 dark:text-rose-300 mt-1 inline-flex items-center gap-1">
             {atRisk.critical} kritik
           </div>
         ) : null}
@@ -296,7 +296,7 @@ function HighlightCard({ payload }: { payload: AdminDigestPayload }) {
     <Card>
       <CardContent className="p-4">
         <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5">
-          <Trophy className="size-4 text-amber-600" aria-hidden />
+          <Trophy className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
           Sınıf bazlı öne çıkanlar
         </h3>
         <div className="space-y-1 text-sm">
@@ -304,7 +304,7 @@ function HighlightCard({ payload }: { payload: AdminDigestPayload }) {
             <div>
               🏆 En yüksek tamamlama:{" "}
               <strong>{highlight.best_grade_label}</strong> —{" "}
-              <span className="text-emerald-700 font-semibold tabular-nums">
+              <span className="text-emerald-700 dark:text-emerald-300 font-semibold tabular-nums">
                 %{highlight.best_grade_rate}
               </span>
             </div>
@@ -313,7 +313,7 @@ function HighlightCard({ payload }: { payload: AdminDigestPayload }) {
             <div>
               ⚠️ En düşük tamamlama:{" "}
               <strong>{highlight.worst_grade_label}</strong> —{" "}
-              <span className="text-rose-700 font-semibold tabular-nums">
+              <span className="text-rose-700 dark:text-rose-300 font-semibold tabular-nums">
                 %{highlight.worst_grade_rate}
               </span>
             </div>
@@ -334,15 +334,15 @@ function InactiveTeachersCard({
   const remaining = totals.inactive_teacher_count - inactive_teachers.length;
   return (
     <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 dark:bg-amber-500/10 dark:border-amber-500/30">
-      <h3 className="text-sm font-medium text-amber-900 mb-2 flex items-center gap-1.5">
+      <h3 className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-2 flex items-center gap-1.5">
         <Moon className="size-4" aria-hidden />
         Son 7 gündür pasif öğretmenler
       </h3>
-      <ul className="text-xs text-amber-800 space-y-1">
+      <ul className="text-xs text-amber-800 dark:text-amber-200 space-y-1">
         {inactive_teachers.map((t) => (
           <li key={t.id}>
             {t.name}{" "}
-            <span className="text-amber-700 font-mono">· {t.email}</span>
+            <span className="text-amber-700 dark:text-amber-300 font-mono">· {t.email}</span>
           </li>
         ))}
         {remaining > 0 && (
@@ -463,9 +463,9 @@ function GradeCohortTable({
                     <span
                       className={cn(
                         "font-semibold",
-                        c.color === "green" && "text-emerald-700",
-                        c.color === "amber" && "text-amber-700",
-                        c.color === "red" && "text-rose-700",
+                        c.color === "green" && "text-emerald-700 dark:text-emerald-300",
+                        c.color === "amber" && "text-amber-700 dark:text-amber-300",
+                        c.color === "red" && "text-rose-700 dark:text-rose-300",
                         c.color === "slate" && "text-muted-foreground",
                       )}
                     >

@@ -40,9 +40,9 @@ export function OfferActions({ token }: { token: string }) {
     return (
       <div className="flex flex-col items-center gap-2 py-2 text-center">
         {done.ok ? (
-          <CheckCircle2 className="size-9 text-emerald-600" aria-hidden />
+          <CheckCircle2 className="size-9 text-emerald-600 dark:text-emerald-300" aria-hidden />
         ) : (
-          <XCircle className="size-9 text-rose-600" aria-hidden />
+          <XCircle className="size-9 text-rose-600 dark:text-rose-300" aria-hidden />
         )}
         <p className="text-sm text-muted-foreground">{done.message}</p>
       </div>

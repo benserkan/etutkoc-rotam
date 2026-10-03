@@ -107,7 +107,7 @@ export function AdminPricingContentClient() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold">
-              <LayoutTemplate className="size-4 text-violet-700" aria-hidden />
+              <LayoutTemplate className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />
               Kart İçerikleri (kodsuz yönetim)
             </h2>
             <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
@@ -262,7 +262,7 @@ export function AdminPricingContentClient() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-rose-600 hover:text-rose-700"
+                    className="text-rose-600 dark:text-rose-300 hover:text-rose-700"
                     onClick={() =>
                       setCfg({ ...cfg, glossary: cfg.glossary.filter((_, j) => j !== i) })
                     }

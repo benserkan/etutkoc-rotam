@@ -69,7 +69,7 @@ interface Props {
 function statusTone(code: number): string {
   if (code >= 500) return "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200";
   if (code >= 400) return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200";
-  return "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30";
+  return "bg-slate-50 text-slate-600 dark:text-slate-300 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30";
 }
 
 function ResolveButton({ group }: { group: SystemErrorGroup }) {
@@ -161,11 +161,11 @@ function ErrorGroupRow({ group }: { group: SystemErrorGroup }) {
             <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
               {group.method} {group.endpoint}
             </span>
-            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+            <span className="rounded-full bg-rose-100 dark:bg-rose-500/15 px-2 py-0.5 text-[11px] font-medium text-rose-700 dark:text-rose-300">
               {group.count}×
             </span>
             {group.stale ? (
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+              <span className="rounded-full bg-slate-200 dark:bg-slate-500/15 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 muhtemelen çözülmüş · son {group.last_seen_label}
               </span>
             ) : null}
@@ -238,7 +238,7 @@ export function SecuritySystemClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <ServerCrash className="size-6 text-slate-700" aria-hidden />
+          <ServerCrash className="size-6 text-slate-700 dark:text-slate-300" aria-hidden />
           Uygulama Hataları
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -272,7 +272,7 @@ export function SecuritySystemClient({ initial }: Props) {
         </h2>
         {d.error_groups.length === 0 ? (
           <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-4 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
-            <CheckCircle2 className="size-5 shrink-0 text-emerald-600" aria-hidden />
+            <CheckCircle2 className="size-5 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
             Açık hata yok. Sistem temiz görünüyor.
           </Card>
         ) : (
@@ -289,7 +289,7 @@ export function SecuritySystemClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <Gauge className="size-4 text-amber-600" aria-hidden />
+              <Gauge className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
               En çok hata üreten uç noktalar (24s)
             </h2>
           </div>
@@ -323,7 +323,7 @@ export function SecuritySystemClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <Timer className="size-4 text-indigo-600" aria-hidden />
+              <Timer className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden />
               Yavaş istekler (24s)
             </h2>
           </div>
@@ -346,7 +346,7 @@ export function SecuritySystemClient({ initial }: Props) {
                         <span className="rounded bg-muted px-1 text-[11px] text-muted-foreground">{r.method}</span>{" "}
                         <span className="font-mono text-[11px]">{r.endpoint}</span>
                       </td>
-                      <td className="px-3 py-1.5 text-right tabular-nums font-medium text-amber-700">
+                      <td className="px-3 py-1.5 text-right tabular-nums font-medium text-amber-700 dark:text-amber-300">
                         {r.response_time_ms} ms
                       </td>
                       <td className="px-3 py-1.5 text-right text-[11px] text-muted-foreground">

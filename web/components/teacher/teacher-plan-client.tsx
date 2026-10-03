@@ -62,7 +62,7 @@ function fmtDate(iso: string | null | undefined): string {
 
 const TONE = {
   emerald: { chip: "bg-emerald-600 text-white", bar: "bg-emerald-500", ring: "border-emerald-500/40" },
-  amber: { chip: "bg-amber-500 text-white", bar: "bg-amber-500", ring: "border-amber-500/40" },
+  amber: { chip: "bg-amber-500 text-amber-950", bar: "bg-amber-500", ring: "border-amber-500/40" },
   rose: { chip: "bg-rose-600 text-white", bar: "bg-rose-500", ring: "border-rose-500/40" },
   slate: { chip: "bg-slate-600 text-white", bar: "bg-slate-400", ring: "border-border" },
 } as const;
@@ -780,12 +780,12 @@ function CheckoutDialog({
           <Row label="Tutar" value={tl(total)} strong />
         </dl>
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
           3D Secure ile korunur; kart bilgin bize gelmez. Kendiliğinden yenileme yoktur.
           {providerQ.data?.sandbox ? " (Test modu)" : ""}
         </p>
         {!available && !providerQ.isLoading ? (
-          <p className="rounded-xl bg-amber-500 px-3 py-2 text-sm text-white">
+          <p className="rounded-xl bg-amber-500 px-3 py-2 text-sm text-amber-950">
             Kartlı ödeme şu an kullanılamıyor. Biraz sonra tekrar dene ya da asistandan bize yaz.
           </p>
         ) : null}

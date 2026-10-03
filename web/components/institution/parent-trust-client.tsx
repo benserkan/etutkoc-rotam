@@ -27,9 +27,9 @@ function pct(v: number | null): string {
 }
 function successColor(v: number | null): string {
   if (v == null) return "text-muted-foreground";
-  if (v >= 95) return "text-emerald-700";
-  if (v >= 80) return "text-amber-700";
-  return "text-rose-700";
+  if (v >= 95) return "text-emerald-700 dark:text-emerald-300";
+  if (v >= 80) return "text-amber-700 dark:text-amber-300";
+  return "text-rose-700 dark:text-rose-300";
 }
 
 export function ParentTrustClient({ initial }: Props) {
@@ -46,7 +46,7 @@ export function ParentTrustClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <HeartHandshake className="size-6 text-indigo-700" aria-hidden />
+          <HeartHandshake className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Veli Güveni
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -79,7 +79,7 @@ export function ParentTrustClient({ initial }: Props) {
             <Mail className="size-3.5" aria-hidden />
             <ColumnHint label="Bekleyen davet" hint="Koçların velilere gönderdiği, henüz kabul edilmemiş ve süresi dolmamış davet sayısı." />
           </div>
-          <div className={cn("mt-1 text-3xl font-bold tabular-nums", s.pending_invites > 0 ? "text-amber-700" : "")}>{s.pending_invites}</div>
+          <div className={cn("mt-1 text-3xl font-bold tabular-nums", s.pending_invites > 0 ? "text-amber-700 dark:text-amber-300" : "")}>{s.pending_invites}</div>
           <div className="text-[11px] text-muted-foreground">kabul bekleyen veli daveti</div>
         </Card>
         <Card className="p-4">
@@ -126,8 +126,8 @@ export function ParentTrustClient({ initial }: Props) {
                 {d.channels.map((c) => (
                   <tr key={c.channel} className="hover:bg-muted/40">
                     <td className="px-3 py-1.5 font-medium">{c.channel_label}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-emerald-700">{c.sent}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-rose-700">{c.failed}</td>
+                    <td className="px-3 py-1.5 text-right tabular-nums text-emerald-700 dark:text-emerald-300">{c.sent}</td>
+                    <td className="px-3 py-1.5 text-right tabular-nums text-rose-700 dark:text-rose-300">{c.failed}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{c.suppressed}</td>
                     <td className={cn("px-3 py-1.5 text-right font-semibold tabular-nums", successColor(c.success_pct))}>{pct(c.success_pct)}</td>
                   </tr>
@@ -152,10 +152,10 @@ export function ParentTrustClient({ initial }: Props) {
 
 
 const STATUS_TONE: Record<string, { text: string; bg: string; border: string }> = {
-  sent:       { text: "text-emerald-800", bg: "bg-emerald-50",  border: "border-emerald-200" },
-  failed:     { text: "text-rose-800",    bg: "bg-rose-50",     border: "border-rose-200" },
-  suppressed: { text: "text-slate-700",   bg: "bg-slate-50",    border: "border-slate-200" },
-  queued:     { text: "text-amber-800",   bg: "bg-amber-50",    border: "border-amber-200" },
+  sent:       { text: "text-emerald-800 dark:text-emerald-200", bg: "bg-emerald-50 dark:bg-emerald-500/15",  border: "border-emerald-200" },
+  failed:     { text: "text-rose-800 dark:text-rose-200",    bg: "bg-rose-50 dark:bg-rose-500/15",     border: "border-rose-200" },
+  suppressed: { text: "text-slate-700 dark:text-slate-300",   bg: "bg-slate-50 dark:bg-slate-500/15",    border: "border-slate-200" },
+  queued:     { text: "text-amber-800 dark:text-amber-200",   bg: "bg-amber-50 dark:bg-amber-500/15",    border: "border-amber-200" },
 };
 
 function fmtDateTime(iso: string | null): string {
@@ -176,9 +176,9 @@ function NotificationDetailSection({ days }: { days: number }) {
 
   const FILTERS: Array<{ key: string | null; label: string; tone?: string }> = [
     { key: null, label: "Tümü" },
-    { key: "sent", label: "Ulaştı", tone: "text-emerald-700" },
-    { key: "failed", label: "Başarısız", tone: "text-rose-700" },
-    { key: "suppressed", label: "Engellendi", tone: "text-slate-700" },
+    { key: "sent", label: "Ulaştı", tone: "text-emerald-700 dark:text-emerald-300" },
+    { key: "failed", label: "Başarısız", tone: "text-rose-700 dark:text-rose-300" },
+    { key: "suppressed", label: "Engellendi", tone: "text-slate-700 dark:text-slate-300" },
   ];
 
   return (

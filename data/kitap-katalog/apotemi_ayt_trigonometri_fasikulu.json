@@ -1,0 +1,149 @@
+{
+ "name": "Apotemi AYT Matematik Trigonometri Fasikülü",
+ "publisher": "Apotemi Yayınları",
+ "subject": "AYT Matematik",
+ "type": "konu_anlatimli",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Trigonometri 1 · Yönlü Açılar – Bir Açının Esas Ölçüsü",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 1 · Trigonometrik Fonksiyonlar",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 1 · Dik Üçgende Trigonometrik Oranlar",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 1 · Trigonometrik Fonksiyonların Bölgelere Göre İşaretleri",
+   "test_count": 4,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 1 · 90° den Büyük Açıların Dönüştürülmesi",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 1 · Trigonometrik Oranların Sıralanması",
+   "test_count": 4,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 1 · Adım Güçlendirme Testleri",
+   "test_count": 9,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 2 · Toplam Fark Formülleri",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 2 · Toplam Fark Formüllerinin Şekil Sorularında Uygulanması",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 2 · Yarım Açı Formülleri",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 2 · Yarım Açı Formüllerinin Şekil Sorularında Uygulanması",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 2 · Adım Güçlendirme Testleri",
+   "test_count": 4,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 3 · Kosinüs Teoremi",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 3 · Sinüs Alan Formülü – Sinüs Teoremi",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 3 · Heron Alan Formülü",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 3 · Adım Güçlendirme Testleri",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 4 · Trigonometrik Denklemler",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 4 · Trigonometrik Lineer Denklemler",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 4 · Homojen Trigonometrik Denklemler",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 4 · Adım Güçlendirme Testleri",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 5 · Trigonometrik Fonksiyonların Periyotları",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 5 · Trigonometrik Fonksiyonların Grafikleri – Grafiklerin Dönüşümü",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 5 · Adım Güçlendirme Testleri (Periyot – Grafik)",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 5 · Ters Trigonometrik Fonksiyonlar",
+   "test_count": 1,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Trigonometri 5 · Adım Güçlendirme Testleri (Ters Trigonometrik Fonksiyonlar)",
+   "test_count": 3,
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "Maraton Testleri",
+   "test_count": 10,
+   "topic": "Trigonometri"
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (metin katmanı yok); Gemini kullanılmadı. Test sayısı gövdeden: renkli test bantları (mor 'ADIM PEKİŞTİRME TESTİ', yeşil 'ADIM GÜÇLENDİRME TESTİ - N', turuncu 'MARATON TESTİ - N') renk taramasıyla 218 sayfanın tamamında tespit edildi, her bant kırpılıp gözle okundu.",
+  "Ofset: pdf indeksi = basılı sayfa − 1 (içindekiler 'Bir Açının Esas Ölçüsü 10' ↔ pdf 9 ADIM sayfası); konu aralıkları bu ofsetle eşlendi.",
+  "Adım Pekiştirme testleri numarasız (her ADIM konu anlatımının ardından ~1 sayfa); her bant 1 test sayıldı. Açık mor 'ADIM PEKİŞTİRME' (TESTİ yazmayan) kutuları konu içi alıştırma — sayılmadı. ADIM/Örnek/Çözüm sayfaları sayılmadı.",
+  "Güçlendirme zincirleri boşluksuz: T1 1-9, T2 1-4, T3 1-3, T4 1-3, T5 1-3 + 1-3 (ters trig. ayrı seri); Maraton 1-10. '(ÇÖZÜMLÜ)' testlerin ardından gelen '(ÇÖZÜMLER)' sayfaları aynı testin çözümüdür — ayrı test sayılmadı.",
+  "Yönlü Açılar (pdf 6-8) içindekilerde yok; ilk bölüme katıldı. Sinüs Alan Formülü'nün kendi pekiştirme testi yok, Sinüs Teoremi ile birleştirildi; Grafikler + Grafiklerin Dönüşümü tek testle birleştirildi.",
+  "Toplam 74 test: pekiştirme 39 + güçlendirme 25 + maraton 10."
+ ]
+}

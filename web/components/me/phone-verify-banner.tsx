@@ -70,13 +70,13 @@ export function PhoneVerifyBanner({ phoneVerified }: Props) {
 
   return (
     <>
-      <div className="bg-amber-50 border-b border-amber-300">
+      <div className="bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 border-b border-amber-300">
         <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center gap-3">
-          <div className="rounded-full bg-amber-200 p-2 shrink-0">
-            <Smartphone className="size-4 text-amber-800" aria-hidden />
+          <div className="rounded-full bg-amber-200 dark:bg-amber-500/15 p-2 shrink-0">
+            <Smartphone className="size-4 text-amber-800 dark:text-amber-200" aria-hidden />
           </div>
           <div className="flex-1 min-w-[220px]">
-            <div className="text-sm font-semibold text-amber-900">
+            <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               Cep telefonunuzu doğrulayın
             </div>
             <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed max-w-3xl">
@@ -101,7 +101,7 @@ export function PhoneVerifyBanner({ phoneVerified }: Props) {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="inline-flex items-center gap-2">
-              <Smartphone className="size-5 text-[#117A86]" aria-hidden />
+              <Smartphone className="size-5 text-[#117A86] dark:text-teal-300" aria-hidden />
               Cep telefonu doğrulama
             </DialogTitle>
             <DialogDescription>

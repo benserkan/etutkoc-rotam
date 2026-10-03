@@ -125,7 +125,7 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
               </span>
             )}
             {!t.is_active && (
-              <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200">
                 pasif
               </span>
             )}
@@ -201,7 +201,7 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
           )}
           {data.is_self && (
             <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30">
-              <CardContent className="p-5 text-xs text-amber-900">
+              <CardContent className="p-5 text-xs text-amber-900 dark:text-amber-200">
                 ℹ Bu sayfa <strong>kendi profilin</strong>. Rol değişimi,
                 impersonate ve hesap silme buradan yapılamaz (kilitlenme riski).
                 Şifre sıfırlama için <Link href="/me/account" className="underline">/me/account</Link>{" "}
@@ -277,7 +277,7 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
     );
   } else {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30">
+      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300 dark:bg-slate-500/10 dark:border-slate-500/30">
         {SOLO_PLAN_LABELS[target.plan ?? "solo_free"] ?? target.plan}
       </span>
     );
@@ -435,7 +435,7 @@ function EditUserForm({
     <Card>
       <CardContent className="p-5">
         <h2 className="font-medium mb-3 inline-flex items-center gap-1.5">
-          <UserCog className="size-4 text-indigo-700" aria-hidden />
+          <UserCog className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Bilgiler
         </h2>
         <form onSubmit={onSubmit} className="space-y-3">
@@ -556,7 +556,7 @@ function SecurityCard({
     <Card>
       <CardContent className="p-5">
         <h2 className="font-medium mb-3 inline-flex items-center gap-1.5">
-          <ShieldCheck className="size-4 text-indigo-700" aria-hidden />
+          <ShieldCheck className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Güvenlik
         </h2>
         <dl className="text-xs text-muted-foreground space-y-1.5 mb-3">
@@ -597,7 +597,7 @@ function SecurityCard({
         <Button
           size="sm"
           onClick={() => setConfirmOpen(true)}
-          className="bg-amber-500 hover:bg-amber-600 text-white"
+          className="bg-amber-500 hover:bg-amber-600 text-amber-950"
         >
           <KeyRound className="size-3.5" aria-hidden />
           Şifre Sıfırla
@@ -624,7 +624,7 @@ function SecurityCard({
               <Button
                 onClick={doReset}
                 disabled={mut.isPending}
-                className="bg-amber-500 hover:bg-amber-600 text-white"
+                className="bg-amber-500 hover:bg-amber-600 text-amber-950"
               >
                 {mut.isPending ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -706,7 +706,7 @@ function ChangeRoleCard({
     <Card>
       <CardContent className="p-5">
         <h2 className="font-medium mb-3 inline-flex items-center gap-1.5">
-          <UserCog className="size-4 text-violet-700" aria-hidden />
+          <UserCog className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />
           Rol Değişimi
         </h2>
         <form onSubmit={onSubmit} className="space-y-2">
@@ -815,26 +815,26 @@ function ImpersonateCard({
   }
 
   return (
-    <Card className="border-violet-200 bg-violet-50/40">
+    <Card className="border-violet-200 bg-violet-50/40 dark:bg-violet-500/10">
       <CardContent className="p-5">
-        <h2 className="font-medium text-violet-900 mb-2 inline-flex items-center gap-1.5">
+        <h2 className="font-medium text-violet-900 dark:text-violet-200 mb-2 inline-flex items-center gap-1.5">
           <Drama className="size-4" aria-hidden />
           Sahte Oturum
         </h2>
-        <p className="text-xs text-violet-800 mb-3 leading-relaxed">
+        <p className="text-xs text-violet-800 dark:text-violet-200 mb-3 leading-relaxed">
           <strong>{targetName}</strong> olarak sisteme giriş yapmış gibi
           görüntüle. Tüm aksiyonların target adı altında çalışır; üst banner
           ile gerçek admin&apos;e dönebilirsin. <strong>Audit log&apos;a
           kaydedilir.</strong>
         </p>
-        <p className="text-[11px] text-violet-700 mb-2">
+        <p className="text-[11px] text-violet-700 dark:text-violet-300 mb-2">
           ⏱ 30 dakika sonra otomatik kapanır. Gerekçe zorunlu (10-200
           karakter).
         </p>
         <form onSubmit={onStart} className="space-y-2">
           <Label
             htmlFor="imp-reason"
-            className="text-[11px] text-violet-800 font-medium"
+            className="text-[11px] text-violet-800 dark:text-violet-200 font-medium"
           >
             Gerekçe (zorunlu)
           </Label>
@@ -847,7 +847,7 @@ function ImpersonateCard({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="örn.  dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200'Ödevler görünmüyor şikayetini yerinde inceleme'"
-            className="block w-full px-2 py-1.5 text-xs border border-violet-300 rounded bg-white text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-300"
+            className="block w-full px-2 py-1.5 text-xs border border-violet-300 rounded bg-card text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-300"
           />
           <Button
             type="submit"
@@ -870,7 +870,7 @@ function ImpersonateCard({
               işlem audit log&apos;a kaydedilir ve 30 dk sonra otomatik
               kapanır.
             </p>
-            <div className="rounded-md border border-violet-200 bg-violet-50 p-2 text-xs text-violet-900">
+            <div className="rounded-md border border-violet-200 bg-violet-50 dark:bg-violet-500/15 dark:border-violet-500/30 p-2 text-xs text-violet-900 dark:text-violet-200">
               <strong>Gerekçe:</strong> {reason}
             </div>
             <DialogFooter className="gap-2 pt-2">
@@ -926,20 +926,20 @@ function DangerZone({
   }
 
   return (
-    <Card className="border-rose-200 bg-rose-50/40">
+    <Card className="border-rose-200 bg-rose-50/40 dark:bg-rose-500/10">
       <CardContent className="p-5">
-        <h2 className="font-medium text-rose-900 mb-2 inline-flex items-center gap-1.5">
+        <h2 className="font-medium text-rose-900 dark:text-rose-200 mb-2 inline-flex items-center gap-1.5">
           <Trash2 className="size-4" aria-hidden />
           Tehlikeli
         </h2>
-        <p className="text-xs text-rose-800 mb-3 leading-relaxed">
+        <p className="text-xs text-rose-800 dark:text-rose-200 mb-3 leading-relaxed">
           Kullanıcıyı tamamen siler. CASCADE ile bağlı veriler de silinir
           (öğrenci silinirse görevleri/ilerlemesi gider).
         </p>
         <Button
           size="sm"
           variant="outline"
-          className="border-rose-300 text-rose-700 hover:bg-rose-100"
+          className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-100"
           onClick={() => setConfirmOpen(true)}
         >
           <Trash2 className="size-3.5" aria-hidden />
@@ -996,7 +996,7 @@ function RecentActivityCard({
     <Card>
       <div className="px-4 py-3 border-b border-border">
         <h2 className="font-medium inline-flex items-center gap-1.5">
-          <FileText className="size-4 text-violet-700" aria-hidden />
+          <FileText className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />
           Son Aktivitesi
         </h2>
       </div>

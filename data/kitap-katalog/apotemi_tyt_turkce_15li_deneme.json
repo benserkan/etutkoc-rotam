@@ -1,0 +1,93 @@
+{
+ "name": "Apotemi TYT Türkçe 15'li Deneme",
+ "publisher": "Apotemi Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "brans_denemesi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Deneme 1 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 2 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 3 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 4 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 5 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 6 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 7 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 8 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 9 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 10 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 11 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 12 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 13 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 14 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 15 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF, 150 sayfa; kontak föyleriyle görerek okundu (AI yok).",
+  "Her deneme 10 sayfa: pdf s.0,10,...,140'ta 'TÜRKÇE TESTİ N' başlığı + 'Bu testte 40 soru vardır' ibaresi — 15 başlangıcın hepsi görüntüyle teyit edildi, numaralar 1..15 kesintisiz. 15×10 = 150 — sayfa hesabı tutuyor.",
+  "Deneme 1/6/15 son sayfaları 39-40. sorularla bitiyor (40 soru doğrulandı).",
+  "DİKKAT: tarama EKSİK — basılı sayfa no = pdf indeksi + 5 (pdf s.9 = basılı 14, son sayfa basılı 154). Kitabın ilk 5 ön sayfası (kapak/içindekiler vb.) ve muhtemelen sondaki cevap anahtarı taramaya alınmamış. Deneme içeriği eksiksiz görünüyor.",
+  "İçindekiler taramada yok; yapı gövdeden çıkarıldı."
+ ]
+}

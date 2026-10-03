@@ -32,11 +32,11 @@ interface Props {
 }
 
 const ROLE_BADGE: Record<string, string> = {
-  super_admin: "bg-rose-100 text-rose-700",
-  institution_admin: "bg-indigo-100 text-indigo-700",
-  teacher: "bg-emerald-100 text-emerald-700",
-  parent: "bg-amber-100 text-amber-700",
-  student: "bg-slate-100 text-slate-700",
+  super_admin: "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300",
+  institution_admin: "bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+  teacher: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  parent: "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  student: "bg-slate-100 dark:bg-slate-500/15 text-slate-700 dark:text-slate-300",
 };
 
 function roleLabel(role: string): string {
@@ -72,7 +72,7 @@ export function SecuritySessionsClient({ initial }: Props) {
           ← Güvenlik Kamarası
         </Link>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <KeyRound className="size-6 text-slate-700" aria-hidden />
+          <KeyRound className="size-6 text-slate-700 dark:text-slate-300" aria-hidden />
           Oturumlar & IP&apos;ler
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -87,11 +87,11 @@ export function SecuritySessionsClient({ initial }: Props) {
           <div className="border-b border-violet-200 bg-violet-50/60 px-4 py-2.5 text-sm font-semibold text-violet-900 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
             <UserCog className="mr-1 inline size-4" aria-hidden />
             Aktif Sahte Oturumlar ({d.active_impersonations.length})
-            <span className="ml-2 text-xs font-normal text-violet-700">— 30 dk sonra otomatik kapanır</span>
+            <span className="ml-2 text-xs font-normal text-violet-700 dark:text-violet-300">— 30 dk sonra otomatik kapanır</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-violet-100/40 text-[11px] uppercase tracking-wide text-violet-700">
+              <thead className="bg-violet-100/40 dark:bg-violet-500/10 text-[11px] uppercase tracking-wide text-violet-700 dark:text-violet-300">
                 <tr>
                   <th className="px-3 py-2 text-left">Süper Admin</th>
                   <th className="px-3 py-2 text-left">Hedef</th>
@@ -110,15 +110,15 @@ export function SecuritySessionsClient({ initial }: Props) {
                     <td className="px-3 py-2 text-[11px] text-muted-foreground">{fmtDateTime(i.started_at)}</td>
                     <td className="px-3 py-2 text-xs">
                       {i.is_expired_now ? (
-                        <span className="rounded bg-rose-100 px-2 py-0.5 text-rose-700">Süre doldu</span>
+                        <span className="rounded bg-rose-100 dark:bg-rose-500/15 px-2 py-0.5 text-rose-700 dark:text-rose-300">Süre doldu</span>
                       ) : (
-                        <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">{Math.floor(i.seconds_left / 60)} dk</span>
+                        <span className="rounded bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-amber-800 dark:text-amber-200">{Math.floor(i.seconds_left / 60)} dk</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-right">
                       <button
                         type="button"
-                        className="text-xs font-medium text-rose-600 hover:text-rose-800"
+                        className="text-xs font-medium text-rose-600 dark:text-rose-300 hover:text-rose-800"
                         onClick={() => setConfirm({ title: "Sahte oturumu sonlandır", desc: "Bu sahte oturumu uzaktan sonlandırmak istediğine emin misin?", run: () => endImp.mutate({ impId: i.id }) })}
                       >
                         Sonlandır
@@ -144,7 +144,7 @@ export function SecuritySessionsClient({ initial }: Props) {
         {/* Aktif oturumlar */}
         <Card className="overflow-hidden lg:col-span-2">
           <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Users className="size-4 text-indigo-600" aria-hidden /> Aktif Oturumlar</h2>
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Users className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden /> Aktif Oturumlar</h2>
             <div className="flex flex-wrap gap-1 text-[11px] text-muted-foreground">
               {Object.entries(d.role_counts).map(([role, n]) => (
                 <span key={role} className="rounded bg-muted px-2 py-0.5">{roleLabel(role)}: {n}</span>
@@ -167,7 +167,7 @@ export function SecuritySessionsClient({ initial }: Props) {
                       <td className="px-3 py-1.5 font-mono text-[11px] text-muted-foreground">{sess.ip ?? "—"}</td>
                       <td className="px-3 py-1.5 text-right text-[11px] text-muted-foreground">{humanizeAgo(sess.idle_seconds)}</td>
                       <td className="px-3 py-1.5 text-right">
-                        <button type="button" className="text-xs font-medium text-rose-600 hover:text-rose-800" onClick={() => setConfirm({ title: "Oturumu kapat", desc: `${sess.user_full_name ?? sess.user_email} kullanıcısının oturumunu uzaktan kapat?`, run: () => revoke.mutate({ sessionToken: sess.session_token }) })}>Kapat</button>
+                        <button type="button" className="text-xs font-medium text-rose-600 dark:text-rose-300 hover:text-rose-800" onClick={() => setConfirm({ title: "Oturumu kapat", desc: `${sess.user_full_name ?? sess.user_email} kullanıcısının oturumunu uzaktan kapat?`, run: () => revoke.mutate({ sessionToken: sess.session_token }) })}>Kapat</button>
                       </td>
                     </tr>
                   ))}
@@ -193,7 +193,7 @@ export function SecuritySessionsClient({ initial }: Props) {
                     <div className="text-[11px] text-muted-foreground">{b.fail_count} deneme · {b.distinct_email_count} farklı e-posta</div>
                   </div>
                   {b.ip ? (
-                    <button type="button" className="shrink-0 text-xs font-medium text-rose-600 hover:text-rose-800" onClick={() => blockIp.mutate({ ip: b.ip!, hours: 1, note: "Bucket'tan manuel" })}>Bloka al</button>
+                    <button type="button" className="shrink-0 text-xs font-medium text-rose-600 dark:text-rose-300 hover:text-rose-800" onClick={() => blockIp.mutate({ ip: b.ip!, hours: 1, note: "Bucket'tan manuel" })}>Bloka al</button>
                   ) : null}
                 </li>
               ))}
@@ -206,7 +206,7 @@ export function SecuritySessionsClient({ initial }: Props) {
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
           <div>
-            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Ban className="size-4 text-rose-600" aria-hidden /> Şüpheli & Bloklu IP&apos;ler</h2>
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Ban className="size-4 text-rose-600 dark:text-rose-300" aria-hidden /> Şüpheli & Bloklu IP&apos;ler</h2>
             <div className="text-[11px] text-muted-foreground">Brute force eşiği aşılırsa otomatik 1 saat blok.</div>
           </div>
           <form
@@ -237,14 +237,14 @@ export function SecuritySessionsClient({ initial }: Props) {
                     <td className="px-3 py-1.5 font-mono text-xs">{r.ip}</td>
                     <td className="px-3 py-1.5 text-[11px] text-muted-foreground">{r.fail_count} fail · {r.distinct_email_count} farklı e-posta</td>
                     <td className="px-3 py-1.5 text-center">
-                      {r.is_blocked ? <span className="rounded bg-rose-100 px-2 py-0.5 text-[11px] text-rose-700">Bloklu</span> : <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] text-amber-700">İzleniyor</span>}
+                      {r.is_blocked ? <span className="rounded bg-rose-100 dark:bg-rose-500/15 px-2 py-0.5 text-[11px] text-rose-700 dark:text-rose-300">Bloklu</span> : <span className="rounded bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-700 dark:text-amber-300">İzleniyor</span>}
                     </td>
                     <td className="px-3 py-1.5 text-[11px] text-muted-foreground">{r.blocked_until ? fmtDateTime(r.blocked_until) : "—"}</td>
                     <td className="px-3 py-1.5 text-right">
                       {r.is_blocked ? (
-                        <button type="button" className="text-xs font-medium text-emerald-600 hover:text-emerald-800" onClick={() => unblockIp.mutate({ ip: r.ip })}>Serbest</button>
+                        <button type="button" className="text-xs font-medium text-emerald-600 dark:text-emerald-300 hover:text-emerald-800" onClick={() => unblockIp.mutate({ ip: r.ip })}>Serbest</button>
                       ) : (
-                        <button type="button" className="text-xs font-medium text-rose-600 hover:text-rose-800" onClick={() => blockIp.mutate({ ip: r.ip, hours: 1, note: "Manuel" })}>Bloka al</button>
+                        <button type="button" className="text-xs font-medium text-rose-600 dark:text-rose-300 hover:text-rose-800" onClick={() => blockIp.mutate({ ip: r.ip, hours: 1, note: "Manuel" })}>Bloka al</button>
                       )}
                     </td>
                   </tr>
@@ -258,7 +258,7 @@ export function SecuritySessionsClient({ initial }: Props) {
       {/* Süper admin girişleri */}
       <Card className="overflow-hidden">
         <div className="border-b border-border px-4 py-2.5">
-          <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="size-4 text-violet-600" aria-hidden /> Süper Admin Girişleri (24s)</h2>
+          <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="size-4 text-violet-600 dark:text-violet-300" aria-hidden /> Süper Admin Girişleri (24s)</h2>
         </div>
         {d.super_admin_logins.length === 0 ? (
           <p className="p-6 text-center text-sm text-muted-foreground">Son 24s süper admin girişi yok.</p>

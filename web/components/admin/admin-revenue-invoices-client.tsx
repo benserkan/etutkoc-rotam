@@ -42,7 +42,7 @@ export function AdminRevenueInvoicesClient({ initial }: Props) {
           ← Ticari Pano
         </Link>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <Receipt className="size-6 text-indigo-700" aria-hidden />
+          <Receipt className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Faturalar
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -77,7 +77,7 @@ export function AdminRevenueInvoicesClient({ initial }: Props) {
       {statusFilter ? (
         <div className="text-sm text-muted-foreground">
           Filtre: <code className="rounded bg-muted px-2 py-0.5 text-xs">{statusFilter}</code>
-          <button type="button" onClick={() => setStatusFilter(null)} className="ml-2 text-xs text-indigo-600 hover:text-indigo-800">
+          <button type="button" onClick={() => setStatusFilter(null)} className="ml-2 text-xs text-indigo-600 dark:text-indigo-300 hover:text-indigo-800">
             × temizle
           </button>
         </div>
@@ -106,7 +106,7 @@ export function AdminRevenueInvoicesClient({ initial }: Props) {
                   <tr key={r.id} className="hover:bg-muted/40">
                     <td className="px-3 py-2">
                       <span className="inline-flex items-center gap-1.5">
-                        {r.owner_type === "user" ? <UserRound className="size-3.5 text-purple-600" aria-hidden /> : <Building2 className="size-3.5 text-indigo-600" aria-hidden />}
+                        {r.owner_type === "user" ? <UserRound className="size-3.5 text-purple-600 dark:text-purple-300" aria-hidden /> : <Building2 className="size-3.5 text-indigo-600 dark:text-indigo-300" aria-hidden />}
                         <Link href={r.owner_url} className="font-medium hover:text-indigo-700">{r.owner_name}</Link>
                       </span>
                     </td>
@@ -119,7 +119,7 @@ export function AdminRevenueInvoicesClient({ initial }: Props) {
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">{r.payment_method ?? "—"}</td>
                     <td className="px-3 py-2 text-right">
-                      <Link href={r.owner_url} className="text-xs text-indigo-600 hover:text-indigo-800">Detay →</Link>
+                      <Link href={r.owner_url} className="text-xs text-indigo-600 dark:text-indigo-300 hover:text-indigo-800">Detay →</Link>
                     </td>
                   </tr>
                 ))}

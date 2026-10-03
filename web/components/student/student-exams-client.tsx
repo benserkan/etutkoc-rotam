@@ -361,8 +361,8 @@ function StudentExamRow({
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {formatTRDate(row.exam_date)} ·{" "}
-                <span className="text-emerald-600">{row.total_correct}D</span>{" "}
-                <span className="text-rose-600">{row.total_wrong}Y</span>{" "}
+                <span className="text-emerald-600 dark:text-emerald-300">{row.total_correct}D</span>{" "}
+                <span className="text-rose-600 dark:text-rose-300">{row.total_wrong}Y</span>{" "}
                 <span className="text-muted-foreground">{row.total_blank}B</span>
                 {" · "}
                 {row.total_questions} soru

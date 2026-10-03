@@ -68,7 +68,7 @@ export function AdminAnnouncementsClient({ initial }: Props) {
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <Megaphone className="size-6 text-indigo-700" aria-hidden />
+          <Megaphone className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Duyurular
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -148,7 +148,7 @@ function CreateForm({
     <Card>
       <CardContent className="p-5">
         <h2 className="text-sm font-medium mb-3 inline-flex items-center gap-1.5">
-          <Plus className="size-4 text-indigo-700" aria-hidden />
+          <Plus className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Yeni Duyuru
         </h2>
         <form onSubmit={onSubmit} className="space-y-3">
@@ -328,7 +328,7 @@ function AnnouncementsTable({ items }: { items: AnnouncementItem[] }) {
 
 function AnnouncementRow({ item }: { item: AnnouncementItem }) {
   return (
-    <tr className={cn(item.is_active_now && "bg-amber-50/30")}>
+    <tr className={cn(item.is_active_now && "bg-amber-50/30 dark:bg-amber-500/10")}>
       <td className="px-4 py-3">
         {item.title && <div className="font-medium">{item.title}</div>}
         <div className="text-xs text-foreground/80 mt-0.5 max-w-md">
@@ -380,17 +380,17 @@ function SeverityBadge({
     critical: {
       cls: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
       Icon: AlertCircle,
-      iconColor: "text-rose-600",
+      iconColor: "text-rose-600 dark:text-rose-300",
     },
     warn: {
       cls: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
       Icon: AlertTriangle,
-      iconColor: "text-amber-600",
+      iconColor: "text-amber-600 dark:text-amber-300",
     },
     info: {
       cls: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
       Icon: Info,
-      iconColor: "text-sky-600",
+      iconColor: "text-sky-600 dark:text-sky-300",
     },
   };
   const m = map[severity];
@@ -427,7 +427,7 @@ function DeleteButton({ id }: { id: number }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-rose-600 hover:text-rose-800 inline-flex items-center gap-0.5"
+        className="text-xs text-rose-600 dark:text-rose-300 hover:text-rose-800 inline-flex items-center gap-0.5"
       >
         <Trash2 className="size-3" aria-hidden />
         Sil

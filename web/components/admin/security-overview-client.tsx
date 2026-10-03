@@ -67,7 +67,7 @@ function AttentionCard({ it }: { it: AttentionItemModel }) {
               <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
               >
                 <Lightbulb className="size-3.5" aria-hidden />
                 {open ? "Açıklamayı gizle" : "Bu ne demek? Ne yapmalı?"}
@@ -84,7 +84,7 @@ function AttentionCard({ it }: { it: AttentionItemModel }) {
           {it.action_url ? (
             <Link
               href={it.action_url}
-              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
             >
               {it.action_label || "Detay"} →
             </Link>
@@ -138,7 +138,7 @@ export function SecurityOverviewClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <Shield className="size-6 text-slate-700" aria-hidden />
+          <Shield className="size-6 text-slate-700 dark:text-slate-300" aria-hidden />
           Güvenlik Kamarası
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -164,7 +164,7 @@ export function SecurityOverviewClient({ initial }: Props) {
         </div>
         {att.is_clean ? (
           <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-4 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
-            <CheckCircle2 className="size-5 shrink-0 text-emerald-600" aria-hidden />
+            <CheckCircle2 className="size-5 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
             Şu an dikkat gerektiren bir durum yok. Her şey sakin görünüyor.
           </Card>
         ) : (
@@ -178,21 +178,21 @@ export function SecurityOverviewClient({ initial }: Props) {
 
       {/* Özet KPI */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard icon={Users} label="Aktif oturum" value={s.active_sessions} tone="bg-indigo-100 text-indigo-700" />
-        <KpiCard icon={Ban} label="Blokli IP" value={s.blocked_ips} tone="bg-rose-100 text-rose-700" />
-        <KpiCard icon={Eye} label="İzlenen IP" value={s.watched_ips} tone="bg-amber-100 text-amber-700" />
-        <KpiCard icon={KeyRound} label="Başarısız giriş (24s)" value={s.failed_24h} tone="bg-rose-100 text-rose-700" />
-        <KpiCard icon={ShieldAlert} label="Kritik aksiyon (24s)" value={s.critical_24h} tone="bg-rose-100 text-rose-700" />
-        <KpiCard icon={BadgeCheck} label="Süper admin giriş (24s)" value={s.super_admin_logins_24h} tone="bg-violet-100 text-violet-700" />
-        <KpiCard icon={Flame} label="Açık suistimal" value={d.abuse_open_count} tone="bg-orange-100 text-orange-700" href="/admin/security-monitor/abuse" />
-        <KpiCard icon={AlertOctagon} label="Onaysız alarm" value={d.unack_alarm_count} tone="bg-amber-100 text-amber-700" href="/admin/security-monitor/alarms" />
+        <KpiCard icon={Users} label="Aktif oturum" value={s.active_sessions} tone="bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300" />
+        <KpiCard icon={Ban} label="Blokli IP" value={s.blocked_ips} tone="bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300" />
+        <KpiCard icon={Eye} label="İzlenen IP" value={s.watched_ips} tone="bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300" />
+        <KpiCard icon={KeyRound} label="Başarısız giriş (24s)" value={s.failed_24h} tone="bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300" />
+        <KpiCard icon={ShieldAlert} label="Kritik aksiyon (24s)" value={s.critical_24h} tone="bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300" />
+        <KpiCard icon={BadgeCheck} label="Süper admin giriş (24s)" value={s.super_admin_logins_24h} tone="bg-violet-100 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300" />
+        <KpiCard icon={Flame} label="Açık suistimal" value={d.abuse_open_count} tone="bg-orange-100 dark:bg-orange-500/15 text-orange-700 dark:text-orange-300" href="/admin/security-monitor/abuse" />
+        <KpiCard icon={AlertOctagon} label="Onaysız alarm" value={d.unack_alarm_count} tone="bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300" href="/admin/security-monitor/alarms" />
       </section>
 
       {/* Sistem hatası kısa özet + rol dağılımı */}
       <section className="grid gap-4 lg:grid-cols-3">
         <Link href="/admin/security-monitor/system" className="lg:col-span-1">
           <Card className="flex h-full items-center gap-3 p-4 transition hover:border-foreground/30">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300">
               <Bug className="size-5" aria-hidden />
             </span>
             <div>
@@ -229,8 +229,8 @@ export function SecurityOverviewClient({ initial }: Props) {
       {/* Aktif kimliğe-bürünme oturumları */}
       {d.active_impersonations.length > 0 ? (
         <section>
-          <Card className="border-l-4 border-l-rose-500 bg-rose-50/40 p-4">
-            <h2 className="inline-flex items-center gap-2 text-sm font-semibold text-rose-800">
+          <Card className="border-l-4 border-l-rose-500 bg-rose-50/40 dark:bg-rose-500/10 p-4">
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold text-rose-800 dark:text-rose-200">
               <UserCog className="size-4" aria-hidden />
               Aktif kimliğe-bürünme oturumları ({d.active_impersonations.length})
             </h2>
@@ -260,7 +260,7 @@ export function SecurityOverviewClient({ initial }: Props) {
                       <td className="px-2 py-1.5 text-muted-foreground">{fmtDateTime(imp.started_at)}</td>
                       <td className="px-2 py-1.5 text-right tabular-nums">
                         {imp.is_expired_now ? (
-                          <span className="text-rose-600">süresi doldu</span>
+                          <span className="text-rose-600 dark:text-rose-300">süresi doldu</span>
                         ) : (
                           `${Math.ceil(imp.seconds_left / 60)} dk`
                         )}
@@ -279,7 +279,7 @@ export function SecurityOverviewClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <Activity className="size-4 text-indigo-600" aria-hidden />
+              <Activity className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden />
               Aktif oturumlar
             </h2>
             <span className="text-xs text-muted-foreground">{d.active_sessions.length}</span>
@@ -318,7 +318,7 @@ export function SecurityOverviewClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <Eye className="size-4 text-amber-600" aria-hidden />
+              <Eye className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
               Şüpheli / blokli IP&apos;ler
             </h2>
             <span className="text-xs text-muted-foreground">{d.suspicious_ips.length}</span>
@@ -367,7 +367,7 @@ export function SecurityOverviewClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <ShieldAlert className="size-4 text-rose-600" aria-hidden />
+              <ShieldAlert className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
               Kritik aksiyon akışı
             </h2>
           </div>
@@ -382,7 +382,7 @@ export function SecurityOverviewClient({ initial }: Props) {
                     <div className="text-[11px] text-muted-foreground">
                       {a.email_attempted ?? (a.actor_id != null ? `Aktör #${a.actor_id}` : "—")}
                       {a.via_admin != null ? (
-                        <span className="ml-1 rounded bg-violet-100 px-1 text-violet-700">admin #{a.via_admin}</span>
+                        <span className="ml-1 rounded bg-violet-100 dark:bg-violet-500/15 px-1 text-violet-700 dark:text-violet-300">admin #{a.via_admin}</span>
                       ) : null}
                     </div>
                   </div>
@@ -396,7 +396,7 @@ export function SecurityOverviewClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <BadgeCheck className="size-4 text-violet-600" aria-hidden />
+              <BadgeCheck className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
               Süper admin girişleri (24s)
             </h2>
           </div>

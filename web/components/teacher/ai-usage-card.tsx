@@ -56,7 +56,7 @@ export function AiUsageCard() {
     <section className="rounded-lg border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <Sparkles className="size-4 text-violet-600" aria-hidden />
+          <Sparkles className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
           Yapay zekâ kullanımı
         </h2>
         <div className="flex gap-1">
@@ -187,9 +187,9 @@ export function AiConsentCard() {
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             {d.consented ? (
-              <ShieldCheck className="size-4 text-emerald-600" aria-hidden />
+              <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
             ) : (
-              <ShieldOff className="size-4 text-rose-600" aria-hidden />
+              <ShieldOff className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
             )}
             Yapay zekâ onayı
           </h2>
@@ -205,7 +205,7 @@ export function AiConsentCard() {
             size="sm"
             onClick={() => setConfirmOpen(true)}
             disabled={revoke.isPending}
-            className="text-rose-700 hover:text-rose-800"
+            className="text-rose-700 dark:text-rose-300 hover:text-rose-800"
           >
             Onayı geri al
           </Button>

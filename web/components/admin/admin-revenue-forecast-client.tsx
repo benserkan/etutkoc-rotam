@@ -44,7 +44,7 @@ export function AdminRevenueForecastClient({ initial }: Props) {
       <header>
         <span className="text-sm text-muted-foreground">Ticari Pano</span>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <TrendingUp className="size-6 text-indigo-700" aria-hidden />
+          <TrendingUp className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Tahmin &amp; Senaryo
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -124,30 +124,30 @@ export function AdminRevenueForecastClient({ initial }: Props) {
               {projections.map((p: MrrProjection) => (
                 <tr key={p.horizon_days} className="hover:bg-muted/30">
                   <td className="px-4 py-3 font-medium">{p.horizon_days} gün</td>
-                  <td className="px-4 py-3 text-right font-mono text-emerald-700">
+                  <td className="px-4 py-3 text-right font-mono text-emerald-700 dark:text-emerald-300">
                     +{tl(p.expected_trial_conversions_mrr)}
                     <div className="text-[10px] text-muted-foreground">
                       {p.trial_ending_count} deneme bitiyor
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-rose-700">
+                  <td className="px-4 py-3 text-right font-mono text-rose-700 dark:text-rose-300">
                     −{tl(p.expected_churn_mrr)}
                     <div className="text-[10px] text-muted-foreground">trend</div>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-rose-700">
+                  <td className="px-4 py-3 text-right font-mono text-rose-700 dark:text-rose-300">
                     −{tl(p.expected_at_risk_loss_mrr)}
                     <div className="text-[10px] text-muted-foreground">sağlık skoru</div>
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-semibold">
                     {tl(p.projected_mrr_status_quo)}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono font-semibold text-indigo-700">
+                  <td className="px-4 py-3 text-right font-mono font-semibold text-indigo-700 dark:text-indigo-300">
                     {tl(p.projected_mrr_with_intervention)}
                   </td>
                   <td
                     className={cn(
                       "px-4 py-3 text-right font-mono font-bold",
-                      p.delta_mrr > 0 ? "text-emerald-700" : "text-muted-foreground",
+                      p.delta_mrr > 0 ? "text-emerald-700 dark:text-emerald-300" : "text-muted-foreground",
                     )}
                   >
                     {p.delta_mrr > 0 ? "+" : ""}
@@ -169,7 +169,7 @@ export function AdminRevenueForecastClient({ initial }: Props) {
           </span>
         </h2>
         {data.risk.institutions.length === 0 ? (
-          <Card className="p-10 text-center text-sm text-emerald-700">
+          <Card className="p-10 text-center text-sm text-emerald-700 dark:text-emerald-300">
             Şu an risk altında ödeyen kurum yok — temiz.
           </Card>
         ) : (
@@ -194,13 +194,13 @@ export function AdminRevenueForecastClient({ initial }: Props) {
                           {inst.name}
                         </Link>
                         {inst.owner_type === "user" ? (
-                          <UserIcon className="ml-1 inline size-3 text-purple-600" aria-label="bağımsız öğretmen" />
+                          <UserIcon className="ml-1 inline size-3 text-purple-600 dark:text-purple-300" aria-label="bağımsız öğretmen" />
                         ) : null}
                       </td>
                       <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{inst.plan}</td>
                       <td className="px-4 py-2 text-center font-mono">
                         {inst.health_score != null ? (
-                          <span className={tone === "rose" ? "text-rose-700" : "text-amber-700"}>
+                          <span className={tone === "rose" ? "text-rose-700 dark:text-rose-300" : "text-amber-700 dark:text-amber-300"}>
                             {inst.health_score}
                           </span>
                         ) : (
@@ -211,7 +211,7 @@ export function AdminRevenueForecastClient({ initial }: Props) {
                         <span
                           className={cn(
                             "rounded px-2 py-0.5 text-[10px] font-semibold uppercase",
-                            tone === "rose" ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-800",
+                            tone === "rose" ? "bg-rose-100 dark:bg-rose-500/15 text-rose-800 dark:text-rose-200" : "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-200",
                           )}
                         >
                           {inst.severity === "critical" ? "Kritik" : "Risk"}
@@ -254,20 +254,20 @@ export function AdminRevenueForecastClient({ initial }: Props) {
               ))}
             </div>
           </Card>
-          <Card className="border-2 border-indigo-300 bg-indigo-50/50 p-5">
-            <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold uppercase text-indigo-700">
+          <Card className="border-2 border-indigo-300 bg-indigo-50/50 dark:bg-indigo-500/10 p-5">
+            <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold uppercase text-indigo-700 dark:text-indigo-300">
               <Sparkles className="size-4" aria-hidden />
               Müdahale Et (%{data.save_rate_pct} kurtarma)
             </div>
             <div className="space-y-2">
               {data.scenario.horizons.map((h) => (
                 <div key={h.horizon_days} className="flex items-baseline justify-between border-b border-indigo-200 pb-1">
-                  <span className="text-xs text-indigo-700">{h.horizon_days} gün sonra:</span>
+                  <span className="text-xs text-indigo-700 dark:text-indigo-300">{h.horizon_days} gün sonra:</span>
                   <div className="text-right">
-                    <span className="font-mono text-base font-semibold text-indigo-900">
+                    <span className="font-mono text-base font-semibold text-indigo-900 dark:text-indigo-200">
                       {tl(h.intervention_mrr)}
                     </span>
-                    <div className="text-[11px] text-emerald-700">+{tl(h.delta_mrr)} ek kazanç</div>
+                    <div className="text-[11px] text-emerald-700 dark:text-emerald-300">+{tl(h.delta_mrr)} ek kazanç</div>
                   </div>
                 </div>
               ))}

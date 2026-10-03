@@ -22,9 +22,9 @@ const CYCLE_LABEL: Record<string, string> = {
   annual: "Akademik yıl (10 ay peşin)",
 };
 const STATUS_TONE: Record<string, string> = {
-  active: "bg-emerald-100 text-emerald-800",
-  paused: "bg-amber-100 text-amber-800",
-  archived: "bg-slate-200 text-slate-700",
+  active: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-200",
+  paused: "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-200",
+  archived: "bg-slate-200 dark:bg-slate-500/15 text-slate-700 dark:text-slate-300",
 };
 
 function fmtTry(n: number): string {
@@ -247,7 +247,7 @@ function LinkRow({ item }: { item: CampaignLinkItem }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-foreground">{item.name}</span>
-            <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", STATUS_TONE[item.status] ?? "bg-slate-100 text-slate-700")}>
+            <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", STATUS_TONE[item.status] ?? "bg-slate-100 dark:bg-slate-500/15 text-slate-700 dark:text-slate-300")}>
               {item.status_label}
             </span>
           </div>
@@ -295,7 +295,7 @@ function LinkRow({ item }: { item: CampaignLinkItem }) {
               type="button"
               onClick={() => setStatus.mutate({ id: item.id, status: "paused" })}
               disabled={setStatus.isPending}
-              className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-100 disabled:opacity-50"
             >
               <Pause className="size-3.5" aria-hidden /> Duraklat
             </button>
@@ -304,7 +304,7 @@ function LinkRow({ item }: { item: CampaignLinkItem }) {
               type="button"
               onClick={() => setStatus.mutate({ id: item.id, status: "active" })}
               disabled={setStatus.isPending}
-              className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 disabled:opacity-50"
             >
               <Play className="size-3.5" aria-hidden /> Yayına al
             </button>

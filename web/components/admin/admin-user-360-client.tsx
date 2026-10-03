@@ -69,7 +69,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
           </Link>
           <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-2xl font-semibold tracking-tight">
             <span className="inline-flex items-center gap-2">
-              <UserRound className="size-6 text-indigo-700" aria-hidden />
+              <UserRound className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
               {owner.name}
             </span>
             <StatusBadge label={owner.is_active ? "Aktif" : "Pasif"} tone={owner.is_active ? "emerald" : "slate"} />
@@ -165,7 +165,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
                         </td>
                         <td className="px-4 py-2 text-xs">{s.label}</td>
                         <td className="px-4 py-2 text-xs">
-                          {s.is_active ? <span className="text-emerald-700">aktif</span> : <span className="text-muted-foreground">pasif</span>}
+                          {s.is_active ? <span className="text-emerald-700 dark:text-emerald-300">aktif</span> : <span className="text-muted-foreground">pasif</span>}
                         </td>
                       </tr>
                     );
@@ -240,11 +240,11 @@ export function AdminUser360Client({ initial, userId }: Props) {
                       {a.full_name} <span className="text-xs text-muted-foreground">{a.email}</span>
                     </Link>
                     <span className="flex flex-wrap items-center gap-1.5 text-xs">
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">{a.plan_label}</span>
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">
+                      <span className="rounded bg-slate-100 dark:bg-slate-500/15 px-1.5 py-0.5 text-slate-700 dark:text-slate-300">{a.plan_label}</span>
+                      <span className="rounded bg-slate-100 dark:bg-slate-500/15 px-1.5 py-0.5 text-slate-700 dark:text-slate-300">
                         {a.active_students} aktif öğrenci
                       </span>
-                      <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800">
+                      <span className="rounded bg-amber-100 dark:bg-amber-500/15 px-1.5 py-0.5 font-medium text-amber-800 dark:text-amber-200">
                         {a.reason_label}
                       </span>
                     </span>
@@ -291,10 +291,10 @@ function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: s
 
 function BandStat({ label, value, tone }: { label: string; value: number; tone: string }) {
   const text: Record<string, string> = {
-    emerald: "text-emerald-700",
-    yellow: "text-yellow-700",
-    amber: "text-amber-700",
-    rose: "text-rose-700",
+    emerald: "text-emerald-700 dark:text-emerald-300",
+    yellow: "text-yellow-700 dark:text-yellow-300",
+    amber: "text-amber-700 dark:text-amber-300",
+    rose: "text-rose-700 dark:text-rose-300",
   };
   return (
     <div className="px-3 py-2.5">

@@ -72,7 +72,7 @@ export function AdminDashboardClient({ initial }: Props) {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[11px] uppercase tracking-wider text-amber-700 font-semibold inline-flex items-center gap-1">
+        <p className="text-[11px] uppercase tracking-wider text-amber-700 dark:text-amber-300 font-semibold inline-flex items-center gap-1">
           <Shield className="size-3.5" aria-hidden />
           Süper Admin
         </p>
@@ -144,12 +144,12 @@ function ActivitySummary() {
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold">
-            <Activity className="size-4 text-indigo-700" aria-hidden />
+            <Activity className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
             Son 7 Gün — Üyelik &amp; Davet Aktivitesi
           </h2>
           <Link
             href="/admin/activity-stream"
-            className="inline-flex items-center gap-0.5 text-xs font-medium text-indigo-700 hover:underline"
+            className="inline-flex items-center gap-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
           >
             Tüm aktivite <ArrowRight className="size-3.5" aria-hidden />
           </Link>
@@ -197,7 +197,7 @@ function ActivitySummary() {
                     ) : null}
                   </span>
                   {it.detail_url ? (
-                    <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] text-indigo-700">
+                    <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] text-indigo-700 dark:text-indigo-300">
                       360 <ArrowRight className="size-3" aria-hidden />
                     </span>
                   ) : null}
@@ -224,13 +224,13 @@ function ActivityKpi({
     <div
       className={cn(
         "rounded-lg border p-2.5",
-        highlight ? "border-emerald-200 bg-emerald-50/50" : "border-border bg-muted/30",
+        highlight ? "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-500/10" : "border-border bg-muted/30",
       )}
     >
       <div
         className={cn(
           "text-lg font-semibold tabular-nums",
-          highlight ? "text-emerald-700" : "text-foreground",
+          highlight ? "text-emerald-700 dark:text-emerald-300" : "text-foreground",
         )}
       >
         {value}
@@ -258,7 +258,7 @@ function AccountsOverview({
   return (
     <section>
       <h2 className="text-sm font-semibold text-foreground inline-flex items-center gap-1.5 mb-3">
-        <Users className="size-4 text-indigo-700" aria-hidden />
+        <Users className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
         Hesap Özeti
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
@@ -273,7 +273,7 @@ function AccountsOverview({
               {health.unhealthy_total > 0 && (
                 <>
                   {" · "}
-                  <span className="text-rose-600 font-medium">
+                  <span className="text-rose-600 dark:text-rose-300 font-medium">
                     {health.unhealthy_total} risk
                   </span>
                 </>
@@ -293,14 +293,14 @@ function AccountsOverview({
           hint={
             activity.total > 0 ? (
               <>
-                <span className="text-emerald-700 font-medium">
+                <span className="text-emerald-700 dark:text-emerald-300 font-medium">
                   {activity.healthy}
                 </span>{" "}
                 aktif (7g)
                 {activity.unhealthy_total > 0 && (
                   <>
                     {" · "}
-                    <span className="text-rose-600 font-medium">
+                    <span className="text-rose-600 dark:text-rose-300 font-medium">
                       {activity.unhealthy_total}
                     </span>{" "}
                     dikkat
@@ -338,7 +338,7 @@ function AccountsOverview({
           hint={
             <>
               {counts.institution_admins} kurum yön. ·{" "}
-              <span className="text-rose-700 font-medium">
+              <span className="text-rose-700 dark:text-rose-300 font-medium">
                 {counts.super_admins} süper
               </span>
             </>
@@ -422,39 +422,39 @@ const TONE_CLASSES: Record<
 > = {
   indigo: {
     border: "border-l-indigo-500",
-    bg: "bg-indigo-50",
-    text: "text-indigo-700",
-    pill: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    bg: "bg-indigo-50 dark:bg-indigo-500/15",
+    text: "text-indigo-700 dark:text-indigo-300",
+    pill: "bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 border-indigo-200",
   },
   violet: {
     border: "border-l-violet-500",
-    bg: "bg-violet-50",
-    text: "text-violet-700",
-    pill: "bg-violet-50 text-violet-700 border-violet-200",
+    bg: "bg-violet-50 dark:bg-violet-500/15",
+    text: "text-violet-700 dark:text-violet-300",
+    pill: "bg-violet-50 dark:bg-violet-500/15 dark:border-violet-500/30 text-violet-700 dark:text-violet-300 border-violet-200",
   },
   sky: {
     border: "border-l-sky-500",
-    bg: "bg-sky-50",
-    text: "text-sky-700",
-    pill: "bg-sky-50 text-sky-700 border-sky-200",
+    bg: "bg-sky-50 dark:bg-sky-500/15",
+    text: "text-sky-700 dark:text-sky-300",
+    pill: "bg-sky-50 dark:bg-sky-500/15 dark:border-sky-500/30 text-sky-700 dark:text-sky-300 border-sky-200",
   },
   amber: {
     border: "border-l-amber-500",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-    pill: "bg-amber-50 text-amber-700 border-amber-200",
+    bg: "bg-amber-50 dark:bg-amber-500/15",
+    text: "text-amber-700 dark:text-amber-300",
+    pill: "bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 border-amber-200",
   },
   rose: {
     border: "border-l-rose-500",
-    bg: "bg-rose-50",
-    text: "text-rose-700",
-    pill: "bg-rose-50 text-rose-700 border-rose-200",
+    bg: "bg-rose-50 dark:bg-rose-500/15",
+    text: "text-rose-700 dark:text-rose-300",
+    pill: "bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 border-rose-200",
   },
   emerald: {
     border: "border-l-emerald-500",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    bg: "bg-emerald-50 dark:bg-emerald-500/15",
+    text: "text-emerald-700 dark:text-emerald-300",
+    pill: "bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border-emerald-200",
   },
 };
 
@@ -517,13 +517,13 @@ function EmailOutageBanner({ health }: { health: AdminEmailHealth }) {
 
 function FailedLoginsBanner({ count }: { count: number }) {
   return (
-    <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
-      <AlertTriangle className="size-5 shrink-0 mt-0.5 text-amber-700" aria-hidden />
+    <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-4 py-3 flex items-start gap-3">
+      <AlertTriangle className="size-5 shrink-0 mt-0.5 text-amber-700 dark:text-amber-300" aria-hidden />
       <div className="flex-1 text-sm">
-        <div className="font-semibold text-amber-900">
+        <div className="font-semibold text-amber-900 dark:text-amber-200">
           Yüksek başarısız giriş hareketi
         </div>
-        <div className="text-amber-800 mt-1">
+        <div className="text-amber-800 dark:text-amber-200 mt-1">
           Son 24 saatte <strong className="tabular-nums">{count}</strong>{" "}
           başarısız giriş veya kilitleme olayı kaydedildi.{" "}
           <Link
@@ -547,15 +547,15 @@ function FailedLoginsBanner({ count }: { count: number }) {
 
 function PendingRequestsBanner({ subscription, total }: { subscription: number; total: number }) {
   return (
-    <div className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-3 flex items-start gap-3">
-      <Inbox className="size-5 shrink-0 mt-0.5 text-indigo-700" aria-hidden />
+    <div className="rounded-md border border-indigo-300 bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 px-4 py-3 flex items-start gap-3">
+      <Inbox className="size-5 shrink-0 mt-0.5 text-indigo-700 dark:text-indigo-300" aria-hidden />
       <div className="flex-1 text-sm">
-        <div className="font-semibold text-indigo-900">
+        <div className="font-semibold text-indigo-900 dark:text-indigo-200">
           {subscription > 0
             ? `${subscription} abonelik aktivasyon talebi onay bekliyor`
             : `${total} iletişim talebi bekliyor`}
         </div>
-        <div className="text-indigo-800 mt-1">
+        <div className="text-indigo-800 dark:text-indigo-200 mt-1">
           {subscription > 0
             ? "Koç(lar) “öde ve devam et” ile aktivasyon istedi. Ödemeyi alıp planı aktive edin."
             : "Fiyatlandırma/iletişim formundan gelen talepler var."}{" "}
@@ -632,17 +632,17 @@ function CommercialShortcuts() {
     <section>
       <header className="flex items-center justify-between mb-3 gap-3 flex-wrap">
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold">
+          <p className="text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 font-semibold">
             Satış · Ödemeler · CRM
           </p>
           <h2 className="text-sm font-semibold inline-flex items-center gap-1.5 mt-0.5">
-            <Wallet className="size-4 text-emerald-700" aria-hidden />
+            <Wallet className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden />
             Ticari & Ödemeler
           </h2>
         </div>
         <Link
           href="/admin/security-monitor/revenue"
-          className="text-xs text-emerald-700 hover:text-emerald-900 font-medium inline-flex items-center gap-0.5"
+          className="text-xs text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 font-medium inline-flex items-center gap-0.5"
         >
           Ticari panoyu aç
           <ArrowRight className="size-3" aria-hidden />
@@ -785,11 +785,11 @@ function CustomerHealth({
 
   return (
     <section>
-      <p className="text-[11px] uppercase tracking-wider text-rose-700 font-semibold">
+      <p className="text-[11px] uppercase tracking-wider text-rose-700 dark:text-rose-300 font-semibold">
         Müşteri Takibi
       </p>
       <h2 className="text-sm font-semibold inline-flex items-center gap-1.5 mt-0.5 mb-3">
-        <Heart className="size-4 text-rose-700" aria-hidden />
+        <Heart className="size-4 text-rose-700 dark:text-rose-300" aria-hidden />
         Müşteri Sağlığı
       </h2>
 
@@ -823,15 +823,15 @@ function InstitutionHealthCard({
 }) {
   return (
     <Card className="overflow-hidden flex flex-col">
-      <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-indigo-50/30">
+      <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-indigo-50/30 dark:bg-indigo-500/10">
         <div className="flex items-center gap-2">
-          <Building2 className="size-4 text-indigo-700" aria-hidden />
+          <Building2 className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
           <h3 className="font-semibold text-sm">Kurum Sağlığı</h3>
           <span className="text-xs text-muted-foreground">({total} kurum)</span>
         </div>
         <Link
           href="/admin/institutions"
-          className="text-xs text-indigo-700 hover:text-indigo-900 font-medium"
+          className="text-xs text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 font-medium"
         >
           Tümünü gör →
         </Link>
@@ -845,7 +845,7 @@ function InstitutionHealthCard({
       <div
         className={cn(
           "p-4 flex-1",
-          topUnhealthy.length > 0 ? "bg-rose-50/20" : "bg-emerald-50/20",
+          topUnhealthy.length > 0 ? "bg-rose-50/20 dark:bg-rose-500/10" : "bg-emerald-50/20 dark:bg-emerald-500/10",
         )}
       >
         {topUnhealthy.length > 0 ? (
@@ -877,7 +877,7 @@ function InstitutionHealthCard({
             </ul>
           </>
         ) : (
-          <p className="text-xs text-emerald-700 inline-flex items-center gap-1.5">
+          <p className="text-xs text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1.5">
             <span>✓</span> Risk/kritik kurum yok — temiz tablo.
           </p>
         )}
@@ -895,9 +895,9 @@ function TeacherActivityCard({
 }) {
   return (
     <Card className="overflow-hidden flex flex-col">
-      <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-violet-50/30">
+      <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-violet-50/30 dark:bg-violet-500/10">
         <div className="flex items-center gap-2">
-          <UserCircle2 className="size-4 text-violet-700" aria-hidden />
+          <UserCircle2 className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />
           <h3 className="font-semibold text-sm">
             Bağımsız Öğretmen Aktivitesi
           </h3>
@@ -907,7 +907,7 @@ function TeacherActivityCard({
         </div>
         <Link
           href="/admin/security-monitor/revenue"
-          className="text-xs text-indigo-700 hover:text-indigo-900 font-medium"
+          className="text-xs text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 font-medium"
         >
           Ticari pano →
         </Link>
@@ -921,7 +921,7 @@ function TeacherActivityCard({
       <div
         className={cn(
           "p-4 flex-1",
-          topRisk.length > 0 ? "bg-rose-50/20" : "bg-emerald-50/20",
+          topRisk.length > 0 ? "bg-rose-50/20 dark:bg-rose-500/10" : "bg-emerald-50/20 dark:bg-emerald-500/10",
         )}
       >
         {topRisk.length > 0 ? (
@@ -959,7 +959,7 @@ function TeacherActivityCard({
             </p>
           </>
         ) : (
-          <p className="text-xs text-emerald-700 inline-flex items-center gap-1.5">
+          <p className="text-xs text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1.5">
             <span>✓</span> Risk altında bağımsız öğretmen yok — herkes 14 gün
             içinde girmiş.
           </p>
@@ -979,10 +979,10 @@ function BandStat({
   tone: "emerald" | "yellow" | "amber" | "rose";
 }) {
   const colorMap = {
-    emerald: { dot: "bg-emerald-500", text: "text-emerald-700" },
-    yellow: { dot: "bg-yellow-500", text: "text-yellow-700" },
-    amber: { dot: "bg-amber-500", text: "text-amber-700" },
-    rose: { dot: "bg-rose-500", text: "text-rose-700" },
+    emerald: { dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-300" },
+    yellow: { dot: "bg-yellow-500", text: "text-yellow-700 dark:text-yellow-300" },
+    amber: { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-300" },
+    rose: { dot: "bg-rose-500", text: "text-rose-700 dark:text-rose-300" },
   };
   const c = colorMap[tone];
   return (
@@ -1003,16 +1003,16 @@ function BandStat({
 function ScoreBadge({ score, color }: { score: number; color: string }) {
   // color is "rose"|"amber"|"yellow"|"emerald" from backend
   const map: Record<string, string> = {
-    rose: "bg-rose-100 text-rose-800 border-rose-300",
-    amber: "bg-amber-100 text-amber-800 border-amber-300",
-    yellow: "bg-yellow-100 text-yellow-800 border-yellow-300",
-    emerald: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    rose: "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 border-rose-300",
+    amber: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-300",
+    yellow: "bg-yellow-100 dark:bg-yellow-500/15 dark:border-yellow-500/30 text-yellow-800 dark:text-yellow-200 border-yellow-300",
+    emerald: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-300",
   };
   return (
     <span
       className={cn(
         "text-[10px] px-1.5 py-0.5 rounded font-mono font-bold border tabular-nums",
-        map[color] ?? "bg-slate-100 text-slate-800 border-slate-300",
+        map[color] ?? "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-800 dark:text-slate-200 border-slate-300",
       )}
     >
       {score}
@@ -1022,10 +1022,10 @@ function ScoreBadge({ score, color }: { score: number; color: string }) {
 
 function BandPill({ band }: { band: HealthLevel }) {
   const map: Record<HealthLevel, string> = {
-    critical: "bg-rose-100 text-rose-800 border-rose-300",
-    risk: "bg-amber-100 text-amber-800 border-amber-300",
-    watch: "bg-yellow-100 text-yellow-800 border-yellow-300",
-    healthy: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    critical: "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 border-rose-300",
+    risk: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-300",
+    watch: "bg-yellow-100 dark:bg-yellow-500/15 dark:border-yellow-500/30 text-yellow-800 dark:text-yellow-200 border-yellow-300",
+    healthy: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-300",
   };
   return (
     <span
@@ -1048,17 +1048,17 @@ function RecentAudits({ audits }: { audits: AuditLogItem[] }) {
     <section>
       <header className="flex items-center justify-between mb-3 gap-3 flex-wrap">
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-violet-700 font-semibold">
+          <p className="text-[11px] uppercase tracking-wider text-violet-700 dark:text-violet-300 font-semibold">
             Sistem Olayları
           </p>
           <h2 className="text-sm font-semibold inline-flex items-center gap-1.5 mt-0.5">
-            <FileText className="size-4 text-violet-700" aria-hidden />
+            <FileText className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />
             Son Audit Olayları
           </h2>
         </div>
         <Link
           href="/admin/audit"
-          className="text-xs text-violet-700 hover:text-violet-900 font-medium inline-flex items-center gap-0.5"
+          className="text-xs text-violet-700 dark:text-violet-300 hover:text-violet-900 font-medium inline-flex items-center gap-0.5"
         >
           Tümünü gör
           <ArrowRight className="size-3" aria-hidden />
@@ -1108,7 +1108,7 @@ function AuditRow({ audit }: { audit: AuditLogItem }) {
         <span className={actionClass}>{audit.action}</span>
         {audit.via_admin != null && (
           <span
-            className="ml-1.5 text-[10px] uppercase tracking-wider bg-violet-100 text-violet-700 border border-violet-200 px-1 py-0.5 rounded"
+            className="ml-1.5 text-[10px] uppercase tracking-wider bg-violet-100 dark:bg-violet-500/15 dark:border-violet-500/30 text-violet-700 dark:text-violet-300 border border-violet-200 px-1 py-0.5 rounded"
             title={`Admin #${audit.via_admin} tarafından sahte oturum`}
           >
             via #{audit.via_admin}
@@ -1137,17 +1137,17 @@ function AuditRow({ audit }: { audit: AuditLogItem }) {
 
 function actionToneClass(action: string): string {
   if (["login_failed", "login_locked", "permission_denied"].includes(action))
-    return "text-rose-700 font-medium";
+    return "text-rose-700 dark:text-rose-300 font-medium";
   if (["login_success", "logout"].includes(action))
-    return "text-emerald-700";
+    return "text-emerald-700 dark:text-emerald-300";
   if (action.startsWith("impersonate"))
-    return "text-violet-700 font-semibold";
+    return "text-violet-700 dark:text-violet-300 font-semibold";
   if (
     action.startsWith("user_") ||
     action.startsWith("institution_") ||
     action === "role_change"
   )
-    return "text-indigo-700";
+    return "text-indigo-700 dark:text-indigo-300";
   return "text-foreground/80";
 }
 

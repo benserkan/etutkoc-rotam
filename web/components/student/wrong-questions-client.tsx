@@ -344,7 +344,7 @@ function WrongCard({
               KAPANDI
             </span>
           ) : item.is_due ? (
-            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
+            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-amber-950">
               YENİDEN ÇÖZ
             </span>
           ) : null}
@@ -688,9 +688,9 @@ function DetailDialog({
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex flex-wrap items-center gap-2 text-base">
             {closed ? (
-              <CheckCircle2 className="size-4 text-emerald-600" aria-hidden />
+              <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
             ) : (
-              <CircleDashed className="size-4 text-amber-600" aria-hidden />
+              <CircleDashed className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
             )}
             {item.topic_name ?? item.section_label ?? "Etiketsiz soru"}
             <span className="text-xs font-normal text-muted-foreground">
@@ -786,7 +786,7 @@ function DetailDialog({
               <Button
                 size="sm"
                 variant="outline"
-                className="ml-auto h-7 border-amber-400 text-xs text-amber-800 hover:bg-amber-500/10"
+                className="ml-auto h-7 border-amber-400 text-xs text-amber-800 dark:text-amber-200 hover:bg-amber-500/10"
                 disabled={update.isPending}
                 onClick={() =>
                   update.mutate(
@@ -929,7 +929,7 @@ function DetailDialog({
             <Button
               variant="outline"
               size="sm"
-              className="h-7 gap-1 text-xs text-rose-600 hover:bg-rose-500/10 hover:text-rose-700"
+              className="h-7 gap-1 text-xs text-rose-600 dark:text-rose-300 hover:bg-rose-500/10 hover:text-rose-700"
               disabled={del.isPending}
               onClick={() => {
                 if (window.confirm("Bu soru arşivden silinsin mi? Geri alınamaz.")) {
@@ -1085,7 +1085,7 @@ function ResolveDialog({
       <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden p-0">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <RotateCcw className="size-4 text-amber-600" aria-hidden />
+            <RotateCcw className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
             Yeniden çözme · {Math.min(idx + 1, queue.length)}/{queue.length}
           </DialogTitle>
         </DialogHeader>
@@ -1176,7 +1176,7 @@ function ResolveDialog({
             {/* SABİT değerlendirme çubuğu */}
             <div className="shrink-0 border-t border-border bg-card px-5 py-3">
               <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-foreground">
-                <AlertTriangle className="size-3.5 text-amber-600" aria-hidden />
+                <AlertTriangle className="size-3.5 text-amber-600 dark:text-amber-300" aria-hidden />
                 Önce KENDİN çöz, sonra işaretle — sistem sana göre plan yapıyor.
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

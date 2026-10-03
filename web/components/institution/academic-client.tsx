@@ -36,9 +36,9 @@ interface Props {
 }
 
 const PCT_TEXT: Record<string, string> = {
-  emerald: "text-emerald-700",
-  amber: "text-amber-700",
-  rose: "text-rose-700",
+  emerald: "text-emerald-700 dark:text-emerald-300",
+  amber: "text-amber-700 dark:text-amber-300",
+  rose: "text-rose-700 dark:text-rose-300",
   slate: "text-muted-foreground",
 };
 
@@ -71,7 +71,7 @@ export function AcademicClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <LineChartIcon className="size-6 text-indigo-700" aria-hidden />
+          <LineChartIcon className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Akademik Çıktı
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -346,7 +346,7 @@ function DeltaValue({ delta }: { delta: number | null }) {
     <div
       className={cn(
         "mt-1 inline-flex items-center gap-1 text-2xl font-bold tabular-nums",
-        up ? "text-emerald-700" : "text-rose-700",
+        up ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300",
       )}
     >
       {up ? <TrendingUp className="size-5" aria-hidden /> : <TrendingDown className="size-5" aria-hidden />}
@@ -367,7 +367,7 @@ function MoverCard({
   rows: AcademicMoverRow[];
   emptyText: string;
 }) {
-  const toneText = tone === "emerald" ? "text-emerald-700" : "text-rose-700";
+  const toneText = tone === "emerald" ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300";
   return (
     <Card className="overflow-hidden">
       <div className="border-b border-border px-4 py-2.5">

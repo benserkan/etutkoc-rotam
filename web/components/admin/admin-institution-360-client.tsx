@@ -62,7 +62,7 @@ export function AdminInstitution360Client({ initial, institutionId }: Props) {
           </Link>
           <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-2xl font-semibold tracking-tight">
             <span className="inline-flex items-center gap-2">
-              <Building2 className="size-6 text-indigo-700" aria-hidden />
+              <Building2 className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
               {ident.name}
             </span>
             <StatusBadge label={ident.is_active ? "Aktif" : "Pasif"} tone={ident.is_active ? "emerald" : "slate"} />
@@ -126,7 +126,7 @@ export function AdminInstitution360Client({ initial, institutionId }: Props) {
               <h2 className="text-sm font-semibold">Açık Riskler ({d.risks.length})</h2>
             </div>
             {d.risks.length === 0 ? (
-              <div className="px-4 py-10 text-center text-sm text-emerald-700">Açık risk yok — temiz.</div>
+              <div className="px-4 py-10 text-center text-sm text-emerald-700 dark:text-emerald-300">Açık risk yok — temiz.</div>
             ) : (
               <ul className="divide-y divide-border">
                 {d.risks.map((r, i) => {

@@ -129,7 +129,7 @@ function CohortTooltip({
       {d.atRiskPct != null && d.atRiskPct > 0 && (
         <div className="flex justify-between gap-3 mt-1 pt-1 border-t border-border">
           <span className="text-muted-foreground">Risk altında</span>
-          <span className="text-rose-700 font-medium tabular-nums">
+          <span className="text-rose-700 dark:text-rose-300 font-medium tabular-nums">
             %{d.atRiskPct}
           </span>
         </div>

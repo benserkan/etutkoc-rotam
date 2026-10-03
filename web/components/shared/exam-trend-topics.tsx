@@ -48,7 +48,7 @@ function fmtDate(iso: string): string {
 }
 
 const LEVEL: Record<AnalysisTrendTopic["evidence_level"], { label: string; cls: string }> = {
-  zayif: { label: "az veri", cls: "bg-amber-500 text-white" },
+  zayif: { label: "az veri", cls: "bg-amber-500 text-amber-950" },
   orta: { label: "orta güven", cls: "bg-slate-500 text-white" },
   guclu: { label: "güçlü kanıt", cls: "bg-cyan-700 text-white" },
 };
@@ -324,7 +324,7 @@ function EvidenceDialog({
               </span>
             </div>
             {t.evidence_level === "zayif" ? (
-              <p className="rounded-lg bg-amber-500 px-3 py-2 text-xs font-medium text-white">
+              <p className="rounded-lg bg-amber-500 px-3 py-2 text-xs font-medium text-amber-950">
                 Kıyas yalnız {t.first_total + t.last_total} soruya dayanıyor — tek soru sonucu
                 değiştirebilir. Kesin karar için bir deneme daha görmek iyi olur.
               </p>

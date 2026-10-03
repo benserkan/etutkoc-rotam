@@ -36,9 +36,9 @@ interface Props {
 }
 
 const RATE_TEXT: Record<string, string> = {
-  emerald: "text-emerald-700",
-  amber: "text-amber-700",
-  rose: "text-rose-700",
+  emerald: "text-emerald-700 dark:text-emerald-300",
+  amber: "text-amber-700 dark:text-amber-300",
+  rose: "text-rose-700 dark:text-rose-300",
   slate: "text-slate-500",
 };
 const RATE_BAR: Record<string, string> = {
@@ -73,7 +73,7 @@ function weekShort(iso: string): string {
 function RateBar({ rate, color }: { rate: number | null; color: string }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="h-2 w-20 overflow-hidden rounded bg-slate-100">
+      <div className="h-2 w-20 overflow-hidden rounded bg-slate-100 dark:bg-slate-500/15">
         <div className={cn("h-full rounded", rateBar(color))} style={{ width: `${rate ?? 0}%` }} />
       </div>
       <span className={cn("w-9 text-right text-xs font-semibold tabular-nums", rateText(color))}>{pct(rate)}</span>
@@ -97,7 +97,7 @@ export function ComplianceClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <ClipboardList className="size-6 text-indigo-700" aria-hidden />
+          <ClipboardList className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Program Uyumu
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -120,7 +120,7 @@ export function ComplianceClient({ initial }: Props) {
             </span>
             {s.delta != null ? (
               <span className={cn("inline-flex items-center gap-0.5 text-[11px] font-medium",
-                s.delta > 0 ? "text-emerald-600" : s.delta < 0 ? "text-rose-600" : "text-muted-foreground")}>
+                s.delta > 0 ? "text-emerald-600 dark:text-emerald-300" : s.delta < 0 ? "text-rose-600 dark:text-rose-300" : "text-muted-foreground")}>
                 {s.delta > 0 ? <TrendingUp className="size-3" aria-hidden /> : s.delta < 0 ? <TrendingDown className="size-3" aria-hidden /> : null}
                 {s.delta > 0 ? "+" : ""}{s.delta}
               </span>
@@ -148,12 +148,12 @@ export function ComplianceClient({ initial }: Props) {
           <div className="mt-1 text-2xl font-bold tabular-nums">{s.completed.toLocaleString("tr-TR")}<span className="text-base text-muted-foreground"> / {s.planned.toLocaleString("tr-TR")}</span></div>
           <div className="text-[11px] text-muted-foreground">{s.student_count} öğrencinin toplamı (koçluğu süren)</div>
         </Card>
-        <Card className={cn("p-4", s.empty_count > 0 && "border-amber-300 bg-amber-50/40")}>
+        <Card className={cn("p-4", s.empty_count > 0 && "border-amber-300 bg-amber-50/40 dark:bg-amber-500/10")}>
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
             <AlertTriangle className="size-3.5" aria-hidden />{" "}
             <ColumnHint label="Programı yok" hint="Bu takvim haftasında (Pazartesi–Pazar, ileri günler dahil) hiç yayınlanmış görevi olmayan, koçluğu süren öğrenci. 3 günden yeni hesaplar sayılmaz; koçluğu sonlandırılmış öğrenciler hiç sayılmaz." />
           </div>
-          <div className={cn("mt-1 text-3xl font-bold tabular-nums", s.empty_count > 0 ? "text-amber-700" : "text-emerald-700")}>{s.empty_count}</div>
+          <div className={cn("mt-1 text-3xl font-bold tabular-nums", s.empty_count > 0 ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300")}>{s.empty_count}</div>
           <div className="text-[11px] text-muted-foreground">bu hafta hiç görevi olmayan öğrenci</div>
         </Card>
       </section>
@@ -161,7 +161,7 @@ export function ComplianceClient({ initial }: Props) {
       {/* Trend */}
       <Card className="p-4">
         <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold">
-          <TrendingUp className="size-4 text-indigo-600" aria-hidden /> Haftalık tamamlama trendi
+          <TrendingUp className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden /> Haftalık tamamlama trendi
         </h2>
         <div style={{ width: "100%", height: 200 }}>
           <ResponsiveContainer>
@@ -180,7 +180,7 @@ export function ComplianceClient({ initial }: Props) {
       <Card className="overflow-hidden">
         <div className="border-b border-border px-4 py-2.5">
           <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-            <Users className="size-4 text-indigo-600" aria-hidden /> Öğretmen kırılımı
+            <Users className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden /> Öğretmen kırılımı
           </h2>
           <p className="text-xs text-muted-foreground">En düşük tamamlama üstte. Sütun başlığına gelince ne ölçtüğü açılır.</p>
         </div>
@@ -209,7 +209,7 @@ export function ComplianceClient({ initial }: Props) {
                       {t.empty_students > 0 ? (
                         <span className="rounded-full bg-amber-600 px-2 py-0.5 text-[11px] font-medium text-white">{t.empty_students}</span>
                       ) : (
-                        <span className="text-[11px] text-emerald-600">0</span>
+                        <span className="text-[11px] text-emerald-600 dark:text-emerald-300">0</span>
                       )}
                     </td>
                   </tr>
@@ -225,7 +225,7 @@ export function ComplianceClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <AlertTriangle className="size-4 text-rose-600" aria-hidden /> En düşük uyumlu öğrenciler
+              <AlertTriangle className="size-4 text-rose-600 dark:text-rose-300" aria-hidden /> En düşük uyumlu öğrenciler
             </h2>
           </div>
           {d.attention_students.length === 0 ? (
@@ -248,12 +248,12 @@ export function ComplianceClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <ClipboardList className="size-4 text-amber-600" aria-hidden /> Boş program (koç başına)
+              <ClipboardList className="size-4 text-amber-600 dark:text-amber-300" aria-hidden /> Boş program (koç başına)
             </h2>
             <p className="text-xs text-muted-foreground">Bu hafta hiç program girilmemiş öğrenciler.</p>
           </div>
           {d.empty_program.length === 0 ? (
-            <p className="flex items-center justify-center gap-2 p-6 text-center text-sm text-emerald-700">
+            <p className="flex items-center justify-center gap-2 p-6 text-center text-sm text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 className="size-5" aria-hidden /> Tüm öğrencilere program girilmiş.
             </p>
           ) : (
@@ -262,7 +262,7 @@ export function ComplianceClient({ initial }: Props) {
                 <li key={e.teacher_id ?? `none-${i}`} className="px-4 py-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{e.teacher_name}</span>
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">{e.count} öğrenci</span>
+                    <span className="rounded-full bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-200">{e.count} öğrenci</span>
                   </div>
                   <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{e.sample_students.join(", ")}{e.count > e.sample_students.length ? " …" : ""}</div>
                 </li>

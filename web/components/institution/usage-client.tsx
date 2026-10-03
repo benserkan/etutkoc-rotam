@@ -68,11 +68,11 @@ export function UsageClient({ initial }: Props) {
         >
           ← Panel
         </Link>
-        <p className="text-[11px] uppercase tracking-wider text-emerald-700 mt-1 font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mt-1 font-semibold">
           Üyelik
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-0.5 flex items-center gap-2">
-          <Wallet className="size-6 text-emerald-700" aria-hidden />
+          <Wallet className="size-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
           Aylık Kredi Kullanımı
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -144,11 +144,11 @@ export function UsageClient({ initial }: Props) {
 
 function HardBlockBanner() {
   return (
-    <div className="rounded-md border border-rose-300 bg-rose-50 text-rose-900 px-4 py-3 flex items-start gap-3">
+    <div className="rounded-md border border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-900 dark:text-rose-200 px-4 py-3 flex items-start gap-3">
       <ShieldOff className="size-5 shrink-0 mt-0.5" aria-hidden />
       <div className="text-sm">
         <div className="font-semibold">Kullanım geçici olarak durduruldu</div>
-        <p className="mt-1 text-rose-800">
+        <p className="mt-1 text-rose-800 dark:text-rose-200">
           ETÜTKOÇ ekibi tarafından kurumunuzun yapay zeka, e-posta ve WhatsApp
           özellikleri manuel olarak durdurulmuş. Görevlerin oluşturulması ve
           diğer normal işlemler etkilenmez. Açtırmak için{" "}
@@ -173,13 +173,13 @@ function WarnBanner({
   remaining: number;
 }) {
   return (
-    <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-900 px-4 py-3 flex items-start gap-3">
+    <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200 px-4 py-3 flex items-start gap-3">
       <AlertTriangle className="size-5 shrink-0 mt-0.5" aria-hidden />
       <div className="text-sm">
         <div className="font-semibold">
           Aylık kredinin %{pct}&apos;i kullanıldı
         </div>
-        <p className="mt-1 text-amber-800">
+        <p className="mt-1 text-amber-800 dark:text-amber-200">
           Bu ay sonuna kadar <b>{remaining}</b> krediniz kaldı. Yapay zeka
           kullanımı veya WhatsApp mesaj gönderimi yoğunsa hızlı tükenebilir.
         </p>
@@ -199,11 +199,11 @@ function OveruseBanner({
 }) {
   const overflow = Math.max(0, used - allocated);
   return (
-    <div className="rounded-md border border-rose-300 bg-rose-50 text-rose-900 px-4 py-3 flex items-start gap-3">
+    <div className="rounded-md border border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-900 dark:text-rose-200 px-4 py-3 flex items-start gap-3">
       <AlertOctagon className="size-5 shrink-0 mt-0.5" aria-hidden />
       <div className="text-sm">
         <div className="font-semibold">Aylık krediniz tükendi</div>
-        <p className="mt-1 text-rose-800">
+        <p className="mt-1 text-rose-800 dark:text-rose-200">
           Bu ay <b className="tabular-nums">{overflow}</b> kredi aşım yaptınız
           (toplam %{pct}). Sistem çalışmaya devam ediyor — kurum
           üyeliklerinde aşımda otomatik durdurma yok. <b>Bir sonraki ayın
@@ -242,10 +242,10 @@ function MainBalanceCard({
 }) {
   const remainingTone =
     pct >= 100
-      ? "text-rose-700"
+      ? "text-rose-700 dark:text-rose-300"
       : pct >= 80
-        ? "text-amber-700"
-        : "text-emerald-700";
+        ? "text-amber-700 dark:text-amber-300"
+        : "text-emerald-700 dark:text-emerald-300";
   const barTone =
     pct >= 100
       ? "bg-rose-500"
@@ -539,7 +539,7 @@ function PlanInfoBlock({
                 key={kc.label}
                 className="px-2 py-0.5 rounded border border-border bg-muted/40 inline-flex items-center gap-1"
               >
-                <Sparkles className="size-2.5 text-emerald-600" aria-hidden />
+                <Sparkles className="size-2.5 text-emerald-600 dark:text-emerald-300" aria-hidden />
                 {kc.label}: <b className="tabular-nums">{kc.cost} kredi</b>
               </span>
             ))}
@@ -623,9 +623,9 @@ function EventsTable({ events }: { events: UsageEventItem[] }) {
                 const afterTone = after == null
                   ? "text-muted-foreground"
                   : after < 0
-                    ? "text-rose-700"
+                    ? "text-rose-700 dark:text-rose-300"
                     : after === 0
-                      ? "text-amber-700"
+                      ? "text-amber-700 dark:text-amber-300"
                       : "text-foreground";
                 return (
                   <tr key={e.id}>

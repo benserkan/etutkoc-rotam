@@ -116,8 +116,8 @@ function GlobalToggleCard({
           className={cn(
             "font-medium border",
             enabledGlobally
-              ? "bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200"
-              : "bg-rose-100 text-rose-700 border-rose-300 hover:bg-rose-200",
+              ? "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border-emerald-300 hover:bg-emerald-200"
+              : "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 border-rose-300 hover:bg-rose-200",
           )}
         >
           {mut.isPending ? (
@@ -212,7 +212,7 @@ function OverrideRow({ override }: { override: FeatureFlagOverrideItem }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-xs text-rose-600 hover:text-rose-800"
+          className="text-xs text-rose-600 dark:text-rose-300 hover:text-rose-800"
         >
           Kaldır
         </button>
@@ -289,7 +289,7 @@ function AddOverrideForm({
     <Card>
       <CardContent className="p-5">
         <h2 className="text-sm font-medium mb-3 inline-flex items-center gap-1.5">
-          <Plus className="size-4 text-indigo-700" aria-hidden />
+          <Plus className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Bir Kuruma Özel Ayar Ver
         </h2>
         <form

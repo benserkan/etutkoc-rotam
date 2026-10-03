@@ -119,7 +119,7 @@ function Body({
   }
   if (q.error || !q.data) {
     return (
-      <div className="px-5 py-8 text-sm text-rose-600">
+      <div className="px-5 py-8 text-sm text-rose-600 dark:text-rose-300">
         <DialogTitle className="sr-only">Kitap detayı</DialogTitle>
         Kitap detayı yüklenemedi.
       </div>
@@ -164,10 +164,10 @@ function Body({
       </DialogHeader>
 
       <div className="px-5 py-2 border-b border-border bg-muted/30 flex items-center gap-4 text-xs">
-        <span className="text-emerald-700 font-medium tabular-nums">
+        <span className="text-emerald-700 dark:text-emerald-300 font-medium tabular-nums">
           ✓ {slotDone} çözüldü
         </span>
-        <span className="text-amber-700 font-medium tabular-nums">
+        <span className="text-amber-700 dark:text-amber-300 font-medium tabular-nums">
           ⏳ {slotReserved} rezerv
         </span>
         <span className="text-foreground font-medium tabular-nums">
@@ -183,7 +183,7 @@ function Body({
       {hasDrift ? (
         <div className="px-5 py-2 border-b border-amber-200 bg-amber-50 text-[11px] text-amber-900 flex items-start gap-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           <AlertTriangle
-            className="size-3.5 text-amber-700 flex-shrink-0 mt-0.5"
+            className="size-3.5 text-amber-700 dark:text-amber-300 flex-shrink-0 mt-0.5"
             aria-hidden
           />
           <div className="flex-1">
@@ -312,8 +312,8 @@ function SectionGrid({
           ) : null}
         </h3>
         <div className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
-          <span className="text-emerald-700">{comp}</span> /{" "}
-          <span className="text-amber-700">{res}</span> /{" "}
+          <span className="text-emerald-700 dark:text-emerald-300">{comp}</span> /{" "}
+          <span className="text-amber-700 dark:text-amber-300">{res}</span> /{" "}
           <b className="text-foreground">{remaining}</b>
           <span className="text-muted-foreground/60"> · {section.test_count}</span>
         </div>

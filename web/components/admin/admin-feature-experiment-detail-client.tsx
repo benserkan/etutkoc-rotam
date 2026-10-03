@@ -95,11 +95,11 @@ export function AdminFeatureExperimentDetailClient({ initial, experimentId }: Pr
           ) : null}
           {exp.status === "running" ? (
             <>
-              <Button onClick={() => apply("paused")} disabled={mut.isPending} variant="outline" className="border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200">
+              <Button onClick={() => apply("paused")} disabled={mut.isPending} variant="outline" className="border-amber-300 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200">
                 <Pause className="size-4" aria-hidden />
                 Duraklat
               </Button>
-              <Button onClick={() => apply("completed")} disabled={mut.isPending} variant="outline" className="border-indigo-300 bg-indigo-100 text-indigo-800 hover:bg-indigo-200">
+              <Button onClick={() => apply("completed")} disabled={mut.isPending} variant="outline" className="border-indigo-300 bg-indigo-100 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-800 dark:text-indigo-200 hover:bg-indigo-200">
                 <Square className="size-4" aria-hidden />
                 Sonlandır
               </Button>
@@ -208,7 +208,7 @@ function StatRow({ v, poolLabel }: { v: ExperimentVariantStat; poolLabel?: strin
         </div>
         <div className="mt-0.5 text-[11px] text-muted-foreground">{v.strategy_label}</div>
         {poolLabel ? (
-          <div className="mt-1 inline-block rounded bg-cyan-100 px-1.5 py-px text-[10px] font-medium text-cyan-900">
+          <div className="mt-1 inline-block rounded bg-cyan-100 dark:bg-cyan-500/15 px-1.5 py-px text-[10px] font-medium text-cyan-900 dark:text-cyan-200">
             {poolLabel}
           </div>
         ) : null}
@@ -221,7 +221,7 @@ function StatRow({ v, poolLabel }: { v: ExperimentVariantStat; poolLabel?: strin
       <td className="px-3 py-3 text-right align-top font-mono">{v.impression}</td>
       <td className="px-3 py-3 text-right align-top font-mono">{v.view}</td>
       <td className="px-3 py-3 text-right align-top font-mono">
-        <span className="font-semibold text-indigo-700">{v.total_clicks}</span>
+        <span className="font-semibold text-indigo-700 dark:text-indigo-300">{v.total_clicks}</span>
         {v.demo_click > 0 && v.cta_click > 0 ? (
           <div className="text-[10px] text-muted-foreground">
             ▶ {v.demo_click} · 🖱 {v.cta_click}
@@ -239,7 +239,7 @@ function StatRow({ v, poolLabel }: { v: ExperimentVariantStat; poolLabel?: strin
             </div>
             <div className="relative mt-1.5 h-1.5 w-32 rounded-full bg-muted">
               <div
-                className="absolute h-full rounded-full bg-indigo-200"
+                className="absolute h-full rounded-full bg-indigo-200 dark:bg-indigo-500/15"
                 style={{ left: `${loW}%`, width: `${Math.max(0, hiW - loW)}%` }}
               />
               <div
@@ -260,14 +260,14 @@ function StatRow({ v, poolLabel }: { v: ExperimentVariantStat; poolLabel?: strin
             <div
               className={cn(
                 "text-sm font-semibold",
-                liftInt > 0 ? "text-emerald-700" : liftInt < 0 ? "text-rose-700" : "text-foreground",
+                liftInt > 0 ? "text-emerald-700 dark:text-emerald-300" : liftInt < 0 ? "text-rose-700 dark:text-rose-300" : "text-foreground",
               )}
             >
               {liftInt >= 0 ? "+" : ""}
               {liftInt}%
             </div>
             {v.vs_control_significant ? (
-              <div className="mt-0.5 inline-block rounded border border-emerald-200 bg-emerald-100 px-1.5 py-px text-[10px] text-emerald-700">
+              <div className="mt-0.5 inline-block rounded border border-emerald-200 bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 px-1.5 py-px text-[10px] text-emerald-700 dark:text-emerald-300">
                 anlamlı fark ✓
               </div>
             ) : (

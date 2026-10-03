@@ -603,7 +603,7 @@ function StepSections({
         <Card>
           <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm">
-              <Check className="inline size-4 text-emerald-600" aria-hidden />{" "}
+              <Check className="inline size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />{" "}
               <strong>{book.sections.length} ünite</strong> eklendi
               {" · "}
               {book.sections.filter((s) => s.topic_id).length} müfredata eşli
@@ -1045,7 +1045,7 @@ function StepMapping({
                               "w-full rounded-md border border-input bg-background px-2 py-1 text-sm",
                               suggested &&
                                 valueFor(r) === r.suggested_topic_id &&
-                                "border-amber-400 bg-amber-50 text-amber-900",
+                                "border-amber-400 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200",
                             )}
                           >
                             <option value="">— eşleşmemiş —</option>

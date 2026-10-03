@@ -31,14 +31,14 @@ import type {
 } from "@/lib/types/testimonial";
 
 const KIND_TONE: Record<string, string> = {
-  review: "bg-sky-100 text-sky-800 border-sky-200",
-  institution_ref: "bg-violet-100 text-violet-800 border-violet-200",
-  success_story: "bg-amber-100 text-amber-800 border-amber-200",
+  review: "bg-sky-100 dark:bg-sky-500/15 dark:border-sky-500/30 text-sky-800 dark:text-sky-200 border-sky-200",
+  institution_ref: "bg-violet-100 dark:bg-violet-500/15 dark:border-violet-500/30 text-violet-800 dark:text-violet-200 border-violet-200",
+  success_story: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-200",
 };
 const STATUS_TONE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 border-amber-200",
-  published: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  hidden: "bg-slate-100 text-slate-600 border-slate-200",
+  pending: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-200",
+  published: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-200",
+  hidden: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border-slate-200",
 };
 
 function Pill({ children, tone }: { children: React.ReactNode; tone: string }) {
@@ -90,7 +90,7 @@ export function TestimonialsClient({ initial }: { initial: TestimonialAdminListR
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300">
               <Star className="size-5" aria-hidden />
             </span>
             <div>
@@ -109,9 +109,9 @@ export function TestimonialsClient({ initial }: { initial: TestimonialAdminListR
 
         {/* Sayım kartları */}
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <CountCard label="Bekleyen" value={counts.pending ?? 0} tone="text-amber-700" />
-          <CountCard label="Yayında" value={counts.published ?? 0} tone="text-emerald-700" />
-          <CountCard label="Gizli" value={counts.hidden ?? 0} tone="text-slate-600" />
+          <CountCard label="Bekleyen" value={counts.pending ?? 0} tone="text-amber-700 dark:text-amber-300" />
+          <CountCard label="Yayında" value={counts.published ?? 0} tone="text-emerald-700 dark:text-emerald-300" />
+          <CountCard label="Gizli" value={counts.hidden ?? 0} tone="text-slate-600 dark:text-slate-300" />
           <CountCard label="Toplam" value={counts.total ?? 0} tone="text-foreground" />
         </div>
       </div>
@@ -144,13 +144,13 @@ export function TestimonialsClient({ initial }: { initial: TestimonialAdminListR
           data.items.map((t) => (
             <article key={t.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <Pill tone={KIND_TONE[t.kind] ?? "bg-slate-100 text-slate-700 border-slate-200"}>
+                <Pill tone={KIND_TONE[t.kind] ?? "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-700 dark:text-slate-300 border-slate-200"}>
                   {t.kind_label}
                 </Pill>
-                <Pill tone={STATUS_TONE[t.status] ?? "bg-slate-100 text-slate-700 border-slate-200"}>
+                <Pill tone={STATUS_TONE[t.status] ?? "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-700 dark:text-slate-300 border-slate-200"}>
                   {t.status_label}
                 </Pill>
-                {t.featured ? <Pill tone="bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200">Öne çıkan</Pill> : null}
+                {t.featured ? <Pill tone="bg-fuchsia-100 dark:bg-fuchsia-500/15 dark:border-fuchsia-500/30 text-fuchsia-800 dark:text-fuchsia-200 border-fuchsia-200">Öne çıkan</Pill> : null}
                 <span className="text-xs text-muted-foreground">· {t.source_label}</span>
                 <Stars n={t.rating} />
               </div>
@@ -165,7 +165,7 @@ export function TestimonialsClient({ initial }: { initial: TestimonialAdminListR
                 {t.author_role_label ? <span>· {t.author_role_label}</span> : null}
                 {t.author_title ? <span>· {t.author_title}</span> : null}
                 {t.institution_name ? <span>· {t.institution_name}</span> : null}
-                {!t.consent_public ? <span className="text-rose-600">· ad yayın onayı yok</span> : null}
+                {!t.consent_public ? <span className="text-rose-600 dark:text-rose-300">· ad yayın onayı yok</span> : null}
               </div>
 
               {/* Aksiyonlar */}
@@ -188,7 +188,7 @@ export function TestimonialsClient({ initial }: { initial: TestimonialAdminListR
                 <Button size="sm" variant="ghost" onClick={() => setEditing(t)}>
                   <Pencil className="size-4" aria-hidden /> Düzenle
                 </Button>
-                <Button size="sm" variant="ghost" className="text-rose-600 hover:text-rose-700" onClick={() => setDeleting(t)}>
+                <Button size="sm" variant="ghost" className="text-rose-600 dark:text-rose-300 hover:text-rose-700" onClick={() => setDeleting(t)}>
                   <Trash2 className="size-4" aria-hidden /> Sil
                 </Button>
               </div>

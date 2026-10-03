@@ -28,15 +28,15 @@ export function WeekPrintSheet({ data }: Props) {
       {/* Araç çubuğu — yazdırmada gizli */}
       <div className="no-print sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between gap-3 flex-wrap">
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600 dark:text-slate-300">
             <b>Yatay A4 · Tek sayfa</b> — uzun başlıklar tek satırda kesilir (…). Yazdırırken{" "}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-xs">Ctrl+P</kbd>{" "}
+            <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 border border-slate-300 rounded text-xs">Ctrl+P</kbd>{" "}
             · <b>Düzen: Yatay</b> · <b>Kenar boşluğu: Minimum</b>
           </div>
           <div className="flex gap-2">
             <Link
               href={`/student/week?start=${data.start_date}`}
-              className="text-sm px-3 py-1.5 border border-slate-300 rounded text-slate-700 hover:bg-slate-50"
+              className="text-sm px-3 py-1.5 border border-slate-300 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-50"
             >
               ← Geri
             </Link>
@@ -63,8 +63,8 @@ export function WeekPrintSheet({ data }: Props) {
             </div>
           </div>
           <div className="text-center leading-tight">
-            <div className="text-sm font-semibold text-slate-900">{data.student_name}</div>
-            <div className="text-[10px] text-slate-600">
+            <div className="text-sm font-semibold text-slate-900 dark:text-slate-200">{data.student_name}</div>
+            <div className="text-[10px] text-slate-600 dark:text-slate-300">
               {data.grade_level ? `${data.grade_level}. Sınıf` : null}
               {data.academic_year_name ? (
                 <>
@@ -81,7 +81,7 @@ export function WeekPrintSheet({ data }: Props) {
             </div>
           </div>
           <div className="text-right leading-tight">
-            <div className="text-sm font-semibold text-slate-900">
+            <div className="text-sm font-semibold text-slate-900 dark:text-slate-200">
               {data.start_day} {data.start_month_label} – {data.end_day} {data.end_month_label} {data.end_year}
             </div>
             <div className="text-[10px] text-slate-500">{data.start_dow_label} başlangıçlı</div>
@@ -179,7 +179,7 @@ function TaskRow({ task }: { task: WeekPrintTask }) {
 
 function NotesCard({ notes }: { notes: string[] }) {
   return (
-    <div className="day-card rounded-md border border-slate-300 bg-slate-50">
+    <div className="day-card rounded-md border border-slate-300 bg-slate-50 dark:bg-slate-500/15 dark:border-slate-500/30">
       <div className="day-head text-white font-semibold" style={{ background: "#475569" }}>
         <div className="day-head-row">
           <span>Notlar & İmza</span>
@@ -188,12 +188,12 @@ function NotesCard({ notes }: { notes: string[] }) {
           ) : null}
         </div>
       </div>
-      <div className="day-body flex flex-col justify-between text-slate-700">
+      <div className="day-body flex flex-col justify-between text-slate-700 dark:text-slate-300">
         <div className="min-h-0 flex-1 overflow-hidden">
           {notes.length > 0 ? (
             notes.map((n, idx) => (
               <div key={idx} className="flex items-start gap-1 text-[10px] leading-snug mb-0.5">
-                <span className="flex-shrink-0 text-amber-700 font-bold">•</span>
+                <span className="flex-shrink-0 text-amber-700 dark:text-amber-300 font-bold">•</span>
                 <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{n}</span>
               </div>
             ))

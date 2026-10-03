@@ -1157,7 +1157,7 @@ function AssignRow({ book: b, checked, onToggle }: { book: TeacherBookListItem; 
             <SourceBadge kind={b.source_kind} />
             <TypeBadge label={b.type_label} />
             {b.fits_student === false ? (
-              <span className="inline-flex rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+              <span className="inline-flex rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-amber-950">
                 Başka sınıf için
               </span>
             ) : null}

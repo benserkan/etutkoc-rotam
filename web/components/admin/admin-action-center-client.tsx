@@ -72,7 +72,7 @@ export function AdminActionCenterClient({ initial }: Props) {
       <header>
         <span className="text-sm text-muted-foreground">Ticari Pano</span>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <Target className="size-6 text-indigo-700" aria-hidden />
+          <Target className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Aksiyon Merkezi — Bugün Ne Yapmalıyım?
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -130,7 +130,7 @@ export function AdminActionCenterClient({ initial }: Props) {
           <button
             type="button"
             onClick={() => setFilter(null)}
-            className="text-xs font-medium text-indigo-700 hover:underline"
+            className="text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
           >
             Filtreyi temizle
           </button>
@@ -138,7 +138,7 @@ export function AdminActionCenterClient({ initial }: Props) {
       ) : null}
 
       {data.items.length === 0 ? (
-        <Card className="p-12 text-center text-sm text-emerald-700">
+        <Card className="p-12 text-center text-sm text-emerald-700 dark:text-emerald-300">
           <CheckCircle2 className="mx-auto mb-2 size-8" aria-hidden />
           Tebrikler — bugün için açık aksiyon yok. Tüm kurumlar sağlıklı, ödemeler
           güncel, deneme alarmı yok.
@@ -149,7 +149,7 @@ export function AdminActionCenterClient({ initial }: Props) {
           <button
             type="button"
             onClick={() => setFilter(null)}
-            className="ml-1 font-medium text-indigo-700 hover:underline"
+            className="ml-1 font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
           >
             Tümünü göster
           </button>
@@ -216,14 +216,14 @@ function ActionRow({ it }: { it: ActionCenterItem }) {
               </Link>
               <span className={cn(
                 "rounded px-1.5 py-0.5 text-[10px] font-medium",
-                ownerType === "user" ? "bg-cyan-100 text-cyan-800" : "bg-violet-100 text-violet-800",
+                ownerType === "user" ? "bg-cyan-100 dark:bg-cyan-500/15 text-cyan-800 dark:text-cyan-200" : "bg-violet-100 dark:bg-violet-500/15 text-violet-800 dark:text-violet-200",
               )}>
                 {ownerType === "user" ? "Bağımsız koç" : "Kurum"}
               </span>
               <SeverityBadge severity={it.severity} />
               <span className="text-[11px] text-muted-foreground">{it.plan_label}</span>
               {it.monthly_price_try > 0 ? (
-                <span className="text-[11px] font-semibold text-emerald-700">
+                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                   {tl(it.monthly_price_try)}/ay
                 </span>
               ) : null}
@@ -294,7 +294,7 @@ function ActionRow({ it }: { it: ActionCenterItem }) {
             {it.last_action_summary ? ` — "${it.last_action_summary.slice(0, 80)}"` : ""}
           </div>
         ) : (
-          <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-700">
+          <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300">
             <TriangleAlert className="size-3.5" aria-hidden />
             Bu kuruma daha önce hiç temas edilmemiş.
           </div>

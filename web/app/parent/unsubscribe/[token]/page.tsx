@@ -61,7 +61,7 @@ function UnsubscribeView({
               <>
                 <div className="flex justify-center">
                   <div
-                    className="rounded-full p-4 bg-muted text-[#117A86]"
+                    className="rounded-full p-4 bg-muted text-[#117A86] dark:text-teal-300"
                     aria-hidden
                   >
                     <BellOff className="size-10" />
@@ -89,7 +89,7 @@ function UnsubscribeView({
               <>
                 <div className="flex justify-center">
                   <div
-                    className="rounded-full p-4 bg-muted text-emerald-600"
+                    className="rounded-full p-4 bg-muted text-emerald-600 dark:text-emerald-300"
                     aria-hidden
                   >
                     <CheckCircle2 className="size-10" />

@@ -70,20 +70,20 @@ export function UpgradeMomentDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <TrendingUp className="size-5 text-cyan-700" aria-hidden />
+            <TrendingUp className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden />
             {p.current_plan_label} doldu ({p.current}/{p.limit}) — büyüyorsun!
           </DialogTitle>
         </DialogHeader>
 
         <div className="rounded-xl border-2 border-cyan-600 bg-gradient-to-b from-cyan-50/80 to-white px-4 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
             {p.current + 1}. öğrencin için sana uygun paket
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-3">
-            <span className="font-display text-2xl font-extrabold text-slate-900">
+            <span className="font-display text-2xl font-extrabold text-slate-900 dark:text-slate-200">
               {p.recommended_label}
             </span>
-            <span className="text-lg font-bold text-slate-900">
+            <span className="text-lg font-bold text-slate-900 dark:text-slate-200">
               {p.recommended_monthly.toLocaleString("tr-TR")} ₺/ay
             </span>
           </div>
@@ -96,7 +96,7 @@ export function UpgradeMomentDialog({
             "Yükseltince pasif öğrencilerin otomatik yeniden aktifleşir",
           ].map((r) => (
             <li key={r} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+              <Check className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
               {r}
             </li>
           ))}

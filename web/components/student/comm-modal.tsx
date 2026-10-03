@@ -188,7 +188,7 @@ function ReplaceForm({
         </DialogHeader>
         <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           <AlertTriangle
-            className="size-5 flex-shrink-0 text-amber-600 mt-0.5"
+            className="size-5 flex-shrink-0 text-amber-600 dark:text-amber-300 mt-0.5"
             aria-hidden
           />
           <div>

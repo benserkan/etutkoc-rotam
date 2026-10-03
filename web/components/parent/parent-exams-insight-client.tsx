@@ -105,7 +105,7 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
         </Link>
         <Link
           href={`/parent/support?child=${studentId}&category=exam_comment`}
-          className="inline-flex items-center gap-1.5 self-center rounded-lg border border-[#117A86]/40 px-3 py-2 text-xs font-semibold text-[#117A86] hover:bg-[#117A86]/5 dark:text-cyan-300"
+          className="inline-flex items-center gap-1.5 self-center rounded-lg border border-[#117A86]/40 px-3 py-2 text-xs font-semibold text-[#117A86] dark:text-teal-300 hover:bg-[#117A86]/5 dark:text-cyan-300"
         >
           <MessageSquarePlus className="size-3.5" aria-hidden /> Koça deneme hakkında sor
         </Link>

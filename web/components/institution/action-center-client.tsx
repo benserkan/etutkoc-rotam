@@ -24,14 +24,14 @@ interface Props {
 }
 
 const SEV_CARD: Record<string, string> = {
-  critical: "border-l-rose-500 bg-rose-50/40",
-  warn: "border-l-amber-500 bg-amber-50/40",
-  info: "border-l-sky-500 bg-sky-50/40",
+  critical: "border-l-rose-500 bg-rose-50/40 dark:bg-rose-500/10",
+  warn: "border-l-amber-500 bg-amber-50/40 dark:bg-amber-500/10",
+  info: "border-l-sky-500 bg-sky-50/40 dark:bg-sky-500/10",
 };
 const SEV_ICON_COLOR: Record<string, string> = {
-  critical: "text-rose-600",
-  warn: "text-amber-600",
-  info: "text-sky-600",
+  critical: "text-rose-600 dark:text-rose-300",
+  warn: "text-amber-600 dark:text-amber-300",
+  info: "text-sky-600 dark:text-sky-300",
 };
 const CAT_ICON: Record<string, LucideIcon> = {
   empty_program: ClipboardX,
@@ -72,7 +72,7 @@ export function ActionCenterClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <AlertTriangle className="size-6 text-rose-600" aria-hidden />
+          <AlertTriangle className="size-6 text-rose-600 dark:text-rose-300" aria-hidden />
           Müdahale Merkezi
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -85,14 +85,14 @@ export function ActionCenterClient({ initial }: Props) {
 
       {/* Özet */}
       <section className="grid grid-cols-3 gap-3">
-        <Card className={cn("p-4", s.critical > 0 && "border-rose-300 bg-rose-50/40")}>
+        <Card className={cn("p-4", s.critical > 0 && "border-rose-300 bg-rose-50/40 dark:bg-rose-500/10")}>
           <div className="text-[11px] font-semibold uppercase text-rose-700 dark:text-rose-300">
             <ColumnHint label="Kritik" hint="Hemen ilgilenilmesi gereken kart sayısı (öğrenci sayısı değil; bir kart bir koçun birden çok öğrencisini kapsayabilir)." />
           </div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.critical}</div>
           <div className="text-[11px] text-muted-foreground mt-0.5">acil ilgi gereken durum</div>
         </Card>
-        <Card className={cn("p-4", s.warn > 0 && "border-amber-300 bg-amber-50/40")}>
+        <Card className={cn("p-4", s.warn > 0 && "border-amber-300 bg-amber-50/40 dark:bg-amber-500/10")}>
           <div className="text-[11px] font-semibold uppercase text-amber-700 dark:text-amber-300">
             <ColumnHint label="Uyarı" hint="Yakından takip edilmesi gereken kart sayısı; acil değil ama büyümeden konuşulmalı." />
           </div>
@@ -111,7 +111,7 @@ export function ActionCenterClient({ initial }: Props) {
       {/* Kartlar */}
       {d.items.length === 0 ? (
         <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-6 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
-          <CheckCircle2 className="size-6 shrink-0 text-emerald-600" aria-hidden />
+          <CheckCircle2 className="size-6 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
           Şu an acil müdahale gerektiren bir durum yok. Tüm sınıflar yolunda görünüyor.
         </Card>
       ) : (

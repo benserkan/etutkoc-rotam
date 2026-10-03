@@ -95,7 +95,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
         <div>
           <span className="text-sm text-muted-foreground">Güvenlik Kamarası</span>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <CircleDollarSign className="size-6 text-emerald-700" aria-hidden />
+            <CircleDollarSign className="size-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
             Ticari Pano
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -128,7 +128,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                 <button key={s.value} type="button" onClick={() => setSegment(s.value)}
                         className={cn(
                           "rounded-md px-3 py-1.5 font-medium transition",
-                          segment === s.value ? "bg-card text-indigo-700 shadow-sm" : "text-muted-foreground hover:text-foreground",
+                          segment === s.value ? "bg-card text-indigo-700 dark:text-indigo-300 shadow-sm" : "text-muted-foreground hover:text-foreground",
                         )}>
                   {s.label}
                   <span className="ml-0.5 text-[10px] opacity-60">({d.segment_counts[s.value] ?? 0})</span>
@@ -148,9 +148,9 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
           {d.trial_combined.length > 0 ? (
             <div className="mt-4 border-t border-border pt-4">
               <div className="mb-2.5 flex items-center gap-2 text-sm font-semibold">
-                <Clock className="size-4 text-amber-600" aria-hidden />
+                <Clock className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
                 7 gün içinde denemesi bitenler
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+                <span className="rounded-full bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-xs font-bold text-amber-800 dark:text-amber-200">
                   {d.trial_combined.length}
                 </span>
                 <span className="text-xs font-normal text-muted-foreground">— dönüşüm fırsatı</span>
@@ -173,7 +173,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                       {dl != null ? (
                         <span className={cn(
                           "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold",
-                          dl <= 1 ? "bg-rose-200 text-rose-900" : dl <= 3 ? "bg-amber-200 text-amber-900" : "bg-white text-amber-800",
+                          dl <= 1 ? "bg-rose-200 dark:bg-rose-500/15 text-rose-900 dark:text-rose-200" : dl <= 3 ? "bg-amber-200 dark:bg-amber-500/15 text-amber-900 dark:text-amber-200" : "bg-white text-amber-800",
                         )}>
                           {dl} gün
                         </span>
@@ -275,7 +275,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
       {segment !== "all" ? (
         <p className="-mt-2 text-[11px] text-muted-foreground">
           <strong>Not:</strong> Terk Riski yalnız kurumlar için hesaplanır (sağlık endeksi tenant-bazlı).
-          Koç riski için <Link href="/admin/revenue/action-center" className="text-indigo-600 underline">Aksiyon Merkezi</Link>&apos;ne bakın.
+          Koç riski için <Link href="/admin/revenue/action-center" className="text-indigo-600 dark:text-indigo-300 underline">Aksiyon Merkezi</Link>&apos;ne bakın.
         </p>
       ) : null}
 
@@ -288,7 +288,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
           </span>
         </div>
         <div className="mb-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200">
-          <strong className="text-slate-900">Ne demek?</strong>{" "}
+          <strong className="text-slate-900 dark:text-slate-200">Ne demek?</strong>{" "}
           <span><strong>Yeni kayıt</strong>: ilk kez sisteme dahil oldu.</span>{" · "}
           <span><strong>Yükselen</strong>: ücretsizden ücretliye veya daha üst pakete geçti.</span>{" · "}
           <span><strong>Düşüren</strong>: pakedi küçülttü.</span>{" · "}
@@ -343,17 +343,17 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                     </td>
                     {segment === "all" ? (
                       <>
-                        <td className="px-3 py-2 text-right font-semibold text-indigo-700">{p.count} →</td>
-                        <td className="px-3 py-2 text-right text-blue-700">{p.institution_count}</td>
-                        <td className="px-3 py-2 text-right text-violet-700">{p.user_count}</td>
+                        <td className="px-3 py-2 text-right font-semibold text-indigo-700 dark:text-indigo-300">{p.count} →</td>
+                        <td className="px-3 py-2 text-right text-blue-700 dark:text-blue-300">{p.institution_count}</td>
+                        <td className="px-3 py-2 text-right text-violet-700 dark:text-violet-300">{p.user_count}</td>
                       </>
                     ) : (
-                      <td className="px-3 py-2 text-right font-semibold text-indigo-700">
+                      <td className="px-3 py-2 text-right font-semibold text-indigo-700 dark:text-indigo-300">
                         {segment === "institution" ? p.institution_count : p.user_count} →
                       </td>
                     )}
                     <td className="px-3 py-2 text-right text-muted-foreground">{p.monthly_price_try > 0 ? `${p.monthly_price_try} ₺` : "—"}</td>
-                    <td className={cn("px-3 py-2 text-right", p.estimated_mrr > 0 ? "font-semibold text-emerald-700" : "text-muted-foreground")}>
+                    <td className={cn("px-3 py-2 text-right", p.estimated_mrr > 0 ? "font-semibold text-emerald-700 dark:text-emerald-300" : "text-muted-foreground")}>
                       {p.estimated_mrr > 0 ? tl(p.estimated_mrr) : "—"}
                     </td>
                   </tr>
@@ -376,7 +376,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
               <div className="inline-flex items-center gap-2 text-sm">
                 <ListChecks className="size-4" aria-hidden />
                 <span className="font-semibold">{drill.title}</span>
-                <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">{drill.count} kayıt</span>
+                <span className="rounded bg-indigo-100 dark:bg-indigo-500/15 px-2 py-0.5 text-xs font-medium text-indigo-800 dark:text-indigo-200">{drill.count} kayıt</span>
               </div>
               <button type="button" onClick={() => setDrill(null)} className="text-muted-foreground hover:text-foreground" aria-label="Kapat">
                 <X className="size-4" aria-hidden />
@@ -408,8 +408,8 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                                 className={cn(
                                   "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium",
                                   isUser
-                                    ? "bg-violet-100 text-violet-800"
-                                    : "bg-blue-100 text-blue-800",
+                                    ? "bg-violet-100 dark:bg-violet-500/15 text-violet-800 dark:text-violet-200"
+                                    : "bg-blue-100 dark:bg-blue-500/15 text-blue-800 dark:text-blue-200",
                                 )}
                                 title={isUser ? "Bağımsız koç" : "Kurum"}
                               >
@@ -427,7 +427,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                               <div className="space-y-0.5">
                                 <div className="flex items-center gap-1">
                                   <span className="text-muted-foreground">{r.from_plan_label ?? "—"}</span>
-                                  <span className="text-indigo-600">→</span>
+                                  <span className="text-indigo-600 dark:text-indigo-300">→</span>
                                   <span className="font-medium text-foreground">{r.to_plan_label ?? "—"}</span>
                                 </div>
                                 <code className="block text-[10px] text-muted-foreground">{r.from_plan ?? "—"} → {r.to_plan ?? "—"}</code>
@@ -441,7 +441,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                           </td>
                           <td className="px-3 py-2 text-right">
                             {r.monthly_price_try && r.monthly_price_try > 0 ? (
-                              <span className="font-semibold text-emerald-700">{tl(r.monthly_price_try)}</span>
+                              <span className="font-semibold text-emerald-700 dark:text-emerald-300">{tl(r.monthly_price_try)}</span>
                             ) : <span className="text-muted-foreground">—</span>}
                           </td>
                           <td className="max-w-xs break-words px-3 py-2 text-muted-foreground">
@@ -463,7 +463,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                           </td>
                           <td className="whitespace-nowrap px-3 py-2 text-right">
                             <Link href={r.detail_url || (isUser ? `/admin/revenue/users/${r.user_id}` : `/admin/revenue/institutions/${r.institution_id}`)}
-                                  className="inline-flex items-center gap-0.5 font-medium text-indigo-600 hover:text-indigo-800">
+                                  className="inline-flex items-center gap-0.5 font-medium text-indigo-600 dark:text-indigo-300 hover:text-indigo-800">
                               360 <ArrowUpRight className="size-3" aria-hidden />
                             </Link>
                           </td>
@@ -530,7 +530,7 @@ function ChangeKpi({ label, value, tone, onClick, tooltip }: { label: string; va
         ) : null}
       </div>
       <div className={cn("mt-0.5 text-xl font-semibold", text)}>{value}</div>
-      {onClick ? <div className="mt-1 text-[10px] text-indigo-600 underline underline-offset-2">→ Listeyi gör</div> : null}
+      {onClick ? <div className="mt-1 text-[10px] text-indigo-600 dark:text-indigo-300 underline underline-offset-2">→ Listeyi gör</div> : null}
     </>
   );
   if (onClick) {

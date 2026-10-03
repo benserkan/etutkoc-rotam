@@ -34,7 +34,7 @@ import type {
 const SOURCE_LABELS: Record<string, { label: string; tone: string }> = {
   db: { label: "Panelden", tone: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200" },
   env: { label: ".env'den", tone: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200" },
-  default: { label: "Varsayılan", tone: "border-slate-200 bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30" },
+  default: { label: "Varsayılan", tone: "border-slate-200 bg-slate-50 text-slate-600 dark:text-slate-300 dark:bg-slate-500/10 dark:border-slate-500/30" },
   none: { label: "Ayarlı değil", tone: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200" },
 };
 
@@ -52,7 +52,7 @@ export function AdminAiSettingsClient({ initial }: { initial: AiSettingsResponse
     <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-xl font-semibold">
-          <Sparkles className="size-5 text-cyan-700" aria-hidden /> AI Ayarları (Gemini)
+          <Sparkles className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden /> AI Ayarları (Gemini)
         </h1>
         <p className="text-sm text-muted-foreground">
           Tek sağlayıcı Gemini. Buraya girilen anahtarları <strong>tüm sistem</strong>{" "}
@@ -276,14 +276,14 @@ function SecretCard({ item, placeholder }: { item: AiSettingItem; placeholder: s
         {item.source === "db" ? (
           confirm ? (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-rose-700">Silinsin mi?</span>
+              <span className="text-rose-700 dark:text-rose-300">Silinsin mi?</span>
               <Button size="sm" variant="ghost" onClick={() => setConfirm(false)} disabled={delIt.isPending}>Vazgeç</Button>
               <Button size="sm" variant="destructive" onClick={() => delIt.mutate({ name: item.name }, { onSuccess: () => setConfirm(false) })} disabled={delIt.isPending}>
                 {delIt.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Trash2 className="size-4" aria-hidden />} Sil
               </Button>
             </div>
           ) : (
-            <button type="button" onClick={() => setConfirm(true)} className="text-xs text-rose-600 hover:underline">
+            <button type="button" onClick={() => setConfirm(true)} className="text-xs text-rose-600 dark:text-rose-300 hover:underline">
               Anahtarı sil
             </button>
           )

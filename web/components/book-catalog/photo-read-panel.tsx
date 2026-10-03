@@ -130,7 +130,7 @@ export function PhotoReadPanel({
           <>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm">
-                <Check className="inline size-4 text-emerald-600" aria-hidden />{" "}
+                <Check className="inline size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />{" "}
                 <strong>{draft.length} bölüm okundu</strong> — kontrol et, gerekirse
                 düzelt, sonra uygula.
               </p>

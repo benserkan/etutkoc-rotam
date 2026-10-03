@@ -334,9 +334,9 @@ function ResultDialog({
                 {r.gates.map((g) => (
                   <li key={g.code} className="flex items-start gap-2 text-sm">
                     {g.ok ? (
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
                     ) : (
-                      <XCircle className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
+                      <XCircle className="mt-0.5 size-4 shrink-0 text-rose-600 dark:text-rose-300" aria-hidden />
                     )}
                     <span className="min-w-0 break-words">
                       <strong>{g.label}</strong> — {g.detail}

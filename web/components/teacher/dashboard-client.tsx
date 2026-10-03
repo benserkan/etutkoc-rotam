@@ -437,7 +437,7 @@ function WarningsFeedSection() {
         {q.isLoading ? (
           <p className="text-sm text-muted-foreground">Yükleniyor…</p>
         ) : q.error || !q.data ? (
-          <p className="text-sm text-rose-600">Uyarı akışı yüklenemedi.</p>
+          <p className="text-sm text-rose-600 dark:text-rose-300">Uyarı akışı yüklenemedi.</p>
         ) : groups.length === 0 ? (
           <p className="inline-flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="size-4" aria-hidden />

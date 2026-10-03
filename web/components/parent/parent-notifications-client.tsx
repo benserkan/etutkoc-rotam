@@ -51,7 +51,7 @@ const STATUS_META: Record<
     label: "Başarısız",
   },
   suppressed: {
-    tone: "bg-slate-100 text-slate-600 border-slate-200",
+    tone: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border-slate-200",
     label: "Engellendi",
   },
 };
@@ -75,7 +75,7 @@ export function ParentNotificationsClient({ initial }: Props) {
     <div className="space-y-5">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight font-display inline-flex items-center gap-2">
-          <Bell className="size-6 text-[#117A86]" aria-hidden />
+          <Bell className="size-6 text-[#117A86] dark:text-teal-300" aria-hidden />
           Bildirim Geçmişi
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -101,7 +101,7 @@ export function ParentNotificationsClient({ initial }: Props) {
 function NotificationRow({ item }: { item: ParentNotificationItem }) {
   const statusMeta =
     STATUS_META[item.status] ?? {
-      tone: "bg-slate-100 text-slate-600 border-slate-200",
+      tone: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border-slate-200",
       label: item.status || "—",
     };
   const kindLabel = KIND_LABELS[item.kind] ?? item.kind;

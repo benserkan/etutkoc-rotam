@@ -53,7 +53,7 @@ export function ArchiveExamWrongsButton({
           title="Yanlışlardan seçtiklerini Soru Arşivine ekle (tekrar kuyruğuna girer)"
           className={className}
         >
-          <BookX className="size-4 text-rose-600" aria-hidden />
+          <BookX className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
         </Button>
       ) : (
         <Button
@@ -165,7 +165,7 @@ function ArchiveWrongsDialog({
       <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col overflow-hidden p-0">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <BookX className="size-4 text-rose-600" aria-hidden />
+            <BookX className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
             Yanlışlardan arşive soru seç
           </DialogTitle>
         </DialogHeader>

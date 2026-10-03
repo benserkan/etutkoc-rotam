@@ -1,0 +1,113 @@
+{
+ "name": "Apotemi TYT Matematik Fonksiyonlar Fasikülü",
+ "publisher": "Apotemi Yayınları",
+ "subject": "TYT Matematik",
+ "type": "konu_anlatimli",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Fonksiyonlar 1 · Fonksiyon Tanımı",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 1 · Grafik Yardımıyla Tanım ve Görüntü Kümesini Bulma",
+   "test_count": 3,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 1 · Fonksiyonlarda İşlemler",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 1 · Fonksiyon Çeşitleri",
+   "test_count": 5,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 1 · Bir Fonksiyonun Tersi",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 1 · Fonksiyonlarda Bileşke",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 1 · Fonksiyon Grafikleri",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 1 · Adım Güçlendirme Testleri",
+   "test_count": 5,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Bir Fonksiyonun En Geniş Tanım Kümesi",
+   "test_count": 4,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Tek ve Çift Fonksiyonlar",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Artan ve Azalan Fonksiyonlar",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Fonksiyonun Ortalama Değişim Oranı",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Parçalı Fonksiyon",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Mutlak Değer Fonksiyonu",
+   "test_count": 2,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Parçalı Fonksiyonların Grafikleri",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Mutlak Değer Fonksiyon Grafikleri",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Grafiklerde Simetri ve Öteleme",
+   "test_count": 1,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonlar 2 · Adım Güçlendirme Testleri",
+   "test_count": 6,
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "Maraton Testleri",
+   "test_count": 9,
+   "topic": "Fonksiyonlar"
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (metin katmanı yok); Gemini kullanılmadı. Renkli test bantları (mor 'ADIM PEKİŞTİRME TESTİ', yeşil 'ADIM GÜÇLENDİRME TESTİ-N', 'MARATON TESTİ - N') renk taramasıyla 131 içerik sayfasında tespit edilip gözle okundu.",
+  "Ders: kapakta TYT/AYT yazmıyor; 'Yeni Müfredat Hakkında' sayfası konuyu 9. ve 10. sınıf (62 saat) olarak tanımlıyor ve içerik (tanım/görüntü, ters, bileşke, tek-çift, artan-azalan, ortalama değişim oranı, parçalı/mutlak değer grafikleri) TYT kapsamında → TYT Matematik. Önsözde YGS-LYS geçiyor (eski baskı).",
+  "Ofset: pdf indeksi = basılı sayfa − 1 (Maraton Testleri 127 ↔ pdf 126 'Maraton Testi - 1').",
+  "Pekiştirme testleri numarasız, ~1 sayfa; her bant 1 test. Güçlendirme zincirleri boşluksuz F1 1-5, F2 1-6; Maraton 1-9 (1'er sayfa). 'ÇÖZÜMLÜ' testlerin 'ÇÖZÜMLER' sayfaları ayrı sayılmadı. Bazı güçlendirme bantları aynı sayfada iki kez algılandı (bant tekrarı) — numaraya göre tekilleştirildi.",
+  "Toplam 46 test: pekiştirme 26 + güçlendirme 11 + maraton 9."
+ ]
+}

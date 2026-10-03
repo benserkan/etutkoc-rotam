@@ -52,7 +52,7 @@ export function VerifyEmailClient({ token }: Props) {
   if (state === "success") {
     return (
       <div className="space-y-4 text-center">
-        <CheckCircle2 className="mx-auto size-10 text-emerald-600" aria-hidden />
+        <CheckCircle2 className="mx-auto size-10 text-emerald-600 dark:text-emerald-300" aria-hidden />
         <p className="text-sm text-muted-foreground">{message}</p>
         <Button asChild className="w-full">
           <Link href="/login">Girişe dön</Link>
@@ -63,7 +63,7 @@ export function VerifyEmailClient({ token }: Props) {
 
   return (
     <div className="space-y-4 text-center">
-      <XCircle className="mx-auto size-10 text-rose-600" aria-hidden />
+      <XCircle className="mx-auto size-10 text-rose-600 dark:text-rose-300" aria-hidden />
       <p className="text-sm text-muted-foreground">{message}</p>
       <Button asChild variant="outline" className="w-full">
         <Link href="/login">Girişe dön</Link>

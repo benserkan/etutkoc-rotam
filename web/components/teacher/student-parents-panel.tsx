@@ -158,7 +158,7 @@ function ParentLinkRow({
         onClick={() => setWaOpen(true)}
         aria-label="WhatsApp gönder"
         title="Veliye WhatsApp mesajı gönder"
-        className="text-emerald-700"
+        className="text-emerald-700 dark:text-emerald-300"
       >
         <MessageSquare className="size-4" aria-hidden />
       </Button>

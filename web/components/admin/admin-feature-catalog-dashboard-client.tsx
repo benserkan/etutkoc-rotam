@@ -41,7 +41,7 @@ export function AdminFeatureCatalogDashboardClient({ initial }: Props) {
             ← Panel
           </Link>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Telescope className="size-6 text-indigo-700" aria-hidden />
+            <Telescope className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
             Vitrin Yönetim Paneli
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -160,7 +160,7 @@ export function AdminFeatureCatalogDashboardClient({ initial }: Props) {
                 </div>
                 <Link
                   href={`/admin/feature-catalog/experiments/${data.experiment.id}`}
-                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                  className="text-xs font-medium text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
                 >
                   Detay →
                 </Link>
@@ -183,14 +183,14 @@ export function AdminFeatureCatalogDashboardClient({ initial }: Props) {
                       {v.total_clicks} / {v.impression} tıklama
                     </div>
                     {v.vs_control_significant ? (
-                      <div className="mt-1 text-[10px] font-medium text-emerald-700">
+                      <div className="mt-1 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
                         ✓ anlamlı fark
                       </div>
                     ) : v.lift_pct != null ? (
                       <div
                         className={cn(
                           "mt-1 text-[10px]",
-                          v.lift_pct > 0 ? "text-emerald-600" : v.lift_pct < 0 ? "text-rose-600" : "text-muted-foreground",
+                          v.lift_pct > 0 ? "text-emerald-600 dark:text-emerald-300" : v.lift_pct < 0 ? "text-rose-600 dark:text-rose-300" : "text-muted-foreground",
                         )}
                       >
                         {v.lift_pct >= 0 ? "+" : ""}
@@ -204,7 +204,7 @@ export function AdminFeatureCatalogDashboardClient({ initial }: Props) {
           ) : (
             <Card className="p-5 text-center text-sm text-muted-foreground">
               Şu anda çalışan A/B deney yok.{" "}
-              <Link href="/admin/feature-catalog/experiments/new" className="text-indigo-600 hover:text-indigo-800">
+              <Link href="/admin/feature-catalog/experiments/new" className="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800">
                 Yeni deney oluştur →
               </Link>
             </Card>
@@ -219,7 +219,7 @@ export function AdminFeatureCatalogDashboardClient({ initial }: Props) {
               Otomatik tespit edilen durumlar.
             </p>
             {data.anomalies.length === 0 ? (
-              <div className="py-2 text-sm text-emerald-700">
+              <div className="py-2 text-sm text-emerald-700 dark:text-emerald-300">
                 ✓ Sistem sağlıklı, bilinen sorun yok.
               </div>
             ) : (
@@ -292,8 +292,8 @@ function SummaryCard({
       <div
         className={cn(
           "mt-0.5 text-2xl font-semibold",
-          tone === "emerald" && "text-emerald-700",
-          tone === "amber" && (value > 0 ? "text-amber-700" : "text-muted-foreground"),
+          tone === "emerald" && "text-emerald-700 dark:text-emerald-300",
+          tone === "amber" && (value > 0 ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"),
           tone === "slate" && "text-muted-foreground",
         )}
       >
@@ -328,9 +328,9 @@ function Stat({
       <div
         className={cn(
           "mt-0.5 text-3xl font-semibold",
-          tone === "emerald" && "text-emerald-700",
-          tone === "amber" && "text-amber-700",
-          tone === "rose" && "text-rose-700",
+          tone === "emerald" && "text-emerald-700 dark:text-emerald-300",
+          tone === "amber" && "text-amber-700 dark:text-amber-300",
+          tone === "rose" && "text-rose-700 dark:text-rose-300",
         )}
       >
         {value}
@@ -353,14 +353,14 @@ function MetricBox({
     <div
       className={cn(
         "rounded p-2 text-center",
-        tone === "indigo" ? "bg-indigo-50" : tone === "emerald" ? "bg-emerald-50" : "bg-muted/50",
+        tone === "indigo" ? "bg-indigo-50 dark:bg-indigo-500/15" : tone === "emerald" ? "bg-emerald-50 dark:bg-emerald-500/15" : "bg-muted/50",
       )}
     >
       <div
         className={cn(
           "text-2xl font-semibold",
-          tone === "indigo" && "text-indigo-700",
-          tone === "emerald" && "text-emerald-700",
+          tone === "indigo" && "text-indigo-700 dark:text-indigo-300",
+          tone === "emerald" && "text-emerald-700 dark:text-emerald-300",
         )}
       >
         {value}

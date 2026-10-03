@@ -104,7 +104,7 @@ export function TeachersListClient({ initial, invitations, tab }: Props) {
             Önerilen
           </span>
           <span className="flex items-center gap-2 pr-20 font-semibold">
-            <Mail className="size-4 shrink-0 text-emerald-600" aria-hidden />
+            <Mail className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
             Davet et — öğretmen kendisi kaydolur
           </span>
           <span className="mt-1 block text-xs text-muted-foreground">
@@ -286,7 +286,7 @@ function PauseBadge({ reason }: { reason: string | null }) {
   if (reason && reason.startsWith("auto")) {
     return (
       <span
-        className="ml-1.5 inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300"
+        className="ml-1.5 inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border border-amber-300"
         title="Sistem tarafından sessizlik nedeniyle otomatik pasifleştirildi (uyarılar susturulmuş)"
       >
         🤖 Otomatik pasif

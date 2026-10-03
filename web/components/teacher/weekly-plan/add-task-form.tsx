@@ -1425,9 +1425,9 @@ function ReviewChips({
                 : Brain;
           const scoreTone =
             it.score >= 60
-              ? "bg-rose-100 text-rose-800"
+              ? "bg-rose-100 dark:bg-rose-500/15 text-rose-800 dark:text-rose-200"
               : it.score >= 30
-                ? "bg-amber-100 text-amber-800"
+                ? "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-200"
                 : "bg-muted text-muted-foreground";
           return (
             <button
@@ -1720,9 +1720,9 @@ function StatCell({
 }) {
   const toneClass = {
     neutral: "text-foreground",
-    info: "text-indigo-700",
-    success: "text-emerald-700",
-    danger: "text-rose-700",
+    info: "text-indigo-700 dark:text-indigo-300",
+    success: "text-emerald-700 dark:text-emerald-300",
+    danger: "text-rose-700 dark:text-rose-300",
   }[tone];
   return (
     <div className="px-2 py-1.5 rounded-md bg-background border border-border text-center">

@@ -306,8 +306,8 @@ export function StudentWeekGrid({ days }: { days: StudentWeekDay[] }) {
 
       <p className="px-4 pb-2.5 text-[11px] text-muted-foreground">
         Bir güne tıkla → o günün detayı açılır.
-        <span className="text-emerald-600"> ✓</span> yapıldı ·
-        <span className="text-amber-600"> ◐</span> kısmen ·
+        <span className="text-emerald-600 dark:text-emerald-300"> ✓</span> yapıldı ·
+        <span className="text-amber-600 dark:text-amber-300"> ◐</span> kısmen ·
         <span> ☐</span> yapılmadı
       </p>
     </section>

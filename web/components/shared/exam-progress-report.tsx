@@ -717,7 +717,7 @@ function ReportShare({
           <DropdownMenuItem
             onSelect={() => window.open(`https://wa.me/?text=${encodeURIComponent(text())}`, "_blank", "noopener")}
           >
-            <MessageCircle className="size-4 text-emerald-600" aria-hidden />
+            <MessageCircle className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
             WhatsApp ile gönder
           </DropdownMenuItem>
           <DropdownMenuItem

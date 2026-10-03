@@ -36,12 +36,12 @@ export function EmailVerifyBanner({ emailVerified }: { emailVerified: boolean })
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50/60 dark:bg-amber-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <MailWarning className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
+        <MailWarning className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
         <div>
-          <p className="text-sm font-medium text-amber-900">E-posta adresiniz henüz doğrulanmadı</p>
-          <p className="text-xs text-amber-800">
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-200">E-posta adresiniz henüz doğrulanmadı</p>
+          <p className="text-xs text-amber-800 dark:text-amber-200">
             Hesabınızı güvende tutmak için e-postanıza gönderdiğimiz bağlantıya tıklayın.
           </p>
         </div>

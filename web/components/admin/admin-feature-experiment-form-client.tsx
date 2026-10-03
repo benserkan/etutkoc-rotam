@@ -120,7 +120,7 @@ export function AdminFeatureExperimentFormClient({ meta }: Props) {
           <div className="border-t border-border pt-5">
             <h3 className="mb-1 text-sm font-semibold">Variant&apos;lar</h3>
             {pools.length > 0 ? (
-              <p className="mb-3 rounded-md bg-cyan-50 px-3 py-2 text-[11px] text-cyan-900">
+              <p className="mb-3 rounded-md bg-cyan-50 dark:bg-cyan-500/15 px-3 py-2 text-[11px] text-cyan-900 dark:text-cyan-200">
                 <strong>Kart havuzu</strong> ile farklı kart setlerini karşılaştırabilirsin
                 (örn. elle hazırlanmış <code className="font-mono">kesfet-*</code> kartlar vs
                 AI temalı <code className="font-mono">tema-*</code> kartlar). Boş bırakırsan
@@ -223,7 +223,7 @@ export function AdminFeatureExperimentFormClient({ meta }: Props) {
             <p
               className={cn(
                 "mt-2 text-[11px]",
-                weightCtrl + weightTest === 100 ? "text-muted-foreground" : "text-rose-600",
+                weightCtrl + weightTest === 100 ? "text-muted-foreground" : "text-rose-600 dark:text-rose-300",
               )}
             >
               Toplam ağırlık 100 olmalı (şu an {weightCtrl + weightTest}).

@@ -1,0 +1,64 @@
+{
+ "name": "Bilgi Sarmal Yıldızlar Yarışıyor TYT 10'lu Matematik Denemesi",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Matematik",
+ "type": "brans_denemesi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Deneme 1 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 2 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 3 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 4 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 5 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 6 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 7 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 8 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 9 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 10 (40 soru)",
+   "test_count": 1,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Metin katmanından sayıldı: 10 deneme, her biri 40 soru (\"Bu testte 40 soru vardır\"), 16 sayfa/deneme, numara zinciri 1..10 boşluksuz. Deneme kitabı — müfredat eşleştirmesi yok."
+ ]
+}

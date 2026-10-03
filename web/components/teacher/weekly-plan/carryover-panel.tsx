@@ -103,7 +103,7 @@ export function CarryoverPanel({
           <p
             className={cn(
               "px-4 pb-2 text-xs",
-              isBrowse ? "text-slate-600" : "text-amber-800",
+              isBrowse ? "text-slate-600 dark:text-slate-300" : "text-amber-800 dark:text-amber-200",
             )}
           >
             {isBrowse
@@ -145,22 +145,22 @@ export function CarryoverPanel({
                     title={cardTooltip(c)}
                     className="min-w-0 flex-1 rounded text-left outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-amber-400"
                   >
-                    <span className="flex items-start gap-1 font-medium text-slate-900">
+                    <span className="flex items-start gap-1 font-medium text-slate-900 dark:text-slate-200">
                       {c.is_block ? (
                         <Boxes className="mt-0.5 size-3 shrink-0 text-violet-500" aria-hidden />
                       ) : null}
                       <span className="break-words">{c.title}</span>
                     </span>
                     {c.section_items.map((si) => (
-                      <span key={si.section_id} className="block break-words text-slate-600">
+                      <span key={si.section_id} className="block break-words text-slate-600 dark:text-slate-300">
                         {si.book_name} · {si.section_label} ·{" "}
-                        <span className="font-semibold text-amber-800">{si.remaining} test</span>
+                        <span className="font-semibold text-amber-800 dark:text-amber-200">{si.remaining} test</span>
                       </span>
                     ))}
                     {c.itemless_items
                       .filter((il) => il.label !== c.title)
                       .map((il, i) => (
-                        <span key={i} className="block break-words text-slate-600">
+                        <span key={i} className="block break-words text-slate-600 dark:text-slate-300">
                           {il.label} · {il.count} soru
                         </span>
                       ))}
@@ -414,7 +414,7 @@ function AddToDayDialog({
           <div>
             <p className="mb-1.5 text-xs font-medium text-foreground">Gün</p>
             {selectableDays.length === 0 ? (
-              <p className="rounded-md bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800">
+              <p className="rounded-md bg-amber-50 dark:bg-amber-500/15 px-2 py-1.5 text-[11px] text-amber-800 dark:text-amber-200">
                 Bu haftada eklenebilecek (bugün veya ileri) gün yok. Yeni hafta
                 oluşturup oraya taşıyın.
               </p>
@@ -428,12 +428,12 @@ function AddToDayDialog({
                   className={cn(
                     "rounded-md border px-2 py-1.5 text-left text-xs transition",
                     day === d.date
-                      ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
+                      ? "border-amber-500 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 font-semibold text-amber-900 dark:text-amber-200"
                       : "border-border bg-card hover:bg-muted/50",
                   )}
                 >
                   {d.dow_label} · {fmtDate(d.date)}
-                  {d.is_today ? <span className="ml-1 text-amber-600">bugün</span> : null}
+                  {d.is_today ? <span className="ml-1 text-amber-600 dark:text-amber-300">bugün</span> : null}
                 </button>
               ))}
             </div>
@@ -449,7 +449,7 @@ function AddToDayDialog({
                   className={cn(
                     "rounded-md border px-2.5 py-1 text-xs transition",
                     period === null
-                      ? "border-slate-500 bg-slate-100 font-semibold text-slate-900"
+                      ? "border-slate-500 bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 font-semibold text-slate-900 dark:text-slate-200"
                       : "border-border bg-card hover:bg-muted/50",
                   )}
                 >
@@ -463,7 +463,7 @@ function AddToDayDialog({
                     className={cn(
                       "rounded-md border px-2.5 py-1 text-xs transition",
                       period === p.key
-                        ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
+                        ? "border-amber-500 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 font-semibold text-amber-900 dark:text-amber-200"
                         : "border-border bg-card hover:bg-muted/50",
                     )}
                   >

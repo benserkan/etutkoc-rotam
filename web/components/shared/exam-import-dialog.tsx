@@ -392,7 +392,7 @@ function ImportFlow({
       >
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <FileUp className="size-4 text-violet-600" aria-hidden />
+            <FileUp className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
             {editMode ? "İçe aktarılan denemeyi düzenle" : "Deneme sonucunu PDF'ten aktar"}
             {draft ? (
               <span className="text-xs font-normal text-muted-foreground">
@@ -422,7 +422,7 @@ function ImportFlow({
 
           {step === "analyzing" ? (
             <div className="flex flex-col items-center gap-3 py-14 text-center">
-              <Loader2 className="size-8 animate-spin text-violet-600" aria-hidden />
+              <Loader2 className="size-8 animate-spin text-violet-600 dark:text-violet-300" aria-hidden />
               <div className="text-sm font-medium text-foreground">
                 {editMode ? "Kayıtlı deneme açılıyor…" : "Yapay zekâ belgeyi okuyor…"}
               </div>
@@ -844,7 +844,7 @@ function PreviewStep({
 
       {/* Eşleşme istatistiği */}
       <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-        <Sparkles className="size-3.5 text-violet-600" aria-hidden />
+        <Sparkles className="size-3.5 text-violet-600 dark:text-violet-300" aria-hidden />
         <Chip tone="emerald">{stats.alias + stats.auto} otomatik eşleşti</Chip>
         {stats.ai > 0 ? <Chip tone="violet">{stats.ai} AI eşledi</Chip> : null}
         {stats.none > 0 ? <Chip tone="amber">{stats.none} eşleşmedi — elle seç</Chip> : null}
@@ -942,7 +942,7 @@ function PreviewStep({
                         }
                         className={cn(
                           "h-7 w-full rounded border bg-card px-1 text-xs font-medium",
-                          row.result ? RESULT_TONE[row.result] : "border-amber-400 text-amber-700",
+                          row.result ? RESULT_TONE[row.result] : "border-amber-400 text-amber-700 dark:text-amber-300",
                           "border-border",
                         )}
                         aria-label="Sonuç"

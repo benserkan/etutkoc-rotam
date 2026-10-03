@@ -66,7 +66,7 @@ export function StudentAppointmentsClient({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold inline-flex items-center gap-2">
-            <Video className="size-5 text-cyan-700" aria-hidden />
+            <Video className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden />
             Görüşmelerim
           </h1>
           <p className="text-sm text-muted-foreground mt-1">

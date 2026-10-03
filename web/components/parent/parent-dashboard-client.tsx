@@ -47,7 +47,7 @@ export function ParentDashboardClient({ initial }: Props) {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[11px] uppercase tracking-wider text-[#117A86] font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-[#117A86] dark:text-teal-300 font-semibold">
           <HeartHandshake className="inline size-3.5 mr-1" aria-hidden />
           Veli Görünümü
         </p>
@@ -113,12 +113,12 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
           </div>
           <div className="text-right text-xs flex flex-col items-end gap-1">
             {!child.is_active && (
-              <span className="inline-flex items-center bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-semibold" title="Bildirim gönderilmez; geçmiş raporlara erişebilirsiniz.">
+              <span className="inline-flex items-center bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-semibold" title="Bildirim gönderilmez; geçmiş raporlara erişebilirsiniz.">
                 Koçluk sona erdi
               </span>
             )}
             {child.is_primary && (
-              <span className="inline-block bg-[#117A86]/10 text-[#117A86] px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold">
+              <span className="inline-block bg-[#117A86]/10 text-[#117A86] dark:text-teal-300 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold">
                 Birincil
               </span>
             )}
@@ -224,7 +224,7 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
           {child.latest_exam_count > 0 ? (
             <div className="rounded-lg border border-[#117A86]/20 bg-[#117A86]/5 px-3 py-2.5">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-[#117A86]">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-[#117A86] dark:text-teal-300">
                   Son Deneme
                 </span>
                 <span className="text-[10px] text-muted-foreground">
@@ -240,7 +240,7 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
                 {child.latest_exam_net != null ? (
                   <span className="inline-flex items-baseline gap-1">
                     <span className="text-muted-foreground">Net:</span>
-                    <span className="text-base font-bold tabular-nums text-[#117A86]">
+                    <span className="text-base font-bold tabular-nums text-[#117A86] dark:text-teal-300">
                       {child.latest_exam_net.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
                     </span>
                   </span>
@@ -259,7 +259,7 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
             </div>
           ) : null}
 
-          <div className="pt-2 border-t border-border text-xs text-[#117A86] group-hover:text-[#0E5F69] inline-flex items-center gap-0.5">
+          <div className="pt-2 border-t border-border text-xs text-[#117A86] dark:text-teal-300 group-hover:text-[#0E5F69] inline-flex items-center gap-0.5">
             Detayları gör
             <ChevronRight
               className="size-3.5 transition-transform group-hover:translate-x-0.5"
@@ -314,7 +314,7 @@ function EmptyState() {
   return (
     <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30">
       <CardContent className="p-8 text-center">
-        <p className="text-sm text-amber-800">
+        <p className="text-sm text-amber-800 dark:text-amber-200">
           Henüz size bağlı bir öğrenci yok. Lütfen sizi davet eden eğitim
           koçunuzla iletişime geçin.
         </p>
@@ -326,7 +326,7 @@ function EmptyState() {
 function PrivacyNote() {
   return (
     <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground flex items-start gap-2">
-      <Info className="size-4 shrink-0 mt-0.5 text-[#117A86]" aria-hidden />
+      <Info className="size-4 shrink-0 mt-0.5 text-[#117A86] dark:text-teal-300" aria-hidden />
       <p className="leading-relaxed">
         <strong className="text-foreground">Bilgi:</strong> Bu panelde size
         görev tamamlama oranı, ders bazında dağılım, istikrar, genel ilerleme ve
@@ -346,24 +346,24 @@ function warningToneClasses(level: WarningLevel): {
   if (level === "red") {
     return {
       borderL: "border-l-rose-500",
-      bg: "bg-rose-50/60",
+      bg: "bg-rose-50/60 dark:bg-rose-500/10",
       bar: "bg-rose-500",
-      text: "text-rose-700",
+      text: "text-rose-700 dark:text-rose-300",
     };
   }
   if (level === "amber") {
     return {
       borderL: "border-l-amber-500",
-      bg: "bg-amber-50/60",
+      bg: "bg-amber-50/60 dark:bg-amber-500/10",
       bar: "bg-amber-500",
-      text: "text-amber-700",
+      text: "text-amber-700 dark:text-amber-300",
     };
   }
   return {
     borderL: "border-l-emerald-500",
-    bg: "bg-emerald-50/60",
+    bg: "bg-emerald-50/60 dark:bg-emerald-500/10",
     bar: "bg-emerald-500",
-    text: "text-emerald-700",
+    text: "text-emerald-700 dark:text-emerald-300",
   };
 }
 

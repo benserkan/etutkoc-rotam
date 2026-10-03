@@ -179,34 +179,34 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
                   <StatusSelect row={p} statuses={statuses} />
                 </td>
                 <td className="px-3 py-2 text-center">
-                  {p.opt_in ? <span className="text-emerald-600" title="WhatsApp izni var">✓</span>
+                  {p.opt_in ? <span className="text-emerald-600 dark:text-emerald-300" title="WhatsApp izni var">✓</span>
                             : <span className="text-slate-400" title="İzin yok">—</span>}
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => setOfferRow(p)} title="Üyelik teklifi üret"
-                            className="rounded p-1.5 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
+                            className="rounded p-1.5 text-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
                       <Gift className="size-4" />
                     </button>
                     {p.instagram ? (
                       <>
                         <button onClick={() => copyDm(p, 1)} title="1. mesajı kopyala (ilk temas)"
-                                className="rounded p-1.5 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
-                          <Copy className={cn("size-4", copiedId === `${p.id}-1` && "text-emerald-600")} />
+                                className="rounded p-1.5 text-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
+                          <Copy className={cn("size-4", copiedId === `${p.id}-1` && "text-emerald-600 dark:text-emerald-300")} />
                         </button>
                         <button onClick={() => copyDm(p, 2)} title="2. mesajı kopyala (cevap geldiyse — link + detay)"
-                                className="rounded p-1.5 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10">
-                          <CopyPlus className={cn("size-4", copiedId === `${p.id}-2` && "text-emerald-600")} />
+                                className="rounded p-1.5 text-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10">
+                          <CopyPlus className={cn("size-4", copiedId === `${p.id}-2` && "text-emerald-600 dark:text-emerald-300")} />
                         </button>
                         <a href={`https://instagram.com/${p.instagram}`} target="_blank" rel="noopener noreferrer"
-                           title="Instagram profilini aç (DM)" className="rounded p-1.5 text-fuchsia-600 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10">
+                           title="Instagram profilini aç (DM)" className="rounded p-1.5 text-fuchsia-600 dark:text-fuchsia-300 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10">
                           <AtSign className="size-4" />
                         </a>
                       </>
                     ) : null}
                     {p.phone ? (
                       <a href={`https://wa.me/${p.phone}`} target="_blank" rel="noopener noreferrer"
-                         title="WhatsApp'tan yaz" className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10">
+                         title="WhatsApp'tan yaz" className="rounded p-1.5 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10">
                         <MessageCircle className="size-4" />
                       </a>
                     ) : null}

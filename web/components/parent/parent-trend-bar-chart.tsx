@@ -124,7 +124,7 @@ function TrendTooltip({
       </div>
       <div className="flex justify-between gap-3">
         <span className="text-muted-foreground">Tamamlanan</span>
-        <span className="tabular-nums font-semibold text-emerald-700">
+        <span className="tabular-nums font-semibold text-emerald-700 dark:text-emerald-300">
           {d.completed}
         </span>
       </div>

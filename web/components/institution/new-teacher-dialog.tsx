@@ -178,7 +178,7 @@ function CreatedTeacherSuccess({
     <div className="space-y-4">
       <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
         <strong>{result.full_name}</strong> başarıyla eklendi.
-        <div className="text-xs text-emerald-800 mt-0.5 font-mono break-all">
+        <div className="text-xs text-emerald-800 dark:text-emerald-200 mt-0.5 font-mono break-all">
           {result.email}
         </div>
       </div>
@@ -200,7 +200,7 @@ function CreatedTeacherSuccess({
             title="Kopyala"
           >
             {copied ? (
-              <Check className="size-4 text-emerald-600" aria-hidden />
+              <Check className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
             ) : (
               <Copy className="size-4" aria-hidden />
             )}

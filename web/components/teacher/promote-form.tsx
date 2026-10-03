@@ -56,7 +56,7 @@ export function PromoteForm({ studentId }: Props) {
   }
   if (q.error || !q.data) {
     return (
-      <div className="text-sm text-rose-600">Form yüklenemedi.</div>
+      <div className="text-sm text-rose-600 dark:text-rose-300">Form yüklenemedi.</div>
     );
   }
 
@@ -194,7 +194,7 @@ function FormBody({
           </Link>
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <ArrowUpRight className="size-6 text-violet-600" aria-hidden />
+          <ArrowUpRight className="size-6 text-violet-600 dark:text-violet-300" aria-hidden />
           {initial.is_graduate ? "Yeni Öğretim Yılı" : "Sınıf Yükselt"}
         </h1>
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
@@ -261,7 +261,7 @@ function FormBody({
                     Listede yıl yok — önce{" "}
                     <Link
                       href="/teacher/years"
-                      className="text-indigo-600 hover:underline"
+                      className="text-indigo-600 dark:text-indigo-300 hover:underline"
                     >
                       akademik yıllar
                     </Link>{" "}

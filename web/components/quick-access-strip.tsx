@@ -106,7 +106,7 @@ export function QuickAccessStrip({ excludeHrefs, className }: Props) {
     >
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
         <h2 className="text-sm font-semibold inline-flex items-center gap-1.5">
-          <Zap className="size-4 text-cyan-600" aria-hidden />
+          <Zap className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
           Hızlı Erişim
         </h2>
         <p className="text-xs text-muted-foreground">
@@ -189,7 +189,7 @@ function QuickCardTile({
           className={cn(
             "rounded p-1 transition",
             pinned
-              ? "text-cyan-700 hover:bg-cyan-500/10"
+              ? "text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/10"
               : "text-muted-foreground/50 hover:text-cyan-700 hover:bg-cyan-500/10",
           )}
         >

@@ -102,7 +102,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
             ← Vitrin Kartları
           </Link>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Bot className="size-6 text-indigo-700" aria-hidden />
+            <Bot className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
             Onay Kuyruğu
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -153,7 +153,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
           <div className="text-xs uppercase tracking-wider text-muted-foreground">
             Bekleyen toplam
           </div>
-          <div className="mt-1 text-3xl font-semibold text-indigo-700">
+          <div className="mt-1 text-3xl font-semibold text-indigo-700 dark:text-indigo-300">
             {data.counts.total ?? 0}
           </div>
         </Card>
@@ -168,7 +168,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
           <div className="inline-flex items-center gap-1 text-xs uppercase tracking-wider text-muted-foreground">
             <FileCode2 className="size-3.5" aria-hidden /> Migration
           </div>
-          <div className="mt-1 text-3xl font-semibold text-blue-700">
+          <div className="mt-1 text-3xl font-semibold text-blue-700 dark:text-blue-300">
             {data.counts.migration ?? 0}
           </div>
         </button>
@@ -183,7 +183,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
           <div className="inline-flex items-center gap-1 text-xs uppercase tracking-wider text-muted-foreground">
             <GitCommitHorizontal className="size-3.5" aria-hidden /> Commit
           </div>
-          <div className="mt-1 text-3xl font-semibold text-amber-700">
+          <div className="mt-1 text-3xl font-semibold text-amber-700 dark:text-amber-300">
             {data.counts.commit ?? 0}
           </div>
         </button>
@@ -194,7 +194,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
           <button
             type="button"
             onClick={() => setSource("")}
-            className="text-indigo-600 hover:text-indigo-800"
+            className="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
           >
             ← tüm kaynaklar
           </button>
@@ -205,7 +205,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
           className={cn(
             "ml-auto inline-flex items-center gap-1 rounded border px-3 py-1 text-xs font-medium",
             showRejected
-              ? "border-rose-300 bg-rose-100 text-rose-700"
+              ? "border-rose-300 bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300"
               : "border-border bg-muted/50 text-muted-foreground",
           )}
         >
@@ -240,7 +240,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                 type="button"
                 disabled={selected.size === 0 || busy}
                 onClick={() => setConfirm({ action: "reject", ids: Array.from(selected) })}
-                className="rounded border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200 disabled:opacity-40"
+                className="rounded border border-amber-300 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 px-3 py-1 text-xs font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-200 disabled:opacity-40"
               >
                 Reddet (gizle)
               </button>
@@ -248,7 +248,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                 type="button"
                 disabled={selected.size === 0 || busy}
                 onClick={() => setConfirm({ action: "delete", ids: Array.from(selected) })}
-                className="rounded border border-rose-300 bg-rose-100 px-3 py-1 text-xs font-medium text-rose-800 hover:bg-rose-200 disabled:opacity-40"
+                className="rounded border border-rose-300 bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 px-3 py-1 text-xs font-medium text-rose-800 dark:text-rose-200 hover:bg-rose-200 disabled:opacity-40"
               >
                 Sil
               </button>
@@ -272,7 +272,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                     key={c.id}
                     className={cn(
                       "border-t border-border",
-                      c.manual_hide && "bg-rose-50/30 opacity-60",
+                      c.manual_hide && "bg-rose-50/30 dark:bg-rose-500/10 opacity-60",
                     )}
                   >
                     <td className="px-4 py-3 align-top">
@@ -290,7 +290,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                         <SolidBadge label="💾 commit" tone="amber" />
                       )}
                       {c.manual_hide ? (
-                        <div className="mt-1 text-[10px] font-medium text-rose-600">REDDEDİLDİ</div>
+                        <div className="mt-1 text-[10px] font-medium text-rose-600 dark:text-rose-300">REDDEDİLDİ</div>
                       ) : null}
                     </td>
                     <td className="px-4 py-3 align-top text-xs text-muted-foreground">
@@ -317,7 +317,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                       <div className="flex flex-wrap items-center gap-1.5">
                         <Link
                           href={`/admin/feature-catalog/${c.id}`}
-                          className="rounded border border-indigo-200 bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-200"
+                          className="rounded border border-indigo-200 bg-indigo-100 dark:bg-indigo-500/15 dark:border-indigo-500/30 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200"
                         >
                           Aç &amp; Düzenle →
                         </Link>

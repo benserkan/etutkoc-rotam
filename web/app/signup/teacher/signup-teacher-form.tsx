@@ -256,7 +256,7 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
               </Button>
             ) : null}
             {phoneRequired && phoneVerified ? (
-              <span className="flex items-center gap-1 px-2 text-sm font-medium text-emerald-600">
+              <span className="flex items-center gap-1 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-300">
                 <ShieldCheck className="size-4" /> Doğrulandı
               </span>
             ) : null}

@@ -240,7 +240,7 @@ function StrugglePanel({
         <CardTitle className="text-base font-semibold inline-flex items-center gap-2 flex-wrap">
           <Target className="size-5 text-amber-500" aria-hidden />
           Müdahale Önerileri — Öğrencinin Zorlandığı Konular
-          <span className="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-500">
+          <span className="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-300">
             {cards.length} konu
           </span>
         </CardTitle>
@@ -294,7 +294,7 @@ function StruggleCard({
             </span>
             <StateLabel state={card.state} label={card.state_label} />
             {card.lapse_count >= 2 ? (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-500 inline-flex items-center gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-700 dark:text-rose-300 inline-flex items-center gap-1">
                 <AlertTriangle className="size-3" aria-hidden />
                 {card.lapse_count}× unutma
               </span>
@@ -330,7 +330,7 @@ function StruggleCard({
         {card.reasons.map((r) => (
           <span
             key={r}
-            className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-500 ring-1 ring-inset ring-amber-500/20"
+            className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-inset ring-amber-500/20"
           >
             {r}
           </span>
@@ -521,10 +521,10 @@ function CardListPanel({ d }: { d: TeacherReviewResponse }) {
 
 const STATE_PILL: Record<ReviewState, string> = {
   new: "bg-muted text-foreground/80 ring-1 ring-inset ring-border",
-  learning: "bg-amber-500/10 text-amber-500 ring-1 ring-inset ring-amber-500/20",
-  relearning: "bg-rose-500/10 text-rose-500 ring-1 ring-inset ring-rose-500/20",
+  learning: "bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-inset ring-amber-500/20",
+  relearning: "bg-rose-500/10 text-rose-700 dark:text-rose-300 ring-1 ring-inset ring-rose-500/20",
   review:
-    "bg-emerald-500/10 text-emerald-500 ring-1 ring-inset ring-emerald-500/20",
+    "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/20",
 };
 
 function StateLabel({ state, label }: { state: ReviewState; label: string }) {

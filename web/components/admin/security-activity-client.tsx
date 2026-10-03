@@ -93,9 +93,9 @@ const FEATURE_ICON: Record<string, LucideIcon> = {
 
 function OwnerBadge({ ownerType }: { ownerType: string }) {
   if (ownerType === "solo") {
-    return <UserRound className="inline size-3.5 shrink-0 text-purple-600" aria-label="Bağımsız öğretmen" />;
+    return <UserRound className="inline size-3.5 shrink-0 text-purple-600 dark:text-purple-300" aria-label="Bağımsız öğretmen" />;
   }
-  return <Building2 className="inline size-3.5 shrink-0 text-blue-600" aria-label="Kurum" />;
+  return <Building2 className="inline size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-label="Kurum" />;
 }
 
 type Drill =
@@ -125,7 +125,7 @@ export function SecurityActivityClient({ initial, segment, initialTab }: Props) 
           ← Güvenlik Kamarası
         </Link>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <Activity className="size-6 text-slate-700" aria-hidden />
+          <Activity className="size-6 text-slate-700 dark:text-slate-300" aria-hidden />
           Aktivite Kamerası
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -177,7 +177,7 @@ export function SecurityActivityClient({ initial, segment, initialTab }: Props) 
               className={cn(
                 "-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition",
                 active
-                  ? "border-indigo-500 text-indigo-700"
+                  ? "border-indigo-500 text-indigo-700 dark:text-indigo-300"
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
@@ -242,11 +242,11 @@ function SuggestionPopover({ suggestions }: { suggestions: ActionSuggestion[] })
   if (!suggestions.length) return null;
   return (
     <details className="relative inline-block">
-      <summary className="inline-flex cursor-pointer list-none items-center gap-0.5 text-[11px] text-amber-700 hover:text-amber-900">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-0.5 text-[11px] text-amber-700 dark:text-amber-300 hover:text-amber-900">
         <Lightbulb className="size-3.5" aria-hidden /> Öneri
       </summary>
       <div className="absolute right-0 top-6 z-20 w-64 rounded-md border border-amber-300 bg-popover p-2 shadow-lg">
-        <div className="mb-1 text-[10px] font-semibold uppercase text-amber-700">Önerilen Aksiyonlar</div>
+        <div className="mb-1 text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-300">Önerilen Aksiyonlar</div>
         <ul className="space-y-1 text-[11px]">
           {suggestions.map((s, i) => (
             <li key={i} className="text-foreground">
@@ -262,7 +262,7 @@ function SuggestionPopover({ suggestions }: { suggestions: ActionSuggestion[] })
 
 function OwnerLink({ ownerType, name, url }: { ownerType: string; name: string | null; url: string }) {
   return (
-    <Link href={url} className="inline-flex items-center gap-1 font-medium text-indigo-700 hover:underline">
+    <Link href={url} className="inline-flex items-center gap-1 font-medium text-indigo-700 dark:text-indigo-300 hover:underline">
       <OwnerBadge ownerType={ownerType} />
       <span className="truncate">{name}</span>
     </Link>
@@ -280,10 +280,10 @@ function ActiveUsersDrill({ window, role, onClose }: { window: string; role: str
   });
   return (
     <Card className="overflow-hidden border-l-4 border-l-indigo-500">
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-indigo-50/40 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-indigo-50/40 dark:bg-indigo-500/10 px-4 py-2.5">
         <div>
           <h3 className="inline-flex items-center gap-1.5 text-sm font-semibold">
-            <Users className="size-4 text-indigo-600" aria-hidden />
+            <Users className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden />
             Aktif Kullanıcı Listesi
             {q.data ? <span className="font-normal text-muted-foreground">— {q.data.role_label} · {q.data.window_label} ({q.data.rows.length})</span> : null}
           </h3>
@@ -324,11 +324,11 @@ function HeatmapDrill({ institutionId, onClose }: { institutionId: number; onClo
   });
   return (
     <Card className="overflow-hidden border-l-4 border-l-indigo-500">
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-indigo-50/40 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-indigo-50/40 dark:bg-indigo-500/10 px-4 py-2.5">
         <div className="min-w-0">
           <h3 className="inline-flex items-center gap-1.5 text-sm font-semibold">
-            <MapIcon className="size-4 text-indigo-600" aria-hidden />
-            <Building2 className="size-3.5 text-blue-600" aria-hidden />
+            <MapIcon className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden />
+            <Building2 className="size-3.5 text-blue-600 dark:text-blue-300" aria-hidden />
             <span className="truncate">{q.data?.institution_name ?? "Kurum"} — Aktivite Haritası</span>
           </h3>
           {q.data ? (
@@ -339,7 +339,7 @@ function HeatmapDrill({ institutionId, onClose }: { institutionId: number; onClo
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {q.data?.institution_id ? (
-            <Link href={`/admin/revenue/institutions/${q.data.institution_id}`} className="rounded border border-indigo-300 px-2 py-1 text-xs text-indigo-700 hover:bg-indigo-50">
+            <Link href={`/admin/revenue/institutions/${q.data.institution_id}`} className="rounded border border-indigo-300 px-2 py-1 text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50">
               Kurum 360 →
             </Link>
           ) : null}
@@ -403,7 +403,7 @@ function TodayTab({
       {d.role_breakdown.length > 0 ? (
         <Card className="p-4">
           <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold">
-            <Users className="size-4 text-indigo-600" aria-hidden /> Bugün aktif — rol kırılımı
+            <Users className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden /> Bugün aktif — rol kırılımı
           </h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {d.role_breakdown.map((r) => {
@@ -417,7 +417,7 @@ function TodayTab({
                     <div className="mt-1 text-2xl font-semibold tabular-nums">{r.today}</div>
                     <div className="text-[11px]">
                       Dün: {r.yesterday}
-                      {r.delta > 0 ? <span className="ml-1 text-emerald-700">↑ %{r.delta_pct}</span> : r.delta < 0 ? <span className="ml-1 text-rose-700">↓ %{-r.delta_pct}</span> : <span className="ml-1 opacity-70">—</span>}
+                      {r.delta > 0 ? <span className="ml-1 text-emerald-700 dark:text-emerald-300">↑ %{r.delta_pct}</span> : r.delta < 0 ? <span className="ml-1 text-rose-700 dark:text-rose-300">↓ %{-r.delta_pct}</span> : <span className="ml-1 opacity-70">—</span>}
                     </div>
                   </div>
                 </button>
@@ -430,7 +430,7 @@ function TodayTab({
       {/* Solo özel panel */}
       {d.solo_special && (segment === "solo" || segment === "all") ? (
         <Card className="border-l-4 border-l-purple-500 p-4">
-          <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-purple-800">
+          <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-purple-800 dark:text-purple-200">
             <UserRound className="size-4" aria-hidden /> Bağımsız Öğretmene Özel Metrikler
           </h2>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -445,11 +445,11 @@ function TodayTab({
       <Card className="p-4">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-            <TrendingUp className="size-4 text-indigo-600" aria-hidden /> Bu hafta vs Geçen hafta — Günlük Aktif
+            <TrendingUp className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden /> Bu hafta vs Geçen hafta — Günlük Aktif
           </h2>
           <span className="text-xs text-muted-foreground">
             {d.wow.this_total} / {d.wow.last_total}
-            {d.wow.delta > 0 ? <span className="ml-1 text-emerald-700">↑ +{d.wow.delta} (%{d.wow.delta_pct})</span> : d.wow.delta < 0 ? <span className="ml-1 text-rose-700">↓ {d.wow.delta} (%{d.wow.delta_pct})</span> : null}
+            {d.wow.delta > 0 ? <span className="ml-1 text-emerald-700 dark:text-emerald-300">↑ +{d.wow.delta} (%{d.wow.delta_pct})</span> : d.wow.delta < 0 ? <span className="ml-1 text-rose-700 dark:text-rose-300">↓ {d.wow.delta} (%{d.wow.delta_pct})</span> : null}
           </span>
         </div>
         {d.wow.max_value > 0 ? <WowBarChart wow={d.wow} /> : <p className="py-8 text-center text-sm text-muted-foreground">Son 14 günde giriş kaydı yok.</p>}
@@ -497,9 +497,9 @@ function RiskTab({ d, onDrill }: { d: ActivityPanelResponse; onDrill: (drill: Dr
     <div className="space-y-5">
       {/* Kalp atışı */}
       <Card className="overflow-hidden">
-        <div className="border-b border-border bg-rose-50/40 px-4 py-2.5">
+        <div className="border-b border-border bg-rose-50/40 dark:bg-rose-500/10 px-4 py-2.5">
           <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-            <HeartPulse className="size-4 text-rose-600" aria-hidden /> Hesap Kalp Atışı — Son Giriş
+            <HeartPulse className="size-4 text-rose-600 dark:text-rose-300" aria-hidden /> Hesap Kalp Atışı — Son Giriş
           </h2>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
             <span>🟢 {hb.healthy} sağlıklı</span><span>🟡 {hb.watch} izle</span><span>🟠 {hb.warning} dikkat</span>
@@ -565,9 +565,9 @@ function RiskTab({ d, onDrill }: { d: ActivityPanelResponse; onDrill: (drill: Dr
       {/* Sönüş hızı */}
       {d.decay_rates.length > 0 ? (
         <Card className="overflow-hidden">
-          <div className="border-b border-border bg-amber-50/40 px-4 py-2.5">
+          <div className="border-b border-border bg-amber-50/40 dark:bg-amber-500/10 px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <TrendingDown className="size-4 text-amber-600" aria-hidden /> Hesap Sönüş Hızı (son 7g vs önceki 7g)
+              <TrendingDown className="size-4 text-amber-600 dark:text-amber-300" aria-hidden /> Hesap Sönüş Hızı (son 7g vs önceki 7g)
             </h2>
           </div>
           <div className="overflow-x-auto">
@@ -587,7 +587,7 @@ function RiskTab({ d, onDrill }: { d: ActivityPanelResponse; onDrill: (drill: Dr
                     <td className="px-3 py-1.5"><OwnerLink ownerType={r.owner_type} name={r.institution_name} url={r.detail_url} /><div className="font-mono text-[10px] text-muted-foreground">{r.plan}</div></td>
                     <td className="px-3 py-1.5 text-right font-mono text-muted-foreground">{r.previous_7d}</td>
                     <td className="px-3 py-1.5 text-right font-mono font-semibold">{r.recent_7d}</td>
-                    <td className={cn("px-3 py-1.5 text-right font-mono font-semibold", r.change_pct < 0 ? "text-rose-700" : r.change_pct > 0 ? "text-emerald-700" : "text-muted-foreground")}>{r.change_pct > 0 ? "+" : ""}{r.change_pct}%</td>
+                    <td className={cn("px-3 py-1.5 text-right font-mono font-semibold", r.change_pct < 0 ? "text-rose-700 dark:text-rose-300" : r.change_pct > 0 ? "text-emerald-700 dark:text-emerald-300" : "text-muted-foreground")}>{r.change_pct > 0 ? "+" : ""}{r.change_pct}%</td>
                     <td className="px-3 py-1.5"><span className={cn("rounded px-2 py-0.5 text-[11px] font-semibold", toneBadge(r.color))}>{r.label}</span></td>
                   </tr>
                 ))}
@@ -599,19 +599,19 @@ function RiskTab({ d, onDrill }: { d: ActivityPanelResponse; onDrill: (drill: Dr
 
       {/* Sessizleşen hesaplar */}
       <Card className="overflow-hidden">
-        <div className="border-b border-border bg-amber-50/40 px-4 py-2.5">
+        <div className="border-b border-border bg-amber-50/40 dark:bg-amber-500/10 px-4 py-2.5">
           <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-            <CalendarClock className="size-4 text-amber-600" aria-hidden /> Sessizleşen Hesaplar — Son 7 Gün
+            <CalendarClock className="size-4 text-amber-600 dark:text-amber-300" aria-hidden /> Sessizleşen Hesaplar — Son 7 Gün
           </h2>
         </div>
         {d.silent_tenants_7d.length === 0 ? (
-          <p className="p-6 text-center text-sm text-emerald-700">Tüm aktif hesaplar son 7 günde sisteme girdi.</p>
+          <p className="p-6 text-center text-sm text-emerald-700 dark:text-emerald-300">Tüm aktif hesaplar son 7 günde sisteme girdi.</p>
         ) : (
           <ul className="max-h-96 divide-y divide-border overflow-auto">
             {d.silent_tenants_7d.map((t, i) => (
               <li key={`${t.owner_id}-${i}`} className="flex items-center justify-between px-4 py-2">
                 <OwnerLink ownerType={t.owner_type} name={t.tenant_name} url={t.detail_url ?? `/admin/revenue/institutions/${t.tenant_id}`} />
-                <span className="text-xs text-rose-600">7 gündür sessiz</span>
+                <span className="text-xs text-rose-600 dark:text-rose-300">7 gündür sessiz</span>
               </li>
             ))}
           </ul>
@@ -622,10 +622,10 @@ function RiskTab({ d, onDrill }: { d: ActivityPanelResponse; onDrill: (drill: Dr
 }
 
 const QUAD_META = {
-  paying_idle: { tag: "KRİTİK", title: "Ödeyen ama Pasif", hint: "Para ödüyor ama kullanmıyor — acil temas", border: "border-rose-300", text: "text-rose-700" },
-  paying_active: { tag: "CHAMPION", title: "Ödeyen ve Aktif", hint: "En değerli müşteriler — referans adayı", border: "border-emerald-300", text: "text-emerald-700" },
-  free_active: { tag: "UPGRADE ADAYI", title: "Free ve Aktif", hint: "Aktif kullanıyor — ücretli plan şansı yüksek", border: "border-amber-300", text: "text-amber-700" },
-  free_idle: { tag: "İHMAL", title: "Free ve Pasif", hint: "Ne ödüyor ne kullanıyor — düşük öncelik", border: "border-slate-200", text: "text-slate-600" },
+  paying_idle: { tag: "KRİTİK", title: "Ödeyen ama Pasif", hint: "Para ödüyor ama kullanmıyor — acil temas", border: "border-rose-300", text: "text-rose-700 dark:text-rose-300" },
+  paying_active: { tag: "CHAMPION", title: "Ödeyen ve Aktif", hint: "En değerli müşteriler — referans adayı", border: "border-emerald-300", text: "text-emerald-700 dark:text-emerald-300" },
+  free_active: { tag: "UPGRADE ADAYI", title: "Free ve Aktif", hint: "Aktif kullanıyor — ücretli plan şansı yüksek", border: "border-amber-300", text: "text-amber-700 dark:text-amber-300" },
+  free_idle: { tag: "İHMAL", title: "Free ve Pasif", hint: "Ne ödüyor ne kullanıyor — düşük öncelik", border: "border-slate-200", text: "text-slate-600 dark:text-slate-300" },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -654,9 +654,9 @@ function RetentionTab({ d }: { d: ActivityPanelResponse }) {
 
       {/* Geri dönenler */}
       <Card className="overflow-hidden">
-        <div className="border-b border-border bg-emerald-50/40 px-4 py-2.5">
+        <div className="border-b border-border bg-emerald-50/40 dark:bg-emerald-500/10 px-4 py-2.5">
           <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-            <RotateCcw className="size-4 text-emerald-600" aria-hidden /> Geri Dönen Kullanıcılar ({d.resurrected.length})
+            <RotateCcw className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden /> Geri Dönen Kullanıcılar ({d.resurrected.length})
           </h2>
         </div>
         {d.resurrected.length === 0 ? (
@@ -666,7 +666,7 @@ function RetentionTab({ d }: { d: ActivityPanelResponse }) {
             {d.resurrected.slice(0, 20).map((u) => (
               <li key={u.user_id} className="flex items-center justify-between px-4 py-1.5 text-xs">
                 <span><span className="font-medium">{u.name}</span> <span className="text-muted-foreground">· {u.role}</span></span>
-                <span className="text-[11px] text-emerald-700">{u.gap_days}g sessizlik → döndü</span>
+                <span className="text-[11px] text-emerald-700 dark:text-emerald-300">{u.gap_days}g sessizlik → döndü</span>
               </li>
             ))}
           </ul>
@@ -695,9 +695,9 @@ function OnboardingTable({ d }: { d: ActivityPanelResponse }) {
   const headers = d.onboarding[0].milestones;
   return (
     <Card className="overflow-hidden">
-      <div className="border-b border-border bg-amber-50/40 px-4 py-2.5">
+      <div className="border-b border-border bg-amber-50/40 dark:bg-amber-500/10 px-4 py-2.5">
         <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-          <UserPlus className="size-4 text-amber-600" aria-hidden /> Yeni Hesap Onboarding Durumu
+          <UserPlus className="size-4 text-amber-600 dark:text-amber-300" aria-hidden /> Yeni Hesap Onboarding Durumu
         </h2>
       </div>
       <div className="overflow-x-auto">
@@ -719,12 +719,12 @@ function OnboardingTable({ d }: { d: ActivityPanelResponse }) {
                 <td className="px-3 py-1.5 text-center text-[11px] text-muted-foreground">{o.age_days}g</td>
                 {o.milestones.map((m) => (
                   <td key={m.key} className="px-2 py-1.5 text-center">
-                    {m.done == null ? <span className="text-slate-300">—</span> : m.done ? <span className="text-emerald-600">✓</span> : <span className="text-slate-300">·</span>}
+                    {m.done == null ? <span className="text-slate-300">—</span> : m.done ? <span className="text-emerald-600 dark:text-emerald-300">✓</span> : <span className="text-slate-300">·</span>}
                   </td>
                 ))}
                 <td className="px-3 py-1.5 text-right">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="h-2 w-14 overflow-hidden rounded bg-slate-100">
+                    <span className="h-2 w-14 overflow-hidden rounded bg-slate-100 dark:bg-slate-500/15">
                       <span className={cn("block h-full", o.completion_pct >= 80 ? "bg-emerald-500" : o.completion_pct >= 40 ? "bg-amber-500" : "bg-rose-500")} style={{ width: `${o.completion_pct}%` }} />
                     </span>
                     <span className="font-mono text-[11px] text-muted-foreground">{o.done_count}/{o.total_count}</span>
@@ -751,7 +751,7 @@ function DepthTab({ d }: { d: ActivityPanelResponse }) {
       {/* Oturum süresi */}
       <Card className="p-4">
         <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold">
-          <Timer className="size-4 text-cyan-600" aria-hidden /> Oturum Süresi Dağılımı (son {sd.days_window}g)
+          <Timer className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden /> Oturum Süresi Dağılımı (son {sd.days_window}g)
         </h2>
         {sd.count === 0 ? (
           <p className="py-4 text-center text-sm text-muted-foreground">Bu pencerede sonlanmış oturum yok.</p>
@@ -772,7 +772,7 @@ function DepthTab({ d }: { d: ActivityPanelResponse }) {
       {d.teacher_student_ratios.length > 0 ? (
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
-            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><GraduationCap className="size-4 text-cyan-600" aria-hidden /> Öğretmen × Öğrenci Oranı</h2>
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><GraduationCap className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden /> Öğretmen × Öğrenci Oranı</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -805,7 +805,7 @@ function DepthTab({ d }: { d: ActivityPanelResponse }) {
       {d.feature_popularity.length > 0 ? (
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
-            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Palette className="size-4 text-purple-600" aria-hidden /> Özellik Popülerliği (son 30g)</h2>
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Palette className="size-4 text-purple-600 dark:text-purple-300" aria-hidden /> Özellik Popülerliği (son 30g)</h2>
           </div>
           <div className="divide-y divide-border">
             {d.feature_popularity.map((f) => {
@@ -813,12 +813,12 @@ function DepthTab({ d }: { d: ActivityPanelResponse }) {
               const pct = maxPop > 0 ? Math.round((f.total_events * 100) / maxPop) : 0;
               return (
                 <div key={f.key} className="flex items-center gap-3 px-4 py-2 text-sm">
-                  <Icon className="size-4 shrink-0 text-purple-600" aria-hidden />
+                  <Icon className="size-4 shrink-0 text-purple-600 dark:text-purple-300" aria-hidden />
                   <span className="w-40 shrink-0 font-medium">{f.label}</span>
-                  <div className="h-3 flex-1 overflow-hidden rounded bg-slate-100">
+                  <div className="h-3 flex-1 overflow-hidden rounded bg-slate-100 dark:bg-slate-500/15">
                     <div className={cn("h-full rounded", f.total_events === 0 ? "bg-rose-300" : "bg-purple-500")} style={{ width: `${pct}%` }} />
                   </div>
-                  <span className={cn("w-12 text-right font-mono", f.total_events === 0 ? "text-rose-700" : "text-foreground")}>{f.total_events}</span>
+                  <span className={cn("w-12 text-right font-mono", f.total_events === 0 ? "text-rose-700 dark:text-rose-300" : "text-foreground")}>{f.total_events}</span>
                   <span className="hidden w-28 text-right text-[11px] text-muted-foreground sm:inline">{f.distinct_institutions} kurum · {f.distinct_users} kişi</span>
                 </div>
               );
@@ -831,7 +831,7 @@ function DepthTab({ d }: { d: ActivityPanelResponse }) {
       {d.feature_matrix.rows.length > 0 ? (
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
-            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Palette className="size-4 text-purple-600" aria-hidden /> Özellik Kullanım Matrisi</h2>
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Palette className="size-4 text-purple-600 dark:text-purple-300" aria-hidden /> Özellik Kullanım Matrisi</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-xs">
@@ -851,10 +851,10 @@ function DepthTab({ d }: { d: ActivityPanelResponse }) {
                     <td className="sticky left-0 z-10 bg-card px-3 py-1.5"><OwnerLink ownerType={r.owner_type} name={r.institution_name} url={r.detail_url} /></td>
                     {r.cells.map((c) => (
                       <td key={c.key} className="px-2 py-1.5 text-center">
-                        {c.used ? <span className="inline-block size-5 rounded bg-emerald-500 text-center leading-5 text-white">✓</span> : <span className="inline-block size-5 rounded bg-slate-100 text-center leading-5 text-slate-300">·</span>}
+                        {c.used ? <span className="inline-block size-5 rounded bg-emerald-500 text-center leading-5 text-white">✓</span> : <span className="inline-block size-5 rounded bg-slate-100 dark:bg-slate-500/15 text-center leading-5 text-slate-300">·</span>}
                       </td>
                     ))}
-                    <td className={cn("px-3 py-1.5 text-right font-mono font-semibold", r.adoption_pct >= 60 ? "text-emerald-700" : r.adoption_pct >= 40 ? "text-amber-700" : "text-rose-700")}>%{r.adoption_pct}</td>
+                    <td className={cn("px-3 py-1.5 text-right font-mono font-semibold", r.adoption_pct >= 60 ? "text-emerald-700 dark:text-emerald-300" : r.adoption_pct >= 40 ? "text-amber-700 dark:text-amber-300" : "text-rose-700 dark:text-rose-300")}>%{r.adoption_pct}</td>
                   </tr>
                 ))}
               </tbody>
@@ -913,24 +913,24 @@ function TimeTab({ d, segment, onDrill }: { d: ActivityPanelResponse; segment: A
   return (
     <div className="space-y-5">
       <Card className="p-4">
-        <h2 className="mb-1 inline-flex items-center gap-2 text-sm font-semibold"><MapIcon className="size-4 text-slate-600" aria-hidden /> Saat × Gün Isı Haritası — Son 7 Gün</h2>
+        <h2 className="mb-1 inline-flex items-center gap-2 text-sm font-semibold"><MapIcon className="size-4 text-slate-600 dark:text-slate-300" aria-hidden /> Saat × Gün Isı Haritası — Son 7 Gün</h2>
         <p className="mb-3 text-[11px] text-muted-foreground">Saatler UTC; Türkiye için +3 ekle. Toplam {d.heatmap.total} giriş.</p>
         {d.heatmap.total === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">Bu pencerede giriş yok.</p> : <ActivityHeatmapGrid matrix={d.heatmap.matrix} dayLabels={d.heatmap.day_labels} maxValue={d.heatmap.max_value} />}
       </Card>
 
       <Card className="p-4">
-        <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold"><Gauge className="size-4 text-cyan-600" aria-hidden /> Günlük Aktif Kullanıcı Trendi — Son 14 Gün</h2>
+        <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold"><Gauge className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden /> Günlük Aktif Kullanıcı Trendi — Son 14 Gün</h2>
         <DauTrendChart series={d.dau_trend_14d} />
       </Card>
 
       {segment === "solo" ? (
-        <Card className="border-l-4 border-l-purple-500 bg-purple-50/40 p-3 text-sm text-purple-900">
+        <Card className="border-l-4 border-l-purple-500 bg-purple-50/40 dark:bg-purple-500/10 p-3 text-sm text-purple-900 dark:text-purple-200">
           Isı haritası ve günlük trend sistem genelidir (kurum + bağımsız birleşik). Bireysel görünüm için Risk veya Karşılaştırma sekmelerine bak.
         </Card>
       ) : (
         <Card className="overflow-hidden">
-          <div className="border-b border-border bg-emerald-50/40 px-4 py-2.5">
-            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Trophy className="size-4 text-emerald-600" aria-hidden /> En Aktif Kurumlar</h2>
+          <div className="border-b border-border bg-emerald-50/40 dark:bg-emerald-500/10 px-4 py-2.5">
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Trophy className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden /> En Aktif Kurumlar</h2>
           </div>
           {d.per_tenant.length === 0 ? (
             <p className="p-6 text-center text-sm text-muted-foreground">Veri yok.</p>
@@ -943,8 +943,8 @@ function TimeTab({ d, segment, onDrill }: { d: ActivityPanelResponse; segment: A
                 <tbody className="divide-y divide-border">
                   {d.per_tenant.map((t) => (
                     <tr key={t.tenant_id} className="hover:bg-muted/40">
-                      <td className="px-3 py-1.5"><Link href={`/admin/revenue/institutions/${t.tenant_id}`} className="font-medium text-indigo-700 hover:underline">{t.tenant_name}</Link><div className="text-[10px] text-muted-foreground">{t.plan}</div></td>
-                      <td className={cn("px-3 py-1.5 text-right font-semibold", t.dau === 0 ? "text-rose-700" : "")}>{t.dau}</td>
+                      <td className="px-3 py-1.5"><Link href={`/admin/revenue/institutions/${t.tenant_id}`} className="font-medium text-indigo-700 dark:text-indigo-300 hover:underline">{t.tenant_name}</Link><div className="text-[10px] text-muted-foreground">{t.plan}</div></td>
+                      <td className={cn("px-3 py-1.5 text-right font-semibold", t.dau === 0 ? "text-rose-700 dark:text-rose-300" : "")}>{t.dau}</td>
                       <td className="px-3 py-1.5 text-right text-muted-foreground">{t.wau}</td>
                       <td className="px-3 py-1.5 text-right text-muted-foreground">{t.mau}</td>
                       <td className="px-3 py-1.5 text-center">
@@ -974,7 +974,7 @@ function BenchmarkTab({ d }: { d: ActivityPanelResponse }) {
       {d.plan_benchmark.length > 0 ? (
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
-            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Gauge className="size-4 text-blue-600" aria-hidden /> Plan Başına Benchmark</h2>
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold"><Gauge className="size-4 text-blue-600 dark:text-blue-300" aria-hidden /> Plan Başına Benchmark</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -990,7 +990,7 @@ function BenchmarkTab({ d }: { d: ActivityPanelResponse }) {
                     <td className="px-3 py-1.5 text-right font-mono text-muted-foreground">{r.avg_active_students}</td>
                     <td className="px-3 py-1.5 text-right font-mono">{r.avg_feature_adoption}/{r.feature_total} <span className="text-[10px] text-muted-foreground">(%{r.avg_feature_adoption_pct})</span></td>
                     <td className="px-3 py-1.5 text-right font-mono text-muted-foreground">{r.avg_session_min > 0 ? `${r.avg_session_min}dk` : "—"}</td>
-                    <td className={cn("px-3 py-1.5 text-right font-mono", r.monthly_price > 0 ? "font-semibold text-emerald-700" : "text-muted-foreground")}>{r.monthly_price > 0 ? `${r.monthly_price.toLocaleString("tr-TR")} ₺` : "—"}</td>
+                    <td className={cn("px-3 py-1.5 text-right font-mono", r.monthly_price > 0 ? "font-semibold text-emerald-700 dark:text-emerald-300" : "text-muted-foreground")}>{r.monthly_price > 0 ? `${r.monthly_price.toLocaleString("tr-TR")} ₺` : "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1002,20 +1002,20 @@ function BenchmarkTab({ d }: { d: ActivityPanelResponse }) {
       {/* Champions */}
       {d.champions.length > 0 ? (
         <section>
-          <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold"><Trophy className="size-4 text-emerald-600" aria-hidden /> Champion Hesaplar — En Üst %10</h2>
+          <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold"><Trophy className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden /> Champion Hesaplar — En Üst %10</h2>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {d.champions.map((c, i) => (
               <Card key={`${c.owner_id}-${i}`} className="border-2 border-emerald-300 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase text-emerald-700">
+                    <div className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-300">
                       <Award className="size-3.5" aria-hidden /> Champion <OwnerBadge ownerType={c.owner_type} />
                     </div>
                     <Link href={c.detail_url} className="block truncate text-sm font-semibold hover:text-emerald-700 hover:underline">{c.institution_name}</Link>
                     <div className="font-mono text-[10px] text-muted-foreground">{c.plan}{c.is_paying ? " · ödeyen" : ""}</div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="text-2xl font-bold text-emerald-700">{c.score}</div>
+                    <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{c.score}</div>
                     <div className="text-[9px] text-muted-foreground">skor / 100</div>
                   </div>
                 </div>
@@ -1027,7 +1027,7 @@ function BenchmarkTab({ d }: { d: ActivityPanelResponse }) {
                 </div>
                 <div className="mt-2 border-t border-emerald-100 pt-2">
                   <SuggestionPopover suggestions={d.action_suggestions.champion ?? []} />
-                  <Link href={`${c.detail_url}?tab=actions`} className="ml-2 inline-flex items-center gap-0.5 text-[11px] text-emerald-700 hover:underline">
+                  <Link href={`${c.detail_url}?tab=actions`} className="ml-2 inline-flex items-center gap-0.5 text-[11px] text-emerald-700 dark:text-emerald-300 hover:underline">
                     CRM aksiyonu <ChevronRight className="size-3" aria-hidden />
                   </Link>
                 </div>

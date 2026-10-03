@@ -215,7 +215,7 @@ function InvitationRow({
             variant="ghost"
             size="sm"
             onClick={onRevoke}
-            className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+            className="text-rose-600 dark:text-rose-300 hover:text-rose-700 hover:bg-rose-50"
           >
             İptal et
           </Button>
@@ -281,12 +281,12 @@ function StatusBadge({ status }: { status: InvitationStatus }) {
   > = {
     pending: {
       label: "bekliyor",
-      cls: "bg-amber-100 text-amber-800 border-amber-200",
+      cls: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-200",
       icon: "⏳",
     },
     consumed: {
       label: "kullanıldı",
-      cls: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      cls: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-200",
       icon: "✓",
     },
     expired: {
@@ -296,7 +296,7 @@ function StatusBadge({ status }: { status: InvitationStatus }) {
     },
     revoked: {
       label: "iptal",
-      cls: "bg-rose-100 text-rose-800 border-rose-200",
+      cls: "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 border-rose-200",
       icon: "",
     },
   };
@@ -347,7 +347,7 @@ function LinkCopyControl({ url }: { url: string }) {
         aria-label="Linki kopyala"
       >
         {copied ? (
-          <Check className="size-3.5 text-emerald-600" aria-hidden />
+          <Check className="size-3.5 text-emerald-600 dark:text-emerald-300" aria-hidden />
         ) : (
           <Copy className="size-3.5" aria-hidden />
         )}

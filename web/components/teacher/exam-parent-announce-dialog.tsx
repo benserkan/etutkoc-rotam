@@ -221,7 +221,7 @@ export function ExamParentAnnounceDialog({
       <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="inline-flex items-center gap-2">
-            <Mail className="size-5 text-teal-600" aria-hidden />
+            <Mail className="size-5 text-teal-600 dark:text-teal-300" aria-hidden />
             {sentMode
               ? "Veliye gönderilen mail"
               : "Veliye duyur — önizle ve düzenle"}
@@ -502,7 +502,7 @@ export function ExamParentAnnounceDialog({
                               </span>
                               {s.unmatched ? (
                                 <span
-                                  className="ml-1 rounded bg-amber-500 px-1 py-px text-[9px] font-semibold uppercase text-white"
+                                  className="ml-1 rounded bg-amber-500 px-1 py-px text-[9px] font-semibold uppercase text-amber-950"
                                   title="Bu satır müfredat dersine bağlanmadı — 'Satırları düzelt' ile bağlayabilirsiniz"
                                 >
                                   bağlanmadı
@@ -711,7 +711,7 @@ export function ExamParentAnnounceDialog({
                       key={r.parent_id}
                       className="flex items-center gap-2 text-xs"
                     >
-                      <Mail className="size-3 text-teal-600" aria-hidden />
+                      <Mail className="size-3 text-teal-600 dark:text-teal-300" aria-hidden />
                       <span className="font-medium text-foreground">{r.name}</span>
                       <span className="text-muted-foreground">· gidecek</span>
                     </li>

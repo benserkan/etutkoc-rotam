@@ -52,7 +52,7 @@ export function AdminRevenueCohortClient({ initial }: Props) {
       <header>
         <span className="text-sm text-muted-foreground">Ticari Pano</span>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <BarChart3 className="size-6 text-indigo-700" aria-hidden />
+          <BarChart3 className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           Kohort &amp; Müşteri Yaşam Değeri
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -235,7 +235,7 @@ export function AdminRevenueCohortClient({ initial }: Props) {
                     {p.monthly_price_try > 0 ? tl(p.monthly_price_try) : "—"}
                   </td>
                   <td className="px-4 py-2 text-right font-mono text-muted-foreground">{p.avg_age_months}</td>
-                  <td className={cn("px-4 py-2 text-right font-mono font-semibold", p.monthly_price_try > 0 ? "text-emerald-700" : "text-muted-foreground")}>
+                  <td className={cn("px-4 py-2 text-right font-mono font-semibold", p.monthly_price_try > 0 ? "text-emerald-700 dark:text-emerald-300" : "text-muted-foreground")}>
                     {p.monthly_price_try > 0 ? tl(p.estimated_ltv_try) : "—"}
                   </td>
                 </tr>

@@ -106,7 +106,7 @@ export function AdminAuditClient({
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <FileText className="size-6 text-violet-700" aria-hidden />
+          <FileText className="size-6 text-violet-700 dark:text-violet-300" aria-hidden />
           Denetim Kaydı (Audit Log)
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -118,11 +118,11 @@ export function AdminAuditClient({
 
       {/* Help collapse */}
       <details className="rounded-md border border-sky-200 bg-sky-50/40 dark:bg-sky-500/10 dark:border-sky-500/30">
-        <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-sky-900 hover:bg-sky-100/60 inline-flex items-center gap-1.5 w-full">
+        <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-sky-900 dark:text-sky-200 hover:bg-sky-100/60 inline-flex items-center gap-1.5 w-full">
           <Info className="size-4" aria-hidden />
           Bu sayfada ne yazıyor? (terim açıklamaları)
         </summary>
-        <div className="px-4 py-3 text-sm text-sky-900 space-y-2 border-t border-sky-200">
+        <div className="px-4 py-3 text-sm text-sky-900 dark:text-sky-200 space-y-2 border-t border-sky-200">
           <div>
             <strong>Denetim kaydı</strong> — sistemde kim ne yaptı, ne zaman
             yaptı izleyen kalıcı log. Silinemez, sadece eklenir.
@@ -316,7 +316,7 @@ function AuditRow({ item }: { item: AuditListItem }) {
     <tr
       className={cn(
         item.via_admin_id != null &&
-          "bg-violet-50 border-l-4 border-violet-400",
+          "bg-violet-50 dark:bg-violet-500/15 dark:border-violet-500/30 border-l-4 border-violet-400",
       )}
       title={
         item.via_admin_id != null ? "Sahte oturum sırasında yapıldı" : undefined
@@ -335,7 +335,7 @@ function AuditRow({ item }: { item: AuditListItem }) {
         {item.actor ? (
           <Link
             href={`/admin/users/${item.actor.id}`}
-            className="text-indigo-600 hover:text-indigo-800"
+            className="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
           >
             {item.actor.full_name}
           </Link>
@@ -345,7 +345,7 @@ function AuditRow({ item }: { item: AuditListItem }) {
           "—"
         )}
         {item.via_admin && (
-          <div className="text-[10px] text-violet-700 mt-0.5 inline-flex items-center gap-1">
+          <div className="text-[10px] text-violet-700 dark:text-violet-300 mt-0.5 inline-flex items-center gap-1">
             <Drama className="size-3" aria-hidden />
             sahte oturum:{" "}
             <Link
@@ -403,19 +403,19 @@ function DetailCell({ item }: { item: AuditListItem }) {
   if (hasDiff) {
     return (
       <details className="group">
-        <summary className="cursor-pointer text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+        <summary className="cursor-pointer text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 text-xs font-medium">
           ↳ Değişim diff&apos;i (önce / sonra)
         </summary>
         <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
           <div className="bg-rose-50 border border-rose-200 rounded p-2 dark:bg-rose-500/10 dark:border-rose-500/30">
-            <div className="text-rose-700 font-semibold mb-1">ÖNCE</div>
-            <pre className="text-rose-900 whitespace-pre-wrap break-words font-mono">
+            <div className="text-rose-700 dark:text-rose-300 font-semibold mb-1">ÖNCE</div>
+            <pre className="text-rose-900 dark:text-rose-200 whitespace-pre-wrap break-words font-mono">
               {"before" in parsed ? JSON.stringify(parsed.before, null, 2) : "—"}
             </pre>
           </div>
           <div className="bg-emerald-50 border border-emerald-200 rounded p-2 dark:bg-emerald-500/10 dark:border-emerald-500/30">
-            <div className="text-emerald-700 font-semibold mb-1">SONRA</div>
-            <pre className="text-emerald-900 whitespace-pre-wrap break-words font-mono">
+            <div className="text-emerald-700 dark:text-emerald-300 font-semibold mb-1">SONRA</div>
+            <pre className="text-emerald-900 dark:text-emerald-200 whitespace-pre-wrap break-words font-mono">
               {"after" in parsed ? JSON.stringify(parsed.after, null, 2) : "—"}
             </pre>
           </div>
@@ -494,20 +494,20 @@ function actionToneClass(action: string): string {
       "institution_delete",
     ].includes(action)
   ) {
-    return "text-rose-700 font-medium";
+    return "text-rose-700 dark:text-rose-300 font-medium";
   }
   if (["login_success", "logout"].includes(action)) {
-    return "text-emerald-700";
+    return "text-emerald-700 dark:text-emerald-300";
   }
   if (action.startsWith("impersonate")) {
-    return "text-violet-700 font-semibold";
+    return "text-violet-700 dark:text-violet-300 font-semibold";
   }
   if (
     action.startsWith("user_") ||
     action.startsWith("institution_") ||
     action === "role_change"
   ) {
-    return "text-indigo-700";
+    return "text-indigo-700 dark:text-indigo-300";
   }
   return "text-foreground/80";
 }

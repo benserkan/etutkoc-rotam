@@ -361,7 +361,7 @@ function EmptyState() {
     <Card>
       <CardContent className="p-12 text-center">
         <PartyPopper
-          className="size-12 mx-auto text-emerald-600 mb-3"
+          className="size-12 mx-auto text-emerald-600 dark:text-emerald-300 mb-3"
           aria-hidden
         />
         <h2 className="text-lg font-semibold mb-1">

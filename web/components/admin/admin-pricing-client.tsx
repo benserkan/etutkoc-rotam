@@ -53,7 +53,7 @@ export function AdminPricingClient({ initial }: { initial: PricingAdminResponse 
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-semibold">
-            <CircleDollarSign className="size-5 text-emerald-700" aria-hidden /> Ücretlendirme
+            <CircleDollarSign className="size-5 text-emerald-700 dark:text-emerald-300" aria-hidden /> Ücretlendirme
           </h1>
           <p className="text-sm text-muted-foreground">
             Üyelik fiyat/limitleri. Buradaki değerler <strong>/pricing sayfası, koç Paket

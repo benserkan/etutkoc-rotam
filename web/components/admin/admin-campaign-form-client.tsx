@@ -149,7 +149,7 @@ export function AdminCampaignFormClient({ meta }: Props) {
                 onClick={() => onSelectSegment(s.value)}
                 className={cn(
                   "rounded-lg border-2 p-3 text-left transition-colors",
-                  segment === s.value ? "border-indigo-500 bg-indigo-50/50" : "border-border hover:border-foreground/30",
+                  segment === s.value ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10" : "border-border hover:border-foreground/30",
                 )}
               >
                 <div className="text-sm font-semibold">{s.label}</div>
@@ -180,7 +180,7 @@ export function AdminCampaignFormClient({ meta }: Props) {
                 "rounded-lg border p-3",
                 preview.count > 0 ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30" : "border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30",
               )}>
-                <div className={cn("text-sm font-semibold", preview.count > 0 ? "text-emerald-900" : "text-amber-900")}>
+                <div className={cn("text-sm font-semibold", preview.count > 0 ? "text-emerald-900 dark:text-emerald-200" : "text-amber-900 dark:text-amber-200")}>
                   {preview.count === 0 ? "Bu segmentte şu anda hedef bulunamadı." : `${preview.count} hedef`}
                   {preview.count > 0 ? (
                     <span className="ml-1 inline-flex items-center gap-2 text-xs font-normal">

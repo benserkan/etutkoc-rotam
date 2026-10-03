@@ -103,7 +103,7 @@ export function ParentSupportClient({ initial, childList }: { initial: SupportLi
                 <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={4000} rows={4}
                   placeholder="Koçunuza iletmek istediğiniz soru/talep…" className="mt-1 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm" />
               </div>
-              {err ? <p className="text-sm text-rose-600">{err}</p> : null}
+              {err ? <p className="text-sm text-rose-600 dark:text-rose-300">{err}</p> : null}
             </div>
 
             <div className="mt-4 flex gap-2">

@@ -38,10 +38,10 @@ interface Props {
 
 const TYPES: Array<{ key: string | null; label: string; tone?: string }> = [
   { key: null, label: "Tümü" },
-  { key: "commercial", label: "Ticari", tone: "text-emerald-700" },
-  { key: "signup", label: "Yeni kayıt", tone: "text-sky-700" },
-  { key: "invitation", label: "Davetler", tone: "text-violet-700" },
-  { key: "change", label: "Plan değişimi", tone: "text-amber-700" },
+  { key: "commercial", label: "Ticari", tone: "text-emerald-700 dark:text-emerald-300" },
+  { key: "signup", label: "Yeni kayıt", tone: "text-sky-700 dark:text-sky-300" },
+  { key: "invitation", label: "Davetler", tone: "text-violet-700 dark:text-violet-300" },
+  { key: "change", label: "Plan değişimi", tone: "text-amber-700 dark:text-amber-300" },
 ];
 
 const DAYS_OPTIONS = [
@@ -80,16 +80,16 @@ function categoryIcon(it: ActivityStreamItem): React.ReactNode {
 
 function itemTone(it: ActivityStreamItem): { wrap: string; badge: string } {
   if (it.type === "plan_upgrade") {
-    return { wrap: "border-emerald-300 bg-emerald-50/40", badge: "bg-emerald-600 text-white" };
+    return { wrap: "border-emerald-300 bg-emerald-50/40 dark:bg-emerald-500/10", badge: "bg-emerald-600 text-white" };
   }
   if (it.is_commercial) {
-    return { wrap: "border-emerald-200 bg-emerald-50/30 dark:bg-emerald-500/10 dark:border-emerald-500/30", badge: "bg-emerald-100 text-emerald-800" };
+    return { wrap: "border-emerald-200 bg-emerald-50/30 dark:bg-emerald-500/10 dark:border-emerald-500/30", badge: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" };
   }
   if (it.category === "signup") {
-    return { wrap: "border-sky-200", badge: "bg-sky-100 text-sky-800" };
+    return { wrap: "border-sky-200", badge: "bg-sky-100 dark:bg-sky-500/15 text-sky-800 dark:text-sky-200" };
   }
   if (it.category === "invitation") {
-    return { wrap: "border-violet-200", badge: "bg-violet-100 text-violet-800" };
+    return { wrap: "border-violet-200", badge: "bg-violet-100 dark:bg-violet-500/15 text-violet-800 dark:text-violet-200" };
   }
   return { wrap: "border-border", badge: "bg-muted text-muted-foreground" };
 }
@@ -114,7 +114,7 @@ export function ActivityStreamPage({
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold">
-          <Activity className="size-6 text-indigo-700" aria-hidden />
+          <Activity className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
           {title}
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
@@ -244,7 +244,7 @@ export function ActivityStreamPage({
                         <div className="flex flex-wrap items-baseline gap-x-2">
                           <span className={cn(
                             "text-sm font-medium",
-                            it.type === "plan_upgrade" && "text-emerald-800",
+                            it.type === "plan_upgrade" && "text-emerald-800 dark:text-emerald-200",
                           )}>
                             {it.title}
                           </span>

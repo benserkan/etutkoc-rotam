@@ -83,9 +83,9 @@ function SurveyRow({ row, done }: { row: SurveyAssignmentRow; done?: boolean }) 
         className="flex items-center gap-3 rounded-lg border border-border p-3 hover:border-cyan-300 hover:bg-muted/40 transition"
       >
         {done ? (
-          <CheckCircle2 className="size-5 shrink-0 text-emerald-600" aria-hidden />
+          <CheckCircle2 className="size-5 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
         ) : (
-          <Clock className="size-5 shrink-0 text-amber-600" aria-hidden />
+          <Clock className="size-5 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
         )}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium truncate">{row.template.title}</p>
@@ -102,7 +102,7 @@ function SurveyRow({ row, done }: { row: SurveyAssignmentRow; done?: boolean }) 
             </p>
           ) : null}
         </div>
-        <span className="shrink-0 text-xs font-medium text-cyan-700">
+        <span className="shrink-0 text-xs font-medium text-cyan-700 dark:text-cyan-300">
           {done ? "Sonuç →" : started ? "Devam et →" : "Başla →"}
         </span>
       </Link>

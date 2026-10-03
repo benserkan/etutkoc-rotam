@@ -61,7 +61,7 @@ export function SecurityAbuseClient({ initial, onlyOpen, kind }: Props) {
           ← Güvenlik Kamarası
         </Link>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <Flame className="size-6 text-orange-600" aria-hidden />
+          <Flame className="size-6 text-orange-600 dark:text-orange-300" aria-hidden />
           Kötüye Kullanım Kamerası
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -134,16 +134,16 @@ export function SecurityAbuseClient({ initial, onlyOpen, kind }: Props) {
                       </td>
                       <td className="px-3 py-1.5">
                         <span className={cn("rounded-full border px-2 py-0.5 text-[11px]", toneBadge(sevColor))}>{meta.severity_labels[s.severity] ?? s.severity}</span>
-                        {s.resolved_at ? <span className="ml-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-700">çözüldü</span> : null}
+                        {s.resolved_at ? <span className="ml-1 rounded bg-emerald-100 dark:bg-emerald-500/15 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:text-emerald-300">çözüldü</span> : null}
                       </td>
                       <td className="px-3 py-1.5 text-xs">
                         {s.actor_full_name ? (
                           <>
-                            <Link href={`/admin/users/${s.actor_user_id}`} className="inline-flex items-center gap-1 font-medium text-indigo-600 hover:underline"><UserRound className="size-3" aria-hidden />{s.actor_full_name}</Link>
+                            <Link href={`/admin/users/${s.actor_user_id}`} className="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-300 hover:underline"><UserRound className="size-3" aria-hidden />{s.actor_full_name}</Link>
                             <div className="text-muted-foreground">{s.actor_email}</div>
                           </>
                         ) : s.tenant_name ? (
-                          <Link href={`/admin/institutions/${s.tenant_id}`} className="inline-flex items-center gap-1 font-medium text-indigo-600 hover:underline"><Building2 className="size-3" aria-hidden />{s.tenant_name}</Link>
+                          <Link href={`/admin/institutions/${s.tenant_id}`} className="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-300 hover:underline"><Building2 className="size-3" aria-hidden />{s.tenant_name}</Link>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
@@ -158,7 +158,7 @@ export function SecurityAbuseClient({ initial, onlyOpen, kind }: Props) {
                                 <Zap className="size-3" aria-hidden /> {actLabel}
                               </button>
                             ) : null}
-                            <button type="button" className="text-xs font-medium text-emerald-600 hover:text-emerald-800" onClick={() => { setResolveFor(s); setResolveNote(""); }}>Çöz</button>
+                            <button type="button" className="text-xs font-medium text-emerald-600 dark:text-emerald-300 hover:text-emerald-800" onClick={() => { setResolveFor(s); setResolveNote(""); }}>Çöz</button>
                           </div>
                         ) : null}
                       </td>

@@ -30,10 +30,10 @@ export function ActivityHeatmapGrid({
   maxValue: number;
 }) {
   function cellClass(v: number): string {
-    if (maxValue <= 0 || v === 0) return "bg-slate-50 text-slate-300";
+    if (maxValue <= 0 || v === 0) return "bg-slate-50 dark:bg-slate-500/15 text-slate-300";
     const intensity = (v * 100) / maxValue;
-    if (intensity < 20) return "bg-indigo-100 text-indigo-700";
-    if (intensity < 50) return "bg-indigo-300 text-indigo-900";
+    if (intensity < 20) return "bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300";
+    if (intensity < 50) return "bg-indigo-300 text-indigo-900 dark:text-indigo-200";
     if (intensity < 80) return "bg-indigo-500 text-white";
     return "bg-indigo-700 text-white font-semibold";
   }
@@ -168,7 +168,7 @@ export function SessionBandsBar({
         return (
           <div key={key} className="flex items-center gap-2 text-xs">
             <div className="w-16 text-muted-foreground">{label}</div>
-            <div className="relative h-5 flex-1 overflow-hidden rounded bg-slate-100">
+            <div className="relative h-5 flex-1 overflow-hidden rounded bg-slate-100 dark:bg-slate-500/15">
               <div className={cn("absolute inset-y-0 left-0 rounded", color)} style={{ width: `${pct}%` }} />
             </div>
             <div className="w-10 text-right font-mono text-muted-foreground">{v}</div>

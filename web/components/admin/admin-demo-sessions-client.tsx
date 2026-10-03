@@ -81,7 +81,7 @@ export function AdminDemoSessionsClient({ initial }: Props) {
     <div className="px-3 sm:px-6 py-4 max-w-5xl mx-auto">
       <header className="mb-5">
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <FlaskConical className="size-6 text-amber-700" aria-hidden />
+          <FlaskConical className="size-6 text-amber-700 dark:text-amber-300" aria-hidden />
           Demo Hesaplar
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -159,7 +159,7 @@ function UniverseCreator() {
       <Card className="mb-5 border-cyan-200 dark:border-cyan-500/30">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Building2 className="size-4 text-cyan-700" aria-hidden />
+            <Building2 className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
             <h2 className="text-sm font-semibold">
               Dolu Kurumsal Evren Oluştur
             </h2>
@@ -246,7 +246,7 @@ function UniverseCreator() {
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FlaskConical className="size-4 text-cyan-700" aria-hidden />
+              <FlaskConical className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
               {result?.label} — hesaplar hazırlanıyor
             </DialogTitle>
           </DialogHeader>
@@ -323,7 +323,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-2">
                 <FlaskConical
-                  className="size-4 text-amber-700 flex-shrink-0"
+                  className="size-4 text-amber-700 dark:text-amber-300 flex-shrink-0"
                   aria-hidden
                 />
                 {item.label ? (
@@ -371,7 +371,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
               variant="outline"
               size="sm"
               onClick={() => setConfirmOpen(true)}
-              className="border-rose-300 text-rose-700 hover:bg-rose-50"
+              className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-50"
             >
               <Trash2 className="size-3.5" aria-hidden />
               Sil
@@ -384,7 +384,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-rose-800">
+            <DialogTitle className="flex items-center gap-2 text-rose-800 dark:text-rose-200">
               <Trash2 className="size-4" aria-hidden />
               Bu demo seansını sil?
             </DialogTitle>

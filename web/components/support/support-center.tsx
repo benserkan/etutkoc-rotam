@@ -56,7 +56,7 @@ const FIELD =
 // mor cevap geldi (dikkat) · yeşil çözüldü · gri geri çekildi.
 const STATUS_TONE: Record<SupportStatus, { chip: string; bar: string }> = {
   open: { chip: "bg-cyan-700 text-white", bar: "bg-cyan-600" },
-  under_review: { chip: "bg-amber-500 text-white", bar: "bg-amber-500" },
+  under_review: { chip: "bg-amber-500 text-amber-950", bar: "bg-amber-500" },
   answered: { chip: "bg-violet-600 text-white", bar: "bg-violet-600" },
   resolved: { chip: "bg-emerald-600 text-white", bar: "bg-emerald-600" },
   withdrawn: { chip: "bg-slate-500 text-white", bar: "bg-slate-400" },
@@ -435,7 +435,7 @@ function RequestDetail({
                     className="size-9 rounded object-cover"
                   />
                 ) : (
-                  <span className="flex size-9 items-center justify-center rounded bg-rose-100 text-rose-700">
+                  <span className="flex size-9 items-center justify-center rounded bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300">
                     <FileText className="size-4" aria-hidden />
                   </span>
                 )}

@@ -26,9 +26,9 @@ import { cn } from "@/lib/utils";
 
 function accTone(pct: number | null): { text: string; bar: string; bg: string } {
   if (pct == null) return { text: "text-muted-foreground", bar: "bg-slate-300", bg: "bg-muted" };
-  if (pct >= 70) return { text: "text-emerald-700", bar: "bg-emerald-500", bg: "bg-emerald-50" };
-  if (pct >= 40) return { text: "text-amber-700", bar: "bg-amber-500", bg: "bg-amber-50" };
-  return { text: "text-rose-700", bar: "bg-rose-500", bg: "bg-rose-50" };
+  if (pct >= 70) return { text: "text-emerald-700 dark:text-emerald-300", bar: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-500/15" };
+  if (pct >= 40) return { text: "text-amber-700 dark:text-amber-300", bar: "bg-amber-500", bg: "bg-amber-50 dark:bg-amber-500/15" };
+  return { text: "text-rose-700 dark:text-rose-300", bar: "bg-rose-500", bg: "bg-rose-50 dark:bg-rose-500/15" };
 }
 
 function AccBadge({ pct }: { pct: number | null }) {
@@ -160,7 +160,7 @@ export function TopicPerformancePanel({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">{s.subject_name}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {s.tests_solved} test · {s.topics.length} konu · <span className="text-emerald-600">{s.correct}D</span> / <span className="text-rose-600">{s.wrong}Y</span>
+                    {s.tests_solved} test · {s.topics.length} konu · <span className="text-emerald-600 dark:text-emerald-300">{s.correct}D</span> / <span className="text-rose-600 dark:text-rose-300">{s.wrong}Y</span>
                   </p>
                 </div>
                 <AccBadge pct={s.accuracy_pct} />
@@ -186,8 +186,8 @@ export function TopicPerformancePanel({
                         </div>
                         <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
                           <span className="inline-flex items-center gap-0.5"><Target className="size-3" aria-hidden /> {tp.tests_solved} test</span>
-                          <span className="inline-flex items-center gap-0.5 text-emerald-600"><CheckCircle2 className="size-3" aria-hidden /> {tp.correct}</span>
-                          <span className="inline-flex items-center gap-0.5 text-rose-600"><XCircle className="size-3" aria-hidden /> {tp.wrong}</span>
+                          <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-300"><CheckCircle2 className="size-3" aria-hidden /> {tp.correct}</span>
+                          <span className="inline-flex items-center gap-0.5 text-rose-600 dark:text-rose-300"><XCircle className="size-3" aria-hidden /> {tp.wrong}</span>
                           {tp.last_solved_at ? <span className="ml-auto">son: {fmtDate(tp.last_solved_at)}</span> : null}
                         </div>
                         {tp.accuracy_pct != null ? (
@@ -210,7 +210,7 @@ export function TopicPerformancePanel({
 
 function SummaryCard({ label, value, tone }: { label: string; value: string; tone?: "emerald" | "amber" | "rose" }) {
   const toneCls =
-    tone === "emerald" ? "text-emerald-700" : tone === "amber" ? "text-amber-700" : tone === "rose" ? "text-rose-700" : "text-foreground";
+    tone === "emerald" ? "text-emerald-700 dark:text-emerald-300" : tone === "amber" ? "text-amber-700 dark:text-amber-300" : tone === "rose" ? "text-rose-700 dark:text-rose-300" : "text-foreground";
   return (
     <div className="rounded-xl border border-border bg-card px-3 py-2.5">
       <p className={cn("text-xl font-bold tabular-nums", toneCls)}>{value}</p>

@@ -158,7 +158,7 @@ export function CurriculumMappingModal({
                           className={cn(
                             "w-full rounded-md border border-input bg-background px-2 py-1 text-sm",
                             suggested && valueFor(r) === r.suggested_topic_id &&
-                              "border-amber-400 bg-amber-50 text-amber-900",
+                              "border-amber-400 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200",
                           )}
                         >
                           <option value="">— eşleşmemiş —</option>
@@ -171,15 +171,15 @@ export function CurriculumMappingModal({
                       </td>
                       <td className="px-3 py-2 align-top">
                         {r.source === "mapped" ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 dark:text-emerald-300">
                             <Check className="size-3" aria-hidden /> eşli
                           </span>
                         ) : r.source === "auto" ? (
-                          <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800">
+                          <span className="rounded bg-sky-100 dark:bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:text-sky-200">
                             otomatik
                           </span>
                         ) : r.source === "ai" ? (
-                          <span className="inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-800">
+                          <span className="inline-flex items-center gap-1 rounded bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-medium text-violet-800 dark:text-violet-200">
                             <Sparkles className="size-2.5" aria-hidden /> AI
                             {r.confidence ? ` · ${r.confidence}` : ""}
                           </span>

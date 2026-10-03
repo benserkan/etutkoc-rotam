@@ -57,15 +57,15 @@ function SummaryCard({ s }: { s: NotifWindowSummary }) {
       <p className="text-[11px] text-muted-foreground">başarı oranı (gönderildi / gönderildi+başarısız)</p>
       <div className="mt-3 grid grid-cols-4 gap-2 text-center">
         <div>
-          <div className="text-base font-semibold tabular-nums text-emerald-600">{s.sent}</div>
+          <div className="text-base font-semibold tabular-nums text-emerald-600 dark:text-emerald-300">{s.sent}</div>
           <div className="text-[10px] text-muted-foreground">Gönderildi</div>
         </div>
         <div>
-          <div className="text-base font-semibold tabular-nums text-rose-600">{s.failed}</div>
+          <div className="text-base font-semibold tabular-nums text-rose-600 dark:text-rose-300">{s.failed}</div>
           <div className="text-[10px] text-muted-foreground">Başarısız</div>
         </div>
         <div>
-          <div className="text-base font-semibold tabular-nums text-amber-600">{s.queued}</div>
+          <div className="text-base font-semibold tabular-nums text-amber-600 dark:text-amber-300">{s.queued}</div>
           <div className="text-[10px] text-muted-foreground">Kuyrukta</div>
         </div>
         <div>
@@ -96,7 +96,7 @@ function MatrixTable({
     <Card className="overflow-hidden">
       <div className="border-b border-border px-4 py-2.5">
         <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-          <Icon className="size-4 text-indigo-600" aria-hidden />
+          <Icon className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden />
           {title}
         </h2>
       </div>
@@ -128,7 +128,7 @@ function MatrixTable({
                           className={cn(
                             "px-3 py-1.5 text-right tabular-nums",
                             v === 0 && "text-muted-foreground/40",
-                            st === "failed" && v > 0 && "font-medium text-rose-600",
+                            st === "failed" && v > 0 && "font-medium text-rose-600 dark:text-rose-300",
                           )}
                         >
                           {v}
@@ -162,7 +162,7 @@ export function SecurityNotificationsClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <BellRing className="size-6 text-slate-700" aria-hidden />
+          <BellRing className="size-6 text-slate-700 dark:text-slate-300" aria-hidden />
           Bildirim Sağlığı
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -184,8 +184,8 @@ export function SecurityNotificationsClient({ initial }: Props) {
           className={cn(
             "flex items-center gap-3 border-l-4 p-3 text-sm",
             d.oldest_queued_minutes >= 60
-              ? "border-l-rose-500 bg-rose-50/40 text-rose-800"
-              : "border-l-amber-500 bg-amber-50/40 text-amber-800",
+              ? "border-l-rose-500 bg-rose-50/40 dark:bg-rose-500/10 text-rose-800 dark:text-rose-200"
+              : "border-l-amber-500 bg-amber-50/40 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200",
           )}
         >
           <Clock className="size-5 shrink-0" aria-hidden />
@@ -197,7 +197,7 @@ export function SecurityNotificationsClient({ initial }: Props) {
       <section>
         <Card className="p-4">
           <h2 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold">
-            <TrendingUp className="size-4 text-indigo-600" aria-hidden />
+            <TrendingUp className="size-4 text-indigo-600 dark:text-indigo-300" aria-hidden />
             Son 7 gün teslimat trendi
           </h2>
           <NotifTrendBarChart series={d.daily_trend_7d} />
@@ -215,7 +215,7 @@ export function SecurityNotificationsClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <ShieldOff className="size-4 text-slate-600" aria-hidden />
+              <ShieldOff className="size-4 text-slate-600 dark:text-slate-300" aria-hidden />
               Engellenme nedenleri (24s)
             </h2>
           </div>
@@ -236,7 +236,7 @@ export function SecurityNotificationsClient({ initial }: Props) {
         <Card className="overflow-hidden">
           <div className="border-b border-border px-4 py-2.5">
             <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-              <XCircle className="size-4 text-rose-600" aria-hidden />
+              <XCircle className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
               Son başarısız gönderimler (24s)
             </h2>
           </div>
@@ -264,7 +264,7 @@ export function SecurityNotificationsClient({ initial }: Props) {
                       <td className="px-3 py-1.5 text-muted-foreground">
                         {CHANNEL_LABEL[f.channel] ?? f.channel}
                       </td>
-                      <td className="px-3 py-1.5 text-[11px] text-rose-600" title={f.error}>
+                      <td className="px-3 py-1.5 text-[11px] text-rose-600 dark:text-rose-300" title={f.error}>
                         <span className="line-clamp-2">{f.error || "—"}</span>
                       </td>
                     </tr>

@@ -33,7 +33,7 @@ export function AdminFeatureExperimentsClient({ initial }: Props) {
             ← Vitrin Kartları
           </Link>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <ListChecks className="size-6 text-indigo-700" aria-hidden />
+            <ListChecks className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
             A/B Deneyleri
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -57,7 +57,7 @@ export function AdminFeatureExperimentsClient({ initial }: Props) {
           <div className="mt-3">
             <Link
               href="/admin/feature-catalog/experiments/new"
-              className="text-indigo-600 hover:text-indigo-800"
+              className="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
             >
               Yeni deney oluştur →
             </Link>
@@ -106,7 +106,7 @@ export function AdminFeatureExperimentsClient({ initial }: Props) {
                           {v.label}
                           <span className="text-muted-foreground"> · </span>%{v.weight}
                           {v.pool_label ? (
-                            <span className="ml-1 rounded bg-cyan-100 px-1 py-0.5 text-[10px] font-medium text-cyan-900">
+                            <span className="ml-1 rounded bg-cyan-100 dark:bg-cyan-500/15 px-1 py-0.5 text-[10px] font-medium text-cyan-900 dark:text-cyan-200">
                               {v.pool}
                             </span>
                           ) : null}
@@ -119,7 +119,7 @@ export function AdminFeatureExperimentsClient({ initial }: Props) {
                     <td className="px-3 py-3 text-right align-top">
                       <Link
                         href={`/admin/feature-catalog/experiments/${e.id}`}
-                        className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                        className="text-xs font-medium text-indigo-600 dark:text-indigo-300 hover:text-indigo-800"
                       >
                         Aç →
                       </Link>

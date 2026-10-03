@@ -61,7 +61,7 @@ export function BulkSendWizard() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 font-semibold">
           <MessageSquare className="inline size-3.5 mr-1" aria-hidden />
           Toplu WhatsApp Gönderim Sihirbazı
         </p>
@@ -486,7 +486,7 @@ function TargetList({
           <Users className="size-3.5" aria-hidden />
           {data.total} kişi · <strong>{data.eligible.length}</strong> gönderilebilir
           {data.no_phone.length > 0 ? (
-            <span className="text-amber-700 ml-1">
+            <span className="text-amber-700 dark:text-amber-300 ml-1">
               · {data.no_phone.length} telefon yok
             </span>
           ) : null}
@@ -516,7 +516,7 @@ function TargetList({
               key={c.user_id}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/40 cursor-pointer",
-                selectedIds.has(c.user_id) && "bg-emerald-50",
+                selectedIds.has(c.user_id) && "bg-emerald-50 dark:bg-emerald-500/15",
               )}
               onClick={() => onToggle(c.user_id)}
             >
@@ -541,7 +541,7 @@ function TargetList({
 
       {data.no_phone.length > 0 ? (
         <details className="text-xs">
-          <summary className="cursor-pointer text-amber-800">
+          <summary className="cursor-pointer text-amber-800 dark:text-amber-200">
             ⚠ {data.no_phone.length} kişinin telefonu doğrulanmamış (görüntüle)
           </summary>
           <ul className="mt-1 ml-4 list-disc text-muted-foreground">
@@ -688,7 +688,7 @@ function ModeOption({
       className={cn(
         "text-left rounded-md border px-4 py-3 transition-colors",
         active
-          ? "border-emerald-600 bg-emerald-50"
+          ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30"
           : "border-border hover:bg-muted/40",
         disabled && "opacity-50 cursor-not-allowed",
       )}
@@ -726,7 +726,7 @@ function DispatchResult({
       </div>
 
       {result.warnings.length > 0 ? (
-        <ul className="text-[11px] text-amber-800 list-disc pl-4 space-y-0.5">
+        <ul className="text-[11px] text-amber-800 dark:text-amber-200 list-disc pl-4 space-y-0.5">
           {result.warnings.slice(0, 3).map((w, i) => (
             <li key={i}>{w}</li>
           ))}
@@ -741,7 +741,7 @@ function DispatchResult({
 
       {result.skipped.length > 0 ? (
         <details className="text-xs">
-          <summary className="cursor-pointer text-amber-800">
+          <summary className="cursor-pointer text-amber-800 dark:text-amber-200">
             ⚠ {result.skipped.length} kişi atlandı (görüntüle)
           </summary>
           <ul className="mt-1 ml-4 list-disc text-muted-foreground">
@@ -777,9 +777,9 @@ function Stat({
 }) {
   const cls =
     tone === "emerald"
-      ? "text-emerald-700"
+      ? "text-emerald-700 dark:text-emerald-300"
       : tone === "amber"
-      ? "text-amber-700"
+      ? "text-amber-700 dark:text-amber-300"
       : "text-foreground";
   return (
     <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
@@ -829,7 +829,7 @@ function SequentialView({ result }: { result: BulkSendResponse }) {
           <div className="text-xs text-muted-foreground">
             Sıralı gönderim — <strong>{currentIdx + 1}</strong> / {items.length}
             {completed.size > 0 ? (
-              <span className="text-emerald-700 ml-2">
+              <span className="text-emerald-700 dark:text-emerald-300 ml-2">
                 ({completed.size} tıklandı)
               </span>
             ) : null}
@@ -848,7 +848,7 @@ function SequentialView({ result }: { result: BulkSendResponse }) {
           className={cn(
             "rounded-md border-2 px-3 py-2",
             completed.has(currentIdx)
-              ? "border-emerald-300 bg-emerald-50"
+              ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30"
               : "border-border bg-background",
           )}
         >

@@ -101,9 +101,9 @@ export function StudentAnalyticsPanel({ studentId }: Props) {
 // ============================================================================
 
 function levelTone(level: "green" | "amber" | "red") {
-  if (level === "red") return { text: "text-rose-700", bg: "bg-rose-50", border: "border-rose-200", label: "Acil" };
-  if (level === "amber") return { text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", label: "Dikkat" };
-  return { text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", label: "Yolunda" };
+  if (level === "red") return { text: "text-rose-700 dark:text-rose-300", bg: "bg-rose-50 dark:bg-rose-500/15", border: "border-rose-200", label: "Acil" };
+  if (level === "amber") return { text: "text-amber-700 dark:text-amber-300", bg: "bg-amber-50 dark:bg-amber-500/15", border: "border-amber-200", label: "Dikkat" };
+  return { text: "text-emerald-700 dark:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-500/15", border: "border-emerald-200", label: "Yolunda" };
 }
 
 function StatTile({
@@ -137,7 +137,7 @@ function SummaryStrip({ summary: s }: { summary: AnalyticsSummary }) {
     <Card>
       <CardHeader className="pb-2 flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-base font-semibold inline-flex items-center gap-2">
-          <Gauge className="size-4 text-cyan-600" aria-hidden />
+          <Gauge className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
           Çalışma Temposu
         </CardTitle>
         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium border", t.bg, t.text, t.border)}>
@@ -175,7 +175,7 @@ function WeeklyTrendCard({ weeks }: { weeks: AnalyticsWeekPoint[] }) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold inline-flex items-center gap-2">
-          <BarChart3 className="size-4 text-cyan-600" aria-hidden />
+          <BarChart3 className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
           Haftalık Tamamlama Trendi
         </CardTitle>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -211,13 +211,13 @@ function WeeklyTrendCard({ weeks }: { weeks: AnalyticsWeekPoint[] }) {
             {delta != null ? (
               <div className="mt-2 text-xs inline-flex items-center gap-1">
                 {delta > 0 ? (
-                  <TrendingUp className="size-3.5 text-emerald-600" />
+                  <TrendingUp className="size-3.5 text-emerald-600 dark:text-emerald-300" />
                 ) : delta < 0 ? (
-                  <TrendingDown className="size-3.5 text-rose-600" />
+                  <TrendingDown className="size-3.5 text-rose-600 dark:text-rose-300" />
                 ) : (
                   <Minus className="size-3.5 text-muted-foreground" />
                 )}
-                <span className={cn("font-semibold tabular-nums", delta > 0 ? "text-emerald-700" : delta < 0 ? "text-rose-700" : "text-muted-foreground")}>
+                <span className={cn("font-semibold tabular-nums", delta > 0 ? "text-emerald-700 dark:text-emerald-300" : delta < 0 ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground")}>
                   {delta > 0 ? "+" : ""}{delta} puan
                 </span>
                 <span className="text-muted-foreground">geçen haftaya göre</span>
@@ -240,7 +240,7 @@ function DowCard({ dows }: { dows: AnalyticsDow[] }) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold inline-flex items-center gap-2">
-          <CalendarDays className="size-4 text-cyan-600" aria-hidden />
+          <CalendarDays className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
           Haftanın Günleri
         </CardTitle>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -297,7 +297,7 @@ function ActivityCalendarCard({ days }: { days: AnalyticsDayFlag[] }) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold inline-flex items-center gap-2">
-          <Activity className="size-4 text-cyan-600" aria-hidden />
+          <Activity className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
           Aktivite Takvimi (35 gün)
         </CardTitle>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -359,7 +359,7 @@ function ExamTrendCard({
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold inline-flex items-center gap-2">
-          <GraduationCap className="size-4 text-cyan-600" aria-hidden />
+          <GraduationCap className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
           Deneme Net Trendi
         </CardTitle>
         <p className="text-xs text-muted-foreground mt-0.5">Son denemeler ve net değişimi.</p>
@@ -374,13 +374,13 @@ function ExamTrendCard({
             {delta != null && section ? (
               <div className="mb-2 inline-flex items-center gap-1.5 text-sm">
                 {delta > 0 ? (
-                  <TrendingUp className="size-4 text-emerald-600" />
+                  <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-300" />
                 ) : delta < 0 ? (
-                  <TrendingDown className="size-4 text-rose-600" />
+                  <TrendingDown className="size-4 text-rose-600 dark:text-rose-300" />
                 ) : (
                   <Minus className="size-4 text-muted-foreground" />
                 )}
-                <span className={cn("font-semibold tabular-nums", delta > 0 ? "text-emerald-700" : delta < 0 ? "text-rose-700" : "text-muted-foreground")}>
+                <span className={cn("font-semibold tabular-nums", delta > 0 ? "text-emerald-700 dark:text-emerald-300" : delta < 0 ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground")}>
                   {delta > 0 ? "+" : ""}{delta} net
                 </span>
                 <span className="text-xs text-muted-foreground">son {section} denemesi</span>
@@ -396,7 +396,7 @@ function ExamTrendCard({
                       {e.exam_date ? ` · ${e.exam_date.slice(5).replace("-", ".")}` : ""}
                     </span>
                   </div>
-                  <span className="font-bold tabular-nums text-cyan-700 shrink-0">
+                  <span className="font-bold tabular-nums text-cyan-700 dark:text-cyan-300 shrink-0">
                     {e.net.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} net
                   </span>
                 </div>
@@ -431,15 +431,15 @@ function WarningsCard({ warnings }: { warnings: AnalyticsWarningItem[] }) {
                 key={i}
                 className={cn(
                   "rounded-lg border-l-4 px-3 py-2",
-                  isRed ? "border-l-rose-500 bg-rose-50" : "border-l-amber-400 bg-amber-50",
+                  isRed ? "border-l-rose-500 bg-rose-50 dark:bg-rose-500/15" : "border-l-amber-400 bg-amber-50 dark:bg-amber-500/15",
                 )}
               >
-                <div className={cn("text-sm font-semibold inline-flex items-center gap-1.5", isRed ? "text-rose-800" : "text-amber-800")}>
+                <div className={cn("text-sm font-semibold inline-flex items-center gap-1.5", isRed ? "text-rose-800 dark:text-rose-200" : "text-amber-800 dark:text-amber-200")}>
                   {isRed ? <Flame className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
                   {w.title}
                 </div>
                 {w.detail ? (
-                  <div className={cn("text-xs mt-0.5", isRed ? "text-rose-700" : "text-amber-700")}>{w.detail}</div>
+                  <div className={cn("text-xs mt-0.5", isRed ? "text-rose-700 dark:text-rose-300" : "text-amber-700 dark:text-amber-300")}>{w.detail}</div>
                 ) : null}
               </div>
             );

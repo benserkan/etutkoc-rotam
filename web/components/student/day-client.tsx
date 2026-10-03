@@ -153,9 +153,9 @@ const PERIOD_META: Array<{
   toneText: string;
   toneBorder: string;
 }> = [
-  { key: "morning", label: "Sabah", Icon: Sunrise, toneText: "text-amber-700", toneBorder: "border-amber-200" },
-  { key: "noon", label: "Öğle", Icon: Sun, toneText: "text-orange-700", toneBorder: "border-orange-200" },
-  { key: "evening", label: "Akşam", Icon: Moon, toneText: "text-indigo-700", toneBorder: "border-indigo-200" },
+  { key: "morning", label: "Sabah", Icon: Sunrise, toneText: "text-amber-700 dark:text-amber-300", toneBorder: "border-amber-200" },
+  { key: "noon", label: "Öğle", Icon: Sun, toneText: "text-orange-700 dark:text-orange-300", toneBorder: "border-orange-200" },
+  { key: "evening", label: "Akşam", Icon: Moon, toneText: "text-indigo-700 dark:text-indigo-300", toneBorder: "border-indigo-200" },
   { key: null, label: "Saatsiz", Icon: Clock, toneText: "text-muted-foreground", toneBorder: "border-border" },
 ];
 

@@ -24,7 +24,7 @@ export function AnalyticsView({
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
               <BarChart3 className="size-5" aria-hidden />
             </span>
             <div>

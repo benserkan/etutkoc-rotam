@@ -51,7 +51,7 @@ export function GoalsClient({ initial }: Props) {
         >
           ← Panel
         </Link>
-        <p className="text-xs uppercase tracking-[0.2em] text-emerald-700 font-semibold mt-2">
+        <p className="text-xs uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300 font-semibold mt-2">
           Kurum Geneli
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1">
@@ -89,7 +89,7 @@ export function GoalsClient({ initial }: Props) {
       {students_without_goals > 0 && (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3 dark:border-amber-500/30 dark:bg-amber-500/10">
           <AlertTriangle
-            className="size-6 shrink-0 text-amber-600 mt-0.5"
+            className="size-6 shrink-0 text-amber-600 dark:text-amber-300 mt-0.5"
             aria-hidden
           />
           <div>

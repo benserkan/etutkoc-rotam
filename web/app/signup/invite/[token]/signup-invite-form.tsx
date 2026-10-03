@@ -132,19 +132,19 @@ export function SignupInviteForm({
   return (
     <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
       <div className="space-y-1.5">
-        <Label htmlFor="full_name" className="text-slate-800">Ad Soyad</Label>
+        <Label htmlFor="full_name" className="text-slate-800 dark:text-slate-200">Ad Soyad</Label>
         <Input id="full_name" autoComplete="name" autoFocus={!defaultFullName} disabled={isSubmitting}
                className={inputCls}
                {...form.register("full_name")} aria-invalid={!!err.full_name} />
-        {err.full_name ? <p className="text-sm text-rose-700">{err.full_name.message}</p> : null}
+        {err.full_name ? <p className="text-sm text-rose-700 dark:text-rose-300">{err.full_name.message}</p> : null}
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="email" className="text-slate-800">E-posta</Label>
+        <Label htmlFor="email" className="text-slate-800 dark:text-slate-200">E-posta</Label>
         {defaultEmail ? (
           <div className="relative">
             <Input id="email" type="email" autoComplete="username" readOnly tabIndex={-1}
-                   className="h-11 cursor-not-allowed border-slate-200 bg-slate-50 pr-10 text-slate-700"
+                   className="h-11 cursor-not-allowed border-slate-200 bg-slate-50 dark:bg-slate-500/15 dark:border-slate-500/30 pr-10 text-slate-700 dark:text-slate-300"
                    {...form.register("email")} aria-invalid={!!err.email} aria-describedby="email-lock" />
             <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           </div>
@@ -157,16 +157,16 @@ export function SignupInviteForm({
             Davet bu adrese gönderildi; hesabınız bu adresle açılır.
           </p>
         ) : null}
-        {err.email ? <p className="text-sm text-rose-700">{err.email.message}</p> : null}
+        {err.email ? <p className="text-sm text-rose-700 dark:text-rose-300">{err.email.message}</p> : null}
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="phone" className="text-slate-800">Cep telefonu</Label>
+        <Label htmlFor="phone" className="text-slate-800 dark:text-slate-200">Cep telefonu</Label>
         <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="0532 123 45 67"
                disabled={isSubmitting} className={inputCls}
                {...form.register("phone")} aria-invalid={!!err.phone} />
         {err.phone ? (
-          <p className="text-sm text-rose-700">{err.phone.message}</p>
+          <p className="text-sm text-rose-700 dark:text-rose-300">{err.phone.message}</p>
         ) : (
           <p className="text-xs text-slate-500">
             {phoneVerificationAvailable
@@ -178,7 +178,7 @@ export function SignupInviteForm({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-slate-800">Şifre</Label>
+          <Label htmlFor="password" className="text-slate-800 dark:text-slate-200">Şifre</Label>
           <div className="relative">
             <Input id="password" type={showPw ? "text" : "password"} autoComplete="new-password"
                    disabled={isSubmitting} className={`${inputCls} pr-10`}
@@ -189,33 +189,33 @@ export function SignupInviteForm({
               {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          {err.password ? <p className="text-sm text-rose-700">{err.password.message}</p> : null}
+          {err.password ? <p className="text-sm text-rose-700 dark:text-rose-300">{err.password.message}</p> : null}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="password_confirm" className="text-slate-800">Şifre (tekrar)</Label>
+          <Label htmlFor="password_confirm" className="text-slate-800 dark:text-slate-200">Şifre (tekrar)</Label>
           <Input id="password_confirm" type={showPw ? "text" : "password"} autoComplete="new-password"
                  disabled={isSubmitting} className={inputCls}
                  {...form.register("password_confirm")} aria-invalid={!!err.password_confirm} />
-          {err.password_confirm ? <p className="text-sm text-rose-700">{err.password_confirm.message}</p> : null}
+          {err.password_confirm ? <p className="text-sm text-rose-700 dark:text-rose-300">{err.password_confirm.message}</p> : null}
         </div>
       </div>
       <p className="-mt-2 text-xs text-slate-500">{passwordRule(role)}</p>
 
-      <label className="flex items-start gap-2.5 rounded-lg bg-slate-50 p-3 text-sm text-slate-700 ring-1 ring-slate-200">
+      <label className="flex items-start gap-2.5 rounded-lg bg-slate-50 dark:bg-slate-500/15 p-3 text-sm text-slate-700 dark:text-slate-300 ring-1 ring-slate-200">
         <input type="checkbox" className="mt-0.5 h-4 w-4 accent-cyan-700" disabled={isSubmitting}
                {...form.register("accept_terms")} />
         <span>
-          <Link href="/kullanim-sartlari" target="_blank" className="font-semibold text-cyan-700 hover:underline">
+          <Link href="/kullanim-sartlari" target="_blank" className="font-semibold text-cyan-700 dark:text-cyan-300 hover:underline">
             Kullanım şartlarını
           </Link>{" "}
           ve{" "}
-          <Link href="/kvkk" target="_blank" className="font-semibold text-cyan-700 hover:underline">
+          <Link href="/kvkk" target="_blank" className="font-semibold text-cyan-700 dark:text-cyan-300 hover:underline">
             KVKK aydınlatma metnini
           </Link>{" "}
           okudum, kabul ediyorum.
         </span>
       </label>
-      {err.accept_terms ? <p className="-mt-3 text-sm text-rose-700">{err.accept_terms.message}</p> : null}
+      {err.accept_terms ? <p className="-mt-3 text-sm text-rose-700 dark:text-rose-300">{err.accept_terms.message}</p> : null}
 
       <Button type="submit" disabled={isSubmitting}
               className="h-12 w-full bg-cyan-700 text-base font-semibold text-white shadow-md shadow-cyan-900/20 hover:bg-cyan-800">

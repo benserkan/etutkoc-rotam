@@ -79,11 +79,11 @@ export function SubscriptionClient({ initial }: Props) {
         >
           ← Panel
         </Link>
-        <p className="text-[11px] uppercase tracking-wider text-emerald-700 mt-1 font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mt-1 font-semibold">
           Üyelik
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-0.5 flex items-center gap-2">
-          <CalendarDays className="size-6 text-emerald-700" aria-hidden />
+          <CalendarDays className="size-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
           Abonelik Yönetimi
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -144,7 +144,7 @@ function UpgradeRequestCard({ data }: { data: SubscriptionResponse }) {
       <div className="h-1 w-full bg-gradient-to-r from-cyan-600 to-cyan-800" aria-hidden />
       <CardContent className="space-y-4 p-5">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300">
             <Gem className="size-5" aria-hidden />
           </span>
           <div>
@@ -182,13 +182,13 @@ function UpgradeRequestCard({ data }: { data: SubscriptionResponse }) {
                     className={cn(
                       "rounded-xl border p-3 text-left transition",
                       isSel
-                        ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600"
+                        ? "border-cyan-600 bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 ring-1 ring-cyan-600"
                         : "border-slate-200 bg-white hover:border-cyan-300",
                     )}
                   >
-                    <p className="text-sm font-bold text-slate-900">{p.label}</p>
-                    <p className="text-xs text-slate-600">{p.coaches}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{p.price_label}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-200">{p.label}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300">{p.coaches}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-200">{p.price_label}</p>
                   </button>
                 );
               })}
@@ -207,7 +207,7 @@ function UpgradeRequestCard({ data }: { data: SubscriptionResponse }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Gem className="size-4 text-cyan-700" aria-hidden /> Plan yükseltme talebi
+              <Gem className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden /> Plan yükseltme talebi
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm">
@@ -260,8 +260,8 @@ function PlanOptionSummary({
   return (
     <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
       <span className="text-muted-foreground">Seçilen kademe:</span>{" "}
-      <span className="font-semibold text-cyan-900">{sel.label}</span>{" "}
-      <span className="text-cyan-800">· {sel.coaches} · {sel.price_label}</span>
+      <span className="font-semibold text-cyan-900 dark:text-cyan-200">{sel.label}</span>{" "}
+      <span className="text-cyan-800 dark:text-cyan-200">· {sel.coaches} · {sel.price_label}</span>
     </div>
   );
 }
@@ -333,7 +333,7 @@ function CurrentStatusCard({
             info="Açıksa: ilk 60 günde öğrencilerin program tamamlama oranı eşiğin altında kalırsa abonelik bir kez 1 ay ücretsiz uzatılır."
             value={
               status.performance_guarantee ? (
-                <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-medium">
                   <CheckCircle2 className="size-3.5" aria-hidden />
                   Aktif
                 </span>
@@ -367,7 +367,7 @@ function KindBadge({ kind }: { kind: SubscriptionStatusInfo["kind"] }) {
       ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200"
       : kind === "paused"
         ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200"
-        : "bg-slate-100 text-slate-700 border-slate-200";
+        : "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-700 dark:text-slate-300 border-slate-200";
   const label =
     kind === "academic_year"
       ? "Akademik Yıl"
@@ -426,8 +426,8 @@ function AcademicYearPromoCard() {
     <Card className="border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30">
       <CardContent className="p-5">
         <div className="flex items-start gap-3">
-          <div className="rounded-md bg-emerald-100 p-2">
-            <Sparkles className="size-5 text-emerald-700" aria-hidden />
+          <div className="rounded-md bg-emerald-100 dark:bg-emerald-500/15 p-2">
+            <Sparkles className="size-5 text-emerald-700 dark:text-emerald-300" aria-hidden />
           </div>
           <div className="flex-1 space-y-2">
             <h3 className="text-base font-semibold">
@@ -494,7 +494,7 @@ function SummerPauseCard({ status }: { status: SubscriptionStatusInfo }) {
     <Card>
       <CardContent className="p-5 space-y-3">
         <h3 className="text-base font-semibold flex items-center gap-2">
-          <Sun className="size-5 text-amber-600" aria-hidden />
+          <Sun className="size-5 text-amber-600 dark:text-amber-300" aria-hidden />
           Yaz Pause Modu
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -551,7 +551,7 @@ function PauseAction() {
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="border-amber-300 text-amber-900 hover:bg-amber-50"
+        className="border-amber-300 text-amber-900 dark:text-amber-200 hover:bg-amber-50"
       >
         <Pause className="size-4" aria-hidden />
         Yaz Pause Moduna Geç
@@ -656,7 +656,7 @@ function GuaranteeCard({
     <Card>
       <CardContent className="p-5 space-y-3">
         <h3 className="text-base font-semibold flex items-center gap-2">
-          <ShieldCheck className="size-5 text-indigo-700" aria-hidden />
+          <ShieldCheck className="size-5 text-indigo-700 dark:text-indigo-300" aria-hidden />
           60 Gün Performans Garantisi
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -799,8 +799,8 @@ function GuaranteeDetails({
               ratePct == null
                 ? "text-muted-foreground"
                 : above
-                  ? "text-emerald-700"
-                  : "text-rose-700",
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : "text-rose-700 dark:text-rose-300",
             )}
           >
             {ratePct == null ? "—" : `%${ratePct}`}
@@ -808,7 +808,7 @@ function GuaranteeDetails({
           {delta != null && (
             <div className={cn(
               "text-[11px]",
-              above ? "text-emerald-700" : "text-rose-700",
+              above ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300",
             )}>
               eşikten {above ? "+" : ""}{delta} puan {above ? "yukarıda" : "aşağıda"}
             </div>
@@ -892,14 +892,14 @@ function AdvantagesCard() {
     <Card>
       <CardContent className="p-5">
         <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
-          <Sparkles className="size-4 text-emerald-700" aria-hidden />
+          <Sparkles className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden />
           Akademik Yıl Avantajları
         </h3>
         <ul className="space-y-2 text-sm text-muted-foreground">
           {items.map((it) => (
             <li key={it} className="flex items-start gap-2">
               <CheckCircle2
-                className="size-4 text-emerald-600 shrink-0 mt-0.5"
+                className="size-4 text-emerald-600 dark:text-emerald-300 shrink-0 mt-0.5"
                 aria-hidden
               />
               <span>{it}</span>
@@ -923,7 +923,7 @@ function HelpCard() {
           <li>
             <a
               href="/pricing"
-              className="text-sky-700 hover:underline inline-flex items-center gap-1"
+              className="text-sky-700 dark:text-sky-300 hover:underline inline-flex items-center gap-1"
             >
               Fiyatlandırma sayfası
               <ArrowUpRight className="size-3" aria-hidden />
@@ -932,7 +932,7 @@ function HelpCard() {
           <li>
             <a
               href="/plans/me"
-              className="text-sky-700 hover:underline inline-flex items-center gap-1"
+              className="text-sky-700 dark:text-sky-300 hover:underline inline-flex items-center gap-1"
             >
               Mevcut plan detayları
               <ArrowUpRight className="size-3" aria-hidden />
@@ -941,7 +941,7 @@ function HelpCard() {
           <li>
             <a
               href="mailto:destek@etutkoc.com"
-              className="text-sky-700 hover:underline"
+              className="text-sky-700 dark:text-sky-300 hover:underline"
             >
               destek@etutkoc.com
             </a>
