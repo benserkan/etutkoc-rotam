@@ -132,7 +132,15 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
     `/teacher/plan-assistant` uçları mobil için duruyor). `/admin/assistant` sayfası + menü.
   - Test: `test_api_v2_site_assistant` 33/33 · `live_site_assistant.py` 12/12 (gerçek tarayıcı +
     gerçek Gemini, 390px + koyu tema) · plan_assistant 23 · contact 13 · support 54 · quick_access 16.
-  - **SIRADA:** mobil uygulamada aynı tek asistan (şu an mobilde yalnız koçun paket asistanı var).
+  - **MOBİL (aynı gün):** `mobile/src/app/assistant.tsx` (kök rota; girişsiz de açılır) + `lib/site-assistant.ts`
+    (kanal ios/android, oturum anahtarı secure-store, `pageForScreen` / `mobileHrefFor` eşlemeleri) +
+    `components/assistant-fab.tsx` (kök layout; YALNIZ rol sekme ekranlarında, klavye açıkken gizli) +
+    karşılama/giriş ekranında "Rota'ya sor"; Paketim "Yardım" artık bu ekrana gider
+    (`teacher-plan-assistant` + `lib/plan-assistant.ts` silindi). Backend `channel` paramı: bilgi
+    bölümlerinde `channel: web|app` (ödeme/fiyat içerenler web; uygulamaya özel karşılıkları app) +
+    istemde uygulama kuralı + uygulamada fiyat özeti yok. Smoke 37/37 (11a-d kanal) ·
+    `live_mobile_assistant.py` 10/10 (Expo web :8095, gerçek yapay zekâ). İstem kuralı eklendi: düğme/menü
+    adı uydurma (yalnız bölümlerde geçenler).
 - **KOYU/AÇIK TEMA OKUNABİLİRLİĞİ — CANLI (2026-10-03, commit `a0b9e7f`, migration YOK):**
   ölçüm `scripts/audit_dark_theme_pages.py [--light]` (144 sayfa, Playwright + lib_live_contrast):
   koyu tema okunmaz metin **1958 → 30**, açık tema 272 → 156 (kalanlar koyu üst şerit / gradyan

@@ -15,6 +15,7 @@ pages: /teacher/plan, /teacher/dashboard
 14 günlük deneme bitince ödeme yapılmazsa ücretsiz pakete geçilir; veriler silinmez.
 
 ## Paket: ödemem neden geçmedi?
+channel: web
 chip: Ödemem neden geçmedi?
 rule: payment_failed
 pages: /teacher/plan
@@ -22,6 +23,7 @@ pages: /teacher/plan
 Son ödeme denemesinin bankadan dönen sebebi sade dille anlatılır.
 
 ## Paket: abonelik yenileme
+channel: web
 chip: Aboneliğim nasıl yenilenir?
 rule: renew
 pages: /teacher/plan
@@ -29,6 +31,7 @@ pages: /teacher/plan
 Web aboneliği kendiliğinden yenilenmez; bitişten 3 gün önce e-posta gelir, Paketim sayfasından ödenir. Erken ödeme kalan günleri yakmaz.
 
 ## Paket: iptal
+channel: web
 chip: Aboneliği nasıl iptal ederim?
 rule: cancel
 pages: /teacher/plan
@@ -44,6 +47,7 @@ link: /teacher/plan | Paketim
 Karne okuma, seans içgörüsü, veli yorumu gibi işler kredi harcar; paket kredisi ay başında yenilenir.
 
 ## Paket: ödeme güvenliği
+channel: web
 rule: pay_safe
 pages: /teacher/plan
 
@@ -209,3 +213,14 @@ Rehber sayfasında Rota sesli ve ekran görüntülü olarak kitap eklemeden dene
 pages: /teacher/plan
 
 Kuruma bağlı öğretmenin paketi ve ödemesi kurum tarafından yönetilir; paket ya da kota sorusunda kurum yöneticine başvurursun. Ekranlar ve e-postalar kurumun markasını taşır.
+
+## Paket işlemleri (uygulamada)
+channel: app
+pages: /teacher/plan
+
+iPhone uygulamasında paketler Profil sekmesindeki Paketim ekranından App Store ile alınır; abonelik dönem sonunda kendiliğinden yenilenir, iptal ya da değişiklik iPhone'da Ayarlar, Apple Kimliği, Abonelikler bölümünden yapılır. Telefon değiştirdiysen Paketim'deki "Satın alımları geri yükle"yi kullan. Android uygulamasında paket işlemi yapılamaz; sorun için ekibimize yazabilirsin. Paketin ne olursa olsun öğrencilerin ve verilerin silinmez.
+
+## Mobil uygulamada koç
+channel: app
+
+Mobil uygulamada öğrencilerini izler, görev ekler, deneme sonucu girer ve PDF karnesi yüklersin, seans kaydı tutar, tahsilatı ve talepleri yönetirsin. Haftalık programın ayrıntılı düzenlenmesi (sürükle bırak, iskelet, haftaya yay), kütüphane ve kitap ekleme ile toplu işlemler web panelinde daha rahattır.

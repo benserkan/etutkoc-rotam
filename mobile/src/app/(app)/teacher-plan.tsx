@@ -272,7 +272,7 @@ export default function TeacherPlanScreen() {
 
   const helpButton = (
     <Pressable
-      onPress={() => router.push("/teacher-plan-assistant")}
+      onPress={() => router.push({ pathname: "/assistant", params: { page: "/teacher/plan" } } as never)}
       accessibilityLabel="Paket asistanı"
       className="flex-row items-center gap-1.5 rounded-full bg-brand-700 px-3.5 py-2 active:bg-brand-800"
     >
@@ -436,7 +436,7 @@ export default function TeacherPlanScreen() {
             ) : null}
 
             <Pressable
-              onPress={() => router.push("/teacher-plan-assistant")}
+              onPress={() => router.push({ pathname: "/assistant", params: { page: "/teacher/plan" } } as never)}
               className="flex-row items-center gap-3 rounded-3xl bg-slate-100 px-5 py-4 active:bg-slate-200"
             >
               <Ionicons name="chatbubble-ellipses-outline" size={22} color="#0e7490" />

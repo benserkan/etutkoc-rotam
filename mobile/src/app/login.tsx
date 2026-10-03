@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -145,6 +146,14 @@ export default function LoginScreen() {
                   <Text className="text-sm font-semibold text-brand-700">Kayıt ol</Text>
                 </Pressable>
               </View>
+
+              <Pressable
+                onPress={() => router.push({ pathname: "/assistant", params: { page: "/login" } } as never)}
+                className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 active:bg-slate-200"
+              >
+                <Ionicons name="chatbubble-ellipses-outline" size={18} color="#0e7490" />
+                <Text className="text-sm font-semibold text-brand-700">Yardım mı lazım? Rota&apos;ya sor</Text>
+              </Pressable>
 
               {/* Apple 2.1(a): giriş ekranında işlevsel yasal bağlantılar */}
               <View className="mt-3 flex-row items-center justify-center gap-2">

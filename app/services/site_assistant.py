@@ -87,7 +87,12 @@ def audience_for(user: User | None) -> str:
 # Bilgi tabanı
 # =============================================================================
 
-_META_KEYS = ("chip", "rule", "pages", "link")
+_META_KEYS = ("chip", "rule", "pages", "link", "channel")
+CHANNELS = ("web", "ios", "android")
+
+
+def is_app(channel: str | None) -> bool:
+    return channel in ("ios", "android")
 
 
 def _slug(t: str) -> str:
@@ -104,13 +109,13 @@ def _parse_md(text: str, fname: str) -> list[dict]:
                 out.append(cur)
             title = line[3:].strip()
             cur = {"id": f"{fname.split('.')[0]}-{_slug(title)}", "title": title, "body": "",
-                   "chip": None, "rule": None, "pages": [], "link": None}
+                   "chip": None, "rule": None, "pages": [], "link": None, "channel": None}
             in_meta = True
             continue
         if cur is None:
             continue
         if in_meta:
-            m = re.match(r"^(chip|rule|pages|link):\s*(.+)$", line.strip())
+            m = re.match(r"^(chip|rule|pages|link|channel):\s*(.+)$", line.strip())
             if m:
                 k, v = m.group(1), m.group(2).strip()
                 if k == "pages":
@@ -142,7 +147,7 @@ def load_kb() -> tuple[dict, ...]:
             items = _parse_md(p.read_text(encoding="utf-8"), fname)
         else:
             items = [{"id": s["id"], "title": s["title"], "body": s["body"], "chip": None,
-                      "rule": None, "pages": [], "link": None}
+                      "rule": None, "pages": [], "link": None, "channel": None}
                      for s in json.loads(p.read_text(encoding="utf-8"))]
         for s in items:
             s["audiences"] = set(auds)
@@ -186,15 +191,20 @@ def page_matches(pattern: str, path: str) -> bool:
     return path == pattern or path.startswith(pattern.rstrip("/") + "/")
 
 
-def _visible(audience: str, *, search: bool) -> list[dict]:
+def _visible(audience: str, *, search: bool, channel: str = "web") -> list[dict]:
+    """Kitleye görünen bölümler. channel: web → 'channel: app' bölümleri gizli;
+    ios/android → 'channel: web' bölümleri (kart/web ödemesi, fiyat) gizli
+    (App Store 3.1.1: uygulamada uygulama-dışı satın almaya yönlendirme yok)."""
     auds = {audience} | (_EXTRA_SEARCH.get(audience, set()) if search else set())
-    return [s for s in load_kb() if s["audiences"] & auds]
+    want = "app" if is_app(channel) else "web"
+    return [s for s in load_kb() if s["audiences"] & auds and s.get("channel") in (None, want)]
 
 
-def retrieve(question: str, audience: str, page: str | None, k: int = 6) -> list[dict]:
+def retrieve(question: str, audience: str, page: str | None, k: int = 6,
+             channel: str = "web") -> list[dict]:
     q = _stems(question)
     scored: list[tuple[float, int, dict]] = []
-    for i, s in enumerate(_visible(audience, search=True)):
+    for i, s in enumerate(_visible(audience, search=True, channel=channel)):
         sc = 0.0
         for w in q:
             if w in s["stems_title"]:
@@ -211,7 +221,7 @@ def retrieve(question: str, audience: str, page: str | None, k: int = 6) -> list
     scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
     picked = [s for _, _, s in scored[:k]]
     if not picked:   # hiç eşleşme yoksa sayfanın bölümleri
-        picked = [s for s in _visible(audience, search=False)
+        picked = [s for s in _visible(audience, search=False, channel=channel)
                   if any(page_matches(p, page or "") for p in s["pages"])][:3]
     return picked
 
@@ -244,13 +254,14 @@ def _pricing_facts() -> dict:
     }
 
 
-def account_facts(db: Session, user: User | None, audience: str) -> dict:
+def account_facts(db: Session, user: User | None, audience: str, channel: str = "web") -> dict:
+    app = is_app(channel)
     try:
         if audience == "public":
-            return {"fiyatlar": _pricing_facts()}
+            return {} if app else {"fiyatlar": _pricing_facts()}
         if audience == "teacher":
             from app.services import plan_assistant as pa
-            return pa._facts_for_ai(pa.build_state(db, user))
+            return pa._facts_for_ai(pa.build_state(db, user), channel)
         if audience == "student":
             from app.models import Task, TaskStatus
             today = date.today()
@@ -271,8 +282,11 @@ def account_facts(db: Session, user: User | None, audience: str) -> dict:
                 User.institution_id == user.institution_id, User.role == UserRole.TEACHER,
                 User.is_active.is_(True)).scalar()
             pi = PLAN_CATALOG.get(getattr(inst, "plan", None) or "")
-            return {"kurum_paketi": pi.label if pi else getattr(inst, "plan", None),
-                    "aktif_ogretmen": int(teachers or 0), "fiyatlar": _pricing_facts()}
+            out = {"kurum_paketi": pi.label if pi else getattr(inst, "plan", None),
+                   "aktif_ogretmen": int(teachers or 0)}
+            if not app:
+                out["fiyatlar"] = _pricing_facts()
+            return out
     except Exception:  # noqa: BLE001 — özet yoksa asistan yine çalışır
         logger.warning("assistant facts failed", exc_info=True)
     return {}
@@ -297,10 +311,13 @@ def _teacher_state(db: Session, user: User) -> dict | None:
 
 
 def greeting(db: Session, user: User | None, audience: str, page: str | None,
-             tstate: dict | None = None) -> str:
+             tstate: dict | None = None, channel: str = "web") -> str:
     name = _first_name(user)
     hi = f"Merhaba {name}!" if name else "Merhaba!"
     if audience == "public":
+        if is_app(channel):
+            return ("Merhaba! Ben Rota, ETÜTKOÇ Rotam'ın asistanıyım. Sistemin nasıl çalıştığını, "
+                    "ücretsiz denemeyi ve hesap açmayı anlatabilirim; istersen ekibimize de bağlarım.")
         if page and page.startswith("/pricing"):
             return ("Merhaba! Ben Rota, ETÜTKOÇ Rotam'ın asistanıyım. Paket seçmene yardım "
                     "edeyim: kaç öğrencinle çalışıyorsun? Fiyat, deneme ya da ödeme hakkında "
@@ -309,7 +326,7 @@ def greeting(db: Session, user: User | None, audience: str, page: str | None,
                 "paketleri ve ücretsiz denemeyi anlatabilirim; istersen ekibimize de bağlarım.")
     if audience == "teacher" and tstate and page and page.startswith("/teacher/plan"):
         from app.services import plan_assistant as pa
-        return pa.greeting_for(tstate)
+        return pa.greeting_for(tstate, channel)
     if audience == "student":
         return f"{hi} Görevlerini işaretlemekten deneme yüklemeye kadar sistemle ilgili her şeyi sorabilirsin."
     if audience == "parent":
@@ -321,26 +338,33 @@ def greeting(db: Session, user: User | None, audience: str, page: str | None,
 
 
 def chips(db: Session, user: User | None, audience: str, page: str | None,
-          tstate: dict | None = None, limit: int = 5) -> list[dict]:
+          tstate: dict | None = None, limit: int = 5, channel: str = "web") -> list[dict]:
     allowed_rules: set[str] = set()
     if audience == "teacher" and tstate:
         from app.services import plan_assistant as pa
-        allowed_rules = {c["id"] for c in pa.chips_for(tstate)}
+        pch = pa.chips_for(tstate, channel)
+        allowed_rules = {c["id"] for c in pch}
         if page and page.startswith("/teacher/plan"):
-            return [{"id": f"pa:{c['id']}", "label": c["label"]} for c in pa.chips_for(tstate)
+            return [{"id": f"pa:{c['id']}", "label": c["label"]} for c in pch
                     if c["id"] != "human"][:limit] + [HUMAN_CHIP]
     on_page: list[dict] = []
+    app_first: list[dict] = []   # uygulamaya özel bölümler (ör. "Paketler (uygulamada)") önce
     rest: list[dict] = []
-    for s in _visible(audience, search=False):
+    for s in _visible(audience, search=False, channel=channel):
         if not s["chip"]:
             continue
         if s["rule"] and s["rule"] not in allowed_rules:
             continue
         item = {"id": f"pa:{s['rule']}" if s["rule"] else s["id"], "label": s["chip"]}
-        (on_page if any(page_matches(p, page or "") for p in s["pages"]) else rest).append(item)
+        if any(page_matches(p, page or "") for p in s["pages"]):
+            on_page.append(item)
+        elif s.get("channel") == "app":
+            app_first.append(item)
+        else:
+            rest.append(item)
     seen: set[str] = set()
     out = []
-    for c in on_page + rest:
+    for c in on_page + app_first + rest:
         if c["id"] in seen:
             continue
         seen.add(c["id"])
@@ -357,7 +381,7 @@ def _link_action(link: dict | None) -> dict | None:
 
 
 def rule_answer(db: Session, user: User | None, audience: str, chip: str,
-                tstate: dict | None = None) -> dict:
+                tstate: dict | None = None, channel: str = "web") -> dict:
     if chip == "human":
         return {"answer": ("Tabii. Aşağıdan mesajını bırakırsan bu konuşmayla birlikte ekibimize "
                            "iletilir; istersen WhatsApp'tan da yazabilirsin."),
@@ -365,14 +389,14 @@ def rule_answer(db: Session, user: User | None, audience: str, chip: str,
     if chip.startswith("pa:"):
         if audience == "teacher" and tstate:
             from app.services import plan_assistant as pa
-            res = pa.rule_answer(chip[3:], tstate)
+            res = pa.rule_answer(chip[3:], tstate, channel)
             act = res.get("action")
             if act and act.get("type") == "handoff":
                 act = {"type": "handoff", "label": "Ekibe yaz"}
             return {"answer": res["answer"], "action": act}
         return {"answer": "Bu soru giriş yapmış koçlar içindir.", "action": None}
     s = _section_by_id(chip)
-    vis = _visible(audience, search=True)
+    vis = _visible(audience, search=True, channel=channel)
     if not s or s not in vis:
         return {"answer": "Bunu bulamadım; kendi cümlenle sorabilirsin.", "action": None}
     return {"answer": s["body"], "action": _link_action(s["link"])}
@@ -401,6 +425,8 @@ KURALLAR:
   ekibe bağlanmayı (handoff) öner.
 - Türkçe, sıcak, sade yaz; 2-6 kısa cümle. Kullanıcıya "{hitap}" diye hitap et.
   "Merhaba" ile başlama. Teknik kod/alan adı yazma.
+- Düğme, menü ya da ekran adı UYDURMA: yalnız bilgi bölümlerinde geçen adları kullan; bölümde
+  adım ayrıntısı yoksa genel yolu söyle (hangi ekrana gidileceği), ayrıntı ekleme.
 - "Nasıl yapılır" sorularında adımları menü adlarıyla anlat; uygun bir sayfa varsa
   "link" alanına O BÖLÜMLERDEKİ bağlantılardan birini koy (başka adres yazma).
 - Fiyatları "2.500 ₺" biçiminde yaz. Kişisel tavsiye verirken hesap özetindeki sayıları kullan.
@@ -424,8 +450,19 @@ SORU: {question}
 """
 
 
+_APP_RULE = {
+    "ios": ("- Kullanıcı iPhone UYGULAMASINDA. Kart, iyzico, havale, web sitesi ya da web'den ödeme "
+            "hakkında HİÇBİR ŞEY söyleme, bağlantı verme; fiyat söyleme. Koç paketleri yalnız uygulama "
+            "içinde Paketim ekranından App Store ile alınır.\n"),
+    "android": ("- Kullanıcı Android UYGULAMASINDA. Kart, iyzico, havale, web sitesi ya da web'den ödeme "
+                "hakkında HİÇBİR ŞEY söyleme, bağlantı verme; fiyat söyleme. Paket işlemleri bu "
+                "uygulamada yapılamaz; gerekirse ekibe yazmayı (handoff) öner.\n"),
+}
+
+
 def ai_answer(question: str, history: list[dict], *, audience: str, page: str | None,
-              sections: list[dict], facts: dict, tstate: dict | None = None) -> dict:
+              sections: list[dict], facts: dict, tstate: dict | None = None,
+              channel: str = "web") -> dict:
     """Gemini cevabı — DB'siz saf fonksiyon (çağıran işlemi önce kapatır)."""
     from app.services import gemini
 
@@ -443,8 +480,8 @@ def ai_answer(question: str, history: list[dict], *, audience: str, page: str | 
     prompt = _PROMPT.format(
         role=_ROLE_TR.get(audience, "bir kullanıcı"), page=page or "-",
         hitap=_HITAP.get(audience, "sen"),
-        extra=("- Koç paket önermek istersen yalnız öğrenci sayısına YETEN paketin kodunu 'plan' alanına koy.\n"
-               if teacher_plan else ""),
+        extra=(("- Koç paket önermek istersen yalnız öğrenci sayısına YETEN paketin kodunu 'plan' alanına koy.\n"
+                if teacher_plan and channel != "android" else "") + _APP_RULE.get(channel, "")),
         plan_field=(', "plan": null | "<paket kodu>"' if teacher_plan else ""),
         sections=sec_txt, facts=json.dumps(facts, ensure_ascii=False, default=str)[:6000],
         history=hist, question=question[:800],
@@ -459,7 +496,7 @@ def ai_answer(question: str, history: list[dict], *, audience: str, page: str | 
     if not answer:
         raise ValueError("empty answer")
     action = None
-    if teacher_plan and data.get("plan"):
+    if teacher_plan and data.get("plan") and channel != "android":
         from app.services import plan_assistant as pa
         action = pa._clean_action({"type": "select_plan", "plan": data.get("plan")}, tstate)
     link = data.get("link")
@@ -470,8 +507,8 @@ def ai_answer(question: str, history: list[dict], *, audience: str, page: str | 
     return {"answer": answer[:1800], "action": action}
 
 
-def fallback_answer(question: str, audience: str, page: str | None) -> dict:
-    hits = retrieve(question, audience, page, k=1)
+def fallback_answer(question: str, audience: str, page: str | None, channel: str = "web") -> dict:
+    hits = retrieve(question, audience, page, k=1, channel=channel)
     if hits:
         s = hits[0]
         return {"answer": s["body"][:900], "action": _link_action(s["link"])}

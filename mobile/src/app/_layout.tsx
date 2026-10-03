@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AssistantFab } from "@/components/assistant-fab";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AuthProvider } from "@/lib/auth";
 import { NotificationObserver } from "@/lib/notification-router";
@@ -30,6 +31,8 @@ export default function RootLayout() {
             <StatusBar style="dark" />
             <NotificationObserver />
             <Stack screenOptions={{ headerShown: false }} />
+            {/* Rota — uygulamanın tek asistanı (rol sekme ekranlarında) */}
+            <AssistantFab />
           </SafeAreaProvider>
         </AuthProvider>
       </QueryClientProvider>

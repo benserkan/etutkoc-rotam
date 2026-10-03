@@ -203,6 +203,30 @@ try:
     check("9b kurum yöneticisi e-postası süper yönetici kutusuna", sent[-1][1]["inbox_path"] == "/admin/support",
           str(sent[-1][1])[:150])
 
+    # 11 — mobil uygulama kanalı (App Store 3.1.1): kart/web ödemesi ve fiyat yok
+    gemini.generate = fake_ok
+    banned = ("iyzico", "kartla", "havale", "₺", "web sitesi")
+    s = anon.get(f"/api/v2/assistant?page=/&session_key={KEY}m&channel=ios").json()
+    texts = [s["greeting"]]
+    for c in s["chips"]:
+        if c["id"] == "human":
+            continue
+        texts.append(anon.post("/api/v2/assistant/ask", json={"session_key": f"{KEY}m", "chip": c["id"],
+                                                              "channel": "ios"}).json()["answer"])
+    leak = [t[:80] for t in texts if any(b in t.lower() for b in banned)]
+    check("11a iOS ziyaretçi: hazır cevaplarda ödeme/fiyat geçmiyor", not leak and len(texts) > 3, str(leak))
+    anon.post("/api/v2/assistant/ask", json={"session_key": f"{KEY}m", "channel": "ios",
+                                            "question": "paketler ne kadar"})
+    pr = captured["prompt"]
+    check("11b iOS yapay zekâ isteminde fiyat bölümü/özeti yok + uygulama kuralı var",
+          "Paketler ve fiyatlar" not in pr and "aylik_tl" not in pr and "iPhone UYGULAMASINDA" in pr, pr[-600:])
+    s = ck.get(f"/api/v2/assistant?page=/teacher/plan&session_key={KEY}k&channel=android").json()
+    check("11c Android koç Paketim: ödeme çipi yok", all(c["id"] not in ("pa:pay_safe", "pa:payment_failed")
+                                                         for c in s["chips"]), str(s["chips"]))
+    w = anon.get(f"/api/v2/assistant?page=/&session_key={KEY}m").json()
+    check("11d web'de uygulama bölümleri görünmez", all("uygulamada" not in c["label"] for c in w["chips"])
+          and not any("(uygulamada)" in x["title"] for x in sa._visible("public", search=True)))
+
     # 10 — süper yönetici görünümü
     a = cs.get("/api/v2/admin/assistant/messages?days=1").json()
     check("10a süper yönetici: sorular + en çok sorulanlar + aktarım sayısı",

@@ -165,3 +165,12 @@ Native değişiklikte (yeni modül/izin) yine yeni AAB + store gerekir.
 2. Koç: program **görüntüleme** (salt-okuma hafta) → düzenleme web'de kalır.
 3. Native AI yakalama (kamera/mikrofon) → koç foto/ses not.
 4. Faz 7: `app/preview/*` rotalarının store build öncesi kaldırılması.
+
+## Rota — tek asistan (2026-10-03)
+
+| Özellik | Web | Mobil |
+|---|---|---|
+| Rota asistanı (hazır sorular + yapay zekâ + ekibe yaz + WhatsApp) | Her sayfada balon (ziyaretçi dahil) | Rol sekme ekranlarında "Rota'ya sor" balonu + karşılama/giriş ekranında bağlantı + Paketim "Yardım" → `/assistant` |
+| Ödeme/fiyat dili | Web: kart/iyzico/fiyat anlatılır | Uygulama kanalı (ios/android): kart, web ödemesi ve fiyat HİÇ geçmez (App Store 3.1.1); iOS'ta paket Paketim/App Store, Android'de ekibe yaz |
+| Bağlantı düğmeleri | Web sayfasına gider | Uygulama ekranına çevrilir (`mobileHrefFor`); karşılığı yoksa düğme çıkmaz |
+

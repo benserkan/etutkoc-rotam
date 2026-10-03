@@ -159,6 +159,14 @@ export default function WelcomeScreen() {
         <Pressable onPress={goLogin} className="items-center rounded-2xl border border-slate-200 py-4 active:bg-slate-50">
           <Text className="text-base font-semibold text-slate-700">Giriş yap</Text>
         </Pressable>
+        <Pressable
+          onPress={() => router.push({ pathname: "/assistant", params: { page: "/" } } as never)}
+          className="flex-row items-center justify-center gap-1.5 py-1"
+          hitSlop={6}
+        >
+          <Ionicons name="chatbubble-ellipses-outline" size={16} color="#0e7490" />
+          <Text className="text-sm font-semibold text-brand-700">Sorun mu var? Rota&apos;ya sor</Text>
+        </Pressable>
         <Text className="pt-1 text-center text-xs text-slate-400">
           Öğrenci veya veli misin? Koçundan aldığın bilgilerle <Text className="font-semibold text-slate-500">Giriş yap</Text>.
         </Text>

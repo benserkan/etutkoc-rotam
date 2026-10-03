@@ -43,6 +43,7 @@ pages: /institution/parent-trust
 Kaç öğrencinin velisinin sisteme bağlı olduğunu, velilerin son giriş durumunu ve bildirimlerin teslim oranını gösterir.
 
 ## Abonelik ve paket yükseltme
+channel: web
 chip: Paketimi nasıl yükseltirim?
 pages: /institution/subscription, /institution/quota
 link: /institution/subscription | Hesap ayarları
@@ -64,3 +65,8 @@ Kurum logonuz kurum yöneticisi, öğretmen, öğrenci ve veli ekranlarında ve 
 pages: /institution/admin-digest
 
 Her Pazartesi kurum özetiniz e-postayla gelir; arşivi Haftalık Özet sayfasındadır ve isterseniz şimdi gönderebilirsiniz.
+
+## Paket ve kota (uygulamada)
+channel: app
+
+Kurum paketi ekibimizle yapılan anlaşmayla açılır; paket değişikliği için bu asistandan "Bir insanla görüşmek istiyorum" ile ekibimize yazabilirsiniz. Öğretmen sınırı dolduysa yeni öğretmen eklenemez.

@@ -57,6 +57,10 @@ def _key(session_key: str | None, user: User | None) -> str:
                                                  "message": "Oturum anahtarı eksik."})
 
 
+def _ch(channel: str | None) -> str:
+    return channel if channel in sa.CHANNELS else "web"
+
+
 def _page(p: str | None) -> str | None:
     if not p:
         return None
@@ -101,6 +105,7 @@ class AAskBody(BaseModel):
     label: str | None = Field(default=None, max_length=200)
     question: str | None = Field(default=None, max_length=800)
     history: list[AMessage] = Field(default_factory=list, max_length=20)
+    channel: str | None = Field(default=None, max_length=10)
 
 
 class AAnswer(BaseModel):
@@ -131,15 +136,16 @@ class AHandoffResult(BaseModel):
 
 @router.get("/assistant", response_model=AState)
 def assistant_state(request: Request, page: str | None = None, session_key: str | None = None,
-                    user: User | None = Depends(optional_user), db: Session = Depends(get_db)):
+                    channel: str | None = None, user: User | None = Depends(optional_user), db: Session = Depends(get_db)):
     aud = sa.audience_for(user)
     pg = _page(page)
     key = _key(session_key, user)
+    ch = _ch(channel)
     tstate = sa._teacher_state(db, user) if aud == "teacher" else None
     return AState(
         audience=aud,
-        greeting=sa.greeting(db, user, aud, pg, tstate),
-        chips=[AChip(**c) for c in sa.chips(db, user, aud, pg, tstate)],
+        greeting=sa.greeting(db, user, aud, pg, tstate, channel=ch),
+        chips=[AChip(**c) for c in sa.chips(db, user, aud, pg, tstate, channel=ch)],
         ai_left=sa.ai_left(db, user=user, session_key=key, iph=sa.ip_hash(_client_ip(request))),
         whatsapp=sa.whatsapp_number(),
         logged_in=user is not None,
@@ -159,11 +165,12 @@ def assistant_ask(body: AAskBody, request: Request, user: User | None = Depends(
     pg = _page(body.page)
     key = _key(body.session_key, user)
     iph = sa.ip_hash(ip)
+    ch = _ch(body.channel)
     tstate = sa._teacher_state(db, user) if aud == "teacher" else None
     left = sa.ai_left(db, user=user, session_key=key, iph=iph)
 
     if body.chip:
-        res = sa.rule_answer(db, user, aud, body.chip, tstate)
+        res = sa.rule_answer(db, user, aud, body.chip, tstate, channel=ch)
         sa.log_message(db, user=user, session_key=key, iph=iph, audience=aud, page=pg,
                        chip=body.chip[:60], question=(body.label or body.chip)[:800],
                        answer=res["answer"], source="rule")
@@ -175,7 +182,7 @@ def assistant_ask(body: AAskBody, request: Request, user: User | None = Depends(
         raise HTTPException(status_code=422, detail={"code": "question_required",
                                                      "message": "Bir soru yaz ya da hazır sorulardan birini seç."})
     if left <= 0:
-        res = sa.fallback_answer(q, aud, pg)
+        res = sa.fallback_answer(q, aud, pg, ch)
         msg = ("Bugünlük yapay zekâ soru hakkın doldu; en yakın bilgiyi veriyorum. " + res["answer"])
         sa.log_message(db, user=user, session_key=key, iph=iph, audience=aud, page=pg, chip=None,
                        question=q, answer=msg, source="limit")
@@ -183,16 +190,16 @@ def assistant_ask(body: AAskBody, request: Request, user: User | None = Depends(
         return AAnswer(answer=msg, action=res["action"], source="limit", ai_left=0)
 
     sections = sa.retrieve(q + " " + " ".join(h.text for h in body.history[-2:] if h.role == "user"),
-                           aud, pg)
-    facts = sa.account_facts(db, user, aud)
+                           aud, pg, channel=ch)
+    facts = sa.account_facts(db, user, aud, ch)
     db.commit()  # uzun dış çağrı açık işlem içinde yapılmaz
     try:
         res = sa.ai_answer(q, [h.model_dump() for h in body.history], audience=aud, page=pg,
-                           sections=sections, facts=facts, tstate=tstate)
+                           sections=sections, facts=facts, tstate=tstate, channel=ch)
         source = "ai"
     except Exception:  # noqa: BLE001 — asistan asla boş dönmez
         logger.warning("site assistant AI failed", exc_info=True)
-        res = sa.fallback_answer(q, aud, pg)
+        res = sa.fallback_answer(q, aud, pg, ch)
         source = "fallback"
     sa.log_message(db, user=user, session_key=key, iph=iph, audience=aud, page=pg, chip=None,
                    question=q, answer=res["answer"], source=source)
