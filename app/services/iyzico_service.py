@@ -148,7 +148,7 @@ def _compute_price(user: User, plan_code: str, cycle: str) -> Decimal:
 
     if cycle == "monthly":
         total = Decimal(str(monthly))
-    else:  # annual = 10 ay peşin
+    else:  # akademik yıl: indirimli aylık × ay sayısı (pricing.annual_total TEK KAYNAK)
         total = Decimal(str(pricing_service.annual_total(monthly)))
 
     return total
@@ -576,7 +576,8 @@ def verify_callback(
                 owner.subscription_cycle = (
                     "academic_year" if tx.cycle == "annual" else "monthly"
                 )
-                days = 365 if tx.cycle == "annual" else 30
+                days = (pricing_service.academic_year_days()
+                        if tx.cycle == "annual" else 30)
                 from datetime import timedelta
                 owner.subscription_period_end = period_base + timedelta(days=days)
                 # Kanal işareti (w7x0a3b4a66w): web kart ödemesi = iyzico.

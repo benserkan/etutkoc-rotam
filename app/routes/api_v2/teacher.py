@@ -3166,7 +3166,7 @@ def teacher_subscription_request_v2(
     months = int(catalog["annual_paid_months"])
     cycle_label = "Akademik yıl (peşin)" if cycle == "academic_year" else "Aylık"
     price_note = (
-        f"~{monthly * months:,} ₺/yıl ({months} ay)".replace(",", ".")
+        f"~{pricing.annual_total(monthly):,} ₺ ({months} ay)".replace(",", ".")
         if cycle == "academic_year"
         else f"~{monthly:,} ₺/ay".replace(",", ".")
     )

@@ -151,7 +151,7 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
             "yanlış soru ipuçları ve seans yapay zekâsı bu pakette açılır."
         ),
         price_monthly_try=2500,
-        price_yearly_try=25000,  # 10 ay (2 ay bedava)
+        price_yearly_try=20000,  # akademik yıl: 10 ay × 2.000 (%20 indirim)
         audience="solo",
         tier_rank=2,
         features_included=[
@@ -176,7 +176,7 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
             "kapasite + AI kariyer sentezi + öncelikli destek."
         ),
         price_monthly_try=5000,
-        price_yearly_try=50000,  # 10 ay
+        price_yearly_try=40000,  # akademik yıl: 10 ay × 4.000
         audience="solo",
         tier_rank=3,
         features_included=[
@@ -199,7 +199,7 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
             "ve taşıma desteği, yeni özelliklere erken erişim, öncelikli destek."
         ),
         price_monthly_try=7500,
-        price_yearly_try=75000,  # 10 ay
+        price_yearly_try=60000,  # akademik yıl: 10 ay × 6.000
         audience="solo",
         tier_rank=4,
         features_included=[

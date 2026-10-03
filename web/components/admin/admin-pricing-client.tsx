@@ -157,7 +157,8 @@ export function AdminPricingClient({ initial }: { initial: PricingAdminResponse 
       </Card>
 
       <div className="grid grid-cols-2 gap-3 sm:max-w-xs">
-        <NumField label="Yıllık ödenen ay (10=2 ay bedava)" value={cfg.annual_paid_months} onChange={(n) => set("annual_paid_months", n)} />
+        <NumField label="Akademik yıl (ay)" value={cfg.annual_paid_months} onChange={(n) => set("annual_paid_months", n)} />
+        <NumField label="Akademik yıl indirimi (%)" value={cfg.annual_discount_pct ?? 20} onChange={(n) => set("annual_discount_pct", n)} />
       </div>
 
       <div className="flex items-center justify-end gap-2">

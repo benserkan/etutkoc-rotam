@@ -92,6 +92,16 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   `test_api_v2_plan_assistant` 19/19 · YENİ `live_plan_flows.py` 51/51 (9 durum × telefon+masaüstü,
   iyzico sandbox'a kadar) · lifecycle 23 · iyzico 29 · credit_packs 19 · IAP 23 · renewal 12 ·
   support 54 · moment checks yeşil.
+- **Akademik yıl fiyatı + /pricing yeni tasarım (2026-10-03, migration YOK):** kullanıcı kararı —
+  akademik yıl = 10 ay tek ödeme, aylıkta %20 indirim: Patika 2.000/ay (20.000) · Rota 4.000 (40.000) ·
+  Zirve 6.000 (60.000). Eski "10 ay öde 12 ay kullan" (2.083/ay, 25.000) KALKTI. TEK KAYNAK
+  `pricing.annual_monthly/annual_total/academic_year_days` (yeni ayar `annual_discount_pct`, süper admin
+  editöründe; katalog tier'larında `annual_monthly`/`annual_total`); iyzico tutarı + abonelik süresi
+  (305 gün = 10 ay) + admin manuel aktivasyon + plans.price_yearly_try (teklif/kampanya linkleri) +
+  asistan aynı kaynaktan. Kurum (B2B) yıllık fiyatlarına DOKUNULMADI. Ortak paket parçaları
+  `web/components/pricing/plan-ui.tsx` (CycleSwitch · PlanOption · annualOf) → /pricing (`solo-plans.tsx`:
+  seçilebilir kartlar + seçilenin içeriği + tek eylem) ve Paketim AYNI dil; /pricing'den yapay zekâ notu
+  ve bayat "manuel aktivasyon" cümlesi kaldırıldı, karşılaştırma/kredi tablosu katlanır.
 - **ÖNLEM — `scripts/check_migration_heads.py`**: çoklu head / kopuk down_revision varsa
   `deploy/redeploy.sh` durur (iki oturumun aynı tabana migration yazması prod açılışını düşürür).
   **KURAL: yeni migration'ın down_revision'ı daima `alembic heads` çıktısı; deploy'dan önce bekçi.**

@@ -20,7 +20,10 @@ PRICING_KEY = "pricing"
 # Süper adminden düzenlenebilen tüm sayılar — kod varsayılanı.
 _DEFAULTS: dict[str, Any] = {
     "currency": "TRY",
-    "annual_paid_months": 10,           # yıllık = 10 ay öde (2 ay bedava)
+    # Akademik yıl (2026-10-03, kullanıcı kararı): 10 aylık okul yılı, aylık
+    # fiyatta %20 indirim → Patika 2.500 → 2.000 ₺/ay, 10 ay = 20.000 ₺.
+    "annual_paid_months": 10,           # akademik yıl kaç ay (ödenen = kullanılan)
+    "annual_discount_pct": 20,          # akademik yıl aylık indirimi (%)
     # --- Solo (B2C) ---
     # 3 kapaklı paket: her tier'ın SERT öğrenci tavanı + sabit aylık fiyatı var.
     # free=3 (ücretsiz). Ücretli: ≤10 / ≤25 / sınırsız. max_students=null → sınırsız.
@@ -137,8 +140,20 @@ def compute_institution_monthly(coach_count: int) -> int | None:
     return int(mt) if mt is not None else None
 
 
+def annual_monthly(monthly: int) -> int:
+    """Akademik yılda aylık bedel (indirimli). TEK KAYNAK — ödeme, sayfa, asistan."""
+    pct = int(_cfg().get("annual_discount_pct", 20))
+    return int(round(int(monthly) * (100 - pct) / 100))
+
+
 def annual_total(monthly: int) -> int:
-    return monthly * int(_cfg()["annual_paid_months"])
+    """Akademik yıl tek ödeme = indirimli aylık × ay sayısı (2.500 → 20.000)."""
+    return annual_monthly(monthly) * int(_cfg()["annual_paid_months"])
+
+
+def academic_year_days() -> int:
+    """Akademik yıl aboneliğinin süresi (gün) — ödenen ay kadar (10 ay ≈ 305 gün)."""
+    return int(round(int(_cfg()["annual_paid_months"]) * 30.5))
 
 
 def is_paid_plan_code(plan_code: str | None) -> bool:
@@ -642,6 +657,7 @@ def get_pricing_catalog() -> dict[str, Any]:
         "feature_glossary": feature_glossary(),
         "currency": cfg["currency"],
         "annual_paid_months": int(cfg["annual_paid_months"]),
+        "annual_discount_pct": int(cfg.get("annual_discount_pct", 20)),
         "contact": {
             "sales_email": str(contact.get("sales_email") or _DEFAULTS["contact"]["sales_email"]),
             "support_email": str(contact.get("support_email") or _DEFAULTS["contact"]["support_email"]),
@@ -651,7 +667,8 @@ def get_pricing_catalog() -> dict[str, Any]:
         "solo": {
             "trial_days": int(cfg["solo_trial_days"]),
             "free": {"students": int(cfg["solo_free_students"]), "ai_included": False},
-            "tiers": [dict(t) for t in cfg["solo_tiers"]],
+            "tiers": [{**t, "annual_monthly": annual_monthly(t["monthly"]),
+                       "annual_total": annual_total(t["monthly"])} for t in cfg["solo_tiers"]],
             "ai_included": True,
         },
         "institution": {

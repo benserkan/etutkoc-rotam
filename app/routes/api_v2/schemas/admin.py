@@ -3455,6 +3455,7 @@ class ContactChannelsIn(BaseModel):
 
 class PricingConfigBody(BaseModel):
     annual_paid_months: int
+    annual_discount_pct: int = 20
     solo_trial_days: int
     solo_free_students: int
     solo_tiers: list[SoloTierIn]

@@ -2316,7 +2316,8 @@ def admin_activate_user_plan_v2(
     if _is_paid(plan):
         target.subscription_status = "active"
         target.subscription_cycle = cycle
-        days = 365 if cycle == "academic_year" else 30
+        from app.services.pricing import academic_year_days
+        days = academic_year_days() if cycle == "academic_year" else 30
         target.subscription_period_end = _dt.now(_tz.utc) + _td(days=days)
         target.subscription_platform = "manual"  # süper admin aktivasyonu
         target.trial_ends_at = None  # deneme bitti (aktif ücretli abonelik)
@@ -8690,7 +8691,7 @@ def admin_ai_settings_delete_v2(
 _PRICING_INVALIDATE = ["admin:settings:pricing", "pricing"]
 
 _PRICING_EDITABLE_KEYS = (
-    "annual_paid_months", "solo_trial_days", "solo_free_students", "solo_tiers",
+    "annual_paid_months", "annual_discount_pct", "solo_trial_days", "solo_free_students", "solo_tiers",
     "institution_trial_days", "institution_free_teachers",
     "institution_free_students", "institution_students_per_coach", "institution_tiers",
     "contact",  # iletişim kanalları (sales/support e-posta + WhatsApp + telefon)
@@ -8732,6 +8733,9 @@ def admin_pricing_set_v2(
             detail={"error": "validation", "code": "invalid_pricing",
                     "message": "En az bir solo paketi ve bir kurum tier'ı gerekir."},
         )
+    if not (0 <= int(payload.get("annual_discount_pct", 20)) <= 90) or payload["annual_paid_months"] <= 0:
+        raise HTTPException(status_code=400, detail={"error": "validation", "code": "invalid_pricing",
+                "message": "Akademik yıl ay sayısı pozitif, indirim %0-90 olmalı."})
     for t in payload["solo_tiers"]:
         if (t["max_students"] is not None and t["max_students"] <= 0) or t["monthly"] < 0:
             raise HTTPException(status_code=400, detail={"error": "validation", "code": "invalid_pricing",

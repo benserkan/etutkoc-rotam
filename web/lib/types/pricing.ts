@@ -5,6 +5,8 @@ export interface SoloTier {
   label: string;
   max_students: number | null;  // null = sınırsız
   monthly: number;
+  annual_monthly?: number;      // akademik yılda aylık (indirimli)
+  annual_total?: number;        // akademik yıl tek ödeme
 }
 
 export interface InstitutionTier {
@@ -81,6 +83,7 @@ export interface PricingCatalog {
   feature_glossary: FeatureGlossaryEntry[]; // tıkla-gör balonlar (tek kaynak)
   currency: string;
   annual_paid_months: number;
+  annual_discount_pct?: number;
   contact: PricingContact;
   solo: {
     trial_days: number;

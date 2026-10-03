@@ -161,6 +161,8 @@ def build_state(db: Session, user: User) -> dict[str, Any]:
             "label": t.get("label") or _plan_label(t["code"]),
             "max_students": t.get("max_students"),
             "monthly_try": t.get("monthly"),
+            "annual_monthly_try": t.get("annual_monthly"),
+            "annual_total_try": t.get("annual_total"),
             "ai_credits_monthly": c.get("credits_monthly"),
             "badge": c.get("badge"),
         })
@@ -168,6 +170,7 @@ def build_state(db: Session, user: User) -> dict[str, Any]:
         "plan": plan,
         "tiers": tiers,
         "annual_paid_months": int(cat.get("annual_paid_months") or 10),
+        "annual_discount_pct": int(cat.get("annual_discount_pct") or 20),
         "trial_days": int(cat["solo"]["trial_days"]),
         "free_students": int(cat["solo"]["free"]["students"]),
         "credit_costs": cat.get("credit_costs") or [],
@@ -309,8 +312,9 @@ def rule_answer(chip: str, state: dict, channel: str = "web") -> dict:
             return {"answer": "Öğrenci sayına uygun paketi bulamadım; bize yazarsan yardımcı olalım.",
                     "action": {"type": "handoff", "label": "Bize yaz"}}
         lines = [f"Şu an {n} aktif öğrencin var; {sug['label']} paketi ({_cap(sug)}) sana yeter.",
-                 f"Aylık {_fmt_tl(sug['monthly_try'])}, akademik yıl peşin ödersen "
-                 f"{_fmt_tl(sug['monthly_try'] * months)} ({12 - months} ay bedava)."]
+                 f"Aylık {_fmt_tl(sug['monthly_try'])}; akademik yıl ({months} ay) tek ödemede "
+                 f"ayda {_fmt_tl(sug['annual_monthly_try'])}, toplam {_fmt_tl(sug['annual_total_try'])} "
+                 f"(%{state['annual_discount_pct']} indirim)."]
         if sug.get("ai_credits_monthly"):
             lines.append(f"Her ay {_fmt_int(sug['ai_credits_monthly'])} yapay zekâ kredisi gelir.")
         idx = state["tiers"].index(sug)
@@ -495,7 +499,8 @@ def _facts_for_ai(state: dict, channel: str = "web") -> dict:
     return {
         "hesap": {k: p.get(k) for k in keep},
         "paketler": state["tiers"],
-        "akademik_yil_odenen_ay": state["annual_paid_months"],
+        "akademik_yil_ay": state["annual_paid_months"],
+        "akademik_yil_indirim_yuzde": state["annual_discount_pct"],
         "deneme_gun": state["trial_days"],
         "ucretsiz_ogrenci": state["free_students"],
         "kredi_maliyetleri": state["credit_costs"],
@@ -504,7 +509,7 @@ def _facts_for_ai(state: dict, channel: str = "web") -> dict:
             "Ödeme yalnız kartla, iyzico 3D Secure. Havale/EFT yok. Kart bilgisi platforma gelmez.",
             "Web aboneliği kendiliğinden yenilenmez: bitişten 3 gün önce e-posta gelir, koç bu sayfadan öder.",
             "Erken yenileme ya da dönem içinde paket yükseltme kalan günleri yakmaz; yeni dönem mevcut bitişin üstüne eklenir.",
-            "Akademik yıl peşin ödemede 12 ay yerine 'akademik_yil_odenen_ay' kadar ödenir.",
+            "Akademik yıl = 'akademik_yil_ay' aylık tek ödeme; aylık fiyatta 'akademik_yil_indirim_yuzde' indirim (paketlerdeki annual_monthly_try / annual_total_try). Abonelik o kadar ay sürer.",
             "İptal: dönem sonuna kadar her şey açık, sonra ücretsiz pakete geçilir; veri silinmez; iptal geri alınabilir.",
             "Süresi dolan (past_due) abonelikte programlama kilitlenir; ödeyince açılır, pasif öğrenciler kendiliğinden aktif olur.",
             "Ücretsiz pakette yapay zekâ kapalı; öğrenci sınırını aşınca yeni programlama kilitlenir, veri silinmez.",

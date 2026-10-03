@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import { FeatureLine, buildGlossaryMap, type GlossaryMap } from "@/components/pricing/feature-info";
 import type { PricingCard, PricingCatalog } from "@/lib/types/pricing";
+import { annualOf } from "@/components/pricing/plan-ui";
 
 function fmt(n: number): string {
   return n.toLocaleString("tr-TR");
@@ -97,11 +98,11 @@ export function PricingCards({
             className={cn("inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-bold transition", yearly ? "bg-white text-cyan-800 shadow-sm" : "text-muted-foreground")}
           >
             Akademik Yıl
-            <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-700">2 ay bedava</span>
+            <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-700">%{catalog.annual_discount_pct ?? 20} indirim</span>
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
-          {yearly ? `${months} ay öde · 12 ay kullan` : "Aylık ödeme · istediğin zaman iptal"}
+          {yearly ? `${months} ay, tek ödeme · her ay %${catalog.annual_discount_pct ?? 20} daha ucuz` : "Aylık ödeme · istediğin zaman iptal"}
         </p>
       </div>
 
@@ -111,7 +112,7 @@ export function PricingCards({
             key={card.key}
             card={card}
             yearly={yearly}
-            months={months}
+            annual={annualOf(catalog, card.plan, card.monthly)}
             glossary={buildGlossaryMap(catalog.feature_glossary)}
           />
         ))}
@@ -120,12 +121,12 @@ export function PricingCards({
   );
 }
 
-function PlanCard({ card, yearly, months, glossary }: { card: PricingCard; yearly: boolean; months: number; glossary?: GlossaryMap }) {
+function PlanCard({ card, yearly, annual, glossary }: { card: PricingCard; yearly: boolean; annual: { monthly: number; total: number; months: number }; glossary?: GlossaryMap }) {
   const featured = card.tone === "featured" || card.highlight;
   const dark = card.tone === "dark";
   const onColor = featured || dark;   // koyu/renkli zemin → açık metin
   const isFree = card.monthly === 0;
-  const monthly = yearly ? Math.round((card.monthly * months) / 12) : card.monthly;
+  const monthly = yearly && card.monthly > 0 ? annual.monthly : card.monthly;
 
   // Kurum kartı fiyat göstermez — "Kurumunuza özel teklif".
   // Solo paketleri kapaklı (sabit) fiyatlı → "X ₺/ay" (eski "'den" değil).
@@ -138,7 +139,7 @@ function PlanCard({ card, yearly, months, glossary }: { card: PricingCard; yearl
     priceUnit = "/ay";
   }
   const priceNote = yearly && !isFree && !card.price_hidden
-    ? "yıllık peşin · 2 ay bedava"
+    ? `${annual.months} ay · toplam ${fmt(annual.total)} ₺`
     : card.price_note ?? "";
 
   const href = card.cta_href || `/signup/teacher?plan=${encodeURIComponent(card.plan)}`;

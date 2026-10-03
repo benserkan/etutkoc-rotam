@@ -35,6 +35,7 @@ import { useInitCreditPackCheckout, useInitPaymentCheckout } from "@/lib/hooks/u
 import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import { FeatureLine, buildGlossaryMap } from "@/components/pricing/feature-info";
 import type { TeacherPlanOption, TeacherPlanResponse } from "@/lib/types/teacher";
+import { CycleSwitch, PlanOption, annualOf, capLabel, tl, type Cycle } from "@/components/pricing/plan-ui";
 
 /**
  * /teacher/plan — "Paketim" (2026-10-03 yeniden tasarım, mobil öncelikli).
@@ -51,11 +52,6 @@ import type { TeacherPlanOption, TeacherPlanResponse } from "@/lib/types/teacher
  * kehribar = dikkat (deneme, iptal) · kırmızı = çözülmesi gereken sorun.
  */
 
-type Cycle = "monthly" | "academic_year";
-
-function tl(n: number): string {
-  return `${Math.round(n).toLocaleString("tr-TR")} ₺`;
-}
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -63,9 +59,6 @@ function fmtDate(iso: string | null | undefined): string {
   return d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 }
 
-function capLabel(max: number | null): string {
-  return max == null ? "Sınırsız öğrenci" : `${max} öğrenciye kadar`;
-}
 
 const TONE = {
   emerald: { chip: "bg-emerald-600 text-white", bar: "bg-emerald-500", ring: "border-emerald-500/40" },
@@ -97,7 +90,13 @@ export function TeacherPlanClient({
     staleTime: 5 * 60_000,
   });
   const catalog = pricingQ.data;
-  const months = data.annual_paid_months || 10;
+  const discountPct = catalog?.annual_discount_pct ?? 20;
+  const priceFor = (t: TeacherPlanOption, c: Cycle) => {
+    const a = annualOf(catalog, t.code, t.price_monthly_try);
+    return c === "academic_year"
+      ? { monthly: a.monthly, total: a.total, months: a.months }
+      : { monthly: t.price_monthly_try, total: t.price_monthly_try, months: 1 };
+  };
 
   const tiers = data.options.filter((o) => o.code !== "solo_free");
   const n = data.student_count;
@@ -202,19 +201,20 @@ export function TeacherPlanClient({
                 {n} aktif öğrencin var. Öğrenci sayına yetmeyen paket seçilemez.
               </p>
             </div>
-            <CycleSwitch cycle={cycle} onChange={setCycle} months={months} />
+            <CycleSwitch cycle={cycle} onChange={setCycle} discountPct={discountPct} />
           </div>
 
           <div className="grid gap-3 lg:grid-cols-3" role="radiogroup" aria-label="Paket seçimi">
             {visibleTiers.map((t) => (
-              <TierOption
+              <PlanOption
                 key={t.code}
-                tier={t}
+                name={t.label}
+                capacity={capLabel(t.max_students)}
+                price={tl(priceFor(t, cycle).monthly)}
+                priceNote={cycle === "academic_year" ? `${priceFor(t, cycle).months} ay · toplam ${tl(priceFor(t, cycle).total)}` : null}
                 selected={t.code === selected}
-                fits={fits(t)}
-                studentCount={n}
-                cycle={cycle}
-                months={months}
+                disabled={!fits(t)}
+                disabledReason={`${n} öğrencine yetmiyor`}
                 credits={catalog?.cards.find((c) => c.plan === t.code)?.credits_monthly ?? null}
                 tag={
                   isPaidState && t.code === data.plan_code
@@ -235,7 +235,7 @@ export function TeacherPlanClient({
             features={catalog?.plan_features?.[selected] ?? []}
             glossary={buildGlossaryMap(catalog?.feature_glossary)}
             cycle={cycle}
-            months={months}
+            price={tierBy(selected) ? priceFor(tierBy(selected)!, cycle) : null}
             isRenewal={isPaidState && selected === data.plan_code}
             disabled={!(tierBy(selected) && fits(tierBy(selected)!))}
             onPay={() => setCheckout({ plan: selected, cycle })}
@@ -302,7 +302,7 @@ export function TeacherPlanClient({
       <CheckoutDialog
         target={checkout}
         tier={checkout ? tierBy(checkout.plan) : undefined}
-        months={months}
+        price={checkout && tierBy(checkout.plan) ? priceFor(tierBy(checkout.plan)!, checkout.cycle) : null}
         data={data}
         onClose={() => setCheckout(null)}
         onAsk={() => {
@@ -673,106 +673,12 @@ function CreditPacks({ exhausted }: { exhausted: boolean }) {
 // 2. Paketler
 // ---------------------------------------------------------------------------
 
-function CycleSwitch({ cycle, onChange, months }: { cycle: Cycle; onChange: (c: Cycle) => void; months: number }) {
-  const opt = (c: Cycle, label: React.ReactNode) => (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={cycle === c}
-      onClick={() => onChange(c)}
-      className={cn(
-        "rounded-full px-4 py-2 text-sm font-semibold transition",
-        cycle === c ? "bg-cyan-700 text-white" : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {label}
-    </button>
-  );
-  return (
-    <div className="inline-flex rounded-full border border-border bg-muted/50 p-1" role="radiogroup" aria-label="Ödeme dönemi">
-      {opt("monthly", "Aylık")}
-      {opt("academic_year", <>Akademik yıl · {12 - months} ay bedava</>)}
-    </div>
-  );
-}
-
-function TierOption({
-  tier,
-  selected,
-  fits,
-  studentCount,
-  cycle,
-  months,
-  credits,
-  tag,
-  onSelect,
-}: {
-  tier: TeacherPlanOption;
-  selected: boolean;
-  fits: boolean;
-  studentCount: number;
-  cycle: Cycle;
-  months: number;
-  credits: number | null;
-  tag: string | null;
-  onSelect: () => void;
-}) {
-  const monthly = cycle === "academic_year" ? (tier.price_monthly_try * months) / 12 : tier.price_monthly_try;
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      disabled={!fits}
-      onClick={onSelect}
-      className={cn(
-        "relative flex w-full items-start gap-3 rounded-2xl border-2 bg-card p-4 text-left transition sm:p-5",
-        selected ? "border-cyan-600 shadow-md" : "border-border hover:border-cyan-600/50",
-        !fits && "cursor-not-allowed opacity-60 hover:border-border",
-      )}
-    >
-      <span
-        className={cn(
-          "mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border-2",
-          selected ? "border-cyan-600 bg-cyan-600" : "border-muted-foreground/40",
-        )}
-        aria-hidden
-      >
-        {selected ? <Check className="size-3 text-white" /> : null}
-      </span>
-      <span className="min-w-0 flex-1">
-        {tag ? (
-          <span className="mb-1.5 inline-block rounded-full bg-cyan-700 px-2 py-0.5 text-[11px] font-semibold text-white">
-            {tag}
-          </span>
-        ) : null}
-        <span className="block font-display text-lg font-bold text-foreground">{tier.label}</span>
-        <span className="block text-sm text-muted-foreground">{capLabel(tier.max_students)}</span>
-        <span className="mt-2 block">
-          <span className="text-2xl font-bold text-foreground">{tl(monthly)}</span>
-          <span className="text-sm text-muted-foreground"> /ay</span>
-        </span>
-        {credits ? (
-          <span className="mt-1 block text-sm text-muted-foreground">
-            Ayda {credits.toLocaleString("tr-TR")} yapay zekâ kredisi
-          </span>
-        ) : null}
-        {!fits ? (
-          <span className="mt-2 block text-xs font-medium text-rose-700 dark:text-rose-400">
-            {studentCount} öğrencine yetmiyor
-          </span>
-        ) : null}
-      </span>
-    </button>
-  );
-}
-
 function SelectedPlanPanel({
   tier,
   features,
   glossary,
   cycle,
-  months,
+  price,
   isRenewal,
   disabled,
   onPay,
@@ -781,13 +687,13 @@ function SelectedPlanPanel({
   features: string[];
   glossary: ReturnType<typeof buildGlossaryMap>;
   cycle: Cycle;
-  months: number;
+  price: { monthly: number; total: number; months: number } | null;
   isRenewal: boolean;
   disabled: boolean;
   onPay: () => void;
 }) {
-  if (!tier) return null;
-  const total = cycle === "academic_year" ? tier.price_monthly_try * months : tier.price_monthly_try;
+  if (!tier || !price) return null;
+  const total = price.total;
   return (
     <div className="rounded-3xl bg-muted/50 p-5 sm:p-6">
       <h3 className="text-base font-semibold text-foreground">{tier.label} paketinde neler var?</h3>
@@ -803,7 +709,7 @@ function SelectedPlanPanel({
       ) : null}
       <div className="mt-5 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          {cycle === "academic_year" ? "Akademik yıl, tek ödeme" : "Aylık ödeme"}:{" "}
+          {cycle === "academic_year" ? `Akademik yıl (${price.months} ay), tek ödeme` : "Aylık ödeme"}:{" "}
           <b className="text-lg text-foreground">{tl(total)}</b>
         </p>
         <Button
@@ -823,14 +729,14 @@ function SelectedPlanPanel({
 function CheckoutDialog({
   target,
   tier,
-  months,
+  price,
   data,
   onClose,
   onAsk,
 }: {
   target: { plan: string; cycle: Cycle } | null;
   tier: TeacherPlanOption | undefined;
-  months: number;
+  price: { monthly: number; total: number; months: number } | null;
   data: TeacherPlanResponse;
   onClose: () => void;
   onAsk: () => void;
@@ -843,10 +749,10 @@ function CheckoutDialog({
     enabled: open,
   });
   const pay = useInitPaymentCheckout();
-  if (!target || !tier) return null;
+  if (!target || !tier || !price) return null;
   const yearly = target.cycle === "academic_year";
-  const total = yearly ? tier.price_monthly_try * months : tier.price_monthly_try;
-  const days = yearly ? 365 : 30;
+  const total = price.total;
+  const days = yearly ? Math.round(price.months * 30.5) : 30;
   const extends_ =
     (data.subscription_status === "active" || data.subscription_status === "canceled") &&
     data.subscription_period_end &&
@@ -863,7 +769,10 @@ function CheckoutDialog({
         </DialogHeader>
         <dl className="divide-y divide-border rounded-2xl border border-border">
           <Row label="Paket" value={`${tier.label} · ${capLabel(tier.max_students).toLowerCase()}`} />
-          <Row label="Dönem" value={yearly ? `Akademik yıl (${months} ay ödenir)` : "1 ay"} />
+          <Row
+            label="Dönem"
+            value={yearly ? `Akademik yıl · ${price.months} ay × ${tl(price.monthly)}` : "1 ay"}
+          />
           <Row
             label="Başlangıç"
             value={extends_ ? `Mevcut dönemin bitişinden sonra (${days} gün eklenir)` : "Ödeme onaylanınca hemen"}

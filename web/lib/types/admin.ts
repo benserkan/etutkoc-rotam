@@ -3177,6 +3177,7 @@ export interface ContactChannelsCfg {
 }
 export interface PricingConfig {
   annual_paid_months: number;
+  annual_discount_pct?: number;
   solo_trial_days: number;
   solo_free_students: number;
   solo_tiers: SoloTierCfg[];

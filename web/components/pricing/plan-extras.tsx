@@ -221,7 +221,7 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: "Ödeme nasıl alınıyor?",
-    a: "Kartla, 3D Secure ile (iyzico altyapısı). Kart bilgilerin bize hiç ulaşmaz. Akademik yıl seçersen 10 ay öder, 12 ay kullanırsın.",
+    a: "Kartla, 3D Secure ile (iyzico altyapısı). Kart bilgilerin bize hiç ulaşmaz. Akademik yıl seçersen 10 aylık tutarı tek seferde ödersin; her ay %20 daha ucuza gelir.",
   },
   {
     q: "Kurum (etüt/dershane/okul) için fark ne?",
