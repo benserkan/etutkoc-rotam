@@ -666,3 +666,30 @@ yayınlar, set taslakları "Gözden Geçir ve Yayınla"da bekler — ayrıca bas
 (açık/kapalı) taslak varken "birden fazla güncelleme yayınlanacak" uyarısı verir →
 önce taslakları yayınla, sonra anahtarı kapat. **SIRADA:** 72 saat dokunma · FB Sayfası
 doldur + IG organik carousel · defter · 22 Ağu bak · 24 Ağu 5. gün · **26 Ağu ana karar**.
+
+## 10) **EKİM 2026 — DENEME ANALİZİ (veli) + İLERLEME DEĞERLENDİRMESİ (öğrenci)** (2026-10-04, TASLAK HAZIR)
+
+**Bağlam:** okullar açılalı 3+ hafta; dershane/özel ders alan ama düzeni oturmayan
+öğrenci. Velinin derdi "emeğin karşılığı", öğrencinin derdi "bu tempoyla yetişir miyim".
+A3 yerleştirme kampanyası KAPALI (kullanıcı).
+
+**Kararlar (kullanıcı):** yalnız Trabzon · iki ayrı teklif: veliye **Ücretsiz Deneme
+Analizi** (tüm denemeler birlikte: net nerede kaybolur, nasıl artar — "karne" kelimesi
+KULLANILMAZ) · öğrenciye **Ücretsiz İlerleme Değerlendirmesi** (program + denemeler:
+tempo sınava yetiyor mu, hangi netlerde olmalı) · öğrenci başlığı "Programın doğru mu,
+tempon yeterli mi? Birinin bakması lazım." + üstte "YKS · LGS HAZIRLIK" etiketi (başlık
+sınavı adıyla söylemediği için şart) · teklif kutusu başlığın hemen altında, güven
+şeridi en altta destek.
+
+**Kurgu:** tek kampanya, tek set, iki reklam · 15–64 · ayrıntılı hedefleme boş ·
+elle FB+IG · 350 TL/gün · 7. günde karar (ölçü: sonuç gönderen kişi başına maliyet).
+
+**Varlıklar:** `Desktop/etutkoc-reklam-ekim/` — `build_ekim.py` (HTML → PNG, sistem
+python + playwright/Chrome) → `veli_4x5.png`, `ogrenci_4x5.png` (1080×1350; Meta 4:5'i
+iki platformda da tam gösterir) + `reklam-metinleri.txt` (birincil metin, başlık,
+hazır mesajlar, ilk yanıt, defter, 7. gün eşikleri).
+
+**AÇIK (kullanıcıdan):** 2026 LGS sonucu (+izin) · izinli veli sözü + imza · örnek
+analiz sayıları temsili mi gerçek-anonim mi (şu an temsili, "Örnek" etiketli).
+Veri gelince `build_ekim.py` başındaki LGS_SONUC / VELI_SOZU / VELI_IMZA değiştirilip
+yeniden koşulur.
