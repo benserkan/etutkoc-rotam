@@ -158,6 +158,22 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## KOÇ REHBERİ — Kitaplar / Program / Denemeler serileri — CANLI (2026-10-06, commit `74ed879`, migration YOK)
+
+- 24 bölüm / 185 adım (eski kitap-ekle/ogrenci-ata/program-kur/yayinla-duyur/hafta-takip/deneme-gir
+  bölümlerinin yerini aldı). İçerik kaynağı `scripts/guide_content/{kitaplar,program,denemeler}.py` →
+  `python -m scripts.guide_content.build` (coach-guide-content.json + `guide_service.COACH_CHAPTERS`'ı yazar).
+  Çekim: `scripts/capture_guide_{kitaplar,program,denemeler}.py` (demo koç rehber-koc@etutkoc.demo).
+- Sayfalarda `GuideHint module=...` (Kitaplar/Program/Denemeler) → ilgili bölümü açar.
+- Ses: Pro TTS (Kore). `generate_guide_audio.py --module X --pro` (var olanı atlar; dakikalık/günlük kota
+  ayrımı, 3 hata ya da günlük sınırda `scripts/.tts_abort`). **Google kota artışı 2026-10-06 uygulandı:**
+  önceden fiilen 50/gün olan Pro TTS bugün 134 istek reddsiz geçti.
+- `GUIDE_ASSET_VERSION=20261006a` (web + mobil); mobil içerik kopyası güncel, OTA `e20ad2d9`.
+- **AÇIK (kullanıcı kararı):** branş ve genel LGS denemeleri Net Gelişimi / Gelişim Raporu / Puan Tahmini /
+  veli e-postasında karışıyor — ayırma önerildi.
+
+---
+
 ## KURUMSAL KİMLİK (co-branding) — CANLI (2026-09-30, commit `c8ad549`, migration YOK)
 
 - **Kural (kullanıcı):** kuruma bağlı her kullanıcıya (kurum yöneticisi, öğretmen,
