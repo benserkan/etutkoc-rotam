@@ -123,47 +123,71 @@ def pcm_to_mp3(pcm: bytes, rate: int, out_mp3: Path):
         wav_path.unlink(missing_ok=True)
 
 
-def tts(text: str, voice: str, keys: list[str], exhausted: set[str]) -> tuple[bytes, int]:
+def tts(
+    text: str,
+    voice: str,
+    keys: list[str],
+    exhausted: set[str],
+    model: str | None = None,
+    style: str = "",
+) -> tuple[bytes, int]:
     """Sesi üret. Birden çok key (ücretli + ücretsiz, ayrı projeler/kotalar) sırayla
     denenir; bir key GÜNLÜK cap'e (per_model_per_day 429) takılınca `exhausted`'a
     eklenir ve sonraki key'e geçilir. Dakika-başı (RPM) 429'da aynı key beklenip
     tekrar denenir."""
     body = {
-        "contents": [{"parts": [{"text": text}]}],
+        "contents": [{"parts": [{"text": style + text}]}],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
             "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
         },
     }
     last = ""
-    # Her turda TÜM key'ler denenir (her birinin AYRI dakika-başı + günlük kotası
-    # var). Bir key günlük cap'e takılırsa `exhausted`'a girer; dakika-başı (RPM)
-    # 429'da ise hemen DİĞER key'e geçilir (onun ayrı RPM kovası boş olabilir).
-    # Tüm key'ler bir turda başarısız olursa kısa bekleyip yeni tur denenir.
-    for rnd in range(6):
+    # Her turda key'ler sırayla denenir. Günlük cap (quotaId *PerDay*) → key
+    # bugün biter. Dakikalık 429 → Google'ın retryDelay'i kadar beklenir.
+    # Zaman aşımı → kısa bekle. ÖNEMLİ: reddedilen/zaman aşımına düşen istekler
+    # de günlük kotadan düşebilir — hızlı yeniden deneme yapılmaz (2026-10-06).
+    for rnd in range(4):
         progressed = False
+        wait = 20
         for key in keys:
             if key in exhausted:
                 continue
             progressed = True
             try:
-                with httpx.Client(timeout=180) as c:
-                    r = c.post(URL, json=body, headers={"x-goog-api-key": key, "content-type": "application/json"})
+                with httpx.Client(timeout=360) as c:
+                    url = URL if not model else f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+                    r = c.post(url, json=body, headers={"x-goog-api-key": key, "content-type": "application/json"})
             except httpx.HTTPError as e:
-                last = str(e); continue
+                last = f"{type(e).__name__}: {e}"
+                print(f"    · deneme {rnd + 1}: {last}", flush=True)
+                wait = max(wait, 30)
+                continue
             if r.status_code == 200:
                 part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
                 mime = part.get("mimeType", "")
                 rate = int(mime.split("rate=")[1].split(";")[0]) if "rate=" in mime else 24000
                 return base64.b64decode(part["data"]), rate
-            txt = r.text[:300]
-            last = f"{r.status_code}: {txt}"
-            if r.status_code == 429 and ("per_day" in txt or "PerDay" in txt or "PerProjectPerModel" in txt):
+            full = r.text
+            qids, retry = [], None
+            try:
+                for d in r.json().get("error", {}).get("details", []):
+                    qids += [v.get("quotaId", "") for v in d.get("violations", [])]
+                    retry = d.get("retryDelay", retry)
+            except Exception:  # noqa: BLE001
+                pass
+            last = f"{r.status_code} {','.join(q for q in qids if q) or full[:200]}"
+            print(f"    · deneme {rnd + 1}: {last} retry={retry}", flush=True)
+            if r.status_code == 429 and any("PerDay" in q for q in qids):
                 exhausted.add(key)  # günlük cap → bu key bugün bitti
-            # diğer 429 (RPM) / 500 / 503 → hemen sıradaki key'e geç
+            elif r.status_code == 429 and retry:
+                try:
+                    wait = max(wait, min(120, int(float(str(retry).rstrip("s"))) + 2))
+                except ValueError:
+                    pass
         if not progressed:
             break  # tüm key'ler günlük cap'li
-        time.sleep(8)  # bir tur tüm key'lerde başarısız → RPM kovası dolsun, yeni tur
+        time.sleep(wait)
     raise RuntimeError(f"TTS başarısız: {last}")
 
 

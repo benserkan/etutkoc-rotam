@@ -329,8 +329,9 @@ export function SelfStudyEntryRow({
       : null;
   return (
     <li className="flex flex-wrap items-start gap-2 py-2 text-sm">
-      <div className="min-w-0 flex-1">
-        <p className="truncate">
+      {/* min genişlik: dar kartta eylemler alt satıra iner, metin harf harf kırılmaz */}
+      <div className="min-w-[14rem] flex-1">
+        <p className="break-words">
           <span className="font-medium">{item.book_name}</span>
           <span className="text-muted-foreground"> · {item.section_label}</span>
         </p>
@@ -356,7 +357,7 @@ export function SelfStudyEntryRow({
           </p>
         ) : null}
       </div>
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex flex-wrap items-center gap-1.5 shrink-0">
         <SelfStudyStatusChip item={item} />
         {onApprove && item.status === "pending" ? (
           <Button

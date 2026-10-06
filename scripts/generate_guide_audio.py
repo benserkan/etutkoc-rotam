@@ -66,6 +66,13 @@ CONTENT_BY_GUIDE = {
 }
 OUT_ROOT = ROOT / "app" / "static" / "guide" / "audio"
 VOICE = "Kore"
+# Gelişmiş seslendirme (2026-10-05): pro TTS + stil talimatı — ekler kelimeye
+# bağlı, doğal vurgu. Talimat sesli OKUNMAZ (yazıya dökümle doğrulandı).
+PRO_MODEL = "gemini-2.5-pro-preview-tts"
+PRO_STYLE = (
+    "Sıcak, sakin ve anlaşılır bir eğitmen sesiyle, doğal Türkçe vurgu ve "
+    "tonlamayla, eklerini kelimeye bağlayarak akıcı oku: "
+)
 
 
 def main() -> int:
@@ -74,10 +81,14 @@ def main() -> int:
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--chapter", default=None)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--module", default=None, help="yalnız bu konudaki bölümler (örn. Kitaplar)")
+    ap.add_argument("--pro", action="store_true", help="pro TTS modeli + stil talimatı")
     args = ap.parse_args()
 
     content = json.loads(CONTENT_BY_GUIDE[args.guide].read_text(encoding="utf-8"))
     chapters = content["chapters"]
+    if args.module:
+        chapters = [c for c in chapters if c.get("module") == args.module]
     if args.chapter:
         chapters = [c for c in chapters if c["key"] == args.chapter]
         if not chapters:
@@ -95,11 +106,26 @@ def main() -> int:
         print("HATA: Gemini anahtarı yok.")
         return 1
     exhausted: set[str] = set()
+    if args.pro:
+        # Pro TTS yalnız ücretli katmanda var — ücretsiz anahtarlar boşuna denenmez.
+        keys = keys[:1]
+    # Aynı UTC gününde önceki tur kotayı bitirdiyse hiç deneme (hak boşa gitmesin).
+    import datetime as _dt
+
+    abort_flag = ROOT / "scripts" / ".tts_abort"
+    today_utc = _dt.datetime.now(_dt.timezone.utc).date().isoformat()
+    if args.pro and abort_flag.exists() and abort_flag.read_text().strip() == today_utc:
+        print("Bugünkü (UTC) pro TTS kotası önceki turda bitti — atlanıyor.")
+        return 2
     if not args.dry_run:
         print(f"Kullanılabilir TTS key sayısı: {len(keys)}")
 
     made = skip = fail = 0
+    streak = 0
+    stopped = False
     for ch in chapters:
+        if stopped:
+            break
         steps = ch["steps"]
         print(f"\n[{ch['key']}] {len(steps)} adım")
         for i, step in enumerate(steps):
@@ -111,13 +137,29 @@ def main() -> int:
                 skip += 1
                 continue
             try:
-                pcm, rate = tts(step["caption"], VOICE, keys, exhausted)
+                pcm, rate = tts(
+                    step.get("speech") or step["caption"],
+                    VOICE,
+                    keys,
+                    exhausted,
+                    model=PRO_MODEL if args.pro else None,
+                    style=PRO_STYLE if args.pro else "",
+                )
                 pcm_to_mp3(pcm, rate, out)
                 made += 1
+                streak = 0
                 print(f"  ✓ {out.relative_to(ROOT)}")
             except Exception as e:  # noqa: BLE001 — üretim scripti, devam et
                 fail += 1
+                streak += 1
                 print(f"  ✗ {ch['key']}/{i}: {e}")
+                # Tüm anahtarlar günlük sınırda ya da üst üste 3 hata → dur (kota boşa gitmesin)
+                if (keys and all(k in exhausted for k in keys)) or streak >= 3:
+                    print("  ■ Tur durduruldu: " + ("günlük sınır" if all(k in exhausted for k in keys) else "üst üste 3 hata"))
+                    if args.pro:
+                        abort_flag.write_text(today_utc)
+                    stopped = True
+                    break
     if not args.dry_run:
         print(f"\nÜretilen: {made} · Atlanan: {skip} · Hata: {fail}")
     return 1 if fail else 0

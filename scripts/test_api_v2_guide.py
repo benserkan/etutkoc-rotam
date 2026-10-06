@@ -62,6 +62,7 @@ from app.models import (
 from app.models.book import BookType
 from app.models.exam_result import ExamSection
 from app.models.suspicious_ip import SuspiciousIp
+from app.services.guide_service import COACH_CHAPTERS
 from app.services.rate_limit import get_login_limiter
 from app.services.security import hash_password
 
@@ -153,6 +154,11 @@ def main() -> int:
         check("2. öğrenci → 404", r.status_code == 404, f"{r.status_code}")
 
         c = login("coach")
+        # id yeniden kullanımı: önceki koşulardan kalan rehber durumu temizlenir
+        from app.models import UserGuideState as _UGS
+        with SessionLocal() as _db:
+            _db.query(_UGS).filter(_UGS.user_id == ctx["coach"]).delete(synchronize_session=False)
+            _db.commit()
         r = c.get(BASE)
         ok = r.status_code == 200
         data = r.json() if ok else {}
@@ -181,10 +187,10 @@ def main() -> int:
         r = c.post(f"{BASE}/progress", json={"action": "chapter_done", "chapter": "hosgeldin"})
         d = r.json() if r.status_code == 200 else {}
         check(
-            "5. chapter_done → done + current=kitap-ekle",
+            "5. chapter_done → done + current=ikinci bölüm",
             r.status_code == 200
             and "hosgeldin" in d["state"]["chapters_done"]
-            and d["state"]["current_chapter"] == "kitap-ekle",
+            and d["state"]["current_chapter"] == COACH_CHAPTERS[1],
             f"{r.status_code} {d}",
         )
 
@@ -274,7 +280,7 @@ def main() -> int:
         check(
             "11. dismiss → dismissed; start → in_progress",
             ok_dismiss and d["state"]["status"] == "in_progress"
-            and len(d["state"]["chapters_done"]) == 7,
+            and len(d["state"]["chapters_done"]) == len(COACH_CHAPTERS),
             f"{d['state']}",
         )
 

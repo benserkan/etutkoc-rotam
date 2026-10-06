@@ -1,5 +1,6 @@
 "use client";
 
+import { GuideHint } from "@/components/guide/guide-hint";
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -174,6 +175,8 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
           </p>
         </div>
       </div>
+
+      <GuideHint module="Denemeler" />
 
       <ExamAddActions
         onImport={(f) => {

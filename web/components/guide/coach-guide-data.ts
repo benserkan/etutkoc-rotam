@@ -42,6 +42,8 @@ export interface GuideActionDef {
 
 export interface GuideChapterDef {
   key: string;
+  /** Konu başlığı (Kitaplar / Program / Denemeler…) — bölüm listesi buna göre gruplanır. */
+  module?: string;
   title: string;
   subtitle: string;
   steps: GuideStepDef[];
@@ -72,7 +74,7 @@ export const GUIDE_STATIC_BASE = "/static/guide";
  * tarayıcı önbelleği bayat kalmasın diye. MP3/PNG yeniden üretince ARTIR
  * (aksi halde kullanıcı eski sesi duyar — 2026-07-23 saha bulgusu).
  */
-const GUIDE_ASSET_VERSION = "20260727b";
+const GUIDE_ASSET_VERSION = "20261006a";
 
 export const GUIDE_AVATAR_SRC = `${GUIDE_STATIC_BASE}/rota-avatar.png?v=${GUIDE_ASSET_VERSION}`;
 

@@ -45,7 +45,7 @@ import { isExamSubject } from "@/lib/utils/subjects";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ColumnHint } from "@/components/ui/column-hint";
-import { DemoHint } from "@/components/demos/demo-hint";
+import { GuideHint } from "@/components/guide/guide-hint";
 import { cn } from "@/lib/utils";
 
 // Sınav (TYT/AYT) kanonik dersleri model-bağımsız (curriculum_model=null +
@@ -535,7 +535,6 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
             Öğrencilerine görev verdiğin kitaplar burada. Bir kitabın üniteleri ve test
             sayıları ne kadar doğruysa programdaki “kalan test” de o kadar doğru olur.
           </p>
-          <DemoHint contextKey="library" role="teacher" />
         </div>
         <Button asChild>
           <Link href="/teacher/library/new">
@@ -543,6 +542,7 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
             Yeni kitap
           </Link>
         </Button>
+        <GuideHint module="Kitaplar" className="w-full basis-full" />
       </header>
 
       <LibraryTabs />

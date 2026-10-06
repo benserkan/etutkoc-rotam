@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DemoHint } from "@/components/demos/demo-hint";
+import { GuideHint } from "@/components/guide/guide-hint";
 import { cn } from "@/lib/utils";
 
 import {
@@ -384,7 +384,6 @@ export function WeekBoard({
               </p>
             </>
           )}
-          <DemoHint contextKey="program" role="teacher" className="mt-1.5" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* WP3 — Yeni Program Oluştur (en belirgin buton) */}
@@ -476,6 +475,8 @@ export function WeekBoard({
           </Button>
         </div>
       </header>
+
+      <GuideHint module="Program" />
 
       {draftTotal > 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50/60 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200 flex items-start gap-3">

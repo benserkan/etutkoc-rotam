@@ -7,12 +7,18 @@ import { GuideClient } from "@/components/guide/guide-client";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Rehber" };
 
-export default function TeacherGuidePage() {
+export default async function TeacherGuidePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ bolum?: string }>;
+}) {
+  const { bolum } = await searchParams;
   return (
     <GuideClient
+      initialChapter={bolum ?? null}
       guideKey="coach_onboarding"
       title="Rehber — Rota ile başlangıç"
-      description="Kitap eklemekten deneme analizine, bir haftalık koçluk akışının tamamı."
+      description="Kitaplar, haftalık program ve deneme analizi — sistemin kalbi olan üç sayfanın adım adım eğitimi."
     />
   );
 }

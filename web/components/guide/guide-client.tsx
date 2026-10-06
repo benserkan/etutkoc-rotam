@@ -11,10 +11,12 @@ interface Props {
   guideKey: string;
   title: string;
   description: string;
+  /** ?bolum= ile gelen bölüm anahtarı — oynatıcı o bölümle açılır. */
+  initialChapter?: string | null;
 }
 
 /** Rehber sayfası istemcisi — durum + kontrol listesi + oynatıcı (rol bazlı). */
-export function GuideClient({ guideKey, title, description }: Props) {
+export function GuideClient({ guideKey, title, description, initialChapter }: Props) {
   const content = GUIDES[guideKey];
   const q = useGuide(guideKey);
   const progress = useGuideProgress(guideKey);
@@ -58,6 +60,7 @@ export function GuideClient({ guideKey, title, description }: Props) {
           refreshing={q.isRefetching}
           onProgress={(body) => progress.mutateAsync(body)}
           onRefresh={() => void q.refetch()}
+          initialChapter={initialChapter}
         />
       ) : (
         <div className="flex h-64 items-center justify-center rounded-xl border bg-card text-sm text-muted-foreground">

@@ -321,7 +321,7 @@ function BookRow({
           aria-expanded={isOpen}
         >
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[13px] text-foreground leading-tight truncate flex items-center gap-1">
+            <span className="text-[13px] text-foreground leading-tight break-words flex items-start gap-1 min-w-0">
               <ChevronRight
                 className={cn(
                   "size-3 text-muted-foreground transition-transform",

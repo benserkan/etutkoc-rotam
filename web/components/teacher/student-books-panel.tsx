@@ -1,5 +1,6 @@
 "use client";
 
+import { GuideHint } from "@/components/guide/guide-hint";
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -326,6 +327,8 @@ export function StudentBooksPanel({ studentId }: Props) {
           </Button>
         </div>
       </div>
+
+      <GuideHint module="Kitaplar" />
 
       <ArchiveSuggestionBand studentId={studentId} />
 

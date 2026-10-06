@@ -47,14 +47,40 @@ ROWS = [
     (20, "Dönüşüm Geometrisi", "A", "A", "D"),
 ]
 
+# İkinci karne (rehber Denemeler serisi, 2026-10-05): bir sonraki deneme.
+# Üslü toparlanıyor; Veri Analizi bu kez yanlış (unutma sinyali). 15D 3Y 2B → 14,00
+ROWS_4 = [
+    (1, "Çarpanlar ve Katlar", "C", "C", "D"),
+    (2, "Çarpanlar ve Katlar", "A", "A", "D"),
+    (3, "Üslü İfadeler", "D", "D", "D"),
+    (4, "Üslü İfadeler", "B", "B", "D"),
+    (5, "Üslü İfadeler", "E", "A", "Y"),
+    (6, "Kareköklü İfadeler", "B", "B", "D"),
+    (7, "Kareköklü İfadeler", "C", "C", "D"),
+    (8, "Kareköklü İfadeler", "A", "A", "D"),
+    (9, "Veri Analizi", "D", "B", "Y"),
+    (10, "Veri Analizi", "A", "—", "B"),
+    (11, "Basit Olayların Olma Olasılığı", "B", "B", "D"),
+    (12, "Basit Olayların Olma Olasılığı", "C", "C", "D"),
+    (13, "Cebirsel İfadeler ve Özdeşlikler", "D", "D", "D"),
+    (14, "Cebirsel İfadeler ve Özdeşlikler", "E", "E", "D"),
+    (15, "Doğrusal Denklemler", "B", "B", "D"),
+    (16, "Doğrusal Denklemler", "A", "A", "D"),
+    (17, "Eşitsizlikler", "C", "E", "Y"),
+    (18, "Eşitsizlikler", "D", "—", "B"),
+    (19, "Üçgenler", "A", "A", "D"),
+    (20, "Dönüşüm Geometrisi", "E", "E", "D"),
+]
+
 SONUC = {"D": ("Doğru", "#168250"), "Y": ("Yanlış", "#be3c3c"), "B": ("Boş", "#c88c14")}
 
 
-def build_html() -> str:
+def build_html(rows=None, title="LGS DENEME SINAVI - 3", tarih="19.07.2026", ozet=(13, 5, 2, "11,33")) -> str:
+    rows = rows or ROWS
     tr = "\n".join(
         f"<tr><td>{no}</td><td class='k'>{konu}</td><td class='c'>{dc}</td>"
         f"<td class='c'>{oc}</td><td class='c' style='color:{SONUC[s][1]};font-weight:600'>{SONUC[s][0]}</td></tr>"
-        for no, konu, dc, oc, s in ROWS
+        for no, konu, dc, oc, s in rows
     )
     return f"""<!doctype html><html lang="tr"><head><meta charset="utf-8"><style>
   * {{ margin:0; padding:0; box-sizing:border-box; }}
@@ -75,9 +101,9 @@ def build_html() -> str:
   .net {{ color:#0e6478; font-weight:700; }}
 </style></head><body>
   <div class="head"><h1>KAREKÖK YAYINLARI</h1>
-    <p>LGS DENEME SINAVI - 3 &nbsp;·&nbsp; KONU ANALİZLİ SONUÇ KARNESİ</p></div>
+    <p>{title} &nbsp;·&nbsp; KONU ANALİZLİ SONUÇ KARNESİ</p></div>
   <div class="meta"><b>Öğrenci:</b> Elif Kaya &nbsp;&nbsp; <b>Sınıf:</b> 8-A
-    &nbsp;&nbsp; <b>Sınav Tarihi:</b> 19.07.2026</div>
+    &nbsp;&nbsp; <b>Sınav Tarihi:</b> {tarih}</div>
   <div class="sec">MATEMATİK</div>
   <table><thead><tr><th>No</th><th>Konu</th><th class="c">Doğru Cevap</th>
     <th class="c">Öğrenci Cevabı</th><th class="c">Sonuç</th></tr></thead>
@@ -86,8 +112,8 @@ def build_html() -> str:
   <table><thead><tr><th>Ders</th><th class="c">Soru</th><th class="c">Doğru</th>
     <th class="c">Yanlış</th><th class="c">Boş</th><th class="c">Net</th></tr></thead>
     <tbody><tr><td>Matematik</td><td class="c">20</td>
-    <td class="c" style="color:#168250">13</td><td class="c" style="color:#be3c3c">5</td>
-    <td class="c" style="color:#c88c14">2</td><td class="c net">11,33</td></tr>
+    <td class="c" style="color:#168250">{ozet[0]}</td><td class="c" style="color:#be3c3c">{ozet[1]}</td>
+    <td class="c" style="color:#c88c14">{ozet[2]}</td><td class="c net">{ozet[3]}</td></tr>
     </tbody></table>
   <div class="foot">Net = Doğru − (Yanlış ÷ 3). Bu karne Karekök Yayınları
     değerlendirme sistemince üretilmiştir.</div>
@@ -95,22 +121,30 @@ def build_html() -> str:
 
 
 def main() -> int:
+    four = "--deneme4" in sys.argv
     html_path = ROOT / "scripts" / "_ornek_karne.html"
-    html_path.write_text(build_html(), encoding="utf-8")
+    if four:
+        html_path.write_text(
+            build_html(ROWS_4, "LGS DENEME SINAVI - 4", "02.10.2026", (15, 3, 2, "14,00")), encoding="utf-8"
+        )
+    else:
+        html_path.write_text(build_html(), encoding="utf-8")
+    pdf_name = "ornek_sonuc_karnesi_4.pdf" if four else "ornek_sonuc_karnesi.pdf"
+    shot_name = "ornek-pdf-4.png" if four else "ornek-pdf.png"
     with sync_playwright() as p:
         b = p.chromium.launch(channel="chrome", headless=True)
         page = b.new_page(viewport={"width": 1440, "height": 900})
         page.goto(html_path.as_uri())
         page.wait_for_load_state("networkidle")
         page.pdf(
-            path=str(ROOT / "scripts" / "ornek_sonuc_karnesi.pdf"),
+            path=str(ROOT / "scripts" / pdf_name),
             format="A4", print_background=True,
         )
         # Sahne: belgenin üst kısmı, oynatıcı oranında
-        page.screenshot(path=str(ROOT / "app" / "static" / "guide" / "shots" / "ornek-pdf.png"))
+        page.screenshot(path=str(ROOT / "app" / "static" / "guide" / "shots" / shot_name))
         b.close()
     html_path.unlink(missing_ok=True)
-    print("üretildi: scripts/ornek_sonuc_karnesi.pdf + shots/ornek-pdf.png")
+    print(f"üretildi: scripts/{pdf_name} + shots/{shot_name}")
     return 0
 
 

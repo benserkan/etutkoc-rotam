@@ -66,7 +66,7 @@ export const GUIDE_KEY_BY_ROLE: Record<string, string> = {
 };
 
 /** web coach-guide-data.ts ile AYNI tutulmalı (varlık önbellek kırıcı). */
-const GUIDE_ASSET_VERSION = "20260727b";
+const GUIDE_ASSET_VERSION = "20261006a";
 
 const STATIC_BASE = `${API_BASE}/static/guide`;
 

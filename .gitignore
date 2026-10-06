@@ -61,3 +61,4 @@ rapor_*.html
 .shots/
 .dev-api.log
 .dev-next.log
+scripts/.tts_abort

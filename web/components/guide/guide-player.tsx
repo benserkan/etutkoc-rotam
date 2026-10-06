@@ -54,9 +54,19 @@ interface Props {
   refreshing: boolean;
   onProgress: (body: GuideProgressBody) => Promise<unknown>;
   onRefresh: () => void;
+  /** Sayfadaki "Nasıl kullanılır" bağlantısından gelen bölüm (?bolum=) — varsa onunla açılır. */
+  initialChapter?: string | null;
 }
 
-export function GuidePlayer({ guide, content, busy, refreshing, onProgress, onRefresh }: Props) {
+export function GuidePlayer({
+  guide,
+  content,
+  busy,
+  refreshing,
+  onProgress,
+  onRefresh,
+  initialChapter,
+}: Props) {
   const chapters = content.chapters;
   const doneSet = useMemo(
     () => new Set(guide.state.chapters_done),
@@ -68,6 +78,7 @@ export function GuidePlayer({ guide, content, busy, refreshing, onProgress, onRe
   }, [chapters, doneSet]);
 
   const [selectedKey, setSelectedKey] = useState<string>(() => {
+    if (initialChapter && chapters.some((c) => c.key === initialChapter)) return initialChapter;
     const cur = guide.state.current_chapter;
     if (cur && chapters.some((c) => c.key === cur)) return cur;
     return chapters[Math.max(0, Math.min(firstOpenIdx, chapters.length - 1))].key;
@@ -298,19 +309,44 @@ export function GuidePlayer({ guide, content, busy, refreshing, onProgress, onRe
             {chapters.map((c, i) => {
               const done = doneSet.has(c.key);
               const active = c.key === selectedKey;
+              const showModule = Boolean(c.module) && c.module !== chapters[i - 1]?.module;
+              const modChapters = showModule ? chapters.filter((x) => x.module === c.module) : [];
+              const modDone = modChapters.filter((x) => doneSet.has(x.key)).length;
+              const modMinutes = showModule
+                ? Math.max(
+                    1,
+                    Math.round(
+                      modChapters.reduce(
+                        (sum, x) =>
+                          sum + x.steps.reduce((t, st) => t + estimateDurationMs(st.caption), 0),
+                        0,
+                      ) / 60000,
+                    ),
+                  )
+                : 0;
               return (
                 <li key={c.key}>
+                  {showModule ? (
+                    <div className="mt-2 flex items-baseline justify-between gap-2 border-t px-2 pb-1 pt-3 first:mt-0 first:border-t-0 first:pt-1">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                        {c.module}
+                      </span>
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                        {modDone}/{modChapters.length} · ~{modMinutes} dk
+                      </span>
+                    </div>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => selectChapter(c.key)}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition",
+                      "flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition",
                       active ? "bg-cyan-600 text-white shadow" : "hover:bg-muted",
                     )}
                   >
                     <span
                       className={cn(
-                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold",
+                        "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold",
                         done
                           ? "border-emerald-500 bg-emerald-500 text-white"
                           : active
@@ -321,10 +357,10 @@ export function GuidePlayer({ guide, content, busy, refreshing, onProgress, onRe
                       {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate font-medium">{c.title}</span>
+                      <span className="block break-words font-medium">{c.title}</span>
                       <span
                         className={cn(
-                          "block truncate text-[11px]",
+                          "block break-words text-[11px]",
                           active ? "text-cyan-100" : "text-muted-foreground",
                         )}
                       >
