@@ -30,6 +30,38 @@ export function sectionPenalty(section: ExamSectionValue): number {
 }
 
 /** Aynı türde bir önceki deneme (rows DESC → listedeki bir sonraki eleman). */
+/** Denemenin serisi: tür + genel/branş (eski yanıtlarda yalnız tür). */
+export function rowSeries(r: ExamResultRow): string {
+  return r.series_key || r.section;
+}
+
+export interface ExamSeriesOption {
+  value: string;
+  label: string;
+  count: number;
+  isBranch: boolean;
+}
+
+/** Seri seçenekleri — genel denemeler önce (sayıya göre), sonra branşlar. */
+export function examSeriesOptions(rows: ExamResultRow[]): ExamSeriesOption[] {
+  const map = new Map<string, ExamSeriesOption>();
+  for (const r of rows) {
+    const k = rowSeries(r);
+    const e = map.get(k);
+    if (e) e.count += 1;
+    else
+      map.set(k, {
+        value: k,
+        label: r.series_label || r.section_label,
+        count: 1,
+        isBranch: r.scope === "brans",
+      });
+  }
+  return [...map.values()].sort(
+    (a, b) => Number(a.isBranch) - Number(b.isBranch) || b.count - a.count,
+  );
+}
+
 export function previousExam(rows: ExamResultRow[], row: ExamResultRow): ExamResultRow | null {
   const i = rows.findIndex((r) => r.id === row.id);
   return i >= 0 && i + 1 < rows.length ? rows[i + 1] : null;

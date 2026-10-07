@@ -102,6 +102,21 @@
     overflow: hidden;
   }
   .demo-scene-inner.transparent { background: transparent; box-shadow: none; }
+  /* Rehber demosu — gerçek ekran görüntüsü (1440×900) + vurgu kutusu */
+  .gd-scene { padding: 0; background: #0F172A; }
+  .gd-frame { position: relative; height: 100%; aspect-ratio: 1440/900; max-width: 100%; }
+  .gd-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+  .gd-box { position: absolute; border: 3px solid #F59E0B; border-radius: 8px;
+            box-shadow: 0 0 0 9999px rgba(15,23,42,0.28), 0 0 18px rgba(245,158,11,0.6);
+            animation: gdPulse 1.8s ease-in-out infinite; pointer-events: none; }
+  @keyframes gdPulse { 0%,100% { border-color: #F59E0B; } 50% { border-color: #FCD34D; } }
+  .gd-note { max-width: 640px; text-align: center; color: #E2E8F0; padding: 24px; }
+  .gd-avatar { width: 84px; height: 84px; border-radius: 999px; margin: 0 auto 14px; display: block;
+               box-shadow: 0 0 0 4px rgba(34,211,238,0.35); }
+  .gd-note-title { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #67E8F9; font-weight: 700; margin-bottom: 8px; }
+  .gd-note-text { font-size: clamp(15px, 1.8vw, 20px); line-height: 1.55; color: #F8FAFC; }
+  .gd-chip { position: absolute; left: 10px; top: 10px; background: rgba(15,23,42,0.85); color: #fff;
+             font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
 
   .demo-caption {
     background: rgba(0,0,0,0.85);
@@ -354,7 +369,27 @@
         <div class="demo-stage" id="demo-stage">
 
         {# ═══════════════ DEMO: GÜNLÜK PROGRAM (mevcut) ═══════════════ #}
-        {% if is_daily %}
+        {# ═══ REHBER DEMOSU (2026-10-06): Kitaplık/Program/Denemeler — Rota Rehberi'nin
+             gerçek ekran görüntüleri + gelişmiş seslendirmesi. Kaynak: app/services/guide_demo.py ═══ #}
+        {% if guide_demo %}
+          {% for sc in guide_demo.scenes %}
+          <div class="demo-scene gd-scene {% if loop.first %}is-active{% endif %}" data-scene="{{ loop.index0 }}">
+            {% if sc.img %}
+            <div class="gd-frame">
+              <img data-src="{{ sc.img }}" alt="{{ sc.chapter }}" class="gd-img" draggable="false">
+              {% if sc.box %}<div class="gd-box" style="left:{{ sc.box.x }}%;top:{{ sc.box.y }}%;width:{{ sc.box.w }}%;height:{{ sc.box.h }}%;"></div>{% endif %}
+              <div class="gd-chip">{{ sc.chapter }}</div>
+            </div>
+            {% else %}
+            <div class="gd-note">
+              <img src="/static/guide/rota-avatar.png" alt="" class="gd-avatar">
+              <div class="gd-note-title">{{ sc.chapter }}</div>
+              <p class="gd-note-text">{{ sc.caption }}</p>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        {% elif is_daily %}
 
           {# Sahne 1: INTRO #}
           <div class="demo-scene is-active" data-scene="0">
@@ -5429,7 +5464,11 @@
 
         {# Sahne adımları #}
         <div class="demo-steps" id="dp-steps">
-          {% if is_daily %}
+          {% if guide_demo %}
+            {% for ch in guide_demo.chapters %}
+            <button class="demo-step {% if loop.first %}is-active{% endif %}" data-from="{{ ch.start }}" data-to="{{ ch.end }}" title="{{ ch.subtitle }}">{{ loop.index }} · {{ ch.title }}</button>
+            {% endfor %}
+          {% elif is_daily %}
             <button class="demo-step is-active" data-step="0">1 · Tanıtım</button>
             <button class="demo-step" data-step="1">2 · Öğrenci seç</button>
             <button class="demo-step" data-step="2">3 · AI başlat</button>
@@ -5786,7 +5825,22 @@
 
       {# Açıklama #}
       <div class="demo-meta" id="demo-meta">
-        {% if is_daily %}
+        {% if guide_demo %}
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 class="text-lg font-bold text-stone-900">{{ guide_demo.title }}</h2>
+            <p class="text-xs text-stone-500 mt-1">{{ guide_demo.chapters|length }} bölüm · {{ guide_demo.scenes|length }} adım · ~{{ guide_demo.minutes }} dakika · Türkçe sesli anlatım · gerçek ekranlar</p>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="px-2 py-1 rounded-full" style="background:#D1FAE5; color:#065F46;">Koç rehberi</span>
+            <span class="px-2 py-1 rounded-full" style="background:#E0F2FE; color:#075985;">Güncel arayüz</span>
+          </div>
+        </div>
+        <p class="text-sm text-stone-600 mt-3 leading-relaxed">{{ guide_demo.desc }}. Rota Rehberi'ndeki eğitim serisinin aynısı: her adım ekranın ilgili yerini gösterir. Alttaki bölüm düğmeleriyle istediğin konuya atlayabilirsin.</p>
+        <div class="flex flex-wrap gap-1.5 mt-4 text-[11px]">
+          {% for ch in guide_demo.chapters %}<span class="px-2 py-1 rounded-md" style="background:#F1F5F9; color:#334155;">{{ ch.title }}</span>{% endfor %}
+        </div>
+        {% elif is_daily %}
         <div class="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h2 class="text-lg font-bold text-stone-900">Günlük Program Oluşturma</h2>
@@ -6421,25 +6475,19 @@
           style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid #E2E8F0;background:#fff;color:#475569;cursor:pointer;">Kurum Yöneticisi</button>
       </div>
       <div id="demo-playlist-items">
-        {# Kitap Ekleme — koç demosu (yeni) #}
-        <a href="/demos?play=book-add-coach" data-audience="teacher" class="demo-playlist-item {% if is_book_add %}is-active{% endif %}">
-          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#0B5560,#117A86);">📚</div>
+        {# Kitaplık / Program / Denemeler — 2026-10-06'dan beri Rota Rehberi'nin gerçek
+           ekranları + gelişmiş seslendirmesiyle (app/services/guide_demo.py). Eski
+           animasyon sahneleri şablonda duruyor ama bu slug'larda gösterilmiyor. #}
+        {% for slug, meta in guide_demo_meta.items() %}
+        <a href="/demos?play={{ slug }}" data-audience="teacher" class="demo-playlist-item {% if play_slug == slug %}is-active{% endif %}">
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,{{ ['#0B5560,#117A86','#4F46E5,#6366F1','#B45309,#D97706'][loop.index0] }});">{{ ['📚','🗓️','📊'][loop.index0] }}</div>
           <div class="demo-playlist-meta">
-            <div class="demo-playlist-title">Kitap Ekleme ve Kütüphane</div>
-            <div class="demo-playlist-desc">Kitap kur · bölümle · AI önerisi · öğrenciye ata</div>
-            <div class="demo-playlist-duration">▶ 8 sahne · ~2 dk · koç</div>
+            <div class="demo-playlist-title">{{ meta[1] }}</div>
+            <div class="demo-playlist-desc">{{ meta[2] }}</div>
+            <div class="demo-playlist-duration">▶ Gerçek ekranlar · sesli · koç</div>
           </div>
         </a>
-
-        {# Program Oluşturma — koç demosu (yeni) #}
-        <a href="/demos?play=program-create-coach" data-audience="teacher" class="demo-playlist-item {% if is_program %}is-active{% endif %}">
-          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#4F46E5,#6366F1);">🗓️</div>
-          <div class="demo-playlist-meta">
-            <div class="demo-playlist-title">Haftalık Program Oluşturma</div>
-            <div class="demo-playlist-desc">Görev · blok · kaynak/rezerv · yayınla · veliye duyur</div>
-            <div class="demo-playlist-duration">▶ 8 sahne · ~2 dk · koç</div>
-          </div>
-        </a>
+        {% endfor %}
 
         {# Günlük Program (daily-plan) — playlist'ten KALDIRILDI (2026-06-07):
            "Haftalık Program Oluşturma" demosuyla örtüşüyor + eskimişti. Slug/sahne/
@@ -6801,7 +6849,13 @@
 <script>
 (function(){
   // ═══════════════ Narration & captions (koşullu) ═══════════════
-  {% if is_daily %}
+  {% if guide_demo %}
+  var narrations = {{ guide_demo.scenes | map(attribute='caption') | list | tojson }};
+  var captions = narrations;
+  var fallbackDurations = {{ guide_demo.scenes | map(attribute='ms') | list | tojson }};
+  var audioUrls = {{ guide_demo.scenes | map(attribute='audio') | list | tojson }};
+  var initialCaption = "🎬 {{ guide_demo.title }} — başlatmak için aşağıdaki ▶ tuşuna bas. Türkçe sesli anlatım, gerçek ekranlar.";
+  {% elif is_daily %}
   // TTS notu: ETÜTKOÇ büyük harfli olunca TTS karıştırıyor → "Etütkoç" şeklinde yazıyoruz
   var narrations = [
     "Merhaba. Bu kısa demoda, Etütkoç Rotam'da bir öğrenciye günlük çalışma programı nasıl oluşturulur, aşama aşama göstereceğiz. Sekiz kısa sahne.",
@@ -8926,7 +8980,16 @@
   function show(idx, andSpeak){
     current = ((idx % total) + total) % total;
     scenes.forEach(function(sc, i){ sc.classList.toggle('is-active', i === current); });
-    stepBtns.forEach(function(b, i){ b.classList.toggle('is-active', i === current); });
+    stepBtns.forEach(function(b, i){
+      var f = b.getAttribute('data-from');
+      b.classList.toggle('is-active', f !== null
+        ? (current >= +f && current < +b.getAttribute('data-to')) : i === current);
+    });
+    // rehber demosu: görseller tembel yüklenir (mevcut + sonraki sahne)
+    [current, current + 1].forEach(function(k){
+      var sc = scenes[k]; var im = sc && sc.querySelector('img[data-src]');
+      if (im) { im.src = im.getAttribute('data-src'); im.removeAttribute('data-src'); }
+    });
     progressFill.style.width = ((current + 1) / total * 100) + '%';
     timeEl.textContent = 'Sahne ' + (current + 1) + ' / ' + total;
     captionEl.textContent = captions[current] || '';
@@ -8937,8 +9000,8 @@
     cancelSpeech();
     if (muted) { startFallbackTimer(); return; }
     // 1) Önce üretilmiş MP3'ü dene (Gemini TTS)
-    if (audioBase) {
-      audioEl.src = audioBase + current + '.mp3';
+    if (audioBase || typeof audioUrls !== 'undefined') {
+      audioEl.src = (typeof audioUrls !== 'undefined' && audioUrls[current]) ? audioUrls[current] : (audioBase + current + '.mp3');
       try { audioEl.playbackRate = rate; } catch(e){}
       audioEl.onended = function(){
         if (!playing) return;
@@ -8992,7 +9055,9 @@
   prevBtn.addEventListener('click', function(){ var w = playing; pause(); show(current - 1, false); if (w) play(); });
   nextBtn.addEventListener('click', function(){ var w = playing; pause(); show(current + 1, false); if (w) play(); });
   stepBtns.forEach(function(b, i){
-    b.addEventListener('click', function(){ var w = playing; pause(); show(i, false); if (w) play(); });
+    var f = b.getAttribute('data-from');
+    var to = f !== null ? +f : i;
+    b.addEventListener('click', function(){ var w = playing; pause(); show(to, false); if (w) play(); });
   });
   muteBtn.addEventListener('click', function(){
     muted = !muted;

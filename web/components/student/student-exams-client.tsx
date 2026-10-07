@@ -23,8 +23,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getStudentExams, studentKeys } from "@/lib/api/student";
 import type { StudentExamsResponse } from "@/lib/types/student";
-import type { ExamResultRow, ExamSectionValue } from "@/lib/types/teacher";
+import type { ExamResultRow } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+import { examSeriesOptions, rowSeries } from "@/lib/exam-format";
 
 /**
  * Denemelerim (Faz 2b) — öğrenci yüzeyi: deneme listesi (salt-okuma) +
@@ -79,24 +80,14 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
   const rows = React.useMemo(() => q.data?.rows ?? [], [q.data]);
 
   // türler farklı ölçekte (TYT/120 · AYT/80 · LGS) → özet + analiz TEK türe göre
-  const sectionsInfo = React.useMemo(() => {
-    const map = new Map<ExamSectionValue, { label: string; count: number }>();
-    for (const r of rows) {
-      const e = map.get(r.section);
-      if (e) e.count += 1;
-      else map.set(r.section, { label: r.section_label, count: 1 });
-    }
-    return [...map.entries()]
-      .map(([value, v]) => ({ value, label: v.label, count: v.count }))
-      .sort((a, b) => b.count - a.count);
-  }, [rows]);
-  const [selSection, setSelSection] = React.useState<ExamSectionValue | null>(null);
+  const sectionsInfo = React.useMemo(() => examSeriesOptions(rows), [rows]);
+  const [selSection, setSelSection] = React.useState<string | null>(null);
   const activeSection =
     selSection && sectionsInfo.some((s) => s.value === selSection)
       ? selSection
       : sectionsInfo[0]?.value ?? null;
   const sectionRows = React.useMemo(
-    () => rows.filter((r) => r.section === activeSection),
+    () => rows.filter((r) => rowSeries(r) === activeSection),
     [rows, activeSection],
   );
   const [tab, setTab] = React.useState<Tab>("overview");
@@ -109,7 +100,7 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
   const shares = sharesQ.data?.shares ?? {};
   const detailRow = detailId != null ? rows.find((r) => r.id === detailId) ?? null : null;
   const detailPrev = detailRow
-    ? previousExam(rows.filter((r) => r.section === detailRow.section), detailRow)
+    ? previousExam(rows.filter((r) => rowSeries(r) === rowSeries(detailRow)), detailRow)
     : null;
   // en son paylaşılan değerlendirme (koçun öğrenciye notu)
   const latestShare = rows
@@ -178,11 +169,11 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
             </div>
             {tab !== "list" && tab !== "score" && sectionsInfo.length > 1 ? (
               <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                Sınav türü
+                Deneme serisi
                 <select
                   value={activeSection ?? ""}
-                  onChange={(e) => setSelSection(e.target.value as ExamSectionValue)}
-                  aria-label="Sınav türü"
+                  onChange={(e) => setSelSection(e.target.value)}
+                  aria-label="Deneme serisi"
                   className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {sectionsInfo.map((s) => (

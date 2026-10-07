@@ -59,6 +59,10 @@ def main() -> int:
     block = "COACH_CHAPTERS = [\n" + "".join(f'    "{k}",\n' for k in keys) + "]"
     SERVICE.write_text(src[:start] + block + src[end:], encoding="utf-8")
 
+    # /demos sayfasının okuduğu statik kopya (Kitaplık/Program/Denemeler videoları)
+    from scripts.guide_content import sync_static
+    sync_static.main()
+
     total = sum(len(c["steps"]) for c in kept)
     print(f"{len(kept)} bölüm · {total} adım")
     for c in kept:

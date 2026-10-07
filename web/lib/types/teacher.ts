@@ -2087,6 +2087,13 @@ export interface ExamResultRow {
   score?: ExamScoreInfo | null;
   /** Faz 3: katılımcı genel ortalaması (karneden ya da koç girişi). */
   averages?: ExamAverages | null;
+  /** Genel deneme mi branş mı (2026-10-06) — netler yalnız aynı seride kıyaslanır. */
+  scope?: "genel" | "brans";
+  scope_subject?: string | null;
+  scope_forced?: boolean;
+  /** "lgs" (genel) | "lgs~matematik" (branş) */
+  series_key?: string;
+  series_label?: string;
 }
 
 export interface ExamScoreInfo {

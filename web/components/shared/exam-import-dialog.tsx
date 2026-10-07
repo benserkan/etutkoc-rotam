@@ -700,7 +700,9 @@ function PreviewStep({
 }) {
   const failing = draft.checks.filter((c) => !c.ok);
   // bilgi: sistemin karne özetine bakarak kendisi düzelttikleri
-  const fixedInfo = draft.checks.filter((c) => c.ok && c.code === "blank_answer_restored");
+  const fixedInfo = draft.checks.filter(
+    (c) => c.ok && (c.code === "blank_answer_restored" || c.code === "date_from_filename"),
+  );
   const stats = draft.match_stats;
 
   // satırlar ders grubuna göre (orijinal indeks korunur — düzenleme için);
@@ -830,6 +832,12 @@ function PreviewStep({
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+      {!draft.exam_date ? (
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+          <b>Tarih:</b> karnede sınav tarihi yazmıyor — kaydetmeden önce yukarıdaki tarih
+          alanına sınavın tarihini gir.
         </div>
       ) : null}
       {fixedInfo.map((c) => (

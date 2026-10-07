@@ -65,7 +65,7 @@ export default async function ExamReportPrintPage({
   }
   // aynı tür, en yeni ilk; bu denemeye KADARki denemeler (sonrakiler karneye girmez)
   const sameType = rows
-    .filter((r) => r.section === row.section)
+    .filter((r) => (r.series_key || r.section) === (row.series_key || row.section))
     .sort((a, b) => (a.exam_date < b.exam_date ? 1 : a.exam_date > b.exam_date ? -1 : b.id - a.id));
   const upTo = sameType.slice(sameType.findIndex((r) => r.id === row.id));
   const prev = previousExam(sameType, row);
@@ -87,7 +87,7 @@ export default async function ExamReportPrintPage({
   let analysisExamCount = 0;
   try {
     const a = await apiServer<ExamTopicAnalysisResponse>(
-      `/api/v2/teacher/students/${sid}/exam-topic-analysis?section=${encodeURIComponent(row.section)}`,
+      `/api/v2/teacher/students/${sid}/exam-topic-analysis?section=${encodeURIComponent(row.series_key || row.section)}`,
     );
     opportunities = a.opportunities.slice(0, 6);
     analysisExamCount = a.exams.length;
@@ -143,7 +143,7 @@ export default async function ExamReportPrintPage({
         <div className="text-right text-xs text-stone-600">
           <p className="max-w-[330px] font-semibold text-stone-900">{row.title}</p>
           <p>
-            {row.section_label} · {fmtTRDate(row.exam_date)} · {row.total_questions} soru
+            {row.series_label || row.section_label} · {fmtTRDate(row.exam_date)} · {row.total_questions} soru
           </p>
         </div>
       </header>
@@ -245,7 +245,7 @@ export default async function ExamReportPrintPage({
       ) : null}
 
       {trend.length >= 2 && trendSubjects.length ? (
-        <Section title={`Gelişim — son ${trend.length} ${row.section_label} denemesi (net)`}>
+        <Section title={`Gelişim — son ${trend.length} ${row.series_label || row.section_label} denemesi (net)`}>
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-stone-300 text-stone-600">

@@ -429,9 +429,14 @@ def demos(
             play = "focus-pomodoro"
         else:
             play = "daily-plan"
+    from app.services import guide_demo
+
     return templates.TemplateResponse(
         "landing/demos.html",
-        {"request": request, "user": user, "play_slug": play},
+        {"request": request, "user": user, "play_slug": play,
+         # Kitaplık/Program/Denemeler → rehberin gerçek ekranları + sesi
+         "guide_demo": guide_demo.build(play),
+         "guide_demo_meta": {k: v for k, v in guide_demo.GUIDE_DEMOS.items()}},
     )
 
 

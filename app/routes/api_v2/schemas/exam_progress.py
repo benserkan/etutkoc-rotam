@@ -5,9 +5,11 @@ from pydantic import BaseModel, Field
 
 
 class ProgressSectionOption(BaseModel):
-    value: str
+    value: str                 # seri anahtarı: "lgs" (genel) | "lgs~matematik" (branş)
     label: str
     count: int
+    kind: str = "genel"        # "genel" | "brans"
+    section: str | None = None  # gerçek sınav türü
 
 
 class ProgressExamPoint(BaseModel):
@@ -96,6 +98,9 @@ class ExamProgressResponse(BaseModel):
     section: str | None = None
     section_label: str | None = None
     section_options: list[ProgressSectionOption] = Field(default_factory=list)
+    series: str | None = None          # seçili seri (genel/branş) — 2026-10-06
+    is_branch: bool = False
+    target_allowed: bool = True        # hedef net yalnız genel seride
     student_name: str | None = None
     generated_at: str
     exams: list[ProgressExamPoint] = Field(default_factory=list)

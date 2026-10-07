@@ -87,7 +87,12 @@ export interface ProgressOpportunity {
 export interface ExamProgressResponse {
   section: string | null;
   section_label: string | null;
-  section_options: { value: string; label: string; count: number }[];
+  section_options: { value: string; label: string; count: number; kind?: string; section?: string | null }[];
+  /** seçili seri (genel/branş) */
+  series?: string | null;
+  is_branch?: boolean;
+  /** hedef net yalnız genel deneme serisinde */
+  target_allowed?: boolean;
   student_name: string | null;
   generated_at: string;
   exams: ProgressExamPoint[];

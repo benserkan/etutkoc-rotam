@@ -348,6 +348,12 @@ def _tyt_score(nets: dict[str, float]) -> float:
 def score_estimate(db: Session, student: User) -> dict:
     exams = (db.query(ExamResult).filter(ExamResult.student_id == student.id)
              .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc()).all())
+    # 2026-10-06: puan YALNIZ GENEL denemelerden — 20 soruluk branş denemesi tüm
+    # sınavın puanını temsil etmez (exam_scope).
+    from app.services import exam_scope
+    branch_only = {e.section for e in exams if exam_scope.classify(e) == "brans"}
+    exams = [e for e in exams if exam_scope.classify(e) == "genel"]
+    branch_only -= {e.section for e in exams}
     latest: dict[ExamSection, ExamResult] = {}
     for e in exams:
         latest.setdefault(e.section, e)
@@ -356,6 +362,11 @@ def score_estimate(db: Session, student: User) -> dict:
            "disclaimer": ("Tahmini ham puandır: son denemelerin netleri, ÖSYM/MEB katsayı yapısıyla "
                           "hesaplanır. Gerçek puan standart puan (o yılki ortalama ve sapma) ile "
                           "hesaplanır; YKS'de diploma notu (OBP) da eklenir. Yön göstermek içindir.")}
+    if branch_only:
+        out["warnings"].append(
+            "Branş denemeleri puan tahminine katılmaz; tahmin için "
+            + ", ".join(EXAM_SECTION_LABELS[s] for s in sorted(branch_only, key=lambda x: x.value))
+            + " genel denemesi girilmeli.")
 
     if ExamSection.LGS in latest:
         e = latest[ExamSection.LGS]

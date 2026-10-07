@@ -65,6 +65,11 @@ _PREFIX_RE = re.compile(
 )
 _STOPWORDS = {"ve", "ile"}
 _ALIAS: dict[str, str] = {
+    # LGS karne kazanım cümleleri (MEB Türkçe) → konu (2026-10-06 benchmark)
+    "metinle ilgili sorulari cevaplar": "paragrafta anlam",
+    "metnin icerigini yorumlar": "paragrafta anlam",
+    "okuduklari ilgili cikarimlarda bulunur": "paragrafta anlam",
+    "yazdiklarini duzenler": "yazim kurallari",
     "obeb okek": "ebob ekok",
     "okek obeb": "ebob ekok",
     "ebob okek": "ebob ekok",

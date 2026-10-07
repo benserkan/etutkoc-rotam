@@ -43,6 +43,7 @@ function tone(section: string) {
 }
 
 interface SectionGroup {
+  key: string; // seri anahtarı (tür + genel/branş)
   section: string;
   label: string;
   rows: ExamRow[]; // DESC (en yeni ilk)
@@ -50,9 +51,12 @@ interface SectionGroup {
 function groupBySection(rows: ExamRow[]): SectionGroup[] {
   const map = new Map<string, SectionGroup>();
   for (const r of rows) {
-    const g = map.get(r.section);
+    // seri = tür + genel/branş (2026-10-06): 90 soruluk genel deneme ile 20
+    // soruluk branş denemesi aynı grafikte kıyaslanmaz
+    const k = r.series_key || r.section;
+    const g = map.get(k);
     if (g) g.rows.push(r);
-    else map.set(r.section, { section: r.section, label: r.section_label, rows: [r] });
+    else map.set(k, { key: k, section: r.section, label: r.series_label || r.section_label, rows: [r] });
   }
   return Array.from(map.values()).sort((a, b) => b.rows.length - a.rows.length);
 }
@@ -163,8 +167,8 @@ export function ExamsView({
   onRefresh?: () => void;
 }) {
   const groups = React.useMemo(() => groupBySection(data.rows), [data.rows]);
-  const [sel, setSel] = React.useState<string | null>(groups[0]?.section ?? null);
-  const selGroup = groups.find((g) => g.section === sel) ?? groups[0];
+  const [sel, setSel] = React.useState<string | null>(groups[0]?.key ?? null);
+  const selGroup = groups.find((g) => g.key === sel) ?? groups[0];
   const [importOpen, setImportOpen] = React.useState(false);
   const [detailId, setDetailId] = React.useState<number | null>(null);
   const qc = useQueryClient();
@@ -253,12 +257,12 @@ export function ExamsView({
             {groups.length > 1 ? (
               <View className="flex-row flex-wrap gap-1.5">
                 {groups.map((g) => {
-                  const active = g.section === selGroup?.section;
+                  const active = g.key === selGroup?.key;
                   const t = tone(g.section);
                   return (
                     <Text
-                      key={g.section}
-                      onPress={() => setSel(g.section)}
+                      key={g.key}
+                      onPress={() => setSel(g.key)}
                       className={cn(
                         "overflow-hidden rounded-full px-3 py-1.5 text-xs font-medium",
                         active ? cn(t.bg, t.text) : "bg-white text-slate-500 border border-slate-200",
@@ -273,10 +277,10 @@ export function ExamsView({
             {selGroup ? <NetTrend group={selGroup} /> : null}
 
             {/* Konu × deneme analizi (Faz 4) — seçili türe göre */}
-            <TopicAnalysisCard section={selGroup?.section ?? null} />
+            <TopicAnalysisCard section={selGroup?.key ?? null} />
 
             {/* Faz 2 + 3 — gelişim ve hedef, puan tahmini */}
-            <ProgressReportCard studentId={null} section={selGroup?.section ?? null} />
+            <ProgressReportCard studentId={null} section={selGroup?.key ?? null} />
             <ScoreEstimateCard studentId={null} />
 
             {importButton}

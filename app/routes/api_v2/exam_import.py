@@ -175,6 +175,7 @@ def _section_choices() -> list[SectionChoice]:
 def _run_analyze(
     db: Session, *, student: User, coach: User, actor: User, pdf_bytes: bytes,
     declared_section: str | None = None, declared_grade: int | None = None,
+    filename: str | None = None,
 ) -> ExamImportDraft:
     """Çift okuma + normalizasyon; kredi koçun havuzundan (tek seferde 6)."""
     # Mükerrer katman 1 — belge parmak izi: aynı PDF daha önce bu öğrenciye
@@ -221,6 +222,18 @@ def _run_analyze(
             "error": "upstream_unavailable", "code": "ai_unavailable",
             "message": f"Yapay zekâ servisi şu an kullanılamıyor: {e}"})
     db.commit()  # kullanım kaydı + sözlük hit sayaçları
+    # Karnede tarih yoksa (LGS karnelerinin çoğu yazmıyor) dosya adındaki tarih
+    # önerilir; koç önizlemede görür, değiştirebilir (2026-10-06).
+    if not draft.get("exam_date"):
+        fd = svc.date_from_filename(filename)
+        if fd:
+            draft["exam_date"] = fd.isoformat()
+            draft["checks"] = list(draft.get("checks") or []) + [{
+                "code": "date_from_filename", "label": "Tarih dosya adından",
+                "ok": True,
+                "detail": f"Karnede tarih yazmıyor; dosya adından {fd.strftime('%d.%m.%Y')} "
+                          "alındı — doğru değilse değiştir.",
+            }]
     return ExamImportDraft(
         **draft,
         section_choices=_section_choices(),
@@ -303,6 +316,7 @@ def teacher_exam_import_analyze(
     coach = _paying_coach(db, student)
     pdf = _read_pdf_upload(file)
     return _run_analyze(db, student=student, coach=coach, actor=user, pdf_bytes=pdf,
+                        filename=file.filename if file else None,
                         declared_section=declared_section,
                         declared_grade=declared_grade)
 
@@ -549,6 +563,7 @@ def student_exam_import_analyze(
     coach = _paying_coach(db, user, actor=user)
     pdf = _read_pdf_upload(file)
     return _run_analyze(db, student=user, coach=coach, actor=user, pdf_bytes=pdf,
+                        filename=file.filename if file else None,
                         declared_section=declared_section,
                         declared_grade=declared_grade)
 

@@ -31,6 +31,7 @@ import {
   ProgressTab,
   previousExam,
 } from "@/components/teacher/exams/exam-analytics";
+import { examSeriesOptions, rowSeries } from "@/lib/exam-format";
 import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
 import { ExamStudentShareButton } from "@/components/teacher/exams/exam-student-share";
 import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
@@ -42,6 +43,7 @@ import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
 import {
   useCreateExam,
   useDeleteExam,
+  useSetExamScope,
   useUpdateExam,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
@@ -135,33 +137,24 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
   });
   const shares = sharesQ.data?.shares ?? {};
 
-  // Sınav türleri farklı ölçekte (TYT/120·AYT/80·LGS) → analizler tek TÜRE
-  // göre hesaplanır; karıştırma yok. En çok denemesi olan tür varsayılan seçili.
+  // Sınav türleri farklı ölçekte (TYT/120·AYT/80·LGS) ve AYNI türde genel deneme
+  // ile branş denemesi (90 soru vs 20 soru) kıyaslanamaz → analizler tek SERİYE
+  // göre hesaplanır (2026-10-06). Genel deneme serisi varsayılan seçili.
   const rows = React.useMemo(() => data?.rows ?? [], [data]);
-  const sectionsInfo = React.useMemo(() => {
-    const map = new Map<ExamSectionValue, { label: string; count: number }>();
-    for (const r of rows) {
-      const e = map.get(r.section);
-      if (e) e.count += 1;
-      else map.set(r.section, { label: r.section_label, count: 1 });
-    }
-    return [...map.entries()]
-      .map(([value, v]) => ({ value, label: v.label, count: v.count }))
-      .sort((a, b) => b.count - a.count);
-  }, [rows]);
-  const [selSection, setSelSection] = React.useState<ExamSectionValue | null>(null);
-  const activeSection =
+  const sectionsInfo = React.useMemo(() => examSeriesOptions(rows), [rows]);
+  const [selSection, setSelSection] = React.useState<string | null>(null);
+  const activeSeries =
     selSection && sectionsInfo.some((s) => s.value === selSection)
       ? selSection
       : sectionsInfo[0]?.value ?? null;
   const sectionRows = React.useMemo(
-    () => rows.filter((r) => r.section === activeSection),
-    [rows, activeSection],
+    () => rows.filter((r) => rowSeries(r) === activeSeries),
+    [rows, activeSeries],
   );
-  // detay penceresi: satır + aynı türde bir önceki deneme
+  // detay penceresi: satır + aynı seride bir önceki deneme
   const detailRow = detailId != null ? rows.find((r) => r.id === detailId) ?? null : null;
   const detailPrev = detailRow
-    ? previousExam(rows.filter((r) => r.section === detailRow.section), detailRow)
+    ? previousExam(rows.filter((r) => rowSeries(r) === rowSeries(detailRow)), detailRow)
     : null;
 
   return (
@@ -171,7 +164,8 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
           <h3 className="text-lg font-semibold">Deneme Analizi</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Netler sınav türüne göre hesaplanır (LGS: doğru − yanlış/3 · YKS: doğru − yanlış/4).
-            Farklı sınav türleri ayrı ölçekte olduğu için analizler seçili türe göredir.
+            Farklı türler ve aynı türün genel denemesiyle branş denemesi (ör. 90 soruluk LGS
+            ile 20 soruluk Matematik branşı) ayrı ölçekte olduğu için analizler seçili seriye göredir.
           </p>
         </div>
       </div>
@@ -247,11 +241,11 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
             </div>
             {tab !== "list" && tab !== "score" && sectionsInfo.length > 1 ? (
               <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                Sınav türü
+                Deneme serisi
                 <select
-                  value={activeSection ?? ""}
-                  onChange={(e) => setSelSection(e.target.value as ExamSectionValue)}
-                  aria-label="Sınav türü"
+                  value={activeSeries ?? ""}
+                  onChange={(e) => setSelSection(e.target.value)}
+                  aria-label="Deneme serisi"
                   className={cn(
                     "h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -278,7 +272,7 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
             ) : tab === "progress" ? (
               <ProgressTab rows={sectionRows} />
             ) : tab === "topics" ? (
-              <ExamTopicAnalysis studentId={studentId} section={activeSection} period={period} />
+              <ExamTopicAnalysis studentId={studentId} section={activeSeries} period={period} />
             ) : tab === "behavior" ? (
               <BehaviorTab rows={sectionRows} />
             ) : tab === "score" ? (
@@ -286,7 +280,7 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
             ) : tab === "report" ? (
               <ExamProgressReport
                 source={{ kind: "teacher", studentId }}
-                section={activeSection}
+                section={activeSeries}
                 period={period}
                 studentName={studentName}
               />
@@ -339,6 +333,40 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Genel / branş işareti — sistem tanır, koç düzeltir (2026-10-06). */
+function ExamScopeSelect({ row }: { row: ExamResultRow }) {
+  const mut = useSetExamScope();
+  const isBranch = row.scope === "brans";
+  const value = row.scope_forced ? (row.scope ?? "genel") : "auto";
+  return (
+    <select
+      value={value}
+      disabled={mut.isPending}
+      onChange={(e) =>
+        mut.mutate({ examId: row.id, scope: e.target.value as "auto" | "genel" | "brans" })
+      }
+      aria-label="Deneme kapsamı (genel ya da branş)"
+      title="Netler yalnız aynı kapsamdaki denemelerle kıyaslanır. Sistem soru sayısından tanır; yanlışsa buradan düzelt."
+      className={cn(
+        "h-6 rounded border px-1 text-[11px] font-medium",
+        isBranch
+          ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200"
+          : "border-border bg-background text-foreground",
+      )}
+    >
+      <option value="auto">
+        {row.scope_forced
+          ? "Sisteme bırak"
+          : `${isBranch ? `${row.scope_subject ?? "Branş"} branş` : "Genel deneme"} (otomatik)`}
+      </option>
+      <option value="genel">Genel deneme</option>
+      <option value="brans">
+        {isBranch && row.scope_subject ? `${row.scope_subject} branş` : "Branş denemesi"}
+      </option>
+    </select>
   );
 }
 
@@ -408,6 +436,7 @@ function ExamRow({
                 >
                   {row.section_label}
                 </span>
+                <ExamScopeSelect row={row} />
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {formatTRDate(row.exam_date)} ·{" "}

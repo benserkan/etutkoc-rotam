@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from app.models import ExamResult, User
 from app.models.exam_progress import ExamTarget, SessionAgendaItem
 from app.models.curriculum import EXAM_SECTION_LABELS, ExamSection
+from app.services import exam_scope
 from app.models.exam_result import section_penalty
 
 QUEUE_MAX = 40
@@ -263,26 +264,24 @@ def build_progress_report(db: Session, student: User, *, section: str | None = N
         q = q.filter(ExamResult.exam_date <= win.end)
     all_exams = q.order_by(ExamResult.exam_date.asc(), ExamResult.id.asc()).all()
 
-    counts: dict[ExamSection, int] = {}
-    for e in all_exams:
-        counts[e.section] = counts.get(e.section, 0) + 1
-    options = [{"value": s.value, "label": EXAM_SECTION_LABELS[s], "count": n}
-               for s, n in sorted(counts.items(), key=lambda x: -x[1])]
-    sec: ExamSection | None = None
-    if section:
-        try:
-            sec = ExamSection(section)
-        except ValueError:
-            sec = None
-    if sec is None and options:
-        sec = ExamSection(options[0]["value"])
+    # 2026-10-06: seçim TÜR değil SERİ (genel deneme / ders bazlı branş) — netler
+    # yalnız aynı kapsamdaki denemeler arasında kıyaslanır (exam_scope).
+    options = exam_scope.series_options(all_exams)
+    skey = exam_scope.resolve_series(section, options)
+    sec: ExamSection | None = ExamSection(exam_scope.section_of_key(skey)) if skey else None
+    is_general = exam_scope.is_general_key(skey)
 
-    exams = [e for e in all_exams if sec is not None and e.section == sec]
-    target = get_targets(db, student.id).get(sec.value) if sec else None
+    exams = [e for e in all_exams if exam_scope.in_series(e, skey)]
+    # hedef net tür anahtarıyla tutulur → yalnız GENEL seriye uygulanır
+    target = get_targets(db, student.id).get(sec.value) if (sec and is_general) else None
+    opt = next((o for o in options if o["value"] == skey), None)
     base = {
         "section": sec.value if sec else None,
-        "section_label": EXAM_SECTION_LABELS[sec] if sec else None,
+        "section_label": (opt["label"] if opt else (EXAM_SECTION_LABELS[sec] if sec else None)),
         "section_options": options,
+        "series": skey,
+        "is_branch": bool(skey) and not is_general,
+        "target_allowed": is_general,
         "student_name": student.full_name,
         "generated_at": _now_iso(),
         "exams": [], "stats": None, "subjects": [], "target": None,
@@ -377,7 +376,7 @@ def build_progress_report(db: Session, student: User, *, section: str | None = N
 
     # konu fırsatları (soru-satırlı denemelerden)
     try:
-        ta = build_exam_topic_analysis(db, student, section=sec.value, period=period)
+        ta = build_exam_topic_analysis(db, student, section=skey, period=period)
     except Exception:  # noqa: BLE001 — rapor konu analizi olmadan da üretilir
         ta = {"opportunities": [], "forgotten": [], "improved": []}
     opps = ta.get("opportunities", [])[:6]

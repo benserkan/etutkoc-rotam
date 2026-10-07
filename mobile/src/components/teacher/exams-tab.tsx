@@ -323,9 +323,10 @@ export function ExamsTabView({
   const sectionCounts = React.useMemo(() => {
     const m = new Map<string, { label: string; n: number }>();
     for (const r of data.rows) {
-      const e = m.get(r.section);
+      const k = r.series_key || r.section; // tür + genel/branş
+      const e = m.get(k);
       if (e) e.n += 1;
-      else m.set(r.section, { label: r.section_label, n: 1 });
+      else m.set(k, { label: r.series_label || r.section_label, n: 1 });
     }
     return [...m.entries()].map(([value, v]) => ({ value, ...v })).sort((a, b) => b.n - a.n);
   }, [data.rows]);

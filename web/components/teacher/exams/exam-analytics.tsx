@@ -247,7 +247,7 @@ export function OverviewTab({
         title="Son deneme"
         description={
           <>
-            {last.title} · {fmtTRDate(last.exam_date)} · {last.section_label}
+            {last.title} · {fmtTRDate(last.exam_date)} · {last.series_label || last.section_label}
           </>
         }
         actions={
@@ -335,7 +335,7 @@ export function OverviewTab({
       ) : null}
 
       <ExamSection
-        title={`${last.section_label} denemelerinin özeti`}
+        title={`${last.series_label || last.section_label} — özet`}
         description="Seçili dönemde bu türdeki tüm denemeler."
       >
         <div className="grid gap-3 sm:grid-cols-3">

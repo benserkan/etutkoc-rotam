@@ -119,12 +119,19 @@ export function ExamProgressReport({
         <ReportShare data={d} studentName={studentName ?? d.student_name} studentId={studentId} />
       </div>
 
-      <TargetSection
-        data={d}
-        isTeacher={isTeacher}
-        isParent={source.kind === "parent"}
-        onEdit={() => setTargetOpen(true)}
-      />
+      {d.target_allowed === false ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          Bu bir branş denemesi serisi: netler yalnız aynı dersin branş denemeleriyle
+          kıyaslanır. Hedef net ve puan tahmini genel denemelere göre tutulur.
+        </p>
+      ) : (
+        <TargetSection
+          data={d}
+          isTeacher={isTeacher}
+          isParent={source.kind === "parent"}
+          onEdit={() => setTargetOpen(true)}
+        />
+      )}
 
       <ExamSection
         icon={TrendingUp}

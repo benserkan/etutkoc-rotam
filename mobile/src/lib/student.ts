@@ -162,6 +162,11 @@ export interface ExamRow {
   /** Faz 3: katılımcı genel ortalaması (karneden ya da koç girişi) */
   averages?: { label: string; total: number | null; source: "auto" | "manual"; subjects: Record<string, number> } | null;
   score?: { score: number | null; rank_overall: number | null; participants: number | null } | null;
+  /** Genel deneme mi branş mı (2026-10-06) — netler yalnız aynı seride kıyaslanır */
+  scope?: "genel" | "brans";
+  scope_subject?: string | null;
+  series_key?: string;
+  series_label?: string;
 }
 export interface ExamSummary {
   count: number;

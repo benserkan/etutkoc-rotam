@@ -250,6 +250,9 @@ LGS_CURRICULUM: dict[str, dict] = {
             ("Chores, Please!", 8),
             ("Science", 8),
             ("Natural Forces", 8),
+            # Tema söylemeyen genel beceri kazanımları ("Students will be able to
+            # guess the meaning of unknown words…") — karne analizi için (2026-10-06)
+            ("Okuma ve Dil Becerileri (Karma)", 8),
         ],
         # 5-7: sınıf (PARENT) + tema (LEAF). MEB ortaokul İngilizce temaları (2018,
         # 8. sınıfla tutarlı; kitaplarda yaygın). 6. sınıf web-doğrulandı.

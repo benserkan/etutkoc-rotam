@@ -141,6 +141,8 @@ class AnalysisSectionOption(BaseModel):
     value: str
     label: str
     count: int                             # soru-satırlı deneme sayısı
+    kind: str = "genel"                    # "genel" | "brans" (2026-10-06)
+    section: str | None = None             # gerçek sınav türü
 
 
 class AnalysisExamMeta(BaseModel):

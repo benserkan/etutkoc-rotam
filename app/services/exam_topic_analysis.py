@@ -134,30 +134,20 @@ def build_exam_topic_analysis(
     exams_all = q.order_by(ExamResult.exam_date.asc(), ExamResult.id.asc()).all()
     exams_all = [e for e in exams_all if e.questions]
 
-    # tür seçenekleri (soru-satırlı deneme sayısıyla)
-    by_section: dict[ExamSection, int] = {}
-    for e in exams_all:
-        by_section[e.section] = by_section.get(e.section, 0) + 1
-    section_options = [
-        {"value": s.value, "label": EXAM_SECTION_LABELS[s], "count": n}
-        for s, n in sorted(by_section.items(), key=lambda x: -x[1])
-    ]
+    # seri seçenekleri (soru-satırlı deneme sayısıyla) — 2026-10-06: genel deneme ile
+    # branş denemesi ayrı seri (exam_scope); "kapanırsa +X net/deneme" aynı kapsamda anlamlı.
+    from app.services import exam_scope
+    section_options = exam_scope.series_options(exams_all)
+    skey = exam_scope.resolve_series(section, section_options)
+    sec: ExamSection | None = ExamSection(exam_scope.section_of_key(skey)) if skey else None
+    _opt = next((o for o in section_options if o["value"] == skey), None)
 
-    sec: ExamSection | None = None
-    if section:
-        try:
-            sec = ExamSection(section)
-        except ValueError:
-            sec = None
-    if sec is None and section_options:
-        sec = ExamSection(section_options[0]["value"])
-
-    exams = [e for e in exams_all if sec is not None and e.section == sec]
+    exams = [e for e in exams_all if exam_scope.in_series(e, skey)]
     exams = exams[-ANALYSIS_EXAM_LIMIT:]
 
     empty = {
-        "section": sec.value if sec else None,
-        "section_label": EXAM_SECTION_LABELS[sec] if sec else None,
+        "section": skey,
+        "section_label": (_opt["label"] if _opt else (EXAM_SECTION_LABELS[sec] if sec else None)),
         "section_options": section_options,
         "exams": [], "topics": [], "opportunities": [],
         "forgotten": [], "improved": [],
@@ -276,8 +266,8 @@ def build_exam_topic_analysis(
     improved.sort(key=lambda t: (t["first_accuracy"] - t["last_accuracy"]))
 
     return {
-        "section": sec.value,
-        "section_label": EXAM_SECTION_LABELS[sec],
+        "section": skey,
+        "section_label": (_opt["label"] if _opt else EXAM_SECTION_LABELS[sec]),
         "section_options": section_options,
         "exams": exams_out,
         "topics": topics_out,

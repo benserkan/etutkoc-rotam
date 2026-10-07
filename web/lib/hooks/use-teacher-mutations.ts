@@ -1640,6 +1640,31 @@ export function useDeleteExam() {
   });
 }
 
+/** Denemeyi genel / branş işaretle ("auto" → sistem tanır). 2026-10-06 */
+export function useSetExamScope() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<ExamResultRow>,
+    ApiError,
+    { examId: number; scope: "auto" | "genel" | "brans" }
+  >({
+    mutationFn: ({ examId, scope }) =>
+      api<MutationResponse<ExamResultRow>>(`/api/v2/teacher/exams/${examId}/scope`, {
+        method: "POST",
+        body: JSON.stringify({ scope }),
+      }),
+    onError: (err) => showError(err, "Deneme türü değiştirilemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(
+        res.data.scope === "brans"
+          ? `Branş denemesi olarak işaretlendi (${res.data.scope_subject ?? "ders"})`
+          : "Genel deneme olarak işaretlendi",
+      );
+    },
+  });
+}
+
 // =============================================================================
 // KS1 — Koçluk seansları
 // =============================================================================

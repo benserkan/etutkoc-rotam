@@ -61,9 +61,21 @@ def _subjects(exam: ExamResult) -> list[dict]:
     return out
 
 
+def _series_key(exam: ExamResult) -> str:
+    from app.services import exam_scope
+    return exam_scope.series_key(exam)
+
+
 def _previous_same_section(db: Session, exam: ExamResult) -> ExamResult | None:
-    """Aynı sınav TÜRÜNDEKİ bir önceki deneme (kıyas ancak böyle anlamlı)."""
-    return (
+    """Aynı SERİDEKİ bir önceki deneme (kıyas ancak böyle anlamlı).
+
+    2026-10-06: tür yetmez — 90 soruluk genel LGS ile 20 soruluk Matematik
+    branşı aynı türdür ama kıyaslanamaz (exam_scope seri anahtarı).
+    """
+    from app.services import exam_scope
+
+    key = exam_scope.series_key(exam)
+    cands = (
         db.query(ExamResult)
         .filter(
             ExamResult.student_id == exam.student_id,
@@ -72,8 +84,10 @@ def _previous_same_section(db: Session, exam: ExamResult) -> ExamResult | None:
             ExamResult.exam_date <= exam.exam_date,
         )
         .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc())
-        .first()
+        .limit(60)
+        .all()
     )
+    return next((e for e in cands if exam_scope.series_key(e) == key), None)
 
 
 def _fmt(n: float) -> str:
@@ -219,7 +233,7 @@ def _net_opportunities(db: Session, exam: ExamResult) -> dict:
         return {"rows": [], "exam_count": 0, "total_gain": 0.0}
     try:
         data = build_exam_topic_analysis(
-            db, exam.student, section=exam.section.value,
+            db, exam.student, section=_series_key(exam),
         )
     except Exception:  # analiz düşerse mail düşmesin (best-effort)
         return {"rows": [], "exam_count": 0, "total_gain": 0.0}
@@ -272,9 +286,13 @@ def _subject_history(db: Session, exam: ExamResult) -> dict:
             ExamResult.exam_date <= exam.exam_date,
         )
         .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc())
-        .limit(MAX_HISTORY_EXAMS)
+        .limit(60)
         .all()
     )
+    # aynı SERİ (genel/branş) — exam_scope, 2026-10-06
+    from app.services import exam_scope
+    _key = exam_scope.series_key(exam)
+    rows = [e for e in rows if exam_scope.series_key(e) == _key][:MAX_HISTORY_EXAMS]
     exams = list(reversed(rows))          # eskiden yeniye — soldan sağa okunur
     if len(exams) < 2:
         return {"exams": [], "rows": [], "has_data": False}

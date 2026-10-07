@@ -485,6 +485,9 @@ def _label_parts(raw: str | None) -> tuple[str, str]:
 _AI_LABEL_BATCH = 40
 
 
+_AI_MATCH_TIMEOUT = 120.0
+
+
 def _ai_match_labels(
     labels: list[dict], candidates: list[Topic], subj_names: dict[int, str],
 ) -> dict[int, int]:
@@ -522,10 +525,22 @@ def _ai_match_labels(
             'Yalnız JSON dön: {"mappings":[{"key":N,"topic_id":N|null}]}'
         )
         try:
-            raw = gemini.generate(
-                [gemini.text_part(prompt)],
-                personal_data=False, json_mode=True, max_output_tokens=16384,
-            )
+            # 45 sn varsayılan süre 30+ etiketli LGS partilerinde kesiliyor,
+            # yedek modele düşüyor ya da etiketler boş kalıyordu (2026-10-06
+            # ölçümü). 120 sn + bir yeniden deneme.
+            raw = None
+            for attempt in range(2):
+                try:
+                    raw = gemini.generate(
+                        [gemini.text_part(prompt)],
+                        personal_data=False, json_mode=True, max_output_tokens=16384,
+                        timeout=_AI_MATCH_TIMEOUT,
+                    )
+                    break
+                except Exception as e:  # noqa: BLE001
+                    if attempt == 1:
+                        raise
+                    logger.info("exam_import AI konu eşleme yeniden deneniyor: %s", e)
             try:
                 mappings = gemini.extract_json(raw).get("mappings") or []
             except Exception:  # noqa: BLE001 — Gemini bazen düz dizi döndürür
@@ -553,6 +568,52 @@ def _ai_match_labels(
         for part in pool.map(_run_batch, batches):
             out.update(part)
     return out
+
+
+_COUNT_MARK_RE = re.compile(r"\s*\[\s*\d+\s*\]\s*")
+# İngilizce genel beceri kazanımları ("Students will be able to …") tema
+# (Friendship, Tourism…) söylemez → AI eşleyemezse dersin "(Karma)" konusuna.
+_GENERIC_SKILL_RE = re.compile(r"^\s*students? (will|can) be able to\b", re.I)
+
+
+def _generic_skill_topic(row: dict, topics: list[Topic]) -> Topic | None:
+    """Tema söylemeyen genel beceri kazanımı → aynı dersin '(Karma)' konusu."""
+    if not _GENERIC_SKILL_RE.search(row.get("topic_raw") or ""):
+        return None
+    sid = row.get("_home_subject_id")
+    return next((t for t in topics if t.subject_id == sid and "(karma)" in t.name.lower()), None)
+
+
+_FILENAME_DATE_RES = (
+    re.compile(r"(?<!\d)(\d{1,2})[.\-_](\d{1,2})[.\-_](20\d{2})(?!\d)"),   # 13.03.2026
+    re.compile(r"(?<!\d)(20\d{2})[.\-_](\d{1,2})[.\-_](\d{1,2})(?!\d)"),   # 2026-03-13
+)
+
+
+def date_from_filename(name: str | None):
+    """Dosya adındaki tarih (13.03.2026 / 2026-03-13); geçersiz/gelecek → None."""
+    if not name:
+        return None
+    for i, rx in enumerate(_FILENAME_DATE_RES):
+        m = rx.search(name)
+        if not m:
+            continue
+        a, b, c = (int(x) for x in m.groups())
+        y, mo, d = (c, b, a) if i == 0 else (a, b, c)
+        try:
+            dt = date(y, mo, d)
+        except ValueError:
+            continue
+        if dt > date.today() or dt.year < 2020:
+            continue
+        return dt
+    return None
+
+
+def _clean_kazanim_label(label: str) -> str:
+    """'[1] A.[1] B.' → 'A.; B.'  (yalnız soru sayısı işaretleri atılır)."""
+    parts = [p.strip() for p in _COUNT_MARK_RE.split(label or "") if p.strip()]
+    return "; ".join(parts) if parts else (label or "").strip()
 
 
 def normalize_topics(
@@ -589,6 +650,12 @@ def normalize_topics(
     ai_pending: dict[tuple[int | None, str], list[int]] = {}  # (home_sid, lkey) → satır idx'leri
 
     for idx, row in enumerate(rows):
+        # Karneler kazanımın başına soru sayısı işareti koyar ("[1] Metinle ilgili
+        # soruları cevaplar."): işaret anahtara girince sözlük/birebir eşleşme hiç
+        # tutmuyordu (LGS benchmark 2026-10-06). İşaret atılır; birden çok
+        # kazanım "; " ile ayrılır.
+        if row.get("topic_raw"):
+            row["topic_raw"] = _clean_kazanim_label(row["topic_raw"])
         home = resolve_subject(row.get("subject_raw"), by_key)
         home_sid = home.id if home else None
         row["subject_id"] = home_sid
@@ -728,6 +795,9 @@ def normalize_topics(
                 elif tp is not None:
                     _assign_topic(rows[ridx], tp, subj_by_id, source="ai")
                     stats["ai"] += 1
+                elif (karma := _generic_skill_topic(rows[ridx], topics)) is not None:
+                    _assign_topic(rows[ridx], karma, subj_by_id, source="auto")
+                    stats["auto"] += 1
                 else:
                     rows[ridx]["topic_id"] = None
                     rows[ridx]["topic_name"] = None

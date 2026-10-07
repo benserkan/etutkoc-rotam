@@ -180,7 +180,10 @@ def _targets_brief(db: Session, student_id: int, exams: list[ExamResult]) -> lis
             sec = ExamSection(sec_value)
         except ValueError:
             continue
-        last = next((e for e in exams if e.section == sec), None)
+        from app.services import exam_scope
+        # hedef GENEL deneme netine göredir — branş denemesiyle kıyaslanmaz
+        last = next((e for e in exams if e.section == sec
+                     and exam_scope.classify(e) == "genel"), None)
         row: dict[str, Any] = {
             "section": EXAM_SECTION_LABELS.get(sec, sec_value),
             "target_net": t.get("target_net"),
@@ -213,6 +216,12 @@ def _score_brief(db: Session, student: User) -> dict | None:
     }
 
 
+def _scope_label(e: ExamResult) -> str:
+    from app.services import exam_scope
+    sc = exam_scope.exam_scope(e)
+    return f"{sc.subject} branş denemesi" if sc.is_branch else "genel deneme"
+
+
 def _deneme_bundle(db: Session, parent: User, student: User, today: date) -> dict:
     exams = _recent_exams(db, student.id)
     bundle: dict[str, Any] = {
@@ -223,6 +232,8 @@ def _deneme_bundle(db: Session, parent: User, student: User, today: date) -> dic
                 "date": e.exam_date.isoformat(),
                 "title": e.title,
                 "section": EXAM_SECTION_LABELS.get(e.section, str(e.section)),
+                # genel deneme mi branş mı — branşın neti genel denemeyle KIYASLANMAZ
+                "kapsam": _scope_label(e),
                 "net": e.net,
                 "correct": e.total_correct,
                 "wrong": e.total_wrong,
@@ -241,14 +252,15 @@ def _deneme_bundle(db: Session, parent: User, student: User, today: date) -> dic
     score = _score_brief(db, student)
     if score:
         bundle["score_estimate"] = score
-    # Aynı türde son iki deneme arası net değişimi (basit trend)
+    # Aynı SERİDE (tür + genel/branş) son iki deneme arası net değişimi
+    from app.services import exam_scope
     by_section: dict[Any, list[ExamResult]] = {}
     for e in exams:
-        by_section.setdefault(e.section, []).append(e)
+        by_section.setdefault(exam_scope.series_key(e), []).append(e)
     for sec, rows in by_section.items():
         if len(rows) >= 2:
             bundle["last_trend"] = {
-                "section": EXAM_SECTION_LABELS.get(sec, str(sec)),
+                "section": exam_scope.exam_scope(rows[0]).series_label,
                 "last_net": rows[0].net,
                 "prev_net": rows[1].net,
                 "delta": round(rows[0].net - rows[1].net, 2),
@@ -364,6 +376,9 @@ DİL KURALLARI (kesin):
 - Tıbbi/psikolojik teşhis YASAK.
 - En fazla BİR "koçla görüşün" önerisi; yalnız veri gerektiriyorsa.
 - Yalnız verilen veriyi kullan; veri yoksa uydurma, "henüz veri yok" de.
+- Denemelerde "kapsam" alanına bak: branş denemesinin neti (ör. yalnız
+  Matematik, 20 soru) genel denemeyle KIYASLANMAZ; net artışı/düşüşü yalnız
+  aynı kapsamdaki denemeler arasında söylenir.
 
 ÇIKTI (yalnız geçerli JSON):
 {

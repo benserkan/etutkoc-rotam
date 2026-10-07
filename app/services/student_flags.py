@@ -263,7 +263,9 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
     exams = (db.query(ExamResult).filter(ExamResult.student_id == student.id)
              .order_by(ExamResult.exam_date.desc(), ExamResult.created_at.desc()).limit(12).all())
     if exams and exams[0].exam_date and (today - exams[0].exam_date).days <= 30:
-        same = [e for e in exams if e.section == exams[0].section]
+        from app.services import exam_scope
+        _k = exam_scope.series_key(exams[0])
+        same = [e for e in exams if exam_scope.series_key(e) == _k]
         if len(same) >= 2 and same[1].net is not None and same[0].net is not None:
             diff = float(same[0].net) - float(same[1].net)
             thr = max(2.0, abs(float(same[1].net)) * 0.1)
@@ -272,7 +274,7 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
                     f"Son denemede net {float(same[1].net):.2f} → {float(same[0].net):.2f}.",
                     [("Önceki", f"{_d(same[1].exam_date)} · {same[1].title} · {float(same[1].net):.2f}"),
                      ("Son", f"{_d(same[0].exam_date)} · {same[0].title} · {float(same[0].net):.2f}"),
-                     ("Kıyas", "aynı sınav türü içinde")])
+                     ("Kıyas", "aynı sınav türü ve kapsamı (genel/branş) içinde")])
             elif diff >= thr:
                 add("G", "green", "good_net_up", "Deneme neti yükseliyor",
                     f"Net {float(same[1].net):.2f} → {float(same[0].net):.2f} (+{diff:.2f}).",

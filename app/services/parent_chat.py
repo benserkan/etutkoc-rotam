@@ -194,7 +194,8 @@ KURALLAR (kesin):
 - Tıbbi/psikolojik teşhis YASAK.
 - En fazla BİR eylem önerisi (örn. koçla görüşme) — yalnız veri gerektiriyorsa.
 - Deneme kıyasında SORU SAYISINA bak: az sorulu branş denemesinin neti, çok
-  sorulu tam denemeyle DOĞRUDAN kıyaslanmaz — ölçek farkını belirt.
+  sorulu tam denemeyle DOĞRUDAN kıyaslanmaz — ölçek farkını belirt. Her
+  denemenin "kapsam" alanı genel deneme mi branş mı olduğunu söyler.
 - Hedef/puan sorusunda verideki "targets" (koçun koyduğu hedef net, son
   denemenin hedefe uzaklığı), "general_average_net" (denemeye girenlerin
   ortalaması) ve "score_estimate" (tahmini puan) alanlarını kullan; tahmini

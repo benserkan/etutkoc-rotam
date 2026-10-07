@@ -72,6 +72,9 @@ def add_exam(db, student_id, coach_id, title, d, section, rows):
         exam_date=d, section=section, total_correct=c, total_wrong=y,
         total_blank=b, net=round(max(c - y / pen, 0), 2),
         import_source="pdf_import",
+        # küçük test fikstürü genel deneme temsil eder (exam_scope soru sayısından
+        # branş sanmasın — 2026-10-06)
+        analysis_meta='{"scope": "genel"}',
     )
     db.add(e)
     db.flush()

@@ -45,15 +45,16 @@ export default function ParentChildExamsRoute() {
   const sections = React.useMemo(() => {
     const m = new Map<string, { label: string; n: number }>();
     for (const r of rows) {
-      const e = m.get(r.section);
+      const k = r.series_key || r.section; // tür + genel/branş
+      const e = m.get(k);
       if (e) e.n += 1;
-      else m.set(r.section, { label: r.section_label, n: 1 });
+      else m.set(k, { label: r.series_label || r.section_label, n: 1 });
     }
     return [...m.entries()].map(([value, v]) => ({ value, ...v })).sort((a, b) => b.n - a.n);
   }, [rows]);
   const [sel, setSel] = React.useState<string | null>(null);
   const active = sel && sections.some((s) => s.value === sel) ? sel : sections[0]?.value ?? null;
-  const chrono = rows.filter((r) => r.section === active).slice().reverse().slice(-10);
+  const chrono = rows.filter((r) => (r.series_key || r.section) === active).slice().reverse().slice(-10);
   const maxNet = Math.max(1, ...chrono.map((r) => r.net));
 
   const refresh = () => {

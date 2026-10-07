@@ -255,16 +255,18 @@ def build_weekly_report(
     exam_trend_delta: float | None = None
     exam_trend_section: str | None = None
     if exam_rows:
+        # aynı SERİ (tür + genel/branş) — exam_scope, 2026-10-06
+        from app.services import exam_scope
         latest = exam_rows[0]
-        latest_section_val = _section_value(latest.section)
+        latest_key = exam_scope.series_key(latest)
         prev_same = None
         for r in exam_rows[1:]:
-            if _section_value(r.section) == latest_section_val:
+            if exam_scope.series_key(r) == latest_key:
                 prev_same = r
                 break
         if prev_same is not None and latest.net is not None and prev_same.net is not None:
             exam_trend_delta = round(float(latest.net) - float(prev_same.net), 2)
-            exam_trend_section = _section_label(latest.section)
+            exam_trend_section = exam_scope.exam_scope(latest).series_label
 
     # --- Koç notları (son 14 gün, veliye iletilmiş) ---
     note_cutoff = datetime.now(timezone.utc) - timedelta(days=NOTE_LOOKBACK_DAYS)

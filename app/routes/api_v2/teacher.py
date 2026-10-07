@@ -143,6 +143,7 @@ from app.routes.api_v2.schemas.teacher import (
     DnaNotifyParentResult,
     DnaSubjectRow,
     ExamCreateBody,
+    ExamScopeBody,
     ExamListSummary,
     ExamQuestionItem,
     ExamQuestionsResponse,
@@ -1372,7 +1373,18 @@ def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamRes
         import_source=exam.import_source,
         score=_exam_score(exam),
         averages=_exam_averages(exam),
+        **_exam_scope_fields(exam),
     )
+
+
+def _exam_scope_fields(exam: ExamResult) -> dict:
+    from app.services import exam_scope as _es
+    sc = _es.exam_scope(exam)
+    return {
+        "scope": sc.kind, "scope_subject": sc.subject,
+        "scope_forced": _es._meta_scope(exam) is not None,
+        "series_key": sc.series_key, "series_label": sc.series_label,
+    }
 
 
 def _exam_averages(exam: ExamResult) -> "ExamAverages | None":
@@ -1838,6 +1850,7 @@ def teacher_create_exam_v2(
         ),
         note=(body.note or "").strip()[:500] or None,
     )
+    _set_exam_scope(exam, body.scope)
     db.add(exam)
     db.commit()
     db.refresh(exam)
@@ -1851,6 +1864,52 @@ def teacher_create_exam_v2(
         invalidate=[
             f"teacher:{user.id}:students:{student.id}:exams",
             f"teacher:{user.id}:students:{student.id}",
+        ],
+    )
+
+
+def _set_exam_scope(exam: ExamResult, scope: str | None) -> None:
+    """analysis_meta.scope — "auto"/None işareti kaldırır (sistem tanır)."""
+    if scope is None:
+        return
+    try:
+        meta = json.loads(exam.analysis_meta) if exam.analysis_meta else {}
+    except ValueError:
+        meta = {}
+    if not isinstance(meta, dict):
+        meta = {}
+    if scope in ("genel", "brans"):
+        meta["scope"] = scope
+    else:
+        meta.pop("scope", None)
+    exam.analysis_meta = json.dumps(meta, ensure_ascii=False) if meta else None
+
+
+@router.post("/exams/{exam_id}/scope", response_model=MutationResponse[ExamResultRow])
+def teacher_set_exam_scope_v2(
+    exam_id: int,
+    body: ExamScopeBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Denemeyi genel / branş olarak işaretle (ya da "auto" ile sisteme bırak).
+
+    Netler yalnız aynı kapsamdaki denemeler arasında kıyaslanır (exam_scope);
+    sistemin tanıması yanlışsa koç buradan düzeltir. Sahiplik 404.
+    """
+    exam = _get_owned_exam(db, exam_id, user.id)
+    _set_exam_scope(exam, body.scope)
+    db.commit()
+    db.refresh(exam)
+    creator_name = None
+    if exam.created_by_id:
+        creator = db.get(User, exam.created_by_id)
+        creator_name = creator.full_name if creator else None
+    return MutationResponse[ExamResultRow](
+        data=_build_exam_row(exam, created_by_name=creator_name),
+        invalidate=[
+            f"teacher:{user.id}:students:{exam.student_id}:exams",
+            f"teacher:{user.id}:students:{exam.student_id}",
         ],
     )
 
@@ -1897,6 +1956,8 @@ def teacher_update_exam_v2(
         if f["subject_payload"] else None
     )
     exam.note = (body.note or "").strip()[:500] or None
+    if body.scope is not None:
+        _set_exam_scope(exam, body.scope)
     db.commit()
     db.refresh(exam)
     creator_name = None
@@ -10026,10 +10087,11 @@ def teacher_student_analytics_v2(
         _exam_q.order_by(ExamResult.exam_date.desc(), ExamResult.created_at.desc())
         .limit(8).all()
     )
+    from app.services import exam_scope as _es
     exam_trend = [
         AnalyticsExamPoint(title=r.title,
                            exam_date=r.exam_date.isoformat() if r.exam_date else None,
-                           section_label=_sec_label(r.section),
+                           section_label=_es.exam_scope(r).series_label,
                            net=float(r.net) if r.net is not None else 0.0)
         for r in exam_rows
     ]
@@ -10037,11 +10099,11 @@ def teacher_student_analytics_v2(
     exam_trend_section = None
     if exam_rows:
         latest = exam_rows[0]
-        lsec = _sec_val(latest.section)
-        prev = next((r for r in exam_rows[1:] if _sec_val(r.section) == lsec), None)
+        lkey = _es.series_key(latest)   # aynı seri (tür + genel/branş)
+        prev = next((r for r in exam_rows[1:] if _es.series_key(r) == lkey), None)
         if prev is not None and latest.net is not None and prev.net is not None:
             exam_trend_delta = round(float(latest.net) - float(prev.net), 2)
-            exam_trend_section = _sec_label(latest.section)
+            exam_trend_section = _es.exam_scope(latest).series_label
 
     warnings = [
         AnalyticsWarningItem(level=w.level, code=w.code, title=w.title, detail=w.detail)

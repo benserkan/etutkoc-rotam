@@ -2165,6 +2165,12 @@ class ExamCreateBody(BaseModel):
     subjects: list[ExamSubjectInput] = []
     note: str | None = None
     force: bool = False  # mükerrer uyarısına (aynı ad + tarih) rağmen kaydet
+    # 2026-10-06: genel/branş — "auto" (varsayılan) sistem tanır; koç elle işaretleyebilir
+    scope: Literal["auto", "genel", "brans"] | None = None
+
+
+class ExamScopeBody(BaseModel):
+    scope: Literal["auto", "genel", "brans"]
 
 
 class ExamSubjectRow(BaseModel):
@@ -2232,6 +2238,12 @@ class ExamResultRow(BaseModel):
     score: ExamScoreInfo | None = None
     import_source: str | None = None       # "pdf_import" → satır-düzeyi düzenleme açılır
     averages: "ExamAverages | None" = None  # Faz 3: genel ortalama (karne / koç girişi)
+    # 2026-10-06: genel/branş ayrımı (exam_scope) — netler yalnız AYNI seride kıyaslanır
+    scope: str = "genel"                    # "genel" | "brans"
+    scope_subject: str | None = None        # branşta ders ("Matematik")
+    scope_forced: bool = False              # koç elle işaretlediyse
+    series_key: str = ""                    # "lgs" | "lgs~matematik"
+    series_label: str = ""                  # "LGS (genel deneme)" | "LGS · Matematik branş"
 
 
 class ExamListSummary(BaseModel):

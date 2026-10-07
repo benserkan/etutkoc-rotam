@@ -174,7 +174,7 @@ def main() -> int:
         ex = b.get("exam_trend", [])
         check("7. exam_trend 2 deneme + net trendi +10 (LGS)",
               len(ex) == 2 and b.get("exam_trend_delta") == 10.0
-              and b.get("exam_trend_section") == "LGS",
+              and (b.get("exam_trend_section") or "").startswith("LGS"),
               f"len={len(ex)} delta={b.get('exam_trend_delta')} sec={b.get('exam_trend_section')}")
 
         check("8. warnings liste", isinstance(b.get("warnings"), list), str(b.get("warnings"))[:80])

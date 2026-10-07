@@ -237,7 +237,7 @@ def main() -> int:
 
         # 7. deneme net trendi TYT +10
         check("7. exam_trend_delta=+10 (TYT)",
-              body.get("exam_trend_delta") == 10.0 and body.get("exam_trend_section") == "TYT",
+              body.get("exam_trend_delta") == 10.0 and (body.get("exam_trend_section") or "").startswith("TYT"),
               f"delta={body.get('exam_trend_delta')} sec={body.get('exam_trend_section')}")
         check("7b. exams listesi >=2", len(body.get("exams", [])) >= 2,
               f"len={len(body.get('exams', []))}")
