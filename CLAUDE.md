@@ -158,6 +158,38 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## DENEME GENEL/BRANŞ AYRIMI + LGS KARNE İYİLEŞTİRMELERİ + /demos REHBER VİDEOLARI — CANLI (2026-10-07, commit `a71b3f3` + düzeltme, migration YOK, OTA `fb3da673`)
+
+- **`app/services/exam_scope.py` (TEK MERKEZ):** genel deneme / branş denemesi. Kural: koç işareti
+  (`analysis_meta.scope`) > başlıkta "branş" > soru < %60 standart (LGS 90 · TYT 120 · AYT 80 ·
+  Maarif 1. Basamak 125) > standart yoksa tek ders = branş. Seri anahtarı `lgs` / `lgs~matematik`.
+  Gelişim raporu, konu analizi, net grafiği (web+mobil seri seçici), puan tahmini (YALNIZ genel),
+  veli e-postası kıyası/geçmiş tablosu, haftalık rapor, analitik deneme trendi, `exam_drop` uyarısı,
+  Rota paketi (`kapsam` alanı) aynı seride kıyaslar. Hedef net yalnız genel seride. Koç deneme
+  satırındaki seçiciyle düzeltir: POST `/teacher/exams/{id}/scope` {auto|genel|brans}.
+  `ExamResultRow` +scope/scope_subject/series_key/series_label. Test `test_exam_scope` 21/21.
+  **KURAL: deneme netini kıyaslayan yeni yüzey `exam_scope.series_key` ile gruplar, `section` ile DEĞİL.**
+- **LGS karne testi (Yiğit Eren, 9 karne, canlı sunucuda, rollback):** 9/9 LGS high, 54/54 ders neti
+  belgeyle birebir, kontroller 63/63, şüpheli 0, 2-3 dk/karne. Düzeltmeler: kazanım başındaki
+  "[1]" soru sayısı işareti atılır (`_clean_kazanim_label`) · Türkçe kazanım sabit eşlemeleri
+  (`curriculum_mapping._ALIAS`) · İngilizce "Students will be able to…" → yeni LGS 8 konusu
+  "Okuma ve Dil Becerileri (Karma)" · AI konu eşleme 45→120 sn + 1 yeniden deneme · karnede tarih
+  yoksa dosya adındaki tarih (`date_from_filename`, önizlemede bilgi notu; hiç yoksa amber uyarı).
+  Betik `scripts/sim_exam_import_lgs.py` (Linux'ta yamasız; confirm commit'i flush'a çevrilir —
+  canlıda iz bırakmaz). **NOT:** LGS karnelerinin hiçbiri tarih basmıyor.
+  **ÖNCEDEN VAR OLAN HATA (doğrulama testinde yakalandı):** Gemini eşleme yanıtında anahtarı
+  bazen METİN döndürüyor (`"key": "40"`) → kod yalnız sayı kabul ettiği için 40 satırlık parti
+  sessizce eşleşmesiz kalıyordu (karneden karneye %14–%100 oynayan eşleşmenin nedeni). Anahtar
+  ve topic_id sayıya çevrilir — exam_import + curriculum_mapping + curriculum_progress.
+  Test `test_exam_ai_match_keys` 4/4. **KURAL: AI JSON'undaki kimlikler daima int()'e çevrilir.**
+- **/demos:** `book-add-coach` · `program-create-coach` · YENİ `exams-coach` artık Rota Rehberi'nin
+  gerçek ekranları + Pro TTS sesiyle (`app/services/guide_demo.py`, veri
+  `app/static/guide/coach-guide-demo.json` ← `scripts/guide_content/sync_static.py`, build.py
+  otomatik çağırır). Diğer demolar değişmedi. **KURAL: rehber içeriği/GUIDE_ASSET_VERSION değişince
+  `python -m scripts.guide_content.sync_static`.**
+
+---
+
 ## KOÇ REHBERİ — Kitaplar / Program / Denemeler serileri — CANLI (2026-10-06, commit `74ed879`, migration YOK)
 
 - 24 bölüm / 185 adım (eski kitap-ekle/ogrenci-ata/program-kur/yayinla-duyur/hafta-takip/deneme-gir

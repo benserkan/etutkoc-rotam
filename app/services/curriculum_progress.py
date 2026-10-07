@@ -849,7 +849,10 @@ def ai_prioritize_units(
     valid = {u.topic_id for u in units}
     pri: dict[int, tuple[int, str]] = {}
     for p in (data.get("priorities") or []):
-        tid = p.get("topic_id")
+        try:  # Gemini kimliği bazen metin döndürür — sayıya çevir
+            tid = int(p.get("topic_id"))
+        except (TypeError, ValueError):
+            continue
         if tid in valid:
             pri[int(tid)] = (int(p.get("priority") or 99), str(p.get("reason") or "").strip())
     return {"summary": str(data.get("summary") or "").strip() or None, "priorities": pri}

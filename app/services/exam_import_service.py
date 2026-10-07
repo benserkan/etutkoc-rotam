@@ -550,9 +550,16 @@ def _ai_match_labels(
             for m in mappings:
                 if not isinstance(m, dict):
                     continue
-                k, tid = m.get("key"), m.get("topic_id")
+                # Gemini anahtarı bazen METİN döndürür ("key": "40") — eskiden
+                # tüm parti sessizce düşüyordu (LGS karnelerinde 40 satır eşleşmesiz
+                # kalıyordu; 2026-10-07 teşhisi). Sayıya çevrilir.
+                try:
+                    k = int(m.get("key"))
+                    tid = int(m["topic_id"]) if m.get("topic_id") is not None else None
+                except (TypeError, ValueError):
+                    continue
                 if k in keys and tid in valid_ids:
-                    res[int(k)] = int(tid)
+                    res[k] = tid
         except Exception as e:  # noqa: BLE001 — best-effort katman
             logger.warning("exam_import AI konu eşleme parti hatası: %s", e)
         return res

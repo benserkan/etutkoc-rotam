@@ -403,8 +403,11 @@ def _ai_suggest_batch(
         for m in mappings:
             if not isinstance(m, dict):
                 continue
-            sid = m.get("section_id")
-            tid = m.get("topic_id")
+            try:  # Gemini kimliği bazen metin döndürür ("12") — sayıya çevir
+                sid = int(m.get("section_id"))
+                tid = int(m.get("topic_id")) if m.get("topic_id") is not None else None
+            except (TypeError, ValueError):
+                continue
             conf = str(m.get("confidence") or "low")
             if sid in sec_ids and tid in valid_ids:
                 out[int(sid)] = (int(tid), conf if conf in ("high", "medium", "low") else "low")
