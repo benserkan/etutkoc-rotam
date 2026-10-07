@@ -48,5 +48,23 @@ r = run({"mappings": [{"key": "0", "topic_id": 999}, {"key": "x", "topic_id": 10
 check("liste dışı / bozuk / null → düşer", r == {}, r)
 check("sayı işareti temizliği", svc._clean_kazanim_label("[1] A.[2] B.") == "A.; B.")
 
+
+# Çift okuma birleşimi: biri "[1]" işaretini kopyalamış, diğeri atlamış → şüpheli DEĞİL
+def _read(prefix):
+    return {"questions": [{"part": None, "subject": "Türkçe", "no": i,
+                           "topic": f"{prefix}Metinle ilgili soruları cevaplar.",
+                           "correct_answer": "A", "student_answer": "A", "result": "dogru"}
+                          for i in range(1, 21)], "subjects": []}
+
+
+merged, sus = svc.merge_reads(_read("[1] "), _read(""))
+check("'[1]' işareti farkı şüpheli üretmez", sus == 0, sus)
+check("birleşik konu temiz", merged["questions"][0]["topic"] == "Metinle ilgili soruları cevaplar.",
+      merged["questions"][0]["topic"])
+r1, r2 = _read(""), _read("")
+r2["questions"][3]["student_answer"] = "B"
+_, sus2 = svc.merge_reads(r1, r2)
+check("gerçek cevap farkı hâlâ şüpheli", sus2 == 1, sus2)
+
 print(f"\n  Sonuç: {PASS} PASS / {FAIL} FAIL")
 sys.exit(1 if FAIL else 0)

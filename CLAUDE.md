@@ -181,7 +181,11 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   bazen METİN döndürüyor (`"key": "40"`) → kod yalnız sayı kabul ettiği için 40 satırlık parti
   sessizce eşleşmesiz kalıyordu (karneden karneye %14–%100 oynayan eşleşmenin nedeni). Anahtar
   ve topic_id sayıya çevrilir — exam_import + curriculum_mapping + curriculum_progress.
-  Test `test_exam_ai_match_keys` 4/4. **KURAL: AI JSON'undaki kimlikler daima int()'e çevrilir.**
+  İkinci yakalanan: çift okumada "[1]" işaretini bir model kopyalayıp diğeri atlayınca konu metni
+  "uyuşmuyor" sayılıp 90 satırın HEPSİ şüpheli boyanıyordu (Mozaik, 5 okumada 1) → `merge_reads`
+  işaret temizlenmiş metinle kıyaslar. Test `test_exam_ai_match_keys` 7/7 (eski kod 20/20 şüpheli).
+  Son canlı doğrulama: 9/9 · ortalama 98,5 · 6 karnede eşleşme %100.
+  **KURAL: AI JSON'undaki kimlikler daima int()'e çevrilir.**
 - **/demos:** `book-add-coach` · `program-create-coach` · YENİ `exams-coach` artık Rota Rehberi'nin
   gerçek ekranları + Pro TTS sesiyle (`app/services/guide_demo.py`, veri
   `app/static/guide/coach-guide-demo.json` ← `scripts/guide_content/sync_static.py`, build.py

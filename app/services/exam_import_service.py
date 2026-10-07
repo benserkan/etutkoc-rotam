@@ -987,6 +987,12 @@ def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
             if q1 is None or q2 is None:
                 suspect = True  # yalnız bir okumada var
             else:
+                # "[1]" soru sayısı işaretini bir okuma kopyalar, diğeri atlar →
+                # işaretle kıyaslanınca 90 satırın HEPSİ şüpheli boyanıyordu (Mozaik
+                # LGS karnesi, 2026-10-07). Kıyas işaret temizlenmiş metinle.
+                q1["topic"] = _clean_kazanim_label(q1.get("topic") or "")
+                q2["topic"] = _clean_kazanim_label(q2.get("topic") or "")
+                base["topic"] = q1["topic"]
                 t1, t2 = normalize(q1["topic"]), normalize(q2["topic"])
                 if t1 != t2:
                     if t1.startswith(t2) or t2.startswith(t1):
