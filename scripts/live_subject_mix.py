@@ -31,7 +31,7 @@ Senaryolar:
    6. Şerit sayfa düzenini bozmaz (gün kartı + sağ panel yerinde, yatay taşma yok)
    7. Çok kaynaklı konuda İKİ kaynak satırı ayrı ayrı listelenir
    8. Önerilen (başlanmış) kaynak üstte + "devam" rozeti
-   9. İKİNCİ satırdaki "+3 test" görevi O kaynağa yazar (koç seçebiliyor)
+   9. İKİNCİ satırdaki "test ver → 3" görevi O kaynağa yazar (koç seçebiliyor)
   10. Kaynak satırlarında kırpılmış metin ("…") yok
 """
 from __future__ import annotations
@@ -418,13 +418,18 @@ def main() -> int:
             # ---- 9. İKİNCİ satırdaki butona bas → görev O kitaba yazılsın
             before_a = _items_for_book(ids["student"], ids["book_a"])
             before_b = _items_for_book(ids["student"], ids["book_b"])
-            second_btn = rows[1].query_selector('button:has-text("+3 test")')
+            # 2026-09-19: sabit "+3 test" düğmesi kalktı → satırdaki "test ver"
+            # satırın ALTINDA adet seçicisini açar, çip (3) görevi yazar.
+            second_btn = rows[1].query_selector('button:has-text("test ver")')
             second_btn.click()
+            page.wait_for_timeout(600)
+            chooser = rows[1].query_selector('[data-testid="assign-count-chooser"]')
+            chooser.query_selector('button:text-is("3")').click()
             page.wait_for_timeout(2500)
             after_a = _items_for_book(ids["student"], ids["book_a"])
             after_b = _items_for_book(ids["student"], ids["book_b"])
             check(
-                "9. İKİNCİ kaynağın '+3 test' butonu görevi O kaynağa yazar "
+                "9. İKİNCİ kaynağın 'test ver → 3' seçimi görevi O kaynağa yazar "
                 "(önerilene DEĞİL)",
                 after_b == before_b + 3 and after_a == before_a,
                 f"A {before_a}→{after_a} · B {before_b}→{after_b}",

@@ -176,8 +176,8 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   `week-grid.toneForKey` ortak `subjectColors`'tan (`dotColor`) → Ders Dengesi şeridi + iskelet
   düzenleyicisi de aynı renk. Mobil `lib/subject-colors.ts` web hue tablosunun BİREBİR kopyası
   (**web'de palet değişirse burası da**) + öğrenci hafta ekranında dolgulu ders etiketleri
-  (tümü görünür). Test 32/32. NOT: `live_subject_mix` senaryo 9 ÖNCEDEN bozuk ("+3 test"
-  düğmesi 2026-09-19'da "test ver" seçicisine döndü; test güncellenmedi).
+  (tümü görünür). Test 32/32. `live_subject_mix` senaryo 9 "test ver → 3" akışına
+  güncellendi (eski "+3 test" düğmesi 2026-09-19'da kalkmıştı) → 11/11.
 
 ---
 
