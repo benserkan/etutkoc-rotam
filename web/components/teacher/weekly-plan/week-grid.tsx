@@ -13,23 +13,14 @@ import {
 
 import { toast } from "sonner";
 
-import { useQuery } from "@tanstack/react-query";
-
-import { getTaskQuantity, teacherKeys } from "@/lib/api/teacher";
 import {
   taskSolvedTests,
-  useCreateTask,
   useDeleteTask,
   useMoveTaskDate,
   useSpreadTask,
 } from "@/lib/hooks/use-teacher-mutations";
 import { cn } from "@/lib/utils";
 import { SubjectTag, subjectColors, subjectTintVars } from "@/components/shared/subject-tag";
-import { AssignCountChooser } from "./assign-count-chooser";
-import {
-  RESOURCE_SECTION_MIME,
-  type ResourceSectionDragPayload,
-} from "./resource-dock";
 import type { TeacherStudentWeekDay, TeacherTask } from "@/lib/types/teacher";
 import {
   findSubjectByExactName,
@@ -398,56 +389,6 @@ export function WeekGrid({
   const spreadMut = useSpreadTask();
   const placeVideos = usePlaceVideos(studentId);
 
-  // Alt panelden (Kaynak Durumu) bırakılan ünite → bırakılan noktada adet
-  // seçici; çip = görev o güne yazılır, gün kısa süre vurgulanır (2026-10-08).
-  const [resDrop, setResDrop] = React.useState<{
-    date: string;
-    period?: "morning" | "noon" | "evening" | "";
-    payload: ResourceSectionDragPayload;
-    x: number;
-    y: number;
-  } | null>(null);
-  const [flashDate, setFlashDate] = React.useState<string | null>(null);
-  const createTask = useCreateTask(studentId);
-  const resQtyQ = useQuery({
-    queryKey: teacherKeys.taskQuantity(studentId, resDrop?.payload.subjectId ?? 0),
-    queryFn: () => getTaskQuantity(studentId, resDrop?.payload.subjectId ?? 0),
-    enabled: resDrop !== null,
-    staleTime: 5 * 60_000,
-  });
-  const assignResDrop = (n: number) => {
-    if (!resDrop) return;
-    const { date, period, payload: rp } = resDrop;
-    const unit =
-      rp.bookType === "brans_denemesi" || rp.bookType === "genel_deneme" ? "deneme" : "test";
-    createTask.mutate(
-      {
-        body: {
-          date,
-          type: "test",
-          title: `${rp.bookName} — ${rp.sectionLabel}: ${n} ${unit}`,
-          scheduled_hour: null,
-          period: period ? period : null,
-          items: [
-            {
-              book_id: rp.bookId,
-              section_id: rp.sectionId,
-              planned_count: n,
-              allow_over_capacity: n > rp.remaining,
-            },
-          ],
-        },
-      },
-      {
-        onSuccess: () => {
-          setFlashDate(date);
-          window.setTimeout(() => setFlashDate((v) => (v === date ? null : v)), 1800);
-        },
-      },
-    );
-    setResDrop(null);
-  };
-
   // --- Sağ tık menüsü (koç isteği 2026-09-03): sürükle-bırakın klavye/fare
   // dostu alternatifi. Taşı/Kopyala seçilince ızgara "hedef gün seç" moduna
   // girer; Sil onaylı çalışır.
@@ -546,26 +487,6 @@ export function WeekGrid({
 
   const handleDrop = React.useCallback(
     (e: React.DragEvent, targetDate: string, period?: "morning" | "noon" | "evening" | "") => {
-      // Alt paneldeki (Kaynak Durumu) ünite bırakıldı → bırakılan yerde
-      // "Kaç test?" seçicisi (2026-10-08).
-      const rraw = e.dataTransfer.getData(RESOURCE_SECTION_MIME);
-      if (rraw) {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOverDate(null);
-        let rp: ResourceSectionDragPayload;
-        try {
-          rp = JSON.parse(rraw);
-        } catch {
-          return;
-        }
-        if (days.find((d) => d.date === targetDate)?.is_past) {
-          toast.warning("Geçmiş güne görev eklenemez.");
-          return;
-        }
-        setResDrop({ date: targetDate, period, payload: rp, x: e.clientX, y: e.clientY });
-        return;
-      }
       const vraw = e.dataTransfer.getData(VIDEO_MIME);
       if (vraw) {
         e.preventDefault();
@@ -699,12 +620,10 @@ export function WeekGrid({
                   }}
                   onDragOver={(e) => {
                     const isVideo = e.dataTransfer.types.includes(VIDEO_MIME);
-                    const isRes = e.dataTransfer.types.includes(RESOURCE_SECTION_MIME);
-                    if (!isVideo && !isRes && !e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
-                    if ((isVideo || isRes) && day.is_past) return;
+                    if (!isVideo && !e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
+                    if (isVideo && day.is_past) return;
                     e.preventDefault();
-                    e.dataTransfer.dropEffect =
-                      isVideo || isRes || e.ctrlKey || e.metaKey ? "copy" : "move";
+                    e.dataTransfer.dropEffect = isVideo || e.ctrlKey || e.metaKey ? "copy" : "move";
                     setDragOverDate(day.date);
                   }}
                   onDragLeave={() =>
@@ -720,8 +639,6 @@ export function WeekGrid({
                         : "border-border bg-card hover:bg-muted/30",
                     dragOverDate === day.date &&
                       "ring-2 ring-cyan-400 ring-offset-1 ring-offset-background",
-                    flashDate === day.date &&
-                      "ring-2 ring-emerald-500 ring-offset-1 ring-offset-background",
                     pending && !day.is_past &&
                       "ring-2 ring-amber-400 ring-offset-1 ring-offset-background cursor-copy",
                     pending && day.is_past && "opacity-40",
@@ -769,12 +686,11 @@ export function WeekGrid({
                             sec.pkey
                               ? (e) => {
                                   const isVideo = e.dataTransfer.types.includes(VIDEO_MIME);
-                                  const isRes = e.dataTransfer.types.includes(RESOURCE_SECTION_MIME);
-                                  if (!isVideo && !isRes && !e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
-                                  if ((isVideo || isRes) && day.is_past) return;
+                                  if (!isVideo && !e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
+                                  if (isVideo && day.is_past) return;
                                   e.preventDefault();
                                   e.dataTransfer.dropEffect =
-                                    isVideo || isRes || e.ctrlKey || e.metaKey ? "copy" : "move";
+                                    isVideo || e.ctrlKey || e.metaKey ? "copy" : "move";
                                   setDragOverDate(day.date);
                                 }
                               : undefined
@@ -1050,39 +966,6 @@ export function WeekGrid({
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
-      {resDrop ? (
-        <div
-          className="fixed z-50 w-[300px] rounded-lg border border-border bg-card p-2 shadow-xl"
-          style={{
-            left: Math.max(8, Math.min(resDrop.x - 150, window.innerWidth - 308)),
-            top: Math.max(8, Math.min(resDrop.y + 8, window.innerHeight - 160)),
-          }}
-          data-testid="grid-resource-drop"
-        >
-          <p className="px-1 text-[11.5px] leading-snug text-foreground">
-            <b>{resDrop.payload.sectionLabel}</b>
-            <span className="text-muted-foreground"> · {resDrop.payload.bookName}</span>
-          </p>
-          <p className="px-1 text-[10.5px] text-muted-foreground">
-            {days.find((d) => d.date === resDrop.date)?.dow_label ?? resDrop.date} gününe ·
-            kalan {resDrop.payload.remaining}
-          </p>
-          <AssignCountChooser
-            defaultCount={resQtyQ.data?.quantity ?? 3}
-            hint={resQtyQ.data?.reason ?? null}
-            remaining={resDrop.payload.remaining}
-            unit={
-              resDrop.payload.bookType === "brans_denemesi" ||
-              resDrop.payload.bookType === "genel_deneme"
-                ? "deneme"
-                : "test"
-            }
-            pending={createTask.isPending}
-            onPick={assignResDrop}
-            onClose={() => setResDrop(null)}
-          />
         </div>
       ) : null}
     </section>

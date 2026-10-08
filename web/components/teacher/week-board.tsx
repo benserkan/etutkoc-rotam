@@ -73,13 +73,6 @@ import { ParentAnnounceDialog } from "./weekly-plan/parent-announce-dialog";
 import { WeekDayCard } from "./weekly-plan/week-day-card";
 import { WeekNotesCard } from "./weekly-plan/week-notes-card";
 import { ResourceSidebar } from "./weekly-plan/resource-sidebar";
-import {
-  DOCK_PREF_DEFAULT,
-  DOCK_PREF_KEY,
-  ResourceDock,
-  type DockPref,
-} from "./weekly-plan/resource-dock";
-import { useLocalPref } from "@/lib/hooks/use-local-pref";
 import { CarryoverPanel } from "./weekly-plan/carryover-panel";
 import { CurriculumBoard } from "./weekly-plan/curriculum-board";
 import { NextUnitsPanel } from "./weekly-plan/next-units-panel";
@@ -275,23 +268,14 @@ export function WeekBoard({
     staleTime: 15_000,
   });
   const carryoverCount = carryoverQ.data?.candidates.length ?? 0;
-  // Kaynak Durumu ALT PANEL modu (2026-10-08, koç denemesi): açıkken sağ
-  // panelden kalkar, sayfanın altına yapışık durur (ızgara daralmaz).
-  const [dockPref, setDockPref] = useLocalPref<DockPref>(DOCK_PREF_KEY, DOCK_PREF_DEFAULT);
-  const resourcesInDock = dockPref.enabled;
   const dockedIds = sideOrder.filter(
     (id) =>
       sideStates[id]?.pinned &&
-      !(id === "week:carryover" && carryoverCount === 0) &&
-      !(id === "week:resources" && resourcesInDock),
+      !(id === "week:carryover" && carryoverCount === 0),
   );
   const peekId =
-    sideOrder.find(
-      (id) =>
-        sideStates[id]?.open &&
-        !sideStates[id]?.pinned &&
-        !(id === "week:resources" && resourcesInDock),
-    ) ?? null;
+    sideOrder.find((id) => sideStates[id]?.open && !sideStates[id]?.pinned) ??
+    null;
   const sideW = dockedIds.length > 0 ? SIDE_PANEL_W + 8 + SIDE_RAIL_W : SIDE_RAIL_W;
   // Bölüm bileşenleri — yalnız görünenler (sabit ya da peek) render edilir.
   const sidePanels: Record<string, React.ReactNode> = {
@@ -326,7 +310,6 @@ export function WeekBoard({
         onOpenBookGrid={setGridBookId}
         studentId={studentId}
         dayDate={openDate ?? data.days[0]?.date ?? ""}
-        onDock={() => setDockPref({ ...dockPref, enabled: true, collapsed: false })}
       />
     ),
   };
@@ -825,10 +808,7 @@ export function WeekBoard({
           <SideRail
             className="order-1 xl:order-2"
             badges={{ "week:carryover": carryoverCount || undefined }}
-            hidden={[
-              ...(carryoverCount === 0 ? ["week:carryover"] : []),
-              ...(resourcesInDock ? ["week:resources"] : []),
-            ]}
+            hidden={carryoverCount === 0 ? ["week:carryover"] : undefined}
           />
           <PeekHost
             peekId={peekId}
@@ -840,17 +820,6 @@ export function WeekBoard({
       </div>
 
       <VideoBasketFloat studentId={studentId} subjects={subjectsForGrouping} />
-
-      {resourcesInDock ? (
-        <ResourceDock
-          data={sidebarQ.data}
-          studentId={studentId}
-          dayDate={openDate ?? data.days[0]?.date ?? ""}
-          onOpenBookGrid={setGridBookId}
-          focusedSubjectId={focusedSubjectId}
-          onClearFocus={() => setFocusedSubjectId(null)}
-        />
-      ) : null}
 
       <BookGridModal
         open={gridBookId !== null}

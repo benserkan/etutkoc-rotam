@@ -42,8 +42,6 @@ interface Props {
   studentId?: number;
   /** Aktif gün — "+N" bu güne yazar */
   dayDate?: string;
-  /** Verilirse başlıkta "Alta al" — Kaynak Durumu alt panele taşınır (2026-10-08). */
-  onDock?: () => void;
 }
 
 /**
@@ -67,7 +65,6 @@ export function ResourceSidebar({
   onOpenBookGrid,
   studentId,
   dayDate,
-  onDock,
 }: Props) {
   // Ünite satırından görev yazma (koç yüzeyi). Hook koşulsuz çağrılır;
   // studentId yoksa (öğrenci ekranı) 0 ile kurulur ve hiç kullanılmaz.
@@ -140,28 +137,15 @@ export function ResourceSidebar({
       summary={subjectCount > 0 ? `${subjectCount} ders` : undefined}
       defaultPinned
       headerRight={
-        <span className="flex items-center gap-2">
-          {focusedSubjectId !== null ? (
-            <button
-              type="button"
-              onClick={onClearFocus}
-              className="text-[11px] text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 underline"
-            >
-              Tümü
-            </button>
-          ) : null}
-          {onDock ? (
-            <button
-              type="button"
-              onClick={onDock}
-              className="text-[11px] text-cyan-700 hover:text-cyan-900 underline dark:text-cyan-300"
-              title="Kaynak Durumu'nu sayfanın altına yapışık panele taşı"
-              data-testid="resource-to-dock"
-            >
-              Alta al
-            </button>
-          ) : null}
-        </span>
+        focusedSubjectId !== null ? (
+          <button
+            type="button"
+            onClick={onClearFocus}
+            className="text-[11px] text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 underline"
+          >
+            Tümü
+          </button>
+        ) : null
       }
     >
       <p className="px-4 pb-1 text-xs text-muted-foreground">Ders bazında kitap ilerlemesi</p>
