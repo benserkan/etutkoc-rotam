@@ -334,6 +334,7 @@ export function TaskSheetContent({
           busy={!!requestBusy}
           onSubmit={onSubmitRequest}
           onReplace={onRequestReplace}
+          currentCount={task.items.length === 1 ? task.items[0].planned ?? null : null}
         />
       ) : null}
     </View>
@@ -346,12 +347,14 @@ function RequestSection({
   busy,
   onSubmit,
   onReplace,
+  currentCount,
 }: {
   canRequest?: CanRequestMatrix;
   hasPending: boolean;
   busy: boolean;
   onSubmit: (kind: RequestKind, payload: RequestPayload) => void;
   onReplace?: () => void;
+  currentCount?: number | null;
 }) {
   const [open, setOpen] = React.useState<RequestKind | null>(null);
   const [msg, setMsg] = React.useState("");
@@ -394,8 +397,13 @@ function RequestSection({
     }
   }
 
+  // Aynı sayı = talep hiçbir şeyi değiştirmez (konu değişikliği "Kaynak
+  // değiştir" ile istenir — 2026-10-08).
+  const sameCount =
+    open === "change" && currentCount != null && Number(count) === currentCount;
   const sendDisabled =
     busy ||
+    sameCount ||
     (open === "question" && !msg.trim()) ||
     (open === "change" && !(Number(count) > 0));
 
@@ -432,6 +440,12 @@ function RequestSection({
               <NumField label="Önerdiğin yeni sayı" value={count} onChangeText={(v) => setCount(v.replace(/[^0-9]/g, "").slice(0, 4))} />
               <View className="flex-1" />
             </View>
+          ) : null}
+          {sameCount ? (
+            <Text className="text-xs text-amber-700">
+              Sayı aynı kalırsa talep hiçbir şeyi değiştirmez. Başka bir konu çözmek
+              istiyorsan &quot;Kaynak değiştir&quot;i seç.
+            </Text>
           ) : null}
           <View className="gap-1">
             <Text className="text-xs font-medium text-slate-600">

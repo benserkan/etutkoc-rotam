@@ -252,6 +252,7 @@ function ApprovalCard({ r }: { r: TeacherRequestListItem }) {
         </p>
       ) : null}
       <MessageBlock text={r.message} />
+      {r.no_effect ? <NoEffectNote /> : null}
 
       {rejecting ? (
         <div className="mt-3 space-y-2">
@@ -409,5 +410,17 @@ function HistoryCard({ r }: { r: TeacherRequestListItem }) {
         </p>
       ) : null}
     </CardShell>
+  );
+}
+
+/** Bekleyen "sayı değiştir" talebinde önerilen sayı mevcutla aynı (2026-10-08). */
+export function NoEffectNote() {
+  return (
+    <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+      <b>Bu talep programda hiçbir şeyi değiştirmez:</b> önerilen sayı mevcut sayıyla
+      aynı. Öğrenci konu değişikliği istiyorsa onaylamak yetmez — görevi haftalık
+      programdan düzenleyip konuyu sen değiştir (çözülen testler de yeni konuya
+      taşınabilir).
+    </p>
   );
 }

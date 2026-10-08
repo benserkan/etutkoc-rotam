@@ -13,6 +13,7 @@ import {
 } from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RequestActionBar } from "@/components/teacher/request-action-bar";
+import { NoEffectNote } from "@/components/teacher/requests-inbox-client";
 
 /**
  * /teacher/requests/[id] — talep detayı (Paket 5: read-only iskelet).
@@ -75,6 +76,8 @@ export default async function TeacherRequestDetailPage({ params }: PageProps) {
         </div>
         <RequestActionBar req={req} />
       </header>
+
+      {req.no_effect ? <NoEffectNote /> : null}
 
       {req.message ? (
         <Card>

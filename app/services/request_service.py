@@ -150,6 +150,19 @@ def create_change_request(
         )
     if proposed_count is not None and proposed_count < 1:
         raise RequestError("Önerilen sayı 1'den küçük olamaz.")
+    # Aynı sayı = talep hiçbir şeyi değiştirmez. Öğrenciler konu değişikliğini
+    # bu talebin mesajına yazıyordu (2026-10-08, Zeynep #164 vakası) → koç
+    # onaylayınca program değişmiyordu. Doğru yola yönlendir.
+    if (
+        proposed_count is not None
+        and len(task.book_items) == 1
+        and proposed_count == task.book_items[0].planned_count
+    ):
+        raise RequestError(
+            f"Bu görevde zaten {proposed_count} test var; sayı aynı kalırsa talep "
+            "hiçbir şeyi değiştirmez. Başka bir konu/ünite çözmek istiyorsan "
+            "'Kaynağı değiştir' seçeneğini kullan."
+        )
     # Pre-doğrulama: kapasite (kalan + gelecek rezervler) yeterli mi?
     if proposed_count is not None and len(task.book_items) == 1:
         item = task.book_items[0]

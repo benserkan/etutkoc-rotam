@@ -1257,6 +1257,11 @@ class TaskSingleItemEditBody(BaseModel):
     notes: str | None = None
     link_url: str | None = None
     allow_over_capacity: bool = False
+    # Tamamlanmış görevin konusu yanlış girilmişse (öğrenci başka konuyu
+    # çözmüş): True → çözülen testler de yeni bölüme taşınır (eski bölümün
+    # "çözüldü" sayacı düşer, yeni bölümünki artar). Yeni sayı çözülenin
+    # altındaysa çözülen yeni sayıya kırpılır. (2026-10-08)
+    move_completed: bool = False
 
 
 class BulkTaskItem(BaseModel):
@@ -1306,6 +1311,9 @@ class TeacherRequestListItem(BaseModel):
     teacher_response: str | None
     created_at: datetime
     responded_at: datetime | None
+    # True → bekleyen "sayı değiştir" talebinde önerilen sayı mevcutla aynı;
+    # onaylamak programda hiçbir şeyi değiştirmez (2026-10-08).
+    no_effect: bool = False
 
 
 class TeacherRequestListResponse(BaseModel):
@@ -1349,6 +1357,7 @@ class TeacherRequestDetail(BaseModel):
     # True → "Mevcut görev" bloğu TALEP ANINDAKİ dondurulmuş hâli gösteriyor
     # (onay görevi değiştirdiği için canlı hâl önerilenle aynı olurdu).
     current_is_snapshot: bool = False
+    no_effect: bool = False                # bkz. TeacherRequestListItem.no_effect
 
     created_at: datetime
     updated_at: datetime

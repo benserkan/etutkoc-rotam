@@ -118,11 +118,12 @@ function ChangeForm({
   const [count, setCount] = React.useState<string>(String(task.planned_count));
   const [message, setMessage] = React.useState("");
   const mut = useRequestChange(dateIso);
+  const sameCount = Number(count) === task.planned_count;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const n = Number(count);
-    if (!Number.isFinite(n) || n < 1) return;
+    if (!Number.isFinite(n) || n < 1 || sameCount) return;
     mut.mutate(
       { task, proposed_count: n, message: message.trim() || undefined },
       { onSuccess: () => onClose() },
@@ -151,12 +152,21 @@ function ChangeForm({
         />
       </div>
 
+      {sameCount ? (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+          Sayı aynı kalırsa bu talep hiçbir şeyi değiştirmez. Başka bir konu ya
+          da ünite çözmek istiyorsan bu pencereyi kapatıp görevin menüsünden{" "}
+          <b>Kaynağı değiştir</b>&apos;i seç.
+        </p>
+      ) : null}
+
       <MessageField value={message} onChange={setMessage} optional />
 
       <Footer
         isPending={mut.isPending}
         onCancel={onClose}
         submitLabel="Talep gönder"
+        disabled={sameCount}
       />
     </form>
   );

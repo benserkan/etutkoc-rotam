@@ -1467,9 +1467,15 @@ function TaskRichEditForm({
   // Kaynak değişti mi (Jinja parite — completed > 0 ise blokla)
   const sourceChanged =
     bookId !== item.book_id || sectionId !== item.section_id;
-  const sourceBlocked = sourceChanged && item.completed_count > 0;
+  // Çözülmüş görevde konu değişince çözülenler de yeni konuya taşınır
+  // (2026-10-08 — öğrenci başka konuyu çözdüyse koç kaydı düzeltebilsin).
+  const [moveCompleted, setMoveCompleted] = React.useState(true);
+  const sourceChangeWithDone = sourceChanged && item.completed_count > 0;
+  const sourceBlocked = sourceChangeWithDone && !moveCompleted;
   const countBelowCompleted =
-    count !== "" && Number(count) < item.completed_count;
+    count !== "" &&
+    Number(count) < item.completed_count &&
+    !(sourceChangeWithDone && moveCompleted);
 
   function onSubjectChange(v: string) {
     const num = v === "" ? "" : Number(v);
@@ -1505,6 +1511,7 @@ function TaskRichEditForm({
           section_id: sectionId,
           planned_count: countNum,
           notes: notes.trim() || null,
+          move_completed: sourceChangeWithDone && moveCompleted,
         },
       },
       { onSuccess: () => onDone() },
@@ -1520,8 +1527,9 @@ function TaskRichEditForm({
     <form onSubmit={submit} className="space-y-4">
       {item.completed_count > 0 ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
-          Bu görevde <b>{item.completed_count}</b> test çözülmüş — kaynak (kitap/ünite)
-          değişikliği bloke; sayıyı en az <b>{item.completed_count}</b> tutmalısın.
+          Bu görevde <b>{item.completed_count}</b> test çözülmüş. Öğrenci aslında
+          başka bir konuyu çözdüyse konuyu değiştirebilirsin — çözülen testler de
+          yeni konuya taşınır.
         </div>
       ) : null}
 
@@ -1600,7 +1608,7 @@ function TaskRichEditForm({
             id={`re-subject-${task.id}`}
             value={subjectId === "" ? "" : String(subjectId)}
             onChange={(e) => onSubjectChange(e.target.value)}
-            disabled={sourceBlocked}
+            disabled={false}
             className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           >
             <option value="">— ders seç —</option>
@@ -1617,7 +1625,7 @@ function TaskRichEditForm({
             id={`re-book-${task.id}`}
             value={bookId === "" ? "" : String(bookId)}
             onChange={(e) => onBookChange(e.target.value)}
-            disabled={subjectId === "" || sourceBlocked}
+            disabled={subjectId === ""}
             className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           >
             <option value="">— önce ders —</option>
@@ -1636,7 +1644,7 @@ function TaskRichEditForm({
             onChange={(e) =>
               setSectionId(e.target.value === "" ? "" : Number(e.target.value))
             }
-            disabled={bookId === "" || sourceBlocked}
+            disabled={bookId === ""}
             className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           >
             <option value="">— önce kitap —</option>
@@ -1653,7 +1661,7 @@ function TaskRichEditForm({
           <input
             id={`re-count-${task.id}`}
             type="number"
-            min={Math.max(1, item.completed_count)}
+            min={sourceChangeWithDone && moveCompleted ? 1 : Math.max(1, item.completed_count)}
             value={count}
             onChange={(e) => setCount(e.target.value)}
             required
@@ -1671,6 +1679,27 @@ function TaskRichEditForm({
           test. Tamamlanan: <span className="tabular-nums">{item.completed_count}</span>/
           <span className="tabular-nums">{item.planned_count}</span>.
         </div>
+      ) : null}
+
+      {sourceChangeWithDone ? (
+        <label className="flex items-start gap-2 rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-100">
+          <input
+            type="checkbox"
+            checked={moveCompleted}
+            onChange={(e) => setMoveCompleted(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            Çözülen <b>{item.completed_count}</b> testi yeni konuya taşı (eski konunun
+            “çözüldü” sayısı düşer, yeni konununki artar).
+            {count !== "" && Number(count) < item.completed_count
+              ? ` Yeni sayı ${count} olduğu için çözülen ${count} olarak kaydedilir.`
+              : ""}
+            {!moveCompleted
+              ? " İşaretlemezsen konu değiştirilemez."
+              : ""}
+          </span>
+        </label>
       ) : null}
 
       {countBelowCompleted ? (
@@ -1707,7 +1736,8 @@ function TaskRichEditForm({
             bookId === "" ||
             sectionId === "" ||
             !count ||
-            countBelowCompleted
+            countBelowCompleted ||
+            sourceBlocked
           }
           className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-foreground text-background text-sm font-medium hover:bg-foreground/90 disabled:opacity-50 transition"
         >

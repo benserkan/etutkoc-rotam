@@ -402,6 +402,8 @@ export interface TaskSingleItemEditBody {
   notes?: string | null;
   link_url?: string | null;
   allow_over_capacity?: boolean;
+  /** Kaynak değişiyorsa çözülen testleri de yeni bölüme taşı (2026-10-08). */
+  move_completed?: boolean;
 }
 
 export type TaskPeriod = "morning" | "noon" | "evening";
@@ -1236,6 +1238,8 @@ export interface TeacherRequestListItem {
   teacher_response: string | null;
   created_at: string;
   responded_at: string | null;
+  /** Bekleyen sayı talebinde önerilen sayı mevcutla aynı — onay hiçbir şeyi değiştirmez. */
+  no_effect?: boolean;
 }
 
 export interface TeacherRequestListResponse {
@@ -1270,6 +1274,8 @@ export interface TeacherRequestDetail {
   current_items: TeacherTaskItem[];
   /** true → "Mevcut görev" bloğu talep anındaki dondurulmuş hâli gösteriyor. */
   current_is_snapshot?: boolean;
+  /** bkz. TeacherRequestListItem.no_effect */
+  no_effect?: boolean;
   created_at: string;
   updated_at: string;
   responded_at: string | null;

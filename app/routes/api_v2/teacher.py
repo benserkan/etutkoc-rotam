@@ -358,6 +358,7 @@ from app.services import task_picker, task_quantity, task_titles, topic_board, t
 from app.services.task_links import effective_link_url, extract_url, normalize_link
 from app.services.task_service import (
     ReservationError,
+    _get_progress,
     release_item,
     release_task_items,
     remaining_for,
@@ -6227,7 +6228,10 @@ def teacher_patch_task_single_item_v2(
     source_changed = (
         body.book_id != item.book_id or body.section_id != item.book_section_id
     )
-    if source_changed and item.completed_count > 0:
+    move_completed = bool(
+        body.move_completed and source_changed and item.completed_count > 0
+    )
+    if source_changed and item.completed_count > 0 and not move_completed:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
@@ -6239,7 +6243,7 @@ def teacher_patch_task_single_item_v2(
                 ),
             },
         )
-    if body.planned_count < item.completed_count:
+    if body.planned_count < item.completed_count and not move_completed:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
@@ -6267,8 +6271,35 @@ def teacher_patch_task_single_item_v2(
                 section_id=item.book_section_id,
                 count=old_pending,
             )
+        moved_completed = 0
+        if move_completed:
+            # Çözülenleri eski bölümden yeni bölüme taşı. Eski bölümde yalnız
+            # görev kaynaklı kısım düşer (elle girilen bağımsız çalışma korunur).
+            old_done = int(item.completed_count)
+            old_sp, _ = _get_progress(
+                db, task.student_id, item.book_id, item.book_section_id
+            )
+            reducible = max(0, int(old_sp.completed_count) - int(old_sp.manual_count or 0))
+            old_sp.completed_count = int(old_sp.completed_count) - min(old_done, reducible)
+            moved_completed = min(old_done, body.planned_count)
+            new_sp, new_sec = _get_progress(
+                db, task.student_id, body.book_id, body.section_id
+            )
+            free = int(new_sec.test_count or 0) - int(new_sp.reserved_count) - int(new_sp.completed_count)
+            if moved_completed > free:
+                if not body.allow_over_capacity:
+                    raise ReservationError(
+                        f"Yeni bölümde yalnız {max(0, free)} test boş; "
+                        f"{moved_completed} çözülmüş test taşınamaz."
+                    )
+                single_warnings.append(
+                    f"Kayıtlı kapasite {moved_completed - max(0, free)} test aşıldı — "
+                    "çözülenler yine de taşındı."
+                )
+            new_sp.completed_count = int(new_sp.completed_count) + moved_completed
         new_pending = body.planned_count - (
-            item.completed_count if not source_changed else 0
+            item.completed_count if not source_changed
+            else moved_completed
         )
         if new_pending > 0:
             if body.allow_over_capacity:
@@ -6301,7 +6332,10 @@ def teacher_patch_task_single_item_v2(
     item.book_section_id = body.section_id
     item.planned_count = body.planned_count
     if source_changed:
-        item.completed_count = 0  # kaynak değişti → eski tamamlama anlamsız
+        if move_completed:
+            item.completed_count = moved_completed
+        else:
+            item.completed_count = 0  # kaynak değişti → eski tamamlama anlamsız
 
     # Task meta güncelle
     task.date = new_date
@@ -6452,8 +6486,24 @@ def _get_owned_request(
     return req
 
 
+def _request_no_effect(req: TaskRequest) -> bool:
+    """Bekleyen CHANGE talebinde önerilen sayı mevcut sayıyla aynı mı?
+
+    Öğrenci konu değişikliğini "sayı değiştir" mesajına yazınca koç onaylasa
+    da program değişmiyordu (Zeynep #164, 2026-10-06/07). Koç onaylamadan önce
+    uyarılsın.
+    """
+    if req.type != RequestType.CHANGE or req.status != RequestStatus.PENDING:
+        return False
+    task = req.task
+    if task is None or req.proposed_count is None or len(task.book_items) != 1:
+        return False
+    return int(task.book_items[0].planned_count) == int(req.proposed_count)
+
+
 def _build_request_list_item(req: TaskRequest) -> TeacherRequestListItem:
     return TeacherRequestListItem(
+        no_effect=_request_no_effect(req),
         id=req.id,
         student_id=req.student_id,
         student_name=req.student.full_name if req.student else "—",
@@ -6525,6 +6575,7 @@ def _build_request_detail(db: Session, req: TaskRequest) -> TeacherRequestDetail
             _build_teacher_task_item(it, sp_map) for it in req.task.book_items
         ]
     return TeacherRequestDetail(
+        no_effect=_request_no_effect(req),
         id=req.id,
         student_id=req.student_id,
         student_name=req.student.full_name if req.student else "—",
