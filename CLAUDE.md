@@ -158,6 +158,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## TALEPTE KONU DEĞİŞİKLİĞİ KAYBI — CANLI (2026-10-08, commit `df8cab3`, migration YOK, OTA `c2f3407c`)
+
+- Saha (Zeynep #164, talepler #147/#149): öğrenci "Sayıyı değiştir" ile 3→3 istedi, konu
+  değişikliğini yalnız mesaja yazdı → onay hiçbir şey değiştirmedi, görevler tamamlanınca
+  çözülenler yanlış konuya yazıldı. Veri düzeltildi (yedek `pre_fix164req_20261008.dump`):
+  3868 → Karışım 3/3, 3870 → Grafik 2/2; sayaçlar Yüzde 4→1 · Karışım 3 · Grafik 0→2.
+- Kod: `create_change_request` aynı sayıyı reddeder (Kaynağı değiştir'e yönlendirir; web
+  comm-modal + mobil task-sheet önceden uyarır) · koç listesi/detayı `no_effect` + uyarı ·
+  single-item PATCH `move_completed` (çözülenler yeni bölüme taşınır, elle girilen kısım
+  korunur, kapasite kontrollü; görev düzenleme penceresinde onay kutusu). Test
+  `test_request_topic_change_fix` 13/13 · teacher_requests 18 · snapshot 9 ·
+  wrong_topic_delete 20 · weekly_plan 15 · student_mutations 12 · teacher_read 12.
+
+---
+
 ## DENEME GENEL/BRANŞ AYRIMI + LGS KARNE İYİLEŞTİRMELERİ + /demos REHBER VİDEOLARI — CANLI (2026-10-07, commit `a71b3f3` + düzeltme, migration YOK, OTA `fb3da673`)
 
 - **`app/services/exam_scope.py` (TEK MERKEZ):** genel deneme / branş denemesi. Kural: koç işareti
