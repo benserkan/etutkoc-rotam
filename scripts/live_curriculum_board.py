@@ -197,7 +197,12 @@ def main() -> int:
     try:
         with sync_playwright() as p:
             b = p.chromium.launch(channel="chrome", headless=True)
-            page = b.new_page(viewport={"width": 1500, "height": 1000})
+            _ctx = b.new_context(viewport={"width": 1500, "height": 1000})
+            # Kaynak Durumu'nu SAĞ PANEL modunda sına (2026-10-08'den beri varsayılan alt panel)
+            _ctx.add_init_script(
+                "try{localStorage.setItem('rotam:week:resource-dock', JSON.stringify({enabled:false}))}catch(e){}"
+            )
+            page = _ctx.new_page()
 
             page.goto(f"{WEB}/login", wait_until="networkidle")
             page.fill('input[name="email"]', ids["email"])
