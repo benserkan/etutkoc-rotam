@@ -171,8 +171,13 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   kırpılmaz, ders sırası koçun gün kartıyla aynı (görev sırası; eskisi alfabetik).
 - Test `live_day_card_subject_colors.py` 28/28 (en yakın farklı ders ΔE açık 11,2 / koyu 15,7)
   · `live_day_card_redesign` 10/10. **KURAL: yeni ders rengi gösteren yüzey `subject-tag`
-  kullanır; ayrı palet yazılmaz.** Kalan: koç Hafta Izgarası + mobil hafta görünümü hâlâ eski
-  renklerde.
+  kullanır; ayrı palet yazılmaz.**
+- Devamı (commit `5e77492`, OTA `484b963a`): koç Hafta Izgarası aynı bloklar + gün kartı sırası;
+  `week-grid.toneForKey` ortak `subjectColors`'tan (`dotColor`) → Ders Dengesi şeridi + iskelet
+  düzenleyicisi de aynı renk. Mobil `lib/subject-colors.ts` web hue tablosunun BİREBİR kopyası
+  (**web'de palet değişirse burası da**) + öğrenci hafta ekranında dolgulu ders etiketleri
+  (tümü görünür). Test 32/32. NOT: `live_subject_mix` senaryo 9 ÖNCEDEN bozuk ("+3 test"
+  düğmesi 2026-09-19'da "test ver" seçicisine döndü; test güncellenmedi).
 
 ---
 
