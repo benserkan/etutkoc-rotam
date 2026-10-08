@@ -15,6 +15,7 @@ Senaryolar (açık + koyu tema):
      (komşu farklı ders ΔE ≥ 10 = "belirgin"; aynı dersin iki satırı ≈ aynı)
   6. Sol şerit ≥ 6px
   7. Etiket metni kırpılmıyor (… yok, taşma yok)
+  8. Öğrenci Hafta Izgarası aynı renk sistemi: dolgulu etiket, şerit, ΔE ≥ 10
 Ekran görüntüleri: .shots/day_card_subjects_{light,dark}.png
 """
 from __future__ import annotations
@@ -119,7 +120,8 @@ def seed() -> dict:
                 "subjects": [v[0].id for v in subj.values()],
                 "books": [v[1].id for v in subj.values()],
                 "sbs": [v[2].id for v in subj.values()],
-                "email": f"{PFX}_t@test.invalid"}
+                "email": f"{PFX}_t@test.invalid",
+                "student_email": f"{PFX}_s@test.invalid"}
 
 
 def cleanup(ids: dict) -> None:
@@ -233,6 +235,72 @@ def run_theme(p, ids: dict, theme: str) -> None:
     b.close()
 
 
+def run_student_week(p, ids: dict, theme: str) -> None:
+    """Öğrenci Hafta Izgarası: aynı renk sistemi (koç gün kartıyla birebir)."""
+    from PIL import Image
+
+    print(f"\n--- öğrenci hafta ızgarası · {theme} tema ---")
+    b = p.chromium.launch(channel="chrome", headless=True)
+    ctx = b.new_context(viewport={"width": 1440, "height": 1000},
+                        color_scheme="dark" if theme == "dark" else "light")
+    ctx.add_init_script(f"try{{localStorage.setItem('lgs-theme','{theme}')}}catch(e){{}}")
+    page = ctx.new_page()
+    page.goto(f"{WEB}/login", wait_until="networkidle")
+    page.fill('input[name="email"]', ids["student_email"])
+    page.fill('input[name="password"]', PWD)
+    page.click('button[type="submit"]')
+    page.wait_for_timeout(6000)
+    page.goto(f"{WEB}/student/week", wait_until="networkidle")
+    page.wait_for_timeout(2500)
+    for txt in ("Daha sonra", "Kapat"):
+        btn = page.query_selector(f'button:has-text("{txt}")')
+        if btn:
+            btn.click()
+            page.wait_for_timeout(800)
+    page.wait_for_selector('[data-testid="subject-block"]', timeout=15000)
+
+    blocks = page.query_selector_all('[data-testid="subject-block"]')
+    names = [bl.query_selector('[data-testid="subject-tag"]').get_attribute("title")
+             for bl in blocks]
+    check(f"[öğrenci {theme}] 6 ders bloğu (TYT Mat 2'li, Kimya 2'li tek blokta)",
+          names == ["TYT Matematik", "AYT Matematik", "TYT Türkçe", "TYT Geometri",
+                    "TYT Fizik", "TYT Kimya"], f"{names}")
+    info = page.evaluate("""() => [...document.querySelectorAll('[data-testid="subject-tag-name"]')].map(c => {
+        const cs = getComputedStyle(c);
+        return {color: cs.color, bg: cs.backgroundColor,
+                clipped: c.scrollWidth > c.clientWidth + 1};
+    })""")
+    check(f"[öğrenci {theme}] dolgulu ders etiketi (beyaz yazı)",
+          info and all(i["color"] == "rgb(255, 255, 255)" and i["bg"] != "rgba(0, 0, 0, 0)"
+                       for i in info), f"{info}")
+    rails = page.evaluate("""() => [...document.querySelectorAll('[data-testid="subject-block"]')]
+        .map(b => parseFloat(getComputedStyle(b).borderLeftWidth))""")
+    check(f"[öğrenci {theme}] sol şerit ≥ 4px", all(r >= 4 for r in rails), f"{rails}")
+    clipped = page.evaluate("""() => [...document.querySelectorAll('[data-testid="subject-block"] *')]
+        .filter(e => getComputedStyle(e).textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 1).length""")
+    check(f"[öğrenci {theme}] metin kırpılmıyor (… yok)", clipped == 0 and not any(i["clipped"] for i in info),
+          f"{clipped}")
+    colors = []
+    for bl in blocks:
+        bl.scroll_into_view_if_needed()
+        bb = bl.bounding_box()
+        shot = page.screenshot(clip={"x": bb["x"] + bb["width"] - 10, "y": bb["y"] + 2,
+                                     "width": 8, "height": max(4, bb["height"] - 4)})
+        im = Image.open(io.BytesIO(shot)).convert("RGB")
+        px = [im.getpixel((x, y)) for x in range(im.width) for y in range(im.height)]
+        colors.append(max(set(px), key=px.count))
+    diffs = [(names[a], names[c], round(delta_e(colors[a], colors[c]), 1))
+             for a in range(len(colors)) for c in range(a + 1, len(colors))
+             if names[a].split()[-1] != names[c].split()[-1]]
+    worst = min(diffs, key=lambda d: d[2])
+    print(f"    en yakın farklı ders çifti: {worst}")
+    check(f"[öğrenci {theme}] farklı dersler arası en küçük ΔE ≥ 10", worst[2] >= 10, f"{worst}")
+    os.makedirs(SHOTS, exist_ok=True)
+    page.query_selector('section:has([data-testid="subject-block"])').screenshot(
+        path=os.path.join(SHOTS, f"student_week_subjects_{theme}.png"))
+    b.close()
+
+
 def main() -> int:
     from playwright.sync_api import sync_playwright
 
@@ -242,6 +310,8 @@ def main() -> int:
         with sync_playwright() as p:
             for theme in ("light", "dark"):
                 run_theme(p, ids, theme)
+            for theme in ("light", "dark"):
+                run_student_week(p, ids, theme)
     finally:
         cleanup(ids)
     print(f"\n{passed} passed, {len(failed)} failed")

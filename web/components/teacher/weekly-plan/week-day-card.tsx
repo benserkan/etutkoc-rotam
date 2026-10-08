@@ -77,6 +77,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SubjectTag } from "@/components/shared/subject-tag";
 import {
   findSubjectByExactName,
   findSubjectInTitle,
@@ -1175,7 +1176,7 @@ function SortableTaskRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-x-2 gap-y-0.5 flex-wrap">
           {primarySubjectName ? (
-            <SubjectTag name={primarySubjectName} hue={hue} />
+            <SubjectTag name={primarySubjectName} />
           ) : null}
           {showTypeBadge ? (
             <span
@@ -2174,39 +2175,5 @@ function SpreadTaskDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/**
- * Ders adı DOLGULU etiket (2026-10-08): renkli yazı koyu zeminde soluk
- * okunuyordu; küçük öğede dolgu (koyu ton + beyaz yazı) bir bakışta ayrışır.
- * Sınav öneki (TYT/AYT/LGS) ayrı küçük işaret: aynı derste TYT ve AYT aynı
- * renkte kalır, AYT koyu dolgulu işaretle ayrılır.
- */
-function SubjectTag({ name, hue }: { name: string; hue: number }) {
-  const m = /^(TYT|AYT|LGS)\s+(.+)$/i.exec(name);
-  const exam = m ? m[1].toUpperCase() : null;
-  const plain = m ? m[2] : name;
-  return (
-    <span className="inline-flex items-center gap-1 self-center" title={name}>
-      {exam ? (
-        <span
-          className={cn(
-            "text-[9.5px] font-bold tracking-wider px-1 py-px rounded border leading-none",
-            exam === "AYT"
-              ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white"
-              : "border-slate-400 text-slate-700 dark:border-slate-500 dark:text-slate-200",
-          )}
-        >
-          {exam}
-        </span>
-      ) : null}
-      <span
-        className="text-[12px] font-semibold whitespace-nowrap px-1.5 py-px rounded text-white"
-        style={{ backgroundColor: `hsl(${hue}, 60%, 36%)` }}
-      >
-        {plain}
-      </span>
-    </span>
   );
 }

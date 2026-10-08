@@ -7,9 +7,9 @@ import {
   findSubjectByExactName,
   findSubjectInTitle,
   subjectGroupKey,
-  subjectToneIndex,
   type SubjectRef,
 } from "@/lib/subject-match";
+import { SubjectTag, subjectTintVars } from "@/components/shared/subject-tag";
 
 /**
  * Hafta Izgarası (öğrenci) — koç Hafta Izgarası'nın salt-okunur eşi.
@@ -67,22 +67,6 @@ function isActivity(t: StudentTask): boolean {
   return t.planned_count <= 0 && t.items.every((it) => (it.planned ?? 0) <= 0);
 }
 
-const SUBJECT_TONES = [
-  { text: "text-indigo-700 dark:text-indigo-300", dot: "bg-indigo-500" },
-  { text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-  { text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
-  { text: "text-rose-700 dark:text-rose-300", dot: "bg-rose-500" },
-  { text: "text-violet-700 dark:text-violet-300", dot: "bg-violet-500" },
-  { text: "text-cyan-700 dark:text-cyan-300", dot: "bg-cyan-500" },
-  { text: "text-fuchsia-700 dark:text-fuchsia-300", dot: "bg-fuchsia-500" },
-  { text: "text-sky-700 dark:text-sky-300", dot: "bg-sky-500" },
-];
-const OTHER_TONE = { text: "text-muted-foreground", dot: "bg-slate-400" };
-
-function toneForKey(key: string, name: string) {
-  if (key === "other") return OTHER_TONE;
-  return SUBJECT_TONES[subjectToneIndex(name, SUBJECT_TONES.length)];
-}
 
 interface SubjGroup {
   key: string;
@@ -119,9 +103,10 @@ function groupDay(tasks: StudentTask[], subjects: SubjectRef[]): SubjGroup[] {
     if (g) g.tasks.push(t);
     else map.set(key, { key, name, order: key === "other" ? 1 : 0, tasks: [t] });
   }
-  return Array.from(map.values()).sort(
-    (a, b) => a.order - b.order || a.name.localeCompare(b.name, "tr"),
-  );
+  // Koçun gün kartıyla AYNI sıra: dersler görevlerin sırasında (ilk görülen
+  // önce), "Diğer" en sonda. (Eskisi alfabetikti → koç ile öğrenci farklı
+  // sıra görüyordu.) Array.sort kararlı: aynı order'da ekleme sırası korunur.
+  return Array.from(map.values()).sort((a, b) => a.order - b.order);
 }
 
 const PERIOD_ORDER = ["morning", "noon", "evening", "none"] as const;
@@ -173,15 +158,28 @@ function deriveSubjects(days: StudentWeekDay[]): SubjectRef[] {
 }
 
 function SubjGroupBlock({ g }: { g: SubjGroup }) {
-  const tone = toneForKey(g.key, g.name);
+  // Koç gün kartıyla AYNI ders renk sistemi (2026-10-08): renkli zemin +
+  // kalın sol şerit + dolgulu ders etiketi. Ders bulunamayan ("Diğer")
+  // görevler nötr kalır. Görev adları KIRPILMAZ (dar sütunda alt satıra iner).
+  const isOther = g.key === "other";
   return (
-    <div>
-      <div className="flex items-center gap-1 leading-tight">
-        <span className={cn("size-1.5 rounded-full flex-shrink-0", tone.dot)} aria-hidden />
-        <span className={cn("text-[10px] font-bold uppercase tracking-wide truncate", tone.text)}>
+    <div
+      data-testid="subject-block"
+      className={cn(
+        "rounded-md border-l-4 px-1.5 py-1",
+        isOther
+          ? "border-l-slate-400 bg-muted/40"
+          : "bg-[var(--subj-tint-l)] dark:bg-[var(--subj-tint-d)]",
+      )}
+      style={isOther ? undefined : subjectTintVars(g.name)}
+    >
+      {isOther ? (
+        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
           {g.name}
         </span>
-      </div>
+      ) : (
+        <SubjectTag name={g.name} size="xs" />
+      )}
       <ul className="mt-0.5 space-y-px">
         {g.tasks.map((t) => {
           const mk = MARK[gorevState(t)];
@@ -190,10 +188,8 @@ function SubjGroupBlock({ g }: { g: SubjGroup }) {
               <span className={cn("shrink-0 font-bold", mk.cls)} aria-hidden>
                 {mk.ch}
               </span>
-              <span className="min-w-0 flex-1 text-foreground/90">
-                <span className="truncate inline-block max-w-full align-bottom">
-                  {taskLabel(t)}
-                </span>
+              <span className="min-w-0 flex-1 text-foreground/90 break-words">
+                {taskLabel(t)}
                 {isActivity(t) ? (
                   (t.solved_count ?? 0) > 0 ? (
                     <span className="text-muted-foreground tabular-nums">
@@ -201,7 +197,7 @@ function SubjGroupBlock({ g }: { g: SubjGroup }) {
                     </span>
                   ) : null
                 ) : (
-                  <span className="font-semibold tabular-nums text-muted-foreground">
+                  <span className="font-semibold tabular-nums text-foreground/70">
                     {" "}{t.completed_count}/{t.planned_count} {taskUnit(t)}
                   </span>
                 )}
