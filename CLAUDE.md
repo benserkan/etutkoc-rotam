@@ -158,6 +158,24 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## DERS RENK SİSTEMİ — koç gün kartı + öğrenci hafta ızgarası — CANLI (2026-10-08, commit `4f00c3c` + `cd061bd`, migration YOK)
+
+- Koç koyu temada gün kartındaki dersleri ayırt edemedi (satır zemini %16 saydam → hepsi
+  lacivert-gri). TEK MERKEZ `web/components/shared/subject-tag.tsx` (`subjectColors` +
+  `subjectTintVars` + `SubjectTag`): koyu temada opak doygun zemin, kalın sol şerit, ders adı
+  DOLGULU etiket (beyaz yazı) + ayrı TYT/AYT işareti. Palet `subject-match.SUBJECT_FIXED_HUE`
+  yeniden aralandı (Matematik 220 · Geometri 165 · Türkçe 350 · Fizik 32 · Tarih 55 …).
+- Koç gün kartı: aynı dersin ardışık görevleri tek kutuda (`renderSubjectRuns`, 3px aralık —
+  9 görevlik gün hâlâ ≤900px); Ders Dağılımı çipleri koyu temada okunur + satırla aynı renk.
+- Öğrenci Hafta Izgarası: aynı sistem (eski 8 tonlu ayrı palet kalktı), görev adları
+  kırpılmaz, ders sırası koçun gün kartıyla aynı (görev sırası; eskisi alfabetik).
+- Test `live_day_card_subject_colors.py` 28/28 (en yakın farklı ders ΔE açık 11,2 / koyu 15,7)
+  · `live_day_card_redesign` 10/10. **KURAL: yeni ders rengi gösteren yüzey `subject-tag`
+  kullanır; ayrı palet yazılmaz.** Kalan: koç Hafta Izgarası + mobil hafta görünümü hâlâ eski
+  renklerde.
+
+---
+
 ## TALEPTE KONU DEĞİŞİKLİĞİ KAYBI — CANLI (2026-10-08, commit `df8cab3`, migration YOK, OTA `c2f3407c`)
 
 - Saha (Zeynep #164, talepler #147/#149): öğrenci "Sayıyı değiştir" ile 3→3 istedi, konu
