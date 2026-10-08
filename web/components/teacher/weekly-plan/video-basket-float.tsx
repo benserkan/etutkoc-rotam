@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+
+import { useFloatingPosition } from "@/lib/hooks/use-floating-position";
 import { useQuery } from "@tanstack/react-query";
 import {
   Check,
@@ -124,6 +126,9 @@ export function VideoBasketFloat({
   subjects: { id: number; name: string }[];
 }) {
   const [open, setOpen] = React.useState(false);
+  // Pencere başlığından tutulup taşınır, yeri hatırlanır (2026-10-08 —
+  // koç: "yüzmüyor, istenen yere taşınmıyor").
+  const fp = useFloatingPosition("rotam:float:video-basket", 380);
   const q = useQuery<VideoBasketResponse>({
     queryKey: videoBasketKeys.basket(studentId),
     queryFn: () => getVideoBasket(studentId),
@@ -163,7 +168,9 @@ export function VideoBasketFloat({
           type="button"
           onClick={() => setOpen(true)}
           data-section="week:video-basket-fab"
-          className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-cyan-800"
+          // Rota'ya sor düğmesi sağ altta (bottom ~1.5rem) → Video Sepeti onun
+          // ÜSTÜNDE durur, üst üste binmez (2026-10-08).
+          className="fixed bottom-24 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-cyan-800"
           title="Video Sepeti — oynatma listesinden günlere sürükle"
         >
           <PlaySquare className="size-4" aria-hidden />
@@ -176,10 +183,19 @@ export function VideoBasketFloat({
         </button>
       ) : (
         <div
+          data-floating
           data-section="week:video-basket"
-          className="fixed bottom-4 right-4 z-40 flex max-h-[min(80vh,720px)] w-[min(380px,calc(100vw-2rem))] flex-col rounded-xl border border-border bg-card shadow-2xl"
+          style={fp.style}
+          className={cn(
+            "fixed z-40 flex max-h-[min(80vh,720px)] w-[min(380px,calc(100vw-2rem))] flex-col rounded-xl border border-border bg-card shadow-2xl",
+            fp.pos ? "" : "bottom-24 right-6",
+          )}
         >
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+          <div
+            {...fp.handleProps}
+            data-testid="video-basket-handle"
+            className="flex select-none items-center gap-2 border-b border-border px-3 py-2"
+          >
             <PlaySquare className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
             <span className="text-sm font-semibold text-foreground">Video Sepeti</span>
             <span className="text-[11px] text-muted-foreground">

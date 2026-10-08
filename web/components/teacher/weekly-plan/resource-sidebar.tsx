@@ -16,6 +16,31 @@ import type {
   SidebarSubject,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+import { subjectHue } from "@/lib/subject-match";
+
+const TR_MONTHS = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+function shortTrDate(iso: string): string {
+  const [, m, d] = iso.split("-").map(Number);
+  return m && d ? `${d} ${TR_MONTHS[m - 1]}` : iso;
+}
+
+/**
+ * Isı haritası (2026-10-08): ünite zemini dersin renginde, çözülen oranına
+ * göre 4 KADEME (sürekli geçiş yerine — %60 ile %70'i göz ayırt etmiyor):
+ * 0 → renksiz · %1–49 açık · %50–99 orta · %100 koyu. Metin her kademede okunur.
+ */
+function heatLevel(sec: SidebarSection): 0 | 1 | 2 | 3 {
+  if (sec.total <= 0 || sec.completed <= 0) return 0;
+  const r = sec.completed / sec.total;
+  if (r >= 1) return 3;
+  return r >= 0.5 ? 2 : 1;
+}
+function heatVars(hue: number, level: 0 | 1 | 2 | 3): React.CSSProperties | undefined {
+  if (level === 0) return undefined;
+  const light = ["", `hsl(${hue}, 70%, 94%)`, `hsl(${hue}, 65%, 84%)`, `hsl(${hue}, 55%, 68%)`][level];
+  const dark = ["", `hsl(${hue}, 35%, 15%)`, `hsl(${hue}, 45%, 23%)`, `hsl(${hue}, 55%, 33%)`][level];
+  return { "--heat-l": light, "--heat-d": dark } as React.CSSProperties;
+}
 
 /** Satırdan görev yazma bağlamı — koç hafta panelinde verilir; öğrenci gün
  *  ekranı (salt okuma) vermez, butonlar hiç render edilmez. */
@@ -186,10 +211,11 @@ export function ResourceSidebar({
         )}
       </div>
 
-      <div className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border flex gap-3 bg-card sticky bottom-0">
-        <span className="text-emerald-600 dark:text-emerald-300">✓ çöz.</span>
-        <span className="text-amber-600 dark:text-amber-300">⏳ rez.</span>
-        <span className="text-foreground">⎯ kalan</span>
+      <div className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border flex flex-wrap gap-x-3 gap-y-0.5 bg-card sticky bottom-0">
+        <span className="whitespace-nowrap text-emerald-600 dark:text-emerald-300">✓ çöz.</span>
+        <span className="whitespace-nowrap text-amber-600 dark:text-amber-300">⏳ rez.</span>
+        <span className="whitespace-nowrap text-foreground">⎯ kalan</span>
+        <span className="basis-full">zemin rengi: çözülen oranı (açık → koyu) · SON: son görev</span>
       </div>
     </PinnableSection>
   );
@@ -280,6 +306,7 @@ function SubjectRow({
               ctx={ctx}
               defaultCount={defaultCount}
               qtyHint={qtyHint}
+              hue={subjectHue(subject.name)}
             />
           ))}
         </div>
@@ -296,6 +323,7 @@ function BookRow({
   ctx,
   defaultCount,
   qtyHint,
+  hue,
 }: {
   book: SidebarBook;
   isOpen: boolean;
@@ -304,6 +332,7 @@ function BookRow({
   ctx: AssignCtx | null;
   defaultCount: number;
   qtyHint: string | null;
+  hue: number;
 }) {
   const pctDone = book.total > 0 ? Math.round((100 * book.completed) / book.total) : 0;
   const pctRes = book.total > 0 ? Math.round((100 * book.reserved) / book.total) : 0;
@@ -352,6 +381,21 @@ function BookRow({
               kalan {book.remaining}
             </span>
           </div>
+          {/* Kaldığı yer — kitap kapalıyken de görünür */}
+          {book.last_section_label ? (
+            <div
+              className="mt-1 ml-4 text-[11px] leading-snug text-foreground"
+              data-testid="book-last-task"
+            >
+              <span className="mr-1 rounded bg-slate-900 px-1 py-px text-[9.5px] font-bold tracking-wider text-white dark:bg-white dark:text-slate-900">
+                SON
+              </span>
+              <span className="break-words">{book.last_section_label}</span>
+              {book.last_task_date ? (
+                <span className="text-muted-foreground"> · {shortTrDate(book.last_task_date)}</span>
+              ) : null}
+            </div>
+          ) : null}
         </button>
         {onOpenGrid ? (
           <button
@@ -382,6 +426,8 @@ function BookRow({
                 defaultCount={defaultCount}
                 qtyHint={qtyHint}
                 unitWord={unitWord}
+                hue={hue}
+                isLast={book.last_section_id === sec.id}
               />
             ))
           )}
@@ -398,6 +444,8 @@ function SectionRow({
   defaultCount,
   qtyHint,
   unitWord,
+  hue,
+  isLast,
 }: {
   section: SidebarSection;
   book: SidebarBook;
@@ -405,30 +453,53 @@ function SectionRow({
   defaultCount: number;
   qtyHint: string | null;
   unitWord: string;
+  hue: number;
+  isLast: boolean;
 }) {
   const full = section.remaining <= 0;
   // Seçim şeridi satırın ALTINDA açılır (KOÇ 2026-09-19: "yukarı çık sayıyı
   // değiştir aşağı in ata" işlevsel değildi; sayı satırda gösterilmez, "+" tek).
   const [open, setOpen] = React.useState(false);
   const close = React.useCallback(() => setOpen(false), []);
+  const level = heatLevel(section);
   return (
-    <li className="px-3 py-1.5 text-[11px]">
+    <li
+      className={cn(
+        "px-3 py-1.5 text-[11px]",
+        level > 0 && "bg-[var(--heat-l)] dark:bg-[var(--heat-d)]",
+        isLast && "border-l-[3px] border-l-slate-900 pl-2.5 dark:border-l-white",
+      )}
+      style={heatVars(hue, level)}
+      data-testid="resource-section"
+      data-heat={level}
+      data-last={isLast ? "1" : undefined}
+    >
       <div className="flex items-center justify-between gap-2">
         {/* KIRPMA YOK — uzun ünite adı sarar */}
         <span className="min-w-0 flex-1 whitespace-normal break-words text-foreground">
+          {isLast ? (
+            <span
+              className="mr-1 inline-block rounded bg-slate-900 px-1 py-px align-[1px] text-[9.5px] font-bold tracking-wider text-white dark:bg-white dark:text-slate-900"
+              title="Bu kitapta en son görev verilen ünite"
+              data-testid="section-last-badge"
+            >
+              SON{section.last_task_date ? ` · ${shortTrDate(section.last_task_date)}` : ""}
+            </span>
+          ) : null}
+          {level === 3 ? <span className="mr-0.5 font-bold" aria-label="tamamlandı">✓</span> : null}
           {section.label}
           {section.topic_name ? (
-            <span className="text-muted-foreground italic">
+            <span className="text-foreground/70 italic">
               {" "}
               ({section.topic_name})
             </span>
           ) : null}
         </span>
         <span className="text-muted-foreground whitespace-nowrap tabular-nums">
-          <span className="text-emerald-600 dark:text-emerald-300">✓{section.completed}</span>{" "}
-          <span className="text-amber-600 dark:text-amber-300">⏳{section.reserved}</span>{" "}
+          <span className="text-emerald-900 dark:text-emerald-100">✓{section.completed}</span>{" "}
+          <span className="text-amber-900 dark:text-amber-100">⏳{section.reserved}</span>{" "}
           <b className="text-foreground">⎯{section.remaining}</b>
-          <span className="text-muted-foreground/60"> / {section.total}</span>
+          <span className="text-foreground/75"> / {section.total}</span>
         </span>
         {ctx ? (
           /* KOÇ (2026-09-19): "+" → satırın altında "Kaç test?" şeridi → çip = görev.

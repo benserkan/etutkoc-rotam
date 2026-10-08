@@ -699,6 +699,8 @@ class SidebarSection(BaseModel):
     completed: int
     reserved: int
     remaining: int
+    # Bu üniteye verilen en son görevin tarihi (YYYY-MM-DD) — yoksa None.
+    last_task_date: str | None = None
 
 
 class SidebarBook(BaseModel):
@@ -710,6 +712,12 @@ class SidebarBook(BaseModel):
     reserved: int
     remaining: int
     sections: list[SidebarSection]
+    # "Kaldığı yer" (2026-10-08): kitapta EN SON görev verilen ünite (tarih,
+    # eşitlikte en yeni görev). Kitap sırası sık atlandığı için sıradan değil
+    # son görevden çıkarılır. Hiç görev yoksa None.
+    last_section_id: int | None = None
+    last_section_label: str | None = None
+    last_task_date: str | None = None
 
 
 class SidebarSubjectSummary(BaseModel):

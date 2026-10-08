@@ -764,6 +764,8 @@ export interface SidebarSection {
   completed: number;
   reserved: number;
   remaining: number;
+  /** Bu üniteye verilen en son görevin tarihi (YYYY-MM-DD) */
+  last_task_date?: string | null;
 }
 
 export interface SidebarBook {
@@ -775,6 +777,10 @@ export interface SidebarBook {
   reserved: number;
   remaining: number;
   sections: SidebarSection[];
+  /** Kaldığı yer: kitapta en son görev verilen ünite */
+  last_section_id?: number | null;
+  last_section_label?: string | null;
+  last_task_date?: string | null;
 }
 
 export interface SidebarSubjectSummary {

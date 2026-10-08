@@ -27,6 +27,7 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.deps import get_db
@@ -35,6 +36,7 @@ from app.models import (
     BookSection,
     StudentBook,
     Task,
+    TaskBookItem,
     User,
     UserRole,
     WeekNote,
@@ -694,6 +696,27 @@ def _build_sidebar(
     if focused_subject_id is not None:
         sbs = [sb for sb in sbs if sb.book.subject_id == focused_subject_id]
 
+    # Kaldığı yer: her ünitenin son görevi (tarih, görev id) — tek sorgu.
+    last_by_section: dict[int, tuple] = {}
+    book_ids = [sb.book_id for sb in sbs]
+    if book_ids:
+        rows = (
+            db.query(
+                TaskBookItem.book_section_id,
+                func.max(Task.date),
+                func.max(Task.id),
+            )
+            .join(Task, Task.id == TaskBookItem.task_id)
+            .filter(
+                Task.student_id == student_id,
+                TaskBookItem.book_id.in_(book_ids),
+                TaskBookItem.book_section_id.isnot(None),
+            )
+            .group_by(TaskBookItem.book_section_id)
+            .all()
+        )
+        last_by_section = {sec_id: (d, tid) for sec_id, d, tid in rows if d is not None}
+
     by_subject: dict[int, list[StudentBook]] = {}
     subject_objs: dict[int, object] = {}
     for sb in sbs:
@@ -719,16 +742,27 @@ def _build_sidebar(
                 res = int(sp.reserved_count) if sp else 0
                 tot = int(sec.test_count)
                 rem = max(0, tot - comp - res)
+                last = last_by_section.get(sec.id)
                 sections_out.append(SidebarSection(
                     id=sec.id,
                     label=sec.label,
                     topic_name=sec.topic.name if sec.topic else None,
                     total=tot, completed=comp, reserved=res, remaining=rem,
+                    last_task_date=last[0].isoformat() if last else None,
                 ))
                 b_total += tot
                 b_completed += comp
                 b_reserved += res
                 b_remaining += rem
+            book_last = max(
+                (
+                    (last_by_section[sec.id], sec)
+                    for sec in (sb.book.sections or [])
+                    if sec.id in last_by_section
+                ),
+                key=lambda x: x[0],
+                default=None,
+            )
             sub_books.append(SidebarBook(
                 id=sb.book.id,
                 name=sb.book.name,
@@ -736,6 +770,9 @@ def _build_sidebar(
                 total=b_total, completed=b_completed, reserved=b_reserved,
                 remaining=b_remaining,
                 sections=sections_out,
+                last_section_id=book_last[1].id if book_last else None,
+                last_section_label=book_last[1].label if book_last else None,
+                last_task_date=book_last[0][0].isoformat() if book_last else None,
             ))
             sub_total += b_total
             sub_completed += b_completed
