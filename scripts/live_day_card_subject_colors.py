@@ -202,6 +202,18 @@ def run_theme(p, ids: dict, theme: str) -> None:
             for i in range(len(boxes) - 1)]
     check(f"[{theme}] 4. gruplar arası boşluk ≥ 3px", gaps and min(gaps) >= 3, f"{gaps}")
 
+    # 9. koç Hafta Izgarası: aynı renk sistemi (dolgulu etiket + şerit), gün
+    #    kartıyla aynı ders sırası
+    gnames = page.evaluate("""() => [...document.querySelectorAll('[data-testid="subject-block"] [data-testid="subject-tag"]')]
+        .map(t => t.getAttribute('title'))""")
+    check(f"[{theme}] 9a. Hafta Izgarası 6 ders bloğu, gün kartı sırasıyla",
+          gnames == ["TYT Matematik", "AYT Matematik", "TYT Türkçe", "TYT Geometri",
+                     "TYT Fizik", "TYT Kimya"], f"{gnames}")
+    gtags = page.evaluate("""() => [...document.querySelectorAll('[data-testid="subject-block"] [data-testid="subject-tag-name"]')]
+        .map(c => getComputedStyle(c).color)""")
+    check(f"[{theme}] 9b. Hafta Izgarası etiketleri dolgulu (beyaz yazı)",
+          gtags and all(c == "rgb(255, 255, 255)" for c in gtags), f"{gtags}")
+
     # 5. gerçek piksel: her satırın sağ ucundan zemin rengi
     os.makedirs(SHOTS, exist_ok=True)
     editor = page.query_selector("#day-editor")

@@ -20,12 +20,12 @@ import {
   useSpreadTask,
 } from "@/lib/hooks/use-teacher-mutations";
 import { cn } from "@/lib/utils";
+import { SubjectTag, subjectColors, subjectTintVars } from "@/components/shared/subject-tag";
 import type { TeacherStudentWeekDay, TeacherTask } from "@/lib/types/teacher";
 import {
   findSubjectByExactName,
   findSubjectInTitle,
   subjectGroupKey,
-  subjectToneIndex,
   type SubjectRef,
 } from "@/lib/subject-match";
 import { usePlaceVideos, VIDEO_MIME, type VideoDragPayload } from "@/lib/api/video-basket";
@@ -137,23 +137,20 @@ function isActivity(t: TeacherTask): boolean {
   );
 }
 
-// Ders bazlı renk — day-board ile aynı stable hash → ton.
-export const SUBJECT_TONES = [
-  { text: "text-indigo-700 dark:text-indigo-300", dot: "bg-indigo-500" },
-  { text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-  { text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
-  { text: "text-rose-700 dark:text-rose-300", dot: "bg-rose-500" },
-  { text: "text-violet-700 dark:text-violet-300", dot: "bg-violet-500" },
-  { text: "text-cyan-700 dark:text-cyan-300", dot: "bg-cyan-500" },
-  { text: "text-fuchsia-700 dark:text-fuchsia-300", dot: "bg-fuchsia-500" },
-  { text: "text-sky-700 dark:text-sky-300", dot: "bg-sky-500" },
-];
-export const OTHER_TONE = { text: "text-muted-foreground", dot: "bg-slate-400" };
+// Ders rengi — ortak sistem (components/shared/subject-tag): gün kartı,
+// öğrenci ızgarası, Ders Dengesi ve iskelet düzenleyicisi AYNI rengi görür
+// (2026-10-08; eskisi 8 tonlu ayrı palet → aynı ders yüzeyden yüzeye farklı).
+// `dot` sınıfı yalnız "Diğer" için dolu; ders noktası `dotColor` ile boyanır.
+export const OTHER_TONE = { text: "text-muted-foreground", dot: "bg-slate-400", dotColor: undefined as string | undefined };
 
-// Ders ADINA göre ton — aynı ad daima aynı renk (editör/yazdırma ile tutarlı).
 export function toneForKey(key: string, name: string) {
   if (key === "other") return OTHER_TONE;
-  return SUBJECT_TONES[subjectToneIndex(name, SUBJECT_TONES.length)];
+  const c = subjectColors(name);
+  return {
+    text: "",
+    dot: "",
+    dotColor: c.rail as string | undefined,
+  };
 }
 
 interface SubjGroup {
@@ -193,9 +190,9 @@ function groupDay(tasks: TeacherTask[], subjects?: SubjectRef[]): SubjGroup[] {
     if (g) g.tasks.push(t);
     else map.set(key, { key, name, order: key === "other" ? 1 : 0, tasks: [t] });
   }
-  return Array.from(map.values()).sort(
-    (a, b) => a.order - b.order || a.name.localeCompare(b.name, "tr"),
-  );
+  // Gün kartıyla AYNI sıra: ders, görevlerin sırasında ilk görüldüğü yerde
+  // (2026-10-08; eskisi alfabetikti). "Diğer" en sonda; sort kararlı.
+  return Array.from(map.values()).sort((a, b) => a.order - b.order);
 }
 
 // Periyot (Sabah/Öğle/Akşam) — gün periyotluysa alt bölümler.
@@ -257,16 +254,28 @@ function SubjGroupBlock({
   onDragState?: (dragging: boolean) => void;
   onContext?: (t: TeacherTask, dayDate: string, x: number, y: number) => void;
 }) {
-  const tone = toneForKey(g.key, g.name);
   const scrolledRef = React.useRef(false);
+  // Ortak ders renk sistemi (2026-10-08): renkli zemin + kalın şerit +
+  // dolgulu ders etiketi (gün kartı ve öğrenci ızgarasıyla aynı).
+  const isOther = g.key === "other";
   return (
-    <div>
-      <div className="flex items-center gap-1 leading-tight">
-        <span className={cn("size-1.5 rounded-full flex-shrink-0", tone.dot)} aria-hidden />
-        <span className={cn("text-[10px] font-bold uppercase tracking-wide truncate", tone.text)}>
+    <div
+      data-testid="subject-block"
+      className={cn(
+        "rounded-md border-l-4 px-1.5 py-1",
+        isOther
+          ? "border-l-slate-400 bg-muted/40"
+          : "bg-[var(--subj-tint-l)] dark:bg-[var(--subj-tint-d)]",
+      )}
+      style={isOther ? undefined : subjectTintVars(g.name)}
+    >
+      {isOther ? (
+        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
           {g.name}
         </span>
-      </div>
+      ) : (
+        <SubjectTag name={g.name} size="xs" />
+      )}
       <ul className="mt-0.5 space-y-px">
         {g.tasks.map((t) => {
           const mk = MARK[gorevState(t)];

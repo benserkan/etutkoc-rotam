@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { StudentWeekDay, StudentWeekResponse } from "@/lib/student";
 import { DemoHint } from "@/components/demos/demo-hint";
+import { splitExamPrefix, subjectColors } from "@/lib/subject-colors";
 
 const TR_MONTHS_SHORT = [
   "Oca", "Şub", "Mar", "Nis", "May", "Haz",
@@ -23,6 +24,32 @@ function distinctSubjects(day: StudentWeekDay): string[] {
     }
   }
   return Array.from(set);
+}
+
+function SubjectChip({ name }: { name: string }) {
+  const { exam, plain } = splitExamPrefix(name);
+  const c = subjectColors(name);
+  return (
+    <View
+      className="flex-row items-center gap-1 rounded-md py-0.5 pl-1 pr-2"
+      style={{ backgroundColor: c.tint, borderLeftWidth: 3, borderLeftColor: c.rail }}
+    >
+      {exam ? (
+        <View
+          className={`rounded px-1 ${exam === "AYT" ? "bg-slate-900" : "border border-slate-400"}`}
+        >
+          <Text
+            className={`text-[9px] font-bold ${exam === "AYT" ? "text-white" : "text-slate-700"}`}
+          >
+            {exam}
+          </Text>
+        </View>
+      ) : null}
+      <View className="rounded px-1.5" style={{ backgroundColor: c.chip }}>
+        <Text className="text-[11px] font-semibold text-white">{plain}</Text>
+      </View>
+    </View>
+  );
 }
 
 function DayCard({ day, onPress }: { day: StudentWeekDay; onPress: () => void }) {
@@ -70,15 +97,13 @@ function DayCard({ day, onPress }: { day: StudentWeekDay; onPress: () => void })
             />
           </View>
           {subjects.length > 0 ? (
+            // Ders etiketleri — web ile aynı renk sistemi (2026-10-08): dolgulu
+            // renkli etiket + TYT/AYT işareti. Hepsi gösterilir (eskisi 4'ten
+            // sonrasını "+N" ile gizliyordu).
             <View className="mt-2.5 flex-row flex-wrap gap-1.5">
-              {subjects.slice(0, 4).map((s) => (
-                <View key={s} className="rounded-md bg-slate-100 px-2 py-0.5">
-                  <Text className="text-[11px] text-slate-600">{s}</Text>
-                </View>
+              {subjects.map((s) => (
+                <SubjectChip key={s} name={s} />
               ))}
-              {subjects.length > 4 ? (
-                <Text className="text-[11px] text-slate-400">+{subjects.length - 4}</Text>
-              ) : null}
             </View>
           ) : null}
         </>

@@ -505,6 +505,7 @@ function DayRail({
                           "mt-1 size-2 shrink-0 rounded-full",
                           toneForKey("s", nm).dot,
                         )}
+                        style={{ backgroundColor: toneForKey("s", nm).dotColor }}
                         aria-hidden
                       />
                       <span className="min-w-0 break-words">
@@ -828,7 +829,11 @@ function RowCard({
       data-testid="skeleton-row"
     >
       <div className="flex flex-wrap items-end gap-2">
-        <span className={cn("mb-2 size-2.5 shrink-0 rounded-full", tone.dot)} aria-hidden />
+        <span
+          className={cn("mb-2 size-2.5 shrink-0 rounded-full", tone.dot)}
+          style={{ backgroundColor: tone.dotColor }}
+          aria-hidden
+        />
         <Field label="Ders" className="min-w-44 flex-[2]">
           <select
             value={row.subject_id}

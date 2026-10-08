@@ -43,7 +43,7 @@ interface MixRow {
   block: string | null;
   tasks: number;
   tests: number;
-  tone: { text: string; dot: string };
+  tone: { text: string; dot: string; dotColor?: string };
 }
 
 /** Ders adı öneki → sınav bloğu. "AYT Matematik" → AYT. */
@@ -218,7 +218,7 @@ export function SubjectMix({
                   <span
                     key={r.key}
                     className={cn("h-full", r.tone.dot)}
-                    style={{ width: `${(100 * v) / total}%` }}
+                    style={{ width: `${(100 * v) / total}%`, backgroundColor: r.tone.dotColor }}
                     title={`${r.name} — %${pct(v, total)}`}
                   />
                 );
@@ -237,6 +237,7 @@ export function SubjectMix({
                 >
                   <span
                     className={cn("size-2 shrink-0 rounded-full", r.tone.dot)}
+                    style={{ backgroundColor: r.tone.dotColor }}
                     aria-hidden
                   />
                   <span className="whitespace-normal break-words font-medium text-foreground">
