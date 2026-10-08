@@ -158,6 +158,15 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## DENENDİ + GERİ ALINDI — Kaynak Durumu alt panel (2026-10-08, `0658bee` → revert `04a8894`)
+
+- Koç ızgara ↔ Kaynak Durumu arasında çok kaydırıyor. Sayfa altına yapışık Kaynak Durumu paneli +
+  üniteyi ızgaraya sürükle-bırak denendi; koç localde kullanışlı bulmadı, tamamen geri alındı.
+  Reddedilenler: ızgarayı daraltan yan yerleşim (sütunlar zaten dar) ve alt panel. Sorun AÇIK —
+  yeni öneri yapılırsa önce koçla tartışılır.
+
+---
+
 ## DERS RENK SİSTEMİ — koç gün kartı + öğrenci hafta ızgarası — CANLI (2026-10-08, commit `4f00c3c` + `cd061bd`, migration YOK)
 
 - Koç koyu temada gün kartındaki dersleri ayırt edemedi (satır zemini %16 saydam → hepsi
