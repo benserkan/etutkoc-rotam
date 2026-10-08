@@ -158,6 +158,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## KAYNAK DURUMU: SON işareti + ısı haritası · VİDEO SEPETİ taşınır — CANLI (2026-10-08, commit `9257a77`, migration YOK)
+
+- `sidebar-items`: ünite başına `last_task_date` + kitapta `last_section_id/label/last_task_date`
+  (kaldığı yer = EN SON görev verilen ünite; kitap sırası sık atlandığı için sıradan değil).
+  Kitap başlığında "SON <ünite> · <tarih>", ünite satırında dolgulu SON etiketi. Koç kararı:
+  yalnız SON ("sıradaki" işareti İSTENMEDİ).
+- Ünite zemini ders renginde 4 kademe (0 · %1–49 · %50–99 · %100 ✓) — koç kararı: sürekli geçiş
+  değil kademe. ✓/⏳ sayıları her kademede okunur (900/100 tonları).
+- Video Sepeti: düğme Rota'ya sor'un üstünde (bottom-24, çakışıyordu); pencere başlıktan taşınır,
+  yeri hatırlanır — ortak `lib/hooks/use-floating-position.ts` (pencerede `data-floating`).
+- SIRADA (koç onayladı, ayrı adım): Kaynak Durumu'na "Ayır" → yüzen pencere (aynı hook).
+- Test `test_sidebar_last_section` 5/5 · `live_resource_heat` 10/10.
+
+---
+
 ## DENENDİ + GERİ ALINDI — Kaynak Durumu alt panel (2026-10-08, `0658bee` → revert `04a8894`)
 
 - Koç ızgara ↔ Kaynak Durumu arasında çok kaydırıyor. Sayfa altına yapışık Kaynak Durumu paneli +
