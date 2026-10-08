@@ -413,20 +413,29 @@ function SubjectChip({
 }: {
   ent: NonNullable<TeacherStudentWeekDay["subject_summary"]>[number];
 }) {
-  const hue = (ent.subject_id * 67) % 360;
+  // Satırlarla AYNI renk (ada göre) — eskisi id*67 ile başka renk veriyordu.
+  const hue = subjectHue(ent.subject_name);
   const hasTasks = ent.task_count > 0;
   return (
     <div
       className={cn(
         "flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-md border",
-        hasTasks ? "" : "border-dashed bg-muted/40 text-muted-foreground",
+        hasTasks
+          // Koyu temada açık pastel zemin + tema metni (beyaz) okunmuyordu
+          // (2026-10-08) → zemin/kenar/ad rengi temaya göre ayrı.
+          ? "bg-[var(--chip-bg-l)] border-[var(--chip-bd-l)] dark:bg-[var(--chip-bg-d)] dark:border-[var(--chip-bd-d)]"
+          : "border-dashed bg-muted/40 text-muted-foreground",
       )}
       style={
         hasTasks
-          ? {
-              background: `hsl(${hue}, 45%, 97%)`,
-              borderColor: `hsl(${hue}, 35%, 82%)`,
-            }
+          ? ({
+              "--chip-bg-l": `hsl(${hue}, 45%, 97%)`,
+              "--chip-bd-l": `hsl(${hue}, 35%, 82%)`,
+              "--chip-bg-d": `hsl(${hue}, 40%, 18%)`,
+              "--chip-bd-d": `hsl(${hue}, 45%, 35%)`,
+              "--chip-tx-l": `hsl(${hue}, 45%, 28%)`,
+              "--chip-tx-d": `hsl(${hue}, 60%, 80%)`,
+            } as React.CSSProperties)
           : undefined
       }
       title={
@@ -438,10 +447,10 @@ function SubjectChip({
       }
     >
       <span
-        className="font-semibold whitespace-nowrap"
-        style={
-          hasTasks ? { color: `hsl(${hue}, 45%, 28%)` } : undefined
-        }
+        className={cn(
+          "font-semibold whitespace-nowrap",
+          hasTasks && "text-[var(--chip-tx-l)] dark:text-[var(--chip-tx-d)]",
+        )}
       >
         {ent.subject_name}
       </span>
@@ -871,6 +880,49 @@ function TaskList({
     );
   }
 
+  // DERS GRUPLARI (2026-10-08): aynı dersin ARDIŞIK görevleri tek kutuda,
+  // dersler arasında boşluk → renk görülmese bile "Matematik bitti, Türkçe
+  // başladı" konumdan okunur (renk körlüğü dahil). Sıra derse göre zaten
+  // gruplu; sürükle-bırak tek SortableContext içinde kalır.
+  function renderSubjectRuns(ids: number[]) {
+    const runs: number[][] = [];
+    let lastKey: string | null = null;
+    for (const id of ids) {
+      const t = tasksById.get(id);
+      if (!t) continue;
+      const key = taskSubject(t, subjects).key;
+      if (key !== lastKey || runs.length === 0) runs.push([id]);
+      else runs[runs.length - 1].push(id);
+      lastKey = key;
+    }
+    return (
+      <div className="space-y-[3px]" data-testid="subject-runs">
+        {runs.map((run) => (
+          <div
+            key={run[0]}
+            data-testid="subject-run"
+            className="overflow-hidden rounded-md ring-1 ring-black/[0.08] dark:ring-white/[0.10] divide-y divide-black/[0.06] dark:divide-white/[0.08]"
+          >
+            {run.map((id) => {
+              const task = tasksById.get(id);
+              if (!task) return null;
+              return (
+                <SortableTaskRow
+                  key={id}
+                  studentId={studentId}
+                  dayDate={day.date}
+                  task={task}
+                  subjects={subjects}
+                  weekDays={weekDays}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <DndContext
       // Stable id zorunlu: dnd-kit module-level useUniqueId counter'ı SSR↔client
@@ -911,22 +963,7 @@ function TaskList({
                     count={periodCounts.get(pk) ?? ids.length}
                     onCarryoverDrop={onCarryoverDrop}
                   />
-                  <div className="divide-y divide-black/[0.06] dark:divide-white/[0.06]">
-                    {ids.map((id) => {
-                      const task = tasksById.get(id);
-                      if (!task) return null;
-                      return (
-                        <SortableTaskRow
-                          key={id}
-                          studentId={studentId}
-                          dayDate={day.date}
-                          task={task}
-                          subjects={subjects}
-                          weekDays={weekDays}
-                        />
-                      );
-                    })}
-                  </div>
+                  <div className="px-1">{renderSubjectRuns(ids)}</div>
                   {openAddPk === pk ? (
                     <div className="border-t border-black/[0.06] dark:border-white/[0.06] bg-card">
                       <AddTaskForm
@@ -954,21 +991,8 @@ function TaskList({
         ) : (
           // Periyotsuz gün: tek liste, ders sırasıyla (Katman 1). Ders
           // başlığı burada da yok — ders satırın kendisinde okunur.
-          <div className="@container divide-y divide-border/60 border-t border-border">
-            {orderedIds.map((id) => {
-              const task = tasksById.get(id);
-              if (!task) return null;
-              return (
-                <SortableTaskRow
-                  key={id}
-                  studentId={studentId}
-                  dayDate={day.date}
-                  task={task}
-                  subjects={subjects}
-                  weekDays={weekDays}
-                />
-              );
-            })}
+          <div className="@container border-t border-border p-1">
+            {renderSubjectRuns(orderedIds)}
           </div>
         )}
       </SortableContext>
@@ -1055,8 +1079,10 @@ function SortableTaskRow({
         ? "hsl(239, 60%, 95%)"
         : "hsl(0, 0%, 99%)";
   // Koyu temada açık pastel zemin beyaza yakın parlar → aynı hue'nun koyu tonu.
+  // 2026-10-08: eskisi %16 saydam basıyordu → koyu zeminde tüm dersler aynı
+  // lacivert-griye dönüyordu (koç ayırt edemedi). Artık opak, doygun koyu ton.
   const rowTintDark = primarySubjectName
-    ? `hsla(${hue}, 45%, 60%, 0.16)`
+    ? `hsl(${hue}, 40%, 18%)`
     : isBlock
       ? "rgba(139, 92, 246, 0.16)"
       : isDeneme
@@ -1069,7 +1095,7 @@ function SortableTaskRow({
     "--row-dark": rowTintDark,
     borderLeftColor:
       primarySubjectName
-        ? `hsl(${hue}, 55%, 55%)`
+        ? `hsl(${hue}, 75%, 50%)`
         : isBlock
           ? "#8b5cf6" // violet — serbest blok
           : isDeneme
@@ -1116,7 +1142,7 @@ function SortableTaskRow({
       ref={setNodeRef}
       id={`task-${task.id}`}
       className={cn(
-        "px-3 py-1.5 flex items-center gap-2.5 border-l-[3px] task-row transition-colors",
+        "px-3 py-1.5 flex items-center gap-2.5 border-l-[6px] task-row transition-colors",
         "bg-[var(--row-light)] dark:bg-[var(--row-dark)]",
         "hover:brightness-[0.97] dark:hover:brightness-110",
       )}
@@ -1149,18 +1175,7 @@ function SortableTaskRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-x-2 gap-y-0.5 flex-wrap">
           {primarySubjectName ? (
-            <span
-              className="text-[13px] font-semibold whitespace-nowrap text-[var(--subj-light)] dark:text-[var(--subj-dark)]"
-              style={
-                {
-                  "--subj-light": `hsl(${hue}, 45%, 32%)`,
-                  "--subj-dark": `hsl(${hue}, 60%, 78%)`,
-                } as React.CSSProperties
-              }
-              title={primarySubjectName}
-            >
-              {primarySubjectName}
-            </span>
+            <SubjectTag name={primarySubjectName} hue={hue} />
           ) : null}
           {showTypeBadge ? (
             <span
@@ -2159,5 +2174,39 @@ function SpreadTaskDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Ders adı DOLGULU etiket (2026-10-08): renkli yazı koyu zeminde soluk
+ * okunuyordu; küçük öğede dolgu (koyu ton + beyaz yazı) bir bakışta ayrışır.
+ * Sınav öneki (TYT/AYT/LGS) ayrı küçük işaret: aynı derste TYT ve AYT aynı
+ * renkte kalır, AYT koyu dolgulu işaretle ayrılır.
+ */
+function SubjectTag({ name, hue }: { name: string; hue: number }) {
+  const m = /^(TYT|AYT|LGS)\s+(.+)$/i.exec(name);
+  const exam = m ? m[1].toUpperCase() : null;
+  const plain = m ? m[2] : name;
+  return (
+    <span className="inline-flex items-center gap-1 self-center" title={name}>
+      {exam ? (
+        <span
+          className={cn(
+            "text-[9.5px] font-bold tracking-wider px-1 py-px rounded border leading-none",
+            exam === "AYT"
+              ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white"
+              : "border-slate-400 text-slate-700 dark:border-slate-500 dark:text-slate-200",
+          )}
+        >
+          {exam}
+        </span>
+      ) : null}
+      <span
+        className="text-[12px] font-semibold whitespace-nowrap px-1.5 py-px rounded text-white"
+        style={{ backgroundColor: `hsl(${hue}, 60%, 36%)` }}
+      >
+        {plain}
+      </span>
+    </span>
   );
 }

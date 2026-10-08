@@ -62,17 +62,19 @@ function nameHashNum(name: string): number {
  * palet kovaları sabitlerin arasına yerleştirildi.
  */
 const SUBJECT_FIXED_HUE: Array<[RegExp, number]> = [
-  [/matematik/, 215],     // mavi
-  [/geometri/, 190],      // turkuaz
-  [/turkce|edebiyat|paragraf|dil bilgisi/, 355], // kırmızı
-  [/fizik/, 25],          // turuncu
-  [/kimya/, 280],         // mor
-  [/biyoloji/, 140],      // yeşil
-  [/tarih|inkilap/, 40],  // kahve-altın
-  [/cografya/, 95],       // yeşil-sarı
-  [/felsefe|din|sosyal/, 320], // pembe-mor
-  [/ingilizce|yabanci|dil$/, 170], // deniz yeşili
-  [/fen/, 160],           // yeşil-turkuaz
+  // 2026-10-08: koç koyu temada Matematik ↔ Geometri (215/190) ve Fizik ↔
+  // Tarih'i ayırt edemedi → TYT tam setinde komşu dersler en az ~30-55° arayla.
+  [/matematik/, 220],     // mavi
+  [/geometri/, 165],      // yeşil-turkuaz (Matematik'ten 55°)
+  [/turkce|edebiyat|paragraf|dil bilgisi/, 350], // kırmızı
+  [/fizik/, 32],          // turuncu (Türkçe kırmızısından 42°)
+  [/kimya/, 275],         // mor
+  [/biyoloji/, 130],      // yeşil
+  [/tarih|inkilap/, 55],  // altın
+  [/cografya/, 90],       // yeşil-sarı
+  [/felsefe|din|sosyal/, 315], // pembe-mor
+  [/ingilizce|yabanci|dil$/, 195], // camgöbeği
+  [/fen/, 165],           // yeşil-turkuaz (LGS'de geometri yok)
 ];
 const SUBJECT_PALETTE = [5, 50, 80, 125, 155, 200, 230, 260, 295, 335, 20, 110];
 
