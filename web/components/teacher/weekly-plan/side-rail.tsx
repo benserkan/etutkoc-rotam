@@ -44,12 +44,17 @@ const ACTIVE_TONE: Record<SideSectionDef["tone"], string> = {
 export function SideRail({
   badges,
   hidden,
+  floating,
+  onFloatingClick,
   className,
 }: {
   /** Simge üstü rozet (örn. Devret aday sayısı) */
   badges?: Record<string, number | undefined>;
   /** Şu an anlamsız bölümler (örn. adayı olmayan Devret) */
   hidden?: readonly string[];
+  /** Yüzen pencerede açık bölümler — tıklama paneline geri koyar */
+  floating?: readonly string[];
+  onFloatingClick?: (id: string) => void;
   className?: string;
 }) {
   const order = useSectionOrder(SIDE_SECTION_IDS);
@@ -67,13 +72,29 @@ export function SideRail({
       )}
     >
       {defs.map((d) => (
-        <RailButton key={d.id} def={d} badge={badges?.[d.id]} />
+        <RailButton
+          key={d.id}
+          def={d}
+          badge={badges?.[d.id]}
+          floating={!!floating?.includes(d.id)}
+          onFloatingClick={onFloatingClick}
+        />
       ))}
     </nav>
   );
 }
 
-function RailButton({ def, badge }: { def: SideSectionDef; badge?: number }) {
+function RailButton({
+  def,
+  badge,
+  floating = false,
+  onFloatingClick,
+}: {
+  def: SideSectionDef;
+  badge?: number;
+  floating?: boolean;
+  onFloatingClick?: (id: string) => void;
+}) {
   const { pinned, open, toggle } = useSectionPref(
     def.id,
     def.defaultPinned,
@@ -82,6 +103,10 @@ function RailButton({ def, badge }: { def: SideSectionDef; badge?: number }) {
   const Icon = def.icon;
 
   function onClick() {
+    if (floating) {
+      onFloatingClick?.(def.id);
+      return;
+    }
     if (pinned) {
       // Panele kaydır; oturumda katlanmışsa aç.
       if (!open) toggle();
@@ -97,7 +122,9 @@ function RailButton({ def, badge }: { def: SideSectionDef; badge?: number }) {
     toggle();
   }
 
-  const title = pinned
+  const title = floating
+    ? `${def.title} — yüzen pencerede. Tıkla: panele geri koy`
+    : pinned
     ? `${def.title} — sabit (panelde). ${def.hint}`
     : open
       ? `${def.title} — kapat`
@@ -110,15 +137,22 @@ function RailButton({ def, badge }: { def: SideSectionDef; badge?: number }) {
       data-rail={def.id}
       data-pinned={pinned ? "1" : "0"}
       data-open={open ? "1" : "0"}
-      aria-pressed={open}
+      data-floating-section={floating ? "1" : "0"}
+      aria-pressed={open || floating}
       title={title}
       className={cn(
         "relative flex shrink-0 flex-col items-center gap-0.5 rounded-md px-0.5 py-1.5 text-muted-foreground transition",
         "min-w-[56px] xl:min-w-0 xl:w-full",
-        open ? ACTIVE_TONE[def.tone] : "hover:bg-muted hover:text-foreground",
+        open || floating ? ACTIVE_TONE[def.tone] : "hover:bg-muted hover:text-foreground",
       )}
     >
-      {pinned ? (
+      {floating ? (
+        <span
+          className="absolute inset-y-1.5 left-0 w-0.5 rounded-r bg-cyan-500"
+          aria-hidden
+          data-float-mark=""
+        />
+      ) : pinned ? (
         <span
           className="absolute inset-y-1.5 left-0 w-0.5 rounded-r bg-amber-500"
           aria-hidden
@@ -167,6 +201,8 @@ export function PeekHost({
       if (!t || !(t instanceof Element)) return;
       if (ref.current?.contains(t)) return;
       if (t.closest("[data-rail]")) return;
+      // Yüzen pencerelerdeki tıklama açık geçici bölümü kapatmasın.
+      if (t.closest("[data-floating]")) return;
       if (document.querySelector('[role="dialog"][data-state="open"]')) return;
       if (t.closest("[data-sonner-toaster]")) return;
       closeSessionGroup(SIDE_SECTION_IDS);

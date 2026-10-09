@@ -158,7 +158,7 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
-## KAYNAK DURUMU: SON işareti + ısı haritası · VİDEO SEPETİ taşınır — CANLI (2026-10-08, commit `9257a77`, migration YOK)
+## KAYNAK DURUMU: SON işareti + ısı haritası · VİDEO SEPETİ taşınır · "Ayır" yüzen pencere — CANLI (2026-10-08/09, migration YOK)
 
 - `sidebar-items`: ünite başına `last_task_date` + kitapta `last_section_id/label/last_task_date`
   (kaldığı yer = EN SON görev verilen ünite; kitap sırası sık atlandığı için sıradan değil).
@@ -168,8 +168,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   değil kademe. ✓/⏳ sayıları her kademede okunur (900/100 tonları).
 - Video Sepeti: düğme Rota'ya sor'un üstünde (bottom-24, çakışıyordu); pencere başlıktan taşınır,
   yeri hatırlanır — ortak `lib/hooks/use-floating-position.ts` (pencerede `data-floating`).
-- SIRADA (koç onayladı, ayrı adım): Kaynak Durumu'na "Ayır" → yüzen pencere (aynı hook).
 - Test `test_sidebar_last_section` 5/5 · `live_resource_heat` 10/10.
+- **Kaynak Durumu "Ayır" → yüzen pencere — CANLI (2026-10-09, migration YOK):** başlıkta
+  "Ayır" → bölüm sağ panelden çıkar, yüzen pencerede açılır (başlıktan taşınır, kaydırınca
+  yerinde, yeri + ayrık durumu tarayıcıda kalır; `useStoredFlag("rotam:float:resources:on")`
+  + `useFloatingPosition("rotam:float:resources")`). "Panele koy" ya da şeritteki Kaynak
+  simgesi (cyan işaret) geri yerleştirir. İçerik AYNI bileşen (`ResourceSidebar floating`
+  modu) → "+" ile görev verme, kalan sayıların anlık güncellenmesi pencerede de çalışır.
+  PeekHost dışarı-tıklaması `[data-floating]` içini saymaz.
+- **Video Sepeti KAPALI düğmesi de taşınır (aynı gün, koç: "onu da taşıyamıyorum"):** önce
+  yalnız açık pencerenin başlığı taşınıyordu. Kanca artık tutma yeri düğme olabilir; 4px'ten
+  az oynama = tıklama (açar), fazlası = taşıma (sonraki click yutulur). Düğmenin kendi
+  konum anahtarı var (`rotam:float:video-basket-fab`).
+- Test YENİ `live_resources_float.py` **14/14** · live_resource_heat 10 · live_section_pins 33 ·
+  `live_video_basket` 21/21 (8 Ekim'den beri kırmızıydı: sağ alttaki sepet penceresi ızgaranın
+  son günlerini örtüyordu → test pencereyi ızgaranın altına konumlar; ürün hatası değil).
 
 ---
 

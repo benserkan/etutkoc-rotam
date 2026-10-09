@@ -89,10 +89,12 @@ import {
 import { WorkBlockPanel } from "./weekly-plan/work-block-panel";
 import { VideoBasketFloat } from "./weekly-plan/video-basket-float";
 import {
+  closeSession,
   useSectionOrder,
   useSectionPref,
   useSectionStates,
 } from "@/lib/hooks/use-section-prefs";
+import { useFloatingPosition, useStoredFlag } from "@/lib/hooks/use-floating-position";
 import { PeekHost, SideRail } from "./weekly-plan/side-rail";
 import {
   SIDE_PANEL_W,
@@ -268,14 +270,29 @@ export function WeekBoard({
     staleTime: 15_000,
   });
   const carryoverCount = carryoverQ.data?.candidates.length ?? 0;
+  // "Ayır" (2026-10-09, koç onaylı): Kaynak Durumu yüzen pencereye geçer —
+  // ızgara ile aynı anda görünür, kaydırınca yerinde kalır, istenen yere
+  // taşınır (Video Sepeti ile aynı kanca). Tercih tarayıcıda kalır.
+  const [resFloating, setResFloating] = useStoredFlag("rotam:float:resources:on");
+  const resFp = useFloatingPosition("rotam:float:resources", 340);
+  const detachResources = React.useCallback(() => {
+    closeSession("week:resources");
+    setResFloating(true);
+  }, [setResFloating]);
+  const dockResources = React.useCallback(() => setResFloating(false), [setResFloating]);
   const dockedIds = sideOrder.filter(
     (id) =>
       sideStates[id]?.pinned &&
-      !(id === "week:carryover" && carryoverCount === 0),
+      !(id === "week:carryover" && carryoverCount === 0) &&
+      !(id === "week:resources" && resFloating),
   );
   const peekId =
-    sideOrder.find((id) => sideStates[id]?.open && !sideStates[id]?.pinned) ??
-    null;
+    sideOrder.find(
+      (id) =>
+        sideStates[id]?.open &&
+        !sideStates[id]?.pinned &&
+        !(id === "week:resources" && resFloating),
+    ) ?? null;
   const sideW = dockedIds.length > 0 ? SIDE_PANEL_W + 8 + SIDE_RAIL_W : SIDE_RAIL_W;
   // Bölüm bileşenleri — yalnız görünenler (sabit ya da peek) render edilir.
   const sidePanels: Record<string, React.ReactNode> = {
@@ -310,6 +327,7 @@ export function WeekBoard({
         onOpenBookGrid={setGridBookId}
         studentId={studentId}
         dayDate={openDate ?? data.days[0]?.date ?? ""}
+        onDetach={detachResources}
       />
     ),
   };
@@ -809,6 +827,8 @@ export function WeekBoard({
             className="order-1 xl:order-2"
             badges={{ "week:carryover": carryoverCount || undefined }}
             hidden={carryoverCount === 0 ? ["week:carryover"] : undefined}
+            floating={resFloating ? ["week:resources"] : undefined}
+            onFloatingClick={dockResources}
           />
           <PeekHost
             peekId={peekId}
@@ -818,6 +838,33 @@ export function WeekBoard({
           </PeekHost>
         </aside>
       </div>
+
+      {resFloating ? (
+        <div
+          data-floating
+          data-testid="resources-float"
+          style={resFp.style}
+          className={cn(
+            "fixed z-40 flex max-h-[min(80vh,760px)] w-[min(340px,calc(100vw-2rem))] flex-col rounded-xl border border-border bg-card shadow-2xl",
+            resFp.pos ? "" : "right-[88px] top-24",
+          )}
+        >
+          <ResourceSidebar
+            data={sidebarQ.data}
+            isLoading={sidebarQ.isLoading}
+            focusedSubjectId={focusedSubjectId}
+            onClearFocus={() => setFocusedSubjectId(null)}
+            openSubjects={openSubjects}
+            setOpenSubjects={setOpenSubjects}
+            openBooks={openBooks}
+            setOpenBooks={setOpenBooks}
+            onOpenBookGrid={setGridBookId}
+            studentId={studentId}
+            dayDate={openDate ?? data.days[0]?.date ?? ""}
+            floating={{ handleProps: resFp.handleProps, onDock: dockResources }}
+          />
+        </div>
+      ) : null}
 
       <VideoBasketFloat studentId={studentId} subjects={subjectsForGrouping} />
 

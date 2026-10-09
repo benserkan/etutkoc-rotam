@@ -90,7 +90,13 @@ def main() -> int:
     try:
         with sync_playwright() as pw:
             b = pw.chromium.launch(channel="chrome", headless=True)
-            pg = b.new_page(viewport={"width": 1440, "height": 900})
+            pg = b.new_page(viewport={"width": 1440, "height": 1300})
+            # Sepet varsayılanı (sağ alt, Rota'nın üstü) ızgaradaki son günleri
+            # örter (2026-10-08'den beri) — test pencereyi ızgaranın altına alır;
+            # koç da başlıktan taşıyabiliyor.
+            pg.add_init_script(
+                "try{localStorage.setItem('rotam:float:video-basket',"
+                "JSON.stringify({x:1000,y:540}))}catch(e){}")
             pg.goto(f"{BASE}/login", wait_until="networkidle")
             pg.fill('input[type="email"]', s["email"])
             pg.fill('input[type="password"]', PWD)

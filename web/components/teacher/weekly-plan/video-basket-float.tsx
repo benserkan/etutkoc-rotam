@@ -129,6 +129,9 @@ export function VideoBasketFloat({
   // Pencere başlığından tutulup taşınır, yeri hatırlanır (2026-10-08 —
   // koç: "yüzmüyor, istenen yere taşınmıyor").
   const fp = useFloatingPosition("rotam:float:video-basket", 380);
+  // Kapalı düğme de taşınır (2026-10-09 — koç: "Video Sepeti'ni de taşıyamıyorum").
+  // Kendi konumu var: düğme küçük, pencere büyük; ikisi aynı noktaya oturmaz.
+  const fab = useFloatingPosition("rotam:float:video-basket-fab", 170);
   const q = useQuery<VideoBasketResponse>({
     queryKey: videoBasketKeys.basket(studentId),
     queryFn: () => getVideoBasket(studentId),
@@ -166,12 +169,18 @@ export function VideoBasketFloat({
       {!open ? (
         <button
           type="button"
+          {...fab.handleProps}
           onClick={() => setOpen(true)}
+          data-floating
           data-section="week:video-basket-fab"
           // Rota'ya sor düğmesi sağ altta (bottom ~1.5rem) → Video Sepeti onun
-          // ÜSTÜNDE durur, üst üste binmez (2026-10-08).
-          className="fixed bottom-24 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-cyan-800"
-          title="Video Sepeti — oynatma listesinden günlere sürükle"
+          // ÜSTÜNDE durur, üst üste binmez (2026-10-08). Sürüklenince yeri kalır.
+          style={{ ...fab.handleProps.style, ...fab.style }}
+          className={cn(
+            "fixed z-40 inline-flex select-none items-center gap-2 rounded-full bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-cyan-800",
+            fab.pos ? "" : "bottom-24 right-6",
+          )}
+          title="Tıkla: Video Sepeti'ni aç · Sürükle: düğmeyi taşı"
         >
           <PlaySquare className="size-4" aria-hidden />
           Video Sepeti

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Grid3x3, Library, Loader2, Plus } from "lucide-react";
+import { ChevronRight, Grid3x3, Library, Loader2, PanelRightClose, PictureInPicture2, Plus } from "lucide-react";
 
 import { PinnableSection } from "./pinnable-section";
 import { AssignCountChooser } from "./assign-count-chooser";
@@ -67,6 +67,13 @@ interface Props {
   studentId?: number;
   /** Aktif gün — "+N" bu güne yazar */
   dayDate?: string;
+  /** "Ayır" (2026-10-09): verilirse başlıkta düğme çıkar, bölüm yüzen pencereye geçer. */
+  onDetach?: () => void;
+  /** Yüzen pencere modunda: başlık tutma yeri + "panele geri koy". */
+  floating?: {
+    handleProps: React.HTMLAttributes<HTMLDivElement>;
+    onDock: () => void;
+  };
 }
 
 /**
@@ -90,6 +97,8 @@ export function ResourceSidebar({
   onOpenBookGrid,
   studentId,
   dayDate,
+  onDetach,
+  floating,
 }: Props) {
   // Ünite satırından görev yazma (koç yüzeyi). Hook koşulsuz çağrılır;
   // studentId yoksa (öğrenci ekranı) 0 ile kurulur ve hiç kullanılmaz.
@@ -154,25 +163,18 @@ export function ResourceSidebar({
   }
 
   const subjectCount = data?.subjects.length ?? 0;
-  return (
-    <PinnableSection
-      id="week:resources"
-      icon={<Library className="size-4" aria-hidden />}
-      title="Kaynak Durumu"
-      summary={subjectCount > 0 ? `${subjectCount} ders` : undefined}
-      defaultPinned
-      headerRight={
-        focusedSubjectId !== null ? (
-          <button
-            type="button"
-            onClick={onClearFocus}
-            className="text-[11px] text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 underline"
-          >
-            Tümü
-          </button>
-        ) : null
-      }
-    >
+  const clearFocusBtn =
+    focusedSubjectId !== null ? (
+      <button
+        type="button"
+        onClick={onClearFocus}
+        className="text-[11px] text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 underline"
+      >
+        Tümü
+      </button>
+    ) : null;
+  const body = (
+    <>
       <p className="px-4 pb-1 text-xs text-muted-foreground">Ders bazında kitap ilerlemesi</p>
 
       {focusedSubjectId !== null && data && data.subjects.length > 0 ? (
@@ -217,6 +219,70 @@ export function ResourceSidebar({
         <span className="whitespace-nowrap text-foreground">⎯ kalan</span>
         <span className="basis-full">zemin rengi: çözülen oranı (açık → koyu) · SON: son görev</span>
       </div>
+    </>
+  );
+
+  if (floating) {
+    // Yüzen pencere: başlıktan tutulup taşınır (Video Sepeti ile aynı kanca).
+    return (
+      <section data-section="week:resources" data-mode="floating" className="flex min-h-0 flex-1 flex-col">
+        <div
+          {...floating.handleProps}
+          data-testid="resources-float-handle"
+          className="flex select-none items-center gap-2 border-b border-border px-3 py-2"
+        >
+          <Library className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="text-sm font-medium text-foreground">Kaynak Durumu</span>
+          {subjectCount > 0 ? (
+            <span className="text-[11px] text-muted-foreground tabular-nums">{subjectCount} ders</span>
+          ) : null}
+          <span className="ml-auto flex shrink-0 items-center gap-1">
+            {clearFocusBtn}
+            <button
+              type="button"
+              onClick={floating.onDock}
+              data-testid="resources-dock"
+              className="flex items-center gap-1 rounded px-1.5 py-1 text-[11px] text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              title="Sağ panele geri koy"
+            >
+              <PanelRightClose className="size-3.5" aria-hidden />
+              <span>Panele koy</span>
+            </button>
+          </span>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto pt-2">{body}</div>
+      </section>
+    );
+  }
+
+  return (
+    <PinnableSection
+      id="week:resources"
+      icon={<Library className="size-4" aria-hidden />}
+      title="Kaynak Durumu"
+      summary={subjectCount > 0 ? `${subjectCount} ders` : undefined}
+      defaultPinned
+      headerRight={
+        clearFocusBtn || onDetach ? (
+          <span className="flex items-center gap-1">
+            {clearFocusBtn}
+            {onDetach ? (
+              <button
+                type="button"
+                onClick={onDetach}
+                data-testid="resources-detach"
+                className="flex items-center gap-1 rounded px-1.5 py-1 text-[11px] text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                title="Ayır — yüzen pencerede aç; istediğin yere taşı, kaydırınca yerinde kalır"
+              >
+                <PictureInPicture2 className="size-3.5" aria-hidden />
+                <span>Ayır</span>
+              </button>
+            ) : null}
+          </span>
+        ) : null
+      }
+    >
+      {body}
     </PinnableSection>
   );
 }
