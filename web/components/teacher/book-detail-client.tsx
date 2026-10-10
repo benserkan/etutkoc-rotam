@@ -347,7 +347,7 @@ function SectionsTab({
             size="sm"
             variant="outline"
             onClick={() => setMapOpen(true)}
-            className="border-indigo-300 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50"
+            className="border-indigo-300 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/25"
           >
             <Wand2 className="size-4" aria-hidden />
             Müfredata eşleştir

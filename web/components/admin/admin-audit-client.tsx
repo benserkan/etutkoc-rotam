@@ -118,7 +118,7 @@ export function AdminAuditClient({
 
       {/* Help collapse */}
       <details className="rounded-md border border-sky-200 bg-sky-50/40 dark:bg-sky-500/10 dark:border-sky-500/30">
-        <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-sky-900 dark:text-sky-200 hover:bg-sky-100/60 inline-flex items-center gap-1.5 w-full">
+        <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-sky-900 dark:text-sky-200 hover:bg-sky-100/60 inline-flex items-center gap-1.5 w-full dark:hover:bg-sky-500/25">
           <Info className="size-4" aria-hidden />
           Bu sayfada ne yazıyor? (terim açıklamaları)
         </summary>

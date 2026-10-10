@@ -258,7 +258,7 @@ function LifecycleButtons({
       {status === "running" ? (
         <>
           <Button variant="outline" disabled={busy} onClick={() => pauseMut.mutate()}
-                  className="border-amber-300 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200">
+                  className="border-amber-300 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-500/25">
             <Pause className="size-4" aria-hidden /> Duraklat
           </Button>
           <Button disabled={busy} onClick={() => { if (confirm("Kampanyayı tamamlandı işaretle?")) completeMut.mutate(); }}

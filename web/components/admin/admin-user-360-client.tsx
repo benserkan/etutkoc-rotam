@@ -82,7 +82,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href={`/admin/users/${owner.owner_id}/account-history`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200"
+            className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:hover:bg-indigo-500/25"
           >
             <ScrollText className="size-4" aria-hidden />
             Hesap Hareketleri

@@ -538,7 +538,7 @@ function ChildMuteRow({ child }: { child: ParentChildLink }) {
               variant="outline"
               onClick={toggle}
               disabled={mut.isPending}
-              className="text-emerald-700 dark:text-emerald-300 border-emerald-200 hover:bg-emerald-50"
+              className="text-emerald-700 dark:text-emerald-300 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/25"
             >
               {mut.isPending ? (
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -556,7 +556,7 @@ function ChildMuteRow({ child }: { child: ParentChildLink }) {
               variant="outline"
               onClick={toggle}
               disabled={mut.isPending}
-              className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50"
+              className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-500/25"
             >
               Sustur
             </Button>
@@ -688,7 +688,7 @@ function WhatsAppActivePanel({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
         size="sm"
         variant="outline"
         onClick={() => setConfirmOpen(true)}
-        className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50"
+        className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-500/25"
       >
         WhatsApp&apos;ı kapat
       </Button>

@@ -551,7 +551,7 @@ function PauseAction() {
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="border-amber-300 text-amber-900 dark:text-amber-200 hover:bg-amber-50"
+        className="border-amber-300 text-amber-900 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-500/25"
       >
         <Pause className="size-4" aria-hidden />
         Yaz Pause Moduna Geç

@@ -363,7 +363,7 @@ export function RotaChat({
               type="button"
               disabled={askMut.isPending}
               onClick={() => onChip(c.action, c.payload)}
-              className="rounded-full border border-cyan-300 bg-white px-3 py-1 text-xs font-medium text-cyan-800 hover:bg-cyan-50 disabled:opacity-50 dark:border-cyan-500/40 dark:bg-slate-900 dark:text-cyan-200"
+              className="rounded-full border border-cyan-300 bg-white px-3 py-1 text-xs font-medium text-cyan-800 hover:bg-cyan-50 disabled:opacity-50 dark:border-cyan-500/40 dark:bg-slate-900 dark:text-cyan-200 dark:hover:bg-cyan-500/25"
             >
               {c.label}
             </button>
@@ -413,7 +413,7 @@ export function RotaChat({
             onClick={() => void startRecording()}
             disabled={askMut.isPending || (data?.daily_left ?? 0) <= 0}
             title="Sesli sor — konuşman yazıya çevrilip kutuya dolar"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 disabled:opacity-50 dark:border-cyan-500/40 dark:bg-slate-900 dark:text-cyan-300"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 disabled:opacity-50 dark:border-cyan-500/40 dark:bg-slate-900 dark:text-cyan-300 dark:hover:bg-cyan-500/25"
           >
             <Mic className="size-4" aria-hidden />
             <span className="sr-only">Sesli sor</span>

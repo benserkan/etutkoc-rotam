@@ -97,7 +97,7 @@ export function NextUnitsPanel({
               type="button"
               onClick={() => aiMut.mutate()}
               disabled={aiMut.isPending}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-300 px-2 py-1 text-[11px] font-medium text-violet-700 dark:text-violet-300 transition hover:bg-violet-50"
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-300 px-2 py-1 text-[11px] font-medium text-violet-700 dark:text-violet-300 transition hover:bg-violet-50 dark:hover:bg-violet-500/25"
             >
               {aiMut.isPending ? (
                 <Loader2 className="size-3 animate-spin" aria-hidden />

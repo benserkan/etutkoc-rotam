@@ -224,7 +224,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           <Button
             size="sm"
             variant="outline"
-            className="border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50 hover:text-violet-800"
+            className="border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50 hover:text-violet-800 dark:hover:bg-violet-500/25 dark:hover:text-violet-100"
             onClick={() => setInsightOpen(true)}
             disabled={!hasSessions || aiLocked}
             title={aiLocked ? "Ücretli pakette kullanılabilir" : hasSessions ? "Seans geçmişinden bir sonraki seans için AI önerisi" : "Önce en az bir seans kaydı gerekir"}
@@ -234,7 +234,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           <Button
             size="sm"
             variant="outline"
-            className="border-cyan-200 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+            className="border-cyan-200 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 hover:text-cyan-800 dark:hover:bg-cyan-500/25 dark:hover:text-cyan-100"
             onClick={() => {
               if (reports.length === 0) createReport.mutate({}, { onSuccess: () => setReportsOpen(true) });
               else setReportsOpen((v) => !v);

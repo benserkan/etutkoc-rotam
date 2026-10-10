@@ -110,7 +110,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
             <div className="flex shrink-0 gap-2">
               <Link
                 href="/teacher/students"
-                className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-card px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition hover:bg-rose-50"
+                className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-card px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition hover:bg-rose-50 dark:hover:bg-rose-500/25"
               >
                 Öğrencileri yönet
               </Link>
@@ -146,7 +146,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
           <div className="flex shrink-0 gap-2">
             <Link
               href="/teacher/students"
-              className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-card px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition hover:bg-rose-50"
+              className="inline-flex items-center justify-center rounded-lg border border-rose-300 bg-card px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 transition hover:bg-rose-50 dark:hover:bg-rose-500/25"
             >
               Öğrencileri yönet
             </Link>
@@ -192,7 +192,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
               }
               setDismissTick((t) => t + 1);
             }}
-            className="shrink-0 rounded p-1 text-amber-700 dark:text-amber-300 transition hover:bg-amber-100"
+            className="shrink-0 rounded p-1 text-amber-700 dark:text-amber-300 transition hover:bg-amber-100 dark:hover:bg-amber-500/25"
           >
             <X className="size-4" aria-hidden />
           </button>
@@ -250,7 +250,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
               }
               setDismissTick((t) => t + 1);
             }}
-            className="shrink-0 rounded p-1 text-amber-700 dark:text-amber-300 transition hover:bg-amber-100"
+            className="shrink-0 rounded p-1 text-amber-700 dark:text-amber-300 transition hover:bg-amber-100 dark:hover:bg-amber-500/25"
           >
             <X className="size-4" aria-hidden />
           </button>

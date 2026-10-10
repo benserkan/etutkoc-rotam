@@ -244,7 +244,7 @@ function SetOverrideButton({
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50"
+        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/25"
       >
         <Sparkles className="size-3" aria-hidden />
         Özel Limit

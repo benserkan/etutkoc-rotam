@@ -1435,7 +1435,7 @@ function ArchiveSuggestionBand({ studentId }: { studentId: number }) {
           <Button
             size="sm"
             variant="outline"
-            className="shrink-0 border-amber-300 bg-white text-amber-900 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-500/40 dark:bg-transparent dark:text-amber-200"
+            className="shrink-0 border-amber-300 bg-white text-amber-900 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-500/40 dark:bg-transparent dark:text-amber-200 dark:hover:bg-amber-500/25 dark:hover:text-amber-100"
             onClick={() => {
               setPicked(candidates.map((cd) => cd.book_id));
               setOpen(true);

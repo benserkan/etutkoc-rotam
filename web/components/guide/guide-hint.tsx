@@ -54,7 +54,7 @@ export function GuideHint({ module, className }: { module: string; className?: s
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/15 dark:text-cyan-200",
+          "inline-flex items-center gap-1.5 rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/15 dark:text-cyan-200 dark:hover:bg-cyan-500/25",
           className,
         )}
       >

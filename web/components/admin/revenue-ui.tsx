@@ -60,11 +60,11 @@ export const SEVERITY_LABEL: Record<string, string> = {
 
 /** Önerilen aksiyon buton tonları (statik — Tailwind purge güvenli). */
 const SUGGEST_BTN: Record<string, string> = {
-  rose: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 hover:bg-rose-100",
-  amber: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 hover:bg-amber-100",
-  emerald: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100",
-  indigo: "border-indigo-300 bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-800 dark:text-indigo-200 hover:bg-indigo-100",
-  slate: "border-slate-300 bg-slate-50 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-800 dark:text-slate-200 hover:bg-slate-100",
+  rose: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 hover:bg-rose-100 dark:hover:bg-rose-500/25",
+  amber: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-500/25",
+  emerald: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-500/25",
+  indigo: "border-indigo-300 bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-800 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-500/25",
+  slate: "border-slate-300 bg-slate-50 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-500/25",
 };
 export function suggestBtnTone(color: string): string {
   return SUGGEST_BTN[color] ?? SUGGEST_BTN.indigo;

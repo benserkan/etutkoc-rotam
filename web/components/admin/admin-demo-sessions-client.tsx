@@ -371,7 +371,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
               variant="outline"
               size="sm"
               onClick={() => setConfirmOpen(true)}
-              className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-50"
+              className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/25"
             >
               <Trash2 className="size-3.5" aria-hidden />
               Sil

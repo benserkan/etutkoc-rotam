@@ -237,7 +237,7 @@ export function RotaCommentaryCard({ studentId }: { studentId: number }) {
                 type="button"
                 onClick={() => genMut.mutate()}
                 disabled={genMut.isPending}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-300 px-3 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-100/60 disabled:opacity-60 dark:border-cyan-500/40 dark:text-cyan-200"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-300 px-3 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-100/60 disabled:opacity-60 dark:border-cyan-500/40 dark:text-cyan-200 dark:hover:bg-cyan-500/25"
               >
                 <RefreshCw
                   className={cn("size-3.5", genMut.isPending && "animate-spin")}

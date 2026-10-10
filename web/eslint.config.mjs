@@ -215,6 +215,47 @@ const lgsPlugin = {
         };
       },
     },
+
+    // 6. no-light-hover-without-dark (2026-10-10, koç: Durum Özeti kartında
+    //    "üzerine gelince yazı hiç okunmuyor") → açık hover zemini
+    //    (hover:bg-<renk>-50/100/200) koyu tema karşılığı olmadan: koyu temada
+    //    üzerine gelince zemin açık renge döner, açık (koyu tema) yazı kaybolur.
+    //    Düzeltme: dark:hover:bg-<renk>-500/25 ekle. Her zaman açık temada kalan
+    //    sayfalar (force-light) ve sabit beyaz zeminli öğeler hariç.
+    "no-light-hover-without-dark": {
+      meta: {
+        type: "problem",
+        docs: { description: "Açık hover zemini koyu temada yazıyı okunmaz yapar" },
+        schema: [],
+        messages: {
+          missing:
+            "Koyu temada üzerine gelince okunmaz: {{cls}} için dark:hover:bg-… karşılığı yok (örn. dark:hover:bg-{{tone}}-500/25).",
+        },
+      },
+      create(context) {
+        const src = context.sourceCode?.getText?.() ?? "";
+        if (src.includes("force-light")) return {};
+        const C =
+          "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
+        const HOVER = new RegExp(`(?<![:\\w/-])hover:bg-(${C})-(?:50|100|200)(?:/\\d+)?(?![\\w/])`);
+        const WHITE = /(?<![:\w/-])bg-white(?![\w/])/;
+        function check(node, value) {
+          if (typeof value !== "string" || value.includes("dark:hover:bg-")) return;
+          const m = value.match(HOVER);
+          if (!m) return;
+          if (WHITE.test(value) && !value.includes("dark:bg-")) return;
+          context.report({ node, messageId: "missing", data: { cls: m[0], tone: m[1] } });
+        }
+        return {
+          Literal(node) {
+            if (typeof node.value === "string") check(node, node.value);
+          },
+          TemplateElement(node) {
+            check(node, node.value?.cooked ?? node.value?.raw);
+          },
+        };
+      },
+    },
   },
 };
 
@@ -242,6 +283,7 @@ const eslintConfig = defineConfig([
       "lgs/no-bare-jargon": "warn",
       "lgs/no-unsafe-contrast": "warn",
       "lgs/no-dark-text-without-variant": "warn",
+      "lgs/no-light-hover-without-dark": "warn",
     },
   },
 

@@ -138,7 +138,7 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
           </select>
           <button
             onClick={() => { overview.refetch(); log.refetch(); }}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-500/25"
           >
             <RefreshCw className="size-4" /> Yenile
           </button>
@@ -186,7 +186,7 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
             {channel && (
               <button
                 onClick={() => { setChannel(""); setPage(1); }}
-                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-50"
+                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-500/25"
               >
                 Tüm kanallar
               </button>
@@ -289,14 +289,14 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
               <button
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 disabled:opacity-40 hover:bg-slate-50"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-500/25"
               >
                 <ChevronLeft className="size-4" /> Önceki
               </button>
               <button
                 disabled={page >= list.pages}
                 onClick={() => setPage((p) => p + 1)}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 disabled:opacity-40 hover:bg-slate-50"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-500/25"
               >
                 Sonraki <ChevronRight className="size-4" />
               </button>

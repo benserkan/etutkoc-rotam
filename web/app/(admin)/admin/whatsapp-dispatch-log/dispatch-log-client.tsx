@@ -149,7 +149,7 @@ export function DispatchLogClient({ initial }: Props) {
                 <button
                   type="button"
                   onClick={clearSender}
-                  className="ml-1 rounded-full hover:bg-emerald-200 p-0.5"
+                  className="ml-1 rounded-full hover:bg-emerald-200 p-0.5 dark:hover:bg-emerald-500/25"
                   aria-label="Filtreyi temizle"
                 >
                   <X className="size-3 text-emerald-800 dark:text-emerald-200" aria-hidden />

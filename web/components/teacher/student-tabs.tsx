@@ -779,9 +779,9 @@ function QuickActions({
 
 // Açık-zemin ton sınıfları (koyu temada da okunur — explicit, purge-safe)
 const SUMMARY_TONE: Record<string, { card: string; title: string; text: string; icon: string }> = {
-  red: { card: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 hover:bg-rose-100", title: "text-rose-900 dark:text-rose-200", text: "text-rose-800 dark:text-rose-200", icon: "text-rose-600 dark:text-rose-300" },
-  amber: { card: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 hover:bg-amber-100", title: "text-amber-900 dark:text-amber-200", text: "text-amber-800 dark:text-amber-200", icon: "text-amber-600 dark:text-amber-300" },
-  green: { card: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 hover:bg-emerald-100", title: "text-emerald-900 dark:text-emerald-200", text: "text-emerald-800 dark:text-emerald-200", icon: "text-emerald-600 dark:text-emerald-300" },
+  red: { card: "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 hover:bg-rose-100 dark:hover:bg-rose-500/25", title: "text-rose-900 dark:text-rose-200", text: "text-rose-800 dark:text-rose-200", icon: "text-rose-600 dark:text-rose-300" },
+  amber: { card: "border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 hover:bg-amber-100 dark:hover:bg-amber-500/25", title: "text-amber-900 dark:text-amber-200", text: "text-amber-800 dark:text-amber-200", icon: "text-amber-600 dark:text-amber-300" },
+  green: { card: "border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/25", title: "text-emerald-900 dark:text-emerald-200", text: "text-emerald-800 dark:text-emerald-200", icon: "text-emerald-600 dark:text-emerald-300" },
 };
 
 interface SummaryRow {

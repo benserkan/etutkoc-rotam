@@ -111,7 +111,7 @@ function RiskCallout({
   return (
     <Link
       href="/institution/at-risk"
-      className="group block rounded-lg border border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 px-4 py-3 hover:border-rose-400 hover:bg-rose-100/60 transition"
+      className="group block rounded-lg border border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 px-4 py-3 hover:border-rose-400 hover:bg-rose-100/60 transition dark:hover:bg-rose-500/25"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -154,7 +154,7 @@ function InactiveCallout({
   return (
     <Link
       href="/institution/activity-heatmap"
-      className="group block rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-4 py-3 hover:border-amber-400 hover:bg-amber-100/60 transition"
+      className="group block rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-4 py-3 hover:border-amber-400 hover:bg-amber-100/60 transition dark:hover:bg-amber-500/25"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">

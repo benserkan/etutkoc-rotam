@@ -1029,7 +1029,7 @@ export function OffersPanel({
                         ) : o.status === "sent" ? (
                           <>
                             <a href={`/offers/${o.token}`} target="_blank" rel="noreferrer"
-                               className="inline-flex items-center gap-1 rounded border border-indigo-300 bg-card px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50">
+                               className="inline-flex items-center gap-1 rounded border border-indigo-300 bg-card px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/25">
                               <ExternalLink className="size-3.5" aria-hidden /> Public link
                             </a>
                             <Button size="sm" variant="outline" disabled={cancelMut.isPending} onClick={() => cancelMut.mutate(o.id)}>
@@ -1145,25 +1145,25 @@ function InvoiceRow({ inv }: { inv: InvoiceItem }) {
             <button type="button" disabled={busy}
                     onClick={() => reminderMut.mutate({ invoiceId: inv.invoice_id, body: { kind: "manual" } })}
                     title="Hatırlatma gönder"
-                    className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+                    className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200 dark:hover:bg-sky-500/25">
               <BellRing className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { const d = prompt("Kaç gün ötelensin?", "7"); if (d) postponeMut.mutate({ invoiceId: inv.invoice_id, body: { days: Number(d) } }); }}
                     title="Vadeyi ötele"
-                    className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 hover:bg-amber-100 disabled:opacity-50 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                    className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 hover:bg-amber-100 disabled:opacity-50 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:hover:bg-amber-500/25">
               <CalendarClock className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { if (confirm("Manuel ödendi işaretlensin mi?")) markPaidMut.mutate({ invoiceId: inv.invoice_id, body: { method: "manual" } }); }}
                     title="Manuel ödendi"
-                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
+                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:hover:bg-emerald-500/25">
               <CheckCircle2 className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { const n = prompt("İptal sebebi?"); if (n != null) cancelMut.mutate({ invoiceId: inv.invoice_id, body: { note: n } }); }}
                     title="İptal et"
-                    className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
+                    className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-500/25">
               <Ban className="size-3.5" aria-hidden />
             </button>
           </div>

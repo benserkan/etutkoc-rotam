@@ -145,7 +145,7 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
             </Button>
           )}
           {["teacher", "institution_admin", "super_admin"].includes(t.role) && (
-            <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200">
+            <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:hover:bg-indigo-500/25">
               <Link href={`/admin/users/${t.id}/account-history`}>
                 <FileText className="size-4" aria-hidden />
                 Hesap Hareketleri
@@ -939,7 +939,7 @@ function DangerZone({
         <Button
           size="sm"
           variant="outline"
-          className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-100"
+          className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/25"
           onClick={() => setConfirmOpen(true)}
         >
           <Trash2 className="size-3.5" aria-hidden />

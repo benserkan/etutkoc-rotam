@@ -122,7 +122,7 @@ export function AdminUsersClient({
           <Button
             variant="outline"
             onClick={() => setDemoOpen(true)}
-            className="border-amber-300 text-amber-900 dark:text-amber-200 hover:bg-amber-50"
+            className="border-amber-300 text-amber-900 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-500/25"
             title="Tanıtım için hazır kurum/koç/öğrenci/veli ekosistemi oluştur"
           >
             <FlaskConical className="size-4" aria-hidden />
@@ -555,7 +555,7 @@ export function TempPasswordDialog({
             size="sm"
             variant="outline"
             onClick={copy}
-            className="border-amber-300 text-amber-800 dark:text-amber-200 hover:bg-amber-100"
+            className="border-amber-300 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-500/25"
           >
             {copied ? (
               <>

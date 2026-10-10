@@ -215,7 +215,7 @@ function InvitationRow({
             variant="ghost"
             size="sm"
             onClick={onRevoke}
-            className="text-rose-600 dark:text-rose-300 hover:text-rose-700 hover:bg-rose-50"
+            className="text-rose-600 dark:text-rose-300 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/25 dark:hover:text-rose-100"
           >
             İptal et
           </Button>

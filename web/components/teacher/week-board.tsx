@@ -1017,7 +1017,7 @@ function ProgramsDropdown({
                   <button
                     type="button"
                     onClick={() => onDelete(p)}
-                    className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+                    className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/25 dark:hover:text-rose-100"
                     title="Programı sil"
                     aria-label="Programı sil"
                   >

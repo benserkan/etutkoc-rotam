@@ -217,7 +217,7 @@ function PlanCard({ card, yearly, annual, glossary }: { card: PricingCard; yearl
           "mt-7 inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition",
           onColor
             ? "bg-amber-400 text-cyan-950 hover:bg-amber-300"
-            : "border border-cyan-600 text-cyan-700 hover:bg-cyan-50",
+            : "border border-cyan-600 text-cyan-700 hover:bg-cyan-50 dark:hover:bg-cyan-500/25",
         )}
       >
         {card.cta}

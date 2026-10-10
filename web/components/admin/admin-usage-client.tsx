@@ -358,8 +358,8 @@ function InstActions({
         className={cn(
           "text-xs",
           hardBlocked
-            ? "border-emerald-200 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50"
-            : "border-rose-200 text-rose-700 dark:text-rose-300 hover:bg-rose-50",
+            ? "border-emerald-200 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/25"
+            : "border-rose-200 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/25",
         )}
       >
         {hardBlocked ? "Aç" : "Durdur"}
@@ -368,7 +368,7 @@ function InstActions({
         size="sm"
         variant="outline"
         onClick={() => setBonusOpen(true)}
-        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50"
+        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/25"
       >
         +Bonus
       </Button>
@@ -556,7 +556,7 @@ function IndepBonus({ userId }: { userId: number }) {
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50"
+        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/25"
       >
         +Bonus
       </Button>

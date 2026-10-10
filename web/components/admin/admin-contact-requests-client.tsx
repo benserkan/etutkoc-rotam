@@ -395,7 +395,7 @@ function CoachOnboardDialog({ item }: { item: ContactRequestItem }) {
     <>
       {canOnboard ? (
         <button type="button" onClick={() => setOpen(true)}
-                className="inline-flex items-center gap-1 rounded border border-violet-300 bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
+                className="inline-flex items-center gap-1 rounded border border-violet-300 bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200 dark:hover:bg-violet-500/25">
           <Rocket className="size-3.5" aria-hidden /> Koç Aç + Aktive Et
         </button>
       ) : null}
@@ -563,7 +563,7 @@ function OnboardDialog({ item }: { item: ContactRequestItem }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1 rounded border border-cyan-300 bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 px-2 py-0.5 text-xs font-semibold text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100"
+          className="inline-flex items-center gap-1 rounded border border-cyan-300 bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 px-2 py-0.5 text-xs font-semibold text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-500/25"
         >
           <Rocket className="size-3.5" aria-hidden /> Kurum Aç + Aktive Et
         </button>
@@ -763,7 +763,7 @@ function OnboardSuccessPanel({
             <button
               type="button"
               onClick={() => copy(result.temp_password, "pwd")}
-              className="inline-flex items-center gap-1 rounded border border-slate-300 bg-card px-2 py-0.5 text-xs hover:bg-slate-50"
+              className="inline-flex items-center gap-1 rounded border border-slate-300 bg-card px-2 py-0.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-500/25"
             >
               {copiedPwd ? <Check className="size-3 text-emerald-600 dark:text-emerald-300" aria-hidden /> : <Copy className="size-3" aria-hidden />}
               {copiedPwd ? "Kopyalandı" : "Kopyala"}
@@ -783,7 +783,7 @@ function OnboardSuccessPanel({
           <button
             type="button"
             onClick={() => copy(result.payment_link_url, "url")}
-            className="inline-flex items-center gap-1 rounded border border-cyan-300 bg-card px-2 py-0.5 text-xs hover:bg-cyan-50"
+            className="inline-flex items-center gap-1 rounded border border-cyan-300 bg-card px-2 py-0.5 text-xs hover:bg-cyan-50 dark:hover:bg-cyan-500/25"
           >
             {copiedUrl ? <Check className="size-3 text-emerald-600 dark:text-emerald-300" aria-hidden /> : <Copy className="size-3" aria-hidden />}
             {copiedUrl ? "Kopyalandı" : "Kopyala"}

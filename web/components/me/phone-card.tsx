@@ -223,7 +223,7 @@ function PhoneVerifiedPanel({
         variant="outline"
         onClick={doDelete}
         disabled={mut.isPending}
-        className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50"
+        className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-500/25"
       >
         {mut.isPending ? (
           <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -484,7 +484,7 @@ function PhoneSoftPanel({
                 variant="outline"
                 onClick={() => delMut.mutate()}
                 disabled={delMut.isPending}
-                className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50"
+                className="text-rose-700 dark:text-rose-300 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-500/25"
               >
                 {delMut.isPending ? (
                   <Loader2 className="size-3.5 animate-spin" aria-hidden />

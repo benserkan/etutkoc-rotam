@@ -106,7 +106,7 @@ export function AdminInstitutionDetailClient({
             {inst.slug}
           </div>
         </div>
-        <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200">
+        <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:hover:bg-indigo-500/25">
           <Link href={`/admin/institutions/${inst.id}/account-history`}>
             <FileText className="size-4" aria-hidden />
             Hesap Hareketleri
@@ -394,7 +394,7 @@ function LogoCard({
             {hasLogo ? (
               <Button
                 variant="ghost"
-                className="text-rose-600 dark:text-rose-300 hover:bg-rose-50 hover:text-rose-700"
+                className="text-rose-600 dark:text-rose-300 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/25 dark:hover:text-rose-100"
                 onClick={() => remove.mutate()}
                 disabled={busy}
               >
@@ -720,7 +720,7 @@ function PlanCard({
                         className={cn(
                           "w-full whitespace-normal text-xs",
                           isCur
-                            ? "border border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-100"
+                            ? "border border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-500/25"
                             : isSel
                               ? "bg-cyan-700 text-white hover:bg-cyan-800"
                               : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
@@ -989,7 +989,7 @@ function DangerZone({
         <Button
           size="sm"
           variant="outline"
-          className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-100"
+          className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/25"
           onClick={() => setConfirmOpen(true)}
         >
           <Trash2 className="size-3.5" aria-hidden />

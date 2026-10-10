@@ -240,7 +240,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                 type="button"
                 disabled={selected.size === 0 || busy}
                 onClick={() => setConfirm({ action: "reject", ids: Array.from(selected) })}
-                className="rounded border border-amber-300 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 px-3 py-1 text-xs font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-200 disabled:opacity-40"
+                className="rounded border border-amber-300 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 px-3 py-1 text-xs font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-200 disabled:opacity-40 dark:hover:bg-amber-500/25"
               >
                 Reddet (gizle)
               </button>
@@ -248,7 +248,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                 type="button"
                 disabled={selected.size === 0 || busy}
                 onClick={() => setConfirm({ action: "delete", ids: Array.from(selected) })}
-                className="rounded border border-rose-300 bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 px-3 py-1 text-xs font-medium text-rose-800 dark:text-rose-200 hover:bg-rose-200 disabled:opacity-40"
+                className="rounded border border-rose-300 bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 px-3 py-1 text-xs font-medium text-rose-800 dark:text-rose-200 hover:bg-rose-200 disabled:opacity-40 dark:hover:bg-rose-500/25"
               >
                 Sil
               </button>
@@ -317,7 +317,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                       <div className="flex flex-wrap items-center gap-1.5">
                         <Link
                           href={`/admin/feature-catalog/${c.id}`}
-                          className="rounded border border-indigo-200 bg-indigo-100 dark:bg-indigo-500/15 dark:border-indigo-500/30 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200"
+                          className="rounded border border-indigo-200 bg-indigo-100 dark:bg-indigo-500/15 dark:border-indigo-500/30 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/25"
                         >
                           Aç &amp; Düzenle →
                         </Link>
@@ -326,7 +326,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                             type="button"
                             disabled={busy}
                             onClick={() => setConfirm({ action: "reject", ids: [c.id] })}
-                            className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200"
+                            className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:hover:bg-amber-500/25"
                           >
                             Reddet
                           </button>
@@ -335,7 +335,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                           type="button"
                           disabled={busy}
                           onClick={() => setConfirm({ action: "delete", ids: [c.id] })}
-                          className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 hover:bg-rose-100 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200"
+                          className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 hover:bg-rose-100 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-500/25"
                         >
                           Sil
                         </button>

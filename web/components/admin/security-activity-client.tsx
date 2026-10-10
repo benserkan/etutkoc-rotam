@@ -339,7 +339,7 @@ function HeatmapDrill({ institutionId, onClose }: { institutionId: number; onClo
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {q.data?.institution_id ? (
-            <Link href={`/admin/revenue/institutions/${q.data.institution_id}`} className="rounded border border-indigo-300 px-2 py-1 text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50">
+            <Link href={`/admin/revenue/institutions/${q.data.institution_id}`} className="rounded border border-indigo-300 px-2 py-1 text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/25">
               Kurum 360 →
             </Link>
           ) : null}

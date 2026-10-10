@@ -152,6 +152,14 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   `dark:text-` karşılığıyla yazılır. + Paket asistanı "Bize yaz" artık muhataba **e-posta** da
   atar (`support_billing_handoff`; kurum öğretmeni → kurum yöneticileri, bağımsız koç → süper
   yöneticiler + satış adresi; commit `a9ff990`).
+- **KOYU TEMA HOVER OKUNABİLİRLİĞİ — CANLI (2026-10-10, migration YOK):** koç: Durum Özeti
+  sarı kartının üzerine gelince yazı okunmuyordu (`hover:bg-amber-100` → koyu temada açık
+  zemin + açık yazı, kontrast 1,12). Site geneli tarama: **92 sınıf / 47 dosya** aynı hata →
+  kodmod `scripts/fix_dark_hover_classes.py` (`dark:hover:bg-<c>-500/25`, hover:text varsa
+  `dark:hover:text-<c>-100`; force-light + sabit beyaz zemin hariç). Yeni eslint
+  **`lgs/no-light-hover-without-dark`** (`--max-warnings 0`). YENİ `live_dark_hover_contrast.py`
+  6/6 (eski sınıfla kırmızı — ayırt edici). **KURAL: açık hover zemini (hover:bg-*-50/100/200)
+  daima dark:hover:bg- karşılığıyla yazılır.**
 - **ÖNLEM — `scripts/check_migration_heads.py`**: çoklu head / kopuk down_revision varsa
   `deploy/redeploy.sh` durur (iki oturumun aynı tabana migration yazması prod açılışını düşürür).
   **KURAL: yeni migration'ın down_revision'ı daima `alembic heads` çıktısı; deploy'dan önce bekçi.**

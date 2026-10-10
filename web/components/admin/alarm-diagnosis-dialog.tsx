@@ -254,7 +254,7 @@ function Icerik({
                 variant="outline"
                 disabled={resolve.isPending}
                 onClick={() => cozumle(true)}
-                className="border-amber-300 text-amber-800 hover:bg-amber-50 dark:text-amber-300"
+                className="border-amber-300 text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/25"
               >
                 <CircleSlash className="mr-1.5 size-4" aria-hidden />
                 Bu yanlış alarm

@@ -86,7 +86,7 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
       <div className="flex flex-wrap gap-2">
         <Link
           href={`/parent/students/${studentId}`}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/40 p-3 hover:bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/40 p-3 hover:bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:hover:bg-cyan-500/25"
         >
           <Sparkles className="size-5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
           <span className="text-sm text-cyan-950 dark:text-cyan-100">

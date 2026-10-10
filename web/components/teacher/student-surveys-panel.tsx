@@ -334,7 +334,7 @@ function CareerSynthesisResult({
             type="button"
             onClick={onRefresh}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-md border border-amber-400 bg-card px-2.5 py-1 text-xs font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1.5 rounded-md border border-amber-400 bg-card px-2.5 py-1 text-xs font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100 disabled:opacity-50 transition dark:hover:bg-amber-500/25"
           >
             {busy ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -488,7 +488,7 @@ function AssignmentRow({
         <button
           type="button"
           onClick={onOpenResult}
-          className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 px-2.5 py-1 text-xs font-medium hover:bg-emerald-100 transition"
+          className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 px-2.5 py-1 text-xs font-medium hover:bg-emerald-100 transition dark:hover:bg-emerald-500/25"
         >
           Sonucu Gör
         </button>

@@ -172,8 +172,8 @@ function ToggleButton({ flag }: { flag: FeatureFlagItem }) {
         className={cn(
           "text-xs px-3 py-1 rounded font-medium border",
           flag.enabled_globally
-            ? "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border-emerald-300 hover:bg-emerald-200"
-            : "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 border-rose-300 hover:bg-rose-200",
+            ? "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/25"
+            : "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 border-rose-300 hover:bg-rose-200 dark:hover:bg-rose-500/25",
         )}
       >
         {flag.enabled_globally ? "● Açık" : "○ Kapalı"}
