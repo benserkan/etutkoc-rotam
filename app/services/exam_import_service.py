@@ -328,13 +328,12 @@ def untaken_optional_block_ids(
             if not _answered(qs) and any(_answered(o) for o in others):
                 out.update(q.id for q in qs)
 
-    if section is not None and track is not None and universe_for_section(section) == EXAM_UNIVERSE_AYT:
-        from app.services.curriculum_progress import TRACK_AYT_SUBJECTS
-        track_keys = {_subject_key(n) for n in TRACK_AYT_SUBJECTS.get(track, set())}
-        if track_keys:
-            for k, qs in groups.items():
-                if k not in track_keys and not _answered(qs):
-                    out.update(q.id for q in qs)
+    from app.services.exam_subjects import untaken_track_keys
+    track_keys = untaken_track_keys(section, track)
+    if track_keys:
+        for k, qs in groups.items():
+            if k not in track_keys and not _answered(qs):
+                out.update(q.id for q in qs)
     return out
 
 
@@ -2041,8 +2040,14 @@ def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
         r["_final_topic"] = tp
         r["_home_subject_id"] = home.id if home else None
 
+    # AYT alan ayrımı: alan dışı + hiç cevaplanmamış ders grupları kırılıma
+    # girmez, boşları toplamdan düşer (exam_subjects TEK MERKEZ; net değişmez)
+    from app.services.exam_subjects import split_untaken_groups
+    kept_groups, dropped_groups = split_untaken_groups(
+        list(groups.values()), section, student.track)
+    totals["blank"] -= sum(g["blank"] for g in dropped_groups)
     subject_payload = []
-    for g in groups.values():
+    for g in kept_groups:
         g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
         subject_payload.append(g)
 
@@ -2263,15 +2268,28 @@ def rebuild_subject_nets(db: Session, exam: ExamResult, student: User) -> bool:
             g["wrong"] += 1
         elif q.result == EQ_RESULT_BOS:
             g["blank"] += 1
+    # AYT alan ayrımı (exam_subjects) — confirm ile AYNI kural; toplamlar da
+    # satırlardan yeniden kurulur ki eski kayıtların "103 boş"u düzelsin
+    from app.services.exam_subjects import split_untaken_groups
+    kept_groups, _dropped = split_untaken_groups(
+        list(groups.values()), section, student.track)
     payload: list[dict] = []
-    for g in groups.values():
+    for g in kept_groups:
         g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
         payload.append(g)
+    tc = sum(g["correct"] for g in kept_groups)
+    tw = sum(g["wrong"] for g in kept_groups)
+    tb = sum(g["blank"] for g in kept_groups)
+    changed = False
+    if (tc, tw, tb) != (exam.total_correct, exam.total_wrong, exam.total_blank) and tc + tw + tb > 0:
+        exam.total_correct, exam.total_wrong, exam.total_blank = tc, tw, tb
+        exam.net = compute_net(tc, tw, section)
+        changed = True
     new_json = json.dumps(payload, ensure_ascii=False)
-    if new_json == (exam.subject_nets or ""):
-        return False
-    exam.subject_nets = new_json
-    return True
+    if new_json != (exam.subject_nets or ""):
+        exam.subject_nets = new_json
+        changed = True
+    return changed
 
 
 def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:

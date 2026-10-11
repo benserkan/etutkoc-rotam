@@ -38,6 +38,7 @@ from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
 from app.main import app
+from app.models.user import Track
 from app.models import (
     CreditAccount,
     CurriculumModel,
@@ -1378,6 +1379,77 @@ def main() -> int:
         check("34c. confirm TYT konu id'sini KABUL etti (evren doğrulaması) + kırılım 'AYT Fizik'",
               r.status_code == 200 and dc34.get("matched_topic_count") == 2
               and sn34 == ["AYT Fizik"], f"{r.text[:200]} sn={sn34}")
+        read_behavior["read"] = build_tyt_read()
+
+        # --- 35) AYT ALAN AYRIMI: sayısal öğrencide girilmeyen sözel bölüm ---
+        # kırılıma girmez, toplam boş düşer (net aynı); soru satırları belgeye
+        # sadık kalır. Alan içi boş ders (Fizik 1 boş) gerçek eksik → kalır.
+        with SessionLocal() as db:
+            st35 = db.get(User, ids["student"])
+            st35.track = Track.SAYISAL
+            db.commit()
+        read_behavior["read"] = {
+            "exam_title": f"{PFX} CADDEM AYT CIS 3",
+            "exam_date": "2026-10-05", "grade_hint": 12, "type_hints": ["AYT"],
+            "subjects": [
+                {"name": "Fizik", "questions": 2, "correct": 1, "wrong": 0, "blank": 1, "net": 1.0},
+                {"name": "Edebiyat", "questions": 2, "correct": 0, "wrong": 0, "blank": 2, "net": 0.0},
+            ],
+            "questions": [
+                {"subject": "Fizik", "no": 1, "topic": "Vektörler",
+                 "correct_answer": "A", "student_answer": "A", "result": "dogru"},
+                {"subject": "Fizik", "no": 2, "topic": "Vektörler",
+                 "correct_answer": "B", "student_answer": None, "result": "bos"},
+                {"subject": "Edebiyat", "no": 1, "topic": "Paragraf",
+                 "correct_answer": "C", "student_answer": None, "result": "bos"},
+                {"subject": "Edebiyat", "no": 2, "topic": "Paragraf",
+                 "correct_answer": "D", "student_answer": None, "result": "bos"},
+            ],
+            "score_info": None,
+        }
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            files={"file": fresh_pdf()})
+        d35 = r.json() if r.status_code == 200 else {}
+        payload35 = {
+            "title": d35.get("title"), "exam_date": d35.get("exam_date"),
+            "section": d35.get("section"), "scope": d35.get("scope"),
+            "grade_hint": d35.get("grade_hint"), "score_info": None,
+            "rows": [{k: x[k] for k in ("subject_raw", "question_no", "topic_raw",
+                                        "topic_id", "correct_answer", "student_answer",
+                                        "result", "is_suspect")} for x in d35.get("rows", [])],
+        }
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-confirm",
+            data={"payload": json.dumps(payload35)}, files={"file": fresh_pdf()})
+        dc35 = r.json().get("data", {}) if r.status_code == 200 else {}
+        with SessionLocal() as db:
+            ex35 = db.get(ExamResult, dc35.get("exam_id")) if dc35 else None
+            sn35 = [s["name"] for s in json.loads(ex35.subject_nets or "[]")] if ex35 else []
+            tot35 = (ex35.total_correct, ex35.total_wrong, ex35.total_blank, ex35.net) if ex35 else None
+            nrows35 = len(ex35.questions) if ex35 else 0
+            # eski kayıt gibi: sözel grubu + 2 boşu elle geri koy → rebuild düzeltmeli
+            if ex35:
+                ex35.subject_nets = json.dumps(json.loads(ex35.subject_nets) + [
+                    {"name": "AYT Edebiyat", "correct": 0, "wrong": 0, "blank": 2,
+                     "unmatched": False, "net": 0.0}], ensure_ascii=False)
+                ex35.total_blank += 2
+                db.flush()
+                changed35 = svc.rebuild_subject_nets(db, ex35, db.get(User, ids["student"]))
+                sn35b = [s["name"] for s in json.loads(ex35.subject_nets or "[]")]
+                tot35b = (ex35.total_correct, ex35.total_wrong, ex35.total_blank, ex35.net)
+                db.rollback()
+            st35 = db.get(User, ids["student"])
+            st35.track = None
+            db.commit()
+        check("35a. sayısal öğrencide sözel grup kırılımda YOK · toplam 1D 0Y 1B (sözel 2 boş düştü) · net 1.0",
+              r.status_code == 200 and sn35 == ["AYT Fizik"] and tot35 == (1, 0, 1, 1.0),
+              f"{r.text[:150]} sn={sn35} tot={tot35}")
+        check("35b. soru satırları belgeye sadık (4 satır kaldı)", nrows35 == 4, str(nrows35))
+        check("35c. eski kayıt rebuild ile aynı kurala çekilir (grup düşer + boş 3→1)",
+              changed35 is True and sn35b == ["AYT Fizik"] and tot35b == (1, 0, 1, 1.0),
+              f"{changed35} {sn35b} {tot35b}")
         read_behavior["read"] = build_tyt_read()
 
     finally:
