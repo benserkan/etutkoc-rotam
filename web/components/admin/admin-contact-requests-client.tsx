@@ -755,7 +755,7 @@ function OnboardSuccessPanel({
         <div className="mt-2 space-y-1.5 text-sm">
           <div>
             <span className="text-xs text-slate-600 dark:text-slate-300">E-posta:</span>{" "}
-            <code className="rounded bg-white px-1.5 py-0.5 font-mono text-xs">{result.institution_admin_email}</code>
+            <code className="rounded bg-card px-1.5 py-0.5 font-mono text-xs text-foreground">{result.institution_admin_email}</code>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-600 dark:text-slate-300">Geçici şifre:</span>
@@ -779,7 +779,7 @@ function OnboardSuccessPanel({
       <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
         <p className="text-[11px] font-bold uppercase tracking-wide text-cyan-700 dark:text-cyan-300">Ödeme linki</p>
         <div className="mt-2 flex items-center gap-2">
-          <code className="flex-1 truncate rounded bg-white px-2 py-1 font-mono text-xs">{result.payment_link_url}</code>
+          <code className="flex-1 truncate rounded bg-card px-2 py-1 font-mono text-xs text-foreground">{result.payment_link_url}</code>
           <button
             type="button"
             onClick={() => copy(result.payment_link_url, "url")}

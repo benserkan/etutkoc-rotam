@@ -127,8 +127,8 @@ export function CarryoverPanel({
                 className={cn(
                   "rounded-md border px-2.5 py-2 text-xs",
                   isBrowse
-                    ? "border-slate-200 bg-white"
-                    : "cursor-grab border-amber-200 bg-white active:cursor-grabbing",
+                    ? "border-slate-200 bg-card dark:border-slate-500/40"
+                    : "cursor-grab border-amber-200 bg-card active:cursor-grabbing dark:border-amber-500/40",
                 )}
               >
                 <div className="flex items-start gap-2">
@@ -164,7 +164,7 @@ export function CarryoverPanel({
                           {il.label} · {il.count} soru
                         </span>
                       ))}
-                    <span className="text-slate-500">
+                    <span className="text-slate-500 dark:text-slate-400">
                       {fmtDate(c.task_date)} ·{" "}
                       <span className="underline decoration-dotted">ayrıntı</span>
                     </span>

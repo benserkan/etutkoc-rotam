@@ -67,7 +67,7 @@ export function PricingCards({
     return (
       <div className="grid items-start gap-6 md:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-96 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+          <div key={i} className="h-96 animate-pulse rounded-2xl border border-slate-200 bg-white dark:bg-white" />
         ))}
       </div>
     );
@@ -150,7 +150,7 @@ function PlanCard({ card, yearly, annual, glossary }: { card: PricingCard; yearl
         "relative flex h-full flex-col rounded-2xl border p-7 transition hover:-translate-y-1.5",
         featured && "border-transparent bg-gradient-to-br from-cyan-700 to-cyan-900 text-white shadow-xl shadow-cyan-700/25 md:-translate-y-3",
         dark && "border-transparent bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-xl shadow-slate-900/30",
-        !onColor && "border-slate-200 bg-white shadow-sm hover:border-cyan-300",
+        !onColor && "border-slate-200 bg-white dark:bg-white shadow-sm hover:border-cyan-300",
       )}
     >
       {card.badge ? (

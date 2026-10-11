@@ -69,7 +69,7 @@ export function ShellBrand({
           className={cn(
             "block w-auto object-contain",
             sidebar ? "h-16 max-w-[210px]" : "h-10 max-w-[180px]",
-            onDark && "rounded-md bg-white px-1.5 py-0.5",
+            onDark && "rounded-md bg-white dark:bg-white px-1.5 py-0.5",
           )}
         />
       ) : (

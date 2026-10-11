@@ -325,7 +325,7 @@ function ChannelCard({
       className={`rounded-xl border p-4 text-left transition ${
         active
           ? "border-cyan-500 ring-2 ring-cyan-200 bg-cyan-50/40 dark:bg-cyan-500/10"
-          : "border-slate-200 bg-white hover:border-slate-300"
+          : "border-slate-200 bg-card hover:border-slate-300 dark:border-slate-500/40"
       }`}
     >
       <div className="flex items-center justify-between">

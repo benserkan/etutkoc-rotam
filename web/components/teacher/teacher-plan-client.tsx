@@ -491,7 +491,7 @@ function StatusHero({
   return (
     <section className={cn("rounded-3xl border-2 bg-card p-5 sm:p-7", tone.ring)} aria-label="Paket durumu">
       <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold", tone.chip)}>
-        <span className="size-1.5 rounded-full bg-white" aria-hidden />
+        <span className="size-1.5 rounded-full bg-white dark:bg-white" aria-hidden />
         {s.label}
       </span>
       <h2 className="mt-3 font-display text-3xl font-bold text-foreground">{title}</h2>

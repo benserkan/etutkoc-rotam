@@ -183,7 +183,7 @@ function UpgradeRequestCard({ data }: { data: SubscriptionResponse }) {
                       "rounded-xl border p-3 text-left transition",
                       isSel
                         ? "border-cyan-600 bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 ring-1 ring-cyan-600"
-                        : "border-slate-200 bg-white hover:border-cyan-300",
+                        : "border-slate-200 bg-card hover:border-cyan-300 dark:border-slate-500/40",
                     )}
                   >
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-200">{p.label}</p>

@@ -256,6 +256,45 @@ const lgsPlugin = {
         };
       },
     },
+
+    // 7. no-white-box-theme-text (2026-10-11, koç: "geçen haftadan eksikler
+    //    hiç okunmuyor") → sabit beyaz zemin (bg-white) koyu tema karşılığı
+    //    olmadan ve kendi koyu yazı rengi olmadan: içindeki yazılar temadan
+    //    (text-foreground / dark:text-*-200) beslenir → koyu temada beyaz
+    //    zemine açık yazı. Düzeltme: bg-card (temaya uyar). Bilinçli beyaz
+    //    (logo zemini, QR, beyaz nokta) → `dark:bg-white` ile niyet açık yazılır.
+    "no-white-box-theme-text": {
+      meta: {
+        type: "problem",
+        docs: { description: "Sabit beyaz kutu, temadan renk alan yazıyla koyu temada okunmaz" },
+        schema: [],
+        messages: {
+          white:
+            "Koyu temada okunmayabilir: bg-white koyu tema karşılığı ve kendi koyu yazı rengi olmadan. Temaya uyan zemin için bg-card kullan; bilinçli beyazsa dark:bg-white ekle.",
+        },
+      },
+      create(context) {
+        const src = context.sourceCode?.getText?.() ?? "";
+        if (src.includes("force-light")) return {};
+        const C =
+          "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
+        const WHITE = /(?<![:\w/-])bg-white(?![\w/])/;
+        const OWN_TEXT = new RegExp(`(?<![:\\w/-])text-(?:${C})-[5-9]00(?![\\w])|text-\\[#`);
+        function check(node, value) {
+          if (typeof value !== "string" || !WHITE.test(value)) return;
+          if (value.includes("dark:bg-") || OWN_TEXT.test(value)) return;
+          context.report({ node, messageId: "white" });
+        }
+        return {
+          Literal(node) {
+            if (typeof node.value === "string") check(node, node.value);
+          },
+          TemplateElement(node) {
+            check(node, node.value?.cooked ?? node.value?.raw);
+          },
+        };
+      },
+    },
   },
 };
 
@@ -284,6 +323,7 @@ const eslintConfig = defineConfig([
       "lgs/no-unsafe-contrast": "warn",
       "lgs/no-dark-text-without-variant": "warn",
       "lgs/no-light-hover-without-dark": "warn",
+      "lgs/no-white-box-theme-text": "warn",
     },
   },
 

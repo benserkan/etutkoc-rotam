@@ -449,7 +449,7 @@ function Branding() {
   return (
     <Panel>
       <div className="flex items-center gap-2 rounded-xl border border-dashed border-cyan-300 bg-cyan-50/60 p-3">
-        <span className="inline-flex size-10 items-center justify-center rounded-lg bg-white shadow-sm">
+        <span className="inline-flex size-10 items-center justify-center rounded-lg bg-white dark:bg-white shadow-sm">
           <Building2 className="size-5 text-cyan-700" aria-hidden />
         </span>
         <div>

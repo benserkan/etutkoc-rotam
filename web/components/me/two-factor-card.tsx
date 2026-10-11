@@ -149,7 +149,7 @@ export function TwoFactorCard() {
         /* KURULUM — QR + backup + kod doğrulama */
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
-            <div className="inline-block rounded-md bg-white p-3">
+            <div className="inline-block rounded-md bg-white dark:bg-white p-3">
               <QRCodeSVG value={setup.provisioning_uri} size={160} />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">

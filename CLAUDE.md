@@ -160,6 +160,13 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   **`lgs/no-light-hover-without-dark`** (`--max-warnings 0`). YENİ `live_dark_hover_contrast.py`
   6/6 (eski sınıfla kırmızı — ayırt edici). **KURAL: açık hover zemini (hover:bg-*-50/100/200)
   daima dark:hover:bg- karşılığıyla yazılır.**
+- **SABİT BEYAZ KUTU + TEMA YAZISI (2026-10-11, CANLI, migration YOK):** koç: hafta planı "Geçen
+  haftadan eksikler" kartları koyu temada okunmuyordu (bg-white kart + dark:text-*-200 yazı,
+  kontrast 1,23). Aynı hata: İletişim Sağlığı kanal kartları · kurum Abonelik paket kartları ·
+  İletişim Talepleri giriş bilgisi/link kutuları → `bg-card`. Yeni eslint
+  **`lgs/no-white-box-theme-text`**: bg-white, dark:bg- ve kendi koyu yazı rengi olmadan yazılamaz;
+  bilinçli beyaz (logo zemini, QR, nokta, pazarlama/yazdırma) `dark:bg-white` ile açık yazıldı.
+  YENİ `live_carryover_dark.py` 4/4 (eski sınıfla kırmızı).
 - **ÖNLEM — `scripts/check_migration_heads.py`**: çoklu head / kopuk down_revision varsa
   `deploy/redeploy.sh` durur (iki oturumun aynı tabana migration yazması prod açılışını düşürür).
   **KURAL: yeni migration'ın down_revision'ı daima `alembic heads` çıktısı; deploy'dan önce bekçi.**
