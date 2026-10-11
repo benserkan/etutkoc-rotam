@@ -59,6 +59,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   Test: `test_exam_parent_goal` 19/19 · `test_exam_import_prefer_school` 7/7 · notify 39 ·
   commentary 20 · chat 20 · exam_import 76 · maarif 22 · faz3 32 · progress 31.
   (`exam_wrong_bridge` 10/11 — senaryo 10 değişiklikten ÖNCE de kırmızı, ayrı iş.)
+- **Seçmeli blok (Din Kültürü ↔ Seçmeli Felsefe) + çift sayım — CANLI (2026-10-11, commit
+  `0eb96b7`, migration YOK):** Yağmur Ongan #224 (Cafer'in öğrencisi) CADDEM 12. sınıf CİS-1 TYT
+  karnesi (125 soru; Felsefe 5 + Din 5 + **Seç. Felsefe 5**): iki okuma Din/Seç. Felsefe'yi farklı
+  adla yazdı ("TYT_DinKültürü"/"TYT_Seç. Felsefe" ↔ açık ad) → `_subject_key` kovaları ayrıştı, 10 soru
+  İKİ KEZ kaydedildi (86D 19B → 91D 24B, net 81 → 86) + Seçmeli Felsefe'nin 5 boşu zorunlu
+  Felsefe'ye karışıp "Felsefe 11 boş". Düzeltme: `_SUBJECT_ALIASES` dinkulturu / sec felsefe ·
+  **Seçmeli Felsefe ders kırılımında kendi adıyla ayrı satır** (önizleme + kayıt + düzeltme taslağı +
+  `rebuild_subject_nets` aynı `_group_label`; konuları TYT Felsefe'de kalır) ·
+  `untaken_optional_block_ids`: ikisi de belgede varken TAMAMI boş taraf konu analizine girmez (sahte
+  "Bilgi Felsefesi +1,25 net" fırsatı yok; tek başına boş Din Kültürü gerçek eksik — dokunulmaz).
+  Prod onarımı `scripts/fix_exam_duplicate_subject_rows.py --exam 200 --apply` (kuru çalışma
+  varsayılan; `--scan` tüm sistemde başka kopya YOK). Test exam_import 83/83 (32a-g) · topic_analysis
+  14/14 · faz3 32 · progress 31 · teacher_exams 19 · maarif 22 · scope 21.
+  **KURAL: yeni karne formatında ders adı varyantı görülünce alias eklenir; iki okumanın aynı dersi
+  farklı adla yazması = çift sayım riski, testi 32a deseniyle yazılır.**
 - **Unutulan/Gelişen konular — KANIT + yeni tasarım (2026-10-03, migration YOK):** koç "%100 → %0
   nasıl oldu?" sorusunun cevabını göremiyordu. `exam_topic_analysis._trend_evidence`: her öğe artık
   ilk/son yarı D/toplam + son yarı yanlış/boş + yarıdaki deneme sayısı + kanıt gücü (≤4 soru az veri ·
