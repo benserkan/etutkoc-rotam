@@ -3836,6 +3836,15 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   sayfaları test DEĞİL). Eşleme elle sabit, prod `--no-map`. **YÜKLENMEDİ:** İntegral
   (PDF yarım tarama, yalnız 1. bölüm 30 test okunabildi — tam PDF istendi) ve eski
   Limit baskısı (maratonlar taranmamış + 2023 baskısının tekrarı).
+- **3D TYT BİYOLOJİ → 2026 BASKISI (2026-10-11, CANLI, migration YOK):** katalog #121 YERİNDE
+  güncellendi (id korunur): 26 bölüm/112 test → **36 bölüm/124 test**. Taranmış PDF (256 s.);
+  yapı içindekilerden, sayılar her sayfanın üst şeridindeki "BÖLÜM NN · Test NN" rozetinden (her
+  test 2 sayfa, zincirler boşluksuz). Koç isteğiyle **Emir'in kitabı (#374) yarı geçişli**: öğrencinin
+  çalıştığı ilk 13 bölüm ("…/ Hayvanlar - Virüsler" dahil, 14 Ekim rezervi dahil) DOKUNULMADI;
+  "Bire Bir ÖSYM (CANLILAR DÜNYASI)"dan itibaren 13 eski bölüm (görevsiz/ilerlemesiz — betik
+  bunu doğrulamadan silmez) yeni baskının 21 bölümüyle değişti → kitap 112→129 test, drift 0.
+  Betik `scripts/revise_3d_tyt_bio_2026.py` (kuru varsayılan, `--book N --apply`; book_sections'a
+  FK veren TÜM tabloları tarar). Yedek `pre_3dbio2026_20261011_0938.dump`.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
