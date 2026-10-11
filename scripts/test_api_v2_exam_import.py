@@ -181,6 +181,36 @@ def build_optional_pair_read() -> dict:
     }
 
 
+def build_umbrella_read() -> dict:
+    """TOPRAK TYT deseni (2026-10-11): özet 'Matematik 5' ŞEMSİYE (Mat 3 + Geo
+    2), soru listesi Matematik/Geometri AYRI; Geometri'nin kendi özeti yok."""
+    return {
+        "exam_title": f"{PFX} TOPRAK TYT DENEME 1",
+        "exam_date": "2026-09-28",
+        "grade_hint": 12,
+        "type_hints": ["TYT"],
+        "subjects": [
+            {"name": "Matematik", "questions": 5, "correct": 3, "wrong": 1, "blank": 1, "net": 2.75},
+            {"name": "Türkçe", "questions": 1, "correct": 1, "wrong": 0, "blank": 0, "net": 1.0},
+        ],
+        "questions": [
+            {"subject": "Türkçe", "no": 1, "topic": "Sözcükte Anlam",
+             "correct_answer": "C", "student_answer": "C", "result": "dogru"},
+            {"subject": "Matematik", "no": 1, "topic": "Rasyonel Sayılar",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            {"subject": "Matematik", "no": 2, "topic": "Tek Çift Sayılar",
+             "correct_answer": "B", "student_answer": "C", "result": "yanlis"},
+            {"subject": "Matematik", "no": 3, "topic": "Sayı Basamakları",
+             "correct_answer": "A", "student_answer": "A", "result": "dogru"},
+            {"subject": "Geometri", "no": 1, "topic": "Üçgende Alan",
+             "correct_answer": "E", "student_answer": "E", "result": "dogru"},
+            {"subject": "Geometri", "no": 2, "topic": "Çokgenler",
+             "correct_answer": "B", "student_answer": None, "result": "bos"},
+        ],
+        "score_info": None,
+    }
+
+
 def build_lgs_read() -> dict:
     """K12-tarzı LGS okuma taklidi: ders kısaltmaları ("Din K.ve A.B.", "Tarih")
     + virgüllü ondalık net + kazanım-cümlesi etiket (gerçek 30.03.2026.pdf'ten)."""
@@ -1253,6 +1283,43 @@ def main() -> int:
         check("32g. rebuild_subject_nets kayıtla aynı gruplamayı üretir (değişiklik yok)",
               changed32 is False, str(changed32))
         read_behavior["optional_pair"] = False
+        read_behavior["read"] = build_tyt_read()
+
+        # --- 33) ŞEMSİYE ÖZET: "Matematik 5" = Mat 3 + Geo 2 (TOPRAK TYT) ---
+        # özette Geometri'nin kendi satırı yok → Matematik özeti iki dersi
+        # birlikte sayar; eskiden "Matematik: soru sayısı tutmuyor (5 var 3
+        # okundu)" yanlış uyarısı çıkıyordu.
+        read_behavior["read"] = build_umbrella_read()
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            files={"file": fresh_pdf()})
+        d33 = r.json() if r.status_code == 200 else {}
+        chk33 = {c["code"]: c for c in d33.get("checks", [])}
+        mat33 = chk33.get("subject_counts:matematik")
+        check("33a. şemsiye özet: Matematik kontrolü UYUMLU (5 soru = 3 Mat + 2 Geo)",
+              r.status_code == 200 and mat33 is not None and mat33["ok"] is True
+              and mat33["detail"].startswith("5 soru"),
+              f"{mat33} {r.text[:120]}")
+        subj33 = {s["name"]: s for s in d33.get("subjects", [])}
+        check("33b. gruplar ayrı kalır (Matematik 3 · Geometri 2) + şemsiye neti gruba yazılmaz",
+              subj33.get("TYT Matematik", {}).get("questions") == 3
+              and subj33.get("TYT Geometri", {}).get("questions") == 2
+              and subj33.get("TYT Matematik", {}).get("doc_net") is None,
+              str(subj33)[:250])
+        # 33c kontrol: Geometri'nin KENDİ özeti varsa şemsiye sayılmaz →
+        # Matematik 5 vs 3 ve Geometri 3 vs 2 gerçek uyuşmazlık olarak kalır
+        read_behavior["read"]["subjects"].append(
+            {"name": "Geometri", "questions": 3, "correct": 1, "wrong": 0, "blank": 2, "net": 1.0})
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            files={"file": fresh_pdf()})
+        d33c = r.json() if r.status_code == 200 else {}
+        chk33c = {c["code"]: c for c in d33c.get("checks", [])}
+        check("33c. alt dersin kendi özeti varsa şemsiye kapalı (iki uyuşmazlık görünür)",
+              chk33c.get("subject_counts:matematik", {}).get("ok") is False
+              and chk33c.get("subject_counts:geometri", {}).get("ok") is False,
+              str({k: v.get("ok") for k, v in chk33c.items()})[:200])
         read_behavior["read"] = build_tyt_read()
 
     finally:

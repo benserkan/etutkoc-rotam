@@ -1122,10 +1122,18 @@ def _summary_agreement(read: dict) -> int:
     for q in read.get("questions") or []:
         k = _subject_key(q.get("subject"))
         counts[k] = counts.get(k, 0) + 1
+    skeys = {_subject_key(s.get("name")) for s in read.get("subjects") or []}
     score = 0
     for s in read.get("subjects") or []:
         qn = s.get("questions")
-        if qn is not None and counts.get(_subject_key(s.get("name"))) == qn:
+        if qn is None:
+            continue
+        sk = _subject_key(s.get("name"))
+        n = counts.get(sk, 0)
+        if n != qn:  # şemsiye ders (Matematik = Matematik + Geometri)
+            n += sum(counts.get(ck, 0) for ck in _SUMMARY_UMBRELLAS.get(sk, ())
+                     if ck not in skeys)
+        if n == qn:
             score += 1
     return score
 
@@ -1184,6 +1192,33 @@ def _fmt_refs(rows: list[dict]) -> str:
     return " · ".join(f"{k} {', '.join(v)}" for k, v in groups.items())
 
 
+# Özet tablosunda ŞEMSİYE ders: "Matematik 40" satırı soru listesinde Matematik 30
+# + Geometri 10 diye ayrışır (TOPRAK TYT, 2026-10-11 — "Matematik: soru sayısı
+# tutmuyor, 40 var 30 okundu" yanlış uyarısı). Özette alt dersin KENDİ satırı
+# yoksa ve şemsiye + alt ders satır toplamı özetle tutuyorsa birlikte sayılır.
+_SUMMARY_UMBRELLAS: dict[str, tuple[str, ...]] = {"matematik": ("geometri",)}
+
+
+def _umbrella_merge(
+    key: tuple[str | None, str], rs: list[dict], questions: int | None,
+    buckets: dict[tuple[str | None, str], list[dict]],
+    summary_keys: set[tuple[str | None, str]],
+) -> list[dict]:
+    """Şemsiye özet satırı için alt ders kovalarını kat (koşullu)."""
+    part, sk = key
+    children = _SUMMARY_UMBRELLAS.get(sk)
+    if not children or questions is None or len(rs) == questions:
+        return rs
+    extra: list[dict] = []
+    for ck in children:
+        if (part, ck) in summary_keys:
+            continue  # alt dersin kendi özeti var → ayrı sayılır
+        extra += buckets.get((part, ck), [])
+    if extra and len(rs) + len(extra) == questions:
+        return rs + extra
+    return rs
+
+
 def _summary_groups(read: dict, rows: list[dict]):
     """Belge özetindeki her ders için (özet, o dersin satırları) çiftleri.
 
@@ -1193,15 +1228,18 @@ def _summary_groups(read: dict, rows: list[dict]):
     buckets: dict[tuple[str | None, str], list[dict]] = {}
     for r in rows:
         buckets.setdefault((r.get("exam_part"), _subject_key(r.get("subject_raw"))), []).append(r)
+    summary_keys = {(s.get("part"), _subject_key(s["name"]))
+                    for s in read.get("subjects") or []}
     for s in read.get("subjects") or []:
         key = (s.get("part"), _subject_key(s["name"]))
         rs = buckets.get(key)
         if rs is None and s.get("part") is None:
-            cands = [v for (p, sk2), v in buckets.items() if sk2 == _subject_key(s["name"])]
-            rs = cands[0] if len(cands) == 1 else None
+            cands = [(k2, v) for k2, v in buckets.items() if k2[1] == key[1]]
+            if len(cands) == 1:
+                key, rs = cands[0]
         if rs is None:
             continue  # özetteki üst bölüm başlığı (örn. "TYT-SOSYAL") — satırlar alt derste
-        yield s, rs
+        yield s, _umbrella_merge(key, rs, s.get("questions"), buckets, summary_keys)
 
 
 def _tally(rs: list[dict]) -> dict[str, int]:
@@ -1593,6 +1631,12 @@ def analyze(
         (s.get("part"), _subject_key(s["name"])): s.get("net")
         for s in merged.get("subjects") or []
     }
+    # özet satırının soru sayısı — şemsiye özet ("Matematik 40" = Mat 30 + Geo
+    # 10) grubun neti değildir; sayı tutmuyorsa belge neti gruba yazılmaz
+    doc_qns: dict[tuple[str | None, str], int | None] = {
+        (s.get("part"), _subject_key(s["name"])): s.get("questions")
+        for s in merged.get("subjects") or []
+    }
 
     all_rows: list[dict] = []
     subjects_out: list[dict] = []
@@ -1736,7 +1780,8 @@ def analyze(
             for p in (part, None):
                 for k in keys:
                     v = doc_nets.get((p, k))
-                    if v is not None:
+                    qn = doc_qns.get((p, k))
+                    if v is not None and (qn is None or qn == g["questions"]):
                         doc_net = v
                         break
                 if doc_net is not None:
