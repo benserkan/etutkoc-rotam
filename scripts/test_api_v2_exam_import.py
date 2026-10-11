@@ -143,6 +143,44 @@ def build_tyt_read() -> dict:
     }
 
 
+def build_optional_pair_read() -> dict:
+    """CADDEM 12. sınıf TYT karnesi deseni (Yağmur #224, 2026-10-11): zorunlu
+    Felsefe + Din Kültürü (çözüldü) + Seçmeli Felsefe (TAMAMI boş — öğrenci
+    Din'i seçti). 2. okuma dersleri belgedeki bitişik/kısaltılmış adla yazar."""
+    return {
+        "exam_title": f"{PFX} CADDEM 12 CIS TYT",
+        "exam_date": "2026-09-12",
+        "grade_hint": 12,
+        "type_hints": ["TYT"],
+        "subjects": [
+            {"name": "TYT_Felsefe", "questions": 3, "correct": 1, "wrong": 1, "blank": 1, "net": 0.75},
+            {"name": "TYT_DinKültürü", "questions": 3, "correct": 3, "wrong": 0, "blank": 0, "net": 3.0},
+            {"name": "TYT_Seç. Felsefe", "questions": 3, "correct": 0, "wrong": 0, "blank": 3, "net": 0.0},
+        ],
+        "questions": [
+            {"subject": "Felsefe", "no": 1, "topic": "Felsefenin Konusu",
+             "correct_answer": "B", "student_answer": "B", "result": "dogru"},
+            {"subject": "Felsefe", "no": 2, "topic": "Bilgi Felsefesi",
+             "correct_answer": "E", "student_answer": None, "result": "bos"},
+            {"subject": "Felsefe", "no": 3, "topic": "Varlık Felsefesi",
+             "correct_answer": "A", "student_answer": "C", "result": "yanlis"},
+            {"subject": "Din Kültürü ve Ahlak Bilgisi", "no": 1, "topic": "Din ve İslam",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            {"subject": "Din Kültürü ve Ahlak Bilgisi", "no": 2, "topic": "Bilgi ve İnanç",
+             "correct_answer": "B", "student_answer": "B", "result": "dogru"},
+            {"subject": "Din Kültürü ve Ahlak Bilgisi", "no": 3, "topic": "Din ve Hayat",
+             "correct_answer": "E", "student_answer": "E", "result": "dogru"},
+            {"subject": "Seçmeli Felsefe", "no": 1, "topic": "Bilgi Felsefesi",
+             "correct_answer": "B", "student_answer": None, "result": "bos"},
+            {"subject": "Seçmeli Felsefe", "no": 2, "topic": "Ahlak Felsefesi",
+             "correct_answer": "D", "student_answer": None, "result": "bos"},
+            {"subject": "Seçmeli Felsefe", "no": 3, "topic": "Siyaset Felsefesi",
+             "correct_answer": "C", "student_answer": None, "result": "bos"},
+        ],
+        "score_info": None,
+    }
+
+
 def build_lgs_read() -> dict:
     """K12-tarzı LGS okuma taklidi: ders kısaltmaları ("Din K.ve A.B.", "Tarih")
     + virgüllü ondalık net + kazanım-cümlesi etiket (gerçek 30.03.2026.pdf'ten)."""
@@ -408,6 +446,15 @@ def main() -> int:
         if read_behavior.get("scramble_subjects"):
             for q in r2["questions"]:
                 q["subject"] = f"Öteki {q['subject']}"
+        # 32: 2. okuma dersleri belgedeki bitişik/kısaltılmış adla yazdı (gerçek
+        # CADDEM karnesi: "TYT_DinKültürü" / "TYT_Seç. Felsefe") — eşanlam
+        # kanonu olmadan kovalar ayrışıp 10 soru iki kez sayılıyordu
+        if read_behavior.get("optional_pair"):
+            ren = {"Felsefe": "TYT_Felsefe",
+                   "Din Kültürü ve Ahlak Bilgisi": "TYT_DinKültürü",
+                   "Seçmeli Felsefe": "TYT_Seç. Felsefe"}
+            for q in r2["questions"]:
+                q["subject"] = ren.get(q["subject"], q["subject"])
         return r1, r2
 
     def fake_generate(parts, *, personal_data, json_mode=True, timeout=45.0,
@@ -1138,6 +1185,75 @@ def main() -> int:
               f"rows={len(d31c.get('rows', []))} sus={d31c.get('suspect_count')}"
               f" mis={mis31c} {r.text[:120]}")
         read_behavior["scramble_subjects"] = False
+
+        # --- 32) SEÇMELİ BLOK (Din Kültürü ↔ Seçmeli Felsefe) + bitişik ad ---
+        # Gerçek CADDEM 12. sınıf TYT karnesi (Yağmur #224, 2026-10-11): iki
+        # okuma Din/Seç. Felsefe'yi farklı adla yazdı → 10 satır çift sayıldı
+        # (86D→91D); Seçmeli Felsefe'nin 5 boşu zorunlu Felsefe'ye karışıp
+        # "Felsefe 11 boş" çıktı.
+        read_behavior["read"] = build_optional_pair_read()
+        read_behavior["optional_pair"] = True
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            files={"file": fresh_pdf()})
+        d32 = r.json() if r.status_code == 200 else {}
+        rows32 = d32.get("rows", [])
+        check("32a. ÇİFT SAYIM YOK: 9 satır (15 değil) + şüpheli 0",
+              r.status_code == 200 and len(rows32) == 9
+              and d32.get("suspect_count") == 0,
+              f"rows={len(rows32)} sus={d32.get('suspect_count')} {r.text[:150]}")
+        subj32 = {s["name"]: s for s in d32.get("subjects", [])}
+        sec32 = subj32.get("Seçmeli Felsefe", {})
+        fel32 = subj32.get("TYT Felsefe", {})
+        din32 = subj32.get("TYT Din Kültürü ve Ahlak Bilgisi", {})
+        check("32b. Seçmeli Felsefe AYRI grup (3 boş) · zorunlu Felsefe 1 boş · "
+              "Din Kültürü ders olarak çözüldü (3 soru)",
+              sec32.get("questions") == 3 and sec32.get("blank") == 3
+              and fel32.get("questions") == 3 and fel32.get("blank") == 1
+              and din32.get("questions") == 3 and din32.get("correct") == 3,
+              str(list(subj32))[:200] + f" sec={sec32} fel={fel32}")
+        check("32c. önizleme satırı display_subject = 'Seçmeli Felsefe' + konusu "
+              "TYT Felsefe'ye bağlı",
+              all(x.get("display_subject") == "Seçmeli Felsefe"
+                  and x.get("subject_name") == "TYT Felsefe"
+                  for x in rows32 if x["subject_raw"] == "Seçmeli Felsefe"),
+              str([x for x in rows32 if x["subject_raw"] == "Seçmeli Felsefe"])[:250])
+        payload32 = {
+            "title": d32.get("title"), "exam_date": d32.get("exam_date"),
+            "section": d32.get("section"), "scope": d32.get("scope"),
+            "grade_hint": d32.get("grade_hint"), "score_info": None,
+            "rows": [{k: x[k] for k in ("subject_raw", "question_no", "topic_raw",
+                                        "topic_id", "correct_answer", "student_answer",
+                                        "result", "is_suspect")} for x in rows32],
+        }
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-confirm",
+            data={"payload": json.dumps(payload32)}, files={"file": fresh_pdf()})
+        dc32 = r.json().get("data", {}) if r.status_code == 200 else {}
+        check("32d. confirm toplamlar belgeyle birebir (4D 1Y 4B · net 3.75)",
+              r.status_code == 200 and dc32.get("total_correct") == 4
+              and dc32.get("total_wrong") == 1 and dc32.get("total_blank") == 4
+              and dc32.get("net") == 3.75, r.text[:250])
+        with SessionLocal() as db:
+            ex32 = db.get(ExamResult, dc32.get("exam_id"))
+            sn32 = {s["name"]: s for s in json.loads(ex32.subject_nets or "[]")} if ex32 else {}
+            skip32 = svc.untaken_optional_block_ids(list(ex32.questions)) if ex32 else set()
+            sec_ids = {q.id for q in ex32.questions
+                       if q.subject_name_raw == "Seçmeli Felsefe"} if ex32 else set()
+            # kayıtlı kırılımı yeniden kur — aynı sunum kuralı (backfill yolu)
+            changed32 = svc.rebuild_subject_nets(db, ex32, db.get(User, ids["student"])) if ex32 else None
+        check("32e. kayıtlı kırılım: 'Seçmeli Felsefe' 3 boş · 'TYT Felsefe' 1 boş",
+              sn32.get("Seçmeli Felsefe", {}).get("blank") == 3
+              and sn32.get("TYT Felsefe", {}).get("blank") == 1
+              and sn32.get("TYT Felsefe", {}).get("correct") == 1,
+              str(sn32)[:250])
+        check("32f. girilmeyen blok = Seçmeli Felsefe'nin 3 satırı (konu analizi dışlar)",
+              skip32 == sec_ids and len(skip32) == 3, f"{skip32} vs {sec_ids}")
+        check("32g. rebuild_subject_nets kayıtla aynı gruplamayı üretir (değişiklik yok)",
+              changed32 is False, str(changed32))
+        read_behavior["optional_pair"] = False
+        read_behavior["read"] = build_tyt_read()
 
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double

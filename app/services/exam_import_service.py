@@ -98,7 +98,24 @@ _SUBJECT_ALIASES: dict[str, str] = {
     # aynı kanona iner, her evrende bu kanona düşen tek sistem dersi bulunur
     # (karma havuzda okul dersi küçük id ile öncelik alır — istenen).
     "turkce": "edebiyat",
+    # CADDEM 12. sınıf TYT karnesi (Yağmur #224, 2026-10-11): bir okuma dersi
+    # belgedeki gibi bitişik/kısaltılmış yazdı ("TYT_DinKültürü", "TYT_Seç.
+    # Felsefe"), diğeri açtı ("Din Kültürü ve Ahlak Bilgisi", "Seçmeli
+    # Felsefe") → kovalar ayrışıp 10 soru İKİ KEZ sayıldı (86D → 91D, 19B → 24B).
+    "dinkulturu": "din kulturu",
+    "sec felsefe": "secmeli felsefe",
+    "secmeli fel": "secmeli felsefe",
 }
+
+# ÖSYM TYT'de Din Kültürü (5) ile Seçmeli Felsefe (5) BİRBİRİNİN YERİNE
+# çözülür: öğrenci birini işaretler, diğerini boş bırakır. (a) Seçmeli Felsefe
+# ders kırılımında KENDİ adıyla ayrı satır olur — konuları TYT Felsefe'ye
+# bağlansa da zorunlu Felsefe bölümüne karıştırılıp "Felsefe 11 boş" yazılmaz
+# (belge de ayrı basar). (b) Girilmeyen taraf (tamamı boş) konu analizine
+# girmez — "Bilgi Felsefesi 5 boş → +1,25 net fırsatı" gibi sahte sinyal
+# üretmesin (öğrenci o bloğu bilerek çözmedi).
+OPTIONAL_PAIR_KEYS: tuple[str, str] = ("din kulturu", "secmeli felsefe")
+_SEPARATE_DISPLAY: dict[str, str] = {"secmeli felsefe": "Seçmeli Felsefe"}
 
 # BİRLEŞİK (grup) ders adları → kapsadıkları sistem derslerinin kanonik
 # anahtarları. Maarif Model karneleri (ve K12 belgeleri) dersleri sınav
@@ -264,6 +281,45 @@ def _display_name(base: str, display_map: dict[str, str] | None) -> str:
     if not display_map or not base:
         return base
     return display_map.get(_subject_key(base), base)
+
+
+def _group_label(subject_raw: str | None, base: str,
+                 display_map: dict[str, str] | None) -> tuple[str, bool]:
+    """Ders kırılımı grup adı → (ad, ayrı-gösterim mi).
+
+    Belgenin ham adı ayrı gösterilen bir bloksa ("Seç. Felsefe") grup o adı
+    taşır — konu dersi (TYT Felsefe) ne derse desin. Aksi hâlde eski kural:
+    çözülen ders adı + okul sınavında sunum köprüsü.
+    """
+    sep = _SEPARATE_DISPLAY.get(_subject_key(subject_raw))
+    if sep:
+        return sep, True
+    return _display_name(base, display_map), False
+
+
+def untaken_optional_block_ids(questions: list) -> set[int]:
+    """Girilmeyen seçmeli bloğun soru id'leri (TYT Din Kültürü ↔ Seçmeli Felsefe).
+
+    Yalnız İKİ blok da belgede varsa ve biri TAMAMEN boş, diğerinde en az bir
+    cevap varsa boş olan "girilmedi" sayılır. Tek başına boş bırakılmış Din
+    Kültürü (LGS/okul sınavı) gerçek bir eksiktir, dokunulmaz. Nesnelerde
+    `id`, `subject_name_raw`, `result` beklenir (ExamResultQuestion).
+    """
+    blocks: dict[str, list] = {}
+    for q in questions:
+        k = _subject_key(getattr(q, "subject_name_raw", None))
+        if k in OPTIONAL_PAIR_KEYS:
+            blocks.setdefault(k, []).append(q)
+    if len(blocks) < 2:
+        return set()
+    def _answered(qs: list) -> bool:
+        return any(getattr(q, "result", None) != EQ_RESULT_BOS for q in qs)
+    out: set[int] = set()
+    for k, qs in blocks.items():
+        others = [o for ok, o in blocks.items() if ok != k]
+        if not _answered(qs) and any(_answered(o) for o in others):
+            out.update(q.id for q in qs)
+    return out
 
 
 def _maarif_pool(
@@ -1658,8 +1714,8 @@ def analyze(
         groups: dict[str, dict] = {}
         for r in rows:
             base = r.get("subject_name") or r.get("subject_raw") or "Diğer"
-            gname = _display_name(base, display_map)
-            r["display_subject"] = gname if display_map else None
+            gname, sep = _group_label(r.get("subject_raw"), base, display_map)
+            r["display_subject"] = gname if (display_map or sep) else None
             g = groups.setdefault(gname, {
                 "name": gname, "part": part, "questions": 0,
                 "correct": 0, "wrong": 0, "blank": 0,
@@ -1882,7 +1938,7 @@ def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
         matched = sid in subj_by_id
         gname = (subj_by_id[sid].name if matched else None) \
             or (str(r.get("subject_raw") or "").strip() or "Diğer")
-        gname = _display_name(gname, display_map)
+        gname, _sep = _group_label(r.get("subject_raw"), gname, display_map)
         g = groups.setdefault(
             gname,
             {"name": gname, "correct": 0, "wrong": 0, "blank": 0,
@@ -2104,7 +2160,7 @@ def rebuild_subject_nets(db: Session, exam: ExamResult, student: User) -> bool:
         matched = sid in subj_by_id
         gname = (subj_by_id[sid].name if matched else None) \
             or ((q.subject_name_raw or "").strip() or "Diğer")
-        gname = _display_name(gname, display_map)
+        gname, _sep = _group_label(q.subject_name_raw, gname, display_map)
         # `unmatched` bayrağı kayıt (_prepare_confirm) ile AYNI kural — yoksa
         # yeniden kurulum "müfredata bağlanmadı" rozetini sessizce düşürürdü.
         g = groups.setdefault(gname, {"name": gname, "correct": 0,
@@ -2203,8 +2259,8 @@ def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
     groups: dict[str, dict] = {}
     for r in rows:
         base = r.get("subject_name") or r.get("subject_raw") or "Diğer"
-        gname = _display_name(base, display_map)
-        r["display_subject"] = gname if display_map else None
+        gname, sep = _group_label(r.get("subject_raw"), base, display_map)
+        r["display_subject"] = gname if (display_map or sep) else None
         g = groups.setdefault(gname, {
             "name": gname, "part": None, "questions": 0,
             "correct": 0, "wrong": 0, "blank": 0,

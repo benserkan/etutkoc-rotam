@@ -28,6 +28,7 @@ from app.models import (
     User,
     section_penalty,
 )
+from app.services import exam_import_service
 
 # analiz penceresi: son N deneme (tür bazında) — ısı haritası okunur kalsın
 ANALYSIS_EXAM_LIMIT = 12
@@ -177,7 +178,12 @@ def build_exam_topic_analysis(
     unmatched = 0
     analyzed = 0
     for ei, e in enumerate(exams):
+        # Girilmeyen seçmeli blok (TYT Din Kültürü ↔ Seçmeli Felsefe'den boş
+        # bırakılan taraf) analize girmez — 5 bilinçli boş "fırsat" değildir.
+        skip_ids = exam_import_service.untaken_optional_block_ids(e.questions)
         for q in e.questions:
+            if q.id in skip_ids:
+                continue
             analyzed += 1
             if q.topic_id is None or q.topic_id not in topic_meta:
                 unmatched += 1

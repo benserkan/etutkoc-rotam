@@ -63,9 +63,9 @@ def topic_id(db, subject_name: str, topic_name: str) -> int:
 
 def add_exam(db, student_id, coach_id, title, d, section, rows):
     """rows: [(topic_id|None, result)] — sayaçlar satırlardan türetilir."""
-    c = sum(1 for _, r in rows if r == "dogru")
-    y = sum(1 for _, r in rows if r == "yanlis")
-    b = sum(1 for _, r in rows if r == "bos")
+    c = sum(1 for row in rows if row[1] == "dogru")
+    y = sum(1 for row in rows if row[1] == "yanlis")
+    b = sum(1 for row in rows if row[1] == "bos")
     pen = 3 if section == ExamSection.LGS else 4
     e = ExamResult(
         student_id=student_id, created_by_id=coach_id, title=title,
@@ -78,9 +78,11 @@ def add_exam(db, student_id, coach_id, title, d, section, rows):
     )
     db.add(e)
     db.flush()
-    for i, (tid, res) in enumerate(rows, start=1):
+    for i, row in enumerate(rows, start=1):
+        tid, res = row[0], row[1]
+        raw = row[2] if len(row) > 2 else "X"
         db.add(ExamResultQuestion(
-            exam_result_id=e.id, question_no=i, subject_name_raw="X",
+            exam_result_id=e.id, question_no=i, subject_name_raw=raw,
             topic_id=tid, topic_label_raw="etiket", result=res,
             is_suspect=False,
         ))
@@ -109,7 +111,19 @@ def main() -> int:
             "paragraf": topic_id(db, "TYT Türkçe", "Paragraf (Karma)"),
             "temel": topic_id(db, "TYT Matematik", "Temel Kavramlar"),
             "trig": topic_id(db, "AYT Matematik", "Trigonometri"),
+            "bilgi_fel": topic_id(db, "TYT Felsefe", "Bilgi Felsefesi"),
+            "din_islam": topic_id(db, "TYT Din Kültürü ve Ahlak Bilgisi", "Din ve İslam"),
         }
+        # 11) OKUL türünde seçmeli-blok denemesi: öğrenci Din'i çözdü, Seçmeli
+        # Felsefe'yi (tamamı boş) GİRMEDİ → o 3 satır analize girmez; Din'in
+        # ayrı bırakılan 1 boşu ise gerçek boştur (blok çözülmüş) ve sayılır.
+        add_exam(db, student.id, coach.id, "OKUL-SEC", date(2026, 5, 20),
+                 ExamSection.OKUL,
+                 [(ids["din_islam"], "dogru", "Din Kültürü ve Ahlak Bilgisi"),
+                  (ids["din_islam"], "bos", "Din Kültürü ve Ahlak Bilgisi"),
+                  (ids["bilgi_fel"], "bos", "Seçmeli Felsefe"),
+                  (ids["bilgi_fel"], "bos", "TYT_Seç. Felsefe"),
+                  (ids["bilgi_fel"], "bos", "Seçmeli Felsefe")])
         R, P, T = ids["rasyonel"], ids["paragraf"], ids["temel"]
         # 3 TYT denemesi (tarih artan) — Rasyonel önce iyi sonra bozuk (unutulan),
         # Paragraf sürekli kötü (en büyük fırsat), Temel karışık + 1 konusuz satır
@@ -163,8 +177,8 @@ def main() -> int:
               and d.get("unmatched_questions") == 1, r.text[:200])
 
         opts = {o["value"]: o["count"] for o in d.get("section_options", [])}
-        check("3. tür seçenekleri soru-satırlı denemelerden (tyt 3 · ayt_say 1; manuel yok)",
-              opts == {"tyt": 3, "ayt_say": 1}, str(opts))
+        check("3. tür seçenekleri soru-satırlı denemelerden (tyt 3 · ayt_say 1 · okul 1; manuel yok)",
+              opts == {"tyt": 3, "ayt_say": 1, "okul": 1}, str(opts))
 
         rows = {t["topic_id"]: t for t in d.get("topics", [])}
         ras = rows.get(ids["rasyonel"], {})
@@ -222,6 +236,19 @@ def main() -> int:
         r = cs.get(url)
         check("10. öğrenci koç ucuna erişemez → 403",
               r.status_code == 403, r.text[:100])
+
+        # 11) girilmeyen seçmeli blok analize girmez (CADDEM karnesi, Yağmur #224)
+        r = ct.get(url + "?section=okul")
+        d11 = r.json() if r.status_code == 200 else {}
+        t11 = {t["topic_id"]: t for t in d11.get("topics", [])}
+        check("11. Seçmeli Felsefe'nin 3 boşu DIŞARIDA: 2 soru analiz · Bilgi Felsefesi "
+              "satırı/fırsatı yok · Din 1D 1B sayıldı",
+              r.status_code == 200 and d11.get("analyzed_question_count") == 2
+              and ids["bilgi_fel"] not in t11
+              and t11.get(ids["din_islam"], {}).get("blank") == 1
+              and not any(o["topic_id"] == ids["bilgi_fel"]
+                          for o in d11.get("opportunities", [])),
+              r.text[:250])
 
     finally:
         with SessionLocal() as db:
