@@ -297,28 +297,44 @@ def _group_label(subject_raw: str | None, base: str,
     return _display_name(base, display_map), False
 
 
-def untaken_optional_block_ids(questions: list) -> set[int]:
-    """Girilmeyen seçmeli bloğun soru id'leri (TYT Din Kültürü ↔ Seçmeli Felsefe).
+def untaken_optional_block_ids(
+    questions: list, *, section: ExamSection | None = None, track=None,
+) -> set[int]:
+    """GİRİLMEYEN bölümlerin soru id'leri — konu analizi bunları dışlar.
 
-    Yalnız İKİ blok da belgede varsa ve biri TAMAMEN boş, diğerinde en az bir
-    cevap varsa boş olan "girilmedi" sayılır. Tek başına boş bırakılmış Din
-    Kültürü (LGS/okul sınavı) gerçek bir eksiktir, dokunulmaz. Nesnelerde
-    `id`, `subject_name_raw`, `result` beklenir (ExamResultQuestion).
+    (1) TYT seçmeli çifti (Din Kültürü ↔ Seçmeli Felsefe): İKİ blok da belgede
+        varsa ve biri TAMAMEN boş, diğerinde en az bir cevap varsa boş olan
+        "girilmedi" sayılır. Tek başına boş Din Kültürü (LGS/okul) gerçek
+        eksiktir, dokunulmaz.
+    (2) AYT alan dışı oturum: AYT kitapçığı tektir, öğrenci alanının
+        bölümlerini çözer. Alanı bilinen öğrencide (track) alan DIŞI ders
+        bölümü TAMAMEN boşsa girilmemiştir (Yağmur #224 SAYISAL, AYT-2: 86
+        sözel boş "Felsefeyi Tanıma +18 net fırsatı" üretiyordu, 2026-10-11).
+        Alan içi ders tamamen boşsa (zaman yetmedi) gerçek eksiktir, kalır.
+    Nesnelerde `id`, `subject_name_raw`, `result` beklenir (ExamResultQuestion).
     """
-    blocks: dict[str, list] = {}
+    groups: dict[str, list] = {}
     for q in questions:
-        k = _subject_key(getattr(q, "subject_name_raw", None))
-        if k in OPTIONAL_PAIR_KEYS:
-            blocks.setdefault(k, []).append(q)
-    if len(blocks) < 2:
-        return set()
+        groups.setdefault(_subject_key(getattr(q, "subject_name_raw", None)), []).append(q)
+
     def _answered(qs: list) -> bool:
         return any(getattr(q, "result", None) != EQ_RESULT_BOS for q in qs)
+
     out: set[int] = set()
-    for k, qs in blocks.items():
-        others = [o for ok, o in blocks.items() if ok != k]
-        if not _answered(qs) and any(_answered(o) for o in others):
-            out.update(q.id for q in qs)
+    blocks = {k: v for k, v in groups.items() if k in OPTIONAL_PAIR_KEYS}
+    if len(blocks) >= 2:
+        for k, qs in blocks.items():
+            others = [o for ok, o in blocks.items() if ok != k]
+            if not _answered(qs) and any(_answered(o) for o in others):
+                out.update(q.id for q in qs)
+
+    if section is not None and track is not None and universe_for_section(section) == EXAM_UNIVERSE_AYT:
+        from app.services.curriculum_progress import TRACK_AYT_SUBJECTS
+        track_keys = {_subject_key(n) for n in TRACK_AYT_SUBJECTS.get(track, set())}
+        if track_keys:
+            for k, qs in groups.items():
+                if k not in track_keys and not _answered(qs):
+                    out.update(q.id for q in qs)
     return out
 
 
@@ -357,6 +373,29 @@ def _maarif_pool(
     )
 
 
+def _ayt_pool_with_tyt(
+    db: Session, student: User, subjects: list[Subject], topics: list[Topic],
+) -> tuple[list[Subject], list[Topic], dict[str, str]]:
+    """AYT havuzu + TYT TAMAMLAYICI (yalnız AYT'de adı olmayan konular).
+
+    Sınıf izleme (CİS) AYT kitapçıkları 9-10. sınıf konusu da sorar: Basınç,
+    Kaldırma Kuvveti, Hücre, Canlıların Temel Bileşenleri… Bunlar AYT
+    taksonomisinde yok → Yağmur #224 AYT-2'de 13 cevaplı Fizik/Biyoloji sorusu
+    eşleşmeden kaldı (2026-10-11). TYT konuları AYT'nin ARKASINA eklenir
+    (öncelik AYT); AYT'de aynı anahtarla bulunan konu TYT'den ALINMAZ (evren-
+    tekil birebir eşleşme belirsizleşmesin). Sunum: TYT dersine çözülen satır
+    AYT ders adıyla gruplanır ("TYT Fizik → AYT Fizik"); konu birikimi TYT
+    konusuna yazılır — 12. sınıf/mezunun TYT omurgası için doğru hedef.
+    """
+    tyt_subjects = universe_subjects(db, EXAM_UNIVERSE_TYT, student)
+    tyt_topics = universe_topics(db, tyt_subjects, universe=EXAM_UNIVERSE_TYT,
+                                 grade_cap=None)
+    ayt_keys = {_topic_key(t.name) for t in topics}
+    extra = [t for t in tyt_topics if _topic_key(t.name) not in ayt_keys]
+    display = {_subject_key(s.name): s.name for s in subjects}
+    return subjects + tyt_subjects, topics + extra, display
+
+
 def _normalization_pool(
     db: Session, universe: str, student: User, *,
     grade_cap: int | None, school_grade: int | None,
@@ -377,6 +416,8 @@ def _normalization_pool(
         return _maarif_pool(db, student, section=section, raw_keys=raw_keys)
     subjects = universe_subjects(db, universe, student)
     topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
+    if universe == EXAM_UNIVERSE_AYT:
+        return _ayt_pool_with_tyt(db, student, subjects, topics)
     if universe != EXAM_UNIVERSE_TYT or not school_grade:
         return subjects, topics, None
     school_subjects = universe_subjects(db, EXAM_UNIVERSE_OKUL, student)
@@ -417,8 +458,11 @@ def _subject_key(name: str | None) -> str:
 
 
 def _subjects_by_key(subjects: list[Subject]) -> dict[str, Subject]:
+    # LİSTE SIRASI öncelik: havuzlar omurgayı başa koyar (okul → sınav; AYT →
+    # TYT tamamlayıcı). id sırası AYT havuzunda TYT dersini (küçük id) öne
+    # alıp "Fizik" bölümünü TYT Fizik'e çözüyordu (2026-10-11).
     out: dict[str, Subject] = {}
-    for s in sorted(subjects, key=lambda x: x.id):
+    for s in subjects:
         k = _subject_key(s.name)
         if k and k not in out:
             out[k] = s

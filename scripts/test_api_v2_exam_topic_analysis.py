@@ -28,6 +28,7 @@ from app.models import (
     Subject,
     SuspiciousIp,
     Topic,
+    Track,
     User,
     UserRole,
 )
@@ -140,8 +141,17 @@ def main() -> int:
                  [(R, "yanlis"), (R, "yanlis"), (P, "yanlis"), (P, "bos"),
                   (T, "dogru")])
         # 1 AYT denemesi (tür filtresi) + 1 satırsız manuel deneme (analize girmez)
+        # 12) SAYISAL öğrencinin AYT kitapçığında alan DIŞI (Edebiyat) bölümü
+        # tamamen boş = girilmedi → analize girmez; alan içi Fizik'in boşu kalır.
+        ids["ayt_par"] = topic_id(db, "AYT Edebiyat", "Paragraf (Karma)")
+        ids["ayt_vek"] = topic_id(db, "AYT Fizik", "Vektörler")
+        student.track = Track.SAYISAL
+        db.commit()
         add_exam(db, student.id, coach.id, "AYT-1", date(2026, 5, 10),
-                 ExamSection.AYT_SAY, [(ids["trig"], "dogru"), (ids["trig"], "yanlis")])
+                 ExamSection.AYT_SAY,
+                 [(ids["trig"], "dogru", "Matematik"), (ids["trig"], "yanlis", "Matematik"),
+                  (ids["ayt_par"], "bos", "Edebiyat"), (ids["ayt_par"], "bos", "Edebiyat"),
+                  (ids["ayt_vek"], "bos", "Fizik")])
         db.add(ExamResult(student_id=student.id, created_by_id=coach.id,
                           title="Manuel", exam_date=date(2026, 5, 12),
                           section=ExamSection.TYT, total_correct=10,
@@ -219,10 +229,16 @@ def main() -> int:
 
         r = ct.get(url + "?section=ayt_say")
         d2 = r.json() if r.status_code == 200 else {}
-        check("7. tür filtresi: ayt_say → 1 deneme · Trigonometri satırı",
+        t2 = {t["topic_id"] for t in d2.get("topics", [])}
+        check("7. tür filtresi: ayt_say → 1 deneme · Trigonometri + Vektörler satırı",
               r.status_code == 200 and len(d2.get("exams", [])) == 1
-              and len(d2.get("topics", [])) == 1
-              and d2["topics"][0]["topic_id"] == ids["trig"], r.text[:200])
+              and t2 == {ids["trig"], ids["ayt_vek"]}, r.text[:200])
+        check("12. SAYISAL öğrencide alan dışı boş Edebiyat bölümü analize GİRMEZ "
+              "(3 soru analiz · Paragraf satırı yok) · alan içi boş Fizik kalır",
+              d2.get("analyzed_question_count") == 3
+              and ids["ayt_par"] not in t2
+              and not any(o["topic_id"] == ids["ayt_par"] for o in d2.get("opportunities", [])),
+              r.text[:250])
 
         r = co.get(url)
         check("8. yabancı koç → 404", r.status_code == 404, r.text[:100])

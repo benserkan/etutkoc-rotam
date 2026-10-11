@@ -180,7 +180,8 @@ def build_exam_topic_analysis(
     for ei, e in enumerate(exams):
         # Girilmeyen seçmeli blok (TYT Din Kültürü ↔ Seçmeli Felsefe'den boş
         # bırakılan taraf) analize girmez — 5 bilinçli boş "fırsat" değildir.
-        skip_ids = exam_import_service.untaken_optional_block_ids(e.questions)
+        skip_ids = exam_import_service.untaken_optional_block_ids(
+            e.questions, section=e.section, track=student.track)
         for q in e.questions:
             if q.id in skip_ids:
                 continue

@@ -1322,6 +1322,64 @@ def main() -> int:
               str({k: v.get("ok") for k, v in chk33c.items()})[:200])
         read_behavior["read"] = build_tyt_read()
 
+        # --- 34) AYT CİS kitapçığında 9-10. sınıf konusu (TYT tamamlayıcı) ---
+        # CADDEM AYT-2 (Yağmur #224): Fizik "Basınç", Biyoloji "Hücre" AYT
+        # taksonomisinde yok → 13 cevaplı soru eşleşmeden kalıyordu. AYT havuzu
+        # artık TYT'de olup AYT'de olmayan konuları tamamlayıcı alır; satır
+        # AYT ders adıyla gruplanır.
+        read_behavior["read"] = {
+            "exam_title": f"{PFX} CADDEM AYT CIS 2",
+            "exam_date": "2026-09-21", "grade_hint": 12, "type_hints": ["AYT"],
+            "subjects": [{"name": "Fizik", "questions": 2, "correct": 1, "wrong": 1,
+                          "blank": 0, "net": 0.75}],
+            "questions": [
+                {"subject": "Fizik", "no": 1, "topic": "Vektörler",
+                 "correct_answer": "A", "student_answer": "A", "result": "dogru"},
+                {"subject": "Fizik", "no": 2, "topic": "Basınç",
+                 "correct_answer": "B", "student_answer": "C", "result": "yanlis"},
+            ],
+            "score_info": None,
+        }
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            files={"file": fresh_pdf()})
+        d34 = r.json() if r.status_code == 200 else {}
+        rows34 = {x["question_no"]: x for x in d34.get("rows", [])}
+        with SessionLocal() as db:
+            tyt_basinc = topic_id(db, "TYT Fizik", "Basınç")
+            ayt_vek = topic_id(db, "AYT Fizik", "Vektörler")
+        check("34a. AYT satırı AYT konusuna, 9-10 konusu TYT Fizik 'Basınç'a bağlandı (AI'sız)",
+              r.status_code == 200 and d34.get("section", "").startswith("ayt")
+              and rows34.get(1, {}).get("topic_id") == ayt_vek
+              and rows34.get(2, {}).get("topic_id") == tyt_basinc
+              and rows34.get(2, {}).get("topic_source") == "auto",
+              f"{d34.get('section')} r1={rows34.get(1)} r2={rows34.get(2)} {r.text[:120]}")
+        subj34 = {s["name"]: s for s in d34.get("subjects", [])}
+        check("34b. sunum: iki satır da 'AYT Fizik' grubunda (TYT Fizik ayrı grup açmaz)",
+              list(subj34) == ["AYT Fizik"] and subj34["AYT Fizik"]["questions"] == 2
+              and rows34.get(2, {}).get("display_subject") == "AYT Fizik",
+              str(subj34)[:200] + str(rows34.get(2, {}).get("display_subject")))
+        payload34 = {
+            "title": d34.get("title"), "exam_date": d34.get("exam_date"),
+            "section": d34.get("section"), "scope": d34.get("scope"),
+            "grade_hint": d34.get("grade_hint"), "score_info": None,
+            "rows": [{k: x[k] for k in ("subject_raw", "question_no", "topic_raw",
+                                        "topic_id", "correct_answer", "student_answer",
+                                        "result", "is_suspect")} for x in d34.get("rows", [])],
+        }
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-confirm",
+            data={"payload": json.dumps(payload34)}, files={"file": fresh_pdf()})
+        dc34 = r.json().get("data", {}) if r.status_code == 200 else {}
+        with SessionLocal() as db:
+            ex34 = db.get(ExamResult, dc34.get("exam_id")) if dc34 else None
+            sn34 = [s["name"] for s in json.loads(ex34.subject_nets or "[]")] if ex34 else []
+        check("34c. confirm TYT konu id'sini KABUL etti (evren doğrulaması) + kırılım 'AYT Fizik'",
+              r.status_code == 200 and dc34.get("matched_topic_count") == 2
+              and sn34 == ["AYT Fizik"], f"{r.text[:200]} sn={sn34}")
+        read_behavior["read"] = build_tyt_read()
+
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double
         svc.gemini.generate = orig_generate
