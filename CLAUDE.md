@@ -74,6 +74,11 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   14/14 · faz3 32 · progress 31 · teacher_exams 19 · maarif 22 · scope 21.
   **KURAL: yeni karne formatında ders adı varyantı görülünce alias eklenir; iki okumanın aynı dersi
   farklı adla yazması = çift sayım riski, testi 32a deseniyle yazılır.**
+  + **Şemsiye özet (commit `68284bf`, aynı gün, CANLI):** TOPRAK TYT karnesi özette "Matematik 40"
+  basıp soruları Matematik 30 + Geometri 10 ayırınca "Matematik: soru sayısı tutmuyor" yanlış uyarısı
+  çıkıyordu → `_SUMMARY_UMBRELLAS` {matematik: geometri}: özette alt dersin KENDİ satırı yoksa ve
+  toplam tutuyorsa birlikte sayılır (`_summary_groups` + `_summary_agreement`); şemsiye özetin neti
+  gruba `doc_net` olarak yazılmaz. Test 33a-c (86/86).
 - **Unutulan/Gelişen konular — KANIT + yeni tasarım (2026-10-03, migration YOK):** koç "%100 → %0
   nasıl oldu?" sorusunun cevabını göremiyordu. `exam_topic_analysis._trend_evidence`: her öğe artık
   ilk/son yarı D/toplam + son yarı yanlış/boş + yarıdaki deneme sayısı + kanıt gücü (≤4 soru az veri ·
