@@ -79,6 +79,19 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   çıkıyordu → `_SUMMARY_UMBRELLAS` {matematik: geometri}: özette alt dersin KENDİ satırı yoksa ve
   toplam tutuyorsa birlikte sayılır (`_summary_groups` + `_summary_agreement`); şemsiye özetin neti
   gruba `doc_net` olarak yazılmaz. Test 33a-c (86/86).
+  + **AYT CİS kitapçığı (commit `70918ed`, aynı gün, CANLI):** Yağmur AYT-2 (166 soru, SAYISAL; 86
+  sözel boş): (a) Fizik "Basınç/Sıvı Basıncı/Arşimet", Biyoloji "Hücre/Canlıların Temel Bileşenleri"
+  (9-10 konuları) AYT taksonomisinde yok → 13 cevaplı soru eşleşmemişti → `_ayt_pool_with_tyt`: AYT
+  havuzuna TYT'de olup AYT'de OLMAYAN konular tamamlayıcı (öncelik AYT, anahtar tekil → evren-tekil
+  eşleşme bozulmaz); satır AYT ders adıyla gruplanır (TYT Fizik → "AYT Fizik"); `_subjects_by_key`
+  artık LİSTE sırası (id sırası TYT dersini öne alıyordu). (b) sözel 86 boş konu analizine girip
+  "Felsefeyi Tanıma +18 net" sahte fırsatı üretiyordu → `untaken_optional_block_ids(section, track)`:
+  AYT'de alanı bilinen öğrencide alan DIŞI ders bölümü tamamen boşsa girilmedi sayılır (alan içi boş
+  ders gerçek eksik). Prod: `rematch_unmatched_exam_rows --exam 202 --apply` 30/36 eşledi (kalan 6 =
+  Din Kültürü'nün ders adından ibaret etiketi); AI'ın Tarih-1 "Toplum Yapısı"nı Sosyoloji'ye bağlaması
+  elle geri alındı (kırılım belgeyle birebir: Tarih 21 · Felsefe 12). Test exam_import 89/89 (34a-c) ·
+  topic_analysis 15/15 (12). **Kalan (bilinçli):** ders kırılımı/veli tablosu sözel 0/0/N satırlarını
+  belge gibi gösterir; "girilmedi" rozeti ayrı iş.
 - **Unutulan/Gelişen konular — KANIT + yeni tasarım (2026-10-03, migration YOK):** koç "%100 → %0
   nasıl oldu?" sorusunun cevabını göremiyordu. `exam_topic_analysis._trend_evidence`: her öğe artık
   ilk/son yarı D/toplam + son yarı yanlış/boş + yarıdaki deneme sayısı + kanıt gücü (≤4 soru az veri ·
