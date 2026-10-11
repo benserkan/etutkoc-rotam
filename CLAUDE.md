@@ -90,8 +90,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   ders gerçek eksik). Prod: `rematch_unmatched_exam_rows --exam 202 --apply` 30/36 eşledi (kalan 6 =
   Din Kültürü'nün ders adından ibaret etiketi); AI'ın Tarih-1 "Toplum Yapısı"nı Sosyoloji'ye bağlaması
   elle geri alındı (kırılım belgeyle birebir: Tarih 21 · Felsefe 12). Test exam_import 89/89 (34a-c) ·
-  topic_analysis 15/15 (12). **Kalan (bilinçli):** ders kırılımı/veli tablosu sözel 0/0/N satırlarını
-  belge gibi gösterir; "girilmedi" rozeti ayrı iş.
+  topic_analysis 15/15 (12).
+  + **AYT ALAN AYRIMI — KAYIT DÜZEYİ, TEK MERKEZ (commit `4fdb024`, aynı gün, CANLI):** koç: "sayısal
+  öğrencide sözel dersler HİÇ dikkate alınmamalı, her analiz ekranında bu ayrım" (Sınav Davranışı
+  tablosu "AYT Edebiyat %100 boş · 24 kaçan net · temkinli", aksiyon planı "son denemede 103 boş").
+  Okuyucu 15+ (kart/davranış/gelişim raporu/veli maili/kurum net-başarı/mobil…) → tek tek yama yerine
+  KAYIT normalize: YENİ `app/services/exam_subjects.py` (`untaken_track_keys` + `split_untaken_groups`):
+  AYT + alanı bilinen öğrencide alan DIŞI ve hiç cevaplanmamış ders grupları `_prepare_confirm`
+  (confirm + düzeltme) ve `rebuild_subject_nets`'te kırılımdan düşer, `total_blank` o kadar azalır
+  (net değişmez); soru satırları belgeye sadık kalır ("Satırları düzelt" hepsini gösterir); konu
+  analizi aynı anahtarları kullanır. `rebuild_subject_nets` artık TOPLAMLARI da satırlardan kurar.
+  Prod backfill (kuru → uygula): yalnız 2 kayıt değişti — Yağmur #202 (103→17 boş, 6 sözel grup düştü)
+  + Berra #90 ÖZDEBİR AYT-4 (101→21 boş). Test exam_import 92/92 (35a-c) + 12 paket yeşil.
+  **KURAL: AYT'de ders/net/boş sayan yeni yüzey subject_nets + total_* kaydından beslenir; sözel/
+  sayısal/EA ayrımı kayıtta çözülmüştür, yüzeyde yeniden filtre YAZILMAZ. Alanı bilinmeyen (track
+  None) öğrencide hiçbir şey düşmez → koç alanı girmeli.**
 - **Unutulan/Gelişen konular — KANIT + yeni tasarım (2026-10-03, migration YOK):** koç "%100 → %0
   nasıl oldu?" sorusunun cevabını göremiyordu. `exam_topic_analysis._trend_evidence`: her öğe artık
   ilk/son yarı D/toplam + son yarı yanlış/boş + yarıdaki deneme sayısı + kanıt gücü (≤4 soru az veri ·
