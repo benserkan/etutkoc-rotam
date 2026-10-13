@@ -1,0 +1,89 @@
+{
+  "name": "Çaddem AYT Matematik Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "AYT Matematik",
+  "type": "soru_bankasi",
+  "target_grade_min": 11,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa)."
+  ],
+  "sections": [
+    {
+      "label": "İkinci Dereceden Denklemler",
+      "test_count": 10,
+      "topic": "İkinci Dereceden Denklemler"
+    },
+    {
+      "label": "Polinomlar",
+      "test_count": 9,
+      "topic": "Polinomlar"
+    },
+    {
+      "label": "Parabol",
+      "test_count": 8,
+      "topic": "Parabol"
+    },
+    {
+      "label": "Eşitsizlikler",
+      "test_count": 8,
+      "topic": "Eşitsizlikler"
+    },
+    {
+      "label": "Fonksiyonlar",
+      "test_count": 11,
+      "topic": "Fonksiyonlar"
+    },
+    {
+      "label": "Trigonometri - I",
+      "test_count": 16,
+      "topic": "Trigonometri"
+    },
+    {
+      "label": "Trigonometri - II",
+      "test_count": 8,
+      "topic": "Trigonometri"
+    },
+    {
+      "label": "Logaritma",
+      "test_count": 9,
+      "topic": "Logaritma ve Üstel Fonksiyonlar"
+    },
+    {
+      "label": "Diziler",
+      "test_count": 8,
+      "topic": "Diziler"
+    },
+    {
+      "label": "Limit ve Süreklilik",
+      "test_count": 8,
+      "topic": "Limit ve Süreklilik"
+    },
+    {
+      "label": "Türev Kuralları",
+      "test_count": 5,
+      "topic": "Türev"
+    },
+    {
+      "label": "Türevin Geometrik Yorumu",
+      "test_count": 8,
+      "topic": "Türev"
+    },
+    {
+      "label": "Maksimum - Minimum Problemleri",
+      "test_count": 5,
+      "topic": "Türev"
+    },
+    {
+      "label": "İntegral",
+      "test_count": 11,
+      "topic": "İntegral"
+    },
+    {
+      "label": "Permütasyon - Kombinasyon - Olasılık - Binom",
+      "test_count": 9,
+      "topic": ""
+    }
+  ]
+}

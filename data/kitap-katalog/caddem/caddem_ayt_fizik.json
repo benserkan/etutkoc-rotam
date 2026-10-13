@@ -1,0 +1,95 @@
+{
+  "name": "Çaddem AYT Fizik Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "AYT Fizik",
+  "type": "soru_bankasi",
+  "target_grade_min": 11,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa).",
+    "Bölüm 1-6'nın Tecrübe Testleri sayfa numaraları taramada okunamadı (toplam 17 test, sayfa bütçesinden bölümlere dağıtıldı — TAHMİNİ); 7-16. bölümler birebir."
+  ],
+  "sections": [
+    {
+      "label": "Vektörler",
+      "test_count": 5,
+      "topic": "Vektörler"
+    },
+    {
+      "label": "Bağıl Hareket",
+      "test_count": 5,
+      "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+    },
+    {
+      "label": "Newton'un Hareket Yasaları",
+      "test_count": 6,
+      "topic": "Newton'un Hareket Yasaları"
+    },
+    {
+      "label": "Bir Boyutta Sabit İvmeli Hareket",
+      "test_count": 9,
+      "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+    },
+    {
+      "label": "İki Boyutta Hareket",
+      "test_count": 6,
+      "topic": "Hareket (Doğrusal, Bağıl, Atışlar)"
+    },
+    {
+      "label": "Enerji ve Hareket",
+      "test_count": 7,
+      "topic": "İş, Güç ve Enerji"
+    },
+    {
+      "label": "İtme ve Çizgisel Momentum",
+      "test_count": 7,
+      "topic": "İtme ve Momentum"
+    },
+    {
+      "label": "Tork, Denge ve Denge Şartları",
+      "test_count": 8,
+      "topic": "Kuvvet, Tork ve Denge"
+    },
+    {
+      "label": "Basit Makineler",
+      "test_count": 6,
+      "topic": "Kütle Merkezi ve Basit Makineler"
+    },
+    {
+      "label": "Elektrik",
+      "test_count": 11,
+      "topic": "Elektrik Alan ve Potansiyel"
+    },
+    {
+      "label": "Manyetizma",
+      "test_count": 18,
+      "topic": "Manyetizma ve Elektromanyetik İndüksiyon"
+    },
+    {
+      "label": "Çembersel Hareket",
+      "test_count": 12,
+      "topic": "Çembersel Hareket"
+    },
+    {
+      "label": "Basit Harmonik Hareket",
+      "test_count": 6,
+      "topic": "Basit Harmonik Hareket"
+    },
+    {
+      "label": "Dalga Mekaniği",
+      "test_count": 8,
+      "topic": "Dalga Mekaniği"
+    },
+    {
+      "label": "Atom Fiziğine Giriş ve Radyoaktivite",
+      "test_count": 9,
+      "topic": "Atom Fiziği ve Radyoaktivite"
+    },
+    {
+      "label": "Modern Fizik",
+      "test_count": 10,
+      "topic": "Modern Fizik"
+    }
+  ]
+}

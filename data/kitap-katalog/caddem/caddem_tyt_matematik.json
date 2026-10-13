@@ -1,0 +1,129 @@
+{
+  "name": "Çaddem TYT Matematik Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "TYT Matematik",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa)."
+  ],
+  "sections": [
+    {
+      "label": "Temel Kavramlar",
+      "test_count": 7,
+      "topic": "Temel Kavramlar"
+    },
+    {
+      "label": "Basamak Kavramı",
+      "test_count": 4,
+      "topic": "Sayı Basamakları"
+    },
+    {
+      "label": "Faktöriyel - Asal Çarpanlar",
+      "test_count": 7,
+      "topic": "Asal Sayılar"
+    },
+    {
+      "label": "Bölme ve Bölünebilme",
+      "test_count": 6,
+      "topic": "Bölme ve Bölünebilme"
+    },
+    {
+      "label": "EBOB - EKOK",
+      "test_count": 6,
+      "topic": "EBOB - EKOK"
+    },
+    {
+      "label": "Rasyonel Sayılar",
+      "test_count": 5,
+      "topic": "Rasyonel Sayılar"
+    },
+    {
+      "label": "Basit Eşitsizlikler",
+      "test_count": 5,
+      "topic": "Basit Eşitsizlikler"
+    },
+    {
+      "label": "Mutlak Değer",
+      "test_count": 5,
+      "topic": "Mutlak Değer"
+    },
+    {
+      "label": "Birinci Dereceden Denklemler",
+      "test_count": 5,
+      "topic": "Birinci Dereceden Denklemler"
+    },
+    {
+      "label": "Üslü Sayılar",
+      "test_count": 7,
+      "topic": "Üslü Sayılar"
+    },
+    {
+      "label": "Köklü Sayılar",
+      "test_count": 7,
+      "topic": "Köklü Sayılar"
+    },
+    {
+      "label": "Çarpanlara Ayırma",
+      "test_count": 8,
+      "topic": "Çarpanlara Ayırma"
+    },
+    {
+      "label": "Oran - Orantı",
+      "test_count": 6,
+      "topic": "Oran ve Orantı"
+    },
+    {
+      "label": "Problemler - I (Sayı-Kesir, Yaş, Hareket)",
+      "test_count": 9,
+      "topic": "Problemler (Karma)"
+    },
+    {
+      "label": "Problemler - II (Yüzde, Kâr-Zarar, Karışım)",
+      "test_count": 6,
+      "topic": "Problemler (Karma)"
+    },
+    {
+      "label": "Problemler - III (İşçi, Sayısal Mantık, Grafik)",
+      "test_count": 6,
+      "topic": "Problemler (Karma)"
+    },
+    {
+      "label": "Mantık",
+      "test_count": 8,
+      "topic": "Mantık"
+    },
+    {
+      "label": "Kümeler",
+      "test_count": 10,
+      "topic": "Kümeler"
+    },
+    {
+      "label": "Fonksiyonlar",
+      "test_count": 14,
+      "topic": "Fonksiyonlar"
+    },
+    {
+      "label": "Permütasyon - Kombinasyon - Binom - Olasılık",
+      "test_count": 10,
+      "topic": ""
+    },
+    {
+      "label": "İstatistik",
+      "test_count": 5,
+      "topic": "Veri ve İstatistik"
+    },
+    {
+      "label": "Polinomlar",
+      "test_count": 5,
+      "topic": "Polinomlar"
+    },
+    {
+      "label": "İkinci Dereceden Denklemler",
+      "test_count": 6,
+      "topic": ""
+    }
+  ]
+}

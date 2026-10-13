@@ -1,0 +1,69 @@
+{
+  "name": "Çaddem TYT Biyoloji Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "TYT Biyoloji",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa)."
+  ],
+  "sections": [
+    {
+      "label": "Yaşam Bilimi Biyoloji - I",
+      "test_count": 7,
+      "topic": "Canlıların Temel Bileşenleri (Karma)"
+    },
+    {
+      "label": "Yaşam Bilimi Biyoloji - II",
+      "test_count": 16,
+      "topic": "Organik Bileşikler"
+    },
+    {
+      "label": "Hücre Kavramı ve Hücre Organelleri",
+      "test_count": 16,
+      "topic": "Hücre Organelleri"
+    },
+    {
+      "label": "Hücre Zarından Madde Geçişleri",
+      "test_count": 10,
+      "topic": "Hücre Zarı ve Madde Geçişleri"
+    },
+    {
+      "label": "Canlılar Dünyası",
+      "test_count": 15,
+      "topic": "Canlıların Sınıflandırılması (Karma)"
+    },
+    {
+      "label": "Mitoz Bölünme ve Eşeysiz Üreme",
+      "test_count": 8,
+      "topic": "Mitoz ve Eşeysiz Üreme"
+    },
+    {
+      "label": "Mayoz Bölünme ve Eşeyli Üreme",
+      "test_count": 9,
+      "topic": "Mayoz ve Eşeyli Üreme"
+    },
+    {
+      "label": "Kalıtım - I",
+      "test_count": 11,
+      "topic": "Kalıtımın Genel İlkeleri (Karma)"
+    },
+    {
+      "label": "Kalıtım - II",
+      "test_count": 7,
+      "topic": "Eşeye Bağlı Kalıtım ve Soyağaçları"
+    },
+    {
+      "label": "Ekosistem Ekolojisi",
+      "test_count": 10,
+      "topic": "Ekosistem Ekolojisi (Karma)"
+    },
+    {
+      "label": "Güncel Çevre Sorunları",
+      "test_count": 8,
+      "topic": "Güncel Çevre Sorunları"
+    }
+  ]
+}

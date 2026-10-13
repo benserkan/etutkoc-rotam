@@ -1,0 +1,100 @@
+{
+  "name": "Çaddem TYT Kimya Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "TYT Kimya",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa).",
+    "Kazanım Testi + Uygulama Testleri deseni; Kontrol Grubu satırları çok konulu → bilinçli eşleşmesiz."
+  ],
+  "sections": [
+    {
+      "label": "Kimya Bilimi",
+      "test_count": 9,
+      "topic": "Kimya Bilimi"
+    },
+    {
+      "label": "Atom ve Yapısı",
+      "test_count": 7,
+      "topic": "Atom Modelleri ve Atomun Yapısı"
+    },
+    {
+      "label": "Periyodik Sistem",
+      "test_count": 9,
+      "topic": "Periyodik Sistem"
+    },
+    {
+      "label": "Kontrol Grubu - 1 (1-3. Bölümler)",
+      "test_count": 4,
+      "topic": ""
+    },
+    {
+      "label": "Kimyasal Türler Arası Etkileşimler",
+      "test_count": 14,
+      "topic": "Kimyasal Türler Arası Etkileşimler (Karma)"
+    },
+    {
+      "label": "Maddenin Hâlleri",
+      "test_count": 12,
+      "topic": "Maddenin Halleri (Karma)"
+    },
+    {
+      "label": "Doğa ve Kimya",
+      "test_count": 5,
+      "topic": ""
+    },
+    {
+      "label": "Kontrol Grubu - 2 (5-7. Bölümler)",
+      "test_count": 5,
+      "topic": ""
+    },
+    {
+      "label": "Kimyanın Temel Kanunları",
+      "test_count": 8,
+      "topic": "Kimyanın Temel Kanunları"
+    },
+    {
+      "label": "Mol Kavramı",
+      "test_count": 8,
+      "topic": "Mol Kavramı"
+    },
+    {
+      "label": "Kimyasal Tepkimeler ve Denklemler",
+      "test_count": 7,
+      "topic": "Kimyasal Tepkimeler ve Hesaplamalar"
+    },
+    {
+      "label": "Kimyasal Hesaplamalar",
+      "test_count": 8,
+      "topic": "Kimyasal Tepkimeler ve Hesaplamalar"
+    },
+    {
+      "label": "Kontrol Grubu - 3 (9-12. Bölümler)",
+      "test_count": 5,
+      "topic": ""
+    },
+    {
+      "label": "Karışımlar",
+      "test_count": 14,
+      "topic": "Karışımlar (Karma)"
+    },
+    {
+      "label": "Asitler, Bazlar ve Tuzlar",
+      "test_count": 12,
+      "topic": "Asitler, Bazlar ve Tuzlar"
+    },
+    {
+      "label": "Kimya Her Yerde",
+      "test_count": 10,
+      "topic": "Kimya Her Yerde"
+    },
+    {
+      "label": "Kontrol Grubu - 4 (14-16. Bölümler)",
+      "test_count": 6,
+      "topic": ""
+    }
+  ]
+}

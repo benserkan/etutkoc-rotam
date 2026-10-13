@@ -1,0 +1,69 @@
+{
+  "name": "Çaddem TYT Fizik Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "TYT Fizik",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa)."
+  ],
+  "sections": [
+    {
+      "label": "Fizik Bilimine Giriş",
+      "test_count": 7,
+      "topic": "Fizik Bilimine Giriş"
+    },
+    {
+      "label": "Madde ve Özellikleri",
+      "test_count": 9,
+      "topic": "Madde ve Özellikleri (Karma)"
+    },
+    {
+      "label": "Hareket",
+      "test_count": 9,
+      "topic": "Hareket"
+    },
+    {
+      "label": "Kuvvet",
+      "test_count": 9,
+      "topic": "Hareket ve Kuvvet (Karma)"
+    },
+    {
+      "label": "Enerji",
+      "test_count": 9,
+      "topic": "İş, Güç ve Enerji (Karma)"
+    },
+    {
+      "label": "Isı ve Sıcaklık",
+      "test_count": 13,
+      "topic": "Isı ve Sıcaklık (Karma)"
+    },
+    {
+      "label": "Elektrostatik",
+      "test_count": 8,
+      "topic": "Elektrostatik"
+    },
+    {
+      "label": "Elektrik ve Manyetizma",
+      "test_count": 12,
+      "topic": "Elektrik (Karma)"
+    },
+    {
+      "label": "Basınç ve Kaldırma Kuvveti",
+      "test_count": 10,
+      "topic": "Basınç ve Kaldırma Kuvveti (Karma)"
+    },
+    {
+      "label": "Dalgalar",
+      "test_count": 11,
+      "topic": "Dalgalar (Karma)"
+    },
+    {
+      "label": "Optik",
+      "test_count": 20,
+      "topic": "Optik (Karma)"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "name": "Çaddem AYT Kimya Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "AYT Kimya",
+  "type": "soru_bankasi",
+  "target_grade_min": 11,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa).",
+    "İçindekilerin SON sayfası (Bölüm 15-18) taranmamış: Kontrol Grubu-4, Organik Bileşikler (9 kazanım testi), Enerji Kaynakları (3 kazanım testi) ve Kontrol Grubu-5 sayıları TAHMİNİ (bleed-through'dan kazanım adedi okundu, uygulama/kontrol blokları yayınevi desenine göre)."
+  ],
+  "sections": [
+    {
+      "label": "Modern Atom Teorisi",
+      "test_count": 7,
+      "topic": "Modern Atom Teorisi"
+    },
+    {
+      "label": "Periyodik Sistem",
+      "test_count": 11,
+      "topic": "Modern Atom Teorisi"
+    },
+    {
+      "label": "Gazlar",
+      "test_count": 13,
+      "topic": "Gazlar"
+    },
+    {
+      "label": "Kontrol Grubu - 1 (1-3. Bölümler)",
+      "test_count": 5,
+      "topic": ""
+    },
+    {
+      "label": "Sıvı Çözeltiler ve Çözünürlük",
+      "test_count": 12,
+      "topic": "Sıvı Çözeltiler ve Çözünürlük"
+    },
+    {
+      "label": "Kimyasal Tepkimelerde Enerji",
+      "test_count": 8,
+      "topic": "Kimyasal Tepkimelerde Enerji"
+    },
+    {
+      "label": "Kimyasal Tepkimelerde Hız",
+      "test_count": 9,
+      "topic": "Kimyasal Tepkimelerde Hız"
+    },
+    {
+      "label": "Kontrol Grubu - 2 (5-7. Bölümler)",
+      "test_count": 5,
+      "topic": ""
+    },
+    {
+      "label": "Kimyasal Tepkimelerde Denge",
+      "test_count": 10,
+      "topic": "Kimyasal Tepkimelerde Denge"
+    },
+    {
+      "label": "Sulu Çözelti Dengeleri - I (Asitler ve Bazlar)",
+      "test_count": 12,
+      "topic": "Asit-Baz Dengesi"
+    },
+    {
+      "label": "Sulu Çözelti Dengeleri - II (Çözünürlük Dengesi)",
+      "test_count": 6,
+      "topic": "Çözünürlük Dengesi"
+    },
+    {
+      "label": "Kontrol Grubu - 3 (9-11. Bölümler)",
+      "test_count": 5,
+      "topic": ""
+    },
+    {
+      "label": "Kimya ve Elektrik",
+      "test_count": 15,
+      "topic": "Kimya ve Elektrik"
+    },
+    {
+      "label": "Karbon Kimyasına Giriş",
+      "test_count": 10,
+      "topic": "Karbon Kimyasına Giriş"
+    },
+    {
+      "label": "Kontrol Grubu - 4 (13-14. Bölümler)",
+      "test_count": 5,
+      "topic": ""
+    },
+    {
+      "label": "Organik Bileşikler",
+      "test_count": 14,
+      "topic": "Organik Bileşikler"
+    },
+    {
+      "label": "Enerji Kaynakları ve Bilimsel Gelişmeler",
+      "test_count": 5,
+      "topic": "Enerji Kaynakları ve Bilimsel Gelişmeler"
+    },
+    {
+      "label": "Kontrol Grubu - 5 (16-17. Bölümler)",
+      "test_count": 5,
+      "topic": ""
+    }
+  ]
+}

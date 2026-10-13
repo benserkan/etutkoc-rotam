@@ -1,0 +1,84 @@
+{
+  "name": "Çaddem AYT Biyoloji Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "AYT Biyoloji",
+  "type": "soru_bankasi",
+  "target_grade_min": 11,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa)."
+  ],
+  "sections": [
+    {
+      "label": "Sinir Sistemi",
+      "test_count": 8,
+      "topic": "Sinir Sistemi"
+    },
+    {
+      "label": "Endokrin Sistemi",
+      "test_count": 7,
+      "topic": "Endokrin Sistem ve Hormonlar"
+    },
+    {
+      "label": "Duyu Organları",
+      "test_count": 7,
+      "topic": "Duyu Organları"
+    },
+    {
+      "label": "Destek ve Hareket Sistemi",
+      "test_count": 7,
+      "topic": "Destek ve Hareket Sistemi"
+    },
+    {
+      "label": "Sindirim Sistemi",
+      "test_count": 7,
+      "topic": "Sindirim Sistemi"
+    },
+    {
+      "label": "Dolaşım ve Savunma Sistemi",
+      "test_count": 11,
+      "topic": "Dolaşım ve Bağışıklık Sistemi"
+    },
+    {
+      "label": "Solunum Sistemi",
+      "test_count": 7,
+      "topic": "Solunum Sistemi"
+    },
+    {
+      "label": "Üriner Sistemi",
+      "test_count": 7,
+      "topic": "Boşaltım Sistemi"
+    },
+    {
+      "label": "Üreme Sistemi ve Embriyonik Gelişim",
+      "test_count": 7,
+      "topic": "Üreme Sistemi ve Embriyonik Gelişim"
+    },
+    {
+      "label": "Komünite ve Popülasyon Ekolojisi",
+      "test_count": 10,
+      "topic": "Komünite ve Popülasyon Ekolojisi"
+    },
+    {
+      "label": "Genden Proteine",
+      "test_count": 10,
+      "topic": "Genden Proteine (Nükleik Asitler, Protein Sentezi)"
+    },
+    {
+      "label": "Fotosentez ve Kemosentez",
+      "test_count": 8,
+      "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+    },
+    {
+      "label": "Hücre Solunum ve Fermantasyon",
+      "test_count": 7,
+      "topic": "Canlılarda Enerji Dönüşümleri (Fotosentez, Solunum)"
+    },
+    {
+      "label": "Bitki Biyolojisi",
+      "test_count": 14,
+      "topic": "Bitki Biyolojisi"
+    }
+  ]
+}

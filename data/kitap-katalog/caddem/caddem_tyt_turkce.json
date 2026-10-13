@@ -1,0 +1,69 @@
+{
+  "name": "Çaddem TYT Türkçe Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "TYT Türkçe",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa)."
+  ],
+  "sections": [
+    {
+      "label": "Sözcükte Anlam",
+      "test_count": 12,
+      "topic": "Sözcükte Anlam"
+    },
+    {
+      "label": "Cümlede Anlam",
+      "test_count": 12,
+      "topic": "Cümlede Anlam"
+    },
+    {
+      "label": "Anlatım Türleri",
+      "test_count": 7,
+      "topic": "Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları"
+    },
+    {
+      "label": "Paragrafta Anlam",
+      "test_count": 21,
+      "topic": "Paragraf (Karma)"
+    },
+    {
+      "label": "Sözcükte Yapı",
+      "test_count": 9,
+      "topic": "Sözcükte Yapı (Ekler)"
+    },
+    {
+      "label": "Ses Bilgisi / Yazım Kuralları / Noktalama İşaretleri",
+      "test_count": 18,
+      "topic": "Dil Bilgisi (Karma)"
+    },
+    {
+      "label": "İsim Soylu Sözcükler",
+      "test_count": 16,
+      "topic": "Sözcük Türleri"
+    },
+    {
+      "label": "Tamlamalar",
+      "test_count": 7,
+      "topic": "Sözcük Türleri"
+    },
+    {
+      "label": "Fiiller",
+      "test_count": 15,
+      "topic": "Fiiller (Anlam, Çatı, Kip, Yapı)"
+    },
+    {
+      "label": "Cümle Bilgisi",
+      "test_count": 12,
+      "topic": "Dil Bilgisi (Karma)"
+    },
+    {
+      "label": "Anlatım Bozuklukları",
+      "test_count": 10,
+      "topic": "Anlatım Bozuklukları"
+    }
+  ]
+}

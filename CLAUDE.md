@@ -6,6 +6,374 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## HAFTALIK GÖREV HAVUZU (dershane modu) — TASARIM KİLİTLİ, ADIM 1–6 YERELDE (2026-10-13)
+
+**ÜÇ ÇERÇEVE (kullanıcı):** (1) yalnız yerelde; **onaysız canlıya alınmaz** (SSH deploy kuralı bu
+iş için askıda). (2) Gün-gün program KALDIRILMAZ; havuz alternatif model. (3) Mevcut program
+yapısına **asla dokunulmaz** — paylaşılan servislerde yalnız `program_mode == "havuz"` dalı,
+varsayılan yol birebir; gün-gün regresyonları (gorev_checks 83/83 · student_flags 24 · warning_rules
+14 · risk_grace 6 · compliance 10 · action_center 8+11 · weekly_plan 15 · teacher_read 12 ·
+student_mutations 12 · carryover 20 · grid_release 17 · wrong_topic 20 · capacity 8) yeşil kalmalı.
+
+**Kararlar (K1–K61, 2026-10-12 basamak basamak soru-cevapla kilitlendi):**
+- Roller: havuzun tek yazarı rehber (K1); ders/özel ders öğretmeni sisteme girmez, ödevi öğrenci
+  seansta aktarır (K11 ödev = kalemin kendisi, iç işaret `teacher_homework`). Öğrenci tek rehbere
+  bağlı, davet akışı aynı (K7). Birebir öğrenci şubeden bağımsız, ayrı mod/işaret yok (K3/K10).
+- Dönem = iki GERÇEKLEŞEN seans arası (7 gün normal, 4-5 tatil, en çok 14), takvim haftasına hizalı
+  değil (K6/K8); seans günü beklenen ama çakılı değil; öğrenci gelmezse dönem uzar, tempo yeni güne
+  göre (K23); 14 gün seanssız → rehbere kırmızı, otomatik kapanış yok, "görüşmesiz kapat" (K57);
+  tatil = "ara" kapanışı + `is_paused` mantığı (K61); dönem geçmişi sınırsız (K60); kapanıştan sonra
+  2 gün öğrenci geç kayıt, sonrası yalnız rehber izli düzeltme (K59/K15).
+- Kalem çekirdeği ders + miktar + birim (test/soru/sayfa/deneme/etkinlik); konu/kaynak/gün etiketi
+  isteğe bağlı (K14/K30); test kaleminde miktar zorunlu, "bitir" kısayol → sayı (K16); miktarsız
+  yalnız etkinlik (1 birim); kaynaksızlık hiçbir adımı durdurmaz (K13 hafif kaynak = bölümsüz kitap);
+  serbest metin ayrıştırılır, sonuç rehbere çiplerle gösterilir, sessizce kaynağa yazılmaz (K28);
+  kalan düzeltilebilir (K15); **havuzda rezerv YOK**; kitabın test sayısı yardımcı (P1).
+- Konu: durum başlıyor/çözüyor/bitirdi (`topic_closures` üstüne türetilir, K5); konu konumu ŞUBEYE
+  yazılır, öğrencide "geride" işareti; şubesizde öğrenciye (K9). Şube şablonu + rutinler + iskelet
+  yalnız soluk öneri, dokununca kalem (K26); öğrencinin kitap ilerleyişi öneriyi ezer.
+- Havuz editörü (rehber, web): sırasız, altta "bu havuzda kalemi olmayan dersler" kontrol şeridi (K24);
+  **alan filtresi sert**: 11-12/mezunda alan boşsa AYT kalemi EKLENEMEZ, önce alan (K25); ders → konu
+  listesi, en son görev verilen konu SON işaretli, konu → miktar → kalem (K27); denemeden tek dokunuş
+  "test ekle" + `exam_result_id` işareti (K29); rehber günlere dağıtmaz, isteğe bağlı gün gün önizleme
+  (K17/K31); havuz yazıldığı anda öğrenciye açık, "seansı bitir" dönemi kesinleştirir (K32); hacim
+  uyarısı bilgi (K33).
+- Seans ekranı tek ekran: tek cümle özet → kalem kalem yapıldı/yapılmadı (öğretmen ödevi farklı
+  renk) → deneme şeridi 3 satır (net+değişim · yanlış konular · geçen dönemde çalışılan konuda yanlış)
+  → önceki seans notu (K19/K21); kitaba dokununca koltuk ızgarası + geri alma (K20); iki tamamlanma
+  kaynağı: öğrenci kaydı / rehberin seansta toplu "işaretlendi" (K18); devir kalem kalem, toplu düğme
+  yok (K22), devredilen kalem sayaç taşır, 3. devir → kaçınılan sinyali, miktar yeniden yazılır (K58).
+- Öğrenci: **günün kabı** — güne başlarken havuzdan kalem seçer → kap = o güne görev; tamamlanınca
+  işaretler (D/Y/B), yapılmayan gün sonu havuza döner; hafta programı kaplardan oluşur (K34/K36);
+  projeksiyon (eşit bölme) yalnız öneri (K35); hatırlatma iki anda (sabah kap boş / akşam
+  işaretlenmemiş kalem), **şube ders programı biliniyorsa** "bugün biyoloji vardı, biyoloji kalemin var"
+  (K37+ek); öğrenci havuza kalem ekler, **rehber seansta kaynağından görüp onaylayınca** yüzdeye girer
+  (K38 revize); havuz dışı çalışma = öğrencinin eklediği kalem, ayrı beyan yolu yok (K39); öğrenci
+  yüzde/kalan gün/tempo/geride-önde hepsini görür, dil yargılamaz (K41).
+- Kağıt öğrencisi (hiç kayıt yok) kendiliğinden tanınır; dönem içi susar, seansta rehberin
+  işaretlemesinden yalnız EĞİLİM çizgisi ("son 4 dönem %70→%40") gösterilir (K40/K51).
+- Erken uyarı (tek başarı kriteri): tempo birimi = test sayısı, etkinlik/deneme/video 1 birim;
+  geride = kalan birim ÷ kalan gün > son 3 dönem günlük ortalaması ×1,5; ilk 2 dönem susar (K42);
+  katılım kademeleri giriş → kap → işaret → D/Y/B; hiçbiri yoksa 2 gün sarı / 3 gün kırmızı,
+  eksik kademede yönlendirme bildirimi (K43); kaçınılan kalem (3 kez kaba girip döndü ya da 4 gün hiç
+  alınmadı) sarı + seans ekranında (K44); zor konu sona kalma deseni yalnız bilgi (K45); doğruluk
+  <%50 (≥2 test) öğrenciye öneri + rehbere sarı (K46); deneme çaprazı anında rehbere uyarı + "Seansa
+  ekle" kuyruğuna zorunlu (K47); öğrenciye kırmızı gitmez; rehber günlük görüşme listesi
+  (randevu modülü), bugünkü seans üstte, öğrenci başına 1 ana + katlanan ek sinyal, Gördüm/Ertele
+  (K48/K50); fren mekanizması YOK (K49).
+- Veli: havuz + kaplar salt okuma, uyarı yok (K52); seans kapanışında özet otomatik HAZIRLANIR,
+  rehber önizler/düzenler, isterse gönderir, otomatik gitmez (K53); Rota veli asistanı havuz verisini
+  alır (K56); havuz öğrencisinde Pazartesi haftalık cron susar (türeyen kural).
+- Kurum: şube × son dönem havuz % · seansı geciken öğrenci (beklenen gün 3+) · rehber başına kırmızı
+  (K54); rehber yükü (günlük görüşme + geciken seans) kuruma görünür (K55).
+
+**Basamak 9 bulguları (kod doğrulandı):** `tasks.date` NOT NULL → havuz kalemi yeni tablo, kap =
+mevcut görev (bugün/hafta/D-Y-B/sayım/veli/mobil değişmeden çalışır); kap kalemi
+`reservation_released_at` dolu doğar → mevcut tamamlama kodu rezerv sayacına dokunmaz; bayrak
+motoru/risk/kurum uyum gün-gün görev tarihi varsayıyor → havuz öğrencisinde yanlış alarm →
+`users.program_mode` ile dallanma; `users.class_group` metin → yeni şube tablosu (metin bağ kalır);
+türeyen: beklenen gün geçince kalan gün 1; onaysız öğrenci kalemi kurum tamamlamasına sızmaz;
+gün-gün editör/iskelet/devret havuz öğrencisinde açılmaz.
+
+**ADIM 1 — TEMEL, YERELDE TAMAM (2026-10-12, commit YOK, deploy YOK):**
+- Migration **`n5o8r1s2r66n`** (← m4n7q0r1q55m; yerelde uygulandı, downgrade/upgrade sınandı):
+  `users.program_mode` ('gun_gun' varsayılan | 'havuz') · `class_groups` (scope_key inst:/coach: +
+  ad; `topic_positions` JSON {subject_id→topic_id}; `lesson_days` JSON {hafta günü→dersler};
+  `book_set_id`) · `study_periods` (student, coach, opened_on/opened_session_id, expected_next_on,
+  closed_on/closed_session_id, status acik|kapandi|ara|gorusmesiz, note) · `pool_items` (period,
+  student, subject, topic?, book?, section?, label?, quantity, unit, completed, day_hint?, source
+  rehber|ogrenci|deneme|devir|sablon, teacher_homework, approval yok|bekliyor|onaylandi|reddedildi,
+  carry_count, cup_attempts, parent_item_id, exam_result_id, removed_at/by) · `tasks.pool_item_id`.
+- Model `app/models/pool.py` (sabitler + ClassGroup/StudyPeriod/PoolItem; `remaining`,
+  `counts_toward_pool`) · `User.program_mode` · `Task.pool_item_id`.
+- **TEK MERKEZ `app/services/pool_mode.py`**: mode_of/is_havuz/havuz_student_ids/set_program_mode
+  (açık dönemde değişmez) · open_period/close_period/list_periods/days_without_session ·
+  add_item (K16 miktar, K25 alan, konu-ders/bölüm-kitap/kitap-atama doğrulamaları, konu+kaynak+metin
+  üçü boşsa `label_required`, öğrenci kaynağı → bekliyor) · remove_item (izli) · approve_item ·
+  carry_item (sayaç+köken) · **put_in_cup** (kalem → o güne görev; kitaplı → TEST + released kalem,
+  başlık `compose_single`; konulu kaynaksız → topic_id kalemi; etkinlik/kitapsız deneme → OTHER,
+  miktar başlık kuyruğunda "· N birim"; aynı kalemden açık kap görevi varsa `already_in_cup`) ·
+  sync_item_progress (görev → kalem tek yön) · **close_day** (ilerlemesiz kap görevi silinir, kısmi
+  görev planlanan=tamamlanan'a küçülür ve tamamlanır, kalan havuzda) · period_summary (birim K42,
+  yüzde, kalan gün ≥1, günde gereken) · şube: get_or_create_class_group/class_group_of/
+  set_topic_position/set_lesson_days/subjects_taught_on/**cup_suggestions** (gün etiketi → o gün
+  dershanede işlenen ders → en çok bekleyen).
+- **Havuz dalı eklenen paylaşılan servisler (yalnız erken çıkış, varsayılan yol aynı):**
+  `student_flags.evaluate_flags` (headline "Haftalık görev havuzu", bayrak yok) ·
+  `analytics.legacy_warnings` · `risk_analysis.compute_risk_score` (ok/0) ·
+  `institution_compliance` (`has_program` ∪ havuz öğrencileri → "boş program" sayılmaz).
+- Test YENİ `scripts/test_pool_mode_foundation.py` **51/51** (mod · dönem kapıları · K16/K25/kaynak
+  doğrulamaları · onay/yüzde · kap=görev + rezerv 0 kanıtı + tamamlanınca kitap sayacı · gün kapanışı
+  3 durum · özet/tempo · devir sayaç/köken · silme izi · şube önerisi · bayrak/risk havuz nötr +
+  gün-gün öğrencisi hâlâ program_none).
+- **DERS:** regresyon suite'i ile `alembic downgrade` aynı anda koşturulmaz (weekly_plan 2 FAIL
+  verdi, tek başına 15/15). Kolon kontrolü `settings.database_url` (lgs.db) ile yapılır, app.db değil.
+**ADIM 2a — REHBER HAVUZ EDİTÖRÜ, YERELDE TAMAM (2026-10-12, commit YOK, deploy YOK):**
+- Router YENİ `app/routes/api_v2/pool.py` (prefix /teacher, sahiplik 404, anahtar
+  `teacher:{tid}:students:{sid}:pool`): GET `/students/{id}/pool` (paket: öğrenci+mod+alan ·
+  açık dönem + kalemler [ad çözümlü] + özet · son 8 dönem · dersler [K24 kalem sayısı; K25 alan
+  boşsa AYT dersleri `locked_ayt_names`'e düşer, `ayt_locked`] · eksik ders şeridi · şube
+  (konum+ders programı) · K33 hacim ipucu) · GET `/pool/topics?subject_id=` (K27: `topic_board`
+  üstüne SON [son havuz kalemi ya da görev günü], kalan, kaynaklar, şube konumu işareti) ·
+  POST `/program-mode` (öğrenci önekini de bayatlatır) · `/pool/periods` (aç) · `/periods/{id}/
+  close` (kapandi|ara|gorusmesiz) · `/periods/{id}/expected` (K8 beklenen gün) · `/pool/items`
+  (+ `/{id}/delete` izli, `/{id}/approve` K38) · `/pool/class-group/position` (K9) ·
+  `/pool/class-group/lesson-days` (K37) · POST `/pool/parse` (K28 — `pool_mode.parse_free_text`:
+  deterministik, AI yok; sayı+birim sözcüğü, öğrencinin kitap adı, seçili dersin konu adı →
+  çipler + taslak; belirsizde uyarı, ASLA yazmaz). Şemalar `schemas/pool.py`.
+  `StudentBriefProfile.program_mode` (additive) → başlık düğmesi havuz öğrencisinde
+  "Haftalık Havuz" → `/pool`.
+- Web YENİ `lib/api/pool.ts` (tipler + `poolKeys` + 9 mutation; yanıt paketi doğrudan cache'e) ·
+  `components/teacher/pool/pool-editor.tsx` (mod kartı → dönem çubuğu [aç / beklenen gün /
+  kapat diyaloğu / 14 gün rozeti] → 4 özet kutusu → sol: ders çipleri + AYT kilit notu + konu
+  listesi [SON/ŞUBE/bitirdi rozetleri, kalan] + kalem yazıcı [kaynak çipleri "devam", 1-5 +
+  başka + "kalanı ver", birim, gün etiketi, öğretmen ödevi, "Şube bu konuda"] + serbest yaz
+  [çipler → "Böyle ekle"] · sağ: ders gruplu havuz listesi [rozetler: öğrenci/onay/devir ×N/
+  deneme/kaba girdi; onayla-reddet; kaldır onaylı] + K24 eksik ders şeridi + K31 gün gün
+  önizleme · şube ders programı paneli · önceki dönemler) · sayfa `/teacher/students/[id]/pool`
+  · `/week` havuz öğrencisinde gün-gün editör yerine "Haftalık havuzu aç" kartı (gün-gün
+  öğrencisi için değişmedi).
+- Test YENİ `test_api_v2_pool_editor.py` **39/39** · YENİ `live_pool_editor.py` **20/20**
+  (gerçek tarayıcı: mod geçişi → dönem → konu → 4 test → rezerv 0 → serbest metin → eksik şerit →
+  önizleme → kaldır → başlık düğmesi → /week kartı → koyu tema 3 bölge kontrast) · teacher_read
+  12 · teacher_students 15 · foundation 51. tsc + eslint temiz. **TEST DERSİ:** alan filtresi
+  kanonik ada bakar ("AYT Fizik"); test tohumunda AYT dersine önek verilmez.
+- **DEV:** yeni router → `run_dev_patched` + Next dev yeniden başlatıldı (be.cmd / fe.cmd
+  scratchpad'de).
+**ADIM 2b — SEANS EKRANI, YERELDE TAMAM (2026-10-12, commit YOK, deploy YOK):**
+- Migration **`n6o9s2t3s77o`** (← n5o8r1s2r66n): `pool_items.session_marked` + `_at` — K18
+  ikinci tamamlanma kaynağı (rehber seansta işaretledi). `PoolItem.done_units` = öğrenci kaydı
+  (`completed`) + rehber işareti; `remaining` buna göre. Erken uyarı (Adım 4) yalnız `completed`.
+- Servis (`pool_mode`): `session_mark` (mutlak sayı; kitaplı test kaleminde ARTIŞ kitap sayacına
+  izli koç kaydı olarak `self_study_service.create_entries(source=coach, not "Seansta
+  işaretlendi")`; azalış sayaca dokunmaz, K15 kitap paneli) · `avoided_items` (K44: 3+ kap
+  denemesi · 3. devir · 4+ gündür hiç kaba alınmadı ve ilerleme yok) · `exam_strip` (K21: son
+  deneme net + aynı `exam_scope.series_key` önceki ile fark · yanlış konular · bu dönem
+  ilerleme olan konulardan denemede yanlış) · `finish_session` (K22/K32 tek işlem: dönemi kapat
+  → isteğe bağlı CoachingSession DONE (in_person) → yeni dönem (opened_session_id) → seçili
+  kalemleri `carry_item`; devir listesinde olmayan kalem → `carry_not_leftover`, hiçbir şey
+  yazılmaz).
+- Uçlar: GET `/pool/session` (özet cümle · kalem satırları [session_marked/done/avoided+gerekçe] ·
+  kaçınılanlar · onay bekleyen öğrenci kalemleri · deneme şeridi · önceki seans · "Seansa ekle"
+  kuyruğu) · POST `/pool/items/{id}/session-mark` {count} · POST `/pool/session/finish`
+  {closed_on, expected_next_on, carry[{item_id, quantity?}], record_session, agenda, coach_note,
+  next_change, mood}.
+- Web `components/teacher/pool/pool-session.tsx` + `/pool/session` sayfası: tek ekran, sekme yok
+  (K19): özet → kalem kalem (öğrenci/seansta/kalan; "seansta" sayı girişi, etkinlikte "yapıldı";
+  öğretmen ödevi eğik mor; "kitaba bak" → Kitaplar sekmesi [K20 ızgara yerine şimdilik]) →
+  kaçınılan kart → deneme şeridi 3 satır (dokun → Denemeler) → gündem kuyruğu → önceki seans →
+  "Seansı bitir" diyaloğu (devir adayları onay kutusu + miktar, beklenen gün, seans kaydı
+  gündem/not/değiştirilecek/ruh hali) → /pool'a döner. Editör dönem çubuğunda "Seans ekranı".
+- **DERS (dev SQLite):** test temizlikleri Task silip TaskBookItem bırakıyordu → yetim kalemler
+  id yeniden kullanımında yeni kap görevine yapışıp sayımı bozdu (4/8 görünüyordu). Üründe (PG
+  cascade) olmaz; yine de `put_in_cup` görevi kalemleriyle BİRLİKTE kurar (`book_items=[...]`),
+  dev'de yetimler temizlendi, 4 test temizliği kalemleri önce siler.
+- Test YENİ `test_api_v2_pool_session.py` **22/22** · YENİ `live_pool_session.py` **22/22**
+  (gerçek tarayıcı: özet → işaretle → kitap sayacı 3 · etkinlik yapıldı · deneme şeridi ·
+  seansı bitir → devir → yeni dönem · koyu tema 4 bölge) · editor 39 · foundation 51 ·
+  live_pool_editor 20 · gorev_checks 83. Öğrenci başlığı "İşlemler" menüsüne "Haftalık havuz
+  modu" girişi eklendi (gün-gün öğrencide de görünür → moda geçiş kartı).
+**ADIM 3 — ÖĞRENCİ KAP AKIŞI (MOBİL) + HATIRLATMALAR, YERELDE TAMAM (2026-10-12, commit YOK, deploy YOK):**
+- Uçlar YENİ `app/routes/api_v2/pool_student.py` (prefix /student, anahtar `student:{id}:pool`):
+  GET `/student/pool` (mod · açık dönem özeti + K41 tempo cümlesi [`_pace`: onde/yolunda/geride,
+  yargılamaz] · kalemler [in_cup_today, cup_task_id, suggested] · bugünün kabı [kap görevleri,
+  `can_return` = ilerleme yoksa] · K35 eşit bölme projeksiyonu · bugün dershanede işlenen dersler ·
+  kendi kalemi için ders listesi [alan kilidi dahil]) · POST `/pool/cup` {item_id, count?} (K34
+  → `put_in_cup` bugüne görev, rezerv yok; aynı kalem açıkken 409) · POST `/pool/cup/{task_id}/
+  return` (yalnız ilerlemesiz; işaretli varsa 409 `has_progress` — kalan gün sonu döner) · POST
+  `/pool/items` (K38 öğrenci kalemi → onay bekliyor, yüzdeye girmez) · POST `/pool/close-day`.
+  Gün-gün öğrencisi → mode gun_gun, boş paket; kap 404 `not_havuz`.
+- Cron (YENİ `app/services/pool_cron.py`, kayıt migration **`n7o0t3u4t88p`**, bool bind):
+  `pool_daily_close` günlük 00:15 UTC (03:15 TR) → dünün kapları `close_day` ile havuza döner (yalnız
+  havuz modu + açık dönem) · `pool_reminders` 30 dk → K37: sabah kap boşsa `usual_first_tick` sonrası
+  (21:00'den önce) push "Bugün havuzdan ne alıyorsun?" (şube ders programı varsa "bugün dershanede
+  Biyoloji vardı ve havuzunda Biyoloji kalemin var…"); akşam 21:00 sonrası kapta işaretlenmemiş
+  kalem varsa push; dedup `moment_events` (pool_morning/pool_evening + gün). Push data
+  `{type: student, screen: pool}` → mobil router `/student-pool`.
+- Mobil (JS-only → OTA): `lib/pool.ts` · `(app)/student-pool.tsx` "Havuzum" (özet kart + tempo
+  cümlesi · "Bugün dershanede" · Bugünün kabı [geri al oku, "Bugün ekranında işaretle" →
+  `router.navigate` tab'a — `push` Expo web'de boş ekran veriyordu] · K37 öneri kutusu · ders gruplu
+  havuz [Kaba al → sayı sayfası 1..8/hepsi; etkinlik ve kalan 1 doğrudan] · projeksiyon açılır ·
+  "Kalem ekle" sayfası K38) · `components/student/pool-banner.tsx` Bugün ekranında yalnız havuz
+  öğrencisinde (today-view QuickAccessStrip altı) · notification-router `screen=pool` · typed routes
+  `/student-pool` (router.d.ts elle). `app/models/__init__.__all__`'a havuz adları eklendi.
+- Test YENİ `test_api_v2_pool_student.py` **29/29** (uçlar + cron: daily_close yalnız havuz öğrencisi ·
+  sabah/akşam push + günde bir kez + gün-gün öğrenciye push yok; `safe_push` monkeypatch) · YENİ
+  `live_mobile_pool.py` **13/13** (Expo web 390px + gerçek backend: banner → Havuzum → Kaba al →
+  kap → Bugün ekranında görev → Kalem ekle onay bekliyor → projeksiyon) · pool suites 22/39/51 ·
+  student_read 11 · student_mutations 12 · gorev_checks 83. Mobil tsc temiz (yalnız önceden var olan
+  `app/preview/*` 6 hata), yeni dosyalar lint temiz.
+- **TEST DERSLERİ:** (a) Expo web için backend `CORS_ORIGINS`'e `http://localhost:8095` gerekir —
+  `be.cmd` env ile başlatır; `expo.cmd` `EXPO_PUBLIC_API_BASE=http://localhost:8081`, **CI=1 verme**
+  (Metro izleme kapanır, düzenleme bundle'a girmez). (b) Expo web'de Pressable metnine Playwright
+  tıklaması "görünür değil" diyor → `click(force=True)`; yığın geçişleri için `page.goto`.
+  (c) Kap listesinde aynı kalemin tamamlanmış görevi de döner — test açık olanı seçmeli.
+- **ADIM 3-WEB — ÖĞRENCİ WEB `/student/pool` "Havuzum", YERELDE TAMAM (2026-10-12, commit YOK,
+  deploy YOK, migration YOK):** mobilin aynısı, aynı uçlar (`pool_student.py`). `web/lib/api/
+  pool-student.ts` (tipler + `studentPoolKey=["student","me","pool"]` + useCupAdd/useCupReturn/
+  useAddStudentPoolItem; mutation yanıtı doğrudan önbelleğe yazılır) · `components/student/
+  pool-client.tsx` (özet kartı + tempo cümlesi · Bugünün kabı [geri al oku + "Bugün sayfasında
+  işaretle →"] · öneri kutusu · ders gruplu liste "Kaba al" → sayı penceresi 1..8/hepsi [etkinlik
+  ve kalan=1 doğrudan] · "Kalem ekle" penceresi [ders çipi + etiket + sayı + birim → onay bekler]
+  · projeksiyon katlanır) · `components/student/pool-banner.tsx` Bugün sayfasında QuickAccessStrip
+  altında YALNIZ havuz öğrencisinde (gün-gün öğrencide hiç render olmaz) · `app/student/pool/
+  page.tsx` (apiServer ilk veri) · site-header STUDENT_NAV "Havuzum" (Daha fazla menüsü).
+  Test YENİ `scripts/live_student_pool_web.py` **17/17** (banner · menü · özet/öneri · kaba al 2 →
+  görev + rezerv 0 · Bugün'de görev · geri al · öğrenci kalemi onay bekliyor + yüzde sabit ·
+  projeksiyon · koyu tema kontrast) + `.shots/student_pool_web{,_dark}.png`. tsc + eslint (tam)
+  temiz · pool smoke 29/39/22 · student_read 11 · student_mutations 12 · weekly_plan 15 ·
+  teacher_read 12 yeşil. **TEST DERSİ:** yeni öğrenci hesabında Rehber karşılama penceresi
+  Bugün'ü örter → "Daha sonra"; "Havuzum" 6. sıradan sonra olduğu için `Daha fazla` açılmadan
+  DOM'da yok.
+**ADIM 4 — ERKEN UYARI KATMANLARI `pool_flags` (K40–K57), YERELDE TAMAM (2026-10-12, commit YOK,
+deploy YOK, migration YOK):**
+- YENİ `app/services/pool_flags.py` — havuz öğrencisi için AYNI `FlagReport` sözleşmesi
+  (`evaluate_pool_flags`); `student_flags.evaluate_flags` havuz dalı artık buna devreder → pano uyarı
+  akışı · Durum Özeti · öğrenci listesi rengi · Gördüm/Ertele (WarningState) · risk puanı değişmeden
+  çalışır. Gün-gün yolu dokunulmadı (student_flags 24 · warning_rules 14 · gorev_checks 83 yeşil).
+  Katmanlar: **P** dönem (`pool_no_period` kırmızı · `pool_empty` sarı · `pool_session_overdue` 14 gün
+  kırmızı K57 · `pool_session_late` beklenen gün 3+ sarı K54; hepsi coach_only, risk puanını
+  YÜKSELTMEZ) · **K** katılım K43 (`pool_idle_streak` giriş+kap+işaret yok 2 gün sarı / 3 gün kırmızı —
+  giriş = `panel_visit_events` + last_active; `pool_no_cup` giriş var kap yok 2 gün; `pool_no_tick` kap
+  var işaret yok; `pool_dy_missing` bilgi ≥3 işaretli test kaleminin %70'inde D/Y boş) · **T** tempo
+  K42 (`pool_behind`: kalan ÖĞRENCİ-kaydı birimi ÷ kalan gün > son 3 tatil-dışı kapanmış dönemin
+  günlük ortalaması ×1,5; <2 kapanmış dönem SUSAR; `pace_baseline`) · **D** K46 (`pool_accuracy_{sid}`
+  ders başına ≥2 D/Y'li test kalemi, doğruluk <%50) · **E** K47 (`pool_exam_cross`: dönem içi denemede
+  bu dönem ilerleme olan konuda yanlış) · **A** K44 (`pool_avoided`) · **Z** K45 bilgi
+  (`pool_late_{sid}`: son 3 dönemin 2'sinde ders birimlerinin ≥%70'i son 2 güne kaldı/yapılmadı) ·
+  **G** (`pool_good_done` %100 · `pool_good_pace`). **Hiyerarşi K48:** primary = EN FAZLA 1 kart
+  (kırmızı>sarı, katman sırası P K T D E A), gerisi secondary; `parent_level` DAİMA green (K52).
+  **Kağıt öğrencisi K40/K51** (`is_paper_student`: hiç girmemiş VEYA ≥1 kapanmış dönem + hiç öğrenci
+  kaydı yok): K/T/D/A susar, yalnız `pool_paper` bilgi + son 4 dönem seans-işareti eğilimi "%70 → %40".
+  Son dönem `ara` → başlık "Ara (tatil)", bayrak yok.
+- **K44 düzeltmesi:** `cup_attempts` her kaba alışta artıyordu (başarılı dahil) → "kaba girip DÖNDÜ"
+  sayısı artık `pool_mode.cup_returns` = cup_attempts − hâlâ var olan kap görevi (ilerlemesiz görev gün
+  sonu/geri alışta silindiğinden kalan görev = dönmeyen alış). `avoid_reasons(period, today, db)` TEK
+  MERKEZ (seans ekranı + bayrak aynı gerekçe metni); `cup_attempts` alanı/sayaç semantiği korundu.
+- **K47 anında:** `pool_flags.exam_cross_check` → `teacher._pool_exam_cross` üç deneme yazma ucuna
+  bağlandı (koç import-confirm · öğrenci import-confirm · koç elle giriş; best-effort, kaydı bozmaz):
+  çalışılan konu × yanlış → `session_agenda_items` anahtar `pool_cross:{exam}:{topic}` (idempotent) +
+  rehbere `safe_push`. Seans ekranı kuyruğu `source=pool` satırını gösterir.
+- **K43 yönlendirme (cron):** `pool_cron.guidance_message` + `reminders()` üçüncü geçiş — sabah
+  penceresinde günde bir (moment `pool_guide`): giriş yok → "Havuzun seni bekliyor" · düşük doğruluk
+  (K46) → "çözümlere bak" · D/Y yok → "doğru/yanlış gir"; kağıt öğrencisine YOK; kap/işaret kademeleri
+  zaten K37 sabah/akşam hatırlatmasında. Öğrenciye kırmızı GİTMEZ.
+- **Risk:** `risk_analysis._pool_risk` — K/T/D/E/A kırmızı → 60, sarı → 30; P katmanı puan vermez ama
+  gösterge listesine girer. **Uyarı akışı:** `warning_link` `pool_no_period/pool_empty` → `/pool`,
+  diğer `pool_*` → `/pool/session`.
+- **Uçlar (additive):** `PoolBundleResponse.flags` + `PoolSessionResponse.flags` (`PoolFlagsOut`:
+  headline/level/primary/secondary/good/paper_student) · `StudentPoolResponse.hints`
+  (`pool_flags.student_hints`: K41/K46/K48 yargısız cümleler; level alanı yok).
+- **Web:** YENİ `components/teacher/pool/pool-flags-card.tsx` (ana kart + rozetler Dikkat/Acil/Bilgi
+  [kehribar dolguya KOYU yazı — beyaz yazı 3,2 kontrast veriyordu] + katman rozeti + "Neden?" kanıt
+  dl + "Ek sinyaller (N) · iyi gidenler" katlanır; `compact` editörde kanıt katlı) → seans ekranı
+  başlığın altında, editörde dönem çubuğunun altında. Öğrenci web `pool-client.tsx` cyan ipucu
+  kutuları (`student:pool:hints`). Mobil `student-pool.tsx` aynı kutu (`hints ?? []`, OTA).
+- Test YENİ `scripts/test_pool_flags.py` **45/45** (P1–P6 · H1–H3 · T1–T3 · K1–K4 · N1–N2 · R1–R3 ·
+  E1–E5 · S1–S2 · C1–C5 · W1–W8 [uyarı akışı tek satır + link + Gördüm/Ertele, seans/editör/öğrenci
+  uçları]) · YENİ `scripts/live_pool_flags.py` **16/16** (gerçek tarayıcı: 1 ana kart → ek sinyaller →
+  kanıt → editör kompakt → pano akışı → koyu tema kontrast → öğrenci ipuçları + `.shots/
+  pool_flags_session{,_dark}.png`, `student_pool_hints_dark.png`) · foundation 51 (10a yeni sözleşme:
+  yalnız pool_* kod, gün-gün kodu yok) · session 22 · editor 39 · student 29 · live_pool_session 22 ·
+  live_pool_editor 20 · live_student_pool_web 17 · live_mobile_pool 13 · exam_import 92 · student_read
+  11 · student_mutations 12 · teacher_exams 19 · compliance 10 · action_center 8 · warning_ack 11.
+  tsc + eslint (tam) temiz; mobil tsc yalnız önceden var olan `app/preview/*`.
+  **TEST DERSİ:** `test_risk_onboarding_grace` 3. senaryo saat 19:00 TR sonrası `today_no_tick`
+  yüzünden kırmızı (saat dondurulmamış, havuzla ilgisiz; `_tr_now` 12:00'a sabitlenince 6/6).
+- **YAPILMADI (sonraki adıma):** K48/K50 "rehber günlük görüşme listesi" (randevu modülü, bugünkü
+  seans üstte) ayrı yüzey — şimdilik K48 mekaniği pano uyarı akışında (öğrenci başına 1 satır +
+  Gördüm/Ertele). K54/K55 kurum sayımları (seansı geciken `pool_session_late` + rehber başına kırmızı)
+  Adım 5 panosunda okunur.
+**ADIM 5 — YERELDE TAMAM (2026-10-12/13, commit YOK, deploy YOK; migration `n8p1u4v5u99q`
+yerelde uygulandı, down/up sınandı):**
+- (a) Cron susturma: `cron_jobs._all_parent_student_pairs(include_havuz=False)` havuz öğrencisini
+  ATLAR (günlük özet/boş gün/haftalık rapor/düşüş); `exam_approaching` include_havuz=True; `event_triggers.
+  on_task_completed` + `student_email_fallback` havuzda susar.
+- (b) K53 veli seans özeti: YENİ `app/services/pool_parent_summary.py` (build_summary kural tabanlı veli
+  dili; rehber notu/öğrenci talebi/onaysız kalem GİRMEZ; `send_summary` kind=WEEKLY_REPORT + `__template
+  parent_pool_session_summary` [YENİ şablon], yalnız QUEUED sayılır; dönem `parent_summary_sent_at/_json`
+  damgası). Uçlar: GET/POST `/teacher/students/{id}/pool/periods/{pid}/parent-summary[/send]` (açık dönem
+  409 period_open · ikinci gönderim 409 already_sent). Web: `pool-parent-summary-dialog.tsx` (önizle/
+  düzenle/gönder, gönderilince salt okuma) + editörde "Dönem kapandı — veli özeti hazır" bandı + dönem
+  satırı rozeti.
+- (c) K54/K55: YENİ `app/services/institution_pool.py` + GET `/institution/pool-overview` + web
+  `/institution/pool` (nav "Haftalık Havuz"; şube×dönem · geciken seans · rehber yükü = bugün görüşme +
+  geciken + kırmızı).
+- (d) K56: `parent_commentary._pool_bundle` (model=havuz; dönem/kalemler/kap günleri/kaçınma/önceki
+  dönemler) + istem girişi + `compute_signature` dönem bazlı; `parent_chat._pool_greeting`.
+- (e) K48/K50: YENİ `app/services/pool_coach_day.py` + GET `/teacher/pool/daily` + web
+  `pool-daily-card.tsx` Görüşmeler sayfasının üstünde (bugünkü seans üstte, 1 ana + ek, Gördüm/Ertele).
+- (f) K52: GET `/parent/students/{id}/pool` + web `parent-pool-card.tsx` (salt okuma, uyarı yok).
+- Test: YENİ `scripts/test_pool_step5.py` **34/34**; regresyon parent 20 · wa 14 · weekly_report 14 ·
+  commentary 20 · chat 20 · insight 11 · pool suite'leri 51/22/39/29/45 · institution 18 · appointments 42 ·
+  trial 4 · exam_notify 39 yeşil. tsc + eslint (dokunulan dosyalar) temiz.
+  (`test_student_email_fallback` 4 FAIL — değişiklikten BAĞIMSIZ, stash ile doğrulandı.)
+- Canlı: YENİ `scripts/live_pool_step5.py` **18/18** (editörde "dönem kapandı — veli özeti hazır; otomatik
+  gitmez" bandı → önizle → cümle düzenle/sil → "1 veliye gönder" → kuyruk 1 + dönem damgası + koçun cümlesi
+  payload'da → rozet "Veliye gönderildi" → yeniden açınca salt okuma · Görüşmeler sayfasında günlük havuz
+  listesi (bugün 16:00 üstte, Gördüm → Geri al + ertelenen sayacı) · kurum menü + /institution/pool KPI/şube/
+  geciken + koyu tema 4 bölüm · veli kartı 2/12 birim + kap + önceki dönem %60, uyarı yok, koyu tema) ·
+  MOBİL YENİ `scripts/live_mobile_pool_step5.py` **6/6** (veli çocuk detayı havuz kartı `components/parent/
+  pool-card.tsx` · koç Görüşmeler ekranı `components/teacher/pool-daily-list.tsx` + Gördüm/Geri al;
+  `lib/pool.ts` parent/daily/ack fetcher'ları; JS-only → OTA) · web canlı regresyon editor 20 · flags 16 ·
+  session 22 · student_pool_web 17 · tam tsc + eslint temiz · mobil tsc yalnız `app/preview/*`.
+  **TEST DERSLERİ:** (a) yarıda kesilen canlı koşunun yetim `NotificationLog`'u id yeniden kullanımıyla yeni
+  öğrenciye yapıştı ("2 bildirim") → tohum, kendi öğrenci id'lerinin bildirimlerini önce siler; dev'deki
+  3 yetim kayıt temizlendi. (b) Expo web innerText CSS `uppercase` uygular ve noktalı İ'yi düşürür
+  ("LISTESI") → metin kontrolü küçük parçalarla/`norm()` ile. (c) tamamlanmış kap görevi "bugün kapta"
+  rozeti almaz (doğru davranış) — kap listesi li sayısıyla denetle.
+**ADIM 6 — DEVİR EKRANI + ARA + GEÇ KAYIT KİLİDİ + DÖNEM GEÇMİŞİ, YERELDE TAMAM (2026-10-13, commit YOK,
+deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
+- **Devir (K22/K58)** — `pool_mode`: `latest_closed_period` · `carry_candidates(db, student_id)` (son KAPANMIŞ
+  ya da ARA döneminin kalan kalemleri; kalan birim, `carry_count`, "3. devir olacak" işareti) · `open_period(...,
+  carry=[(item_id, quantity|None)])` adayları doğrular, listede olmayan kalem → `carry_not_leftover` (hiçbir şey
+  yazılmaz), her kalem `carry_item` ile sayaç+köken taşır (yeni kalem `source=devir`, `parent_item_id`). Toplu
+  "hepsini devret" düğmesi BİLİNÇLİ YOK (K22 kalem kalem). 3. devir → K44/K58 kaçınma sinyali (`avoid_reasons`).
+  Uç: `POST /pool/periods` gövdesine `carry[{item_id, quantity?}]`; paket yanıtına `carry_candidates` +
+  `periods_total`. Web `PeriodBar`: dönem yokken devir listesi (onay kutusu + kalan ön-dolu miktar + "Devir ×N" /
+  "3. devir olacak" rozeti) → düğme "Dönem aç · N kalem devret".
+- **Ara / tatil (K61)** — `break_state(db, student_id)`: son dönem `ara` kapanışıysa `{since, period_id}`;
+  paket `on_break`; aradan dönüşte devir adayları ara döneminin kalemleridir. Editörde amber "Ara (tatil) —
+  <tarih>'ten beri" bandı + dönüş notu; öğrenci web/mobil Havuzum boş durumda "Ara (tatil)… yeni dönem açılınca"
+  metni + `previous` (son 3 dönem % özeti); veli kartı (web+mobil) aynı metin. `is_paused` DOKUNULMADI (ara =
+  dönem kapanış türü, kullanıcı durdurma değil).
+- **Geç kayıt kilidi (K59/K15)** — `PoolItem` sabiti `LATE_ENTRY_DAYS = 2`; `pool_mode.late_entry_lock(db, task,
+  today)`: kap görevi KAPANMIŞ bir dönemin kalemine bağlıysa ve `closed_on + 2` geçildiyse kilit. Öğrenci uçları
+  (`student.py` complete / uncomplete / set-completed) `_ensure_pool_entry_open` → 403 `late_entry_locked`
+  ("rehberinden düzeltme iste"); 2 gün içinde serbest; açık dönem/gün-gün öğrencisi etkilenmez. Rehber düzeltmesi
+  mevcut izli yoldan (`session_mark`, K15).
+- **Dönem geçmişi (K60, sınırsız)** — `pool_mode.period_history(db, student_id, offset, limit)` → `(total,
+  rows)`; satır: durum, tarih aralığı, birim/yüzde, ders kırılımı (`subjects[{name, done, total}]`), `carried_in`
+  / `carried_out`, `session_marked_units`, `has_session`, `parent_summary_sent_at`. Uç `GET /students/{id}/pool/
+  periods?offset&limit` (PoolHistoryResponse; açık dönem de ilk sırada döner). Web `PeriodHistory`: sayfalı
+  ("Daha fazla", 10'ar; açık dönem varsa `limit+1` istenir ve istemcide süzülür → ilk sayfa 10 kapanmış dönem),
+  başlık "N dönem · geçmiş sınırsız saklanır", satır → ders kırılımı + "devredildi N" + veli özeti rozeti;
+  "dönem kapandı — veli özeti hazır" bandı (Adım 5) burada yaşar.
+- **Koyu tema dersi:** shadcn varsayılan `Button` (`bg-primary text-primary-foreground`) koyu temada 3,68, `bg-
+  cyan-600` üstünde beyaz 3,62 ölçer (4,5 eşiği altı) → "Dönem aç" ve "Veli özetini önizle" düğmeleri
+  `bg-cyan-700 text-white hover:bg-cyan-800` (≈5,0). **KURAL: 4,5 eşikli canlı ölçüme giren birincil düğme
+  cyan-700 ile yazılır; cyan-600/primary yetmez.**
+- Test YENİ `scripts/test_pool_step6.py` **26/26** (devir adayları · `carry_not_leftover` yazmaz · sayaç/köken ·
+  3. devir sinyali · ara durumu + aradan dönüş adayları · kilit: 2 gün içinde 200, 3. gün 403, açık dönem serbest,
+  gün-gün öğrencisi etkilenmez · geçmiş sayfalama/ders kırılımı/devir sayaçları) · YENİ `live_pool_step6.py`
+  **16/16** (gerçek tarayıcı: devir listesi → rozetler → miktar ön-dolu → "Dönem aç · 1 kalem devret" → yeni
+  dönemde Devir ×3 + DB doğrulama + kaçınma sinyali · geçmiş 12 dönem, ilk sayfa 10 → Daha fazla → 12 ·
+  "devredildi 1" · satır detayı 4/10 · 0/6 · ara bandı + aradan dönüş devir adayı · öğrenci Havuzum ara metni +
+  önceki dönemler · koyu tema 2 bölge 4,5). Regresyon: pool smoke 34/45/51/39/22/29 · student_read 11 ·
+  student_mutations 12 · teacher_read 12 · weekly_plan 15 · student_flags 24 · institution 18 · parent 20 ·
+  run_gorev_checks 83/83 · canlı editor 20 · flags 16 · session 22 · student_pool_web 17 · mobil pool 13 +
+  step5 6 · web tsc + eslint (tam) temiz · mobil tsc yalnız `app/preview/*` 6 eski hata.
+  **TEST DERSİ:** tohumda aynı kalemden ileri tarihli açık kap görevi varken `put_in_cup` `already_in_cup` verir →
+  önce tamamlanacak görev kurulur, sonra açık olan.
+- **HAVUZ MODU 6 ADIMIN TAMAMI YERELDE.** Commit + deploy yalnız kullanıcı onayıyla (SSH deploy kuralı bu iş için
+  askıda). Deploy öncesi bekçi: `scripts/check_migration_heads.py` (baş `n8p1u4v5u99q`), migration zinciri
+  n5o8r1s2r66n → n6o9s2t3s77o → n7o0t3u4t88p → n8p1u4v5u99q prod'da sırayla uygulanır (hepsi additive,
+  downgrade sınandı). Açık kararlar (kullanıcı): K20 kitaba dokununca koltuk ızgarası (seans ekranında şimdilik
+  "Kitaplar" sekmesine link) · K37 hatırlatma metinlerinin sahada ayarı · K54 kurum panosunun gerçek verisiyle ilk
+  gözlem.
+
+---
+
 ## DENEME ANALİZİ Faz 1-3 — CANLI (2026-10-02)
 
 - **Faz 1** (`7b3c43a`): alt sekmeler (Genel Bakış/Net Gelişimi/Konu Analizi/Sınav Davranışı/Tüm
@@ -3898,6 +4266,23 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   bunu doğrulamadan silmez) yeni baskının 21 bölümüyle değişti → kitap 112→129 test, drift 0.
   Betik `scripts/revise_3d_tyt_bio_2026.py` (kuru varsayılan, `--book N --apply`; book_sections'a
   FK veren TÜM tabloları tarar). Yedek `pre_3dbio2026_20261011_0938.dump`.
+- **ÇADDEM — 10 SORU BANKASI (Yağmur Ongan #224, koç Cafer SET #162) — CANLI (2026-10-13, prod
+  katalog id 266-275, Cafer kitapları #583-592, migration YOK; JSON `data/kitap-katalog/caddem/`):**
+  TYT Mat 23/157 · TYT Türkçe 11/139 · TYT Fizik 11/117 · TYT Kimya 17/143 · TYT Biyoloji 11/117 ·
+  TYT-AYT Geometri 16/149 (ders TYT Geometri) · AYT Mat 15/133 · AYT Fizik 16/133 · AYT Kimya 18/157 ·
+  AYT Biyoloji 14/117 (bölüm/test). Kaynak: WhatsApp tarama PDF'leri (kapak + içindekiler fotoğrafı,
+  metin katmanı yok; sayfalar 90° dönük iki-sayfa yayılımı → PyMuPDF `prerotate(-90)` + 4 sütun şeridi
+  ile okundu). **Çaddem deseni:** bölüm = N "Pekiştirme Testi" (Kimya'da "Kazanım Testi", her biri 2
+  sayfa = 1 test) + "Tecrübe Testleri" (Kimya'da "Uygulama Testleri") + "Son Test"; blok sayısı =
+  sayfa aralığı ÷ 2; Kimya kitaplarında ayrıca 3-4 bölümde bir "Kontrol Grubu" (çok konulu → bilinçli
+  eşleşmesiz). Satır = bölüm (konu); eşleme JSON'da `topic` ile SABİT, prod `--no-map`.
+  **TAHMİNİ kısımlar (JSON warnings'te):** AYT Fizik Bölüm 1-6 tecrübe sayıları (sayfa numaraları
+  taramada okunamadı; 17 test bütçeden dağıtıldı) · AYT Kimya Bölüm 15-18 (içindekilerin son sayfası
+  taranmamış; bleed-through'dan kazanım adedi okundu). Yeniden tarama gelirse `--reset` ile düzeltilir.
+  Atama `scripts.assign_catalog_books --coach 162 --student 224 --names-from
+  /app/data/kitap-katalog/caddem --apply` (Yağmur toplam 31 kitap). **DERS:** konteynerde seeder
+  `PYTHONPATH=/app` ister; `docker exec ... /app/dir/*.json` globu host'ta açılmaz → host listesinden
+  döngü.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı

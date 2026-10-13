@@ -1,0 +1,94 @@
+{
+  "name": "Çaddem TYT-AYT Geometri Soru Bankası",
+  "publisher": "Çaddem Yayınları",
+  "subject": "TYT Geometri",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 12,
+  "target_graduate": true,
+  "warnings": [
+    "İçindekiler fotoğrafından (WhatsApp tarama, 13.10.2026). Pekiştirme/Kazanım testleri birebir; Tecrübe/Uygulama/Son Test ve Kontrol Grubu blokları sayfa aralığı ÷ 2 (her test 2 sayfa)."
+  ],
+  "sections": [
+    {
+      "label": "Açılar ve Açı - Kenar Bağıntıları",
+      "test_count": 12,
+      "topic": "Üçgende Açılar"
+    },
+    {
+      "label": "Dik Üçgen ve Özel Üçgenler",
+      "test_count": 11,
+      "topic": "Dik Üçgen ve Pisagor"
+    },
+    {
+      "label": "Üçgenin Yardımcı Elemanları",
+      "test_count": 10,
+      "topic": "Üçgende Açıortay ve Kenarortay"
+    },
+    {
+      "label": "Üçgende Benzerlik",
+      "test_count": 9,
+      "topic": "Üçgende Eşlik ve Benzerlik"
+    },
+    {
+      "label": "Üçgende Alan",
+      "test_count": 8,
+      "topic": "Üçgende Alan"
+    },
+    {
+      "label": "Çokgenler ve Dörtgenler",
+      "test_count": 10,
+      "topic": "Çokgenler ve Dörtgenler (Karma)"
+    },
+    {
+      "label": "Paralelkenar, Eşkenar Dörtgen ve Deltoid",
+      "test_count": 15,
+      "topic": "Çokgenler ve Dörtgenler (Karma)"
+    },
+    {
+      "label": "Dikdörtgen ve Kare",
+      "test_count": 11,
+      "topic": "Çokgenler ve Dörtgenler (Karma)"
+    },
+    {
+      "label": "Yamuk",
+      "test_count": 9,
+      "topic": "Yamuk"
+    },
+    {
+      "label": "Çemberde Açı",
+      "test_count": 5,
+      "topic": "Çember ve Daire"
+    },
+    {
+      "label": "Çemberde Uzunluk",
+      "test_count": 7,
+      "topic": "Çember ve Daire"
+    },
+    {
+      "label": "Dairede Alan",
+      "test_count": 7,
+      "topic": "Çember ve Daire"
+    },
+    {
+      "label": "Katı Cisimler",
+      "test_count": 12,
+      "topic": "Katı Cisimler (Prizma, Piramit, Koni, Küre, Silindir)"
+    },
+    {
+      "label": "Noktanın ve Doğrunun Analitik İncelenmesi",
+      "test_count": 11,
+      "topic": "Analitik Geometri"
+    },
+    {
+      "label": "Dönüşümler",
+      "test_count": 6,
+      "topic": "Dönüşüm Geometrisi"
+    },
+    {
+      "label": "Çemberin Analitik İncelenmesi",
+      "test_count": 6,
+      "topic": "Analitik Geometri"
+    }
+  ]
+}
