@@ -1,0 +1,235 @@
+{
+  "name": "Hiper Zeka TAM 8. Sınıf Fen Bilimleri (5 Modül)",
+  "publisher": "Hiper Zeka Yayınları",
+  "subject": "Fen Bilimleri",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [
+    "İçindekiler fotoğraflarından (5 modül kapağı + içindekiler, 13.10.2026). Modül 1'de testler numaralı (Kazanım 01-05, Yeni Nesil 01-03); Modül 2-5'te test sayısı sayfa aralığından: Kazanım testi 2 sayfa, Yeni Nesil testi ~4 sayfa (Modül 1 ile birebir doğrulandı). Çözümlü Testler (konu anlatımı + çözümlü örnek) test sayılmadı. Ünite Sonu Değerlendirme sayıları TAHMİNİ (~5 sayfa/test)."
+  ],
+  "sections": [
+    {
+      "label": "Modül 1 · Mevsimlerin Oluşumu — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "Mevsimler ve İklim"
+    },
+    {
+      "label": "Modül 1 · Mevsimlerin Oluşumu — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "Mevsimler ve İklim"
+    },
+    {
+      "label": "Modül 1 · İklim ve Hava Hareketleri — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "Mevsimler ve İklim"
+    },
+    {
+      "label": "Modül 1 · İklim ve Hava Hareketleri — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "Mevsimler ve İklim"
+    },
+    {
+      "label": "Modül 1 · Mevsimler ve İklim — Ünite Sonu Değerlendirme",
+      "test_count": 2,
+      "topic": "Mevsimler ve İklim"
+    },
+    {
+      "label": "Modül 2 · DNA ve Genetik Kod — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 2 · DNA ve Genetik Kod — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 2 · Kalıtım — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 2 · Kalıtım — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 2 · Mutasyon - Modifikasyon - Adaptasyon — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 2 · Mutasyon - Modifikasyon - Adaptasyon — Yeni Nesil Testleri",
+      "test_count": 2,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 2 · Biyoteknoloji — Kazanım Testleri",
+      "test_count": 3,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 2 · Biyoteknoloji — Yeni Nesil Testleri",
+      "test_count": 1,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 2 · DNA ve Genetik Kod — Ünite Sonu Değerlendirme",
+      "test_count": 3,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Modül 3 · Katı Basıncı — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Modül 3 · Katı Basıncı — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Modül 3 · Sıvı Basıncı — Kazanım Testleri",
+      "test_count": 6,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Modül 3 · Sıvı Basıncı — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Modül 3 · Gaz Basıncı — Kazanım Testleri",
+      "test_count": 6,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Modül 3 · Gaz Basıncı — Yeni Nesil Testleri",
+      "test_count": 4,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Modül 3 · Basınç — Ünite Sonu Değerlendirme",
+      "test_count": 2,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Modül 4 · Periyodik Sistem — Kazanım Testleri",
+      "test_count": 2,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Periyodik Sistem — Yeni Nesil Testleri",
+      "test_count": 2,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Fiziksel ve Kimyasal Değişimler — Kazanım Testleri",
+      "test_count": 2,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Fiziksel ve Kimyasal Değişimler — Yeni Nesil Testleri",
+      "test_count": 2,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Kimyasal Tepkimeler — Kazanım Testleri",
+      "test_count": 2,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Kimyasal Tepkimeler — Yeni Nesil Testleri",
+      "test_count": 2,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Asitler ve Bazlar — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Asitler ve Bazlar — Yeni Nesil Testleri",
+      "test_count": 4,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Maddenin Isı ile Etkileşimi — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Maddenin Isı ile Etkileşimi — Yeni Nesil Testleri",
+      "test_count": 2,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Kimya Endüstrisi — Kazanım Testleri",
+      "test_count": 1,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Kimya Endüstrisi — Yeni Nesil Testleri",
+      "test_count": 1,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 4 · Madde ve Endüstri — Ünite Sonu Değerlendirme",
+      "test_count": 3,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Modül 5 · Makaralar — Kazanım Testleri",
+      "test_count": 6,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Makaralar — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Kaldıraçlar — Kazanım Testleri",
+      "test_count": 6,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Kaldıraçlar — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Eğik Düzlem — Kazanım Testleri",
+      "test_count": 4,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Eğik Düzlem — Yeni Nesil Testleri",
+      "test_count": 3,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Çıkrık - Dişli Çark - Kasnak ve Vida — Kazanım Testleri",
+      "test_count": 5,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Çıkrık - Dişli Çark - Kasnak ve Vida — Yeni Nesil Testleri",
+      "test_count": 2,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Bileşik Makineler — Yeni Nesil Testleri",
+      "test_count": 1,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Modül 5 · Basit Makineler — Ünite Sonu Değerlendirme",
+      "test_count": 2,
+      "topic": "Basit Makineler"
+    }
+  ]
+}
