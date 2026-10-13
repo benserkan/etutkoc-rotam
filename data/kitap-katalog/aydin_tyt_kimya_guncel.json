@@ -1,0 +1,508 @@
+{
+ "name": "Aydın TYT Kimya Konu Özetli Soru Bankası",
+ "publisher": "Aydın Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "warnings": [
+  "Güncel baskı (Aydın çözüm uygulaması, kitap #532 'TYT Kimya Konu Özetli Soru Bankası (Güncel Baskı)'), 2026-10-13. Özet satırları test değildir, katalogdan çıkarıldı.",
+  "Bölüm içindeki ardışık aynı konulu testler tek satırda; her bölümün Konu Tarama + Beceri Temelli testleri ayrı satır, bölümün ana konusuna eşli.",
+  "Eski kayıt (70 bölüm/139 test) konu taramalarını önceki konuya katıyordu; bölüm bazında test sayıları birebir aynı (13/13)."
+ ],
+ "sections": [
+  {
+   "label": "Kimya Nedir?",
+   "test_count": 2,
+   "topic": "Kimya Bilimi",
+   "unit": "Kimya Bilimi"
+  },
+  {
+   "label": "Kimya Ne İşe Yarar?",
+   "test_count": 2,
+   "topic": "Kimya Bilimi",
+   "unit": "Kimya Bilimi"
+  },
+  {
+   "label": "Güvenliğimiz ve Kimya",
+   "test_count": 2,
+   "topic": "Kimya Bilimi",
+   "unit": "Kimya Bilimi"
+  },
+  {
+   "label": "Kimyanın Sembolik Dili",
+   "test_count": 2,
+   "topic": "Kimya Bilimi",
+   "unit": "Kimya Bilimi"
+  },
+  {
+   "label": "Konu Tarama (Kimya Bilimi)",
+   "test_count": 2,
+   "topic": "Kimya Bilimi",
+   "unit": "Kimya Bilimi"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYA BİLİMİ)",
+   "test_count": 1,
+   "topic": "Kimya Bilimi",
+   "unit": "Kimya Bilimi"
+  },
+  {
+   "label": "Atom Modelleri",
+   "test_count": 1,
+   "topic": "Atom Modelleri ve Atomun Yapısı",
+   "unit": "Atom ve Yapısı"
+  },
+  {
+   "label": "Atom Altı Tanecikler",
+   "test_count": 4,
+   "topic": "Atom Modelleri ve Atomun Yapısı",
+   "unit": "Atom ve Yapısı"
+  },
+  {
+   "label": "Atomların Kimliği",
+   "test_count": 1,
+   "topic": "Atom Modelleri ve Atomun Yapısı",
+   "unit": "Atom ve Yapısı"
+  },
+  {
+   "label": "Konu Tarama (Atom ve Yapısı)",
+   "test_count": 2,
+   "topic": "Atom Modelleri ve Atomun Yapısı",
+   "unit": "Atom ve Yapısı"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (ATOM VE YAPISI)",
+   "test_count": 1,
+   "topic": "Atom Modelleri ve Atomun Yapısı",
+   "unit": "Atom ve Yapısı"
+  },
+  {
+   "label": "Periyodik Sistem ve Özellikleri",
+   "test_count": 2,
+   "topic": "Periyodik Sistem",
+   "unit": "Periyodik Sistem"
+  },
+  {
+   "label": "Elementlerin Özelliklerine Göre Sınıflandırılması",
+   "test_count": 2,
+   "topic": "Periyodik Sistem",
+   "unit": "Periyodik Sistem"
+  },
+  {
+   "label": "Periyodik Değişen Özellikler",
+   "test_count": 4,
+   "topic": "Periyodik Sistem",
+   "unit": "Periyodik Sistem"
+  },
+  {
+   "label": "Konu Tarama (Periyodik Sistem)",
+   "test_count": 3,
+   "topic": "Periyodik Sistem",
+   "unit": "Periyodik Sistem"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (PERİYODİK SİSTEM)",
+   "test_count": 1,
+   "topic": "Periyodik Sistem",
+   "unit": "Periyodik Sistem"
+  },
+  {
+   "label": "Kimyasal Tür Nedir?",
+   "test_count": 1,
+   "topic": "Kimyasal Türler Arası Etkileşimler (Karma)",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "İyonik Bağlar",
+   "test_count": 2,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "Kovalent Bağlar",
+   "test_count": 3,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "Metalik Bağlar",
+   "test_count": 1,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "Bileşiklerin Adlandırılması",
+   "test_count": 2,
+   "topic": "Güçlü Etkileşimler (Kimyasal Bağlar)",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "Zayıf Etkileşimler",
+   "test_count": 2,
+   "topic": "Zayıf Etkileşimler",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "Konu Tarama (Kimyasal Türler Arası Etkileşimler)",
+   "test_count": 2,
+   "topic": "Kimyasal Türler Arası Etkileşimler (Karma)",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 2,
+   "topic": "Fiziksel ve Kimyasal Değişimler",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYASAL TÜRLER ARASI ETKİLEŞİMLER)",
+   "test_count": 1,
+   "topic": "Kimyasal Türler Arası Etkileşimler (Karma)",
+   "unit": "Kimyasal Türler Arası Etkileşimler"
+  },
+  {
+   "label": "Maddenin Hâlleri ve Su Döngüsü",
+   "test_count": 1,
+   "topic": "Maddenin Halleri (Karma)",
+   "unit": "Maddenin Hâlleri"
+  },
+  {
+   "label": "Katılar",
+   "test_count": 2,
+   "topic": "Katılar",
+   "unit": "Maddenin Hâlleri"
+  },
+  {
+   "label": "Sıvılar",
+   "test_count": 3,
+   "topic": "Sıvılar",
+   "unit": "Maddenin Hâlleri"
+  },
+  {
+   "label": "Gazlar",
+   "test_count": 1,
+   "topic": "Gazlar",
+   "unit": "Maddenin Hâlleri"
+  },
+  {
+   "label": "Atmosfer ve Bağıl Nem",
+   "test_count": 1,
+   "topic": "Gazlar",
+   "unit": "Maddenin Hâlleri"
+  },
+  {
+   "label": "Maddenin Hâlleri, Plazma",
+   "test_count": 1,
+   "topic": "Maddenin Halleri (Karma)",
+   "unit": "Maddenin Hâlleri"
+  },
+  {
+   "label": "Konu Tarama (Maddenin Hâlleri)",
+   "test_count": 3,
+   "topic": "Maddenin Halleri (Karma)",
+   "unit": "Maddenin Hâlleri"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (MADDENİN HÂLLERİ)",
+   "test_count": 1,
+   "topic": "Maddenin Halleri (Karma)",
+   "unit": "Maddenin Hâlleri"
+  },
+  {
+   "label": "Su ve Hayat",
+   "test_count": 3,
+   "topic": "Kimya Her Yerde",
+   "unit": "Doğa ve Kimya"
+  },
+  {
+   "label": "Çevre Kimyası",
+   "test_count": 2,
+   "topic": "Kimya Her Yerde",
+   "unit": "Doğa ve Kimya"
+  },
+  {
+   "label": "Konu Tarama (Doğa ve Kimya)",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Doğa ve Kimya"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (DOĞA VE KİMYA)",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Doğa ve Kimya"
+  },
+  {
+   "label": "Kütlenin Korunumu ve Sabit Oranlar Yasası",
+   "test_count": 1,
+   "topic": "Kimyanın Temel Kanunları",
+   "unit": "Kimyanın Temel Yasaları"
+  },
+  {
+   "label": "Sabit Oranlar Yasası",
+   "test_count": 1,
+   "topic": "Kimyanın Temel Kanunları",
+   "unit": "Kimyanın Temel Yasaları"
+  },
+  {
+   "label": "Katlı Oranlar Yasası",
+   "test_count": 1,
+   "topic": "Kimyanın Temel Kanunları",
+   "unit": "Kimyanın Temel Yasaları"
+  },
+  {
+   "label": "Konu Tarama (Kimyanın Temel Yasaları)",
+   "test_count": 4,
+   "topic": "Kimyanın Temel Kanunları",
+   "unit": "Kimyanın Temel Yasaları"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYANIN TEMEL YASALARI)",
+   "test_count": 1,
+   "topic": "Kimyanın Temel Kanunları",
+   "unit": "Kimyanın Temel Yasaları"
+  },
+  {
+   "label": "Mol - Kütle - Tanecik - Hacim İlişkisi",
+   "test_count": 4,
+   "topic": "Mol Kavramı",
+   "unit": "Mol Kavramı"
+  },
+  {
+   "label": "Mol - akb İlişkisi",
+   "test_count": 1,
+   "topic": "Mol Kavramı",
+   "unit": "Mol Kavramı"
+  },
+  {
+   "label": "Mol Karışım Problemleri",
+   "test_count": 1,
+   "topic": "Mol Kavramı",
+   "unit": "Mol Kavramı"
+  },
+  {
+   "label": "Konu Tarama (Mol Kavramı)",
+   "test_count": 3,
+   "topic": "Mol Kavramı",
+   "unit": "Mol Kavramı"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (MOL KAVRAMI)",
+   "test_count": 1,
+   "topic": "Mol Kavramı",
+   "unit": "Mol Kavramı"
+  },
+  {
+   "label": "Tepkime Denklemleri",
+   "test_count": 1,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkime Türleri"
+  },
+  {
+   "label": "Yanma Tepkimeleri",
+   "test_count": 2,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkime Türleri"
+  },
+  {
+   "label": "Çözünme - Çökelme Tepkimeleri",
+   "test_count": 1,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkime Türleri"
+  },
+  {
+   "label": "Asit - Baz Tepkimeleri",
+   "test_count": 1,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkime Türleri"
+  },
+  {
+   "label": "Konu Tarama (Kimyasal Tepkime Türleri)",
+   "test_count": 2,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkime Türleri"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYASAL TEPKİME TÜRLERİ)",
+   "test_count": 1,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkime Türleri"
+  },
+  {
+   "label": "Denklem Katsayılarının Yorumlanması",
+   "test_count": 1,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkimelerde Hesaplamalar"
+  },
+  {
+   "label": "Artan Madde Problemleri",
+   "test_count": 2,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkimelerde Hesaplamalar"
+  },
+  {
+   "label": "Verim - Safsızlık Problemleri",
+   "test_count": 1,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkimelerde Hesaplamalar"
+  },
+  {
+   "label": "Karışım - Atom Kütlesi Bulma Problemleri",
+   "test_count": 1,
+   "topic": "Mol Kavramı",
+   "unit": "Kimyasal Tepkimelerde Hesaplamalar"
+  },
+  {
+   "label": "Konu Tarama (Kimyasal Tepkimelerde Hesaplamalar)",
+   "test_count": 2,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkimelerde Hesaplamalar"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYASAL TEPKİMELERDE HESAPLAMALAR)",
+   "test_count": 1,
+   "topic": "Kimyasal Tepkimeler ve Hesaplamalar",
+   "unit": "Kimyasal Tepkimelerde Hesaplamalar"
+  },
+  {
+   "label": "Homojen ve Heterojen Karışımlar",
+   "test_count": 2,
+   "topic": "Karışımların Sınıflandırılması",
+   "unit": "Karışımlar"
+  },
+  {
+   "label": "Çözünmenin Moleküler Temeli",
+   "test_count": 1,
+   "topic": "Çözünme ve Derişim",
+   "unit": "Karışımlar"
+  },
+  {
+   "label": "Derişim Türleri",
+   "test_count": 3,
+   "topic": "Çözünme ve Derişim",
+   "unit": "Karışımlar"
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 1,
+   "topic": "Çözünme ve Derişim",
+   "unit": "Karışımlar"
+  },
+  {
+   "label": "Karışımların Ayrılması",
+   "test_count": 3,
+   "topic": "Ayırma ve Saflaştırma",
+   "unit": "Karışımlar"
+  },
+  {
+   "label": "Konu Tarama (Karışımlar)",
+   "test_count": 3,
+   "topic": "Karışımlar (Karma)",
+   "unit": "Karışımlar"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KARIŞIMLAR)",
+   "test_count": 1,
+   "topic": "Karışımlar (Karma)",
+   "unit": "Karışımlar"
+  },
+  {
+   "label": "Asitleri ve Bazları Tanıyalım",
+   "test_count": 1,
+   "topic": "Asitler, Bazlar ve Tuzlar",
+   "unit": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Asitlerin ve Bazların Tepkimeleri ve Özellikleri",
+   "test_count": 5,
+   "topic": "Asitler, Bazlar ve Tuzlar",
+   "unit": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Hayatımızdaki Asitler ve Bazlar",
+   "test_count": 2,
+   "topic": "Asitler, Bazlar ve Tuzlar",
+   "unit": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Tuzların Kullanım Alanları",
+   "test_count": 1,
+   "topic": "Asitler, Bazlar ve Tuzlar",
+   "unit": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Konu Tarama (Asitler, Bazlar ve Tuzlar)",
+   "test_count": 2,
+   "topic": "Asitler, Bazlar ve Tuzlar",
+   "unit": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (ASİTLER, BAZLAR VE TUZLAR)",
+   "test_count": 1,
+   "topic": "Asitler, Bazlar ve Tuzlar",
+   "unit": "Asitler, Bazlar ve Tuzlar"
+  },
+  {
+   "label": "Temizlik Malzemeleri, Sabunlar",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "Temizlik Malzemeleri, Deterjanlar",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "Temizlik Malzemeleri, Hijyen Amaçlı Kullanılan Maddeler",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "Polimerler",
+   "test_count": 2,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "Kozmetik Ürünler",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "İlaçlar",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "Hazır Gıdalar",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "Yenilebilir Yağlar",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "Konu Tarama (Kimya Her Yerde)",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYA HER YERDE)",
+   "test_count": 1,
+   "topic": "Kimya Her Yerde",
+   "unit": "Kimya Her Yerde"
+  }
+ ]
+}
