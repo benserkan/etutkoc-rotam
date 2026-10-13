@@ -4432,7 +4432,12 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   katalogdan yeni Book #595 açıldı, eski atama kaldırıldı, görev kalemleri ünite içi test SIRASINA göre taşındı
   (Asit-Baz 3 → 1 + Konu Tarama 2 bölündü, D/Y orantılı); 17 çözülen + 8 rezerv birebir, sapma 0. Betik
   `scripts/revise_aydin_tyt_kimya_2026.py` (kuru varsayılan), JSON `aydin_tyt_kimya_guncel.json`. Yedek
-  `pre_aydinkim_20261013_1710.dump`. **DERS:** kalemlerin bölümünü değiştirdikten sonra başlık yenilemeden önce
+  `pre_aydinkim_20261013_1710.dump`. **Devamı (aynı gün):** "Karışım - Atom Kütlesi Bulma Problemleri" konusu
+  Mol Kavramı → Kimyasal Tepkimeler ve Hesaplamalar (koç düzeltmesi; katalog + Book #595). Taha #84 (83 çözülen,
+  76'sı bağımsız çalışma kaydı — kayıtlar da test sırasıyla bölündü; 4 iskelet satırı yeni kitaba bağlandı) ve
+  Boran #157 (15 çözülen) aynı Book #595'e taşındı; toplamlar birebir, sapma 0. Eski Book #358 artık hiçbir
+  öğrencide/kayıtta kullanılmıyor (koç kütüphanesinde duruyor). Yedek `pre_aydinkim2_20261013_1716.dump`.
+  **DERS:** kalemlerin bölümünü değiştirdikten sonra başlık yenilemeden önce
   `expire_all()` — yoksa eski bölüm adıyla başlık üretilir.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
