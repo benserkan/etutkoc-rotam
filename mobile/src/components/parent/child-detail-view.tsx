@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import type { WarningLevel } from "@/lib/parent";
 import type { ParentStudentOverview } from "@/lib/parent-detail";
 import { ParentAppointmentsCard } from "@/components/parent/appointments-card";
+import { ParentPoolCard } from "@/components/parent/pool-card";
 import { RotaCommentaryCard } from "@/components/parent/rota-commentary-card";
 import { cn } from "@/lib/utils";
 
@@ -124,6 +125,9 @@ export function ParentChildDetailView({
 
       {/* Sıradaki koçluk görüşmesi (varsa) */}
       <ParentAppointmentsCard studentId={data.student.id} />
+
+      {/* K52: haftalık havuz — yalnız havuz modundaki çocukta, salt okuma */}
+      <ParentPoolCard studentId={data.student.id} />
 
       {/* Rota'nın Yorumu — sayılar/grafikler velinin dilinde (tek kapı) */}
       <RotaCommentaryCard studentId={data.student.id} />

@@ -141,6 +141,11 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
             .distinct()
             .all()
         }
+        # Havuz modu (2026-10-12): "programı var" = açık dönemin havuzu; takvim
+        # haftasında görev aranmaz (kap boşken de programsız sayılmaz). Dönem-bazlı
+        # kurum panosu Basamak 7'de; burada yalnız yanlış "boş program" önlenir.
+        from app.services.pool_mode import havuz_student_ids
+        has_program |= havuz_student_ids(db, list(student_ids))
 
     summary = _summarize(this_totals)
     last_summary = _summarize(last_totals)

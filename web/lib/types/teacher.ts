@@ -199,6 +199,8 @@ export interface StudentBriefProfile {
   grade_level: number | null;
   is_active: boolean;
   is_paused?: boolean;        // mola modu (takip duraklatıldı — yaz molası)
+  /** Program modu: gün-gün (varsayılan) ya da haftalık görev havuzu (dershane) */
+  program_mode?: "gun_gun" | "havuz";
   is_graduate: boolean;
   class_group?: string | null;
   institution_id: number | null;
@@ -1061,6 +1063,8 @@ export interface CurriculumTopicItem {
   pct: number;
   unit_name: string | null;
   grade_level: number | null;
+  /** İlerleme/projeksiyona giren konu (odak sınıf; TYT/AYT dersinde tüm konular) */
+  in_focus?: boolean;
   /**
    * Koç "bu konu bitti" dedi mi (2026-09-07). Müfredat tamamlanmasının kaynağı
    * kitabın test sayacı DEĞİL koçun kararıdır.
@@ -1069,6 +1073,9 @@ export interface CurriculumTopicItem {
   closed_at?: string | null;
   /** Kaynaksız (kitapsız ama konuya bağlı) görevlerden çözülen test sayısı */
   sourceless_completed?: number;
+  /** HAVUZ: açık dönemde bu konudan bekleyen birim · seansta işaretlenen kaynaksız birim */
+  pool_remaining?: number;
+  pool_marked?: number;
   /** Deneme çaprazı (Faz 3): işlenmiş görünen konuda denemeler düşük doğruluk */
   exam_mismatch: boolean;
   exam_accuracy_pct: number | null;
@@ -1090,6 +1097,12 @@ export interface CurriculumSubjectItem {
   last_topic_name: string | null;
   next_topic_name: string | null;
   topics: CurriculumTopicItem[];
+  /** HAVUZ: açık dönemde bu dersten bekleyen birim (konulu kalemler) */
+  pool_remaining?: number;
+  /** Önceki sınıfların konuları (yukarıdaki sayımlar içinde bulunulan sınıfın) */
+  prior_total_topics?: number;
+  prior_started_topics?: number;
+  prior_completed_topics?: number;
 }
 
 export interface CurriculumExtraItem {
@@ -1108,6 +1121,19 @@ export interface CurriculumProjectionItem {
   pace_per_week: number;
   projected_coverage_pct: number;
   verdict: "yetisir" | "risk" | "yetismez" | "sinav_yok" | "veri_yok";
+  /** okul_yili_sonu: o sınıfın müfredatı eğitim yılı sonuna (15 Haziran) · sinav: mezun, tüm konular */
+  target_kind?: "okul_yili_sonu" | "sinav";
+  target_date?: string | null;
+  target_label?: string | null;
+}
+
+export interface CurriculumGradeItem {
+  grade: number | null;
+  total_topics: number;
+  started_topics: number;
+  completed_topics: number;
+  coverage_pct: number;
+  is_focus: boolean;
 }
 
 export interface CurriculumProgressResponse {
@@ -1119,6 +1145,17 @@ export interface CurriculumProgressResponse {
   subjects: CurriculumSubjectItem[];
   extras: CurriculumExtraItem[];
   projection: CurriculumProjectionItem | null;
+  /** havuz → konu satırında "Havuza ekle" (açık dönem varsa) */
+  program_mode?: "gun_gun" | "havuz";
+  pool_period_id?: number | null;
+  /** Açık dönemde konusu belirsiz havuz kalemleri — müfredata işlenmez */
+  pool_unlinked?: { item_id: number; subject_name: string; title: string; quantity: number; done: number }[];
+  /** Odak sınıf (2026-10-14): overall_* bu sınıfın konuları; null → kümülatif (12/mezun) */
+  focus_grade?: number | null;
+  cumulative_total_topics?: number;
+  cumulative_started_topics?: number;
+  cumulative_coverage_pct?: number;
+  grades?: CurriculumGradeItem[];
 }
 
 // Faz 2 — sıradaki atanabilir üniteler
@@ -1933,6 +1970,75 @@ export interface TeacherStudentAnalyticsResponse {
   exam_trend_section: string | null;
   exam_trend_delta: number | null;
   warnings: AnalyticsWarningItem[];
+  // 2026-10-15 — kaynak ayrımlı çalışma + müfredat
+  mix?: AnalyticsMix | null;
+  subject_work?: AnalyticsSubjectWork[];
+  dow_all?: AnalyticsDowAll[];
+  curriculum?: AnalyticsCurriculum | null;
+  program_mode?: string;
+}
+
+/** Son N gün çözülen test — kaynağa göre (deneme hariç). */
+export interface AnalyticsMix {
+  window_days: number;
+  book_planned: number;
+  book_completed: number;
+  sourceless_planned: number;
+  sourceless_completed: number;
+  session_tests: number;
+  total_tests: number;
+  correct: number;
+  wrong: number;
+  blank: number;
+  tests_with_result: number;
+  result_coverage_pct: number | null;
+  accuracy_pct: number | null;
+}
+
+export interface AnalyticsSubjectWork {
+  subject_id: number;
+  name: string;
+  book_tests: number;
+  sourceless_tests: number;
+  session_tests: number;
+  total: number;
+  planned: number;
+  correct: number;
+  wrong: number;
+  blank: number;
+  tests_with_result: number;
+  accuracy_pct: number | null;
+  coverage_pct: number | null;
+  started_topics: number;
+  total_topics: number;
+  next_topic: string | null;
+  last_topic: string | null;
+}
+
+export interface AnalyticsDowAll {
+  weekday: number;
+  label: string;
+  avg_completed: number;
+  hit_pct: number | null;
+  programmed_days: number;
+}
+
+export interface AnalyticsCurriculum {
+  focus_grade: number | null;
+  coverage_pct: number;
+  started_topics: number;
+  total_topics: number;
+  cumulative_coverage_pct: number;
+  cumulative_started_topics: number;
+  cumulative_total_topics: number;
+  verdict: "yetisir" | "risk" | "yetismez" | "sinav_yok" | "veri_yok" | null;
+  days_to_exam: number | null;
+  remaining_topics: number | null;
+  pace_per_week: number | null;
+  projected_coverage_pct: number | null;
+  target_kind?: "okul_yili_sonu" | "sinav" | null;
+  target_date?: string | null;
+  target_label?: string | null;
 }
 
 export interface ParentNoteBody {

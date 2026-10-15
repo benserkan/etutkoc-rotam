@@ -143,6 +143,11 @@ def on_task_completed(db: Session, student: User) -> dict:
     """
     summary = {"checked": 1, "fired_for_parents": 0, "skipped_recent": 0, "skipped_no_cycle": 0}
 
+    # Havuz modu (Adım 5): haftalık rapor yerine K53 seans özeti (rehber onayıyla) gider.
+    if getattr(student, "program_mode", "gun_gun") == "havuz":
+        summary["skipped_no_cycle"] = 1
+        return summary
+
     today = _today_utc()
     if not _is_cycle_complete(db, student.id, today):
         summary["skipped_no_cycle"] = 1

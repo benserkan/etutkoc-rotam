@@ -237,6 +237,8 @@ from app.routes.api_v2.schemas.teacher import (
     CarryoverResult,
     CarryoverSectionItem,
     CurriculumExtraItem,
+    CurriculumGradeItem,
+    CurriculumPoolUnlinkedItem,
     CurriculumProgressResponse,
     CurriculumProjectionItem,
     CurriculumSubjectItem,
@@ -319,6 +321,10 @@ from app.routes.api_v2.schemas.teacher import (
     TeacherReviewFleetRow,
     TeacherReviewResponse,
     TeacherStudentAnalyticsResponse,
+    AnalyticsCurriculum,
+    AnalyticsDowAll,
+    AnalyticsMix,
+    AnalyticsSubjectWork,
     TeacherStudentDayResponse,
     TeacherStudentDetailResponse,
     TeacherStudentListItem,
@@ -513,6 +519,7 @@ def _build_brief_profile(student: User) -> StudentBriefProfile:
         academic_year_name=(
             student.academic_year.name if student.academic_year else None
         ),
+        program_mode=getattr(student, "program_mode", None) or "gun_gun",
     )
 
 
@@ -909,6 +916,7 @@ _WARN_LINK = {
     "projection_zero_rate": ("dna", "Çalışma analizini gör"),
     "subjects_unprogrammed": ("week", "Programa ekle"),
     "program_none": ("week", "Program oluştur"),
+    "program_after_switch": ("week", "İlk programı hazırla"),
     "program_ending": ("week", "Yeni haftayı hazırla"),
     "draft_only": ("week", "Taslağı yayınla"),
     "empty_streak": ("week", "Günleri incele"),
@@ -923,6 +931,22 @@ _WARN_LINK = {
 }
 
 
+
+def _pool_exam_cross(db: Session, *, student: User, exam_id: int, actor: User) -> None:
+    """K47 (havuz modu): yeni deneme → bu dönem çalışılan konuda yanlış varsa seans
+    gündemine zorunlu ekle + rehbere push. Best-effort; deneme kaydını asla bozmaz."""
+    try:
+        if getattr(student, "program_mode", "gun_gun") != "havuz":
+            return
+        from app.services.pool_flags import exam_cross_check
+        exam_cross_check(db, student=student, exam_id=exam_id, actor=actor)
+        db.commit()
+    except Exception:  # noqa: BLE001
+        db.rollback()
+        import logging
+        logging.getLogger(__name__).warning("pool exam cross-check failed", exc_info=True)
+
+
 def warning_link(student_id: int, code: str) -> tuple[str, str]:
     """Uyarı kodu → kanıt sayfası (tek merkez: durum özeti + uyarı akışı)."""
     suffix, label = _WARN_LINK.get(code, ("week", "Programı incele"))
@@ -930,6 +954,11 @@ def warning_link(student_id: int, code: str) -> tuple[str, str]:
         suffix, label = "week", "Bu dersin görevlerini incele"
     if code.startswith(("exam_behind_", "exam_stalled_")):
         suffix, label = "#analytics", "Sınava hazırlık tablosunu gör"
+    # Havuz modu sinyalleri (pool_flags, Adım 4): dönem/havuz → editör, gerisi → seans ekranı
+    if code in ("pool_no_period", "pool_empty"):
+        suffix, label = "pool", "Havuzu yaz"
+    elif code.startswith("pool_"):
+        suffix, label = "pool/session", "Seans ekranını aç"
     if suffix.startswith("#"):
         return f"/teacher/students/{student_id}{suffix}", label
     return f"/teacher/students/{student_id}/{suffix}", label
@@ -1546,9 +1575,13 @@ def teacher_student_topic_performance_v2(
     from app.services.topic_performance import compute_topic_performance
 
     win = grade_period_service.resolve_window(db, student.id, period)
+    from app.services.topic_performance import loss_focus
+
+    perf = compute_topic_performance(db, student.id, start=win.start, end=win.end)
     return build_topic_performance_response(
-        compute_topic_performance(db, student.id, start=win.start, end=win.end),
+        perf,
         grade_period_service.build_filter_meta(db, student.id, win),
+        focus=loss_focus(db, student.id, perf),
     )
 
 
@@ -1597,9 +1630,10 @@ def teacher_student_curriculum_v2(
                         topic_id=t.topic_id, name=t.name, order=t.order,
                         has_resource=t.has_resource, test_total=t.test_total,
                         completed=t.completed, reserved=t.reserved, status=t.status, pct=t.pct,
-                        unit_name=t.unit_name, grade_level=t.grade_level,
+                        unit_name=t.unit_name, grade_level=t.grade_level, in_focus=t.in_focus,
                         closed=t.closed, closed_at=t.closed_at,
                         sourceless_completed=t.sourceless_completed,
+                        pool_remaining=t.pool_remaining, pool_marked=t.pool_marked,
                         exam_mismatch=bool(_mm(t.topic_id)),
                         exam_accuracy_pct=_mm(t.topic_id).get("accuracy_pct"),
                         exam_answered=_mm(t.topic_id).get("answered"),
@@ -1611,8 +1645,23 @@ def teacher_student_curriculum_v2(
                     )
                     for t in s.topics
                 ],
+                pool_remaining=s.pool_remaining,
+                prior_total_topics=s.prior_total_topics,
+                prior_started_topics=s.prior_started_topics,
+                prior_completed_topics=s.prior_completed_topics,
             )
             for s in res.subjects
+        ],
+        focus_grade=res.focus_grade,
+        cumulative_total_topics=res.cumulative_total_topics,
+        cumulative_started_topics=res.cumulative_started_topics,
+        cumulative_coverage_pct=res.cumulative_coverage_pct,
+        grades=[
+            CurriculumGradeItem(
+                grade=g.grade, total_topics=g.total_topics, started_topics=g.started_topics,
+                completed_topics=g.completed_topics, coverage_pct=g.coverage_pct, is_focus=g.is_focus,
+            )
+            for g in res.grades
         ],
         extras=[
             CurriculumExtraItem(
@@ -1629,9 +1678,19 @@ def teacher_student_curriculum_v2(
                 pace_per_week=res.projection.pace_per_week,
                 projected_coverage_pct=res.projection.projected_coverage_pct,
                 verdict=res.projection.verdict,
+                target_kind=res.projection.target_kind,
+                target_date=res.projection.target_date,
+                target_label=res.projection.target_label,
             )
             if res.projection else None
         ),
+        program_mode=res.program_mode,
+        pool_period_id=res.pool_period_id,
+        pool_unlinked=[
+            CurriculumPoolUnlinkedItem(item_id=u.item_id, subject_name=u.subject_name, title=u.title,
+                                       quantity=u.quantity, done=u.done)
+            for u in res.pool_unlinked
+        ],
     )
 
 
@@ -1860,6 +1919,7 @@ def teacher_create_exam_v2(
     from app.services.push_notifications import notify_parents_rota_exam_ready_bg
     background_tasks.add_task(
         notify_parents_rota_exam_ready_bg, student.id, student.full_name)
+    _pool_exam_cross(db, student=student, exam_id=exam.id, actor=user)
     return MutationResponse[ExamResultRow](
         data=_build_exam_row(exam, created_by_name=user.full_name),
         invalidate=[
@@ -5098,6 +5158,7 @@ def teacher_close_topic_v2(
         invalidate=[
             f"teacher:{user.id}:students:{student.id}:curriculum",
             f"teacher:{user.id}:students:{student.id}:next-units",
+            f"teacher:{user.id}:students:{student.id}:pool",
         ],
     )
 
@@ -5122,6 +5183,7 @@ def teacher_reopen_topic_v2(
         invalidate=[
             f"teacher:{user.id}:students:{student.id}:curriculum",
             f"teacher:{user.id}:students:{student.id}:next-units",
+            f"teacher:{user.id}:students:{student.id}:pool",
         ],
     )
 
@@ -6049,7 +6111,7 @@ def teacher_set_task_item_result_v2(
         correct=body.correct,
         wrong=body.wrong,
         blank=body.blank,
-        is_book_item=item.book_id is not None,
+        is_book_item=(item.book_id is not None or item.topic_id is not None),
     )
 
     try:
@@ -6074,6 +6136,13 @@ def teacher_set_task_item_result_v2(
         task.status = TaskStatus.PARTIAL
         task.completed_at = None
 
+    if task.pool_item_id is not None:  # havuz kap görevi: kalem sayacı hemen (2026-10-14)
+        from app.models.pool import PoolItem
+        from app.services.pool_mode import sync_item_progress
+
+        item = db.get(PoolItem, task.pool_item_id)
+        if item is not None:
+            sync_item_progress(db, item)
     db.commit()
     db.refresh(task)
     return MutationResponse[TeacherTask](
@@ -10161,7 +10230,61 @@ def teacher_student_analytics_v2(
         for w in snap.warnings
     ]
 
+    # --- 2026-10-15: kaynak ayrımlı çalışma (kitaplı / kaynaksız / seansta) + müfredat ---
+    from app.services.study_mix import compute_study_mix
+    from app.services import curriculum_progress as _cp
+
+    mx = compute_study_mix(db, student, today=today, days=30)
+    mix_out = AnalyticsMix(
+        window_days=mx.window_days, book_planned=mx.book.planned, book_completed=mx.book.completed,
+        sourceless_planned=mx.sourceless.planned, sourceless_completed=mx.sourceless.completed,
+        session_tests=mx.session_tests, total_tests=mx.total_tests, correct=mx.correct, wrong=mx.wrong,
+        blank=mx.blank, tests_with_result=mx.tests_with_result,
+        result_coverage_pct=mx.result_coverage_pct, accuracy_pct=mx.accuracy_pct,
+    )
+    subject_work = [
+        AnalyticsSubjectWork(
+            subject_id=w.subject_id, name=w.name, book_tests=w.book_tests,
+            sourceless_tests=w.sourceless_tests, session_tests=w.session_tests, total=w.total,
+            planned=w.planned, correct=w.correct, wrong=w.wrong, blank=w.blank,
+            tests_with_result=w.tests_with_result, accuracy_pct=w.accuracy_pct,
+            coverage_pct=w.coverage_pct, started_topics=w.started_topics, total_topics=w.total_topics,
+            next_topic=w.next_topic, last_topic=w.last_topic,
+        )
+        for w in mx.subjects
+    ]
+    dow_all = [
+        AnalyticsDowAll(weekday=r.weekday, label=_DOW[r.weekday], avg_completed=r.avg_completed,
+                        hit_pct=r.hit_pct, programmed_days=r.programmed_days)
+        for r in mx.dow
+    ]
+    curriculum_out = None
+    try:
+        cpr = _cp.compute_curriculum_progress(db, student, user.id)
+        pj = cpr.projection
+        curriculum_out = AnalyticsCurriculum(
+            focus_grade=cpr.focus_grade, coverage_pct=cpr.overall_coverage_pct,
+            started_topics=cpr.overall_started_topics, total_topics=cpr.overall_total_topics,
+            cumulative_coverage_pct=cpr.cumulative_coverage_pct,
+            cumulative_started_topics=cpr.cumulative_started_topics,
+            cumulative_total_topics=cpr.cumulative_total_topics,
+            verdict=pj.verdict if pj else None, days_to_exam=pj.days_to_exam if pj else None,
+            remaining_topics=pj.remaining_topics if pj else None,
+            pace_per_week=pj.pace_per_week if pj else None,
+            projected_coverage_pct=pj.projected_coverage_pct if pj else None,
+            target_kind=pj.target_kind if pj else None,
+            target_date=pj.target_date if pj else None,
+            target_label=pj.target_label if pj else None,
+        )
+    except Exception:  # noqa: BLE001 — müfredat bloğu best-effort
+        curriculum_out = None
+
     return TeacherStudentAnalyticsResponse(
+        mix=mix_out,
+        subject_work=subject_work,
+        dow_all=dow_all,
+        curriculum=curriculum_out,
+        program_mode=getattr(student, "program_mode", None) or "gun_gun",
         student_id=student.id,
         student_name=student.full_name,
         window_days=30,

@@ -976,3 +976,78 @@ export interface InstitutionSelfStudyReportResponse {
   recent: SelfStudyReportEntryRow[];
   mismatches: SelfStudyMismatchRow[];
 }
+
+
+// ---------------------------------------------------------------- Haftalık havuz panosu (K54/K55)
+
+export interface PoolGroupRow {
+  class_group: string;
+  students: number;
+  last_pct: number | null;
+  open_pct: number | null;
+  late_sessions: number;
+  red: number;
+  amber: number;
+  lessons_set: boolean;
+}
+
+export interface PoolLateSessionRow {
+  student_id: number;
+  student_name: string;
+  coach_name: string;
+  class_group: string | null;
+  opened_on: string;
+  expected_next_on: string | null;
+  days_open: number;
+  late_days: number;
+  level: "red" | "amber";
+  pct: number | null;
+}
+
+export interface PoolCoachLoadRow {
+  coach_id: number;
+  coach_name: string;
+  students: number;
+  red: number;
+  amber: number;
+  late_sessions: number;
+  today_sessions: number;
+  load: number;
+  pending_approval: number;
+  bulk: number;
+  paper: number;
+  avg_open_pct: number | null;
+}
+
+export interface PoolParticipation { students: number; cup_today: number; ticked_today: number; idle: number; paper: number }
+export interface PoolPace { onde: number; yolunda: number; geride: number; belirsiz: number }
+export interface PoolSources { student_units: number; coach_units: number; done_units: number; total_units: number }
+export interface PoolItemsMix {
+  total: number; book: number; topic: number; free: number; teacher_homework: number; carried: number;
+  pending_approval: number; rejected: number; student_added: number;
+}
+export interface PoolSignalRow { key: string; label: string; hint: string; red: number; amber: number; info: number; students: number }
+export interface PoolSubjectRow { name: string; done: number; total: number; pct: number; students: number }
+export interface PoolTrendRow { week_start: string; avg_pct: number | null; periods: number }
+
+export interface InstitutionPoolOverviewResponse {
+  students: number;
+  coaches: number;
+  open_periods: number;
+  avg_last_pct: number | null;
+  avg_open_pct: number | null;
+  late_sessions: number;
+  red_students: number;
+  amber_students: number;
+  groups: PoolGroupRow[];
+  late: PoolLateSessionRow[];
+  coaches_rows: PoolCoachLoadRow[];
+  avg_expected_pct: number | null;
+  participation: PoolParticipation;
+  pace: PoolPace;
+  sources: PoolSources;
+  items: PoolItemsMix;
+  signals: PoolSignalRow[];
+  subjects: PoolSubjectRow[];
+  trend: PoolTrendRow[];
+}

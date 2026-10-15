@@ -53,6 +53,7 @@ export function StudentDetailView({
   data,
   onOpenDev,
   onOpenTopics,
+  onOpenPool,
   onSendWa,
   onToggleActive,
   togglingActive = false,
@@ -60,6 +61,8 @@ export function StudentDetailView({
   data: TeacherStudentDetail;
   onOpenDev?: () => void;
   onOpenTopics?: () => void;
+  /** Havuz modundaki öğrenci: "Haftalık havuz" kartı (Program sekmesine geçer). */
+  onOpenPool?: () => void;
   onSendWa?: () => void;
   onToggleActive?: () => void;
   togglingActive?: boolean;
@@ -127,6 +130,23 @@ export function StudentDetailView({
             </View>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#0e7490" />
+        </Pressable>
+      ) : null}
+
+      {/* Haftalık havuz — havuz modundaki öğrencide en üstte */}
+      {onOpenPool ? (
+        <Pressable
+          onPress={onOpenPool}
+          className="flex-row items-center justify-between rounded-2xl bg-cyan-700 px-5 py-4 active:bg-cyan-800"
+        >
+          <View className="flex-1 flex-row items-center gap-3">
+            <Ionicons name="file-tray-full-outline" size={22} color="#ffffff" />
+            <View className="flex-1">
+              <Text className="text-[15px] font-semibold text-white">Haftalık havuz</Text>
+              <Text className="mt-0.5 text-xs text-cyan-50">Seansa kadar gün gün ne yaptı, ders ders ilerleme</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#ffffff" />
         </Pressable>
       ) : null}
 

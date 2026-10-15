@@ -208,6 +208,9 @@ class StudentBriefProfile(BaseModel):
     exam_date: str | None = None             # "YYYY-MM-DD"
     graduate_mode: str | None = None         # "full_time" | "dershane"
     academic_year_name: str | None = None
+    # Havuz modu (2026-10-12): 'gun_gun' (varsayılan) | 'havuz' — başlıktaki
+    # "Haftalık Program" düğmesi havuz öğrencisinde havuz editörüne gider.
+    program_mode: str = "gun_gun"
 
 
 class StudentPauseResult(BaseModel):
@@ -1028,12 +1031,16 @@ class CurriculumTopicItem(BaseModel):
     pct: int
     unit_name: str | None = None     # ait olduğu tema/ünite (Maarif) — UI gruplama
     grade_level: int | None = None   # konunun sınıfı — UI sınıf başlığı
+    in_focus: bool = True             # ilerleme/projeksiyona giren konu (odak sınıf; TYT/AYT dersinde tüm konular)
     # Koç "bu konu bitti" dedi mi (2026-09-07). Müfredat tamamlanmasının
     # kaynağı kitabın sayacı DEĞİL koçun kararıdır.
     closed: bool = False
     closed_at: str | None = None
     # Kaynaksız (kitapsız ama konuya bağlı) görevlerden çözülen test sayısı
     sourceless_completed: int = 0
+    # HAVUZ (2026-10-14): açık dönemde bu konudan bekleyen birim · seansta işaretlenen kaynaksız birim
+    pool_remaining: int = 0
+    pool_marked: int = 0
     # Deneme çapraz doğrulaması (self-study Faz 3): işlenmiş görünen konuda
     # son denemeler düşük doğruluk gösteriyorsa True + detaylar
     exam_mismatch: bool = False
@@ -1063,6 +1070,20 @@ class CurriculumSubjectItem(BaseModel):
     last_topic_name: str | None = None
     next_topic_name: str | None = None
     topics: list[CurriculumTopicItem] = []
+    pool_remaining: int = 0
+    # Odak sınıf (2026-10-14): yukarıdaki sayımlar içinde bulunulan sınıfın; önceki sınıflar ayrı
+    prior_total_topics: int = 0
+    prior_started_topics: int = 0
+    prior_completed_topics: int = 0
+
+
+class CurriculumGradeItem(BaseModel):
+    grade: int | None = None
+    total_topics: int
+    started_topics: int
+    completed_topics: int
+    coverage_pct: int
+    is_focus: bool = False
 
 
 class CurriculumExtraItem(BaseModel):
@@ -1081,6 +1102,17 @@ class CurriculumProjectionItem(BaseModel):
     pace_per_week: float
     projected_coverage_pct: int
     verdict: str                     # yetisir|risk|yetismez|sinav_yok|veri_yok
+    target_kind: str = "sinav"       # okul_yili_sonu | sinav
+    target_date: str | None = None
+    target_label: str | None = None
+
+
+class CurriculumPoolUnlinkedItem(BaseModel):
+    item_id: int
+    subject_name: str
+    title: str
+    quantity: int
+    done: int
 
 
 class CurriculumProgressResponse(BaseModel):
@@ -1092,6 +1124,15 @@ class CurriculumProgressResponse(BaseModel):
     subjects: list[CurriculumSubjectItem]
     extras: list[CurriculumExtraItem]
     projection: CurriculumProjectionItem | None = None
+    program_mode: str = "gun_gun"
+    pool_period_id: int | None = None
+    pool_unlinked: list[CurriculumPoolUnlinkedItem] = []
+    # Odak sınıf: overall_* bu sınıfın konuları; None → kümülatif (12/mezun)
+    focus_grade: int | None = None
+    cumulative_total_topics: int = 0
+    cumulative_started_topics: int = 0
+    cumulative_coverage_pct: int = 0
+    grades: list[CurriculumGradeItem] = []
 
 
 # Faz 2 — sıradaki üniteler (atanabilir)
@@ -2052,6 +2093,77 @@ class TeacherStudentAnalyticsResponse(BaseModel):
     exam_trend_section: str | None = None
     exam_trend_delta: float | None = None
     warnings: list[AnalyticsWarningItem]
+    # --- 2026-10-15: kaynak ayrımlı çalışma + müfredat ilerlemesi (additive) ---
+    mix: "AnalyticsMix | None" = None
+    subject_work: list["AnalyticsSubjectWork"] = []
+    dow_all: list["AnalyticsDowAll"] = []
+    curriculum: "AnalyticsCurriculum | None" = None
+    program_mode: str = "gun_gun"
+
+
+class AnalyticsMix(BaseModel):
+    window_days: int
+    book_planned: int
+    book_completed: int
+    sourceless_planned: int
+    sourceless_completed: int
+    session_tests: int
+    total_tests: int
+    correct: int
+    wrong: int
+    blank: int
+    tests_with_result: int
+    result_coverage_pct: int | None = None
+    accuracy_pct: int | None = None
+
+
+class AnalyticsSubjectWork(BaseModel):
+    subject_id: int
+    name: str
+    book_tests: int
+    sourceless_tests: int
+    session_tests: int
+    total: int
+    planned: int
+    correct: int
+    wrong: int
+    blank: int
+    tests_with_result: int
+    accuracy_pct: int | None = None
+    coverage_pct: int | None = None
+    started_topics: int = 0
+    total_topics: int = 0
+    next_topic: str | None = None
+    last_topic: str | None = None
+
+
+class AnalyticsDowAll(BaseModel):
+    weekday: int
+    label: str
+    avg_completed: float
+    hit_pct: int | None = None
+    programmed_days: int
+
+
+class AnalyticsCurriculum(BaseModel):
+    focus_grade: int | None = None
+    coverage_pct: int
+    started_topics: int
+    total_topics: int
+    cumulative_coverage_pct: int
+    cumulative_started_topics: int
+    cumulative_total_topics: int
+    verdict: str | None = None              # yetisir | risk | yetismez | sinav_yok | veri_yok
+    days_to_exam: int | None = None
+    remaining_topics: int | None = None
+    pace_per_week: float | None = None
+    projected_coverage_pct: int | None = None
+    target_kind: str | None = None          # okul_yili_sonu | sinav
+    target_date: str | None = None
+    target_label: str | None = None
+
+
+TeacherStudentAnalyticsResponse.model_rebuild()
 
 
 # --- Veliye Not Gönder ---
@@ -2294,6 +2406,18 @@ class TopicPerfRow(BaseModel):
     answered: int
     accuracy_pct: int | None = None
     last_solved_at: datetime | None = None
+    # 2026-10-14 — veri kalitesi + deneme kıyası + seviye
+    blank: int = 0
+    tests_with_result: int = 0
+    session_tests: int = 0
+    exam_answered: int = 0
+    exam_correct: int = 0
+    exam_accuracy_pct: int | None = None
+    level: str = "veri_yok"            # zayif | dikkat | iyi | veri_yok
+    loss_score: int = 0
+    subject_id: int | None = None
+    subject_name: str | None = None
+    exam_only: bool = False
 
 
 class SubjectPerfRow(BaseModel):
@@ -2305,6 +2429,10 @@ class SubjectPerfRow(BaseModel):
     answered: int
     accuracy_pct: int | None = None
     topics: list[TopicPerfRow] = []
+    blank: int = 0
+    tests_with_result: int = 0
+    session_tests: int = 0
+    weak_topics: int = 0
 
 
 class TopicPerformanceOverall(BaseModel):
@@ -2315,62 +2443,71 @@ class TopicPerformanceOverall(BaseModel):
     accuracy_pct: int | None = None
     subject_count: int
     topic_count: int
+    blank: int = 0
+    tests_with_result: int = 0
+    session_tests: int = 0
+    # sonucu girilebilir testlerin (seans işareti hariç) yüzde kaçında D/Y/B var
+    result_coverage_pct: int | None = None
+    weak_topics: int = 0
 
 
 class TopicPerformanceResponse(BaseModel):
     overall: TopicPerformanceOverall
     subjects: list[SubjectPerfRow]
+    # "Nerede kaybediyor": zayıf/dikkat konular kayıp puanına göre (yalnız denemede olanlar dahil)
+    focus: list[TopicPerfRow] = []
     # P3: hangi sınıf dönemine göre süzüldü (applied=False → tüm geçmiş)
     period: PeriodFilterMeta | None = None
 
 
+def _topic_perf_row(t) -> "TopicPerfRow":
+    return TopicPerfRow(
+        topic_id=t.topic_id, topic_name=t.topic_name, tests_solved=t.tests_solved,
+        correct=t.correct, wrong=t.wrong, answered=t.answered, accuracy_pct=t.accuracy_pct,
+        last_solved_at=t.last_solved_at, blank=t.blank, tests_with_result=t.tests_with_result,
+        session_tests=t.session_tests, exam_answered=t.exam_answered, exam_correct=t.exam_correct,
+        exam_accuracy_pct=t.exam_accuracy_pct, level=t.level, loss_score=t.loss_score,
+        subject_id=t.subject_id, subject_name=t.subject_name, exam_only=t.exam_only,
+    )
+
+
 def build_topic_performance_response(
-    subjects: list, period: "PeriodFilterMeta | None" = None,
+    subjects: list, period: "PeriodFilterMeta | None" = None, focus: list | None = None,
 ) -> "TopicPerformanceResponse":
     """topic_performance.SubjectPerf listesini API yanıtına çevirir (3 yüzey ortak)."""
     rows: list[SubjectPerfRow] = []
-    t_tests = t_correct = t_wrong = 0
+    t = {"tests": 0, "correct": 0, "wrong": 0, "blank": 0, "with": 0, "session": 0, "weak": 0}
     topic_count = 0
     for s in subjects:
-        t_tests += s.tests_solved
-        t_correct += s.correct
-        t_wrong += s.wrong
+        t["tests"] += s.tests_solved
+        t["correct"] += s.correct
+        t["wrong"] += s.wrong
+        t["blank"] += s.blank
+        t["with"] += s.tests_with_result
+        t["session"] += s.session_tests
+        t["weak"] += s.weak_topics
         topic_count += len(s.topics)
-        rows.append(
-            SubjectPerfRow(
-                subject_id=s.subject_id,
-                subject_name=s.subject_name,
-                tests_solved=s.tests_solved,
-                correct=s.correct,
-                wrong=s.wrong,
-                answered=s.answered,
-                accuracy_pct=s.accuracy_pct,
-                topics=[
-                    TopicPerfRow(
-                        topic_id=t.topic_id,
-                        topic_name=t.topic_name,
-                        tests_solved=t.tests_solved,
-                        correct=t.correct,
-                        wrong=t.wrong,
-                        answered=t.answered,
-                        accuracy_pct=t.accuracy_pct,
-                        last_solved_at=t.last_solved_at,
-                    )
-                    for t in s.topics
-                ],
-            )
-        )
-    answered = t_correct + t_wrong
+        rows.append(SubjectPerfRow(
+            subject_id=s.subject_id, subject_name=s.subject_name, tests_solved=s.tests_solved,
+            correct=s.correct, wrong=s.wrong, answered=s.answered, accuracy_pct=s.accuracy_pct,
+            topics=[_topic_perf_row(tp) for tp in s.topics], blank=s.blank,
+            tests_with_result=s.tests_with_result, session_tests=s.session_tests,
+            weak_topics=s.weak_topics,
+        ))
+    answered = t["correct"] + t["wrong"]
+    enterable = t["tests"] - t["session"]
     overall = TopicPerformanceOverall(
-        tests_solved=t_tests,
-        correct=t_correct,
-        wrong=t_wrong,
-        answered=answered,
-        accuracy_pct=(int(round(100 * t_correct / answered)) if answered > 0 else None),
-        subject_count=len(rows),
-        topic_count=topic_count,
+        tests_solved=t["tests"], correct=t["correct"], wrong=t["wrong"], answered=answered,
+        accuracy_pct=(int(round(100 * t["correct"] / answered)) if answered > 0 else None),
+        subject_count=len(rows), topic_count=topic_count, blank=t["blank"],
+        tests_with_result=t["with"], session_tests=t["session"],
+        result_coverage_pct=(int(round(100 * t["with"] / enterable)) if enterable > 0 else None),
+        weak_topics=t["weak"],
     )
-    return TopicPerformanceResponse(overall=overall, subjects=rows, period=period)
+    return TopicPerformanceResponse(
+        overall=overall, subjects=rows, period=period,
+        focus=[_topic_perf_row(x) for x in (focus or [])],
+    )
 
 
 # =============================================================================

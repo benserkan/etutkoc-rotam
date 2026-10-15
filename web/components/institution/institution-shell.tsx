@@ -27,6 +27,7 @@ import {
   ScrollText,
   Target,
   TentTree,
+  Layers,
   UserCog,
   Users,
   Wallet,
@@ -128,6 +129,11 @@ const NAV_SECTIONS: NavSection[] = [
         href: "/institution/self-study",
         label: "Bağımsız Çalışma",
         icon: TentTree,
+      },
+      {
+        href: "/institution/pool",
+        label: "Haftalık Havuz",
+        icon: Layers,
       },
       {
         href: "/institution/at-risk",

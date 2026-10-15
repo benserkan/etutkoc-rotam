@@ -39,6 +39,7 @@ from app.models import (
     Track,
     User,
 )
+from app.models.curriculum import CurriculumModel
 from app.services import topic_closure
 from app.services.gorev_stats import DENEME_BOOK_TYPES
 
@@ -61,6 +62,10 @@ class TopicProgress:
     closed_at: str | None = None
     # Kaynaksız (kitapsız ama konuya bağlı) görevlerden çözülen test sayısı
     sourceless_completed: int = 0
+    # HAVUZ (2026-10-14): açık dönemde bu konudan bekleyen birim + seansta işaretlenen kaynaksız birim
+    pool_remaining: int = 0
+    pool_marked: int = 0
+    in_focus: bool = True             # ilerleme/projeksiyon hesabına giren konu (odak sınıf)
     # Kaynak kırılımı (2026-09-27): [(kitap adı, çözülen, toplam)] — tamamlanma
     # kuralının hangi kitaptan geldiği UI'da görünsün (deneme kitabı hariç).
     sources: list = field(default_factory=list)
@@ -79,6 +84,12 @@ class SubjectProgress:
     last_topic_name: str | None      # frontier: son işlenen (en yüksek order, started)
     next_topic_name: str | None      # frontier: sıradaki (kaynaklı, başlanmamış)
     topics: list[TopicProgress] = field(default_factory=list)
+    pool_remaining: int = 0          # açık havuz döneminde bu dersten bekleyen birim (konulu kalemler)
+    # ODAK SINIF (2026-10-14): yukarıdaki sayımlar öğrencinin İÇİNDE BULUNDUĞU sınıfın konularıdır
+    # (9-11 / LGS 5-8). Önceki sınıfların konuları ayrıca sayılır; 12/mezunda odak yok → hepsi.
+    prior_total_topics: int = 0
+    prior_started_topics: int = 0
+    prior_completed_topics: int = 0
 
 
 @dataclass
@@ -92,13 +103,39 @@ class ExtraSection:
 
 
 @dataclass
+class PoolUnlinkedItem:
+    """Açık havuz döneminde KONUSU OLMAYAN kalem (serbest metin / konusuz kitap bölümü) —
+    müfredata işlenemez; koç görsün diye listelenir (kitaptaki 'eşleşmemiş ünite'nin havuz karşılığı)."""
+    item_id: int
+    subject_name: str
+    title: str
+    quantity: int
+    done: int
+
+
+@dataclass
 class CurriculumProjection:
     has_exam: bool
     days_to_exam: int | None
     remaining_topics: int
-    pace_per_week: float            # son 2 haftada işlenen farklı konu / 2
-    projected_coverage_pct: int     # mevcut hızla sınava kadar ulaşılacak kapsama
+    pace_per_week: float            # son 2 haftada işlenen farklı ODAK konu / 2
+    projected_coverage_pct: int     # mevcut hızla hedef güne kadar ulaşılacak kapsama
     verdict: str                    # yetisir | risk | yetismez | sinav_yok | veri_yok
+    # 2026-10-15: hedef — okulda olan öğrencide EĞİTİM YILI SONU (o sınıfın müfredatı),
+    # mezunda SINAV (9-12 tüm konular). `days_to_exam` geriye uyum için hedef güne kalan gün.
+    target_kind: str = "sinav"      # okul_yili_sonu | sinav
+    target_date: str | None = None
+    target_label: str | None = None
+
+
+@dataclass
+class GradeCoverage:
+    grade: int | None       # None = sınıfı belirsiz konular
+    total_topics: int
+    started_topics: int
+    completed_topics: int
+    coverage_pct: int
+    is_focus: bool
 
 
 @dataclass
@@ -111,6 +148,52 @@ class CurriculumProgress:
     subjects: list[SubjectProgress]
     extras: list[ExtraSection]       # müfredata eşleşmemiş kitap üniteleri
     projection: "CurriculumProjection | None" = None
+    program_mode: str = "gun_gun"            # havuz → konu satırında "Havuza ekle"
+    pool_period_id: int | None = None        # açık havuz dönemi
+    pool_unlinked: list[PoolUnlinkedItem] = field(default_factory=list)
+    # ODAK SINIF: overall_* bu sınıfın konularıdır. None → kümülatif (12/mezun/bilinmeyen).
+    focus_grade: int | None = None
+    cumulative_total_topics: int = 0
+    cumulative_started_topics: int = 0
+    cumulative_coverage_pct: int = 0
+    grades: list[GradeCoverage] = field(default_factory=list)
+
+
+def focus_grade_for(student: User) -> int | None:
+    """Koçun önceliği öğrencinin içinde bulunduğu sınıfın müfredatıdır (koç, 2026-10-14/15).
+
+    Okuldaki öğrenci (5-12) → o sınıf: ilerleme ve projeksiyon YALNIZ bu sınıfın konularından;
+    önceki sınıfların konuları görünür ama hesaba girmez (12. sınıf öğrencisi 9-11'i de görür,
+    hesap 12. sınıf konularıyla). Mezun → yok (9-12 tüm konular). Sınıfı bilinmeyen → yok."""
+    g = student.grade_level
+    if student.is_graduate or g is None or g > 12 or g < 5:
+        return None
+    return g
+
+
+def topic_in_focus(grade_level: int | None, focus: int | None) -> bool:
+    """Konu odak sınıfa mı ait? Odak yoksa hepsi; sınıfı belirsiz konu odaktadır."""
+    return focus is None or grade_level is None or grade_level == focus
+
+
+def topic_in_focus_for(t: Topic, s: Subject, focus: int | None) -> bool:
+    """Konu-düzeyi odak. SINAV dersinde (TYT/AYT) sınıf ayrımı YOK — TYT ve AYT konu listesi zaten
+    belli, dersin tüm konuları ilerleme ve projeksiyona girer (koç, 2026-10-15). Okul müfredatı
+    dersinde konu kendi sınıfıyla karşılaştırılır (önceki sınıfların konuları görünür, hesaba girmez)."""
+    if focus is None or _is_exam_subject(s):
+        return True
+    return t.grade_level is None or t.grade_level == focus
+
+
+def school_year_end(today: "date") -> "date":
+    """Eğitim öğretim yılı sonu — 15 Haziran (koç). Eylül-Haziran arası içinde bulunulan yılın
+    sonu; yaz tatilinde (15 Haziran sonrası) bir sonraki yılın sonu."""
+    from datetime import date as _d
+
+    if today.month >= 9:
+        return _d(today.year + 1, 6, 15)
+    end = _d(today.year, 6, 15)
+    return end if today <= end else _d(today.year + 1, 6, 15)
 
 
 # KONU TAMAMLANMA KURALI (koç, 2026-09-27) — kaynak sayısına göre:
@@ -171,6 +254,7 @@ def _status(
     sourceless_completed: int = 0,
     sourceless_planned: int = 0,
     sources_complete: bool | None = None,
+    pool_planned: int = 0,
 ) -> str:
     """Konunun durumu.
 
@@ -180,17 +264,20 @@ def _status(
 
     Kaynaksız çalışma (kitapsız ama konuya bağlı görev) da konuyu "işlenmiş"
     yapar; kitabı olmayan konu artık otomatik "kaynak_yok" değildir.
+
+    HAVUZ (2026-10-13): açık dönemde bu konudan bekleyen kalem (`pool_planned`) rezervin
+    karşılığıdır → "planlandı".
     """
     if closed:
         return "tamamlandi"
     if not has_resource:
         if sourceless_completed > 0:
             return "devam"
-        if sourceless_planned > 0:
+        if sourceless_planned > 0 or pool_planned > 0:
             return "planlandi"
         return "kaynak_yok"
     if completed <= 0:
-        if reserved > 0 or sourceless_planned > 0:
+        if reserved > 0 or sourceless_planned > 0 or pool_planned > 0:
             return "planlandi"
         return "devam" if sourceless_completed > 0 else "baslanmadi"
     done = (
@@ -200,29 +287,68 @@ def _status(
     return "tamamlandi" if done else "devam"
 
 
+def _recent_topic_ids(db: Session, student: User, days: int = 14) -> set[int]:
+    """Son `days` günde işlenen konular (kitaplı bölüm konusu + kaynaksız konulu kalem + koçun kapattığı)."""
+    from datetime import date, datetime, timedelta, timezone
+
+    from app.models import Task, TaskBookItem
+    from app.models.topic_closure import TopicClosure
+
+    start = date.today() - timedelta(days=days)
+    ids = {r[0] for r in (
+        db.query(BookSection.topic_id)
+        .join(TaskBookItem, TaskBookItem.book_section_id == BookSection.id)
+        .join(Task, Task.id == TaskBookItem.task_id)
+        .filter(Task.student_id == student.id, Task.date >= start, TaskBookItem.completed_count > 0,
+                BookSection.topic_id.isnot(None))
+        .distinct().all())}
+    ids |= {r[0] for r in (
+        db.query(TaskBookItem.topic_id)
+        .join(Task, Task.id == TaskBookItem.task_id)
+        .filter(Task.student_id == student.id, Task.date >= start, TaskBookItem.completed_count > 0,
+                TaskBookItem.book_id.is_(None), TaskBookItem.topic_id.isnot(None))
+        .distinct().all())}
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    ids |= {r[0] for r in (
+        db.query(TopicClosure.topic_id)
+        .filter(TopicClosure.student_id == student.id, TopicClosure.closed_at >= since).all())}
+    return ids
+
+
 def _compute_projection(
     db: Session, student: User, total: int, started: int,
+    *, focus_topic_ids: set[int] | None = None, focus: int | None = None,
 ) -> "CurriculumProjection":
-    """Müfredat yetişme projeksiyonu — kapsama + sınav yakınlığı + son hız.
+    """Müfredat yetişme projeksiyonu — kapsama + hedef güne kalan süre + son hız.
 
-    Hız = son 14 günde işlenen FARKLI konu sayısı / 2 (hafta). Projeksiyon =
-    started + hız × kalan hafta → sınava kadar ulaşılacak kapsama. Eşikler:
-    %100 müfredat kapsaması gerçekçi değil (kimse bitirmez) → %90 tahmini
-    kapsama "yetişir", %70-89 "riskli", <%70 "yetişmez". Sınav yoksa sinav_yok.
+    HEDEF (koç, 2026-10-15): okuldaki öğrenci (odak sınıf var) o sınıfın müfredatını EĞİTİM YILI
+    SONUNA (15 Haziran) kadar bitirebilir mi? — sınava girmeyen 9-11 için sınav tarihi anlamsız.
+    Mezun (odak yok) → sınav tarihi, 9-12 tüm konular.
+    Hız = son 14 günde işlenen farklı ODAK konu sayısı / 2 (hafta) — önceki sınıflardan verilen
+    konular hızı şişirmez. Eşikler: %90 tahmini kapsama "yetişir", %70-89 "riskli", <%70 "yetişmez".
     """
     from datetime import date
 
-    ed = student.effective_exam_date
-    days = max(0, (ed - date.today()).days) if ed is not None else None
+    today = date.today()
+    if focus is not None:
+        target = school_year_end(today)
+        kind, label = "okul_yili_sonu", f"Eğitim yılı sonu ({target.day} Haziran {target.year})"
+    else:
+        target = student.effective_exam_date
+        kind = "sinav"
+        label = f"{student.effective_exam_label or 'Sınav'} ({target.strftime('%d.%m.%Y')})" if target else None
+    days = max(0, (target - today).days) if target is not None else None
+    tdate = target.isoformat() if target is not None else None
     if total <= 0:
-        return CurriculumProjection(False, days, 0, 0.0, 0, "veri_yok")
+        return CurriculumProjection(False, days, 0, 0.0, 0, "veri_yok", kind, tdate, label)
     remaining = max(0, total - started)
-    # son 14 günde işlenen farklı konu → hız
-    recent = recently_covered_units(db, student, days=14)
-    pace = round(len({c.topic_name for c in recent}) / 2.0, 1)
+    recent = _recent_topic_ids(db, student, days=14)
+    if focus_topic_ids is not None:
+        recent &= focus_topic_ids
+    pace = round(len(recent) / 2.0, 1)
     if days is None:
         return CurriculumProjection(
-            False, None, remaining, pace, round(100 * started / total), "sinav_yok")
+            False, None, remaining, pace, round(100 * started / total), "sinav_yok", kind, tdate, label)
     weeks = days / 7.0
     projected_started = min(total, started + pace * weeks)
     proj_pct = round(100 * projected_started / total)
@@ -234,7 +360,7 @@ def _compute_projection(
         verdict = "risk"
     else:
         verdict = "yetismez"
-    return CurriculumProjection(True, days, remaining, pace, proj_pct, verdict)
+    return CurriculumProjection(True, days, remaining, pace, proj_pct, verdict, kind, tdate, label)
 
 
 _EXAM_SECTIONS = {
@@ -316,6 +442,31 @@ def _student_resource_subject_ids(db: Session, student: User) -> set[int]:
     return {r[0] for r in rows}
 
 
+def _has_exam_counterpart(s: Subject, exam_by_base: dict[str, list[Subject]]) -> bool:
+    bases = {s.name} | _SCHOOL_EXAM_SYNONYMS.get(s.name, set())
+    return any(exam_by_base.get(b) for b in bases)
+
+
+def _student_worked_subject_ids(db: Session, student: User) -> set[int]:
+    """Kitabı olmasa da çalışılan dersler: kaynaksız (konulu) görev kalemi ya da havuz kalemi."""
+    from app.models.pool import PoolItem
+
+    ids = {r[0] for r in (
+        db.query(Topic.subject_id)
+        .join(TaskBookItem, TaskBookItem.topic_id == Topic.id)
+        .join(Task, Task.id == TaskBookItem.task_id)
+        .filter(Task.student_id == student.id, TaskBookItem.book_id.is_(None))
+        .distinct().all()
+    )}
+    ids |= {r[0] for r in (
+        db.query(PoolItem.subject_id)
+        .filter(PoolItem.student_id == student.id, PoolItem.removed_at.is_(None),
+                PoolItem.subject_id.isnot(None))
+        .distinct().all()
+    )}
+    return ids
+
+
 def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subject]:
     """Öğrencinin müfredat dersleri (resmi/koç) — grade + curriculum_model filtreli.
 
@@ -346,12 +497,16 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
         and not (student_cm and s.curriculum_model and s.curriculum_model != student_cm)
         and exam_subject_visible_for_track(s, student.track)
     ]
-    # Sınav omurgası (TYT/AYT) tercihi YALNIZ 11-12 + mezunda.
+    # Sınav omurgası (TYT/AYT) tercihi YALNIZ Klasik 11-12 + mezunda. MAARIF 11 (2026-2027'de
+    # 9-10-11 Maarif, yalnız 12 Klasik — saha 2026-10-13 #415) okul omurgasını izler: 9-10 ile
+    # aynı kural. Eskiden 11 her modelde sınav omurgasındaydı → Maarif 11 öğrencisine Maarif
+    # Fizik yerine klasik içerikli AYT Fizik konuları sunuluyordu.
+    maarif = student_cm == CurriculumModel.MAARIF_LISE
     exam_backbone = bool(student.is_graduate) or (
-        student.grade_level is not None and student.grade_level >= 11
+        student.grade_level is not None and student.grade_level >= 11 and not maarif
     )
-    # 9-10: okul (Maarif) omurgası esas; sınav dersi yalnız KAYNAKLIYSA görünür.
-    early_yks = (not exam_backbone) and student.grade_level in (9, 10)
+    # 9-10 (+ Maarif 11): okul omurgası esas; sınav dersi yalnız KAYNAKLIYSA görünür.
+    early_yks = (not exam_backbone) and student.grade_level in (9, 10, 11)
     resource_ids = (
         _student_resource_subject_ids(db, student)
         if (exam_backbone or early_yks)
@@ -363,6 +518,7 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
         for s in candidates:
             if _is_exam_subject(s):
                 exam_by_base.setdefault(_exam_base_name(s.name), []).append(s)
+    worked_ids = _student_worked_subject_ids(db, student) if exam_backbone else set()
     # kaynağı olan OKUL dersleri (sınav karşılığının gizlenip gizlenmeyeceği için)
     school_names_with_res = {
         s.name for s in candidates
@@ -379,8 +535,16 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
         # koç o derse kaynak atadıysa görünür.
         if student.is_graduate and not _is_exam_subject(s) and s.id not in resource_ids:
             continue
+        # KLASİK 11-12 (2026-10-14, #414): sınav omurgasında YKS karşılığı OLMAYAN okul dersi
+        # (T.C. İnkılap Tarihi, İngilizce…) yalnız kaynak atandıysa ya da çalışıldıysa görünür —
+        # havuz ders seçicisi (`pool._klasik_exam_scheme`) ile aynı kural. Önceden 12 Sayısal
+        # öğrencinin müfredatında "İnkılap 0/8" duruyordu.
+        if (exam_backbone and not student.is_graduate and not _is_exam_subject(s)
+                and s.id not in resource_ids and s.id not in worked_ids
+                and not _has_exam_counterpart(s, exam_by_base)):
+            continue
         if early_yks:
-            # 9-10 Maarif: okul dersi daima kalır, sınav dersi kaynak ister.
+            # 9-10 / Maarif 11: okul dersi daima kalır, sınav dersi kaynak ister.
             if _is_exam_subject(s) and s.id not in resource_ids:
                 continue
         elif exam_backbone:
@@ -516,6 +680,12 @@ def compute_curriculum_progress(
         r.topic_id: {"planned": int(r.planned or 0), "completed": int(r.completed or 0)}
         for r in sourceless_rows
     }
+    # HAVUZ (2026-10-13): seansta işaretlenen kaynaksız birim = kaynaksız çalışma; açık dönemde bekleyen
+    # kalem = "planlandı". Gün-gün öğrencide ikisi de boş.
+    from app.services.pool_mode import topic_pool_signals
+    pool_sig = topic_pool_signals(db, student.id)
+    for tid, n in pool_sig.session_marked.items():
+        sourceless.setdefault(tid, {"planned": 0, "completed": 0})["completed"] += n
     # Koçun kapattığı konular — durum hesabının en üst otoritesi
     closures = topic_closure.closure_map(db, student.id)
 
@@ -551,6 +721,10 @@ def compute_curriculum_progress(
     # 3) Ders bazında topic durumları
     out_subjects: list[SubjectProgress] = []
     g_total = g_started = 0
+    c_total = c_started = 0
+    focus = focus_grade_for(student)
+    by_grade: dict[int | None, list[int]] = {}   # grade → [total, started, completed]
+    focus_ids: set[int] = set()
     for s in subjects:
         # Tema/ünite (parent) topic'leri yalnız GRUPLAMA içindir; "konu" sayımı +
         # durum yalnız LEAF (alt başlık) üzerinden; sınıf filtresi kümülatif —
@@ -561,9 +735,11 @@ def compute_curriculum_progress(
         parent_name_by_id = leaf_set.parent_names
         tps: list[TopicProgress] = []
         started = completed_topics = no_res = 0
+        p_total = p_started = p_completed = 0
         last_name: str | None = None
         next_name: str | None = None
         for t in topics:
+            in_focus = topic_in_focus_for(t, s, focus)
             agg = by_topic.get(t.id)
             has_res = agg is not None
             test_total = agg["test"] if agg else 0
@@ -578,6 +754,7 @@ def compute_curriculum_progress(
                 sourceless_completed=sl["completed"],
                 sourceless_planned=sl["planned"],
                 sources_complete=agg_complete(agg),
+                pool_planned=pool_sig.planned.get(t.id, 0),
             )
             if is_closed:
                 pct = 100  # koç kapattı → konu bitti (kitapta test kalmış olabilir)
@@ -593,6 +770,9 @@ def compute_curriculum_progress(
                 closed=is_closed,
                 closed_at=(closure.closed_at.isoformat() if closure and closure.closed_at else None),
                 sourceless_completed=sl["completed"],
+                pool_remaining=pool_sig.planned.get(t.id, 0),
+                pool_marked=pool_sig.session_marked.get(t.id, 0),
+                in_focus=in_focus,
                 sources=sorted(
                     (
                         (book_names.get(bid, "—"), c, tt)
@@ -602,28 +782,47 @@ def compute_curriculum_progress(
                     key=lambda x: (-(x[1] / x[2]), x[0]),
                 ),
             ))
-            if not has_res:
-                no_res += 1
             # "İşlendi" sayımı kaynaklı çözümü de kaynaksız çalışmayı da kapsar;
             # kapatılan konu her hâlde işlenmiş sayılır.
-            if comp > 0 or sl["completed"] > 0 or is_closed:
+            is_started = comp > 0 or sl["completed"] > 0 or is_closed
+            is_done = st == "tamamlandi"
+            gb = by_grade.setdefault(t.grade_level, [0, 0, 0])
+            gb[0] += 1
+            gb[1] += int(is_started)
+            gb[2] += int(is_done)
+            c_total += 1
+            c_started += int(is_started)
+            if in_focus:
+                focus_ids.add(t.id)
+            if not in_focus:
+                p_total += 1
+                p_started += int(is_started)
+                p_completed += int(is_done)
+                continue
+            if not has_res:
+                no_res += 1
+            if is_started:
                 started += 1
                 last_name = t.name  # order'lı → en son işlenen
-            if st == "tamamlandi":
+            if is_done:
                 completed_topics += 1
-            # Sıradaki = kapatılmamış + hiç dokunulmamış ilk kaynaklı konu
+            # Sıradaki = kapatılmamış + hiç dokunulmamış ilk kaynaklı konu (odak sınıfta)
             if (
                 next_name is None and has_res and comp <= 0
                 and not is_closed and sl["completed"] <= 0
             ):
                 next_name = t.name
-        total = len(topics)
+        total = len(topics) - p_total
         cov = round(100 * started / total) if total else 0
         out_subjects.append(SubjectProgress(
             subject_id=s.id, name=s.name, order=s.order, total_topics=total,
             started_topics=started, completed_topics=completed_topics,
             no_resource_topics=no_res, coverage_pct=cov,
             last_topic_name=last_name, next_topic_name=next_name, topics=tps,
+            pool_remaining=sum(tp.pool_remaining for tp in tps),
+            prior_total_topics=p_total,
+            prior_started_topics=p_started,
+            prior_completed_topics=p_completed,
         ))
         g_total += total
         g_started += started
@@ -640,7 +839,39 @@ def compute_curriculum_progress(
         for ex in extras:
             ex.subject_name = subj_name_cache.get(row_subj.get(ex.section_id))
 
-    projection = _compute_projection(db, student, g_total, g_started)
+    # Projeksiyon ODAK sınıfın konularıyla, hedef eğitim yılı sonu; mezunda tüm konular + sınav.
+    projection = _compute_projection(db, student, g_total, g_started,
+                                     focus_topic_ids=(focus_ids if focus is not None else None), focus=focus)
+    grades = [
+        GradeCoverage(
+            grade=g, total_topics=v[0], started_topics=v[1], completed_topics=v[2],
+            coverage_pct=round(100 * v[1] / v[0]) if v[0] else 0,
+            is_focus=(focus is not None and topic_in_focus(g, focus)),
+        )
+        for g, v in sorted(by_grade.items(), key=lambda kv: (kv[0] is None, kv[0] or 0))
+    ]
+
+    program_mode = getattr(student, "program_mode", None) or "gun_gun"
+    pool_period_id: int | None = None
+    pool_unlinked: list[PoolUnlinkedItem] = []
+    if program_mode == "havuz":
+        from app.services.pool_mode import get_open_period
+
+        op = get_open_period(db, student.id)
+        if op is not None:
+            pool_period_id = op.id
+            for it in op.items:
+                if it.removed_at is not None or not it.counts_toward_pool:
+                    continue
+                if it.topic_id or (it.section is not None and it.section.topic_id):
+                    continue
+                pool_unlinked.append(PoolUnlinkedItem(
+                    item_id=it.id,
+                    subject_name=(it.subject.name if it.subject is not None else "—"),
+                    title=(it.label or (it.section.label if it.section is not None else None)
+                           or (it.book.name if it.book is not None else "—")),
+                    quantity=int(it.quantity or 0), done=int(it.done_units or 0),
+                ))
 
     return CurriculumProgress(
         curriculum_model=(student.effective_curriculum_model.value
@@ -652,6 +883,14 @@ def compute_curriculum_progress(
         subjects=out_subjects,
         extras=extras,
         projection=projection,
+        program_mode=program_mode,
+        pool_period_id=pool_period_id,
+        pool_unlinked=pool_unlinked,
+        focus_grade=focus,
+        cumulative_total_topics=c_total,
+        cumulative_started_topics=c_started,
+        cumulative_coverage_pct=round(100 * c_started / c_total) if c_total else 0,
+        grades=grades,
     )
 
 
@@ -897,11 +1136,34 @@ def recently_covered_units(
             TaskBookItem.completed_count > 0,
         )
         .group_by(Subject.name, Topic.name)
-        .order_by(func.sum(TaskBookItem.completed_count).desc())
         .all()
     )
+    # KAYNAKSIZ KONULU kalemler (2026-10-15): kitapsız ama konusu olan görev (havuz / müfredattan
+    # verilen) de konuyu işler — konu/hafta hızına ve seans "geçen hafta" listesine girmeli.
+    sourceless = (
+        db.query(
+            Subject.name.label("subject_name"),
+            Topic.name.label("topic_name"),
+            func.sum(TaskBookItem.completed_count).label("tests"),
+        )
+        .select_from(Task)
+        .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+        .join(Topic, Topic.id == TaskBookItem.topic_id)
+        .join(Subject, Subject.id == Topic.subject_id)
+        .filter(
+            Task.student_id == student.id,
+            Task.date >= start,
+            TaskBookItem.book_id.is_(None),
+            TaskBookItem.completed_count > 0,
+        )
+        .group_by(Subject.name, Topic.name)
+        .all()
+    )
+    agg: dict[tuple[str, str], int] = {}
+    for r in list(rows) + list(sourceless):
+        k = (r.subject_name, r.topic_name)
+        agg[k] = agg.get(k, 0) + int(r.tests or 0)
     return [
-        CoveredUnit(subject_name=r.subject_name, topic_name=r.topic_name,
-                    tests_completed=int(r.tests or 0))
-        for r in rows
+        CoveredUnit(subject_name=k[0], topic_name=k[1], tests_completed=v)
+        for k, v in sorted(agg.items(), key=lambda kv: -kv[1])
     ]

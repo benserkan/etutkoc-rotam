@@ -682,11 +682,11 @@ function QuickActions({
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-2" data-quick-actions>
       <Link
-        href={`/teacher/students/${studentId}/week`}
+        href={`/teacher/students/${studentId}/${profile.program_mode === "havuz" ? "pool" : "week"}`}
         className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background transition hover:bg-foreground/90"
       >
         <CalendarRange className="size-4" aria-hidden />
-        Haftalık Program
+        {profile.program_mode === "havuz" ? "Haftalık Havuz" : "Haftalık Program"}
       </Link>
       <button
         type="button"
@@ -727,6 +727,21 @@ function QuickActions({
                   {isGraduate
                     ? "akademik yıl, alan ve çalışma şekli"
                     : "yıl başında bir sonraki sınıfa taşı"}
+                </span>
+              </span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/teacher/students/${studentId}/pool`}>
+              <CalendarRange aria-hidden />
+              <span className="flex flex-col">
+                <span>
+                  {profile.program_mode === "havuz" ? "Program modu: havuz" : "Haftalık havuz modu"}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {profile.program_mode === "havuz"
+                    ? "dershane modu açık · gün gün programa dönmek buradan"
+                    : "dershane öğrencisi için: haftanın görevleri tek havuzda"}
                 </span>
               </span>
             </Link>

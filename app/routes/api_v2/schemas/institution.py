@@ -1048,3 +1048,124 @@ class InstitutionSelfStudyReportResponse(BaseModel):
     coaches: list[SelfStudyReportCoachRow]
     recent: list[SelfStudyReportEntryRow]
     mismatches: list[SelfStudyMismatchRow] = []
+
+
+# ---------------------------------------------------------------- Haftalık havuz panosu (K54/K55)
+
+class PoolGroupRow(BaseModel):
+    class_group: str
+    students: int
+    last_pct: int | None = None     # şubenin son KAPANMIŞ dönem ortalama havuz %'si (K54)
+    open_pct: int | None = None     # açık dönem ortalaması
+    late_sessions: int = 0
+    red: int = 0
+    amber: int = 0
+    lessons_set: bool = False       # şubenin dershane ders programı girilmiş mi (dağılım önerisi buna dayanır)
+
+
+class PoolLateSessionRow(BaseModel):
+    student_id: int
+    student_name: str
+    coach_name: str
+    class_group: str | None = None
+    opened_on: str
+    expected_next_on: str | None = None
+    days_open: int
+    late_days: int
+    level: str
+    pct: int | None = None          # açık dönemin havuz %'si
+
+
+class PoolCoachLoadRow(BaseModel):
+    coach_id: int
+    coach_name: str
+    students: int
+    red: int
+    amber: int
+    late_sessions: int
+    today_sessions: int
+    load: int                       # K55: bugünkü görüşme + geciken seans + kırmızı
+    pending_approval: int = 0       # öğrencinin eklediği, rehber onayı bekleyen kalem
+    bulk: int = 0                   # toplu işaretleme sinyali olan öğrenci
+    paper: int = 0                  # kağıt öğrencisi (uygulamaya kayıt girmiyor)
+    avg_open_pct: int | None = None
+
+
+class PoolParticipation(BaseModel):
+    students: int = 0
+    cup_today: int = 0
+    ticked_today: int = 0
+    idle: int = 0
+    paper: int = 0
+
+
+class PoolPace(BaseModel):
+    onde: int = 0
+    yolunda: int = 0
+    geride: int = 0
+    belirsiz: int = 0
+
+
+class PoolSources(BaseModel):
+    student_units: int = 0
+    coach_units: int = 0
+    done_units: int = 0
+    total_units: int = 0
+
+
+class PoolItemsMix(BaseModel):
+    total: int = 0
+    book: int = 0
+    topic: int = 0
+    free: int = 0
+    teacher_homework: int = 0
+    carried: int = 0
+    pending_approval: int = 0
+    rejected: int = 0
+    student_added: int = 0
+
+
+class PoolSignalRow(BaseModel):
+    key: str
+    label: str
+    hint: str
+    red: int = 0
+    amber: int = 0
+    info: int = 0
+    students: int = 0
+
+
+class PoolSubjectRow(BaseModel):
+    name: str
+    done: int
+    total: int
+    pct: int
+    students: int
+
+
+class PoolTrendRow(BaseModel):
+    week_start: str
+    avg_pct: int | None = None
+    periods: int = 0
+
+
+class InstitutionPoolOverviewResponse(BaseModel):
+    students: int
+    coaches: int
+    open_periods: int
+    avg_last_pct: int | None = None
+    avg_open_pct: int | None = None
+    late_sessions: int
+    red_students: int
+    amber_students: int
+    groups: list[PoolGroupRow] = []
+    late: list[PoolLateSessionRow] = []
+    coaches_rows: list[PoolCoachLoadRow] = []
+    avg_expected_pct: int | None = None
+    participation: PoolParticipation = PoolParticipation()
+    pace: PoolPace = PoolPace()
+    sources: PoolSources = PoolSources()
+    items: PoolItemsMix = PoolItemsMix()
+    signals: list[PoolSignalRow] = []
+    subjects: list[PoolSubjectRow] = []
+    trend: list[PoolTrendRow] = []

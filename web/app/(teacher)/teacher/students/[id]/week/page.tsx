@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { apiServer } from "@/lib/api-server";
@@ -46,6 +47,35 @@ export default async function TeacherStudentWeekPage({
   if (start) qsParts.push(`start=${encodeURIComponent(start)}`);
   if (programId) qsParts.push(`program_id=${encodeURIComponent(programId)}`);
   const qs = qsParts.length ? `?${qsParts.join("&")}` : "";
+
+  // Havuz modundaki öğrencide gün-gün editör AÇILMAZ (Basamak 9 türeyen kural):
+  // iki editör aynı öğrencide karışmasın. Gün-gün öğrencisi için hiçbir şey değişmez.
+  let detail: { student?: { program_mode?: string; full_name?: string } } | null = null;
+  try {
+    detail = await apiServer(`/api/v2/teacher/students/${encodeURIComponent(String(numericId))}`);
+  } catch {
+    detail = null;
+  }
+  if (detail?.student?.program_mode === "havuz") {
+    return (
+      <div className="mx-auto max-w-2xl p-6">
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-5 text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+          <h1 className="text-lg font-semibold">Bu öğrenci haftalık havuz modunda</h1>
+          <p className="mt-1 text-sm">
+            {detail.student.full_name ?? "Öğrenci"} için program gün gün değil, haftalık görev havuzuyla
+            yazılır. Gün gün editör bu öğrencide kapalıdır; eski görevleri Bugün/hafta görünümlerinden
+            okunur.
+          </p>
+          <Link
+            href={`/teacher/students/${numericId}/pool`}
+            className="mt-3 inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-medium text-white hover:bg-cyan-700"
+          >
+            Haftalık havuzu aç
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   let data: TeacherStudentWeekResponse;
   try {

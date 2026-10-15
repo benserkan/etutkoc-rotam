@@ -107,6 +107,15 @@ class User(Base):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # Program modu (2026-10-12, havuz tasarımı Basamak 9): 'gun_gun' = mevcut
+    # gün-gün program (varsayılan, hiçbir davranış değişmez) · 'havuz' = haftalık
+    # görev havuzu (dershane). Paylaşılan servisler (bayrak motoru, risk, kurum
+    # uyum, veli cron'u) bu alana bakıp YALNIZ havuz dalını ayırır; gün-gün yolu
+    # birebir aynı kalır. Mod değişimi yalnız açık dönem yokken (pool_mode.set_program_mode).
+    program_mode: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="gun_gun", server_default="gun_gun",
+    )
+
     # M5 ext (2026-05-31) — Demo etiketi: süper admin tanıtım hesapları için.
     # is_demo = True işaretli kayıtlar `/admin/demo-sessions` sayfasında listelenir;
     # `demo_seed_id` aynı seansın tüm kayıtlarını gruplar (toplu silme için).
@@ -383,13 +392,19 @@ class User(Base):
           1. entry_year_grade9 elle girildiyse onu kullan (sınıf tekrarı vb.
              override durumlar için)
           2. Yoksa academic_year.start_year + grade_level'dan tahmin et
-          3. Hiçbiri yoksa None (UI öğretmenden manuel seçmesini ister)
+          3. Akademik yıl da yoksa bugünün öğretim yılı (2026-10-13; eskiden None)
         """
-        from app.models.curriculum import derive_curriculum_model
+        from app.models.curriculum import current_school_year_start, derive_curriculum_model
 
         ay_start = None
         if self.academic_year is not None:
             ay_start = self.academic_year.start_year
+        elif self.entry_year_grade9 is None and not self.is_graduate:
+            # Akademik yıl atanmamış 11-12: bugünün öğretim yılı (sınıf tekrarı yok varsayımı,
+            # derive_curriculum_model ile aynı). Elle girilen entry_year_grade9 her zaman önce gelir.
+            # MEZUN bilinçli hariç: mezun yalnız YKS'ye hazırlanır, okul dersi yalnız kaynak varsa
+            # görünür (Emir #113 kuralı) — model türetilirse Maarif etiketli kaynağı gizlenirdi.
+            ay_start = current_school_year_start()
 
         return derive_curriculum_model(
             grade_level=self.grade_level,

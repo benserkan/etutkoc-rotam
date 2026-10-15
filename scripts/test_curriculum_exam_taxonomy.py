@@ -21,7 +21,7 @@ from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
 from app.models import (
-    Book, BookSection, BookType, CurriculumModel, ExamSection, Subject, Topic,
+    Book, BookSection, BookType, CurriculumModel, ExamSection, StudentBook, Subject, Topic,
     Track, User, UserRole,
 )
 from app.services import curriculum_mapping as cm
@@ -180,7 +180,21 @@ def main() -> int:
                   f"TYT {PFX}Matematik" in names and f"AYT {PFX}Matematik" in names, f"{names}")
             check("B2. okul Matematik GİZLENİR (sınav karşılığı var)",
                   f"{PFX}Matematik" not in names, f"{names}")
-            check("B3. sınav karşılığı olmayan okul Fizik AYNEN kalır",
+            # 2026-10-14 (#414): Klasik 11-12 sınav omurgasında YKS karşılığı olmayan okul dersi
+            # yalnız KAYNAK atandıysa / çalışıldıysa görünür (havuz ders seçicisiyle aynı kural).
+            check("B3. sınav karşılığı olmayan okul Fizik kaynaksız → GİZLİ",
+                  f"{PFX}Fizik" not in names, f"{names}")
+            ft = Topic(subject_id=ids["subjs"][1], name=f"{PFX} Optik", order=1, teacher_id=ids["coach"])
+            db.add(ft); db.flush()
+            fb = Book(name=f"{PFX} Okul Fizik SB", subject_id=ids["subjs"][1], type=BookType.SORU_BANKASI,
+                      teacher_id=ids["coach"])
+            db.add(fb); db.flush()
+            db.add(BookSection(book_id=fb.id, label="Optik", test_count=5, order=1, topic_id=ft.id))
+            db.add(StudentBook(student_id=student.id, book_id=fb.id))
+            db.commit()
+            ids["fiz_book"] = fb.id
+            names = {s.name for s in _applicable_subjects(db, student, ids["coach"])}
+            check("B3b. aynı derse kaynak atanınca GÖRÜNÜR",
                   f"{PFX}Fizik" in names, f"{names}")
 
         # --- C) gerçek TYT kitabı → seedlenen TYT konularına yüksek auto-map ---
@@ -204,6 +218,10 @@ def main() -> int:
             check("C2. eski durumdan (1/34) belirgin iyileşme", auto >= 28)
     finally:
         with SessionLocal() as db:
+            if ids.get("fiz_book"):
+                db.execute(sa_delete(StudentBook).where(StudentBook.book_id == ids["fiz_book"]))
+                db.execute(sa_delete(BookSection).where(BookSection.book_id == ids["fiz_book"]))
+                db.execute(sa_delete(Book).where(Book.id == ids["fiz_book"]))
             if ids.get("book"):
                 db.execute(sa_delete(BookSection).where(BookSection.book_id == ids["book"]))
                 db.execute(sa_delete(Book).where(Book.id == ids["book"]))

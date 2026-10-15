@@ -2,6 +2,7 @@ import { apiServer } from "@/lib/api-server";
 import type { TeacherAppointmentsResponse } from "@/lib/types/appointment";
 import type { TeacherStudentListResponse } from "@/lib/types/teacher";
 import { AppointmentsClient } from "@/components/teacher/appointments-client";
+import { PoolDailyCard } from "@/components/teacher/pool/pool-daily-card";
 
 /**
  * /teacher/appointments — online görüşme takvimi.
@@ -21,5 +22,11 @@ export default async function TeacherAppointmentsPage() {
       "/api/v2/teacher/students?page_size=100",
     ),
   ]);
-  return <AppointmentsClient initial={data} students={students.items} />;
+  return (
+    <div className="space-y-6">
+      {/* K48/K50: havuz öğrencileri günlük görüşme listesi (havuz öğrencisi yoksa görünmez) */}
+      <PoolDailyCard />
+      <AppointmentsClient initial={data} students={students.items} />
+    </div>
+  );
 }

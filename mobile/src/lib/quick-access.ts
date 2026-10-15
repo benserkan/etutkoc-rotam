@@ -140,6 +140,8 @@ export function mobilePathToCatalogPath(
       return "/institution/action-center";
     case "/institution-compliance":
       return "/institution/compliance";
+    case "/institution-pool":
+      return "/institution/pool";
     case "/institution-academic":
       return "/institution/academic";
     case "/institution-at-risk":
@@ -243,6 +245,8 @@ export function mobileHrefForCard(card: QuickCard): string | null {
       return "/institution/action-center";
     case "institution.compliance":
       return "/institution-compliance";
+    case "institution.pool":
+      return "/institution-pool";
     case "institution.academic":
       return "/institution-academic";
     case "institution.at_risk":

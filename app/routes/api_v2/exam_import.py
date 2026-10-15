@@ -346,6 +346,8 @@ def teacher_exam_import_confirm(
     from app.services.push_notifications import notify_parents_rota_exam_ready_bg
     background_tasks.add_task(
         notify_parents_rota_exam_ready_bg, student.id, student.full_name)
+    from app.routes.api_v2.teacher import _pool_exam_cross
+    _pool_exam_cross(db, student=student, exam_id=result.exam_id, actor=user)
     return MutationResponse[ExamImportConfirmResult](
         data=result,
         invalidate=[
@@ -589,6 +591,8 @@ def student_exam_import_confirm(
     from app.services.push_notifications import notify_parents_rota_exam_ready_bg
     background_tasks.add_task(
         notify_parents_rota_exam_ready_bg, user.id, user.full_name)
+    from app.routes.api_v2.teacher import _pool_exam_cross
+    _pool_exam_cross(db, student=user, exam_id=result.exam_id, actor=user)
     invalidate = ["student:exams"]
     if user.teacher_id:
         invalidate.append(f"teacher:{user.teacher_id}:students:{user.id}:exams")

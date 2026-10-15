@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CalendarDays, ChevronLeft, ChevronRight, PlusCircle } from "lucide-react";
 
@@ -13,6 +14,8 @@ interface Props {
   day: StudentDayResponse;
   /** Yeni görev iste — parent CommModal'ı açar. */
   onRequestAdd: () => void;
+  /** Haftalık havuz öğrencisi: görev koçtan İSTENMEZ, havuza kalem eklenir (rehber seansta onaylar). */
+  havuz?: boolean;
 }
 
 /**
@@ -22,7 +25,7 @@ interface Props {
  * Navigasyon: `/student/day?date=YYYY-MM-DD` query string ile gün değişir;
  * Server Component re-fetch eder, client cache layout aynı.
  */
-export function DayHeader({ day, onRequestAdd }: Props) {
+export function DayHeader({ day, onRequestAdd, havuz = false }: Props) {
   const router = useRouter();
   const today = todayIso();
   const isOnToday = day.is_today;
@@ -69,10 +72,19 @@ export function DayHeader({ day, onRequestAdd }: Props) {
 
         <PrintMenu startDate={day.date} />
 
-        <Button onClick={onRequestAdd} variant="default" size="sm">
-          <PlusCircle className="size-4" />
-          Yeni görev iste
-        </Button>
+        {havuz ? (
+          <Button asChild variant="outline" size="sm" title="Öğretmen ödevi ya da kendi ek çalışman — havuzuna ekle; rehberin seansta onaylar">
+            <Link href="/student/pool?ekle=1">
+              <PlusCircle className="size-4" />
+              Havuza kalem ekle
+            </Link>
+          </Button>
+        ) : (
+          <Button onClick={onRequestAdd} variant="default" size="sm">
+            <PlusCircle className="size-4" />
+            Yeni görev iste
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-1">

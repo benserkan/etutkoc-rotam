@@ -135,7 +135,6 @@ def main() -> int:
 
             subjects = page.locator('[data-testid="curriculum-subject"]').all_inner_texts()
             joined = " | ".join(subjects)
-            joined += " | " + page.locator('[data-testid="curriculum-nosource"]').inner_text()
             check("1. mezunda İngilizce / İnkılap dersi yok",
                   "İngilizce" not in joined and "İnkılap" not in joined, joined[:200])
             check("2. TYT Matematik varsayılan açık (kaynaklı ders)",
@@ -179,8 +178,10 @@ def main() -> int:
             ov = page.evaluate(OVERFLOW_JS, '[data-section="curriculum-panel"]')
             page.screenshot(path=os.path.join(SHOT_DIR, "curriculum_panel_mobile.png"), full_page=True)
             check("11. dar ekranda panel taşmıyor", not ov.get("hscroll"), str(ov))
-            ns = page.locator('[data-testid="curriculum-nosource"] summary').inner_text()
-            check("12. kaynaksız dersler tek katlanır grupta", "Kaynağı olmayan dersler" in ns, ns)
+            nav = page.locator('[data-section="curriculum:subjects"]').inner_text()
+            check("12. dersler kitap var/yok ayrımı olmadan TYT/AYT gruplarında (2026-10-14)",
+                  "TYT DERSLERİ" in nav.upper() and "AYT DERSLERİ" in nav.upper()
+                  and page.query_selector('[data-testid="curriculum-nosource"]') is None, nav[:120])
             b.close()
     finally:
         cleanup(d)

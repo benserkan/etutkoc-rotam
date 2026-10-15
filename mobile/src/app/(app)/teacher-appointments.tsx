@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PoolDailyList } from "@/components/teacher/pool-daily-list";
 import { FormSheet } from "@/components/ui/form-sheet";
 import {
   approveAppointment,
@@ -103,6 +104,9 @@ export default function TeacherAppointmentsRoute() {
             <RefreshControl refreshing={q.isRefetching} onRefresh={() => q.refetch()} />
           }
         >
+          {/* K48/K50: havuz öğrencileri günlük liste (havuz öğrencisi yoksa görünmez) */}
+          <PoolDailyList />
+
           {/* Bekleyen istekler */}
           {data.pending.length > 0 ? (
             <View className="rounded-2xl border border-amber-200 bg-amber-50 p-4 gap-2">

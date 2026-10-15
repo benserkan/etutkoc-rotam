@@ -19,11 +19,12 @@ import {
   teacherKeys,
 } from "@/lib/teacher";
 import { cn } from "@/lib/utils";
+import { PoolWatchView } from "@/components/teacher/pool-watch-view";
 
 type Tab = "genel" | "program" | "mufredat" | "denemeler" | "seanslar";
 const TABS: { key: Tab; label: string }[] = [
   { key: "genel", label: "Genel" },
-  { key: "program", label: "Program" },
+  { key: "program", label: "Program" }, // havuz öğrencisinde: Haftalık havuz
   { key: "mufredat", label: "Müfredat" },
   { key: "denemeler", label: "Denemeler" },
   { key: "seanslar", label: "Seanslar" },
@@ -125,12 +126,14 @@ export default function TeacherStudentRoute() {
           data={q.data}
           onOpenDev={() => router.push({ pathname: "/teacher-student-dev", params: { id: String(studentId) } })}
           onOpenTopics={() => router.push({ pathname: "/topic-performance", params: { source: "teacher", id: String(studentId) } })}
+          onOpenPool={q.data.student.program_mode === "havuz" ? () => setTab("program") : undefined}
           onSendWa={() => setWaOpen(true)}
           onToggleActive={toggleActive}
           togglingActive={toggling}
         />
       ) : tab === "program" ? (
-        <ProgramTab studentId={studentId} />
+        // Havuz modundaki öğrencide gün-gün editör yerine havuz İzle görünümü (web editörünün "İzle" modu).
+        q.data.student.program_mode === "havuz" ? <PoolWatchView studentId={studentId} /> : <ProgramTab studentId={studentId} />
       ) : tab === "mufredat" ? (
         <CurriculumTab studentId={studentId} />
       ) : tab === "denemeler" ? (

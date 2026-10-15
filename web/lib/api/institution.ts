@@ -39,6 +39,7 @@ import type {
   SubscriptionUpgradeRequestBody,
   TeacherCardResponse,
   UsageResponse,
+  InstitutionPoolOverviewResponse,
 } from "@/lib/types/institution";
 
 // =============================================================================
@@ -71,6 +72,7 @@ export const institutionKeys = {
     ["institution", "me", "cohorts", tab] as const,
   compliance: (weeks: number) =>
     ["institution", "me", "compliance", String(weeks)] as const,
+  poolOverview: () => ["institution", "me", "pool-overview"] as const,
   actionCenter: () => ["institution", "me", "action-center"] as const,
   teacherScorecard: (weeks: number) =>
     ["institution", "me", "teacher-scorecard", String(weeks)] as const,
@@ -177,6 +179,10 @@ export function getInstitutionCompliance(weeks = 8) {
   return api<InstitutionComplianceResponse>(
     `/api/v2/institution/compliance?weeks=${weeks}`,
   );
+}
+
+export function getInstitutionPoolOverview() {
+  return api<InstitutionPoolOverviewResponse>("/api/v2/institution/pool-overview");
 }
 
 export function getInstitutionActionCenter() {

@@ -23,6 +23,9 @@ export function subjectColors(name: string) {
     rail: `hsl(${hue}, 75%, 50%)`,
     /** Dolgulu etiket zemini (beyaz yazı) */
     chip: `hsl(${hue}, 60%, 36%)`,
+    /** Küçük yazılı dolgulu etiket zemini — her tonda beyaz yazıyla ≥4,5 kontrast (yeşil/sarı tonlarda
+     *  36% açıklık 3,9'a düşüyordu; 2026-10-13 havuz ekranları ölçümü) */
+    chipStrong: `hsl(${hue}, 65%, 29%)`,
   };
 }
 

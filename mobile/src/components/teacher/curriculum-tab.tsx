@@ -20,7 +20,8 @@ const STATUS: Record<
   devam: { label: "Devam", dot: "bg-amber-500", text: "text-amber-700" },
   planlandi: { label: "Planlandı", dot: "bg-sky-500", text: "text-sky-700" },
   baslanmadi: { label: "Başlanmadı", dot: "bg-slate-300", text: "text-slate-500" },
-  kaynak_yok: { label: "Kaynak yok", dot: "bg-slate-200", text: "text-slate-400" },
+  // "kaynak_yok" durum değil, kaynak bilgisi: başlanmadı + kitabı yok (koç kaynaksız/havuzdan verebilir)
+  kaynak_yok: { label: "Başlanmadı", dot: "bg-slate-300", text: "text-slate-500" },
 };
 
 const VERDICT: Record<
@@ -219,12 +220,22 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
                 >
                   <View className={cn("size-2 rounded-full", meta.dot)} />
                   <View className="flex-1">
-                    <Text className={cn("text-sm", t.status === "kaynak_yok" ? "text-slate-400" : "text-slate-700")}>
+                    <Text className="text-sm text-slate-700">
                       {t.name}
                       {isNext ? "  • sıradaki" : ""}
                     </Text>
                     {t.has_resource && t.test_total > 0 ? (
-                      <Text className="text-[11px] text-slate-400">{t.completed}/{t.test_total} test</Text>
+                      <Text className="text-[11px] text-slate-500">{t.completed}/{t.test_total} test (kitap)</Text>
+                    ) : !t.has_resource ? (
+                      <Text className="text-[11px] text-slate-400">kitap yok</Text>
+                    ) : null}
+                    {(t.sourceless_completed ?? 0) > 0 ? (
+                      <Text className="text-[11px] font-medium text-amber-800">
+                        kaynaksız {t.sourceless_completed} test çözüldü{(t.pool_marked ?? 0) > 0 ? ` (${t.pool_marked}’i seansta)` : ""}
+                      </Text>
+                    ) : null}
+                    {(t.pool_remaining ?? 0) > 0 ? (
+                      <Text className="text-[11px] font-medium text-sky-700">havuzda {t.pool_remaining} test bekliyor</Text>
                     ) : null}
                     {t.exam_mismatch ? (
                       <Text className="text-[11px] font-medium text-amber-700">
@@ -233,7 +244,9 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
                       </Text>
                     ) : null}
                   </View>
-                  <Text className={cn("text-[10px] font-medium", meta.text)}>{meta.label}</Text>
+                  <Text className={cn("text-[10px] font-medium", t.closed ? "text-emerald-700" : meta.text)}>
+                    {t.closed ? "Koç kapattı" : meta.label}
+                  </Text>
                 </View>
               </View>
             );

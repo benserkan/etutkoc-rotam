@@ -79,6 +79,14 @@ def _subject_of(t: Task):
     return None
 
 
+def _recent_gun_gun_switch(db, student_id: int, today):
+    try:
+        from app.services.program_mode_switch import recent_switch_to_gun_gun
+        return recent_switch_to_gun_gun(db, student_id, today)
+    except Exception:  # noqa: BLE001 — uyarı motoru asla düşmez
+        return None
+
+
 def evaluate_flags(db: Session, student: User, today: date, projection=None,
                    *, include_goal: bool = True) -> FlagReport:
     from app.services.analytics import Warning, _d, legacy_warnings
@@ -87,6 +95,13 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
     if getattr(student, "is_paused", False) or not student.is_active:
         rep.headline = "Takip duraklatıldı" if getattr(student, "is_paused", False) else ""
         return rep
+    # Haftalık görev havuzu modu (2026-10-12): bu motorun program/katılım katmanları
+    # gün-gün programın görev tarihlerini varsayar; havuz öğrencisinde "programı yok /
+    # boş gün" YANLIŞ ALARM üretir. Havuz katmanları (K40–K51) ayrı üreticide
+    # (pool_flags, Adım 4) — aynı FlagReport sözleşmesi. Gün-gün öğrencisi için bu satırın etkisi yok.
+    if getattr(student, "program_mode", "gun_gun") == "havuz":
+        from app.services.pool_flags import evaluate_pool_flags
+        return evaluate_pool_flags(db, student, today)
 
     now = datetime.now(timezone.utc)
     created = _aw(student.created_at)
@@ -129,6 +144,13 @@ def evaluate_flags(db: Session, student: User, today: date, projection=None,
                 f"{len(drafts_ahead)} görev hazır ama yayınlanmamış; öğrenci programını göremiyor.",
                 [("Taslak görev", f"{len(drafts_ahead)} görev · ilk gün {_d(first)}"),
                  ("Yayınlanmış görev (bugün ve sonrası)", "0")])
+        elif (switched := _recent_gun_gun_switch(db, student.id, today)) is not None:
+            # 2026-10-15: haftalık havuzdan gün güne yeni geçti — ilk programı hazırlama süresi.
+            add("A", "amber", "program_after_switch", "Gün gün programa geçti — ilk programı hazırla",
+                f"{_d(switched.effective_on)} tarihinde haftalık havuzdan gün gün programa geçti; "
+                "henüz yayınlanmış görev yok.",
+                [("Geçiş günü", _d(switched.effective_on)),
+                 ("Bugün ve sonrası", "yayınlanmış görev yok")])
         elif age is None or age >= 3:
             if last_prog:
                 gap = (today - last_prog).days

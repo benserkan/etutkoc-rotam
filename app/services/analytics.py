@@ -185,7 +185,7 @@ def _as_local_date(dt: datetime | None) -> date | None:
 
 def daily_completed_series(
     db: Session, student_id: int, end_date: date, days_back: int,
-    tests_only: bool = False,
+    tests_only: bool = False, books_only: bool = False,
 ) -> dict[date, int]:
     """Son N gün için her günün tamamlanan test sayısı.
 
@@ -210,9 +210,10 @@ def daily_completed_series(
     for t in tasks:
         if t.date not in result:
             continue
+        _is = gorev_stats.item_is_book_test if books_only else gorev_stats.item_is_test
         items = (
-            [it for it in t.book_items if gorev_stats.item_is_test(it)]
-            if tests_only else t.book_items
+            [it for it in t.book_items if _is(it)]
+            if (tests_only or books_only) else t.book_items
         )
         total = sum(it.completed_count for it in items)
         if total > 0:
@@ -249,7 +250,7 @@ def daily_action_series(
 
 def daily_planned_series(
     db: Session, student_id: int, end_date: date, days_back: int,
-    tests_only: bool = False,
+    tests_only: bool = False, books_only: bool = False,
 ) -> dict[date, int]:
     """Her gün için o güne atanmış planlanan toplam test (Task.date bazında).
 
@@ -270,9 +271,10 @@ def daily_planned_series(
     for t in tasks:
         if t.date not in result:
             continue
+        _is = gorev_stats.item_is_book_test if books_only else gorev_stats.item_is_test
         items = (
-            [it for it in t.book_items if gorev_stats.item_is_test(it)]
-            if tests_only else t.book_items
+            [it for it in t.book_items if _is(it)]
+            if (tests_only or books_only) else t.book_items
         )
         result[t.date] += sum(it.planned_count for it in items)
     return result
@@ -502,7 +504,9 @@ def compute_projection(
     # PROJEKSİYON = yalnız TEST envanteri (deneme test'e karışmaz). Hız/plan/envanter
     # hepsi tests_only — deneme soruları projeksiyona girmez (izole edilmiş hesap).
     # Tarihçe — günlük tamamlama (sadece geçmiş)
-    series = daily_completed_series(db, student.id, today, window_days, tests_only=True)
+    # KİTAP envanteri projeksiyonu → hız da yalnız KİTAPLI test (kaynaksız konulu çalışma kitap
+    # envanterini tüketmez; analitik tempo/trend kaynaksızı ayrıca sayar).
+    series = daily_completed_series(db, student.id, today, window_days, books_only=True)
     # Geçmiş penceresi öğrencinin İLK yayınlanmış görevinden başlar: 1 haftalık
     # öğrencinin hızı 28 güne bölünüp 4 kat küçük çıkıyordu (Zeynep Ela: gerçek
     # ~11 test/gün, projeksiyon 2.8). Başlamadan önceki boş günler haftagünü
@@ -519,7 +523,7 @@ def compute_projection(
 
     # Planlama serisi — geçmiş + gelecek (öğretmenin tüm planını yansıtır)
     # daily_planned_series end_date'e doğru bakıyor; gelecek için ayrı çekip birleştiriyoruz.
-    past_planned = daily_planned_series(db, student.id, today, window_days, tests_only=True)
+    past_planned = daily_planned_series(db, student.id, today, window_days, books_only=True)
     # Geleceğe planları al — gelecek görevleri sınav tarihine kadar kapsar
     from app.models import Task as _Task, TaskBookItem as _TBI
     future_q = (
@@ -531,7 +535,7 @@ def compute_projection(
     future_planned: dict[date, int] = {}
     for t in future_q:
         future_planned[t.date] = future_planned.get(t.date, 0) + sum(
-            it.planned_count for it in t.book_items if gorev_stats.item_is_test(it)
+            it.planned_count for it in t.book_items if gorev_stats.item_is_book_test(it)
         )
 
     # DOW bazlı: tamamlanan = sadece geçmiş, planlanan = geçmiş + gelecek (yalnızca plan girilmiş günler)
@@ -839,6 +843,10 @@ def legacy_warnings(
     # listesi rengi + uyarı akışı + rozet hepsi otomatik susar. Veli cron'ları
     # zaten _all_parent_student_pairs'te paused'ı atlıyor.
     if getattr(student, "is_paused", False):
+        return out
+    # Havuz modu (2026-10-12): gün-gün varsayımlı eski üretici havuz öğrencisinde
+    # çalışmaz (bkz. student_flags.evaluate_flags aynı kapı).
+    if getattr(student, "program_mode", "gun_gun") == "havuz":
         return out
 
     # Onboarding: yeni oluşturulmuş öğrenci (hesap < 3 gün) inaktivite uyarısı

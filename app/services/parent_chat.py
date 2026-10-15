@@ -122,6 +122,8 @@ def build_greeting(db: Session, student: User, today: date | None = None) -> dic
     today = today or date.today()
     yesterday = today - timedelta(days=1)
     first = (student.full_name or "").split(" ")[0] or "çocuğunuz"
+    if getattr(student, "program_mode", "gun_gun") == "havuz":
+        return _pool_greeting(db, student, first, today)
 
     def _day_counts(d: date) -> tuple[int, int, list[str]]:
         rows = (
@@ -241,3 +243,27 @@ def answer_question(
         raise AIInvalidResponse("Boş sohbet cevabı")
     # Tek güvenlik makası: aşırı uzun cevabı kırp (kural zaten kısa ister)
     return answer[:2000]
+
+
+def _pool_greeting(db: Session, student: User, first: str, today: date) -> dict:
+    """K56: havuz öğrencisinde karşılama dönem/kap diliyle (kredisiz)."""
+    from app.services import pool_mode as pm
+
+    period = pm.get_open_period(db, student.id)
+    chips = [{"id": "havuz", "label": "Havuz nasıl gidiyor?", "action": "ask",
+              "payload": "Çocuğum bu dönem havuzunu yetiştiriyor mu?"},
+             {"id": "hafta-yorum", "label": "Dönemi yorumla", "action": "commentary", "payload": "program"},
+             {"id": "deneme-yorum", "label": "Denemeleri yorumla", "action": "commentary", "payload": "deneme"}]
+    if period is None:
+        return {"text": f"{first} için rehber henüz yeni dönemin havuzunu yazmadı; seans sonrası burada görünür.",
+                "chips": chips[:4]}
+    s = pm.period_summary(db, period, today)
+    cup = (db.query(Task).filter(Task.student_id == student.id, Task.date == today, Task.pool_item_id.isnot(None)).all())
+    done = sum(1 for t in cup if t.status == TaskStatus.COMPLETED)
+    if cup:
+        text = (f"{first} bugün havuzundan {len(cup)} kalem aldı, {done} tanesini işaretledi. "
+                f"Dönem yüzde {s.pct} ({s.done_units}/{s.total_units} birim), seansa {s.days_left} gün.")
+    else:
+        text = (f"{first} bugün henüz havuzdan kalem almadı. Dönem yüzde {s.pct} "
+                f"({s.done_units}/{s.total_units} birim), seansa {s.days_left} gün.")
+    return {"text": text, "chips": chips[:4]}

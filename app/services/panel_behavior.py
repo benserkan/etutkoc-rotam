@@ -162,6 +162,7 @@ _CATALOG: list[CatalogEntry] = [
     _E("parent.support", "/parent/support", "Destek"),
     # ── Kurum yöneticisi ──
     _E("institution.compliance", "/institution/compliance", "Program Uyumu"),
+    _E("institution.pool", "/institution/pool", "Haftalık Havuz"),
     _E("institution.action_center", "/institution/action-center", "Müdahale Merkezi"),
     _E("institution.academic", "/institution/academic", "Akademik Çıktı"),
     _E("institution.at_risk", "/institution/at-risk", "Risk Paneli"),

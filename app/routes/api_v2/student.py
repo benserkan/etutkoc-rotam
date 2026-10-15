@@ -160,13 +160,25 @@ def _require_student(user: User = Depends(get_current_user_v2)) -> User:
 # ============================================================================
 
 
+def item_is_test_unit(item: TaskBookItem) -> bool:
+    """Kalemin sayacı TEST mi (D/Y/B soru, toplam tavanı yok) yoksa SORU mu (kitapsız deneme)?
+
+    Kitaplı kalem VE kaynaksız konulu kalem (kitapsız ama topic_id dolu — koçun müfredattan ya da
+    havuzdan kaynak seçmeden verdiği görev) TEST birimidir: completed = test, D/Y/B = soru.
+    Yalnız kitapsız + konusuz etiket kalemi (tam deneme) soru birimidir (2026-10-14 düzeltmesi:
+    kaynaksız konulu kalem deneme sanılıp D+Y+B ≤ test sayısı kuralına takılıyordu)."""
+    return item.book_id is not None or getattr(item, "topic_id", None) is not None
+
+
 def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
     section = item.section
-    topic_name = section.topic.name if (section and section.topic) else None
+    topic = section.topic if (section and section.topic) else getattr(item, "topic", None)
+    topic_name = topic.name if topic else None
     section_label = section.label if section else None
-    # Ders + tip — Hafta Izgarası ders gruplaması için (kitapsız denemede None).
+    # Ders + tip — Hafta Izgarası ders gruplaması için (kitapsız denemede None;
+    # kaynaksız konulu kalemde konunun dersi).
     book = item.book
-    subject = book.subject if book else None
+    subject = book.subject if book else (topic.subject if topic is not None else None)
 
     # max_completable: kalemin planlı sayısını şimdilik tavan say.
     # Daha fazlasını yapmak için CHANGE talebi → öğretmen onayı (mevcut akış).
@@ -181,6 +193,8 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
         section_id=item.book_section_id,
         section_label=section_label,
         topic_name=topic_name,
+        topic_id=(topic.id if topic is not None else None),
+        is_test_unit=item_is_test_unit(item),
         planned=item.planned_count,
         completed=item.completed_count,
         is_full=(item.completed_count >= item.planned_count and item.planned_count > 0),
@@ -201,7 +215,7 @@ def _validate_result_distribution(
 ) -> None:
     """D/Y validation — birim duyarlı.
 
-    Kitaplı görev (`is_book_item=True`):
+    Kitaplı ya da kaynaksız KONULU görev (`is_book_item=True`, bkz. item_is_test_unit):
       - completed = **test sayısı** (rezerv-bağlı, ≤ planned)
       - correct/wrong = **soru sayısı** (her test çoklu soru içerir; örn. 3 test = 30 soru)
       - Kural: sadece c ≥ 0, w ≥ 0. Toplam üst sınır YOK (bağımsız metric).
@@ -288,7 +302,19 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
         work_block_id=task.work_block_id,
         work_block_title=wb.title if wb else None,
         work_block_unit=wb.unit if wb else None,
+        pool_item_id=task.pool_item_id,
+        pool_max_count=_pool_max(db, task),
     )
+
+
+def _pool_max(db: Session, task: Task) -> int | None:
+    if task.pool_item_id is None:
+        return None
+    from app.services import pool_mode as pm
+    try:
+        return pm.cup_max_count(db, task)
+    except Exception:
+        return None
 
 
 def _build_resource_sidebar(db: Session, student_id: int) -> ResourceSidebar:
@@ -577,9 +603,13 @@ def student_topic_performance_v2(
     from app.services.topic_performance import compute_topic_performance
 
     win = grade_period_service.resolve_window(db, user.id, period)
+    from app.services.topic_performance import loss_focus
+
+    perf = compute_topic_performance(db, user.id, start=win.start, end=win.end)
     return build_topic_performance_response(
-        compute_topic_performance(db, user.id, start=win.start, end=win.end),
+        perf,
         grade_period_service.build_filter_meta(db, user.id, win),
+        focus=loss_focus(db, user.id, perf),
     )
 
 
@@ -1219,6 +1249,39 @@ def _get_own_task(db: Session, task_id: int, student_id: int) -> Task:
     return task
 
 
+def _sync_pool_item(db: Session, task: Task) -> None:
+    """Havuz kap görevi işaretlenince kalemin sayacı HEMEN güncellenir (2026-10-14). Eskiden yalnız havuz
+    ekranı açılınca senkronlanıyordu → müfredattaki "havuzda N bekliyor", rehber uyarıları ve kurum panosu
+    o ana kadar eski sayıyı gösteriyordu."""
+    if task.pool_item_id is None:
+        return
+    from app.models.pool import PoolItem
+    from app.services.pool_mode import sync_item_progress
+
+    item = db.get(PoolItem, task.pool_item_id)
+    if item is not None:
+        sync_item_progress(db, item)
+
+
+def _ensure_pool_entry_open(db: Session, task: Task) -> None:
+    """K59/K15 (havuz modu): kap görevinin dönemi kapanalı 2+ gün olduysa öğrenci kaydı kilitli."""
+    from app.services.pool_mode import late_entry_lock
+
+    lock_from = late_entry_lock(db, task, date.today())
+    if lock_from is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "forbidden",
+                "code": "late_entry_locked",
+                "message": (
+                    "Bu kalemin dönemi kapandı; kapanıştan 2 gün sonra öğrenci kaydı kilitlenir. "
+                    "Düzeltme için rehberine söyle — seansta kaynağına bakıp işaretler."
+                ),
+            },
+        )
+
+
 def _ensure_not_future(task: Task) -> None:
     """Gelecek tarihli görevin tamamlama tıklamasını engelle.
 
@@ -1356,6 +1419,7 @@ def complete_task_v2(
     """
     task = _get_own_task(db, task_id, user.id)
     _ensure_not_future(task)
+    _ensure_pool_entry_open(db, task)
 
     was_completed = task.status == TaskStatus.COMPLETED
 
@@ -1370,7 +1434,7 @@ def complete_task_v2(
             correct=correct,
             wrong=wrong,
             blank=blank,
-            is_book_item=single.book_id is not None,
+            is_book_item=item_is_test_unit(single),
         )
 
     try:
@@ -1390,6 +1454,7 @@ def complete_task_v2(
         _fire_task_completed_event_safe(db, user)
         _evaluate_badges_safe(db, user.id)
 
+    _sync_pool_item(db, task)
     db.commit()
     db.refresh(task)
 
@@ -1418,6 +1483,7 @@ def uncomplete_task_v2(
     """
     task = _get_own_task(db, task_id, user.id)
     # uncomplete'ta _ensure_not_future ÇAĞRILMAZ — mevcut Jinja akışıyla aynı
+    _ensure_pool_entry_open(db, task)
     try:
         svc_uncomplete_task(db, task)
     except ReservationError as e:
@@ -1427,6 +1493,7 @@ def uncomplete_task_v2(
     # Kalemsiz görevde geri alınca çözülen soru kaydını da temizle (simetri)
     if not task.book_items:
         task.solved_count = None
+    _sync_pool_item(db, task)
     db.commit()
     db.refresh(task)
 
@@ -1459,6 +1526,7 @@ def set_item_completed_v2(
     """
     task = _get_own_task(db, task_id, user.id)
     _ensure_not_future(task)
+    _ensure_pool_entry_open(db, task)
 
     item = next((i for i in task.book_items if i.id == item_id), None)
     if not item:
@@ -1479,7 +1547,7 @@ def set_item_completed_v2(
         correct=body.correct,
         wrong=body.wrong,
         blank=body.blank,
-        is_book_item=item.book_id is not None,
+        is_book_item=item_is_test_unit(item),
     )
 
     try:
@@ -1513,6 +1581,7 @@ def set_item_completed_v2(
         _fire_task_completed_event_safe(db, user)
         _evaluate_badges_safe(db, user.id)
 
+    _sync_pool_item(db, task)
     db.commit()
     db.refresh(task)
 

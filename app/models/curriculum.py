@@ -165,6 +165,18 @@ def derive_curriculum_model(
     )
 
 
+def current_school_year_start(today=None) -> int:
+    """Bugünün öğretim yılının Eylül-yılı (2026-10 → 2026; 2027-03 → 2026).
+
+    Öğrenciye akademik yıl atanmamışsa müfredat modeli bununla türetilir
+    (saha 2026-10-13, #415: akademik yılsız 11. sınıf Maarif öğrencisinin modeli
+    None kalıyor, okul dersleri yerine klasik içerikli AYT konuları sunuluyordu).
+    Eylül öncesi (yaz) önceki öğretim yılı sayılır — sınıf yükseltmesi Eylül'de."""
+    from datetime import date as _date
+    t = today or _date.today()
+    return t.year if t.month >= 9 else t.year - 1
+
+
 def estimate_entry_year_grade9(
     *, current_grade: int | None, academic_year_start: int
 ) -> int | None:

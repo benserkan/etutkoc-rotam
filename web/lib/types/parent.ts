@@ -514,3 +514,35 @@ export interface ParentSessionsResponse {
   sessions: ParentSessionItem[];
   billing: ParentBillingSummary;
 }
+
+
+// ---------------------------------------------------------------- K52 haftalık havuz (salt okuma)
+
+export interface ParentPoolItem {
+  id: number;
+  subject_name: string;
+  title: string;
+  quantity: number;
+  unit: string;
+  done: number;
+  remaining: number;
+  teacher_homework: boolean;
+  in_cup_today: boolean;
+}
+
+export interface ParentPoolResponse {
+  mode: "gun_gun" | "havuz";
+  period_id: number | null;
+  opened_on: string | null;
+  expected_next_on: string | null;
+  days_open: number | null;
+  summary: {
+    pct: number; total_units: number; done_units: number; items_total: number; items_done: number;
+    days_left: number; per_day_needed: number; expected_next_on: string | null; pace: string; pace_note: string;
+  } | null;
+  items: ParentPoolItem[];
+  cup: { title: string; status: string }[];
+  previous: { id: number; opened_on: string; closed_on: string | null; status: string; status_label: string; total_units: number; done_units: number; pct: number }[];
+  on_break: { period_id: number; since: string; note: string | null } | null;
+  today: string;
+}

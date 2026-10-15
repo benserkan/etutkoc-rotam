@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, Moon, Sun, Sunrise } from "lucide-react";
 
@@ -13,12 +14,16 @@ import { ShareExperiencePrompt } from "@/components/testimonials/share-experienc
 import { ErrorState } from "@/components/error-state";
 
 import { DayHeader } from "./day-header";
+import { PoolBanner } from "./pool-banner";
+import { getStudentPool, studentPoolKey } from "@/lib/api/pool-student";
 import { ResourceSidebar } from "./resource-sidebar";
 import { TaskCard } from "./task-card";
 import { ProjectionCard } from "./projection-card";
 import { CommModal, type CommMode } from "./comm-modal";
 
 interface Props {
+  /** Sayfa ipucu (\"Nasıl kullanılır?\") — havuz kartının ALTINDA gösterilir */
+  demoHint?: React.ReactNode;
   initial: StudentDayResponse;
 }
 
@@ -34,9 +39,10 @@ interface Props {
  *   - URL ?date= query'si Server Component'in initialData'sını besler; bu
  *     bileşen yine de useQuery ile aynı date'i talep eder (anlık state).
  */
-export function DayClient({ initial }: Props) {
+export function DayClient({ initial, demoHint }: Props) {
   const dateIso = initial.date;
 
+  const poolQ = useQuery({ queryKey: studentPoolKey, queryFn: getStudentPool, staleTime: 30_000 });
   const q = useQuery<StudentDayResponse>({
     queryKey: studentKeys.day(dateIso),
     queryFn: () => getStudentDay(dateIso),
@@ -68,12 +74,21 @@ export function DayClient({ initial }: Props) {
   }
   const day = q.data;
 
+  // Haftalık havuz öğrencisinde gün gün program yok: sınav projeksiyonu (gün gün plana göre) gizlenir,
+  // boş gün "kabın boş — havuzdan al" der, "Yeni görev iste" yerine "Havuza kalem ekle" (2026-10-13).
+  const havuz = poolQ.data?.mode === "havuz";
   const showProjection =
-    day.projection && (day.is_today || day.is_future) && !day.is_past;
+    !havuz && day.projection && (day.is_today || day.is_future) && !day.is_past;
 
   return (
     <div className="space-y-4">
-      <DayHeader day={day} onRequestAdd={() => setComm({ mode: "add" })} />
+      {/* Haftalık havuz modu (dershane): havuz öğrencisinin asıl çalışma yeri — sayfanın EN ÜSTÜNDE,
+          tarih gezgini ve düğmelerden önce (yalnız havuz öğrencisinde render olur) */}
+      <PoolBanner />
+
+      {demoHint}
+
+      <DayHeader day={day} havuz={havuz} onRequestAdd={() => setComm({ mode: "add" })} />
 
       <QuickAccessStrip excludeHrefs={["/student/day"]} />
 
@@ -86,7 +101,21 @@ export function DayClient({ initial }: Props) {
             <ProjectionCard projection={day.projection} />
           ) : null}
 
-          {day.tasks.length === 0 ? (
+          {day.tasks.length === 0 && havuz ? (
+            <div className="rounded-lg border border-dashed border-border bg-card px-4 py-10 text-center text-sm" data-section="student:day:cup-empty">
+              <p className="font-medium text-foreground">
+                {day.is_past ? "Bu gün kabına bir şey almamışsın." : day.is_today ? "Bugünün kabı boş." : "Bu gün için henüz kap kurulmadı."}
+              </p>
+              {day.is_today ? (
+                <>
+                  <p className="mt-1 text-xs text-muted-foreground">Havuzundan bugün çalışacaklarını seç; burada görev olarak çıkar ve işaretlersin.</p>
+                  <Link href="/student/pool" className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-md bg-cyan-700 px-4 text-sm font-medium text-white hover:bg-cyan-800">
+                    Havuzdan kalem al
+                  </Link>
+                </>
+              ) : null}
+            </div>
+          ) : day.tasks.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
               <p className="font-medium">Bu güne henüz görev yok.</p>
               {day.is_past ? (

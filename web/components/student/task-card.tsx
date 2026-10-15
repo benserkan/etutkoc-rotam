@@ -17,12 +17,18 @@ import {
   Trash2,
   MessageCircle,
   ExternalLink,
+  Undo2,
 } from "lucide-react";
 import { linkButtonLabel } from "@/lib/task-links";
 import { TaskVideoLinks } from "@/components/shared/task-video-links";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { useCupResize, useCupReturn } from "@/lib/api/pool-student";
 import {
   Tooltip,
   TooltipContent,
@@ -67,13 +73,23 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
   const blocked = task.is_future_blocked;
   const isCompleted = task.status === "completed";
   const isPartial = task.status === "partial";
+  // Tamamlayınca sonuç sor (2026-10-14): test birimli, sonucu girilmemiş ilk kalemin
+  // doğru/yanlış/boş penceresi kendiliğinden açılır — "Sonucu girmeden geç" ile atlanabilir.
+  // Sonuç girilmeyen test konu performansına doğruluk olarak yansımaz.
+  const [askItemId, setAskItemId] = React.useState<number | null>(null);
 
   function toggleAll() {
     if (blocked) return;
     if (isCompleted) {
       uncomplete.mutate({ task });
     } else {
-      complete.mutate({ task });
+      const target = task.items.find(
+        (it) =>
+          (it.is_test_unit ?? it.book_id != null) &&
+          it.planned > 0 &&
+          it.correct == null && it.wrong == null && it.blank == null,
+      );
+      complete.mutate({ task }, { onSuccess: () => { if (target) setAskItemId(target.id); } });
     }
   }
 
@@ -152,6 +168,8 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
               item={item}
               dateIso={dateIso}
               blocked={blocked}
+              askResult={askItemId === item.id}
+              onAskDone={() => setAskItemId(null)}
             />
           ))
         ) : (
@@ -320,11 +338,16 @@ function ItemRow({
   item,
   dateIso,
   blocked,
+  askResult = false,
+  onAskDone,
 }: {
   task: StudentTask;
   item: StudentTaskItem;
   dateIso: string;
   blocked: boolean;
+  /** Görev az önce tamamlandı → sonuç penceresini kendiliğinden aç */
+  askResult?: boolean;
+  onAskDone?: () => void;
 }) {
   const debounced = useDebouncedSetItem(dateIso);
   const setItem = useSetItemCompleted(dateIso);
@@ -332,8 +355,9 @@ function ItemRow({
   const max = item.planned;
   const min = 0;
 
-  // Kitapsız deneme kaleminde de D/Y mantıklı (TYT branş denemesi → 40 soru/35 D/5 Y)
-  const isDeneme = item.book_id == null;
+  // Kitapsız deneme kaleminde de D/Y mantıklı (TYT branş denemesi → 40 soru/35 D/5 Y).
+  // Kaynaksız KONULU kalem (kitapsız ama konusu var) denemedir değil, test birimidir.
+  const isDeneme = item.is_test_unit === false || (item.is_test_unit == null && item.book_id == null);
   const hasResult =
     item.correct != null || item.wrong != null || item.blank != null;
 
@@ -357,7 +381,10 @@ function ItemRow({
         blank: r.blank,
       },
       {
-        onSuccess: () => setSheetOpen(false),
+        onSuccess: () => {
+          setSheetOpen(false);
+          onAskDone?.();
+        },
       },
     );
   }
@@ -437,8 +464,11 @@ function ItemRow({
       </div>
 
       <CompleteSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
+        open={sheetOpen || askResult}
+        onClose={() => {
+          setSheetOpen(false);
+          onAskDone?.();
+        }}
         onSubmit={handleSheetSubmit}
         taskTitle={task.title}
         itemLabel={
@@ -485,10 +515,11 @@ function ResultBadge({
         type="button"
         onClick={onEdit}
         disabled={blocked}
-        className="inline-flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground hover:text-foreground transition disabled:opacity-40"
+        className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-amber-950 transition hover:bg-amber-400 disabled:opacity-40"
+        title="Sonuç girilmeyen test konu performansına doğruluk olarak yansımaz"
       >
         <Plus className="size-2.5" aria-hidden />
-        doğru/yanlış/boş ekle
+        doğru/yanlış/boş gir
       </button>
     );
   }
@@ -586,6 +617,57 @@ function ActionsMenu({
   }, [open]);
 
   const canChangeOrReplaceOrRemove = !isCompleted && !task.has_pending_request;
+  const [resizeOpen, setResizeOpen] = React.useState(false);
+  const cupReturn = useCupReturn();
+
+  // Haftalık havuz: kap görevini öğrenci kendisi kurdu → sayı/çıkar REHBERE TALEP değildir,
+  // öğrenci doğrudan düzeltir (talep menüsü yerine kendi eylemleri).
+  if (task.pool_item_id != null) {
+    const done = task.items.reduce((a, it) => a + it.completed, 0);
+    const resizable = task.items.length === 1 && task.pool_max_count != null;
+    return (
+      <div className="relative" ref={ref}>
+        <Button type="button" variant="ghost" size="icon" className="size-7" aria-label="Görev eylemleri"
+                onClick={() => setOpen((o) => !o)}>
+          <MoreHorizontal className="size-4" aria-hidden="true" />
+        </Button>
+        {open ? (
+          <div role="menu" className="absolute right-0 z-20 mt-1 w-56 rounded-md border border-border bg-popover p-1 shadow-md">
+            {resizable ? (
+              <MenuItem
+                label="Bugünkü sayıyı değiştir"
+                icon={<CircleDashed className="size-3.5" />}
+                disabled={isCompleted || blocked}
+                disabledReason={isCompleted ? "Tamamlanmış görev — işaretlediğin sayıyı düzeltmek için − düğmesini kullan" : blocked ? "Gelecek tarihli görev" : undefined}
+                onClick={() => { setOpen(false); setResizeOpen(true); }}
+              />
+            ) : null}
+            <MenuItem
+              label="Havuza geri al"
+              icon={<Undo2 className="size-3.5" />}
+              disabled={done > 0 || isCompleted || cupReturn.isPending}
+              disabledReason={done > 0 ? "İşaretlediğin kısım var; kalan gün sonunda havuza kendiliğinden döner" : undefined}
+              onClick={() => { setOpen(false); cupReturn.mutate({ task_id: task.id }); }}
+            />
+            <div className="my-1 h-px bg-border" aria-hidden="true" />
+            <MenuItem
+              label="Koçuna sor"
+              icon={<MessageCircle className="size-3.5" />}
+              onClick={() => { setOpen(false); onOpenComm("question", task); }}
+            />
+            <MenuItem
+              label="Yanlışı arşivle"
+              icon={<BookX className="size-3.5" />}
+              onClick={() => { setOpen(false); window.location.href = wrongArchiveHref(task); }}
+            />
+          </div>
+        ) : null}
+        {resizeOpen ? (
+          <CupResizeDialog task={task} done={done} onClose={() => setResizeOpen(false)} />
+        ) : null}
+      </div>
+    );
+  }
 
   // Tip-aware menü görünürlüğü:
   // - "Sayıyı değiştir" → görevde **en az bir sayı kalemi** olmalı (Test, Deneme).
@@ -677,6 +759,51 @@ function ActionsMenu({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Kap görevinin bugünkü sayısını düzelt — alt sınır işaretlenen, üst sınır havuzdaki kalan. */
+function CupResizeDialog({ task, done, onClose }: { task: StudentTask; done: number; onClose: () => void }) {
+  const resize = useCupResize();
+  const planned = task.items[0]?.planned ?? 1;
+  const max = Math.max(planned, task.pool_max_count ?? planned);
+  const min = Math.max(1, done);
+  const [val, setVal] = React.useState(planned);
+  const opts = Array.from({ length: Math.min(max, 12) - min + 1 }, (_, i) => min + i);
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Bugün kaç tane?</DialogTitle>
+          <DialogDescription>
+            {task.title} — kaba {planned} almıştın. Bugün yapacağın sayıyı seç; kalan havuzda bekler.
+            {done > 0 ? ` ${done} tanesini işaretledin, daha aza inemez.` : ""}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Bugünkü sayı">
+          {opts.map((n) => (
+            <button key={n} type="button" role="radio" aria-checked={val === n} onClick={() => setVal(n)}
+                    className={cn("min-w-10 rounded-md border px-3 py-1.5 text-sm font-semibold tabular-nums",
+                      val === n ? "border-transparent bg-cyan-700 text-white" : "bg-background text-foreground hover:bg-muted")}>
+              {n}
+            </button>
+          ))}
+          {max > 12 ? (
+            <Input type="number" min={min} max={max} value={val} aria-label="Başka sayı" className="h-9 w-20"
+                   onChange={(e) => { const n = Number(e.target.value); if (Number.isInteger(n)) setVal(n); }} />
+          ) : null}
+        </div>
+        <p className="text-xs text-muted-foreground">En az {min}, en fazla {max} (havuzdaki kalan).</p>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Vazgeç</Button>
+          <Button disabled={resize.isPending || val === planned || val < min || val > max}
+                  className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white"
+                  onClick={() => resize.mutate({ task_id: task.id, count: val }, { onSuccess: onClose })}>
+            {val} yap
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -77,6 +77,10 @@ class StudentTaskItem(BaseModel):
     section_id: int | None = None
     section_label: str | None = None
     topic_name: str | None = None
+    topic_id: int | None = None
+    # TEST birimi mi (kitaplı ya da kaynaksız konulu kalem): completed = test, D/Y/B = soru, toplam
+    # tavanı yok. False = kitapsız deneme (completed = soru, D+Y+B ≤ completed).
+    is_test_unit: bool = True
     planned: int                   # planned_count
     completed: int                 # completed_count
     is_full: bool                  # planned == completed
@@ -114,6 +118,10 @@ class StudentTask(BaseModel):
     work_block_id: int | None = None
     work_block_title: str | None = None
     work_block_unit: str | None = None
+    # Haftalık havuz (dershane): bu görev havuzdan kaba alınmış. Öğrenci sayısını KENDİ düzeltir
+    # (rehbere talep değil); pool_max_count = yapılan + kalemin havuzdaki kalanı.
+    pool_item_id: int | None = None
+    pool_max_count: int | None = None
 
 
 # ============================================================================

@@ -12,7 +12,9 @@ Senaryolar:
   1. 9. sınıf + LGS kitapları → Maarif dersi GÖRÜNÜR (asıl saha hatası)
   2. 9. sınıf → kaynaksız TYT dersi GİZLİ
   3. 9. sınıf + TYT kitabı atanmış → o TYT dersi GÖRÜNÜR (erken YKS hazırlığı)
-  4. 11. sınıf → sınav omurgası korunur (TYT görünür, kaynaksız okul gizlenir)
+  4. 11. sınıf (akademik yılsız, 2026-2027 → Maarif kohortu) → OKUL omurgası (2026-10-13 #415):
+     Maarif dersi görünür, kaynaksız TYT gizli
+  4b. 12. sınıf (Klasik kohortu) → sınav omurgası korunur (TYT görünür, kaynaksız okul gizlenir)
   5. 8. sınıf (LGS) → dedup yok, okul dersleri olduğu gibi
 """
 from __future__ import annotations
@@ -74,7 +76,10 @@ def seed() -> dict:
         s8 = User(email=f"{PFX}_s8@test.invalid", password_hash=hash_password("x"),
                   full_name="Sekizinci", role=UserRole.STUDENT, is_active=True,
                   teacher_id=coach.id, grade_level=8)
-        db.add_all([s9, s11, s8])
+        s12 = User(email=f"{PFX}_s12@test.invalid", password_hash=hash_password("x"),
+                   full_name="Onikinci", role=UserRole.STUDENT, is_active=True,
+                   teacher_id=coach.id, grade_level=12)
+        db.add_all([s9, s11, s8, s12])
         db.flush()
 
         # Maarif lise "Matematik" (9-12) + TYT Matematik (sınav, model=None)
@@ -87,10 +92,13 @@ def seed() -> dict:
         lgs = Subject(name=f"Fen Bilimleri {PFX}", teacher_id=coach.id,
                       curriculum_model=CurriculumModel.LGS,
                       min_grade_level=5, max_grade_level=8)
-        db.add_all([maarif, tyt, lgs])
+        klasik = Subject(name=f"Matematik {PFX}", teacher_id=coach.id,
+                         curriculum_model=CurriculumModel.KLASIK_LISE,
+                         min_grade_level=9, max_grade_level=12)
+        db.add_all([maarif, tyt, lgs, klasik])
         db.flush()
         topics = {}
-        for sj in (maarif, tyt, lgs):
+        for sj in (maarif, tyt, lgs, klasik):
             tp = Topic(subject_id=sj.id, name=f"Konu {sj.id}", order=1)
             db.add(tp)
             db.flush()
@@ -118,20 +126,20 @@ def seed() -> dict:
         db.add(StudentBook(student_id=s8.id, book_id=b_lgs.id))
         db.commit()
         return {
-            "coach_id": coach.id, "s9": s9.id, "s11": s11.id, "s8": s8.id,
-            "maarif": maarif.id, "tyt": tyt.id, "lgs": lgs.id,
+            "coach_id": coach.id, "s9": s9.id, "s11": s11.id, "s8": s8.id, "s12": s12.id,
+            "maarif": maarif.id, "tyt": tyt.id, "lgs": lgs.id, "klasik": klasik.id,
             "b_lgs": b_lgs.id, "b_maarif": b_maarif.id, "b_tyt": b_tyt.id,
         }
 
 
 def cleanup(d: dict) -> None:
     with SessionLocal() as db:
-        sids = [d["s9"], d["s11"], d["s8"]]
+        sids = [d["s9"], d["s11"], d["s8"], d["s12"]]
         db.execute(sa_delete(StudentBook).where(StudentBook.student_id.in_(sids)))
         for bid in (d["b_lgs"], d["b_maarif"], d["b_tyt"]):
             db.execute(sa_delete(BookSection).where(BookSection.book_id == bid))
             db.execute(sa_delete(Book).where(Book.id == bid))
-        for sj in (d["maarif"], d["tyt"], d["lgs"]):
+        for sj in (d["maarif"], d["tyt"], d["lgs"], d["klasik"]):
             db.execute(sa_delete(Topic).where(Topic.subject_id == sj))
             db.execute(sa_delete(Subject).where(Subject.id == sj))
         db.execute(sa_delete(User).where(User.id.in_(sids + [d["coach_id"]])))
@@ -162,11 +170,21 @@ def main() -> int:
                   f"TYT Matematik {PFX}" in n9b and f"Matematik {PFX}" in n9b,
                   str(sorted(n9b)))
 
-            # 4. 11. sınıf: sınav omurgası korunur (kaynaksız okul gizlenir)
+            # 4. 11. sınıf, akademik yılsız: bugünün öğretim yılından Maarif → OKUL omurgası
+            st11 = db.get(User, d["s11"])
+            check("4a. 11. sınıf akademik yılsız → model MAARIF (bugünün öğretim yılı)",
+                  st11.effective_curriculum_model == CurriculumModel.MAARIF_LISE, str(st11.effective_curriculum_model))
             n11 = names(db, d["s11"], d["coach_id"])
-            check("4. 11. sınıf → sınav omurgası korunur (TYT var, okul gizli)",
-                  f"TYT Matematik {PFX}" in n11 and f"Matematik {PFX}" not in n11,
+            check("4. Maarif 11 → okul omurgası (Maarif dersi var, kaynaksız TYT gizli)",
+                  f"Matematik {PFX}" in n11 and f"TYT Matematik {PFX}" not in n11,
                   str(sorted(n11)))
+            # 4b. 12. sınıf: Klasik kohortu → sınav omurgası korunur
+            st12 = db.get(User, d["s12"])
+            n12 = names(db, d["s12"], d["coach_id"])
+            check("4b. 12. sınıf → model KLASIK + sınav omurgası (TYT var, okul gizli)",
+                  st12.effective_curriculum_model == CurriculumModel.KLASIK_LISE
+                  and f"TYT Matematik {PFX}" in n12 and f"Matematik {PFX}" not in n12,
+                  f"{st12.effective_curriculum_model} {sorted(n12)}")
 
             # 5. 8. sınıf: LGS dersi görünür, lise dersleri hiç aday değil
             n8 = names(db, d["s8"], d["coach_id"])

@@ -133,8 +133,13 @@ def _parent_prefs_map(db: Session) -> dict[int, ParentNotificationPref]:
     return {p.parent_id: p for p in rows}
 
 
-def _all_parent_student_pairs(db: Session) -> list[tuple[User, User, ParentStudentLink]]:
-    """Aktif (parent, student, link) üçlüleri."""
+def _all_parent_student_pairs(db: Session, *, include_havuz: bool = False) -> list[tuple[User, User, ParentStudentLink]]:
+    """Aktif (parent, student, link) üçlüleri.
+
+    include_havuz=False (varsayılan): haftalık görev havuzu modundaki öğrenci ATLANIR —
+    günlük özet / boş gün / haftalık rapor / düşüş uyarısı gün-gün görev tarihlerini
+    varsayar; havuz öğrencisinin velisine seans özeti (K53) rehber onayıyla gider.
+    Yalnız sınav-yaklaşıyor (tarih bazlı) havuz öğrencisini de kapsar (include_havuz=True)."""
     links = (
         db.query(ParentStudentLink)
         .options(
@@ -156,6 +161,8 @@ def _all_parent_student_pairs(db: Session) -> list[tuple[User, User, ParentStude
         if link.parent.is_paused or link.student.is_paused:
             continue
         if link.parent.role != UserRole.PARENT or link.student.role != UserRole.STUDENT:
+            continue
+        if not include_havuz and getattr(link.student, "program_mode", "gun_gun") == "havuz":
             continue
         out.append((link.parent, link.student, link))
     return out
@@ -381,7 +388,7 @@ def exam_approaching(db: Session, *, now: datetime) -> dict:
     Hedef sınavı olmayan (5-7, 9-11) öğrenciler atlanır.
     """
     today = _today_utc(now)
-    pairs = _all_parent_student_pairs(db)
+    pairs = _all_parent_student_pairs(db, include_havuz=True)
     counts = {
         "sent": 0,
         "skipped_no_target": 0,
@@ -1023,8 +1030,23 @@ def student_weekly_email(db: Session, *, now: datetime) -> dict:
     return run_student_weekly_emails(db, now=now)
 
 
+def pool_daily_close(db: Session, *, now: datetime) -> dict:
+    """Günlük 03:15 TR — havuz modundaki öğrencilerde dünün kaplarını kapat (K34)."""
+    from app.services.pool_cron import daily_close
+    return daily_close(db, now=now)
+
+
+def pool_reminders(db: Session, *, now: datetime) -> dict:
+    """30 dk — havuz modu sabah/akşam hatırlatma push'ları (K37; günde bir kez)."""
+    from app.services.pool_cron import reminders
+    return reminders(db, now=now)
+
+
 JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "daily_summary": daily_summary,
+    # Haftalık görev havuzu (dershane modu) — gün sonu kapanış + hatırlatmalar
+    "pool_daily_close": pool_daily_close,
+    "pool_reminders": pool_reminders,
     "weekly_backstop": weekly_backstop,
     "student_weekly_email": student_weekly_email,
     "drop_alert": drop_alert,

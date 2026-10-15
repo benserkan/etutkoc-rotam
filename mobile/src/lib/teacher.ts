@@ -62,6 +62,7 @@ export interface TeacherStudentDetail {
     display_grade_label: string | null;
     track_label: string | null;
     last_login_at: string | null;
+    program_mode?: "gun_gun" | "havuz";
   };
   worst_warning_level: WarningLevel;
   warning_items: WarningItem[];
@@ -189,6 +190,11 @@ export interface CurriculumTopicItem {
   pct: number;
   unit_name: string | null;
   grade_level: number | null;
+  closed?: boolean;
+  sourceless_completed?: number;
+  /** HAVUZ: açık dönemde bu konudan bekleyen birim · seansta işaretlenen kaynaksız birim */
+  pool_remaining?: number;
+  pool_marked?: number;
   /** Deneme çaprazı (Faz 3) — işlenmiş görünen konuda denemede düşük doğruluk */
   exam_mismatch?: boolean;
   exam_accuracy_pct?: number | null;

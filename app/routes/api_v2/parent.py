@@ -244,9 +244,13 @@ def parent_student_topic_performance_v2(
 
     # P3: veli de varsayılan olarak BU dönemi görür (geçen yıl karışmasın).
     win = grade_period_service.resolve_window(db, student.id, period)
+    from app.services.topic_performance import loss_focus
+
+    perf = compute_topic_performance(db, student.id, start=win.start, end=win.end)
     return build_topic_performance_response(
-        compute_topic_performance(db, student.id, start=win.start, end=win.end),
+        perf,
         grade_period_service.build_filter_meta(db, student.id, win),
+        focus=loss_focus(db, student.id, perf),
     )
 
 
@@ -2333,3 +2337,91 @@ def parent_chat_audio_v2(
         content=m.audio, media_type=m.audio_content_type,
         headers={"Cache-Control": "private, max-age=0, no-store"},
     )
+
+
+# ---------------------------------------------------------------- K52 haftalık havuz (salt okuma)
+
+@router.get("/students/{student_id}/pool")
+def parent_student_pool_v2(student_id: int, user: User = Depends(_require_parent), db: Session = Depends(get_db)):
+    """K52: veli havuzu + bugünün kabını SALT OKUMA görür; uyarı yok (K52), onaysız öğrenci
+    kalemi ve rehbere özel notlar görünmez."""
+    from app.models import Task, TaskStatus
+    from app.models.pool import APPROVAL_PENDING, APPROVAL_REJECTED, PERIOD_STATUS_LABELS
+    from app.routes.api_v2.pool_student import _pace, _title
+    from app.routes.api_v2.schemas.pool import (
+        ParentPoolCup, ParentPoolItem, ParentPoolResponse, PoolPeriodBrief, StudentPoolSummary,
+    )
+    from app.services import pool_mode as pm
+    from app.services.parent_view import ParentAccessDenied, assert_parent_can_view
+
+    try:
+        student = assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "student_not_found",
+                                                     "message": "Öğrenci bulunamadı."})
+    today = date.today()
+    mode = pm.mode_of(student)
+    period = pm.get_open_period(db, student.id) if mode == "havuz" else None
+    prev = []
+    if mode == "havuz":
+        for p in pm.list_periods(db, student.id, limit=4):
+            if period is not None and p.id == period.id:
+                continue
+            sm = pm.period_summary(db, p, today)
+            prev.append(PoolPeriodBrief(id=p.id, opened_on=p.opened_on.isoformat(),
+                                        closed_on=p.closed_on.isoformat() if p.closed_on else None, status=p.status,
+                                        status_label=PERIOD_STATUS_LABELS.get(p.status, p.status),
+                                        total_units=sm.total_units, done_units=sm.done_units, pct=sm.pct))
+    from app.routes.api_v2.pool_student import _break_out
+    on_break = _break_out(db, student.id) if mode == "havuz" else None
+    if period is None:
+        return ParentPoolResponse(mode=mode, previous=prev, on_break=on_break, today=today.isoformat())
+    live = [it for it in period.items if it.removed_at is None and it.approval not in (APPROVAL_PENDING, APPROVAL_REJECTED)]
+    from app.models import Book, BookSection, Subject, Topic
+
+    def pull(model, ids):
+        ids = {i for i in ids if i}
+        return {r.id: r for r in db.query(model).filter(model.id.in_(ids)).all()} if ids else {}
+    names = {"subjects": pull(Subject, [i.subject_id for i in live]), "topics": pull(Topic, [i.topic_id for i in live]),
+             "books": pull(Book, [i.book_id for i in live]), "sections": pull(BookSection, [i.book_section_id for i in live])}
+    cup_tasks = (db.query(Task).filter(Task.student_id == student.id, Task.date == today, Task.pool_item_id.isnot(None))
+                 .order_by(Task.order).all())
+    in_cup = {t.pool_item_id for t in cup_tasks if t.status != TaskStatus.COMPLETED}
+    s = pm.period_summary(db, period, today)
+    pace, note = _pace(s, pm.days_without_session(period, today))
+    return ParentPoolResponse(
+        mode=mode, period_id=period.id, opened_on=period.opened_on.isoformat(),
+        expected_next_on=period.expected_next_on.isoformat() if period.expected_next_on else None,
+        days_open=(today - period.opened_on).days,
+        summary=StudentPoolSummary(pct=s.pct, total_units=s.total_units, done_units=s.done_units,
+                                   items_total=s.items_total, items_done=s.items_done, days_left=s.days_left,
+                                   per_day_needed=s.per_day_needed,
+                                   expected_next_on=s.expected_next_on.isoformat() if s.expected_next_on else None,
+                                   pace=pace, pace_note=note),
+        items=[ParentPoolItem(id=it.id, subject_name=names["subjects"][it.subject_id].name if it.subject_id in names["subjects"] else "—",
+                              title=_title(it, names), quantity=it.quantity, unit=it.unit, done=it.done_units,
+                              remaining=it.remaining, teacher_homework=bool(it.teacher_homework),
+                              in_cup_today=it.id in in_cup) for it in live],
+        cup=[ParentPoolCup(title=t.title, status=t.status.value) for t in cup_tasks],
+        previous=prev, today=today.isoformat(),
+    )
+
+
+@router.get("/students/{student_id}/pool/periods/{period_id}")
+def parent_student_pool_period_v2(student_id: int, period_id: int, user: User = Depends(_require_parent),
+                                  db: Session = Depends(get_db)):
+    """K52/K60: veli çocuğunun geçmiş dönemini kalem kalem + gün gün SALT OKUMA görür;
+    onay bekleyen/red kalemler, kaldırılanlar ve kaçınma sayaçları görünmez, uyarı yok."""
+    from app.models import StudyPeriod
+    from app.routes.api_v2.pool_student import period_detail_response
+    from app.services.parent_view import ParentAccessDenied, assert_parent_can_view
+    try:
+        student = assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "student_not_found",
+                                                     "message": "Öğrenci bulunamadı."})
+    period = db.get(StudyPeriod, period_id)
+    if period is None or period.student_id != student.id:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "period_not_found",
+                                                     "message": "Dönem bulunamadı."})
+    return period_detail_response(db, period, audience="parent")

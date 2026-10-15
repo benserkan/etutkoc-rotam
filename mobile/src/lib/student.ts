@@ -13,6 +13,9 @@ export interface StudentTaskItem {
   section_id: number | null;
   section_label: string | null;
   topic_name: string | null;
+  topic_id?: number | null;
+  /** Kitaplı ya da kaynaksız konulu kalem → test birimi (D/Y/B soru). false = kitapsız deneme. */
+  is_test_unit?: boolean;
   planned: number;
   completed: number;
   is_full: boolean;

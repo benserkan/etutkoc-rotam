@@ -15,6 +15,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
   {
     title: "Analiz",
     items: [
+      { label: "Haftalık Havuz", sub: "Havuz öğrencileri: tempo, ders ilerlemesi, geciken seans", icon: "file-tray-full-outline", path: "/institution-pool" },
       { label: "Program Uyumu", sub: "Tamamlama + doğruluk + boş program", icon: "clipboard-outline", path: "/institution-compliance" },
       { label: "Akademik Çıktı", sub: "Deneme net başarısı + trend", icon: "school-outline", path: "/institution-academic" },
       { label: "Risk Paneli", sub: "Risk altındaki öğrenciler", icon: "warning-outline", path: "/institution-at-risk" },

@@ -16,6 +16,7 @@ import type {
   ParentSettingsResponse,
   ParentStudentOverviewResponse,
   ParentUnsubscribeResult,
+  ParentPoolResponse,
   ParentWeekResponse,
   WeeklyReportResponse,
 } from "@/lib/types/parent";
@@ -29,6 +30,10 @@ export const parentKeys = {
   dashboard: () => ["parent", "me", "dashboard"] as const,
   student: (id: number) =>
     ["parent", "me", "students", String(id)] as const,
+  studentPool: (id: number) =>
+    ["parent", "me", "students", String(id), "pool"] as const,
+  studentPoolPeriod: (id: number, periodId: number) =>
+    ["parent", "me", "students", String(id), "pool", "period", String(periodId)] as const,
   studentWeek: (id: number, start: string | null) =>
     [
       "parent",
@@ -307,4 +312,15 @@ export function createParentCoachRequest(studentId: number, body: ParentCoachReq
     `/api/v2/parent/students/${studentId}/coach-request`,
     { method: "POST", body: JSON.stringify(body) },
   );
+}
+
+
+/** K52: haftalık havuz + bugünün kabı (salt okuma; gün gün çocukta mode=gun_gun). */
+export function getParentStudentPool(studentId: number) {
+  return api<ParentPoolResponse>(`/api/v2/parent/students/${studentId}/pool`);
+}
+
+/** K52/K60: çocuğun geçmiş dönemi kalem kalem + gün gün (salt okuma; uyarı/sayaç yok). */
+export function getParentPoolPeriod(studentId: number, periodId: number) {
+  return api<import("@/lib/api/pool").PoolPeriodDetailResponse>(`/api/v2/parent/students/${studentId}/pool/periods/${periodId}`);
 }

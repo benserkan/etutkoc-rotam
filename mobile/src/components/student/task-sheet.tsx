@@ -76,14 +76,20 @@ interface Row {
   blank: string;
 }
 
+/** Test birimi mi? Kitaplı ya da kaynaksız konulu kalem → evet; kitapsız deneme → soru.
+ *  (Eski sunucu alanı göndermezse book_id'ye düşer.) */
+function isTestUnit(it: StudentTask["items"][number]): boolean {
+  return it.is_test_unit ?? it.book_id != null;
+}
+
 function buildRows(task: StudentTask): Row[] {
   return task.items
     .filter((it) => (it.planned ?? 0) > 0)
     .map((it) => ({
       itemId: it.id,
       label: it.book_name + (it.section_label ? ` · ${it.section_label}` : ""),
-      unit: it.book_id == null ? "soru" : "test",
-      isBookItem: it.book_id != null,
+      unit: isTestUnit(it) ? "test" : "soru",
+      isBookItem: isTestUnit(it),
       planned: it.planned,
       completed: it.completed,
       correct: it.correct != null ? String(it.correct) : "",

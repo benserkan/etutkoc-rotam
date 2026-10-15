@@ -102,6 +102,15 @@ class Task(Base):
         Boolean, nullable=False, default=False, server_default="0"
     )
 
+    # Havuz modu (2026-10-12): bu görev öğrencinin "günün kabına" aldığı bir havuz
+    # kaleminden doğduysa kalem bağı. NULL = gün-gün programın normal görevi
+    # (mevcut davranış). Kap görevinin kitaplı kalemleri rezerv TUTMAZ
+    # (reservation_released_at doğuşta dolu). Kalem silinirse SET NULL.
+    pool_item_id: Mapped[int | None] = mapped_column(
+        ForeignKey("pool_items.id", ondelete="SET NULL", name="fk_tasks_pool_item"),
+        nullable=True, index=True,
+    )
+
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

@@ -39,12 +39,27 @@ def item_is_test(item) -> bool:
     """Görev kalemi 'test' mi — kitapsız tam-deneme + deneme kitabı kalemi HARİÇ.
 
     Günlük seri 'test/gün' + 'test hacmi' sayımında deneme'yi dışlar.
+
+    2026-10-15: kaynaksız KONULU kalem (kitapsız ama topic_id dolu — havuz / müfredattan
+    verilen görev) da TESTtir; classify_gorev ve completion.test_item_filter zaten böyle
+    sayıyordu, analitik serileri (tempo, trend, projeksiyon hızı) saymıyordu.
     """
+    if getattr(item, "book_id", None) is None:
+        return getattr(item, "topic_id", None) is not None
+    return (
+        getattr(item, "book", None) is not None
+        and item.book.type not in _DENEME_BOOK_TYPES
+    )
+
+def item_is_book_test(item) -> bool:
+    """Yalnız KİTAPLI test kalemi (soru bankası). Kitap envanterine dayanan hesaplar
+    (sınava yetişme projeksiyonu) bunu kullanır — kaynaksız çalışma kitap envanterini tüketmez."""
     return (
         getattr(item, "book_id", None) is not None
         and getattr(item, "book", None) is not None
         and item.book.type not in _DENEME_BOOK_TYPES
     )
+
 
 GOREV_CATEGORIES = ("test", "deneme", "tam_deneme", "etkinlik")
 

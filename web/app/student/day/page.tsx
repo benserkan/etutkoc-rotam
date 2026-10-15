@@ -33,8 +33,7 @@ export default async function StudentDayPage({
   const day = await apiServer<StudentDayResponse>(`/api/v2/student/day${qs}`);
   return (
     <div className="space-y-4">
-      <DemoHint contextKey="day" role="student" />
-      <DayClient initial={day} />
+      <DayClient initial={day} demoHint={<DemoHint contextKey="day" role="student" />} />
     </div>
   );
 }

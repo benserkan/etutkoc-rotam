@@ -341,6 +341,16 @@ from app.models.wrong_question import (
 from app.models.task_template import TaskTemplate, TaskTemplateItem
 from app.models.video_basket import VideoBasketItem, VideoSource
 from app.models.weekly_skeleton import SkeletonGhostAction, WeeklySkeleton, WeeklySkeletonSlot
+from app.models.pool import (
+    PROGRAM_MODE_GUN_GUN,
+    PROGRAM_MODE_HAVUZ,
+    PROGRAM_MODE_LABELS,
+    PROGRAM_MODES,
+    ClassGroup,
+    PoolItem,
+    StudyPeriod,
+    ProgramModeChange,
+)
 from app.models.warning_state import WarningState
 from app.models.moment_event import MomentEvent
 from app.models.coach_device import CoachDeviceLink
@@ -520,6 +530,8 @@ from app.models.user import (
 )
 
 __all__ = [
+    "PROGRAM_MODE_GUN_GUN", "PROGRAM_MODE_HAVUZ", "PROGRAM_MODE_LABELS", "PROGRAM_MODES",
+    "ClassGroup", "PoolItem", "StudyPeriod", "ProgramModeChange",
     "SignupAttribution",
     "SIGNUP_SOURCE_LANDING",
     "SIGNUP_SOURCE_DIRECT",

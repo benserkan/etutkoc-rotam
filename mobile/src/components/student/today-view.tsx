@@ -8,6 +8,7 @@ import { NextAppointmentBanner } from "@/components/student/next-appointment-ban
 import { DemoHint } from "@/components/demos/demo-hint";
 import type { StudentDayResponse, StudentTask } from "@/lib/student";
 import { activityLabel, linkButtonLabel, openTaskLink, taskLabel as displayLabel } from "@/lib/task-display";
+import { PoolBanner } from "@/components/student/pool-banner";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
 
 const TR_DAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
@@ -104,6 +105,8 @@ export function TodayView({
     >
       <DemoHint contextKey="day" role="student" />
       <QuickAccessStrip padded={false} />
+      {/* Haftalık havuz modu (dershane): yalnız havuz öğrencisinde görünür */}
+      <PoolBanner />
       {/* Sıradaki online görüşme (varsa) — dokun: Görüşmelerim */}
       <NextAppointmentBanner />
       {/* Özet kart (gradient native'de çalışmaz → solid marka rengi) */}

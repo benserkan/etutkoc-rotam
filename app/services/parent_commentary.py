@@ -98,9 +98,62 @@ def _wrong_archive_brief(db: Session, student_id: int) -> dict | None:
         return None
 
 
+def _pool_bundle(db: Session, student: User, today: date) -> dict:
+    """K56: havuz öğrencisinde Rota'nın program paketi — dönem/havuz verisi (gün-gün
+    haftalık rapor yerine). Rehbere özel seans notu ve öğrenci talepleri PAYLAŞILMAZ."""
+    from app.models import Task, TaskStatus
+    from app.services import pool_mode as pm
+
+    period = pm.get_open_period(db, student.id)
+    bundle: dict[str, Any] = {"student_name": student.full_name, "today": today.isoformat(),
+                              "model": "havuz",
+                              "model_note": ("Öğrenci haftalık görev havuzu modelinde: rehber seansta haftanın "
+                                             "havuzunu yazar, öğrenci her gün havuzdan 'kabını' kendisi kurar; "
+                                             "yapılmayan kalem gün sonunda havuza döner. Yüzde = tamamlanan birim ÷ "
+                                             "havuzdaki birim (test sayısı; video/deneme 1 birim).")}
+    if period is None:
+        bundle["period"] = None
+        return bundle
+    s = pm.period_summary(db, period, today)
+    items = []
+    for it in period.items:
+        if not it.counts_toward_pool:
+            continue
+        name = (it.section.label if it.book_section_id and it.section is not None
+                else (it.topic.name if it.topic_id and it.topic is not None else (it.label or it.unit)))
+        items.append({"subject": it.subject.name if it.subject is not None else "Diğer", "name": name,
+                      "quantity": it.quantity, "unit": it.unit, "done": it.done_units, "remaining": it.remaining,
+                      "teacher_homework": bool(it.teacher_homework)})
+    cups: dict[str, dict] = {}
+    for t in (db.query(Task).filter(Task.student_id == student.id, Task.pool_item_id.isnot(None),
+                                    Task.date >= period.opened_on, Task.date <= today).all()):
+        c = cups.setdefault(t.date.isoformat(), {"taken": 0, "done": 0})
+        c["taken"] += 1
+        c["done"] += 1 if t.status == TaskStatus.COMPLETED else 0
+    bundle["period"] = {"opened_on": period.opened_on.isoformat(),
+                        "expected_next_on": period.expected_next_on.isoformat() if period.expected_next_on else None,
+                        "days_left": s.days_left, "pct": s.pct, "done_units": s.done_units, "total_units": s.total_units,
+                        "items_done": s.items_done, "items_total": s.items_total, "per_day_needed": s.per_day_needed}
+    bundle["items"] = items
+    bundle["cups_by_day"] = cups
+    av = pm.avoid_reasons(period, today, db)
+    if av:
+        bundle["avoided_items"] = [{"name": (it.label or (it.topic.name if it.topic is not None else it.unit)),
+                                    "reason": r} for it, r in list(av.items())[:5]]
+    hist = [p for p in pm.list_periods(db, student.id, limit=4) if p.id != period.id]
+    bundle["previous_periods"] = [{"opened_on": p.opened_on.isoformat(), "pct": pm.period_summary(db, p, today).pct}
+                                  for p in hist]
+    wa = _wrong_archive_brief(db, student.id)
+    if wa:
+        bundle["wrong_archive"] = wa
+    return bundle
+
+
 def _program_bundle(db: Session, parent: User, student: User, today: date) -> dict:
     from app.services.parent_weekly_report import build_weekly_report
 
+    if getattr(student, "program_mode", "gun_gun") == "havuz":
+        return _pool_bundle(db, student, today)
     monday = _monday_of(today)
     report = build_weekly_report(db, parent, student.id, week_start=monday, today=today)
     bundle: dict[str, Any] = {
@@ -307,6 +360,13 @@ def build_bundle(db: Session, parent: User, student: User, kind: str, today: dat
 
 def compute_signature(db: Session, student_id: int, kind: str, today: date | None = None) -> dict:
     today = today or date.today()
+    if kind == PC_KIND_PROGRAM and getattr(db.get(User, student_id), "program_mode", "gun_gun") == "havuz":
+        from app.services import pool_mode as pm
+        p = pm.get_open_period(db, student_id)
+        if p is None:
+            return {"period": None}
+        sm = pm.period_summary(db, p, today)
+        return {"period": p.id, "total": sm.total_units, "done": sm.done_units}
     if kind == PC_KIND_PROGRAM:
         monday = _monday_of(today)
         q = db.query(Task).filter(
@@ -420,6 +480,10 @@ def _build_prompt(kind: str, bundle: dict) -> str:
         if kind == PC_KIND_PROGRAM
         else "KONU: Çocuğun DENEME SINAVI sonuçları ve konu analizi."
     )
+    if kind == PC_KIND_PROGRAM and bundle.get("model") == "havuz":
+        intro = ("KONU: Çocuğun HAFTALIK GÖREV HAVUZU ilerlemesi. Model: rehber seansta havuzu yazar, "
+                 "öğrenci her gün havuzdan kabını kurar; bölümler dönem (seanstan seansa) üzerinden "
+                 "anlatılır, 'bu hafta' yerine 'bu dönem' de. 'period' yoksa havuz henüz yazılmamıştır.")
     return (
         f"{_RULES}\n{sections_hint}\n\n{_SPEECH_RULES}\n\n{intro}\n\n"
         f"--- VERİ ---\n{json.dumps(bundle, ensure_ascii=False, default=str)}"

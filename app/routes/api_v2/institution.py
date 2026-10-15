@@ -74,6 +74,7 @@ from app.models import (
 from app.routes.api_v2.dependencies import _auth_error, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.institution import (
+    InstitutionPoolOverviewResponse, PoolCoachLoadRow, PoolGroupRow, PoolLateSessionRow,
     ActivityHeatmapResponse,
     AdminDigestDetailResponse,
     AdminDigestListResponse,
@@ -2752,4 +2753,24 @@ def institution_self_study_report_v2(
         coaches=[SelfStudyReportCoachRow(**c) for c in d["coaches"]],
         recent=[SelfStudyReportEntryRow(**r) for r in d["recent"]],
         mismatches=[SelfStudyMismatchRow(**m) for m in d.get("mismatches", [])],
+    )
+
+
+@router.get("/pool-overview", response_model=InstitutionPoolOverviewResponse)
+def institution_pool_overview_v2(user: User = Depends(_require_institution_admin), db: Session = Depends(get_db)):
+    """Haftalık havuz panosu (K54/K55): şube × son dönem %, seansı geciken öğrenci, rehber başına
+    kırmızı + rehber yükü. Gizlilik: öğrenci detay sayfası YOK."""
+    from app.services.institution_pool import build_overview
+
+    inst = _get_institution_or_403(db, user.institution_id)
+    ov = build_overview(db, institution_id=inst.id)
+    return InstitutionPoolOverviewResponse(
+        students=ov.students, coaches=ov.coaches, open_periods=ov.open_periods, avg_last_pct=ov.avg_last_pct,
+        avg_open_pct=ov.avg_open_pct, late_sessions=ov.late_sessions, red_students=ov.red_students,
+        amber_students=ov.amber_students,
+        groups=[PoolGroupRow(**g) for g in ov.groups], late=[PoolLateSessionRow(**r) for r in ov.late],
+        coaches_rows=[PoolCoachLoadRow(**c) for c in ov.coach_rows],
+        avg_expected_pct=ov.avg_expected_pct,
+        participation=ov.participation or {}, pace=ov.pace or {}, sources=ov.sources or {}, items=ov.items or {},
+        signals=ov.signals, subjects=ov.subjects, trend=ov.trend,
     )

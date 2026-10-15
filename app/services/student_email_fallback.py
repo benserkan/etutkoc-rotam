@@ -227,6 +227,8 @@ def run_student_weekly_emails(db: Session, *, now: datetime) -> dict:
     )
     counts: dict[str, int] = {}
     for s in students:
+        if getattr(s, "program_mode", "gun_gun") == "havuz":
+            continue  # havuz öğrencisi: haftalık mail dönem/seans ritmine göre (K53), gün-gün özet değil
         any_task = (
             db.query(Task.id)
             .filter(

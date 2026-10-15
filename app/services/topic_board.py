@@ -125,6 +125,7 @@ class BoardTopic:
     readiness: str                 # ready | caution | none
     readiness_note: str
     sources: list[BoardSource] = field(default_factory=list)
+    grade_level: int | None = None  # konunun sınıfı (Maarif 9-10-11 ünite adları tekrar eder)
 
 
 @dataclass
@@ -258,6 +259,7 @@ def build_topic_board(
     student: User,
     coach_id: int,
     subject_id: int | None = None,
+    allow_subject: Subject | None = None,
 ) -> TopicBoardPage:
     """Ders için konu kartları — müfredat sırasında.
 
@@ -266,6 +268,11 @@ def build_topic_board(
     uygulanabilir dersleri taşır → ders seçici hiç kaybolmaz.
     """
     all_subjects = _applicable_subjects(db, student, coach_id)
+    # Havuz editörü 11+ öğrencide TYT/AYT derslerini AYRI grup olarak da sunar (2026-10-13 #415); o ders
+    # öğrencinin müfredat omurgasında olmayabilir (Maarif 11 + kaynaksız AYT Fizik) — çağıran doğruladıysa
+    # panoya eklenir. Diğer yüzeyler (müfredat sekmesi, hafta paneli) bu parametreyi vermez → değişmez.
+    if allow_subject is not None and allow_subject.id not in {s.id for s in all_subjects}:
+        all_subjects = [*all_subjects, allow_subject]
 
     # --- kaynaklar (kalan kapasite) — ders seçiminden ÖNCE: seçenek sırası
     #     "kaynağı olan ders öne" kuralına bağlı (P4/P5 ile aynı ilke).
@@ -404,6 +411,12 @@ def build_topic_board(
         .all()
     )
     sourceless = {int(t): int(n or 0) for t, n in sourceless_rows}
+    # HAVUZ (2026-10-13): seans işareti (kaynaksız) çalışma sayılır; açık dönemde bekleyen kalem → planlandı.
+    # Gün-gün öğrencide ikisi de boş → pano değişmez.
+    from app.services.pool_mode import topic_pool_signals
+    pool_sig = topic_pool_signals(db, student.id)
+    for tid, n in pool_sig.session_marked.items():
+        sourceless[tid] = sourceless.get(tid, 0) + n
 
     closures = topic_closure.closure_map(db, student.id)
     exam_wrong = _exam_wrong_counts(db, student.id)
@@ -456,6 +469,8 @@ def build_topic_board(
                 # Kaynak sayacında çözülmüş test (önceden çözülmüş / bağımsız
                 # çalışma) da konuyu "devam" yapar — sekmeyle aynı.
                 status = "devam"
+            elif pool_sig.planned.get(t.id, 0) > 0:
+                status = "planlandi"
             elif secs:
                 status = "baslanmadi"
             else:
@@ -465,6 +480,7 @@ def build_topic_board(
             rows.append(BoardTopic(
                 topic_id=t.id, name=t.name, order=t.order,
                 unit_name=parent_names.get(t.parent_id) if t.parent_id else None,
+                grade_level=t.grade_level,
                 status=status, closed=is_closed,
                 closed_at=(closure.closed_at.isoformat()
                            if closure and closure.closed_at else None),

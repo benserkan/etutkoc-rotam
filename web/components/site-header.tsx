@@ -13,6 +13,7 @@ import {
   BookOpenCheck,
   BookX,
   CalendarDays,
+  Layers,
   CalendarRange,
   ChevronDown,
   Compass,
@@ -36,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { getStudentBadges, studentKeys } from "@/lib/api/student";
+import { getStudentPool, studentPoolKey } from "@/lib/api/pool-student";
 import type { PendingBadgesResponse } from "@/lib/types/student";
 import type { UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
@@ -66,6 +68,7 @@ const STUDENT_NAV: NavLink[] = [
   { href: "/student/topics", label: "Konu Performansı", icon: Crosshair },
   { href: "/student/requests", label: "Talepler", icon: ListChecks, badgeKey: "pending_count" },
   { href: "/student/appointments", label: "Görüşmelerim", icon: Video },
+  { href: "/student/pool", label: "Havuzum", icon: Layers },
   { href: "/student/guide", label: "Rehber", icon: Compass },
   { href: "/student/exams", label: "Denemelerim", icon: GraduationCap },
   { href: "/student/surveys", label: "Anketler", icon: ClipboardList },
@@ -80,6 +83,18 @@ const STUDENT_NAV: NavLink[] = [
 // Hedefler) "Daha fazla" taşma menüsüne iner. Mobil drawer düz liste gösterir.
 const STUDENT_NAV_PRIMARY = STUDENT_NAV.slice(0, 6);
 const STUDENT_NAV_MORE = STUDENT_NAV.slice(6);
+
+/**
+ * Haftalık havuz öğrencisinde (dershane modu) havuz ana çalışma yeridir: "Havuzum" "Daha fazla"da
+ * gizli kalmaz, "Bugün"den hemen sonra gelir (2026-10-13 saha: öğrenci havuzu bulamadı).
+ */
+function studentNavFor(havuz: boolean): { primary: NavLink[]; more: NavLink[]; all: NavLink[] } {
+  if (!havuz) return { primary: STUDENT_NAV_PRIMARY, more: STUDENT_NAV_MORE, all: STUDENT_NAV };
+  const pool = STUDENT_NAV.find((n) => n.href === "/student/pool")!;
+  const rest = STUDENT_NAV.filter((n) => n.href !== "/student/pool");
+  const all = [rest[0], pool, ...rest.slice(1)];
+  return { primary: all.slice(0, 6), more: all.slice(6), all };
+}
 
 /**
  * Site başlığı — ETÜTKOÇ logosu + yatay öğrenci navigasyonu + bekleyen rozet
@@ -106,6 +121,17 @@ export function SiteHeader({ user, enableBadges = true, brand }: Props) {
 
   const pendingCount = badges.data?.pending_count ?? 0;
   const isStudent = user.role === "student";
+  // Havuz modu (dershane) — Bugün kartıyla aynı önbellek anahtarı, ek istek yükü yok
+  const poolQ = useQuery({
+    queryKey: studentPoolKey,
+    queryFn: getStudentPool,
+    enabled: enableBadges && isStudent,
+    staleTime: 30_000,
+  });
+  const havuz = poolQ.data?.mode === "havuz";
+  // Nokta yalnız kap GERÇEKTEN boşken (hiç kalem alınmadı); hepsi bitmiş kap boş sayılmaz
+  const cupEmpty = havuz && !!poolQ.data?.summary && poolQ.data.cup.length === 0;
+  const nav = studentNavFor(havuz);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
@@ -119,22 +145,32 @@ export function SiteHeader({ user, enableBadges = true, brand }: Props) {
 
         {isStudent ? (
           <nav className="hidden lg:flex items-center gap-1 flex-1 ml-2" aria-label="Öğrenci paneli">
-            {STUDENT_NAV_PRIMARY.map((n) => {
+            {nav.primary.map((n) => {
               const active =
                 pathname === n.href || pathname.startsWith(`${n.href}/`);
               const Icon = n.icon;
               const count = n.badgeKey ? badges.data?.[n.badgeKey] ?? 0 : 0;
+              const isPool = havuz && n.href === "/student/pool";
               return (
                 <Link
                   key={n.href}
                   href={n.href}
+                  data-nav-pool={isPool ? "1" : undefined}
+                  title={isPool ? "Haftanın havuzu — bugün çalışacaklarını buradan kabına al" : undefined}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
-                    active
-                      ? "bg-muted font-medium text-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    "relative inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+                    isPool
+                      ? active
+                        ? "bg-cyan-700 font-semibold text-white"
+                        : "border border-cyan-700/60 font-semibold text-foreground hover:bg-cyan-500/10"
+                      : active
+                        ? "bg-muted font-medium text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >
+                  {isPool && cupEmpty ? (
+                    <span className="absolute -right-1 -top-1 size-2.5 rounded-full bg-amber-500 ring-2 ring-background" aria-label="Bugünün kabı boş" />
+                  ) : null}
                   <Icon className="size-3.5" aria-hidden />
                   {n.label}
                   {count > 0 ? (
@@ -145,7 +181,7 @@ export function SiteHeader({ user, enableBadges = true, brand }: Props) {
                 </Link>
               );
             })}
-            <StudentMoreMenu items={STUDENT_NAV_MORE} pathname={pathname} />
+            <StudentMoreMenu items={nav.more} pathname={pathname} />
           </nav>
         ) : (
           <div className="flex-1" />
@@ -225,7 +261,7 @@ export function SiteHeader({ user, enableBadges = true, brand }: Props) {
 
       {/* Mobil drawer — basit overlay + sağdan kayan panel */}
       {isStudent && navOpen ? (
-        <MobileDrawer onClose={() => setNavOpen(false)} pathname={pathname} user={user} onLogout={() => logout.mutate()} />
+        <MobileDrawer items={nav.all} onClose={() => setNavOpen(false)} pathname={pathname} user={user} onLogout={() => logout.mutate()} />
       ) : null}
     </header>
   );
@@ -322,11 +358,13 @@ function StudentMoreMenu({
 }
 
 function MobileDrawer({
+  items,
   onClose,
   pathname,
   user,
   onLogout,
 }: {
+  items: NavLink[];
   onClose: () => void;
   pathname: string;
   user: UserPublic;
@@ -382,7 +420,7 @@ function MobileDrawer({
           aria-label="Öğrenci paneli"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {STUDENT_NAV.map((n) => {
+          {items.map((n) => {
             const active =
               pathname === n.href || pathname.startsWith(`${n.href}/`);
             const Icon = n.icon;

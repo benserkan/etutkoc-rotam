@@ -30,6 +30,9 @@ export interface StudentTaskItem {
   section_id: number | null;
   section_label: string | null;
   topic_name: string | null;
+  topic_id?: number | null;
+  /** Kitaplı ya da kaynaksız konulu kalem → test birimi (D/Y/B soru). false = kitapsız deneme. */
+  is_test_unit?: boolean;
   planned: number;
   completed: number;
   is_full: boolean;
@@ -66,6 +69,9 @@ export interface StudentTask {
   work_block_id?: number | null;
   work_block_title?: string | null;
   work_block_unit?: string | null;
+  // Haftalık havuz (dershane): görev havuzdan kaba alındı — sayıyı öğrenci KENDİ düzeltir (talep değil)
+  pool_item_id?: number | null;
+  pool_max_count?: number | null;
 }
 
 // =============================================================================

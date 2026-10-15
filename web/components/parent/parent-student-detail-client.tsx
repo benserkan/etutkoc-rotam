@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotaCommentaryCard } from "@/components/parent/rota-commentary-card";
 import { ParentAppointmentsCard } from "@/components/parent/parent-appointments-card";
+import { ParentPoolCard } from "@/components/parent/parent-pool-card";
 import {
   getParentStudentOverview,
   parentKeys,
@@ -120,6 +121,9 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
 
       {/* Sıradaki koçluk görüşmesi (varsa) */}
       <ParentAppointmentsCard studentId={data.student.id} />
+
+      {/* K52: haftalık havuz (yalnız havuz modundaki çocukta görünür, salt okuma) */}
+      <ParentPoolCard studentId={data.student.id} />
 
       {/* 4 metrik kart */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

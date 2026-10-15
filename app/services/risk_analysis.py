@@ -154,6 +154,37 @@ def _consecutive_empty_days(db: Session, student_id: int, today: date) -> int:
     return count
 
 
+def _pool_risk(db: Session, student: User, today: date, now: datetime) -> RiskAssessment:
+    """Havuz öğrencisi: risk = havuz bayrak motorunun (pool_flags) ana+ek sinyalleri.
+    Kırmızı öğrenci sinyali → en az Risk (60); sarı → Dikkat (30). Rehber-aksiyonu
+    (P katmanı: dönem yok / seans gecikti) risk puanını YÜKSELTMEZ ama gösterge olarak
+    listelenir (K54 'seansı geciken öğrenci' kurum panosunda ayrı sayılır)."""
+    from app.services.pool_flags import evaluate_pool_flags
+    rep = evaluate_pool_flags(db, student, today)
+    indicators: list[RiskIndicator] = []
+    score = 0
+    for w in rep.primary + rep.secondary:
+        if w.level == "green":
+            continue
+        indicators.append(RiskIndicator(code=f"flag_{w.code}", title=w.title, detail=w.detail, weight=0))
+        if w.layer == "P":
+            continue
+        if w.level == "red":
+            score = max(score, 60)
+        elif w.level == "amber":
+            score = max(score, 30)
+    la = student.last_active_at
+    if la is not None and la.tzinfo is None:
+        la = la.replace(tzinfo=timezone.utc)
+    level = _level_for_score(score)
+    return RiskAssessment(
+        student=student, score=score, level=level,  # type: ignore[arg-type]
+        level_label=LEVEL_LABELS_TR[level], level_emoji=LEVEL_EMOJIS[level],
+        indicators=indicators,
+        last_login_days=(now - la).days if la else None,
+    )
+
+
 def compute_risk_score(
     db: Session, *, student: User, today: date | None = None,
     now: datetime | None = None,
@@ -186,6 +217,11 @@ def compute_risk_score(
             level_label=LEVEL_LABELS_TR["ok"],
             level_emoji=LEVEL_EMOJIS["ok"],
         )
+    # Havuz modu (2026-10-12): "programsız / boş gün / düşük haftalık tamamlama"
+    # göstergeleri gün-gün görev tarihlerini varsayar → havuz öğrencisinde yanlış
+    # alarm. Havuz risk göstergeleri pool_flags'tan (K42–K51, Adım 4) türetilir.
+    if getattr(student, "program_mode", "gun_gun") == "havuz":
+        return _pool_risk(db, student, today, now)
 
     # Haftalık özet
     # TEK TANIM (completion.py): test hacmi, yayınlanmış görevler, son 7 gün.

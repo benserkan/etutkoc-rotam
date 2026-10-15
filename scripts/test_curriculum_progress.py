@@ -160,28 +160,46 @@ def main() -> int:
             with _patch.object(type(st), "effective_exam_date", property(lambda self: None)):
                 res = cp.compute_curriculum_progress(db, st, ids["teacher"])
             proj = res.projection
-            check("19. projeksiyon var + sınav yok → verdict sinav_yok",
-                  proj is not None and proj.verdict == "sinav_yok",
-                  f"{proj.verdict if proj else None}")
-            check("20. projeksiyon: kalan = toplam - işlenen (overall)",
+            # 2026-10-15: okuldaki öğrenci (8. sınıf) → hedef EĞİTİM YILI SONU, odak sınıf konuları
+            from app.services.curriculum_progress import focus_grade_for, school_year_end
+            check("19. okuldaki öğrenci: hedef eğitim yılı sonu (15 Haziran), sınav tarihine bağlı değil",
+                  proj is not None and proj.target_kind == "okul_yili_sonu"
+                  and proj.target_date == school_year_end(date.today()).isoformat()
+                  and proj.verdict != "sinav_yok",
+                  f"{proj.target_kind if proj else None} {proj.target_date if proj else None} {proj.verdict if proj else None}")
+            check("20. projeksiyon: kalan = ODAK sınıf toplamı - işlenen",
                   proj is not None
                   and proj.remaining_topics == res.overall_total_topics - res.overall_started_topics,
-                  f"rem={proj.remaining_topics if proj else None} "
-                  f"total={res.overall_total_topics} started={res.overall_started_topics}")
-            # sınav tarihi ver (effective_exam_date türetilmiş property → geçici override)
+                  f"rem={proj.remaining_topics if proj else None} overall={res.overall_total_topics}")
+            fg = focus_grade_for(student)
+            check("20b. odak sınıf: overall = odak sınıf konuları, grades toplamı = kümülatif",
+                  res.focus_grade == fg
+                  and sum(g.total_topics for g in res.grades) == res.cumulative_total_topics
+                  and (fg is None or res.overall_total_topics
+                       == sum(g.total_topics for g in res.grades if g.is_focus)),
+                  f"focus={res.focus_grade} overall={res.overall_total_topics}")
+            check("20c. ders sayımı: odak + önceki = ders konu listesi",
+                  all(s_.total_topics + s_.prior_total_topics == len(s_.topics) for s_ in res.subjects))
+            # mezun → sınav tarihi + tüm konular
             from datetime import timedelta
             from unittest.mock import patch
             fake_date = date.today() + timedelta(days=60)
-            with patch.object(type(st), "effective_exam_date",
-                              property(lambda self: fake_date)):
+            st.is_graduate = True
+            with patch.object(type(st), "effective_exam_date", property(lambda self: fake_date)):
                 res2 = cp.compute_curriculum_progress(db, st, ids["teacher"])
+            st.is_graduate = False
             p2 = res2.projection
-            check("21. sınav tarihi girilince → has_exam + days_to_exam ~60",
-                  p2 is not None and p2.has_exam and 58 <= (p2.days_to_exam or 0) <= 60,
-                  f"{p2.has_exam if p2 else None} {p2.days_to_exam if p2 else None}")
+            check("21. mezun → hedef sınav (~60 gün) + odak yok (tüm konular)",
+                  p2 is not None and p2.target_kind == "sinav" and 58 <= (p2.days_to_exam or 0) <= 60
+                  and res2.focus_grade is None and res2.overall_total_topics == res2.cumulative_total_topics,
+                  f"{p2.target_kind if p2 else None} {p2.days_to_exam if p2 else None} focus={res2.focus_grade}")
             check("22. verdict yetisir|risk|yetismez içinde",
                   p2 is not None and p2.verdict in ("yetisir", "risk", "yetismez"),
                   f"{p2.verdict if p2 else None}")
+            check("23. eğitim yılı sonu: Ekim→gelecek 15 Haziran · Mayıs→bu yıl · Temmuz→gelecek yıl",
+                  school_year_end(date(2026, 10, 15)) == date(2027, 6, 15)
+                  and school_year_end(date(2027, 5, 1)) == date(2027, 6, 15)
+                  and school_year_end(date(2027, 7, 1)) == date(2028, 6, 15))
     finally:
         with SessionLocal() as db:
             tks = [t.id for t in db.query(Task).filter(Task.student_id == ids["student"]).all()]
