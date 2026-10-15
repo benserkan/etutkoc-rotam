@@ -776,6 +776,10 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
       geç → DB rezerv 0 + kısmi görev kaldı → geçmiş · seansı bitir + geç → /week + sarı uyarı · koyu tema · 390px) ·
       `live_pool_editor` 34/34 (1c adımı yeni pencereye uyarlandı) · live_pool_session 22 · step6 16 · havuz suite'leri
       53/22/41/47/26 · student_flags 24 · weekly_plan 15 · tsc + eslint temiz. Mobilde geçiş yok (havuz yazma web'de).
+- **CANLI (2026-10-15, commit `c8a92ec`):** önce prod yedeği `pre_havuz_20261015_1100.dump` (geçici DB'ye geri yüklenip
+  satır sayıları canlıyla birebir doğrulandı + kopyası `D:\LGS-Program-yedekler\`, sha256 eşit) → web/worker/next rebuild
+  (Plausible derlemede durduruldu) → prod head `o9q2v5w6v11r`, 101 kullanıcının tamamı `gun_gun` (davranış değişmedi),
+  pool cron'ları kayıtlı, loglar temiz. Yerel mod geçişi testi: #4 Berra gün gün→havuz + #414 havuz→gün gün (seansla) yeşil.
 - **HAVUZ MODU 6 ADIMIN TAMAMI YERELDE.** Commit + deploy yalnız kullanıcı onayıyla (SSH deploy kuralı bu iş için
   askıda). Deploy öncesi bekçi: `scripts/check_migration_heads.py` (baş `o9q2v5w6v11r`), migration zinciri
   n5o8r1s2r66n → n6o9s2t3s77o → n7o0t3u4t88p → n8p1u4v5u99q → o9q2v5w6v11r prod'da sırayla uygulanır (hepsi additive,
