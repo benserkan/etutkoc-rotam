@@ -828,8 +828,14 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
 - Test: `test_api_v2_guide` 24/24 (23-24 yol atlama) · YENİ `live_guide_branch.py` 9/9 · pool editor 41 / session 22 /
   student 29 / flags 47 / step5 34 / step6 26 / step7 30 / foundation 53 · canlı editor 34 · session 22 · flags 16 ·
   step6 16 · step7 22 · student_pool_web 19 · web tsc+eslint temiz · mobil tsc yalnız `app/preview/*`.
-- **Not (ayrı iş):** havuz konu listesinde 12. sınıf öğrenciye TYT Matematik konuları "10. sınıf · kendi sınıfı"
-  diye gruplanıyor (kendi sınıfı etiketi yanlış) · öğrenci Bugün'de "1/6 test" yapılmışken "%0 tamam" yazıyor.
+- **Commit `a678cdb` (2026-10-17), deploy/OTA BEKLİYOR.** Ardından iki düzeltme (migration YOK):
+  (a) havuz konu listesinde "kendi sınıfı" listedeki EN BÜYÜK sınıftan türetiliyordu → 12. sınıf öğrenciye TYT
+  Mat "10. sınıf · kendi sınıfı" + varsayılan süzgeç 10'a kayıyordu. Artık öğrencinin GERÇEK sınıfı; sınav
+  dersinde (TYT/AYT) sınıf etiketi/varsayılan süzgeç yok (Tümü). live_pool_editor 34/34.
+  (b) öğrenci Bugün/hafta "% tamam" ikili görev sayımıydı (6 testin 1'i → %0), koç yüzeyi kısmi pay veriyordu.
+  TEK MERKEZ `gorev_stats.gorev_fraction` / `completion_pct` (koç `_task_completion_fraction` bunu kullanır);
+  "X/Y görev" sayımı değişmedi. YENİ `test_day_partial_pct.py` 9/9 · gorev 83/83 · student_read 11 ·
+  student_mutations 12 · teacher_read 12 · weekly_plan 15 · pool_student 29.
 
 ## KONUSUZ TEST GÖREVLERİ → MÜFREDAT KONUSU (2026-10-16, Açı Seçkin Kurs saha bulgusu, migration YOK)
 

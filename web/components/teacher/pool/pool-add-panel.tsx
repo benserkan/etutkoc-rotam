@@ -127,6 +127,7 @@ export function AddPanel({ studentId, data, subjectId, onSubject }: {
                 studentId={studentId}
                 subject={subj}
                 maxGrade={maxGrade}
+                studentGrade={data.student.is_graduate ? null : data.student.grade_level}
                 books={books}
                 booksLoading={booksQ.isLoading}
                 onPick={setChoice}
@@ -301,8 +302,8 @@ function SubjectPicker({ data, studentId, onPick }: {
 
 // ---------------------------------------------------------------- 2 nereden?
 
-function SourcePicker({ studentId, subject, maxGrade, books, booksLoading, onPick }: {
-  studentId: number; subject: PoolSubjectOut; maxGrade: number | null; books: PoolBookOut[]; booksLoading: boolean;
+function SourcePicker({ studentId, subject, maxGrade, studentGrade, books, booksLoading, onPick }: {
+  studentId: number; subject: PoolSubjectOut; maxGrade: number | null; studentGrade: number | null; books: PoolBookOut[]; booksLoading: boolean;
   onPick: (c: Choice) => void;
 }) {
   const hasBooks = subject.book_count + subject.deneme_count > 0;
@@ -339,6 +340,7 @@ function SourcePicker({ studentId, subject, maxGrade, books, booksLoading, onPic
             </p>
           )}
           <TopicPicker studentId={studentId} subjectId={subject.id} subjectName={subject.name} maxGrade={maxGrade}
+                       studentGrade={studentGrade} examSubject={subject.group === "sinav"}
                        onPick={(t) => onPick(t === "none" ? { kind: "none" } : { kind: "topic", topic: t })} />
         </>
       )}
@@ -427,8 +429,9 @@ function BookList({ books, loading, onPick }: {
   );
 }
 
-function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, onPick }: {
+function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, studentGrade = null, examSubject = false, onPick }: {
   studentId: number; subjectId: number; subjectName: string; maxGrade?: number | null;
+  studentGrade?: number | null; examSubject?: boolean;
   onPick: (t: PoolTopicOut | "none") => void;
 }) {
   const q = useQuery({
@@ -447,8 +450,10 @@ function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, onPic
   const grades = [...gradeCounts.keys()].sort((a, b) => (b ?? -1) - (a ?? -1));
   const multiGrade = grades.length > 1;
   const [gradeSel, setGradeSel] = React.useState<number | "all" | null>(null);
-  const activeGrade: number | "all" = gradeSel ?? (multiGrade && maxGrade == null && grades[0] != null ? grades[0] : "all");
-  const ownGrade = maxGrade == null ? grades[0] : null;
+  // "Kendi sınıfı" = öğrencinin GERÇEK sınıfı (listedeki en büyük sınıf değil). Sınav dersinde (TYT/AYT)
+  // sınıf ayrımı yapılmaz: 12. sınıf öğrencide TYT konuları 9-10. sınıfa ait olsa da "kendi sınıfı" sayılmaz.
+  const ownGrade = !examSubject && maxGrade == null && studentGrade != null && gradeCounts.has(studentGrade) ? studentGrade : null;
+  const activeGrade: number | "all" = gradeSel ?? (multiGrade && ownGrade != null ? ownGrade : "all");
   const shown = (t ? topics.filter((x) => trLower(x.name).includes(t) || trLower(x.unit_name ?? "").includes(t)) : topics)
     .filter((x) => t || activeGrade === "all" || x.grade_level === activeGrade);
   // Sınıf → ünite/tema gruplaması (Maarif'te ünite adları sınıflar arasında tekrar eder)

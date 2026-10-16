@@ -4644,21 +4644,9 @@ def teacher_student_week_v2(
     )
     from app.services.weekly_program_service import get_active_program
 
-    def _task_completion_fraction(t: Task) -> float:
-        """Görev tamamlama oranı (0..1) — manşet %'si için.
+    from app.services import gorev_stats
 
-        COMPLETED görev → 1.0 (tip fark etmez). Sayısal (test/deneme) görev →
-        çözülen/planlanan soru. Kalemsiz etkinlik (Video/Özet/Tekrar/Diğer)
-        tamamlanmamışsa 0. Böylece 'Diğer' görevleri 'tamam' işaretlenince
-        tamamlama yüzdesine SAYILIR (eskiden soru-bazlı olduğu için %0 görünüyordu).
-        """
-        if t.status == TaskStatus.COMPLETED:
-            return 1.0
-        p = sum(int(it.planned_count or 0) for it in t.book_items)
-        if p <= 0:
-            return 0.0
-        c = sum(int(it.completed_count or 0) for it in t.book_items)
-        return min(1.0, c / p)
+    _task_completion_fraction = gorev_stats.gorev_fraction
 
     student = _get_owned_student(db, student_id, user.id)
     today = date.today()

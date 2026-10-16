@@ -445,7 +445,8 @@ def _build_day_summary(tasks: list[Task]) -> DaySummary:
     completed = sum(it.completed_count for t in tasks for it in t.book_items)
     # GÖREV tamamlama (her madde 1 görev; deneme soruları test'e karışmaz)
     g = gorev_stats.summarize(tasks)
-    pct = (g.gorev_done / g.gorev_total) if g.gorev_total > 0 else 0.0
+    # Manşet %: görev payları (kısmi test görevi kısmi sayılır — koç yüzeyiyle aynı formül)
+    pct = gorev_stats.completion_pct(tasks)
     return DaySummary(
         total_tasks=len(tasks),
         total_items=total_items,
@@ -680,7 +681,7 @@ def student_week_v2(
         completed = sum(it.completed_count for t in day_tasks for it in t.book_items)
         # GÖREV tamamlama (her madde 1 görev; deneme soruları test'e karışmaz)
         _g = gorev_stats.summarize(day_tasks)
-        pct = (_g.gorev_done / _g.gorev_total) if _g.gorev_total > 0 else 0.0
+        pct = gorev_stats.completion_pct(day_tasks)
         dow_idx = d.weekday()  # Mon=0..Sun=6
         week_days.append(StudentWeekDay(
             date=d.isoformat(),
@@ -707,7 +708,7 @@ def student_week_v2(
         total_test_planned += _g.test_planned
         total_test_completed += _g.test_completed
 
-    total_pct = (total_gorev_done / total_gorev) if total_gorev > 0 else 0.0
+    total_pct = gorev_stats.completion_pct(t for d in days for t in tasks_by_day[d])
 
     return StudentWeekResponse(
         start_date=start.isoformat(),

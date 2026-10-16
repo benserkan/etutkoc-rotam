@@ -132,6 +132,27 @@ def gorev_done(task: Task) -> bool:
     return _completed(task) >= p
 
 
+def gorev_fraction(task: Task) -> float:
+    """Görevin tamamlanma payı (0..1) — manşet "% tamam" için TEK formül.
+
+    COMPLETED → 1.0. Soru-hacimli görev → çözülen/planlanan (6 testten 1'i → 1/6;
+    ikili gorev_done'da 0 sayılırdı ve "1/6 test · %0 tamam" çelişkisi doğardı).
+    Kalemsiz etkinlik bitmemişse 0. Koç ve öğrenci yüzeyleri aynı formülü kullanır.
+    """
+    if task.status == TaskStatus.COMPLETED:
+        return 1.0
+    p = _planned(task)
+    if p <= 0:
+        return 0.0
+    return min(1.0, _completed(task) / p)
+
+
+def completion_pct(tasks) -> float:
+    """Görev listesinin manşet yüzdesi (0..1): görev payları ortalaması."""
+    tasks = list(tasks)
+    return (sum(gorev_fraction(t) for t in tasks) / len(tasks)) if tasks else 0.0
+
+
 def _primary_book(task: Task):
     for it in task.book_items:
         if it.book is not None:
