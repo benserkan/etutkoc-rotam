@@ -38,8 +38,21 @@ export interface GuideActionDef {
   optional?: boolean;
 }
 
+/** Dallanan rehberde yol (web coach-guide-data.ts ile aynı, 2026-10-16). */
+export type GuideBranch = "gun-gun" | "havuz";
+
+export interface GuideChoiceOption {
+  branch: GuideBranch;
+  label: string;
+  description: string;
+}
+
 export interface GuideChapterDef {
   key: string;
+  /** Yalnız bir yola ait bölüm; yolu olmayan bölüm ortaktır. */
+  branch?: GuideBranch;
+  /** Bölüm sonunda "sonraki" yerine yol seçimi. */
+  choice?: { prompt: string; options: GuideChoiceOption[] } | null;
   title: string;
   subtitle: string;
   steps: GuideStepDef[];
@@ -66,7 +79,7 @@ export const GUIDE_KEY_BY_ROLE: Record<string, string> = {
 };
 
 /** web coach-guide-data.ts ile AYNI tutulmalı (varlık önbellek kırıcı). */
-const GUIDE_ASSET_VERSION = "20261006a";
+const GUIDE_ASSET_VERSION = "20261016a";
 
 const STATIC_BASE = `${API_BASE}/static/guide`;
 
@@ -148,4 +161,22 @@ export function postGuideProgress(
     method: "POST",
     body,
   });
+}
+
+export const BRANCH_LABELS: Record<GuideBranch, string> = {
+  "gun-gun": "Gün gün program",
+  havuz: "Haftalık havuz",
+};
+
+/** Koçun yolu: şu anki bölüm bir yoldaysa o; değilse yalnız bir yolda iz varsa o. */
+export function inferBranch(
+  chapters: GuideChapterDef[],
+  currentKey: string | null | undefined,
+  touched: (key: string) => boolean,
+): GuideBranch | null {
+  const cur = chapters.find((c) => c.key === currentKey);
+  if (cur?.branch) return cur.branch;
+  const hit = new Set<GuideBranch>();
+  for (const c of chapters) if (c.branch && touched(c.key)) hit.add(c.branch);
+  return hit.size === 1 ? [...hit][0] : null;
 }

@@ -3,7 +3,7 @@
 import { Compass } from "lucide-react";
 
 import { GuidePlayer } from "@/components/guide/guide-player";
-import { GUIDES } from "@/components/guide/coach-guide-data";
+import { GUIDES, type GuideBranch } from "@/components/guide/coach-guide-data";
 import { useGuide, useGuideProgress } from "@/lib/hooks/use-guide";
 
 interface Props {
@@ -13,15 +13,22 @@ interface Props {
   description: string;
   /** ?bolum= ile gelen bölüm anahtarı — oynatıcı o bölümle açılır. */
   initialChapter?: string | null;
+  /** Bu yollardaki bölümler hiç gösterilmez (örn. gün gün öğrenciye "havuz" bölümü). */
+  hideBranches?: GuideBranch[];
 }
 
 /** Rehber sayfası istemcisi — durum + kontrol listesi + oynatıcı (rol bazlı). */
-export function GuideClient({ guideKey, title, description, initialChapter }: Props) {
-  const content = GUIDES[guideKey];
+export function GuideClient({ guideKey, title, description, initialChapter, hideBranches }: Props) {
+  const base = GUIDES[guideKey];
+  const content = hideBranches?.length
+    ? { ...base, chapters: base.chapters.filter((c) => !c.branch || !hideBranches.includes(c.branch)) }
+    : base;
   const q = useGuide(guideKey);
   const progress = useGuideProgress(guideKey);
 
-  const doneCount = q.data?.state.chapters_done.length ?? 0;
+  const doneCount = (q.data?.state.chapters_done ?? []).filter((k) =>
+    content.chapters.some((c) => c.key === k),
+  ).length;
   const total = content.chapters.length;
   const pct = Math.round((doneCount / total) * 100);
 

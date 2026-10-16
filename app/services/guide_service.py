@@ -55,6 +55,7 @@ COACH_CHAPTERS = [
     "kitap-ilerleme",
     "kitap-kapasite",
     "kitap-sablon",
+    "prog-mod",
     "prog-sayfa",
     "prog-gorev",
     "prog-panel",
@@ -62,6 +63,13 @@ COACH_CHAPTERS = [
     "prog-iskelet",
     "prog-yayin",
     "prog-takip",
+    "havuz-giris",
+    "havuz-kalem",
+    "havuz-sube",
+    "havuz-ogrenci",
+    "havuz-izle",
+    "havuz-seans",
+    "havuz-donem",
     "den-aktar",
     "den-liste",
     "den-genel",
@@ -71,9 +79,30 @@ COACH_CHAPTERS = [
     "den-paylas",
 ]
 
+# Dallanan rehber (2026-10-16): program bölümünde koç "gün gün" ya da "havuz"
+# yolunu seçer. Bir yoldaki bölüm bitince sıradaki bölüm ÖBÜR yolu atlar.
+# build.py yazar; ortak bölümler burada yer almaz.
+COACH_CHAPTER_BRANCH = {
+    "prog-sayfa": "gun-gun",
+    "prog-gorev": "gun-gun",
+    "prog-panel": "gun-gun",
+    "prog-izgara": "gun-gun",
+    "prog-iskelet": "gun-gun",
+    "prog-yayin": "gun-gun",
+    "prog-takip": "gun-gun",
+    "havuz-giris": "havuz",
+    "havuz-kalem": "havuz",
+    "havuz-sube": "havuz",
+    "havuz-ogrenci": "havuz",
+    "havuz-izle": "havuz",
+    "havuz-seans": "havuz",
+    "havuz-donem": "havuz",
+}
+
 STUDENT_CHAPTERS = [
     "ogr-hosgeldin",
     "ogr-bugun",
+    "ogr-havuz",  # yalnız havuz modundaki öğrenciye gösterilir (istemci süzer)
     "ogr-kitaplar",
     "ogr-yanlislar",
     "ogr-denemeler",
@@ -102,6 +131,27 @@ CHAPTERS_BY_GUIDE: dict[str, list[str]] = {
     GUIDE_STUDENT_ONBOARDING: STUDENT_CHAPTERS,
     GUIDE_PARENT_ONBOARDING: PARENT_CHAPTERS,
 }
+
+CHAPTER_BRANCH_BY_GUIDE: dict[str, dict[str, str]] = {
+    GUIDE_COACH_ONBOARDING: COACH_CHAPTER_BRANCH,
+}
+
+
+def next_chapter(guide_key: str, chapter: str) -> str | None:
+    """Bitirilen bölümden sonra gelecek bölüm. Bir yoldaki bölüm bitince öbür
+    yolun bölümleri atlanır; ortak bölümden sonra listedeki ilk bölüm gelir."""
+    chapters = CHAPTERS_BY_GUIDE.get(guide_key, [])
+    if chapter not in chapters:
+        return None
+    branches = CHAPTER_BRANCH_BY_GUIDE.get(guide_key, {})
+    mine = branches.get(chapter)
+    for key in chapters[chapters.index(chapter) + 1:]:
+        other = branches.get(key)
+        if mine and other and other != mine:
+            continue
+        return key
+    return None
+
 
 PROGRESS_ACTIONS = {"start", "chapter_done", "watch", "complete", "dismiss", "reset"}
 
@@ -184,11 +234,11 @@ def apply_progress(
         if chapter not in done:
             done.append(chapter)
             state.set_chapters_done(done)
-        # Sıradaki bölüme ilerlet (bilinen bölüm listesinde ise)
+        # Sıradaki bölüme ilerlet (bilinen bölüm listesinde ise; öbür yol atlanır)
         if chapter in chapters:
-            idx = chapters.index(chapter)
-            if idx + 1 < len(chapters):
-                state.current_chapter = chapters[idx + 1]
+            nxt = next_chapter(guide_key, chapter)
+            if nxt:
+                state.current_chapter = nxt
             else:
                 state.current_chapter = chapter
                 state.status = GUIDE_STATUS_COMPLETED

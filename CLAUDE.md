@@ -789,6 +789,48 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
 
 ---
 
+## ROTA REHBERİ — DALLANAN PROGRAM BÖLÜMÜ (gün gün / havuz) + HAVUZ EĞİTİMİ (2026-10-16, migration YOK)
+
+- **Kullanıcı kararı:** iki modu tek videoda birleştirme YOK; Program girişinde koç yolunu seçer, rehber o yolla
+  devam eder, öbür yol bölüm listesinde katlı ("Öbür yol: … — göz at"). /demos'ta Havuz AYRI video.
+- **Altyapı (DB'siz):** bölümde `branch: "gun-gun"|"havuz"` + giriş bölümünde `choice` (prompt + 2 seçenek).
+  Yol, izlenen bölümlerden çıkarılır (`inferBranch`, web `coach-guide-data.ts` + mobil `lib/guide.ts`). Sunucu
+  `guide_service.COACH_CHAPTER_BRANCH` (build.py yazar) + `next_chapter`: yoldaki bölüm bitince öbür yol atlanır
+  (gün gün sonu → Denemeler, havuz sonu → Denemeler). Web oynatıcı: seçim kartı (`mode="choice"`), yol başlıkları,
+  bitiş = ortak + seçilen yolun bölümleri. Mobil oynatıcı aynı; mobilde giriş bölümü SEÇİMDEN SONRA bitmiş sayılır
+  (sayfa `chapters_done` değişince oynatıcıyı yeniden kuruyor — önce yazılırsa seçim kartı kaybolurdu).
+  `GuideClient/GuidePlayer.hideBranches`: öğrenci rehberinde `ogr-havuz` yalnız havuz modundaki öğrenciye.
+- **İçerik:** `prog-mod` (7 adım, ortak giriş + seçim) · gün gün 7 bölüm `branch` etiketli, `prog-gorev` yeni görev
+  kutusuna göre yeniden (14 adım: yazım hatalı arama, kutu içi çip, >15 test uyarısı, kaynaksız, ayrıntılı formda
+  kitapsız ders + konu seçici, konu adlı başlık) · YENİ `scripts/guide_content/havuz.py` 7 bölüm / 50 adım
+  (giriş · kalem · şube · öğrenci kabı · izle · seans · dönem/geri dönüş) · öğrenci `ogr-havuz` 6 adım · veli
+  `veli-program` +1 adım (havuz kartı). Koç rehberi 32 bölüm / 246 adım. Gün adları anlatımdan çıkarıldı
+  (çekimler artık koşulduğu güne göre gün seçiyor).
+- **Demo veri (yalnız DEV):** YENİ `scripts/seed_guide_demo_havuz.py` — Deniz Arslan (12 SAY, havuz, 3 kapanmış +
+  açık dönem, 4 katalog kitabı, kaçınılan/devir×2/öğretmen ödevi/onay bekleyen kalem, 12-A ders programı) · Ece
+  Yıldız (dönemi dün kapandı, devir listesi) · Selin Arslan (Deniz'in velisi). Bugüne göreli; çekimden önce koş.
+- **Çekim:** YENİ `scripts/capture_guide_havuz.py` (44 ekran `hv-*`, `--only mod,giris,izle,sube,seans,donem,kalem,
+  veli,ogrenci`; kalem bölümü Deniz'e yazar → önce tohum). `capture_guide_program.py` gün bağımsız yapıldı (ızgara
+  kaynağı görevli gün, hedefler bugünden sonra; iskelet/öneri satırı olan ilk gün; yayın yarının taslağı) + görev
+  bölümü yeni akış (`p-ara-sonuc` yazım hatası, `p-adet-uyari`, `p-ayrintili-kaynaksiz`, `p-konu-secici`,
+  `p-kaynaksiz-eklendi`). 57 program ekranı yeni ders renkleriyle tazelendi.
+- **Ses:** değişen adımlar git'teki önceki içerikle karşılaştırılıp eski MP3'leri silindi, 79 Pro TTS (Kore) üretildi.
+  `GUIDE_ASSET_VERSION=20261016a` (web + mobil). İçerik JSON'ları mobile kopyalandı (JS-only → OTA).
+- **/demos:** `guide_demo._FILTERS` — Program videosu yalnız gün gün yolu; YENİ `pool-coach` "Haftalık Görev Havuzu"
+  (giriş bölümünün ilk 6 adımı + 7 havuz bölümü, 56 adım ~13 dk). `sync_static` artık Havuz + `branch` taşır.
+- **Sayfa kartları:** havuz editörü + seans ekranında `<GuideHint module="Havuz" />`.
+- **Yan düzeltmeler:** (a) kaçınma kuralı (`pool_mode.avoid_reasons`) onay bekleyen/reddedilen öğrenci kalemini
+  saymıyor, "hiç kaba alınmadı" süresi kalemin EKLENDİĞİ günden (dönem ortasında eklenen kalem suçlanmıyordu) —
+  YENİ `test_pool_avoid_rules.py` 4/4, `test_api_v2_pool_session` + `live_pool_session` test verisi kalem
+  tarihleriyle; (b) devir listesinde kullanıcıya sızan "(K22)/(K58)" kodları kaldırıldı; (c) öğrenci Havuzum'da
+  tempo cümlesi iki kez yazıyordu (kart + ipucu) — ipucu varken kart cümlesi gizli (web + mobil); (d)
+  `live_pool_step7` 14 Ekim konu zorunluluğuna takılıyordu (konusuz test kalemi → sayfa).
+- Test: `test_api_v2_guide` 24/24 (23-24 yol atlama) · YENİ `live_guide_branch.py` 9/9 · pool editor 41 / session 22 /
+  student 29 / flags 47 / step5 34 / step6 26 / step7 30 / foundation 53 · canlı editor 34 · session 22 · flags 16 ·
+  step6 16 · step7 22 · student_pool_web 19 · web tsc+eslint temiz · mobil tsc yalnız `app/preview/*`.
+- **Not (ayrı iş):** havuz konu listesinde 12. sınıf öğrenciye TYT Matematik konuları "10. sınıf · kendi sınıfı"
+  diye gruplanıyor (kendi sınıfı etiketi yanlış) · öğrenci Bugün'de "1/6 test" yapılmışken "%0 tamam" yazıyor.
+
 ## KONUSUZ TEST GÖREVLERİ → MÜFREDAT KONUSU (2026-10-16, Açı Seçkin Kurs saha bulgusu, migration YOK)
 
 - **Bulgu:** Açı rehber öğretmeni #167 (14 öğrenci) 260 görevin 223'ünü "Diğer" etkinliği olarak, ders+konu+test

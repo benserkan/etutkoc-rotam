@@ -131,7 +131,10 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
           <span className="rounded-full bg-white/15 px-2.5 py-1">seansa {s.days_left} gün{s.expected_next_on ? ` · ${fmtDate(s.expected_next_on)}` : ""}</span>
           <span className="rounded-full bg-white/15 px-2.5 py-1">günde ~{Math.max(1, Math.round(s.per_day_needed))} birim</span>
         </div>
-        <div className={cn("mt-2 text-sm font-medium", s.pace === "geride" ? "text-amber-100" : "text-cyan-50")}>{s.pace_note}</div>
+        {/* "Tempo biraz geride" ipucu aynı cümleyi zaten söylüyor — tekrar etme */}
+        {!(s.pace === "geride" && data.hints.some((h) => h.code === "pool_behind")) ? (
+          <div className={cn("mt-2 text-sm font-medium", s.pace === "geride" ? "text-amber-100" : "text-cyan-50")}>{s.pace_note}</div>
+        ) : null}
       </div>
 
       {/* K41/K46/K48: yönlendirme — kırmızı yok, yargı yok */}

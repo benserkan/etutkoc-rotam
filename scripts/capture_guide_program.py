@@ -227,30 +227,38 @@ def shots_gorev(page: Page) -> None:
     card.get_by_text("Yeni görev ekle").first.click()
     time.sleep(1.2)
     search = page.get_by_label("Görev ara").first
+    box = page.get_by_label("Görev ekleme kutusu").first
     to_top(page, search)
     search.click()
     time.sleep(2.5)
     drop = search.locator("xpath=ancestor::div[contains(@class,'relative')][1]")
     cgs.snap(page, "p-ara-oneriler", {"kutu": search, "liste": drop})
-    search.fill("Doğrusal")
+    # Yazım hatasına dayanıklı arama
+    search.fill("dogrsal denklm")
     time.sleep(2.5)
     cgs.snap(page, "p-ara-sonuc", {"kutu": search, "liste": drop})
     src = page.get_by_role("button", name="3D LGS Matematik", exact=False).first
     src.click()
     time.sleep(1.5)
-    adet = page.get_by_label("Adet").first
-    cgs.snap(page, "p-ara-secildi", {"ozet": adet.locator("xpath=ancestor::div[contains(@class,'space-y') or contains(@class,'rounded')][1]"), "adet": adet})
-    page.get_by_role("button", name="Ekle", exact=True).first.click()
+    adet = page.get_by_label("Test sayısı").first
+    cgs.snap(page, "p-ara-secildi", {"kutu": box, "adet": adet,
+                                     "cip": page.get_by_label("Seçimi değiştir").first})
+    adet.fill("20")
+    time.sleep(0.8)
+    cgs.snap(page, "p-adet-uyari", {"kutu": box, "uyari": page.get_by_text("test sayısıdır", exact=False).first.locator("xpath=ancestor::p[1]")})
+    adet.fill("3")
+    time.sleep(0.5)
+    page.get_by_role("button", name="Ekle · 3 test", exact=True).first.click()
     time.sleep(2.5)
     cgs.snap(page, "p-eklendi", {"kart": card})
-    # Kaynak belirtmeden ver
+    # Kaynak belirtmeden ver (konuya bağlı, kitapsız)
     search = page.get_by_label("Görev ara").first
     to_top(page, search)
     search.click()
-    search.fill("Üçgenler")
+    search.fill("üçgenler")
     time.sleep(2.5)
     kb = page.get_by_role("button", name="Kaynak belirtmeden ver").first
-    cgs.snap(page, "p-kaynaksiz", {"buton": kb})
+    cgs.snap(page, "p-kaynaksiz", {"buton": kb, "liste": drop})
     page.keyboard.press("Escape")
     time.sleep(0.5)
     # Ayrıntılı form
@@ -258,6 +266,32 @@ def shots_gorev(page: Page) -> None:
     time.sleep(1.2)
     tiles = page.get_by_text("Görev tipi", exact=False).first.locator("xpath=ancestor::div[2]")
     cgs.snap(page, "p-ayrintili", {"tipler": tiles})
+    # Kitabı olmayan derste test: ders → "Kaynaksız" kendiliğinden → konu seçici
+    form = card.locator("form").last
+    subj = form.locator("select").first
+    opts = subj.locator("option").all_inner_texts()
+    target = next((o for o in opts if "İnkılap" in o), None)
+    subj.select_option(label=target)
+    time.sleep(2.5)
+    to_top(page, form, 160)
+    cgs.snap(page, "p-ayrintili-kaynaksiz", {
+        "ders": subj,
+        "kitap": form.locator("select").nth(1),
+        "konu": page.get_by_label("Müfredat konusu seç").first,
+    })
+    page.get_by_label("Müfredat konusu seç").first.click()
+    time.sleep(1.5)
+    panel = page.locator("[data-testid='topic-picker-panel']").first
+    panel.get_by_label("Konu ara").fill("atatürk")
+    time.sleep(0.8)
+    to_top(page, form, 160)
+    cgs.snap(page, "p-konu-secici", {"panel": panel, "ara": panel.get_by_label("Konu ara")})
+    panel.locator("button.block").first.click()
+    time.sleep(0.6)
+    form.get_by_label("Test sayısı").fill("2")
+    form.locator("button[type=submit]").last.click()
+    time.sleep(2.5)
+    cgs.snap(page, "p-kaynaksiz-eklendi", {"kart": card})
     # Periyotlu gün: yarına sabah + akşam görevi (API) → bölgeler
     fen_id, fen = sections_of("Sınav Yayınları%")
     mat_id, mat = sections_of("3D LGS Matematik%")
@@ -351,7 +385,12 @@ def shots_izgara(page: Page) -> None:
     page.evaluate("window.scrollTo(0, 0)")
     time.sleep(0.6)
     cgs.snap(page, "p-izgara", {"izgara": grid})
-    chip = grid_cell(page, MONDAY).locator("li").first
+    # Kaynak: haftanın görevli bir günü; hedefler daima bugünden SONRA (geçmiş güne
+    # kopyalanamaz/taşınamaz) — betik haftanın hangi günü koşarsa koşsun çalışsın.
+    src_day = MONDAY + timedelta(days=2)
+    copy_to = TODAY + timedelta(days=1)
+    move_to = TODAY + timedelta(days=2)
+    chip = grid_cell(page, src_day).locator("li").first
     chip.click(button="right")
     time.sleep(0.8)
     menu = page.get_by_role("button", name="Başka güne kopyala").first.locator("xpath=..")
@@ -360,17 +399,17 @@ def shots_izgara(page: Page) -> None:
     time.sleep(0.8)
     banner = page.get_by_text("günü seç (ızgarada bir güne tıkla)", exact=False).first
     cgs.snap(page, "p-hedef", {"bant": banner.locator(".."), "izgara": grid})
-    grid_cell(page, MONDAY + timedelta(days=3)).click()
+    grid_cell(page, copy_to).click()
     time.sleep(2.5)
-    cgs.snap(page, "p-kopyalandi", {"hucre": grid_cell(page, MONDAY + timedelta(days=3))})
-    # taşı: Çarşamba'daki ilk görevi Cuma'ya
-    grid_cell(page, MONDAY + timedelta(days=2)).locator("li").first.click(button="right")
+    cgs.snap(page, "p-kopyalandi", {"hucre": grid_cell(page, copy_to)})
+    # taşı: bugünün ilk görevini iki gün sonraya
+    grid_cell(page, TODAY).locator("li").first.click(button="right")
     time.sleep(0.8)
     page.get_by_role("button", name="Başka güne taşı").first.click()
     time.sleep(0.6)
-    grid_cell(page, MONDAY + timedelta(days=4)).click()
+    grid_cell(page, move_to).click()
     time.sleep(2.5)
-    cgs.snap(page, "p-tasindi", {"izgara": grid, "hucre": grid_cell(page, MONDAY + timedelta(days=4))})
+    cgs.snap(page, "p-tasindi", {"izgara": grid, "hucre": grid_cell(page, move_to)})
     # Haftaya yay — bugünün görevi
     open_day(page, TODAY)
     card = page.locator(f"details[data-day='{iso(TODAY)}']").first
@@ -381,7 +420,8 @@ def shots_izgara(page: Page) -> None:
     dlg = page.get_by_role("dialog").first
     dlg.wait_for(timeout=15_000)
     time.sleep(0.8)
-    for g in ("Cmt", "Paz"):
+    # Hafta sonunu yalnız haftanın başında çıkar (perşembeden sonra seçilebilir tek günler onlar)
+    for g in (("Cmt", "Paz") if TODAY.weekday() < 3 else ()):
         b = dlg.get_by_role("button", name=g, exact=True)
         if b.count():
             b.first.click()
@@ -408,9 +448,14 @@ def shots_iskelet(page: Page) -> None:
     dlg.get_by_role("button", name="Bu haftayı iskelet yap").click()
     time.sleep(3.0)
     tabs = dlg.get_by_test_id("skeleton-day-tab")
-    tabs.nth(1).click()
-    time.sleep(1.0)
+    # Satırı olan ilk gün (iskelet bu haftanın görevlerinden çıkar; gün sabit değil)
     day = dlg.get_by_test_id("skeleton-day").first
+    for i in range(tabs.count()):
+        tabs.nth(i).click()
+        time.sleep(0.8)
+        day = dlg.get_by_test_id("skeleton-day").first
+        if day.get_by_test_id("skeleton-row").count():
+            break
     cgs.snap(page, "p-iskelet-gun", {"gunler": dlg.locator("nav[aria-label='Günler']").first, "gun": day})
     row = day.get_by_test_id("skeleton-row").first
     cgs.snap(page, "p-iskelet-satir", {"satir": row})
@@ -463,10 +508,15 @@ def shots_iskelet(page: Page) -> None:
     week(page, NEXT_MONDAY)
     grid = page.get_by_text("tüm günler bir bakışta", exact=False).first.locator("xpath=ancestor::section[1]")
     cgs.snap(page, "p-oneri-izgara", {"izgara": grid})
-    tue = NEXT_MONDAY + timedelta(days=1)
-    open_day(page, tue)
-    card = page.locator(f"details[data-day='{iso(tue)}']").first
-    box = card.locator("[data-section='day:skeleton-ghosts']").first
+    # Matematik önerisi olan ilk gün
+    tue = NEXT_MONDAY
+    for k in range(7):
+        tue = NEXT_MONDAY + timedelta(days=k)
+        open_day(page, tue)
+        card = page.locator(f"details[data-day='{iso(tue)}']").first
+        box = card.locator("[data-section='day:skeleton-ghosts']").first
+        if box.count() and box.get_by_test_id("ghost-row").filter(has_text="Matematik").count():
+            break
     to_top(page, box, 90)
     cgs.snap(page, "p-oneri", {"oneriler": box, "rutin": box.get_by_role("button", name="Rutinleri onayla", exact=False).first})
     # konu satırı → çip şeridi
@@ -518,7 +568,7 @@ def shots_yayin(page: Page) -> None:
     pub = page.get_by_role("button", name="Tüm haftayı yayınla", exact=False).first
     banner = page.get_by_text("görev taslak halinde", exact=False).first
     cgs.snap(page, "p-taslak", {"dugme": pub, "bant": banner.locator("xpath=ancestor::div[1]")})
-    tue = MONDAY + timedelta(days=1)
+    tue = TODAY + timedelta(days=1)  # taslak görevler yarına yazıldı
     open_day(page, tue)
     card = page.locator(f"details[data-day='{iso(tue)}']").first
     to_top(page, card, 90)

@@ -20,6 +20,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { GuideHint } from "@/components/guide/guide-hint";
 import { useCloseTopic, useReopenTopic } from "@/lib/hooks/use-teacher-mutations";
 import { PoolFlagsCard } from "./pool-flags-card";
 import { SubjectTag, subjectColors } from "@/components/shared/subject-tag";
@@ -81,6 +82,8 @@ export function PoolSession({ studentId, initial }: { studentId: number; initial
           <Button onClick={() => setFinishOpen(true)} className="bg-cyan-700 text-white hover:bg-cyan-800">Seansı bitir</Button>
         )}
       </header>
+
+      <GuideHint module="Havuz" />
 
       {!data.period ? (
         <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">

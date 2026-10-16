@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GuidePlayer } from "@/components/guide/guide-player";
 import { useAuth } from "@/lib/auth";
+import { getStudentPool } from "@/lib/pool";
 import {
   getGuide,
   GUIDE_KEY_BY_ROLE,
@@ -37,6 +38,14 @@ export default function GuideRoute() {
     queryKey: guideKeys.state(guideKey ?? "none"),
     queryFn: () => getGuide(guideKey!),
     enabled: Boolean(guideKey),
+  });
+
+  // Öğrencide havuz bölümü yalnız haftalık havuz modundaysa gösterilir
+  const poolQ = useQuery({
+    queryKey: ["student", "pool", "mode-for-guide"],
+    queryFn: () => getStudentPool(),
+    enabled: user?.role === "student",
+    staleTime: 5 * 60_000,
   });
 
   const progress = useMutation({
@@ -105,7 +114,8 @@ export default function GuideRoute() {
             key={`${guideKey}-${q.data.state.chapters_done.length}-${q.data.state.status}`}
             content={content}
             guide={q.data}
-            onProgress={(body) => progress.mutate(body)}
+            onProgress={(body) => progress.mutateAsync(body)}
+            hideBranches={user?.role === "student" && poolQ.data?.mode !== "havuz" ? ["havuz"] : []}
           />
         </ScrollView>
       )}

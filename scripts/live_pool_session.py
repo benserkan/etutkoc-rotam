@@ -100,6 +100,10 @@ def seed() -> dict:
         i1 = pool_mode.add_item(db, period=p, student=st, subject=tyt, quantity=4, unit="test", book=b, section=s1)
         i2 = pool_mode.add_item(db, period=p, student=st, subject=tyt, quantity=3, unit="test", topic=t2, teacher_homework=True)
         i3 = pool_mode.add_item(db, period=p, student=st, subject=tyt, quantity=None, unit="etkinlik", label="Üslü videosu")
+        # Kalemler dönem açılırken eklenmiş olsun (kaçınma süresi kalemin havuza girdiği günden ölçülür)
+        from datetime import datetime as _dt, time as _tm, timezone as _tz
+        for _it in (i1, i2, i3):
+            _it.created_at = _dt.combine(today - timedelta(days=5), _tm(12), tzinfo=_tz.utc)
         t = pool_mode.put_in_cup(db, item=i1, day=today - timedelta(days=3), count=2)
         task_service.complete_task(db, t)
         pool_mode.sync_item_progress(db, i1)

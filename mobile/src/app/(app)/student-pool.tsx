@@ -152,7 +152,10 @@ function PoolBody({
         <Text className="mt-2 text-xs text-brand-100">
           {s.items_done}/{s.items_total} kalem · seansa {s.days_left} gün{s.expected_next_on ? ` (${fmtDate(s.expected_next_on)})` : ""}
         </Text>
-        <Text className={`mt-1 text-sm font-medium ${paceColor}`}>{s.pace_note}</Text>
+        {/* "Tempo biraz geride" ipucu aynı cümleyi zaten söylüyor — tekrar etme */}
+        {!(s.pace === "geride" && (data.hints ?? []).some((h) => h.code === "pool_behind")) ? (
+          <Text className={`mt-1 text-sm font-medium ${paceColor}`}>{s.pace_note}</Text>
+        ) : null}
       </View>
 
       {/* Bugün dershanede */}

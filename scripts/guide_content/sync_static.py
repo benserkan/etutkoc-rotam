@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 GUIDE = ROOT / "web" / "components" / "guide"
 OUT = ROOT / "app" / "static" / "guide" / "coach-guide-demo.json"
-MODULES = ("Kitaplar", "Program", "Denemeler")
+MODULES = ("Kitaplar", "Program", "Havuz", "Denemeler")
 
 
 def main() -> int:
@@ -34,8 +34,8 @@ def main() -> int:
         for st in ch["steps"]:
             box = (boxes.get(st.get("shot"), {}).get("targets") or {}).get(st.get("target") or "")
             steps.append({"caption": st.get("caption", ""), "shot": st.get("shot"), "box": box})
-        chapters.append({"key": ch["key"], "module": ch["module"], "title": ch.get("title", ""),
-                         "subtitle": ch.get("subtitle", ""), "steps": steps})
+        chapters.append({"key": ch["key"], "module": ch["module"], "branch": ch.get("branch"),
+                         "title": ch.get("title", ""), "subtitle": ch.get("subtitle", ""), "steps": steps})
     OUT.write_text(json.dumps({"version": version, "chapters": chapters}, ensure_ascii=False) + "\n",
                    encoding="utf-8")
     n = sum(len(c["steps"]) for c in chapters)

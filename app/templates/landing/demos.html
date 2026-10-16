@@ -6480,7 +6480,7 @@
            animasyon sahneleri şablonda duruyor ama bu slug'larda gösterilmiyor. #}
         {% for slug, meta in guide_demo_meta.items() %}
         <a href="/demos?play={{ slug }}" data-audience="teacher" class="demo-playlist-item {% if play_slug == slug %}is-active{% endif %}">
-          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,{{ ['#0B5560,#117A86','#4F46E5,#6366F1','#B45309,#D97706'][loop.index0] }});">{{ ['📚','🗓️','📊'][loop.index0] }}</div>
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,{{ ['#0B5560,#117A86','#4F46E5,#6366F1','#B45309,#D97706','#0E7490,#0891B2'][loop.index0] }});">{{ ['📚','🗓️','📊','🧺'][loop.index0] }}</div>
           <div class="demo-playlist-meta">
             <div class="demo-playlist-title">{{ meta[1] }}</div>
             <div class="demo-playlist-desc">{{ meta[2] }}</div>

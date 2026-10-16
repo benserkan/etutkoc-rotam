@@ -21,7 +21,25 @@ GUIDE_DEMOS: dict[str, tuple[str, str, str]] = {
                              "Görev ekle · yan panel · hafta ızgarası · iskelet · yayınla ve takip et"),
     "exams-coach": ("Denemeler", "Deneme Analizi",
                     "PDF'ten aktar · deneme listesi · konu analizi · gelişim raporu · veliyle paylaş"),
+    "pool-coach": ("Havuz", "Haftalık Görev Havuzu",
+                   "Gün gün ile farkı · havuzu yaz · öğrencinin kabı · seansa kadar izle · seans ve devir"),
 }
+
+# Video başına bölüm süzgeci (2026-10-16): rehber dallandı (gün gün / havuz).
+#  · Program videosu yalnız gün gün yolunu anlatır — yol seçim kartı videoda olmaz.
+#  · Havuz videosu modların farkını anlatan girişle (seçim adımı hariç) başlar.
+# (bölüm → dahil mi, atlanacak son adım sayısı)
+def _program_filter(ch: dict) -> tuple[bool, int]:
+    return (ch.get("module") == "Program" and ch.get("branch") == "gun-gun"), 0
+
+
+def _pool_filter(ch: dict) -> tuple[bool, int]:
+    if ch.get("key") == "prog-mod":
+        return True, 1  # son adım: "seçim sende, kartlardan birini seç"
+    return ch.get("module") == "Havuz", 0
+
+
+_FILTERS = {"program-create-coach": _program_filter, "pool-coach": _pool_filter}
 
 
 @lru_cache(maxsize=1)
@@ -36,11 +54,17 @@ def build(slug: str | None) -> dict | None:
     data = _load(DATA.stat().st_mtime)
     ver = data.get("version", "1")
     chapters, scenes = [], []
+    flt = _FILTERS.get(slug)
     for ch in data.get("chapters", []):
-        if ch.get("module") != module:
+        if flt is not None:
+            keep, drop_last = flt(ch)
+        else:
+            keep, drop_last = ch.get("module") == module, 0
+        if not keep:
             continue
         start = len(scenes)
-        for i, st in enumerate(ch["steps"]):
+        steps = ch["steps"][: len(ch["steps"]) - drop_last] if drop_last else ch["steps"]
+        for i, st in enumerate(steps):  # i = asıl adım numarası (ses dosyası adı)
             scenes.append({
                 "img": f"/static/guide/shots/{st['shot']}.png?v={ver}" if st.get("shot") else None,
                 "audio": f"/static/guide/audio/{ch['key']}/{i}.mp3?v={ver}",

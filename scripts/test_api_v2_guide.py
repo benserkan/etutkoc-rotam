@@ -440,6 +440,33 @@ def main() -> int:
             and d2["state"]["steps_watched"]["veli-rota-program"] == [3],
             f"{d['state']} {d2['state'].get('steps_watched')}",
         )
+
+        # 23-24. Dallanan koç rehberi (2026-10-16): gün gün ↔ havuz yolu
+        CB = "/api/v2/me/guide/coach_onboarding"
+        cy = login("coach_b")
+        cy.post(f"{CB}/progress", json={"action": "reset"})
+        d = cy.get(CB).json()
+        r1 = cy.post(f"{CB}/progress", json={"action": "chapter_done", "chapter": "prog-takip"}).json()
+        r2 = cy.post(f"{CB}/progress", json={"action": "chapter_done", "chapter": "havuz-donem"}).json()
+        r3 = cy.post(f"{CB}/progress", json={"action": "chapter_done", "chapter": "prog-mod"}).json()
+        check(
+            "23. yol atlama: gün gün sonu → Denemeler, havuz sonu → Denemeler, giriş → gün gün",
+            "prog-mod" in d["chapters"] and "havuz-giris" in d["chapters"]
+            and d["chapters"].index("prog-mod") < d["chapters"].index("prog-sayfa")
+            < d["chapters"].index("havuz-giris") < d["chapters"].index("den-aktar")
+            and r1["state"]["current_chapter"] == "den-aktar"
+            and r2["state"]["current_chapter"] == "den-aktar"
+            and r3["state"]["current_chapter"] == "prog-sayfa",
+            f"{r1['state']['current_chapter']} {r2['state']['current_chapter']} {r3['state']['current_chapter']}",
+        )
+        r4 = cy.post(f"{CB}/progress", json={"action": "start", "chapter": "havuz-giris"}).json()
+        r5 = cy.post(f"{CB}/progress", json={"action": "chapter_done", "chapter": "havuz-giris"}).json()
+        check(
+            "24. havuz yolu seçildi: havuz-giris → havuz-kalem (gün gün bölümlerine geri dönmez)",
+            r4["state"]["current_chapter"] == "havuz-giris"
+            and r5["state"]["current_chapter"] == "havuz-kalem",
+            f"{r4['state']['current_chapter']} {r5['state']['current_chapter']}",
+        )
     finally:
         cleanup()
 

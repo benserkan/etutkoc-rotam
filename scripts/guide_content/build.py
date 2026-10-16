@@ -26,14 +26,19 @@ LEGACY_MODULE = {
     "hafta-takip": "Program",
     "deneme-gir": "Denemeler",
 }
-ORDER = ["Başlangıç", "Kitaplar", "Program", "Denemeler"]
+ORDER = ["Başlangıç", "Kitaplar", "Program", "Havuz", "Denemeler"]
 
 
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
-    from scripts.guide_content import denemeler, kitaplar, program
+    from scripts.guide_content import denemeler, havuz, kitaplar, program
 
-    modules = {kitaplar.MODULE: kitaplar.CHAPTERS, program.MODULE: program.CHAPTERS, denemeler.MODULE: denemeler.CHAPTERS}
+    modules = {
+        kitaplar.MODULE: kitaplar.CHAPTERS,
+        program.MODULE: program.CHAPTERS,
+        havuz.MODULE: havuz.CHAPTERS,
+        denemeler.MODULE: denemeler.CHAPTERS,
+    }
     data = json.loads(CONTENT.read_text(encoding="utf-8"))
     kept = []
     for ch in data["chapters"]:
@@ -57,7 +62,14 @@ def main() -> int:
     start = src.index("COACH_CHAPTERS = [")
     end = src.index("]", start) + 1
     block = "COACH_CHAPTERS = [\n" + "".join(f'    "{k}",\n' for k in keys) + "]"
-    SERVICE.write_text(src[:start] + block + src[end:], encoding="utf-8")
+    src = src[:start] + block + src[end:]
+    # Dallanan rehber: bölüm → yol (gün gün / havuz). Ortak bölümler listede yok.
+    bstart = src.index("COACH_CHAPTER_BRANCH = {")
+    bend = src.index("}", bstart) + 1
+    bblock = "COACH_CHAPTER_BRANCH = {" + chr(10) + "".join(
+        f'    "{c["key"]}": "{c["branch"]}",' + chr(10) for c in kept if c.get("branch")
+    ) + "}"
+    SERVICE.write_text(src[:bstart] + bblock + src[bend:], encoding="utf-8")
 
     # /demos sayfasının okuduğu statik kopya (Kitaplık/Program/Denemeler videoları)
     from scripts.guide_content import sync_static

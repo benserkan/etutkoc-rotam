@@ -40,10 +40,23 @@ export interface GuideActionDef {
   optional?: boolean;
 }
 
+/** Dallanan rehberde yol: koç programı gün gün mü havuzla mı kuruyor (2026-10-16). */
+export type GuideBranch = "gun-gun" | "havuz";
+
+export interface GuideChoiceOption {
+  branch: GuideBranch;
+  label: string;
+  description: string;
+}
+
 export interface GuideChapterDef {
   key: string;
   /** Konu başlığı (Kitaplar / Program / Denemeler…) — bölüm listesi buna göre gruplanır. */
   module?: string;
+  /** Yalnız bir yola ait bölüm. Yolu olmayan bölüm herkes için ortaktır. */
+  branch?: GuideBranch;
+  /** Bölüm sonunda "Sonraki bölüm" yerine yol seçimi gösterilir. */
+  choice?: { prompt: string; options: GuideChoiceOption[] } | null;
   title: string;
   subtitle: string;
   steps: GuideStepDef[];
@@ -60,6 +73,27 @@ export const COACH_GUIDE = rawContent as CoachGuideContent;
 export const STUDENT_GUIDE = rawStudentContent as CoachGuideContent;
 export const PARENT_GUIDE = rawParentContent as CoachGuideContent;
 
+export const BRANCH_LABELS: Record<GuideBranch, string> = {
+  "gun-gun": "Gün gün program",
+  havuz: "Haftalık havuz",
+};
+
+/**
+ * Koçun seçtiği yol — açık bir seçim yoksa izlediği bölümlerden çıkarılır:
+ * şu anki bölüm bir yoldaysa o yol; değilse yalnız bir yolda izleme izi varsa o.
+ */
+export function inferBranch(
+  chapters: GuideChapterDef[],
+  currentKey: string | null | undefined,
+  touched: (key: string) => boolean,
+): GuideBranch | null {
+  const cur = chapters.find((c) => c.key === currentKey);
+  if (cur?.branch) return cur.branch;
+  const hit = new Set<GuideBranch>();
+  for (const c of chapters) if (c.branch && touched(c.key)) hit.add(c.branch);
+  return hit.size === 1 ? [...hit][0] : null;
+}
+
 /** guide_key → içerik (oynatıcı + rehber sayfası buradan çözer). */
 export const GUIDES: Record<string, CoachGuideContent> = {
   [COACH_GUIDE.guideKey]: COACH_GUIDE,
@@ -74,7 +108,7 @@ export const GUIDE_STATIC_BASE = "/static/guide";
  * tarayıcı önbelleği bayat kalmasın diye. MP3/PNG yeniden üretince ARTIR
  * (aksi halde kullanıcı eski sesi duyar — 2026-07-23 saha bulgusu).
  */
-const GUIDE_ASSET_VERSION = "20261006a";
+const GUIDE_ASSET_VERSION = "20261016a";
 
 export const GUIDE_AVATAR_SRC = `${GUIDE_STATIC_BASE}/rota-avatar.png?v=${GUIDE_ASSET_VERSION}`;
 

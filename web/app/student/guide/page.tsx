@@ -13,11 +13,15 @@ export default async function StudentGuidePage() {
   // Kurumsal kimlik: kuruma bağlı öğrenci kurumun adıyla karşılanır.
   const me = await apiServer<MyAccountResponse>("/api/v2/me").catch(() => null);
   const brandName = me?.brand?.name ?? null;
+  // Havuz bölümü yalnız haftalık havuz modundaki öğrenciye gösterilir.
+  const pool = await apiServer<{ mode?: string }>("/api/v2/student/pool").catch(() => null);
+  const isHavuz = pool?.mode === "havuz";
   return (
     <GuideClient
       guideKey="student_onboarding"
       title={brandName ? `Rehber — Rota ile ${brandName} sistemini keşfet` : "Rehber — Rota ile Rotam'ı keşfet"}
       description="Günlük görevlerinden yanlış soru arşivine, deneme analizinden hedeflerine — bütün araçların tek turda."
+      hideBranches={isHavuz ? [] : ["havuz"]}
     />
   );
 }

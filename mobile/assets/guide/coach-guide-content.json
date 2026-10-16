@@ -625,8 +625,82 @@
    ]
   },
   {
+   "key": "prog-mod",
+   "module": "Program",
+   "title": "Program modunu seç: gün gün mü, havuz mu?",
+   "subtitle": "İki çalışma biçimi, kime hangisi, nasıl geçilir",
+   "action": null,
+   "choice": {
+    "prompt": "Programı nasıl kuracaksın?",
+    "options": [
+     {
+      "branch": "gun-gun",
+      "label": "Gün gün program",
+      "description": "Her günün görevlerini sen yazarsın. Bireysel takip ettiğin, her gün ne çalışacağını belirlediğin öğrenciler için."
+     },
+     {
+      "branch": "havuz",
+      "label": "Haftalık havuz",
+      "description": "Seansta haftanın işlerini havuza yazarsın; öğrenci her gün kendi kabını kurar. Haftada bir görüştüğün dershane ve etüt öğrencileri için."
+     }
+    ]
+   },
+   "steps": [
+    {
+     "caption": "Sıra programda. Etütkoç'ta bir öğrencinin programı iki biçimde kurulur: gün gün program ya da haftalık havuz. Önce ikisinin farkını görelim, sonra sen kendi yolunu seçeceksin.",
+     "shot": null,
+     "target": null,
+     "click": false,
+     "zoom": false
+    },
+    {
+     "caption": "Gün gün programda her günün görevlerini sen yazarsın: pazartesi şu üç test, salı şu konu. Öğrencinin başlığında Haftalık Program düğmesi vardır. Bireysel takip ettiğin, her gün ne yapacağını senin belirlediğin öğrenci için uygundur.",
+     "shot": "hv-baslik-gungun",
+     "target": "dugme",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Haftalık havuzda ise seansta haftanın işlerini bir havuza yazarsın: Köklü Sayılar sekiz test, Hareket beş test, okul ödevi on iki sayfa. Hangi gün ne çalışacağını öğrenci kendisi seçer. Havuz modundaki öğrencinin başlığında Haftalık Havuz düğmesi vardır.",
+     "shot": "hv-baslik-havuz",
+     "target": "dugme",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Havuz, haftada bir seansla görüştüğün dershane ve etüt öğrencileri için tasarlandı. Bir dönem iki seans arasıdır; öğrenci her gün havuzdan kendi kabını kurar, sen seansta neyin yapıldığına bakarsın.",
+     "shot": null,
+     "target": null,
+     "click": false,
+     "zoom": false
+    },
+    {
+     "caption": "Öğrencinin modunu değiştirmek için başlıktaki İşlemler menüsünde Haftalık havuz modu girişini kullanırsın.",
+     "shot": "hv-islemler",
+     "target": "giris",
+     "click": true,
+     "zoom": true
+    },
+    {
+     "caption": "Geçiş penceresi hiçbir şeyi silmeden önce ne olacağını gösterir: kaç görevin silineceğini, kısmen çözülmüş kaç görevin kalacağını ve kaç testin kitaba iade edileceğini. Çözülen testler müfredatta ve kitap sayacında kalır. Geçişin en doğru anı hafta biterken ya da seansın sonudur.",
+     "shot": "hv-mod-pencere",
+     "target": "pencere",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Şimdi seçim sende. Öğrencilerinin çoğu için nasıl çalışıyorsan o yolla devam et; öbür yolu bölüm listesinden istediğin zaman açabilirsin. Aşağıdaki kartlardan birini seç.",
+     "shot": null,
+     "target": null,
+     "click": false,
+     "zoom": false
+    }
+   ]
+  },
+  {
    "key": "prog-sayfa",
    "module": "Program",
+   "branch": "gun-gun",
    "title": "Program sayfası ve yeni program",
    "subtitle": "Haftayı aç, sayfanın düzenini tanı",
    "action": {
@@ -639,7 +713,7 @@
    },
    "steps": [
     {
-     "caption": "Sıra programda. Bu eğitimde Elif'in bir haftalık programını baştan sona birlikte kuracağız: haftayı açacağız, görev ekleyeceğiz, görevleri günler arasında taşıyacağız, her hafta tekrar eden düzeni iskelete çevireceğiz ve programı öğrenciye ve veliye ulaştıracağız.",
+     "caption": "Gün gün program yolundasın. Bu yolda Elif'in bir haftalık programını baştan sona birlikte kuracağız: haftayı açacağız, görev ekleyeceğiz, görevleri günler arasında taşıyacağız, her hafta tekrar eden düzeni iskelete çevireceğiz ve programı öğrenciye ve veliye ulaştıracağız.",
      "shot": null,
      "target": null,
      "click": false,
@@ -727,6 +801,7 @@
   {
    "key": "prog-gorev",
    "module": "Program",
+   "branch": "gun-gun",
    "title": "Gün kartında görev ekle",
    "subtitle": "Konuyu ara, kaynağı seç, adedi gir",
    "action": null,
@@ -746,35 +821,43 @@
      "zoom": true
     },
     {
-     "caption": "Her konunun altında o konuyu içeren kitapları ve ünitede kaç test kaldığını görürsün. Kapasitesi dolmuş bir ünite gizlenmez, kapasite doldu diye işaretlenir.",
-     "shot": "p-ara-oneriler",
-     "target": "liste",
-     "click": false,
-     "zoom": true
-    },
-    {
-     "caption": "Şimdi aramayı deneyelim. Kutuya Doğrusal yazdım. Doğrusal Denklemler konusu geldi; altında 3D L G S Matematik kitabının ilgili ünitesi ve kalan test sayısı var.",
+     "caption": "Arama yazım hatasına dayanıklıdır. Kutuya aceleyle dogrsal denklm yazdım; harfler eksik ama Doğrusal Denklemler yine en üstte geldi. Sözcüklerin sırası da önemli değil; bir ünitenin adını yazarsan altındaki konular gelir. Tam uymayan sonuçlar kısmi eşleşme diye işaretlenir.",
      "shot": "p-ara-sonuc",
      "target": "liste",
      "click": false,
+     "zoom": true,
+     "speech": "Arama yazım hatasına dayanıklıdır. Kutuya aceleyle, harfleri eksik yazdım; Doğrusal Denklemler yine en üstte geldi. Sözcüklerin sırası da önemli değil; bir ünitenin adını yazarsan altındaki konular gelir. Tam uymayan sonuçlar kısmi eşleşme diye işaretlenir."
+    },
+    {
+     "caption": "Her konunun altında o konuyu içeren kitaplar ve ünitede kaç test kaldığı yazar. 3D L G S Matematik kitabına tıkladım. Seçimim artık kutunun içinde bir çip olarak duruyor: konu, ders ve kitap. Çipteki çarpıyla seçimi kaldırırsın.",
+     "shot": "p-ara-secildi",
+     "target": "cip",
+     "click": false,
      "zoom": true
     },
     {
-     "caption": "Kaynağa tıkladım. Mavi şeritte seçimim görünüyor: konu, ders ve kitap. Adet kutusu kendiliğinden doldu. Bu sayı, senin bu derste genelde verdiğin test sayısından gelir; sağda nedenini yazar. İstersen değiştirirsin.",
+     "caption": "Yanındaki kutu test sayısıdır ve kendiliğinden doldu. Bu sayı senin bu öğrenciye genelde verdiğin adetten gelir; altında nedeni yazar. Kitapta kaç test kaldığını da hemen altında görürsün.",
      "shot": "p-ara-secildi",
      "target": "adet",
      "click": false,
      "zoom": true
     },
     {
-     "caption": "Ekle'ye bastım. Görev bugünün kartına düştü. Satırda ders, konu ve test sayısı görünüyor. Bu üç test, kitabın o ünitesinden ayrıldı; yani başka bir güne aynı testleri yanlışlıkla bir daha veremezsin.",
+     "caption": "Bu kutu soru değil test sayısıdır. Yanlışlıkla yirmi yazdım; sistem hemen uyardı: soru sayısı yazdıysan test sayısına çevir, bir test genelde on ile on beş soru. Görev yine eklenebilir, uyarı yalnız seni korumak için.",
+     "shot": "p-adet-uyari",
+     "target": "uyari",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Üç yazıp Ekle'ye bastım. Görev bugünün kartına düştü; satırda ders, konu ve test sayısı görünüyor. Bu üç test kitabın o ünitesinden ayrıldı; yani aynı testleri başka bir güne yanlışlıkla bir daha veremezsin.",
      "shot": "p-eklendi",
      "target": "kart",
      "click": false,
      "zoom": true
     },
     {
-     "caption": "Bazen öğrenci o konuyu kendi kaynağından ya da okulda çalışır. O zaman konunun altındaki Kaynak belirtmeden ver seçeneğini kullan. Görev yine konuya bağlanır ve müfredat takibine girer, ama hiçbir kitaptan test ayrılmaz.",
+     "caption": "Bazen öğrenci o konuyu kendi kaynağından ya da okulda çalışır. O zaman konunun altındaki Kaynak belirtmeden ver satırını kullan. Görev yine müfredat konusuna bağlanır; müfredat haritasına, konu performansına ve kurum tablolarına işler. Yalnız hiçbir kitaptan test ayrılmaz.",
      "shot": "p-kaynaksiz",
      "target": "buton",
      "click": false,
@@ -788,7 +871,28 @@
      "zoom": true
     },
     {
-     "caption": "Görevin gün içindeki yerini de belirleyebilirsin. Ayrıntılı formdaki Periyot seçeneğiyle Sabah, Öğle ya da Akşam seçersin. Salı gününe bir sabah, bir de akşam görevi ekledim. Gün kartı artık bölümlere ayrıldı ve her bölüm kendi rengiyle görünüyor.",
+     "caption": "Öğrencinin hiç kitabı olmayan bir derse de test verebilirsin. Ayrıntılı formda dersi İnkılap Tarihi seçtim. Elif'in bu derste kitabı yok; bu yüzden kitap kutusunda kendiliğinden Kaynaksız seçildi ve yanında Müfredat konusu alanı açıldı.",
+     "shot": "p-ayrintili-kaynaksiz",
+     "target": "kitap",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Konu alanına tıklayınca arama kutulu bir liste açılır. Konular sınıfa ve üniteye göre gruplanmıştır; uzun listede aşağı inmen gerekmez. Atatürk yazdım; üç konu kaldı. İlkini seçip iki test yazıyorum.",
+     "shot": "p-konu-secici",
+     "target": "panel",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Görev konunun adıyla eklendi: Atatürkçülük ve Çağdaşlaşan Türkiye, iki test. Kaynaksız görevler de öğrencinin konu performansına ve müfredat ilerlemesine sayılır.",
+     "shot": "p-kaynaksiz-eklendi",
+     "target": "kart",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Görevin gün içindeki yerini de belirleyebilirsin. Ayrıntılı formdaki Periyot seçeneğiyle Sabah, Öğle ya da Akşam seçersin. Yarına bir sabah, bir de akşam görevi ekledim. Gün kartı bölümlere ayrıldı ve her bölüm kendi rengiyle görünüyor.",
      "shot": "p-periyot",
      "target": "kart",
      "click": false,
@@ -806,12 +910,13 @@
   {
    "key": "prog-panel",
    "module": "Program",
+   "branch": "gun-gun",
    "title": "Kaynak Durumu ve Müfredat'tan görev",
    "subtitle": "Kalan testi gör, oradan ver; konuyu kapat",
    "action": null,
    "steps": [
     {
-     "caption": "Görev vermenin ikinci yolu sağdaki Kaynak Durumu paneli. Çarşamba gününü seçtim. Panelde Matematik'i, sonra 3D L G S Matematik kitabını açtım. Her ünitenin satırında çözülen, programdaki ve kalan test sayısı yazar.",
+     "caption": "Görev vermenin ikinci yolu sağdaki Kaynak Durumu paneli. Haftanın bir gününü seçtim. Panelde Matematik'i, sonra 3D L G S Matematik kitabını açtım. Her ünitenin satırında çözülen, programdaki ve kalan test sayısı yazar.",
      "shot": "p-kaynak",
      "target": "panel",
      "click": false,
@@ -878,6 +983,7 @@
   {
    "key": "prog-izgara",
    "module": "Program",
+   "branch": "gun-gun",
    "title": "Hafta ızgarası: taşı, kopyala, yay",
    "subtitle": "Görevleri günler arasında yönet",
    "action": null,
@@ -890,7 +996,7 @@
      "zoom": true
     },
     {
-     "caption": "Bir görevi başka güne almanın en kolay yolu sağ tık. Pazartesideki görevin üzerine sağ tıkladım. Menüde dört seçenek var: başka güne taşı, başka güne kopyala, günü düzenle ve görevi sil.",
+     "caption": "Bir görevi başka güne almanın en kolay yolu sağ tık. Izgaradaki bir görevin üzerine sağ tıkladım. Menüde dört seçenek var: başka güne taşı, başka güne kopyala, günü düzenle ve görevi sil.",
      "shot": "p-sagtik",
      "target": "menu",
      "click": false,
@@ -904,14 +1010,14 @@
      "zoom": true
     },
     {
-     "caption": "Perşembeye tıkladım. Görevin bir kopyası perşembeye eklendi. Kopyalar taslak olarak eklenir; yani yayınlayana kadar öğrenci görmez. Aynı görev o günde zaten varsa sistem ikinci kez eklemez.",
+     "caption": "Ertesi güne tıkladım. Görevin bir kopyası o güne eklendi. Kopyalar taslak olarak eklenir; yani yayınlayana kadar öğrenci görmez. Aynı görev o günde zaten varsa sistem ikinci kez eklemez.",
      "shot": "p-kopyalandi",
      "target": "hucre",
      "click": false,
      "zoom": true
     },
     {
-     "caption": "Taşıma da aynı şekilde çalışır. Çarşambadaki bir görevi sağ tıkla Başka güne taşı ile cumaya aldım. Fareyle de yapabilirsin: görevi sürükleyip başka bir güne bırakırsan taşınır, Ctrl tuşuna basılı tutarak bırakırsan kopyalanır.",
+     "caption": "Taşıma da aynı şekilde çalışır. Bugünün görevini sağ tıkla Başka güne taşı ile iki gün sonrasına aldım. Fareyle de yapabilirsin: görevi sürükleyip başka bir güne bırakırsan taşınır, Ctrl tuşuna basılı tutarak bırakırsan kopyalanır.",
      "shot": "p-tasindi",
      "target": "hucre",
      "click": false,
@@ -925,14 +1031,14 @@
      "zoom": true
     },
     {
-     "caption": "Pencerede görevin çoğaltılacağı günleri seçersin. Kaynak gün ve geçmiş günler seçilemez. Ben hafta sonunu çıkardım. Altındaki kutu önemli: bölüm biterse kitabın sıradaki bölümünden devam et. Ünitede yeterli test kalmazsa kopyalar kitabın sıradaki ünitesinden devam eder. Dört güne yay'a basıyorum.",
+     "caption": "Pencerede görevin çoğaltılacağı günleri seçersin. Kaynak gün ve geçmiş günler seçilemez. Altındaki kutu önemli: bölüm biterse kitabın sıradaki bölümünden devam et. Ünitede yeterli test kalmazsa kopyalar kitabın sıradaki ünitesinden devam eder. Dört güne yay'a basıyorum.",
      "shot": "p-yay",
      "target": "pencere",
      "click": false,
      "zoom": true
     },
     {
-     "caption": "Görev seçtiğim günlere taslak olarak çoğaltıldı. Perşembeye zaten kopyaladığım için o gün atlandı; aynı görev bir güne iki kez yazılmaz. Her gün kitaptan ayrı testler ayrıldı. Kaynak yetmeyen gün olursa sistem bunu açıkça söyler.",
+     "caption": "Görev seçtiğim günlere taslak olarak çoğaltıldı. Ertesi güne zaten kopyaladığım için o gün atlandı; aynı görev bir güne iki kez yazılmaz. Her gün kitaptan ayrı testler ayrıldı. Kaynak yetmeyen gün olursa sistem bunu açıkça söyler.",
      "shot": "p-yayildi",
      "target": "izgara",
      "click": false,
@@ -943,6 +1049,7 @@
   {
    "key": "prog-iskelet",
    "module": "Program",
+   "branch": "gun-gun",
    "title": "İskelet ve öneriler",
    "subtitle": "Her hafta tekrar eden düzen, kendiliğinden",
    "action": null,
@@ -962,7 +1069,7 @@
      "zoom": true
     },
     {
-     "caption": "Bastığımda bu haftanın görevlerinden her gün için ders ve kaynak satırları çıkarıldı. Soldaki listede her günün satırları görünüyor. Salı'yı seçtim.",
+     "caption": "Bastığımda bu haftanın görevlerinden her gün için ders ve kaynak satırları çıkarıldı. Soldaki listede her günün satırları görünüyor. Satırı olan bir günü seçtim.",
      "shot": "p-iskelet-gun",
      "target": "gunler",
      "click": false,
@@ -976,7 +1083,7 @@
      "zoom": true
     },
     {
-     "caption": "Üç satır türü var. Konu satırı kitapta kaldığı konudan devam eder. Okul ya da dershane dersi, o gün okulda işlenen derstir; sistem o gün hangi konunun işlendiğini sorar. Salı gününe Fen Bilimleri için böyle bir satır ekledim.",
+     "caption": "Üç satır türü var. Konu satırı kitapta kaldığı konudan devam eder. Okul ya da dershane dersi, o gün okulda işlenen derstir; sistem o gün hangi konunun işlendiğini sorar. Bu güne Fen Bilimleri için böyle bir satır ekledim.",
      "shot": "p-iskelet-capa",
      "target": "satir",
      "click": false,
@@ -1004,7 +1111,7 @@
      "zoom": true
     },
     {
-     "caption": "Salı'yı açtım. Kartta İskeletten öneriler bölümü var. Her satırda ders, kaynak ve öneri rozeti görünüyor. Rutin satırlarını tek tek onaylamak zorunda değilsin: Rutinleri onayla düğmesi hepsini birden yazar.",
+     "caption": "Gelecek haftanın bir gününü açtım. Kartta İskeletten öneriler bölümü var. Her satırda ders, kaynak ve öneri rozeti görünüyor. Rutin satırlarını tek tek onaylamak zorunda değilsin: Rutinleri onayla düğmesi hepsini birden yazar.",
      "shot": "p-oneri",
      "target": "oneriler",
      "click": false,
@@ -1050,6 +1157,7 @@
   {
    "key": "prog-yayin",
    "module": "Program",
+   "branch": "gun-gun",
    "title": "Taslak, yayın ve veliye duyuru",
    "subtitle": "Programı öğrenciye ve veliye ulaştır",
    "action": {
@@ -1108,6 +1216,7 @@
   {
    "key": "prog-takip",
    "module": "Program",
+   "branch": "gun-gun",
    "title": "Hafta boyunca takip",
    "subtitle": "Kim ne yaptı, hafta nereye gidiyor",
    "action": null,
@@ -1149,6 +1258,433 @@
     },
     {
      "caption": "Bir hafta biterken yapılmadan kalan görevler varsa şeritte Devret paneli çıkar. Bu görevleri sürükleyerek ya da Ekle ile yeni haftaya taşırsın; taşınan görev listeden düşer. Hepsi bu kadar. Programla ilgili her şeyi gördün; sıradaki konu denemeler.",
+     "shot": null,
+     "target": null,
+     "click": false,
+     "zoom": false
+    }
+   ]
+  },
+  {
+   "key": "havuz-giris",
+   "module": "Havuz",
+   "branch": "havuz",
+   "title": "Havuz nedir, ilk dönem nasıl açılır?",
+   "subtitle": "Dönem, havuz, kap — ve dönem kartı",
+   "action": {
+    "label": "Bir öğrencini havuz moduna al, ilk dönemini aç",
+    "href": "/teacher/students",
+    "checkKey": "program-kur",
+    "doneLabel": "Havuzun hazır",
+    "hint": "Yol: sol menü → Öğrenciler → öğrencinin sayfasında İşlemler → Haftalık havuz modu.",
+    "optional": true
+   },
+   "steps": [
+    {
+     "caption": "Haftalık havuz yolundasın. Üç kavramı bilmen yeter. Dönem: iki seans arasındaki süre, genelde bir hafta. Havuz: o dönemde yapılacak işlerin listesi. Kap: öğrencinin her gün havuzdan aldığı, o günün görevleri.",
+     "shot": null,
+     "target": null,
+     "click": false,
+     "zoom": false
+    },
+    {
+     "caption": "Bir öğrenci havuz moduna geçince sayfasında Haftalık Havuz düğmesi çıkar. Geçişi İşlemler menüsünden yaparsın; pencere hangi görevin silinip hangisinin kalacağını önceden gösterir.",
+     "shot": "hv-mod-pencere",
+     "target": "pencere",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Ece'nin dönemi dünkü seansta kapandı ve yeni dönem henüz açılmadı. Üstte seans günü ve beklenen sonraki seans var. Beklenen gün çakılı değildir; öğrenci gelmezse dönem uzar, tempo yeni güne göre hesaplanır.",
+     "shot": "hv-donem-ac",
+     "target": "ac",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Son dönemden kalan kalemler Devredilecek kalemler listesinde. Yeni haftaya taşıyacaklarını tek tek işaretlersin, gerekirse miktarı yeniden yazarsın. Toplu düğme bilinçli olarak yok; her kalem için karar sensin. Üçüncü kez devredilen kalem kaçınılan diye işaretlenir.",
+     "shot": "hv-donem-ac",
+     "target": "devir",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Dönem açıldığında havuz sayfasının en üstünde dönem kartı durur. Deniz'in dönemi beşinci gününde. Altındaki şerit dönemi gün gün gösterir: geçen günler, bugün, kalan günler ve seans günü.",
+     "shot": "hv-donem-kart",
+     "target": "takvim",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Dört ölçü dönemin özeti. Tamamlanan: havuzun yüzde kırk yedisi yapıldı; çubuktaki çizgi bu güne kadar beklenen yeri gösterir. Biten kalem, seansa kalan gün ve günde gereken birim. Her ölçünün altında ne anlama geldiği yazar.",
+     "shot": "hv-donem-kart",
+     "target": "olcu",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Sağ üstteki İzle ve Düzenle anahtarı sayfayı ikiye ayırır. İzle, seansa kadar öğrencinin ne yaptığını görmek içindir. Düzenle, havuza kalem eklemek ve havuzu yönetmek içindir. Önce havuzu yazmayı görelim.",
+     "shot": "hv-donem-kart",
+     "target": "gorunum",
+     "click": false,
+     "zoom": true
+    }
+   ]
+  },
+  {
+   "key": "havuz-kalem",
+   "module": "Havuz",
+   "branch": "havuz",
+   "title": "Havuza kalem eklemek",
+   "subtitle": "Ders, nereden, miktar — ya da tek satırda yaz",
+   "action": null,
+   "steps": [
+    {
+     "caption": "Düzenle görünümüne geçtim. Solda Havuza kalem ekle paneli, sağda havuzun kendisi var. Havuz yazıldığı anda öğrenciye açılır; ayrıca yayınlaman gerekmez.",
+     "shot": "hv-duzenle",
+     "target": "ekle",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Birinci adım ders. Dersler okul, T Y T ve A Y T başlıklarıyla gruplanır. Öğrencinin kitabı olan dersler rozetle işaretlidir; havuzda kalemi olan derslerde kaç kalem olduğu yazar. T Y T Matematik'e tıklıyorum.",
+     "shot": "hv-kalem-ders",
+     "target": "mat",
+     "click": true,
+     "zoom": true
+    },
+    {
+     "caption": "İkinci adım: nereden? İki yol var. Öğrencinin kitabından: kitabın kendi bölümleri listelenir, her bölümde kaç test kaldığı yazar. Son kalem verilen bölüm SON diye işaretlenir. Kitaptan verilen kalemde öğrenci işaretledikçe kitap sayacı da ilerler.",
+     "shot": "hv-kalem-kitap",
+     "target": "kitap",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Çarpanlara Ayırma bölümünü seçtim. Üçüncü adımda miktarı seçersin; birim kitaptan gelir. Kalanı ver düğmesi bölümde kalan bütün testleri tek seferde yazar. Havuza ekle'ye basınca kalem listeye düşer.",
+     "shot": "hv-kalem-miktar-kitap",
+     "target": "ekle",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "İkinci yol: Müfredat konusundan, yani kaynaksız. Öğrencinin elinde olmayan bir kaynaktan ya da okul ödevinden çalışacaksa resmi konuyu seçer, sayıyı sen yazarsın. Konular sınıfa göre gruplanır; kendi sınıfı önde gelir. Arama kutusu bütün sınıflarda arar.",
+     "shot": "hv-kalem-konu",
+     "target": "konular",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Bir konu seçtim. Birim olarak test, soru, sayfa, deneme ya da etkinlik seçebilirsin. Test ve soru kalemi mutlaka bir konuya bağlanır; böylece konu performansına ve müfredat haritasına işler. Ek seçeneklerde gün etiketi ve ders öğretmeni ödevi işareti var.",
+     "shot": "hv-kalem-miktar",
+     "target": "birim",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Kalem eklendi. Havuz listesi derslere göre gruplu ve her ders kendi renginde. Üstteki çubuk birimlerin derslere nasıl dağıldığını gösterir. Her kalemde kaç birimin yapıldığı, kitaptan geliyorsa kitapta kaç testin çözüldüğü yazar.",
+     "shot": "hv-kalem-liste",
+     "target": "liste",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Rozetlere dikkat et: Devir iki, bu kalemin iki dönemdir taşındığını söyler. Kaç kez kaba girdi, öğrencinin onu kaç kez seçip geri bıraktığını gösterir. Eğik yazılı kalem ders öğretmeninin ödevidir.",
+     "shot": "hv-kalem-liste",
+     "target": "liste",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Listenin altında Bu havuzda kalemi olmayan dersler var. Zorunlu değil, bir kontrol listesi. Bir derse tıklarsan ekleme paneli doğrudan o derse geçer.",
+     "shot": "hv-kalem-eksik",
+     "target": "eksik",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Daha hızlı bir yol var: Hızlı yaz. Doğal yazarsın, ayraç gerekmez. Fizik hareket üç test yazıp Ayrıştır'a bastım. Sistem dersi, konuyu, sayıyı ve birimi buldu; sonucu önce sana gösterir, onaylamadan hiçbir şey yazılmaz.",
+     "shot": "hv-hizli",
+     "target": "okunan",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Bu kez yalnız paragraf dört test yazdım. Ders T Y T Türkçe olarak bulundu, konu için bir tahmin geldi: Paragraf Karma. Tahmin sarı renkle işaretlenir; doğru değilse değiştirirsin, doğruysa Böyle ekle'ye basarsın. Birden çok konuya uyan sözcüklerde seçenekler listelenir.",
+     "shot": "hv-hizli-secenek",
+     "target": "okunan",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "En altta Gün gün nasıl görünür önizlemesi var. Havuzun kalan birimlerini şubenin ders programına göre günlere dağıtır: bir dersin kalemi önce o dersin dershanede işlendiği güne yerleşir. Bu yalnız bir öneridir; günleri öğrenci kendisi seçer.",
+     "shot": "hv-onizleme",
+     "target": "onizleme",
+     "click": false,
+     "zoom": true
+    }
+   ]
+  },
+  {
+   "key": "havuz-sube",
+   "module": "Havuz",
+   "branch": "havuz",
+   "title": "Şube ve dershane ders programı",
+   "subtitle": "Hangi gün hangi ders işleniyor",
+   "action": null,
+   "steps": [
+    {
+     "caption": "Havuz öğrencin bir şubede ise, örneğin On İki A, şubenin dershane ders programını bir kez girersin. Tabloda her satır bir ders, her sütun bir gün. Hücreye dokununca o gün o ders işleniyor demektir.",
+     "shot": "hv-sube",
+     "target": "tablo",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Bu tablo iki yerde işe yarar. Birincisi önizleme: kalemler dersin işlendiği güne yerleşir. İkincisi öğrencinin sabah hatırlatması: bugün dershanede Biyoloji vardı ve havuzunda Biyoloji kalemin var diye konuşur. Program şubeye bağlıdır; aynı şubedeki bütün öğrencilerde geçerlidir.",
+     "shot": "hv-sube",
+     "target": "sube",
+     "click": false,
+     "zoom": true
+    }
+   ]
+  },
+  {
+   "key": "havuz-ogrenci",
+   "module": "Havuz",
+   "branch": "havuz",
+   "title": "Öğrenci tarafı: günün kabı",
+   "subtitle": "Kaba al, işaretle, gece havuza döner",
+   "action": null,
+   "steps": [
+    {
+     "caption": "Şimdi öğrencinin ne gördüğüne bakalım. Deniz Bugün sayfasını açtığında en üstte haftanın havuzu kartı var: yüzde kaç bittiği, seansa kaç gün kaldığı, bugün kabında kaç kalem olduğu. Havuzu aç düğmesi Havuzum sayfasına götürür.",
+     "shot": "hv-ogr-bugun",
+     "target": "kart",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Havuzum sayfasında haftanın özeti ve tempo cümlesi var. Dil yargılamaz: tempo biraz geride, bugün bir fazla yapmak haftayı rahatlatır der. Bugün dershanede işlenen dersler de burada yazar.",
+     "shot": "hv-ogr-havuzum",
+     "target": "ozet",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Aşağıda havuzdaki kalemler derslere göre listelenir. Her kalemin yanında Kaba al düğmesi var. Kaba almak, o kalemi bugünün görevi yapmak demektir.",
+     "shot": "hv-ogr-liste",
+     "target": "liste",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Kaba al'a basınca Bugün kaç tane diye sorar. Seçilebilecek sayılar kalemde kalan kadardır. Öğrenci çok büyük bir sayı seçerse sistem gerçekten çözecek misin diye nazikçe sorar; engel değildir.",
+     "shot": "hv-ogr-kaba-al",
+     "target": "pencere",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Kalem artık Bugünün kabında. Kapta her görevin dersi, kaç birim olduğu ve ilerleme çubuğu görünür. Hiç dokunulmamış görevi geri ok ile havuza geri alabilir.",
+     "shot": "hv-ogr-kap",
+     "target": "kap",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "İşaretleme Bugün sayfasında yapılır, gün gün programdaki gibi: testleri işaretler, doğru, yanlış ve boş sayısını girer. Bugün yapılmayan kısım gece kendiliğinden havuza döner; kısmen yapılanın yapılan kısmı kalır.",
+     "shot": "hv-ogr-gorev",
+     "target": "gorev",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Öğrenci havuza kendisi de kalem ekleyebilir, örneğin kendi bulduğu bir paragraf denemesi ya da öğretmeninin verdiği bir ödev. Senin onayın gelene kadar bu kalem yüzdeye girmez.",
+     "shot": "hv-ogr-kalem-ekle",
+     "target": "pencere",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Haftaya nasıl dağılır kartı, senin önizlemenle aynı kuralla öğrencinin işini günlere böler. Bu da bir öneridir. Öğrenci sabah kabı boşsa ve akşam işaretlemediği kalem varsa hatırlatma alır.",
+     "shot": null,
+     "target": null,
+     "click": false,
+     "zoom": false
+    }
+   ]
+  },
+  {
+   "key": "havuz-izle",
+   "module": "Havuz",
+   "branch": "havuz",
+   "title": "Seansa kadar izlemek",
+   "subtitle": "Gün gün, derslere göre, uyarılar",
+   "action": null,
+   "steps": [
+    {
+     "caption": "İzle görünümüne dönelim. Dönem kartının altında uyarı kartı durur. Deniz için tempo geride diyor: kalan yirmi dokuz birim için günde dokuz virgül yedi birim gerekiyor, son üç dönemde günde ortalama üç birim yaptı.",
+     "shot": "hv-izle-uyari",
+     "target": "uyari",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Neden düğmesi kanıtı açar: kalan birim, gereken tempo, öğrencinin alışkanlığı ve kural. Uyarı, gereken tempo alışkanlığın bir buçuk katını aşınca çıkar; ilk iki dönem susar. Öğrenciye kırmızı uyarı gitmez, yalnız yargılamayan bir ipucu gider.",
+     "shot": "hv-izle-uyari",
+     "target": "kanit",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Gün gün şeridi öğrencinin her gün ne yaptığını gösterir. Her gün renkli dilimlere ayrılır; her renk bir derstir. Altında o gün yapılan birim yazar. Gelecek günler soluk, seans günü kesikli çerçevelidir.",
+     "shot": "hv-izle-gunler",
+     "target": "gunler",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Bir güne dokununca o günün görevleri açılır: hangi kalemden kaç birim yapıldığı, doğru, yanlış ve boş sayıları. Seansa girmeden önce haftanın nasıl geçtiğini burada okursun.",
+     "shot": "hv-izle-gun-detay",
+     "target": "detay",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Derslere göre ilerleme kartları her dersin yüzdesini gösterir. Koyu renk öğrencinin kendi kaydı, açık renk seansta senin işaretlediğin kısımdır. Kaçınılan kalemi olan ders ayrıca işaretlenir.",
+     "shot": "hv-izle-dersler",
+     "target": "dersler",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Onayını bekleyen öğrenci kalemleri burada listelenir. Öğrenci kaynağını seansta gösterince Onayla'ya basarsın; o andan sonra yüzdeye girer.",
+     "shot": "hv-izle-onay",
+     "target": "onay",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Bütün havuz öğrencilerini tek yerde görmek için Görüşmeler sayfasının üstündeki Bugünkü görüşme listesine bak. Seansı bugün olanlar en üsttedir; her öğrencide tek bir ana sinyal, gerisi ek altında. Gördüm, sinyali üç gün gizler; durum sürerse geri gelir.",
+     "shot": "hv-gorusme-listesi",
+     "target": "liste",
+     "click": false,
+     "zoom": true
+    }
+   ]
+  },
+  {
+   "key": "havuz-seans",
+   "module": "Havuz",
+   "branch": "havuz",
+   "title": "Seans ekranı ve Seansı bitir",
+   "subtitle": "Kalem kalem bak, işaretle, yeni dönemi aç",
+   "action": null,
+   "steps": [
+    {
+     "caption": "Seans günü dönem kartındaki Seans ekranı düğmesine basarsın. Bu ekran tek sayfadır, sekme yok. En üstte tek cümlelik özet: havuzun yüzde kırk yedisi, kaçınma ve onay bekleyen kalem.",
+     "shot": "hv-seans-ust",
+     "target": "ozet",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Kalem kalem bölümünde her kalemde öğrencinin kendi kaydı, senin seansta işaretlediğin ve kalan görünür. Öğrenci kâğıt üzerinde çözmüş ama sisteme girmemişse kaynağına bakar, seansta kutusuna sayıyı yazarsın. Kitaptan gelen kalemde bu sayı kitap sayacına da yazılır.",
+     "shot": "hv-seans-kalem",
+     "target": "kalemler",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Kitaba bak bağlantısı öğrencinin kitap sayfasını açar. Konuyu kapat düğmesiyle öğrencinin bitirdiği konuyu müfredatta tamamlanmış sayarsın. Etkinlik kaleminde sayı yerine yapıldı düğmesi var.",
+     "shot": "hv-seans-kalem",
+     "target": "kalemler",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Sağda kaçınılan kalemler listelenir: üç kez kaba girip geri dönen, üçüncü kez devredilen ya da günlerdir hiç kaba alınmayan kalem. Seansta konuş: zor mu geldi, kaynak mı yok, zaman mı kalmadı? Denemesi varsa son denemenin şeridi de burada görünür.",
+     "shot": "hv-seans-kacinilan",
+     "target": "kacinilan",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Görüşme bitince Seansı bitir'e basarsın. Tek işlemde dönem kapanır, seans kaydı yazılır ve bugün yeni dönem açılır.",
+     "shot": "hv-seans-ust",
+     "target": "bitir",
+     "click": true,
+     "zoom": true
+    },
+    {
+     "caption": "Pencerede kalanı olan kalemler listelenir. Devredeceklerini tek tek işaretler, miktarı değiştirirsin. Beklenen sonraki seansı seçersin. Seans kaydı yaz kutusu açıksa gündem ve notun Seanslar sekmesine ve tahsilata geçer.",
+     "shot": "hv-seans-bitir",
+     "target": "pencere",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Yeni dönemde devredilen kalem Devir rozetiyle görünür ve kaç kez devredildiği sayılır. Üçüncü devir kaçınma sinyali üretir; o kalemi seansta ayrıca konuşmak gerekir.",
+     "shot": null,
+     "target": null,
+     "click": false,
+     "zoom": false
+    }
+   ]
+  },
+  {
+   "key": "havuz-donem",
+   "module": "Havuz",
+   "branch": "havuz",
+   "title": "Ara, dönem geçmişi ve gün güne dönüş",
+   "subtitle": "Seanssız kapatma, veli özeti, geçmiş, mod geçişi",
+   "action": null,
+   "steps": [
+    {
+     "caption": "Bazen seans yapılmaz: öğrenci tatildedir ya da görüşme olmamıştır. Bunun için dönem kartında Seanssız kapat var. Pencerede iki seçenek çıkar: görüşmesiz kapat ya da ara, yani tatil. Seans yapılmadığını onaylaman gerekir; görüşmesiz kapatmada kısa bir gerekçe de yazarsın.",
+     "shot": "hv-seanssiz",
+     "target": "pencere",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Kapanan her dönem Dönem geçmişi'nde bir kart olur: tarih aralığı, yüzde, ders ders ilerleme, devir girişi ve çıkışı. Geçmiş sınırsız saklanır. Dönem kapanınca veli özeti hazırlanır; kendiliğinden gitmez.",
+     "shot": "hv-gecmis",
+     "target": "gecmis",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Veli özetini önizle'ye basınca özet açılır. Cümleleri tek tek düzenler ya da silersin, sonra gönderirsin. Senin notun ve öğrencinin onaylanmamış kalemleri özete girmez.",
+     "shot": "hv-veli-ozet",
+     "target": "satirlar",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Bir dönem kartındaki Aç düğmesi o dönemi ayrıntısıyla gösterir. Havuz kalemleri sekmesinde ne verildiğini, ne bittiğini ve neyin devredildiğini görürsün.",
+     "shot": "hv-donem-pencere",
+     "target": "pencere",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Gün gün sekmesi o dönemde öğrencinin her gün ne çalıştığını, kaç test çözdüğünü, doğru, yanlış ve boş sayılarını gösterir. Gün gün programdaki geçmiş haftaların karşılığı budur.",
+     "shot": "hv-donem-pencere-gun",
+     "target": "pencere",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Öğrenciyi gün gün programa geri almak istersen bunu seansın sonunda yaparsın. Seansı bitir penceresinde Bu seansla gün gün programa geç kutusunu işaretle. Kutu, geçişte ne olacağını açıkça yazar: çözülenler müfredatta kalır, kalan kalemler devredilmez, dokunulmamış görevler silinir.",
+     "shot": "hv-seans-gungune",
+     "target": "gecis",
+     "click": false,
+     "zoom": true
+    },
+    {
+     "caption": "Hepsi bu kadar. Havuzla ilgili her şeyi gördün: dönemi açmak, havuzu yazmak, öğrencinin kabı, izlemek ve seans. Sıradaki konu denemeler.",
      "shot": null,
      "target": null,
      "click": false,

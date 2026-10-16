@@ -18,7 +18,7 @@ export default async function TeacherGuidePage({
       initialChapter={bolum ?? null}
       guideKey="coach_onboarding"
       title="Rehber — Rota ile başlangıç"
-      description="Kitaplar, haftalık program ve deneme analizi — sistemin kalbi olan üç sayfanın adım adım eğitimi."
+      description="Kitaplar, program (gün gün ya da haftalık havuz) ve deneme analizi — sistemin kalbi olan sayfaların adım adım eğitimi."
     />
   );
 }

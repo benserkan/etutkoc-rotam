@@ -20,6 +20,9 @@ import {
   type GuideContent,
   type GuideProgressAction,
   type GuideResponse,
+  BRANCH_LABELS,
+  inferBranch,
+  type GuideBranch,
 } from "@/lib/guide";
 
 /**
@@ -42,30 +45,48 @@ interface Props {
     action: GuideProgressAction;
     chapter?: string;
     step?: number;
-  }) => void;
+  }) => void | Promise<unknown>;
+  /** Bu yollardaki bölümler hiç gösterilmez (gün gün öğrenciye "havuz" bölümü). */
+  hideBranches?: GuideBranch[];
 }
 
 const SCENE_ASPECT = 1440 / 900;
 
-export function GuidePlayer({ content, guide, onProgress }: Props) {
-  const chapters = content.chapters;
+export function GuidePlayer({ content, guide, onProgress, hideBranches }: Props) {
+  const allChapters = React.useMemo(
+    () =>
+      content.chapters.filter(
+        (c) => !c.branch || !hideBranches?.includes(c.branch),
+      ),
+    [content.chapters, hideBranches],
+  );
   const doneSet = React.useMemo(
     () => new Set(guide.state.chapters_done),
     [guide.state.chapters_done],
   );
 
-  const initialChapterIdx = React.useMemo(() => {
-    const cur = guide.state.current_chapter;
-    if (cur) {
-      const i = chapters.findIndex((c) => c.key === cur);
-      if (i >= 0) return i;
-    }
-    const firstOpen = chapters.findIndex((c) => !doneSet.has(c.key));
-    return firstOpen >= 0 ? firstOpen : 0;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount'ta bir kez
-  }, []);
+  // Dallanan rehber: seçilen yol (gün gün / havuz) — öbür yol rayda gizli
+  const [branch, setBranch] = React.useState<GuideBranch | null>(() =>
+    inferBranch(
+      allChapters,
+      guide.state.current_chapter,
+      (k) => doneSet.has(k) || (guide.state.steps_watched?.[k]?.length ?? 0) > 0,
+    ),
+  );
+  const [showOther, setShowOther] = React.useState(false);
+  const [choosing, setChoosing] = React.useState(false);
+  const chapters = React.useMemo(
+    () => allChapters.filter((c) => !c.branch || !branch || c.branch === branch || showOther),
+    [allChapters, branch, showOther],
+  );
 
-  const [chapterIdx, setChapterIdx] = React.useState(initialChapterIdx);
+  const [chapterKey, setChapterKey] = React.useState<string>(() => {
+    const cur = guide.state.current_chapter;
+    if (cur && allChapters.some((c) => c.key === cur)) return cur;
+    const firstOpen = allChapters.find((c) => !doneSet.has(c.key));
+    return (firstOpen ?? allChapters[0]).key;
+  });
+  const chapterIdx = Math.max(0, chapters.findIndex((c) => c.key === chapterKey));
   const [stepIdx, setStepIdx] = React.useState(0);
   const [playing, setPlaying] = React.useState(false);
   const [finished, setFinished] = React.useState(false); // bölüm sonu kartı
@@ -179,11 +200,18 @@ export function GuidePlayer({ content, guide, onProgress }: Props) {
   }, [playing, chapter.key, stepIdx, chapter.steps]);
 
   // Bölüm değişince adım/kart durumu sıfırlanır
-  const openChapter = (idx: number) => {
-    setChapterIdx(idx);
+  const openKey = (key: string) => {
+    const target = allChapters.find((c) => c.key === key);
+    if (target?.branch) setBranch(target.branch);
+    setChapterKey(key);
     setStepIdx(0);
     setFinished(false);
+    setChoosing(false);
     setPlaying(false);
+  };
+  const openChapter = (idx: number) => {
+    const c = chapters[idx];
+    if (c) openKey(c.key);
   };
 
   const play = () => {
@@ -205,13 +233,45 @@ export function GuidePlayer({ content, guide, onProgress }: Props) {
   }, [chapter.key, played]);
 
   const completeChapter = () => {
+    // Yol seçimi olan bölüm: koç kartta yolunu seçer. Bölüm SEÇİMDEN SONRA bitmiş
+    // sayılır — sayfa oynatıcıyı chapters_done değişince yeniden kurduğu için
+    // önce yazılırsa seçim kartı kaybolur ve koç gün gün yoluna düşerdi.
+    if (chapter.choice) {
+      setFinished(false);
+      setChoosing(true);
+      return;
+    }
     onProgress({ action: "chapter_done", chapter: chapter.key });
-    if (chapterIdx < chapters.length - 1) {
-      openChapter(chapterIdx + 1);
+    // Bir yoldaki bölümden sonra öbür yolun bölümleri atlanır
+    const mine = chapter.branch ?? branch;
+    const pos = allChapters.findIndex((c) => c.key === chapter.key);
+    const next = allChapters
+      .slice(pos + 1)
+      .find((c) => !c.branch || !mine || c.branch === mine);
+    if (next) {
+      openKey(next.key);
     } else {
       setGuideDone(true);
     }
   };
+
+  const chooseBranch = (b: GuideBranch) => {
+    setBranch(b);
+    setShowOther(false);
+    const first = allChapters.find((c) => c.branch === b);
+    if (!first) return;
+    openKey(first.key);
+    // Sıra önemli: önce giriş bölümü biter, sonra seçilen yolun ilk bölümü başlar
+    // (sunucudaki current_chapter seçilen yolda kalsın).
+    void Promise.resolve(onProgress({ action: "chapter_done", chapter: chapter.key })).then(() =>
+      onProgress({ action: "start", chapter: first.key }),
+    );
+  };
+  const otherBranch: GuideBranch | null = branch
+    ? branch === "havuz"
+      ? "gun-gun"
+      : "havuz"
+    : null;
 
   if (guideDone) {
     return (
@@ -243,6 +303,7 @@ export function GuidePlayer({ content, guide, onProgress }: Props) {
           {chapters.map((c, i) => {
             const active = i === chapterIdx;
             const done = doneSet.has(c.key);
+            const isOther = Boolean(c.branch && branch && c.branch !== branch);
             return (
               <Pressable
                 key={c.key}
@@ -267,11 +328,23 @@ export function GuidePlayer({ content, guide, onProgress }: Props) {
                       : "text-xs font-medium text-slate-700"
                   }
                 >
-                  {i + 1}. {c.title}
+                  {allChapters.indexOf(c) + 1}. {c.title}
+                  {isOther ? " (öbür yol)" : ""}
                 </Text>
               </Pressable>
             );
           })}
+          {otherBranch && !showOther ? (
+            <Pressable
+              onPress={() => setShowOther(true)}
+              className="flex-row items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 active:bg-slate-100"
+            >
+              <Ionicons name="git-branch-outline" size={13} color="#64748b" />
+              <Text className="text-xs text-slate-600">
+                Öbür yol: {BRANCH_LABELS[otherBranch]}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -348,13 +421,39 @@ export function GuidePlayer({ content, guide, onProgress }: Props) {
         </Pressable>
       ) : null}
 
+      {/* Yol seçimi — programı gün gün mü havuzla mı kuracaksın */}
+      {choosing && chapter.choice ? (
+        <View className="gap-2.5 rounded-2xl border border-cyan-200 bg-white p-4">
+          <Text className="text-sm font-bold text-slate-900">{chapter.choice.prompt}</Text>
+          <Text className="text-xs text-slate-500">
+            Seçtiğin yolla devam ederiz; öbür yolu bölüm listesinden istediğin zaman açabilirsin.
+          </Text>
+          {chapter.choice.options.map((o) => (
+            <Pressable
+              key={o.branch}
+              onPress={() => chooseBranch(o.branch)}
+              className="gap-1 rounded-xl border-2 border-slate-200 p-3 active:border-cyan-600 active:bg-cyan-50"
+            >
+              <View className="flex-row items-center gap-1.5">
+                <Ionicons name="git-branch-outline" size={15} color="#0e7490" />
+                <Text className="text-sm font-semibold text-slate-900">{o.label}</Text>
+              </View>
+              <Text className="text-xs leading-5 text-slate-600">{o.description}</Text>
+              <Text className="text-xs font-medium text-cyan-800">
+                {allChapters.filter((c) => c.branch === o.branch).length} bölüm →
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
       {/* Bölüm sonu kartı */}
       {finished ? (
         <ChapterEndCard
           chapter={chapter}
           checklist={guide.checklist}
           preexisting={guide.preexisting}
-          isLast={chapterIdx === chapters.length - 1}
+          isLast={chapterIdx === chapters.length - 1 && !chapter.choice}
           onComplete={completeChapter}
           onReplay={() => {
             setFinished(false);

@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  GitBranch,
   ExternalLink,
   Eye,
   Maximize,
@@ -25,10 +27,13 @@ import { cn } from "@/lib/utils";
 import { GuideAvatar } from "@/components/guide/guide-avatar";
 import {
   audioSrc,
+  BRANCH_LABELS,
   boxFor,
+  inferBranch,
   estimateDurationMs,
   shotSrc,
   type CoachGuideContent,
+  type GuideBranch,
   type GuideChapterDef,
 } from "@/components/guide/coach-guide-data";
 import type { GuideProgressBody, GuideResponse } from "@/lib/types/guide";
@@ -44,7 +49,7 @@ import type { GuideProgressBody, GuideResponse } from "@/lib/types/guide";
  *   değişse de rehber kaldığı adımdan devam eder.
  */
 
-type Mode = "idle" | "playing" | "paused" | "end";
+type Mode = "idle" | "playing" | "paused" | "end" | "choice";
 
 interface Props {
   guide: GuideResponse;
@@ -91,6 +96,23 @@ export function GuidePlayer({
   const [played, setPlayed] = useState<Record<string, number[]>>(() => ({
     ...(guide.state.steps_watched ?? {}),
   }));
+
+  // Dallanan rehber: koçun seçtiği yol (gün gün / havuz). Açık seçim yoksa
+  // izlediği bölümlerden çıkarılır; sayfadan bir yolun bölümüyle gelindiyse o yol.
+  const [branch, setBranch] = useState<GuideBranch | null>(() =>
+    inferBranch(
+      chapters,
+      initialChapter ?? guide.state.current_chapter,
+      (k) => doneSet.has(k) || (guide.state.steps_watched?.[k]?.length ?? 0) > 0,
+    ),
+  );
+  const [showOtherBranch, setShowOtherBranch] = useState(false);
+  const hasBranches = chapters.some((c) => c.branch);
+  // Bölüm, seçilen yolda mı (ortak bölümler her zaman)?
+  const inPath = useCallback(
+    (c: GuideChapterDef) => !c.branch || !branch || c.branch === branch,
+    [branch],
+  );
 
   const firstUnwatched = useCallback(
     (key: string) => {
@@ -251,22 +273,46 @@ export function GuidePlayer({
   const selectChapter = useCallback(
     (key: string) => {
       stopAudio();
+      const target = chapters.find((c) => c.key === key);
+      if (target?.branch) setBranch(target.branch);
       setSelectedKey(key);
       setStepIdx(firstUnwatched(key));
       setMode("idle");
     },
-    [stopAudio, firstUnwatched],
+    [stopAudio, firstUnwatched, chapters],
   );
 
   const completeChapter = useCallback(async () => {
     await onProgress({ action: "chapter_done", chapter: chapter.key });
-    const next = chapters[chapterIdx + 1];
+    // Yol seçimi olan bölüm: "sonraki" yok — koç kartta yolunu seçer.
+    if (chapter.choice) {
+      setMode("choice");
+      return;
+    }
+    // Bir yoldaki bölümden sonra öbür yolun bölümleri atlanır.
+    const mine = chapter.branch ?? branch;
+    const next = chapters
+      .slice(chapterIdx + 1)
+      .find((c) => !c.branch || !mine || c.branch === mine);
     if (next) {
       selectChapter(next.key);
     } else {
       setMode("end");
     }
-  }, [onProgress, chapter.key, chapters, chapterIdx, selectChapter]);
+  }, [onProgress, chapter, chapters, chapterIdx, selectChapter, branch]);
+
+  const chooseBranch = useCallback(
+    (b: GuideBranch) => {
+      setBranch(b);
+      setShowOtherBranch(false);
+      const first = chapters.find((c) => c.branch === b);
+      if (first) {
+        void onProgress({ action: "start", chapter: first.key });
+        selectChapter(first.key);
+      }
+    },
+    [chapters, onProgress, selectChapter],
+  );
 
   const goStep = useCallback(
     (delta: number) => {
@@ -274,12 +320,24 @@ export function GuidePlayer({
         const next = Math.max(0, Math.min(chapter.steps.length - 1, idx + delta));
         return next;
       });
-      setMode((m) => (m === "end" ? "playing" : m));
+      setMode((m) => (m === "end" || m === "choice" ? "playing" : m));
     },
     [chapter.steps.length],
   );
 
-  const allDone = chapters.every((c) => doneSet.has(c.key));
+  // Rehber bitti mi: ortak bölümler + seçilen yolun bölümleri (yol seçilmediyse
+  // herhangi bir yolun tamamı).
+  const pathChapters = chapters.filter(inPath);
+  const branchDone = (b: GuideBranch) =>
+    chapters.filter((c) => c.branch === b).every((c) => doneSet.has(c.key));
+  const allDone =
+    chapters.filter((c) => !c.branch).every((c) => doneSet.has(c.key)) &&
+    (!hasBranches || (branch ? branchDone(branch) : branchDone("gun-gun") || branchDone("havuz")));
+  const isLastInPath = pathChapters[pathChapters.length - 1]?.key === chapter.key;
+  const otherBranch: GuideBranch | null = branch ? (branch === "havuz" ? "gun-gun" : "havuz") : null;
+  const visibleChapters = chapters.filter(
+    (c) => !c.branch || !branch || c.branch === branch || showOtherBranch,
+  );
   // Üç bilgi durumu (ENGEL DEĞİL): fresh = rehber başladıktan sonra gerçekten
   // yapıldı (yeşil) · already = rehberden önce zaten vardı (mavi) · hiçbiri =
   // henüz yapılmadı (amber öneri). Devam her durumda serbest.
@@ -306,11 +364,19 @@ export function GuidePlayer({
             Bölümler
           </p>
           <ul className="space-y-1">
-            {chapters.map((c, i) => {
+            {visibleChapters.map((c, i) => {
               const done = doneSet.has(c.key);
               const active = c.key === selectedKey;
-              const showModule = Boolean(c.module) && c.module !== chapters[i - 1]?.module;
-              const modChapters = showModule ? chapters.filter((x) => x.module === c.module) : [];
+              const prev = visibleChapters[i - 1];
+              const showModule = Boolean(c.module) && c.module !== prev?.module;
+              const modChapters = showModule
+                ? visibleChapters.filter((x) => x.module === c.module)
+                : [];
+              const showBranch = Boolean(c.branch) && c.branch !== prev?.branch;
+              const isOther = Boolean(c.branch && branch && c.branch !== branch);
+              // Öbür yolun katlanmış satırı: seçilen yolun son bölümünden sonra
+              const lastOfMine =
+                Boolean(branch) && c.branch === branch && visibleChapters[i + 1]?.branch !== branch;
               const modDone = modChapters.filter((x) => doneSet.has(x.key)).length;
               const modMinutes = showModule
                 ? Math.max(
@@ -336,12 +402,30 @@ export function GuidePlayer({
                       </span>
                     </div>
                   ) : null}
+                  {showBranch && c.branch ? (
+                    <div
+                      className={cn(
+                        "mx-2 mb-1 mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold",
+                        isOther
+                          ? "bg-slate-500/10 text-slate-700 dark:text-slate-300"
+                          : "bg-cyan-700 text-white",
+                      )}
+                    >
+                      <GitBranch className="h-3.5 w-3.5 shrink-0" />
+                      <span className="min-w-0 break-words">
+                        Yol: {BRANCH_LABELS[c.branch]}
+                        {isOther ? " (öbür yol)" : branch ? " — senin yolun" : ""}
+                      </span>
+                    </div>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => selectChapter(c.key)}
+                    data-chapter={c.key}
                     className={cn(
                       "flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition",
                       active ? "bg-cyan-600 text-white shadow" : "hover:bg-muted",
+                      isOther && !active && "opacity-70",
                     )}
                   >
                     <span
@@ -354,7 +438,7 @@ export function GuidePlayer({
                             : "border-slate-300 text-slate-500",
                       )}
                     >
-                      {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                      {done ? <Check className="h-3.5 w-3.5" /> : chapters.indexOf(c) + 1}
                     </span>
                     <span className="min-w-0">
                       <span className="block break-words font-medium">{c.title}</span>
@@ -368,6 +452,20 @@ export function GuidePlayer({
                       </span>
                     </span>
                   </button>
+                  {lastOfMine && otherBranch && !showOtherBranch ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowOtherBranch(true)}
+                      data-section="guide-other-branch"
+                      className="mx-2 mt-1 flex w-[calc(100%-1rem)] items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted dark:border-slate-600"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                      <span className="min-w-0 break-words">
+                        Öbür yol: {BRANCH_LABELS[otherBranch]} (
+                        {chapters.filter((x) => x.branch === otherBranch).length} bölüm) — göz at
+                      </span>
+                    </button>
+                  ) : null}
                 </li>
               );
             })}
@@ -417,11 +515,59 @@ export function GuidePlayer({
             </div>
           ) : null}
 
+          {/* Yol seçimi — programı gün gün mü havuzla mı kuracaksın */}
+          {mode === "choice" && chapter.choice ? (
+            <div
+              className="absolute inset-0 z-20 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-4"
+              data-section="guide-branch-choice"
+            >
+              <div className="w-full max-w-2xl rounded-xl border bg-card p-5 shadow-2xl">
+                <div className="flex items-start gap-3">
+                  <GuideAvatar size={56} speaking={false} />
+                  <div className="min-w-0">
+                    <p className="font-semibold">{chapter.choice.prompt}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Seçtiğin yolla devam ederiz. Öbür yolu bölüm listesinden istediğin zaman açabilirsin.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {chapter.choice.options.map((o) => {
+                    const n = chapters.filter((c) => c.branch === o.branch).length;
+                    return (
+                      <button
+                        key={o.branch}
+                        type="button"
+                        onClick={() => chooseBranch(o.branch)}
+                        data-branch={o.branch}
+                        className={cn(
+                          "rounded-xl border-2 p-4 text-left transition hover:border-cyan-600 hover:bg-cyan-500/10",
+                          branch === o.branch ? "border-cyan-600" : "border-border",
+                        )}
+                      >
+                        <span className="flex items-center gap-2 font-semibold">
+                          <GitBranch className="h-4 w-4 shrink-0 text-cyan-700 dark:text-cyan-300" />
+                          {o.label}
+                        </span>
+                        <span className="mt-1.5 block text-sm leading-snug text-muted-foreground">
+                          {o.description}
+                        </span>
+                        <span className="mt-2 block text-xs font-medium text-cyan-800 dark:text-cyan-200">
+                          {n} bölüm →
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {/* Bölüm sonu kartı */}
           {mode === "end" ? (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/60 p-4">
               <div className="w-full max-w-md rounded-xl border bg-card p-5 shadow-2xl">
-                {allDone && chapterIdx === chapters.length - 1 ? (
+                {allDone && isLastInPath ? (
                   <CompletionCard
                     busy={busy}
                     onReset={() => onProgress({ action: "reset" })}
@@ -588,7 +734,7 @@ export function GuidePlayer({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => (playing ? setMode("paused") : mode === "end" ? begin() : setMode("playing"))}
+            onClick={() => (playing ? setMode("paused") : mode === "end" || mode === "choice" ? begin() : setMode("playing"))}
           >
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
@@ -614,7 +760,7 @@ export function GuidePlayer({
                 aria-label={`Adım ${i + 1}`}
                 onClick={() => {
                   setStepIdx(i);
-                  if (mode === "end" || mode === "idle") setMode("playing");
+                  if (mode === "end" || mode === "choice" || mode === "idle") setMode("playing");
                 }}
                 className={cn(
                   "h-2 rounded-full transition-all",

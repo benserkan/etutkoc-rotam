@@ -113,7 +113,7 @@ def seed() -> dict:
         i_c = pm.add_item(db, period=p1, student=s, subject=fiz, quantity=None, unit="etkinlik", label="Optik videosu")
         pm.add_item(db, period=p1, student=s, subject=tyt, quantity=3, unit="test", label="Kendi paragrafım",
                     source=SOURCE_STUDENT, created_by=s)
-        i_rm = pm.add_item(db, period=p1, student=s, subject=tyt, quantity=5, unit="test", label="Yanlışlıkla eklenen")
+        i_rm = pm.add_item(db, period=p1, student=s, subject=tyt, quantity=5, unit="sayfa", label="Yanlışlıkla eklenen")
         pm.remove_item(db, i_rm, coach)
         _cup(db, i_a, today - timedelta(days=7), 4, done=4, dyb=(3, 1, 0))
         t_partial = _cup(db, i_a, today - timedelta(days=6), 3, done=2)

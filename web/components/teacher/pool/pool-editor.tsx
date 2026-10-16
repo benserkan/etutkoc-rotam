@@ -24,6 +24,7 @@ import {
 import { Hint } from "@/components/ui/hint";
 import { subjectColors } from "@/components/shared/subject-tag";
 import { cn } from "@/lib/utils";
+import { GuideHint } from "@/components/guide/guide-hint";
 import { AddPanel } from "./pool-add-panel";
 import { ModeHistoryList, ModeSwitchDialog } from "@/components/teacher/pool/mode-switch-dialog";
 import { PoolFlagsCard } from "./pool-flags-card";
@@ -112,6 +113,8 @@ export function PoolEditor({ studentId, initial, initialView }: {
           <ModeBadge mode={student.program_mode} />
         </div>
       </header>
+
+      <GuideHint module="Havuz" />
 
       {!isHavuz ? (
         <>
@@ -363,7 +366,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
           <div className="mt-3 rounded-md border p-3" data-section="pool:carry">
             <div className="text-sm font-semibold text-foreground">Devredilecek kalemler ({data.carry_candidates.length} aday)</div>
             <p className="text-xs text-muted-foreground">
-              Son dönemden kalanlar. Kalem kalem seç; miktarı yeniden yaz. Toplu düğme yok (K22). 3. devir kaçınma sinyali üretir (K58).
+              Son dönemden kalanlar. Yeni haftaya taşınacakları tek tek işaretle, gerekirse miktarı yeniden yaz. Üçüncü kez devredilen kalem “kaçınılan” diye işaretlenir.
             </p>
             <ul className="mt-2 space-y-1">
               {data.carry_candidates.map((c) => (

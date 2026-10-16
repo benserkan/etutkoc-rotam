@@ -1355,18 +1355,23 @@ def avoided_items(period: StudyPeriod, today: date, db: Session | None = None) -
 
 
 def avoid_reasons(period: StudyPeriod, today: date, db: Session | None = None) -> dict[PoolItem, str]:
-    live = [it for it in period.items if it.removed_at is None and it.remaining > 0]
+    # Onay bekleyen / reddedilen öğrenci kalemi henüz havuzun işi değil → kaçınma sayılmaz.
+    live = [it for it in period.items
+            if it.removed_at is None and it.remaining > 0 and it.counts_toward_pool]
     returns = cup_returns(db, live) if db is not None else {it.id: int(it.cup_attempts or 0) for it in live}
-    idle = (today - period.opened_on).days >= AVOID_IDLE_DAYS
     out: dict[PoolItem, str] = {}
     for it in live:
         r = returns.get(it.id, 0)
+        # "Hiç kaba alınmadı" süresi kalemin HAVUZA GİRDİĞİ günden ölçülür (dönem
+        # ortasında eklenen kalem, dönemin yaşıyla suçlanmaz).
+        since = max(period.opened_on, tr_date(it.created_at) or period.opened_on)
+        idle_days = (today - since).days
         if r >= CUP_AVOID_THRESHOLD:
             out[it] = f"{r} kez kaba girip geri döndü"
         elif (it.carry_count or 0) >= CARRY_AVOID_THRESHOLD:
             out[it] = f"{it.carry_count}. kez devrediliyor"
-        elif idle and (it.cup_attempts or 0) == 0 and it.done_units == 0:
-            out[it] = f"{(today - period.opened_on).days} gündür hiç kaba alınmadı"
+        elif idle_days >= AVOID_IDLE_DAYS and (it.cup_attempts or 0) == 0 and it.done_units == 0:
+            out[it] = f"{idle_days} gündür hiç kaba alınmadı"
     return out
 
 
