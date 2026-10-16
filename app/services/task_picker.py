@@ -78,6 +78,9 @@ class PickerItem:
     quantity: int                # koçun bu derste tipik verdiği sayı (P3)
     quantity_reason: str
     sources: list[PickerSource] = field(default_factory=list)
+    theme_name: str | None = None  # üst başlık (tema/ünite) — "neden çıktı" ipucu
+    grade_level: int | None = None
+    match: str | None = None       # arama: "tam" | "kısmi" | "tema"
 
 
 @dataclass
@@ -259,25 +262,38 @@ def build_task_picker(
             status=status, badge=badge,
             quantity=sug.quantity, quantity_reason=sug.reason,
             sources=sorted(secs, key=lambda s: (s.full, -s.remaining)),
+            theme_name=leaf_set.parent_names.get(topic.parent_id) if topic.parent_id else None,
+            grade_level=topic.grade_level,
         )
 
-    # ---- Arama modu: gruplama yok, konu + kitap + bölüm adında ara
+    # ---- Arama modu: gruplama yok — sezgisel, yazım hatasına dayanıklı (2026-10-16)
+    #      Eski sürüm sorguyu TEK PARÇA, harfi harfine arıyordu: "milli desten"
+    #      "Millî Bir Destan"ı bulamıyordu. topic_search: sözcük bazlı, sıra
+    #      önemsiz, baş harf + yazım hatası toleransı, tema adı alt konuları getirir.
     if q and q.strip():
-        needle = q.strip().casefold().replace("ı", "i").replace("İ", "i")
+        from app.services.topic_search import SearchDoc, search
 
-        def matches(topic: Topic) -> bool:
-            hay = [topic.name]
-            for s in sources.get(topic.id, []):
-                hay.append(s.book_name)
-                hay.append(s.section_label)
-            subj = subj_by_id.get(topic.subject_id)
-            if subj:
-                hay.append(subj.name)
-            blob = " ".join(hay).casefold().replace("ı", "i").replace("İ", "i")
-            return needle in blob
-
-        hits = [make(t, "kapalı" if t.id in closed else None)
-                for t in leaf_topics if matches(t)][:SEARCH_LIMIT]
+        own = student.grade_level
+        docs = []
+        for t in leaf_topics:
+            secs = sources.get(t.id, [])
+            subj = subj_by_id.get(t.subject_id)
+            bonus = (0.03 if (own is not None and t.grade_level == own) else 0.0)
+            bonus += 0.02 if secs else 0.0
+            bonus -= 0.05 if t.id in closed else 0.0
+            docs.append(SearchDoc(
+                key=t.id, name=t.name,
+                theme=leaf_set.parent_names.get(t.parent_id) if t.parent_id else None,
+                subject=subj.name if subj else None,
+                extra=" ".join(f"{s.book_name} {s.section_label}" for s in secs),
+                bonus=bonus,
+            ))
+        topic_by_id = {t.id: t for t in leaf_topics}
+        hits = []
+        for h in search(q, docs, SEARCH_LIMIT):
+            it = make(topic_by_id[h.key], "kapalı" if h.key in closed else None)
+            it.match = "tema" if h.via_theme else ("tam" if h.full else "kısmi")
+            hits.append(it)
         return [PickerGroup(key="search", label="Arama sonuçları", items=hits)]
 
     # ---- Grup 1: müfredatta sıradaki (ders başına ilk N açık konu)

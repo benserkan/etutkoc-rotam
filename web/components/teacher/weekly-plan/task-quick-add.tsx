@@ -22,6 +22,7 @@ import {
   Search,
   Sparkles,
   TriangleAlert,
+  X,
   Zap,
 } from "lucide-react";
 
@@ -130,6 +131,12 @@ export function TaskQuickAdd({
     staleTime: 30_000,
   });
 
+  /** Konu satırına tıklama: kitabı varsa (dolu olmayan) ilk kaynak, yoksa kaynaksız. */
+  function chooseDefault(topic: PickerTopicItem) {
+    const src = topic.sources.find((x) => !x.full) ?? null;
+    choose(topic, src);
+  }
+
   function choose(topic: PickerTopicItem, source: PickerSourceItem | null) {
     setPicked({ topic, source });
     setCount(String(topic.quantity));
@@ -197,64 +204,128 @@ export function TaskQuickAdd({
 
   const groups = pickerQ.data?.groups ?? [];
   const empty = !pickerQ.isLoading && groups.length === 0;
+  const firstHit = groups[0]?.items[0] ?? null;
+  const n = Number(count);
+  // Kutu TEST sayısıdır; 15'ten büyük sayı çoğu zaman soru sayısı yazıldığını gösterir.
+  const looksLikeQuestions = Number.isFinite(n) && n > 15;
 
   return (
     <div ref={boxRef} className="relative space-y-2">
-      <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
+      <form
+        onSubmit={submit}
+        className="flex flex-wrap items-center gap-2"
+        aria-label="Görev ekleme kutusu"
+      >
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={picked && !open ? "" : q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            placeholder={
-              picked ? "Başka bir şey ekle…" : "Ne çalışsın?  konu · kaynak"
-            }
-            className="pl-8"
-            aria-label="Görev ara"
-          />
+          {picked && !open ? (
+            // Seçim KUTUNUN İÇİNDE görünür (2026-10-16 koç geri bildirimi: boş
+            // "Başka bir şey ekle…" + alttaki şerit neyin seçildiğini belirsizleştiriyordu)
+            <div
+              className="flex min-h-9 w-full items-center gap-2 rounded-md border border-cyan-300 bg-cyan-50 px-2.5 py-1 text-[13px] text-cyan-950 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-50"
+              data-testid="quick-add-picked"
+            >
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="min-w-0 flex-1 text-left"
+                aria-label="Seçimi değiştir"
+              >
+                <span className="font-semibold">{picked.topic.topic_name}</span>
+                <span className="text-cyan-800 dark:text-cyan-200">
+                  {" · "}
+                  {picked.topic.subject_name}
+                  {" · "}
+                  {picked.source ? picked.source.book_name : "kaynaksız (müfredata bağlı)"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPicked(null);
+                  setCount("");
+                  setOpen(true);
+                }}
+                className="shrink-0 rounded p-0.5 hover:bg-cyan-500/20"
+                aria-label="Seçimi kaldır"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setOpen(true);
+                }}
+                onFocus={() => setOpen(true)}
+                onKeyDown={(e) => {
+                  // Enter = ilk sonucu seç (kitabı varsa kitaptan, yoksa kaynaksız)
+                  if (e.key === "Enter" && open && firstHit) {
+                    e.preventDefault();
+                    chooseDefault(firstHit);
+                  }
+                }}
+                placeholder="Ne çalışsın?  konu adı yaz · örn. milli destan"
+                className="pl-8"
+                aria-label="Görev ara"
+              />
+            </>
+          )}
         </div>
-        <Input
-          type="number"
-          min={1}
-          value={count}
-          onChange={(e) => setCount(e.target.value)}
-          disabled={!picked}
-          className="w-16 text-right tabular-nums"
-          aria-label="Adet"
-        />
+        <label className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <Input
+            type="number"
+            min={1}
+            value={count}
+            onChange={(e) => setCount(e.target.value)}
+            disabled={!picked}
+            className="w-16 text-right tabular-nums"
+            aria-label="Test sayısı"
+          />
+          test
+        </label>
         <Button type="submit" size="sm" disabled={!picked || !count || create.isPending}>
           {create.isPending ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : picked && n > 0 ? (
+            `Ekle · ${n} test`
           ) : (
             "Ekle"
           )}
         </Button>
       </form>
 
-      {/* Seçim özeti — koç ne eklediğini görsün */}
+      {/* Seçimin ne demek olduğu — koç ne eklediğini görsün */}
       {picked ? (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-cyan-200 bg-cyan-50 px-2.5 py-1.5 text-[12px] text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
-          <span className="font-medium">{picked.topic.topic_name}</span>
-          <span className="text-cyan-700 dark:text-cyan-300">
-            · {picked.topic.subject_name}
-          </span>
+        <p className="flex flex-wrap items-center gap-x-1.5 text-[11.5px] text-muted-foreground">
           {picked.source ? (
-            <span className="text-cyan-700 dark:text-cyan-300">
-              · {picked.source.book_name}
-            </span>
+            <>
+              <BookOpen className="h-3 w-3" />
+              {picked.source.section_label} —{" "}
+              {picked.source.full ? "kapasite doldu" : `${picked.source.remaining} test kaldı`}
+            </>
           ) : (
-            <span className="inline-flex items-center gap-1 text-cyan-700 dark:text-cyan-300">
-              <Zap className="h-3 w-3" /> kaynak belirtilmedi
-            </span>
+            <>
+              <Zap className="h-3 w-3" />
+              Kitap seçilmedi: görev bu müfredat konusuna bağlı test olarak eklenir; müfredat
+              ilerlemesine ve kurum tablolarına yansır.
+            </>
           )}
-          <span className="ml-auto text-[11px] text-cyan-700 dark:text-cyan-300">
-            {picked.topic.quantity_reason}
+          <span className="basis-full sm:ml-auto sm:basis-auto">{picked.topic.quantity_reason}</span>
+        </p>
+      ) : null}
+
+      {picked && looksLikeQuestions ? (
+        <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            Bu kutu <b>test sayısıdır</b> — {n} test yazdın. Soru sayısı yazdıysan test sayısına
+            çevir (bir test genelde 10–15 soru).
           </span>
-        </div>
+        </p>
       ) : null}
 
       {overflow > 0 && picked?.source ? (
@@ -280,7 +351,8 @@ export function TaskQuickAdd({
             </p>
           ) : empty ? (
             <p className="px-2 py-3 text-center text-xs text-muted-foreground">
-              Eşleşen konu yok. Farklı bir kelime deneyin.
+              Eşleşen konu yok. Konunun bir kelimesini ya da baş harflerini yaz
+              (örn. &ldquo;trigo&rdquo;, &ldquo;destan&rdquo;).
             </p>
           ) : (
             groups.map((g) => (
@@ -290,15 +362,31 @@ export function TaskQuickAdd({
                 </p>
                 {g.items.map((it) => (
                   <div key={it.topic_id} className="mb-0.5">
-                    <div className="flex items-center gap-1.5 px-2 py-1">
-                      <span className="truncate text-[13px] font-medium text-foreground">
+                    <button
+                      type="button"
+                      onClick={() => chooseDefault(it)}
+                      className="flex w-full flex-wrap items-baseline gap-x-1.5 rounded px-2 py-1 text-left hover:bg-accent"
+                      title={
+                        it.sources.some((x) => !x.full)
+                          ? "Seç — kitabından verilir"
+                          : "Seç — kaynak belirtmeden (müfredata bağlı) verilir"
+                      }
+                    >
+                      <span className="text-[13px] font-medium text-foreground">
                         {it.topic_name}
                       </span>
-                      <span className="truncate text-[11px] text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         {it.subject_name}
+                        {it.grade_level ? ` · ${it.grade_level}. sınıf` : ""}
+                        {it.theme_name ? ` · ${it.theme_name}` : ""}
                       </span>
                       {it.badge ? <Badge label={it.badge} /> : null}
-                    </div>
+                      {it.match === "kısmi" ? (
+                        <span className="text-[10px] text-amber-700 dark:text-amber-300">
+                          kısmi eşleşme
+                        </span>
+                      ) : null}
+                    </button>
                     {it.sources.map((s) => (
                       <button
                         key={s.section_id}

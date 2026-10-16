@@ -843,42 +843,35 @@ def all_subjects(
     seçebilmeli (örn. öğretmen henüz Tarih kitabı atamamış ama Tarih videosu
     eklemek istiyor).
 
-    Filtre: koçun kendi Subject havuzu + builtin + öğrencinin curriculum_model'i
-    + sınıf seviyesi aralığı. Aynı ad farklı modellerden tekille — ilk geçen kalır.
+    Kural müfredat sekmesiyle aynı (`_applicable_subjects`) + kitabı olan dersler.
     """
-    from sqlalchemy import or_ as sa_or
-    from app.models.curriculum import Subject
-    from app.services.curriculum_progress import exam_subject_visible_for_track
+    from app.models import Book, StudentBook
+    from app.services.curriculum_progress import _applicable_subjects
 
     student = _get_owned_student(db, student_id, user.id)
 
-    student_cm = student.effective_curriculum_model
-    rows = (
-        db.query(Subject)
-        .filter(
-            sa_or(Subject.is_builtin.is_(True), Subject.teacher_id == user.id)
-        )
-        .order_by(Subject.order, Subject.name)
+    # TEK KURAL (2026-10-16): müfredat sekmesi + görev kutusuyla AYNI ders kümesi.
+    # Eski sürüm sınav taksonomisi derslerini (TYT Matematik…) model filtresinden
+    # geçirdiği için 10. sınıf Maarif öğrencisinde "Matematik" ile "TYT Matematik"
+    # yan yana çıkıyordu. _applicable_subjects: 9-10/Maarif 11 → okul dersleri
+    # (TYT yalnız kaynağı varsa), Klasik 11-12 + mezun → TYT/AYT omurgası (alana göre).
+    # Öğrencinin kitabı olan dersler de eklenir (koç o derste etkinlik verebilsin).
+    subjects = list(_applicable_subjects(db, student, user.id))
+    seen_ids = {s.id for s in subjects}
+    seen_names = {s.name for s in subjects}
+    for b in (
+        db.query(Book)
+        .join(StudentBook, StudentBook.book_id == Book.id)
+        .filter(StudentBook.student_id == student.id, StudentBook.archived_at.is_(None))
         .all()
-    )
-
-    seen_names: set[str] = set()
-    items: list[SubjectBrief] = []
-    for s in rows:
-        # Sınıf seviyesi filtre
-        if not s.covers_grade(student.grade_level, is_graduate=student.is_graduate):
-            continue
-        # Müfredat modeli filtre (öğrencinin modeline uymuyor + ders model-bound ise atla)
-        if student_cm and s.curriculum_model and s.curriculum_model != student_cm:
-            continue
-        # AYT alan (track) filtresi — Sözel öğrenci AYT Fizik görmesin vb.
-        if not exam_subject_visible_for_track(s, student.track):
-            continue
-        # Tekille (ad bazlı — farklı modellerden aynı ders adı varsa ilki kalır)
-        if s.name in seen_names:
-            continue
-        seen_names.add(s.name)
-        items.append(SubjectBrief(id=s.id, name=s.name))
+    ):
+        subj = b.subject
+        if subj is not None and subj.id not in seen_ids and subj.name not in seen_names:
+            subjects.append(subj)
+            seen_ids.add(subj.id)
+            seen_names.add(subj.name)
+    subjects.sort(key=lambda s: (s.order or 0, s.name or ""))
+    items = [SubjectBrief(id=s.id, name=s.name) for s in subjects]
 
     return SubjectListResponse(items=items)
 

@@ -342,6 +342,7 @@ from app.routes.api_v2.schemas.teacher import (
     TeacherTaskItem,
     TeacherWeekNote,
 )
+from app.services.gorev_stats import primary_subject
 from app.services import book_archive, grade_period_service, grade_transition
 from app.services.analytics import student_snapshot
 from app.services.request_service import (
@@ -4001,6 +4002,11 @@ def _build_teacher_task_item(
     completed = sp.completed_count if sp else 0
     remaining = max(0, section_total - reserved - completed)
     subj = item.book.subject if (item.book and item.book.subject) else None
+    # Kaynaksız konu kalemi (kitap yok, topic var): ders ve konu müfredat
+    # konusundan gelir — yoksa gün kartı/ızgara görevi "Diğer" sanıyordu (2026-10-16).
+    topic = item.topic if (item.book is None and item.topic_id) else None
+    if subj is None and topic is not None:
+        subj = topic.subject
     return TeacherTaskItem(
         id=item.id,
         book_id=item.book_id,
@@ -4010,7 +4016,8 @@ def _build_teacher_task_item(
         subject_name=subj.name if subj else None,
         section_id=item.book_section_id,
         section_label=sec.label if sec else None,
-        topic_name=sec.topic.name if (sec and sec.topic) else None,
+        topic_name=(sec.topic.name if (sec and sec.topic) else (topic.name if topic else None)),
+        topic_id=item.topic_id if item.book_id is None else None,
         planned_count=item.planned_count,
         completed_count=item.completed_count,
         section_total_tests=section_total,
@@ -4098,10 +4105,10 @@ def _load_day_tasks_for_student(
             0 if t.scheduled_hour is not None else 1,
             t.scheduled_hour if t.scheduled_hour is not None else 0,
             (
-                t.book_items[0].book.subject.order,
-                t.book_items[0].book.subject.id,
+                (_ps := primary_subject(t)).order or 0,
+                _ps.id,
             )
-            if (t.book_items and t.book_items[0].book and t.book_items[0].book.subject)
+            if primary_subject(t) is not None
             else (10**9, 10**9),
             t.order,
             t.id,
@@ -4697,10 +4704,10 @@ def teacher_student_week_v2(
             0 if t.scheduled_hour is not None else 1,
             t.scheduled_hour if t.scheduled_hour is not None else 0,
             (
-                t.book_items[0].book.subject.order,
-                t.book_items[0].book.subject.id,
+                (_ps := primary_subject(t)).order or 0,
+                _ps.id,
             )
-            if (t.book_items and t.book_items[0].book and t.book_items[0].book.subject)
+            if primary_subject(t) is not None
             else (10**9, 10**9),
             t.order,
             t.id,
@@ -4737,6 +4744,13 @@ def teacher_student_week_v2(
     subjects_map: dict[int, object] = {}
     for sb in assignments:
         subjects_map[sb.book.subject.id] = sb.book.subject
+    # Kaynaksız konu kalemlerinin dersleri de özete girer (kitabı olmayan ders —
+    # 2026-10-16: kaynaksız görev Ders Dağılımı'nda hiç görünmüyordu).
+    for _d_tasks in tasks_by_day.values():
+        for _t in _d_tasks:
+            for _it in _t.book_items:
+                if _it.book is None and _it.topic is not None and _it.topic.subject is not None:
+                    subjects_map.setdefault(_it.topic.subject.id, _it.topic.subject)
     subjects = sorted(subjects_map.values(), key=lambda s: (s.order, s.name))
 
     # Öğrenme modeli — request başına 1 kez
@@ -5004,6 +5018,7 @@ def teacher_task_picker_v2(
                         subject_id=i.subject_id, subject_name=i.subject_name,
                         status=i.status, badge=i.badge,
                         quantity=i.quantity, quantity_reason=i.quantity_reason,
+                        theme_name=i.theme_name, grade_level=i.grade_level, match=i.match,
                         sources=[
                             PickerSourceItem(
                                 book_id=s.book_id, book_name=s.book_name,

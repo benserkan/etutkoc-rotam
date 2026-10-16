@@ -63,6 +63,7 @@ export const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
 function taskUnit(t: TeacherTask): string {
   if (t.work_block_unit) return t.work_block_unit; // serbest blok birimi öncelikli
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
+  if (it && it.book_id == null && it.topic_id != null) return "test"; // kaynaksız konu kalemi
   if (it && it.book_id == null) return "soru"; // kitapsız tam deneme
   if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
   return "test";
@@ -75,6 +76,9 @@ function taskUnit(t: TeacherTask): string {
 function taskLabel(t: TeacherTask): string {
   const bookItems = t.items.filter((it) => it.book_id != null);
   const first = bookItems[0] ?? t.items[0];
+  if (first && first.book_id == null && first.topic_id != null && first.topic_name) {
+    return first.topic_name; // kaynaksız konu kalemi: koç konuyu görsün
+  }
   if (first?.book_id) {
     const base = first.section_label || first.topic_name || first.book_name;
     // Çok kalemli görev (haftaya yay sıradaki bölüme geçti): ilk bölüm tek

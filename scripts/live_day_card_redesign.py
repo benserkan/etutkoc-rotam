@@ -184,7 +184,7 @@ def main() -> int:
                         row.click()
                         page.wait_for_timeout(700)
                         page.locator(
-                            'form:has(input[aria-label="Görev ara"]) button[type="submit"]'
+                            'form[aria-label="Görev ekleme kutusu"] button[type="submit"]'
                         ).first.click()
                         page.wait_for_timeout(2500)
                     with SessionLocal() as db:

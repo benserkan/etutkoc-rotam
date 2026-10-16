@@ -399,6 +399,9 @@ class TeacherTaskItem(BaseModel):
     section_id: int | None = None
     section_label: str | None
     topic_name: str | None
+    # Kaynaksız konu kalemi (kitap yok, müfredat konusu var) — TEST birimidir,
+    # deneme değil (2026-10-16: arayüz kitapsız her kalemi deneme sanıyordu).
+    topic_id: int | None = None
     planned_count: int
     completed_count: int
     # Section'daki anlık rezerv/tamam durumu (öğretmen kapasiteyi anında görsün)
@@ -995,6 +998,9 @@ class PickerTopicItem(BaseModel):
     quantity: int                 # koçun bu derste tipik verdiği sayı (P3)
     quantity_reason: str
     sources: list[PickerSourceItem] = []
+    theme_name: str | None = None
+    grade_level: int | None = None
+    match: str | None = None      # arama: tam | kısmi | tema
 
 
 class PickerGroupItem(BaseModel):

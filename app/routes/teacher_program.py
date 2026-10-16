@@ -100,9 +100,15 @@ def compute_day_subject_summary(
     for t in day_tasks:
         for it in t.book_items:
             if it.book is None:
-                continue  # kitapsız deneme kalemi — derse bağlı değil, ders özetine girmez
-            sid = it.book.subject_id
-            is_deneme = it.book.type.value in ("brans_denemesi", "genel_deneme")
+                # Kaynaksız konu kalemi → konunun dersi (test sayılır, 2026-10-16).
+                # Kitapsız + konusuz deneme kalemi derse bağlı değil, özete girmez.
+                if getattr(it, "topic", None) is None:
+                    continue
+                sid = it.topic.subject_id
+                is_deneme = False
+            else:
+                sid = it.book.subject_id
+                is_deneme = it.book.type.value in ("brans_denemesi", "genel_deneme")
             entry = by_sid.setdefault(
                 sid, {"task_ids": set(), "tests": 0, "denemeler": 0}
             )

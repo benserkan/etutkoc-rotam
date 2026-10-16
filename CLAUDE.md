@@ -817,6 +817,20 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
 - Test YENİ `test_task_topic_link.py` 17/17 · YENİ `live_task_topic_link.py` 15/15 (form kesin/tahmin, toplu sayfa,
   koyu tema 4,5, 390px) · institution 18 · p2 19 · compliance 10 · teacher_read 12 · weekly_plan 15 · curriculum 25 ·
   student_mutations 12 · sourceless_dyb 6 · warning_ack 11 · gorev 83/83 · web tsc + eslint (tam) temiz.
+- **Devamı — görev kutusu sezgisel arama + kaynaksız görev "Diğer" değil (aynı gün):** (1) YENİ `topic_search.py`:
+  sözcük bazlı, sıra önemsiz, baş harf + yazım hatası (Damerau 1-2 harf) + kısaltma, konu adı > kaynak > tema > ders
+  ağırlığı, tema adı alt konuları getirir, tam uyan <3 ise kısmi eşleşmeler sonda; `task_picker` arama modu buna
+  bağlandı ("milli desten" → Millî Bir Destan, "fotosnetez" → Fotosentez); sonuçta tema + sınıf + "kısmi" işareti.
+  (2) Görev kutusu: seçim KUTUNUN İÇİNDE çip (konu · ders · kitap/"kaynaksız (müfredata bağlı)" + ×), adet kutusu
+  "test" etiketli, düğme "Ekle · N test", konu satırı tıklanabilir (kitabı varsa kitaptan, yoksa kaynaksız), Enter =
+  ilk sonuç, >15 yazınca "bu kutu test sayısıdır" uyarısı; form `aria-label="Görev ekleme kutusu"`. (3) Kaynaksız
+  konu kalemi her yüzeyde dersine bağlı: `TeacherTaskItem` ders+konu topic'ten + `topic_id`; `gorev_stats.
+  primary_subject`; Ders Dağılımı (`compute_day_subject_summary` + ders listesi); veli görünümü; sıralama. Web:
+  gün kartında DENEME rozeti/“soru” birimi yok, ızgara "test", Ders Dengesi sayar. (4) `all-subjects` (Diğer/Video/
+  Özet/Tekrar ders listesi) artık `_applicable_subjects` + kitabı olan dersler — 10. sınıf Maarif'te "TYT Matematik"
+  çıkmıyor. Test `test_task_topic_link` 23/23 · YENİ `live_quick_add_fuzzy.py` 12/12 · task_picker 11 · live_task_quick_add
+  14 · live_day_card_redesign 10 · live_subject_mix 11 · weekly_plan 15 · skeleton 27/22 · gorev 83/83 · parent 20/14.
+  AÇIK KARAR: soru birimi (şu an kutu daima TEST; 30 yazılırsa 30 test sayılır).
 - **BİLİNÇLİ YAPILMADI:** mobil koç görev ekleme ekranında aynı uyarı (koç yazmayı web'de yapıyor) · öğrencinin
   kalemsiz göreve girdiği "çözdüğüm soru" kurum tablolarına eklenmedi (birim belirsiz; oran %100'ü aşıyordu).
 

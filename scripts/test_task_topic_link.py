@@ -241,6 +241,31 @@ def main() -> int:
                     errs.append(f"{fn.__name__}: {e}")
         check("16b kohort 4 sekmenin hepsi hatasız (sınıf/alan/müfredat/hedef sınav)", not errs, str(errs))
 
+        # ---- 2026-10-16 ek: sezgisel arama + ders listesi + kaynaksız görevin dersi
+        r = c.get(f"/api/v2/teacher/students/{d['s8']}/task-picker", params={"q": "milli desten"})
+        names = [i["topic_name"] for g in r.json()["groups"] for i in g["items"]]
+        check("18 arama: 'milli desten' (yazım hatası + araya giren sözcük) → Millî Bir Destan ilk sırada",
+              r.status_code == 200 and names and names[0].startswith("Millî Bir Destan"), str(names[:3]))
+        r = c.get(f"/api/v2/teacher/students/{d['s10']}/task-picker", params={"q": "sözün ezgisi"})
+        its = [i for g in r.json()["groups"] for i in g["items"]]
+        check("19 arama: tema adı ('sözün ezgisi') → alt konuları + tema adı yanıtta",
+              its and all(i.get("theme_name") and "Sözün Ezgisi" in i["theme_name"] for i in its[:3]), str(its[:2])[:300])
+        r = c.get(f"/api/v2/teacher/students/{d['s10']}/task-picker", params={"q": "fotosnetez"})
+        names = [i["topic_name"] for g in r.json()["groups"] for i in g["items"]]
+        check("20 arama: harf yer değiştirmesi ('fotosnetez') → Fotosentez", "Fotosentez" in names[:2], str(names[:3]))
+        r = c.get(f"/api/v2/teacher/students/{d['s10']}/all-subjects")
+        snames = [x["name"] for x in r.json()["items"]]
+        check("21 10. sınıf (Maarif, kitapsız) ders listesinde TYT dersi YOK, okul dersleri var",
+              r.status_code == 200 and "Matematik" in snames and not any(n.startswith("TYT") for n in snames),
+              str(snames))
+        r = c.get(f"/api/v2/teacher/students/{d['s8']}/week", params={"start": (date.today() - timedelta(days=1)).isoformat()})
+        wk = r.json()
+        item = next((it for day in wk.get("days", []) for t in day.get("tasks", []) if t["id"] == d["ebob_done"]
+                     for it in t["items"]), None)
+        check("22 kaynaksız görev kalemi: ders = Matematik, konu = Çarpanlar ve Katlar (Diğer değil)",
+              item and item.get("subject_name") == "Matematik" and item.get("topic_name") == "Çarpanlar ve Katlar",
+              str(item)[:300])
+
         r = c.post(f"/api/v2/teacher/students/{d['s8']}/tasks", json={
             "date": date.today().isoformat(), "type": "test", "title": "Türkçe · cümlede anlam",
             "notes": "AÇI 2 TEST", "items": [{"book_id": None, "section_id": None,

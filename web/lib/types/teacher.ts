@@ -376,6 +376,8 @@ export interface TeacherTaskItem {
   section_id: number;
   section_label: string | null;
   topic_name: string | null;
+  /** Kaynaksız konu kalemi: kitap yok ama müfredat konusu var → TEST birimi (deneme değil) */
+  topic_id?: number | null;
   planned_count: number;
   completed_count: number;
   section_total_tests: number;
@@ -979,6 +981,11 @@ export interface PickerTopicItem {
   quantity: number;
   quantity_reason: string;
   sources: PickerSourceItem[];
+  /** Üst başlık (tema/ünite) — arama "neden bunu buldu" ipucu */
+  theme_name?: string | null;
+  grade_level?: number | null;
+  /** Arama eşleşmesi: tam | kısmi | tema */
+  match?: string | null;
 }
 
 export interface PickerGroupItem {

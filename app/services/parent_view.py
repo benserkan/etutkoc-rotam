@@ -337,10 +337,12 @@ def student_week(db: Session, parent: User, student_id: int, start: date) -> dic
         for it in t.book_items:
             book_items.append({
                 "book_name": it.book.name if it.book else None,
-                "subject_name": it.book.subject.name if it.book and it.book.subject else None,
-                "subject_id": it.book.subject_id if it.book else None,
+                "subject_name": (it.book.subject.name if it.book and it.book.subject
+                                 else (it.topic.subject.name if it.topic else None)),
+                "subject_id": it.book.subject_id if it.book else (it.topic.subject_id if it.topic else None),
                 "section_label": it.section.label if it.section else None,
-                "topic_name": it.section.topic.name if it.section and it.section.topic else None,
+                "topic_name": (it.section.topic.name if it.section and it.section.topic
+                               else (it.topic.name if it.topic else None)),
                 "planned_count": it.planned_count,
                 "completed_count": it.completed_count,
             })

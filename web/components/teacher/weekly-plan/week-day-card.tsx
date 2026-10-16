@@ -1057,8 +1057,11 @@ function SortableTaskRow({
   const isBlock = task.work_block_id != null;
   // Kitapsız (deneme) kalem = book_id None → tam deneme; blok + bloğu-silinmiş
   // (block_detached) görev HARİÇ → onlar 'Diğer' olarak gösterilir, DENEME değil.
+  // Kaynaksız KONU kalemi (book_id yok, topic_id var) deneme DEĞİL, testtir (2026-10-16).
   const isDeneme =
-    !isBlock && !task.block_detached && task.items.some((it) => it.book_id === null);
+    !isBlock &&
+    !task.block_detached &&
+    task.items.some((it) => it.book_id === null && it.topic_id == null);
   // Dersi olmayan etkinlik satırları (video/özet/tekrar/diğer) için tip-renkli şerit.
   const ACTIVITY_ACCENT: Record<string, string> = {
     video: "#38bdf8", ozet: "#34d399", tekrar: "#a78bfa", other: "#94a3b8",

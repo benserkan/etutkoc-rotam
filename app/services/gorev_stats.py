@@ -139,6 +139,18 @@ def _primary_book(task: Task):
     return None
 
 
+def primary_subject(task: Task):
+    """Görevin dersi: ilk kitaplı kalemin dersi; kitap yoksa kaynaksız konu
+    kaleminin konusunun dersi (2026-10-16 — kaynaksız görev "Diğer" sayılıyordu)."""
+    book = _primary_book(task)
+    if book is not None and book.subject is not None:
+        return book.subject
+    for it in task.book_items:
+        if it.book is None and getattr(it, "topic", None) is not None:
+            return it.topic.subject
+    return None
+
+
 @dataclass
 class SubjectGorev:
     """Ders bazında TEST görevleri (denemeler ayrı listede)."""
@@ -214,10 +226,14 @@ def summarize(tasks: list[Task]) -> GorevSummary:
             s.test_planned += p
             s.test_completed += c
             book = _primary_book(t)
-            sid = book.subject_id if book is not None else None
+            if book is not None:            # kitaplı görev: eski davranış birebir
+                sid = book.subject_id
+                subj = book.subject
+            else:                           # kaynaksız konu kalemi → konunun dersi
+                subj = primary_subject(t)
+                sid = subj.id if subj is not None else None
             sg = subj_map.get(sid)
             if sg is None:
-                subj = book.subject if book is not None else None
                 sg = SubjectGorev(
                     subject_id=sid,
                     subject_name=(subj.name if subj else "Diğer"),

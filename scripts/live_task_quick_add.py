@@ -224,7 +224,7 @@ def main() -> int:
             if row:
                 row.click()
                 page.wait_for_timeout(900)
-                qty = page.query_selector('input[aria-label="Adet"]')
+                qty = page.query_selector('input[aria-label="Test sayısı"]')
                 val = qty.input_value() if qty else ""
                 check("3. adet öğrenilmiş değerle ön-dolu (koç yazmıyor: 4)",
                       val == "4", f"deger={val!r}")
@@ -324,7 +324,7 @@ def _submit(page) -> None:
     Kutuyu arama input'undan tanımlayıp onun form'undaki submit'e basıyoruz.
     """
     page.locator(
-        'form:has(input[aria-label="Görev ara"]) button[type="submit"]'
+        'form[aria-label="Görev ekleme kutusu"] button[type="submit"]'
     ).first.click()
 
 
