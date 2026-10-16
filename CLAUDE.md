@@ -828,7 +828,8 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
 - Test: `test_api_v2_guide` 24/24 (23-24 yol atlama) · YENİ `live_guide_branch.py` 9/9 · pool editor 41 / session 22 /
   student 29 / flags 47 / step5 34 / step6 26 / step7 30 / foundation 53 · canlı editor 34 · session 22 · flags 16 ·
   step6 16 · step7 22 · student_pool_web 19 · web tsc+eslint temiz · mobil tsc yalnız `app/preview/*`.
-- **Commit `a678cdb` (2026-10-17), deploy/OTA BEKLİYOR.** Ardından iki düzeltme (migration YOK):
+- **CANLI (2026-10-17): commit `a678cdb` + `35f023e`, yedek `pre_guide_20261017.dump`, web/worker/next rebuild,
+  prod head `o9q2v5w6v11r`, mobil OTA `3933154a` (runtime 1.0.0).** Ardından iki düzeltme (migration YOK):
   (a) havuz konu listesinde "kendi sınıfı" listedeki EN BÜYÜK sınıftan türetiliyordu → 12. sınıf öğrenciye TYT
   Mat "10. sınıf · kendi sınıfı" + varsayılan süzgeç 10'a kayıyordu. Artık öğrencinin GERÇEK sınıfı; sınav
   dersinde (TYT/AYT) sınıf etiketi/varsayılan süzgeç yok (Tümü). live_pool_editor 34/34.
