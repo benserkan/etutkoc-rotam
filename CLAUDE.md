@@ -831,6 +831,13 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
   çıkmıyor. Test `test_task_topic_link` 23/23 · YENİ `live_quick_add_fuzzy.py` 12/12 · task_picker 11 · live_task_quick_add
   14 · live_day_card_redesign 10 · live_subject_mix 11 · weekly_plan 15 · skeleton 27/22 · gorev 83/83 · parent 20/14.
   AÇIK KARAR: soru birimi (şu an kutu daima TEST; 30 yazılırsa 30 test sayılır).
+- **Devamı 2 — kitabı olmayan öğrenciye test (aynı gün, commit BEKLİYOR):** web "Ayrıntılı form" Test sekmesi
+  artık kitabı olan dersler önde + müfredatın diğer dersleri ("Kitabı yok — kaynaksız verilir"); kitap kutusunda
+  "Kaynaksız (müfredat konusuna bağlı)" seçeneği (kitabı yoksa otomatik) → konu listesi (`subject-topics`) → kitapsız
+  topic_id kalemi; >15 yazınca "test sayısıdır" uyarısı. Mobil `add-task-sheet` web görev kutusuyla aynı mantığa
+  geçti (task-picker konu araması + kitaptan/kaynaksız + kitabı yoksa ders→konu yolu; `lib/teacher` picker/
+  subject-topics fetcher'ları, JS-only → OTA). Test YENİ `live_test_form_sourceless.py` 5/5 · YENİ
+  `live_mobile_add_task.py` 7/7 · live_task_quick_add 14 · live_quick_add_fuzzy 12 · web tsc+eslint temiz.
 - **BİLİNÇLİ YAPILMADI:** mobil koç görev ekleme ekranında aynı uyarı (koç yazmayı web'de yapıyor) · öğrencinin
   kalemsiz göreve girdiği "çözdüğüm soru" kurum tablolarına eklenmedi (birim belirsiz; oran %100'ü aşıyordu).
 

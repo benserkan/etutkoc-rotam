@@ -124,6 +124,7 @@ export function ProgramTab({ studentId }: { studentId: number }) {
         onRefresh={() => weekQ.refetch()}
       />
       <AddTaskSheet
+        studentId={studentId}
         visible={addDate != null}
         date={addDate}
         books={booksQ.data?.items ?? []}

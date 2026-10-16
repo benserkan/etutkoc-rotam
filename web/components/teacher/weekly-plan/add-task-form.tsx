@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { extractTestCount } from "@/lib/api/task-topic-link";
+import {
+  extractTestCount,
+  getSubjectTopics,
+  taskTopicKeys,
+  topicOptionLabel,
+  type SubjectTopicsResponse,
+} from "@/lib/api/task-topic-link";
 import { TopicLinkPanel, useTopicLink } from "./topic-link-panel";
 import {
   AlertTriangle,
@@ -216,6 +222,15 @@ export function AddTaskForm({
     name: s.name,
   }));
 
+  // TEST: kitabı olan dersler önde + müfredatın diğer dersleri (kaynaksız test, 2026-10-16).
+  // Eskiden yalnız kitabı olan dersler listeleniyordu → kitabı yüklenmemiş öğrencide
+  // ders listesi BOŞTU, test verilemiyordu.
+  const bookedIds = new Set(bookedSubjects.map((s) => s.id));
+  const testSubjects = [
+    ...bookedSubjects,
+    ...allSubjects.filter((s) => !bookedIds.has(s.id)),
+  ];
+
   if (!detailed) {
     return (
       <div className="@container px-4 py-4 border-t border-border/60 bg-card space-y-2.5">
@@ -299,7 +314,8 @@ export function AddTaskForm({
         <TestForm
           studentId={studentId}
           dayDate={dayDate}
-          subjects={bookedSubjects}
+          subjects={testSubjects}
+          bookedSubjectIds={bookedIds}
           period={period}
           onFocusSubject={onFocusSubject}
           onAfterAdd={onAfterAdd}
@@ -426,6 +442,7 @@ function TestForm({
   studentId,
   dayDate,
   subjects,
+  bookedSubjectIds,
   period,
   onFocusSubject,
   onAfterAdd,
@@ -433,6 +450,8 @@ function TestForm({
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
+  /** Öğrencinin kitabı olan dersler — listede önde; diğerlerinde kaynaksız verilir */
+  bookedSubjectIds: Set<number>;
   period: TaskPeriod | null;
   onFocusSubject: (id: number | null) => void;
   onAfterAdd: () => void;
@@ -440,8 +459,11 @@ function TestForm({
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
   const [subjectId, setSubjectId] = React.useState<number | "">("");
-  const [bookId, setBookId] = React.useState<number | "">("");
+  // "none" = kaynaksız (müfredat konusuna bağlı) test — 2026-10-16: kitabı
+  // yüklenmemiş öğrenciye de test verilebilsin.
+  const [bookId, setBookId] = React.useState<number | "" | "none">("");
   const [sectionId, setSectionId] = React.useState<number | "">("");
+  const [topicId, setTopicId] = React.useState<number | "">("");
   const [plannedCount, setPlannedCount] = React.useState<string>("");
 
   const booksQ = useQuery<BookOptionsResponse>({
@@ -457,15 +479,24 @@ function TestForm({
     enabled: subjectId !== "",
     staleTime: 60_000,
   });
+  const books = booksQ.data?.items ?? [];
+  const noBooks = subjectId !== "" && booksQ.isSuccess && books.length === 0;
+  // Kitabı olmayan derste kaynaksız otomatik seçilir (koç ayrıca seçmez)
+  const sourceless = bookId === "none" || (bookId === "" && noBooks);
+  const realBookId = typeof bookId === "number" ? bookId : null;
 
   const sectionsQ = useQuery<SectionOptionsResponse>({
-    queryKey: teacherKeys.studentBookSections(
-      studentId,
-      bookId === "" ? 0 : bookId,
-    ),
-    queryFn: () => getStudentBookSections(studentId, bookId === "" ? 0 : bookId),
-    enabled: bookId !== "",
+    queryKey: teacherKeys.studentBookSections(studentId, realBookId ?? 0),
+    queryFn: () => getStudentBookSections(studentId, realBookId ?? 0),
+    enabled: realBookId !== null,
     staleTime: 60_000,
+  });
+
+  const topicsQ = useQuery<SubjectTopicsResponse>({
+    queryKey: taskTopicKeys.subjectTopics(studentId, subjectId === "" ? 0 : subjectId),
+    queryFn: () => getSubjectTopics(studentId, subjectId === "" ? 0 : subjectId),
+    enabled: sourceless && subjectId !== "",
+    staleTime: 5 * 60_000,
   });
 
   const statsQ = useQuery<SectionStatsResponse>({
@@ -475,7 +506,7 @@ function TestForm({
     ),
     queryFn: () =>
       getStudentSectionStats(studentId, sectionId === "" ? 0 : sectionId),
-    enabled: sectionId !== "",
+    enabled: sectionId !== "" && !sourceless,
     staleTime: 30_000,
   });
 
@@ -484,29 +515,53 @@ function TestForm({
     setSubjectId(num as number | "");
     setBookId("");
     setSectionId("");
+    setTopicId("");
     onFocusSubject(num === "" ? null : num);
   }
 
   // Seçili bölümde kayıtlı kapasite yetiyor mu? (yetmiyorsa engel değil, uyarı)
   const selectedSection = React.useMemo(
     () =>
-      sectionId === ""
+      sectionId === "" || sourceless
         ? undefined
         : (sectionsQ.data?.items ?? []).find((s) => s.id === sectionId),
-    [sectionsQ.data, sectionId],
+    [sectionsQ.data, sectionId, sourceless],
   );
   const wanted = Number(plannedCount);
   const overflow =
     selectedSection && Number.isFinite(wanted) && wanted > 0
       ? Math.max(0, wanted - selectedSection.remaining)
       : 0;
+  // Kutu TEST sayısıdır; 15'ten büyük sayı çoğu zaman soru sayısıdır.
+  const looksLikeQuestions = Number.isFinite(wanted) && wanted > 15;
+
+  const topics = topicsQ.data?.topics ?? [];
+  const selectedTopic = topicId === "" ? undefined : topics.find((t) => t.topic_id === topicId);
+  const ready = sourceless ? topicId !== "" : realBookId !== null && sectionId !== "";
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (bookId === "" || sectionId === "") return;
+    if (!ready) return;
     const count = Number(plannedCount);
     if (!Number.isFinite(count) || count < 1) return;
     const scheduledHour = hour === "" ? null : Number(hour);
+    const item = sourceless
+      ? {
+          // Kaynaksız görev: kitap yok, müfredat konusu var
+          book_id: null,
+          section_id: null,
+          topic_id: topicId as number,
+          label: selectedTopic?.name ?? "Konu",
+          planned_count: count,
+        }
+      : {
+          book_id: realBookId as number,
+          section_id: sectionId as number,
+          planned_count: count,
+          // Kayıtlı kapasite yetmiyorsa engel çıkarma: koç aşımı formda
+          // amber uyarı olarak zaten GÖRÜYOR ve bilerek gönderiyor.
+          allow_over_capacity: overflow > 0,
+        };
     create.mutate(
       {
         body: {
@@ -515,30 +570,23 @@ function TestForm({
           title: "Görev",
           scheduled_hour: scheduledHour,
           period: period,
-          items: [
-            {
-              book_id: bookId,
-              section_id: sectionId,
-              planned_count: count,
-              // Kayıtlı kapasite yetmiyorsa engel çıkarma: koç aşımı formda
-              // amber uyarı olarak zaten GÖRÜYOR ve bilerek gönderiyor.
-              // Kitabın test sayısı gerçeği her zaman yansıtmaz (yayınevi
-              // sayımı, sistem dışı çözülen testler) — envanter yardımcıdır.
-              allow_over_capacity: overflow > 0,
-            },
-          ],
+          items: [item],
         },
       },
       {
         onSuccess: () => {
           setBookId("");
           setSectionId("");
+          setTopicId("");
           setPlannedCount("");
           onAfterAdd();
         },
       },
     );
   }
+
+  const booked = subjects.filter((s) => bookedSubjectIds.has(s.id));
+  const others = subjects.filter((s) => !bookedSubjectIds.has(s.id));
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
@@ -551,85 +599,139 @@ function TestForm({
             onChange={onSubjectChange}
           >
             <option value="">— ders seç —</option>
-            {subjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
+            {booked.length > 0 ? (
+              <optgroup label="Kitabı olan dersler">
+                {booked.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+            {others.length > 0 ? (
+              <optgroup
+                label={booked.length > 0 ? "Kitabı yok — kaynaksız verilir" : "Dersler (kaynaksız verilir)"}
+              >
+                {others.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
           </Select>
         </div>
         <div className="@2xl:col-span-3">
           <Label>Kitap</Label>
           <Select
-            value={bookId === "" ? "" : String(bookId)}
+            value={sourceless ? "none" : bookId === "" ? "" : String(bookId)}
             onChange={(v) => {
-              const num = v === "" ? "" : Number(v);
-              setBookId(num as number | "");
+              setBookId(v === "" ? "" : v === "none" ? "none" : Number(v));
               setSectionId("");
+              setTopicId("");
             }}
             disabled={subjectId === ""}
           >
-            <option value="">
-              {subjectId === "" ? "— önce ders seç —" : "— kitap seç —"}
-            </option>
-            {(booksQ.data?.items ?? []).map((b) => (
+            {subjectId === "" ? (
+              <option value="">— önce ders seç —</option>
+            ) : noBooks ? null : (
+              <option value="">— kitap seç —</option>
+            )}
+            {books.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
               </option>
             ))}
+            {subjectId !== "" ? (
+              <option value="none">Kaynaksız (müfredat konusuna bağlı)</option>
+            ) : null}
           </Select>
         </div>
         <div className="@2xl:col-span-3">
-          <Label>Ünite / Deneme</Label>
-          <Select
-            value={sectionId === "" ? "" : String(sectionId)}
-            onChange={(v) =>
-              setSectionId(v === "" ? "" : (Number(v) as number))
-            }
-            disabled={bookId === ""}
-          >
-            <option value="">
-              {bookId === "" ? "— önce kitap seç —" : "— ünite seç —"}
-            </option>
-            {(sectionsQ.data?.items ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-                {s.topic_name ? ` (${s.topic_name})` : ""} · kalan {s.remaining}
+          <Label>{sourceless ? "Müfredat konusu" : "Ünite / Deneme"}</Label>
+          {sourceless ? (
+            <Select
+              value={topicId === "" ? "" : String(topicId)}
+              onChange={(v) => setTopicId(v === "" ? "" : Number(v))}
+              disabled={topicsQ.isLoading}
+            >
+              <option value="">{topicsQ.isLoading ? "yükleniyor…" : "— konu seç —"}</option>
+              {topics.map((t) => (
+                <option key={t.topic_id} value={t.topic_id}>
+                  {topicOptionLabel(t)}
+                </option>
+              ))}
+            </Select>
+          ) : (
+            <Select
+              value={sectionId === "" ? "" : String(sectionId)}
+              onChange={(v) => setSectionId(v === "" ? "" : (Number(v) as number))}
+              disabled={realBookId === null}
+            >
+              <option value="">
+                {realBookId === null ? "— önce kitap seç —" : "— ünite seç —"}
               </option>
-            ))}
-          </Select>
+              {(sectionsQ.data?.items ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                  {s.topic_name ? ` (${s.topic_name})` : ""} · kalan {s.remaining}
+                </option>
+              ))}
+            </Select>
+          )}
         </div>
         <div className="@2xl:col-span-2">
-          <Label>Adet</Label>
+          <Label>Adet (test)</Label>
           <Input
             type="number"
             min={1}
             value={plannedCount}
             onChange={(e) => setPlannedCount(e.target.value)}
             className="text-right tabular-nums"
+            aria-label="Test sayısı"
           />
         </div>
         <div className="@2xl:col-span-1 flex justify-end">
-          <SubmitButton
-            pending={create.isPending}
-            disabled={bookId === "" || sectionId === "" || !plannedCount}
-          />
+          <SubmitButton pending={create.isPending} disabled={!ready || !plannedCount} />
         </div>
       </div>
+      {sourceless && subjectId !== "" ? (
+        <p className="flex items-start gap-1.5 text-[11.5px] leading-snug text-muted-foreground">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            {selectedTopic ? (
+              <b className="text-foreground">
+                {topicOptionLabel(selectedTopic)} ·{" "}
+                {subjects.find((s) => s.id === subjectId)?.name}.{" "}
+              </b>
+            ) : null}
+            {noBooks ? "Öğrencinin bu derste kitabı yok. " : ""}Görev seçtiğin müfredat
+            konusuna bağlı test olarak eklenir; müfredat ilerlemesine, konu performansına ve
+            kurum tablolarına yansır.
+          </span>
+        </p>
+      ) : null}
+      {looksLikeQuestions ? (
+        <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            Bu kutu <b>test sayısıdır</b> — {wanted} test yazdın. Soru sayısı yazdıysan test
+            sayısına çevir (bir test genelde 10–15 soru).
+          </span>
+        </p>
+      ) : null}
       {overflow > 0 && selectedSection ? (
         <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             <b>{selectedSection.label}</b> bölümünde kayıtlı kapasite{" "}
-            {selectedSection.remaining === 0
-              ? "kalmadı"
-              : `${selectedSection.remaining} test`}
-            {" "}— <b>{overflow} test</b> aşılacak. Görev yine de oluşturulur;
-            kitabın test sayısı gerçeği her zaman yansıtmaz.
+            {selectedSection.remaining === 0 ? "kalmadı" : `${selectedSection.remaining} test`}
+            {" "}— <b>{overflow} test</b> aşılacak. Görev yine de oluşturulur; kitabın test
+            sayısı gerçeği her zaman yansıtmaz.
           </span>
         </p>
       ) : null}
-      {statsQ.data ? <SectionStatsMini stats={statsQ.data} /> : null}
+      {statsQ.data && !sourceless ? <SectionStatsMini stats={statsQ.data} /> : null}
     </form>
   );
 }

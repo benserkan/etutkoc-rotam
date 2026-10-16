@@ -4532,6 +4532,21 @@ def _create_task_with_items(
         if book and section:
             task.title = _compose_single_item_title(book, section, bi.planned_count)
             db.flush()
+    elif (
+        len(payload.items) == 1
+        and getattr(payload.items[0], "topic_id", None)
+        and (task.title or "").strip() in ("", "Görev", "—")
+    ):
+        # Kaynaksız (konuya bağlı) tek kalem: yer tutucu "Görev" yerine
+        # "Konu — N test" (hızlı görev kutusunun başlığıyla aynı biçim).
+        ti = payload.items[0]
+        from app.models import Topic as _Topic
+
+        topic = db.get(_Topic, ti.topic_id)
+        name = (topic.name if topic else None) or (getattr(ti, "label", None) or "").strip()
+        if name:
+            task.title = f"{name} — {ti.planned_count} test"
+            db.flush()
     return task
 
 

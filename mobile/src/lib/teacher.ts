@@ -385,8 +385,11 @@ export interface TeacherWeekResponse {
 export interface TaskItemBody {
   book_id?: number | null;
   section_id?: number | null;
+  /** Kaynaksız (kitapsız) test kalemi — müfredat konusuna bağlı (2026-10-16) */
+  topic_id?: number | null;
   label?: string | null;
   planned_count: number;
+  allow_over_capacity?: boolean;
 }
 export interface TaskCreateBody {
   date: string;
@@ -579,6 +582,53 @@ export function getPlanFeatures(): Promise<Record<string, string[]>> {
   return apiRequest<{ plan_features?: Record<string, string[]> }>(`/api/v2/pricing`, {
     auth: false,
   }).then((c) => c.plan_features ?? {});
+}
+
+// ====== Görev kutusu: konu arama (web TaskQuickAdd ile aynı uç) ======
+export interface PickerSource {
+  book_id: number;
+  book_name: string;
+  section_id: number;
+  section_label: string;
+  total: number;
+  remaining: number;
+  full: boolean;
+}
+export interface PickerTopic {
+  topic_id: number;
+  topic_name: string;
+  subject_id: number;
+  subject_name: string;
+  status: string;
+  badge: string | null;
+  quantity: number;
+  quantity_reason: string;
+  sources: PickerSource[];
+  theme_name?: string | null;
+  grade_level?: number | null;
+  match?: string | null;
+}
+export interface PickerGroup {
+  key: string;
+  label: string;
+  items: PickerTopic[];
+}
+export function getTeacherTaskPicker(id: number, q: string): Promise<{ groups: PickerGroup[] }> {
+  const qs = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
+  return apiRequest(`/api/v2/teacher/students/${id}/task-picker${qs}`);
+}
+export interface SubjectTopicOption {
+  topic_id: number;
+  name: string;
+  grade_level: number | null;
+  parent_name: string | null;
+  subject_name: string | null;
+}
+export function getTeacherSubjectTopics(
+  id: number,
+  subjectId: number,
+): Promise<{ subject_id: number; subject_name: string; topics: SubjectTopicOption[] }> {
+  return apiRequest(`/api/v2/teacher/students/${id}/subject-topics?subject_id=${subjectId}`);
 }
 
 export const teacherMiscKeys = {
