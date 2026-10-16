@@ -33,7 +33,9 @@ from app.models import (  # noqa: E402
 )
 from app.models.suspicious_ip import SuspiciousIp  # noqa: E402
 from app.services import task_topic_link as ttl  # noqa: E402
-from app.services.cohort_analysis import cohort_by_grade  # noqa: E402
+from app.services.cohort_analysis import (  # noqa: E402
+    cohort_by_curriculum, cohort_by_exam_target, cohort_by_grade, cohort_by_track,
+)
 from app.services.curriculum_progress import compute_curriculum_progress  # noqa: E402
 from app.services.rate_limit import get_login_limiter  # noqa: E402
 from app.services.security import hash_password  # noqa: E402
@@ -229,6 +231,15 @@ def main() -> int:
 
         b = c.get("/api/v2/teacher/badges").json()
         check("16 rozet 3 → 1", b.get("unlinked_test_tasks") == 1, str(b))
+
+        errs = []
+        with SessionLocal() as db:
+            for fn in (cohort_by_grade, cohort_by_track, cohort_by_curriculum, cohort_by_exam_target):
+                try:
+                    fn(db, institution_id=d["inst"])
+                except Exception as e:  # noqa: BLE001
+                    errs.append(f"{fn.__name__}: {e}")
+        check("16b kohort 4 sekmenin hepsi hatasız (sınıf/alan/müfredat/hedef sınav)", not errs, str(errs))
 
         r = c.post(f"/api/v2/teacher/students/{d['s8']}/tasks", json={
             "date": date.today().isoformat(), "type": "test", "title": "Türkçe · cümlede anlam",

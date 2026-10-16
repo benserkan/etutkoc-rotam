@@ -37,13 +37,15 @@ from app.models import (
     CURRICULUM_MODEL_LABELS,
     CurriculumModel,
     EXAM_TARGET_LABELS,
-    ExamTarget,
     Task,
     TaskBookItem,
     User,
     UserRole,
 )
 from app.services import completion
+# DİKKAT: app.models.ExamTarget deneme hedef-net TABLOSU (exam_progress) — hedef sınav
+# türü enum'u academic'te; ad çakışması hedef sınav sekmesini çökertiyordu (2026-10-16).
+from app.models.academic import ExamTarget
 from app.models.user import GRADUATE_MODE_LABELS, TRACK_LABELS, GraduateMode, Track
 from app.services.risk_analysis import bulk_risk_assessment, filter_at_risk
 
@@ -423,7 +425,7 @@ def cohort_by_curriculum(
         if not sids:
             continue
         # Bu cohort için planned/completed sum
-        completion = (
+        sums = (
             db.query(
                 func.coalesce(func.sum(TaskBookItem.planned_count), 0).label("p"),
                 func.coalesce(func.sum(TaskBookItem.completed_count), 0).label("c"),
@@ -439,7 +441,7 @@ def cohort_by_curriculum(
             )
             .first()
         )
-        planned, completed = (int(completion.p), int(completion.c)) if completion else (0, 0)
+        planned, completed = (int(sums.p), int(sums.c)) if sums else (0, 0)
         label = CURRICULUM_MODEL_LABELS[curr] if curr else "Belirsiz müfredat"
         cohort_key = curr.value if curr else "unknown"
         agg = {"student_count": len(sids), "planned": planned, "completed": completed}
@@ -483,7 +485,7 @@ def cohort_by_exam_target(
         sids = student_ids_by_target.get(tg, [])
         if not sids:
             continue
-        completion = (
+        sums = (
             db.query(
                 func.coalesce(func.sum(TaskBookItem.planned_count), 0).label("p"),
                 func.coalesce(func.sum(TaskBookItem.completed_count), 0).label("c"),
@@ -499,7 +501,7 @@ def cohort_by_exam_target(
             )
             .first()
         )
-        planned, completed = (int(completion.p), int(completion.c)) if completion else (0, 0)
+        planned, completed = (int(sums.p), int(sums.c)) if sums else (0, 0)
         # Label
         try:
             label = EXAM_TARGET_LABELS[ExamTarget(tg)]
