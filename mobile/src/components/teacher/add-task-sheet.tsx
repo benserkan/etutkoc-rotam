@@ -16,6 +16,27 @@ import {
 } from "@/lib/teacher";
 import { cn } from "@/lib/utils";
 
+const TR_MAP: Record<string, string> = {
+  ı: "i", İ: "i", ş: "s", Ş: "s", ğ: "g", Ğ: "g", ü: "u", Ü: "u", ö: "o", Ö: "o", ç: "c", Ç: "c", â: "a", î: "i", û: "u",
+};
+function normTr(s: string): string {
+  return s
+    .replace(/[ıİşŞğĞüÜöÖçÇâîû]/g, (c) => TR_MAP[c] ?? c)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+/** Web topic-picker-panel ile aynı kural: her sözcük ad/tema/ders sözcüklerinden birinin başında. */
+function topicMatches(
+  t: { name: string; parent_name: string | null; subject_name: string | null },
+  query: string,
+): boolean {
+  const q = normTr(query);
+  if (!q) return true;
+  const hay = normTr([t.name, t.parent_name ?? "", t.subject_name ?? ""].join(" ")).split(" ");
+  return q.split(" ").every((w) => hay.some((h) => h.startsWith(w)));
+}
+
 /**
  * Mobil koç görev ekleme (2026-10-16 — web görev kutusuyla aynı mantık).
  *
@@ -114,6 +135,7 @@ export function AddTaskSheet({
     }
   }
 
+  const [topicQuery, setTopicQuery] = React.useState("");
   const debounced = useDebounced(query, 300);
   const pickerQ = useQuery({
     queryKey: ["teacher", "student", studentId, "task-picker", debounced],
@@ -127,6 +149,8 @@ export function AddTaskSheet({
     enabled: visible && step === "subjectTopic" && subject != null,
     staleTime: 5 * 60_000,
   });
+
+  const shownTopics = (subjectTopicsQ.data?.topics ?? []).filter((t) => topicMatches(t, topicQuery));
 
   if (!date) return null;
 
@@ -431,7 +455,7 @@ export function AddTaskSheet({
               {subjects.map((s) => (
                 <Pressable
                   key={s.id}
-                  onPress={() => { setSubject(s); setStep("subjectTopic"); }}
+                  onPress={() => { setSubject(s); setTopicQuery(""); setStep("subjectTopic"); }}
                   className="rounded-full border border-slate-300 bg-white px-3 py-1.5 active:bg-slate-50"
                 >
                   <Text className="text-sm font-medium text-slate-700">{s.name}</Text>
@@ -444,12 +468,26 @@ export function AddTaskSheet({
         {step === "subjectTopic" && subject ? (
           <View className="gap-2">
             <Text className="text-xs font-medium text-slate-600">{subject.name} — konu seç</Text>
+            <View className="flex-row items-center gap-2 rounded-xl border border-slate-300 bg-white px-3">
+              <Ionicons name="search" size={16} color="#64748b" />
+              <TextInput
+                value={topicQuery}
+                onChangeText={setTopicQuery}
+                placeholder="Konu ya da ünite ara"
+                placeholderTextColor="#94a3b8"
+                aria-label="Konu ara"
+                className="flex-1 py-2.5 text-[15px] text-slate-900"
+              />
+              <Text className="text-xs text-slate-400">{shownTopics.length}</Text>
+            </View>
             {subjectTopicsQ.isLoading ? (
               <ActivityIndicator color="#0e7490" />
-            ) : (subjectTopicsQ.data?.topics ?? []).length === 0 ? (
-              <Text className="text-sm text-slate-400">Bu derste müfredat konusu bulunamadı.</Text>
+            ) : shownTopics.length === 0 ? (
+              <Text className="text-sm text-slate-400">
+                {topicQuery ? "Eşleşen konu yok — daha kısa yaz." : "Bu derste müfredat konusu bulunamadı."}
+              </Text>
             ) : (
-              (subjectTopicsQ.data?.topics ?? []).map((t) => (
+              shownTopics.map((t) => (
                 <Pressable
                   key={t.topic_id}
                   onPress={() =>

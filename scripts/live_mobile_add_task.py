@@ -140,6 +140,12 @@ def main() -> int:
             subj.first.click(force=True)
             page.wait_for_timeout(3500)
             page.screenshot(path=".shots/mobile_add_task_subject_topics.png")
+            n_all = page.locator('div[tabindex="0"]').filter(has_text="sınıf").count()
+            page.locator('input[aria-label="Konu ara"]').fill("olasi")
+            page.wait_for_timeout(800)
+            n_f = page.locator('div[tabindex="0"]').filter(has_text="sınıf").count()
+            check("4b2 konu araması listeyi daraltır ('olasi' → olasılık)",
+                  0 < n_f < n_all and page.get_by_text("Olasılı", exact=False).count() > 0, f"{n_all}->{n_f}")
             first_topic = page.locator('div[tabindex="0"]').filter(has_text="sınıf").first
             first_topic.click(force=True)
             page.wait_for_timeout(1200)

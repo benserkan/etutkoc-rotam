@@ -10,8 +10,10 @@ import {
   type SubjectTopicsResponse,
 } from "@/lib/api/task-topic-link";
 import { TopicLinkPanel, useTopicLink } from "./topic-link-panel";
+import { TopicPickerPanel } from "./topic-picker-panel";
 import {
   AlertTriangle,
+  ChevronDown,
   BookOpen,
   Boxes,
   Brain,
@@ -464,6 +466,7 @@ function TestForm({
   const [bookId, setBookId] = React.useState<number | "" | "none">("");
   const [sectionId, setSectionId] = React.useState<number | "">("");
   const [topicId, setTopicId] = React.useState<number | "">("");
+  const [topicOpen, setTopicOpen] = React.useState(false);
   const [plannedCount, setPlannedCount] = React.useState<string>("");
 
   const booksQ = useQuery<BookOptionsResponse>({
@@ -516,6 +519,7 @@ function TestForm({
     setBookId("");
     setSectionId("");
     setTopicId("");
+    setTopicOpen(false);
     onFocusSubject(num === "" ? null : num);
   }
 
@@ -629,6 +633,7 @@ function TestForm({
               setBookId(v === "" ? "" : v === "none" ? "none" : Number(v));
               setSectionId("");
               setTopicId("");
+              setTopicOpen(v === "none");
             }}
             disabled={subjectId === ""}
           >
@@ -650,18 +655,21 @@ function TestForm({
         <div className="@2xl:col-span-3">
           <Label>{sourceless ? "Müfredat konusu" : "Ünite / Deneme"}</Label>
           {sourceless ? (
-            <Select
-              value={topicId === "" ? "" : String(topicId)}
-              onChange={(v) => setTopicId(v === "" ? "" : Number(v))}
-              disabled={topicsQ.isLoading}
+            <button
+              type="button"
+              onClick={() => setTopicOpen((o) => !o)}
+              aria-expanded={topicOpen}
+              aria-label="Müfredat konusu seç"
+              className={cn(
+                "flex min-h-9 w-full items-center justify-between gap-2 rounded-md border bg-background px-3 py-1.5 text-left text-sm",
+                topicOpen ? "border-cyan-600 ring-1 ring-cyan-600" : "border-input",
+              )}
             >
-              <option value="">{topicsQ.isLoading ? "yükleniyor…" : "— konu seç —"}</option>
-              {topics.map((t) => (
-                <option key={t.topic_id} value={t.topic_id}>
-                  {topicOptionLabel(t)}
-                </option>
-              ))}
-            </Select>
+              <span className={cn("min-w-0 break-words", !selectedTopic && "text-muted-foreground")}>
+                {selectedTopic ? selectedTopic.name : "— konu ara / seç —"}
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            </button>
           ) : (
             <Select
               value={sectionId === "" ? "" : String(sectionId)}
@@ -695,6 +703,18 @@ function TestForm({
           <SubmitButton pending={create.isPending} disabled={!ready || !plannedCount} />
         </div>
       </div>
+      {sourceless && subjectId !== "" && topicOpen ? (
+        <TopicPickerPanel
+          topics={topics}
+          loading={topicsQ.isLoading}
+          selectedId={topicId === "" ? null : topicId}
+          onSelect={(t) => {
+            setTopicId(t.topic_id);
+            setTopicOpen(false);
+          }}
+          onClose={() => setTopicOpen(false)}
+        />
+      ) : null}
       {sourceless && subjectId !== "" ? (
         <p className="flex items-start gap-1.5 text-[11.5px] leading-snug text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
