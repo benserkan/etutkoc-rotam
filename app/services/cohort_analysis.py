@@ -66,6 +66,13 @@ class CohortStats:
     at_risk_pct: int | None   # %risk — 0 öğrenci ise None
     # Renk kodu için kolaylık
     rate_color: str = field(default="slate")  # green / amber / red / slate (None için)
+    # Görev bazlı (2026-10-16, Açı saha bulgusu): koç görevleri test sayısı
+    # olmadan ("Diğer" + serbest metin) verince test hacmi 0 kalır, tablo boş
+    # görünür. Yönetici en azından görev tamamlamayı ve kaç görevin test
+    # sayısız/konusuz verildiğini görsün.
+    gorev_total: int = 0
+    gorev_done: int = 0
+    unlinked_test_tasks: int = 0
 
 
 @dataclass
@@ -205,7 +212,28 @@ def _make_cohort_stats(
         if student_count > 0:
             at_risk_pct = int(round(100 * at_risk_count / student_count))
 
+    gorev_total = gorev_done = unlinked = 0
+    if student_ids:
+        from app.services.task_topic_link import is_unlinked_test_task
+
+        ws, we = _week_range(today)
+        from sqlalchemy.orm import selectinload
+
+        week_tasks = (
+            db.query(Task)
+            .options(selectinload(Task.book_items))
+            .filter(Task.student_id.in_(student_ids), Task.date >= ws, Task.date <= we,
+                    Task.is_draft.is_(False))
+            .all()
+        )
+        gorev_total = len(week_tasks)
+        gorev_done = sum(1 for t in week_tasks if getattr(t.status, "value", t.status) == "completed")
+        unlinked = sum(1 for t in week_tasks if is_unlinked_test_task(t))
+
     return CohortStats(
+        gorev_total=gorev_total,
+        gorev_done=gorev_done,
+        unlinked_test_tasks=unlinked,
         cohort_key=cohort_key,
         cohort_label=cohort_label,
         student_count=student_count,

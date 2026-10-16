@@ -15,6 +15,7 @@ import {
   Inbox,
   LayoutDashboard,
   LifeBuoy,
+  Link2,
   Loader2,
   LogOut,
   Menu,
@@ -52,7 +53,8 @@ interface NavLink {
     | "pending_request_count"
     | "at_risk_count"
     | "support_answered_count"
-    | "support_inbox_pending";
+    | "support_inbox_pending"
+    | "unlinked_test_tasks";
 }
 
 const TEACHER_NAV: NavLink[] = [
@@ -67,6 +69,7 @@ const TEACHER_NAV: NavLink[] = [
   { href: "/teacher/billing", label: "Tahsilat", icon: Wallet },
   { href: "/teacher/plan", label: "Paket", icon: Gem },
   { href: "/teacher/library", label: "Kitaplar", icon: BookOpen },
+  { href: "/teacher/unlinked-tasks", label: "Konusuz Görevler", icon: Link2, badgeKey: "unlinked_test_tasks" },
   { href: "/teacher/academic-years", label: "Akademik Yıllar", icon: CalendarRange },
   { href: "/teacher/grade-advance", label: "Sınıf Yükseltme", icon: ArrowUpRight },
   { href: "/teacher/usage", label: "Kullanım", icon: Gauge },

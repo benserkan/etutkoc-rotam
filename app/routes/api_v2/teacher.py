@@ -3856,6 +3856,7 @@ def teacher_badges_v2(
         .count()
     )
     from app.services.support_request_service import pending_count_teacher
+    from app.services.task_topic_link import count_unlinked
     return TeacherBadgesResponse(
         # Rozet = ilgilenilmesi gereken her şey: onay bekleyen + görülmemiş
         # soru/not ("Gördüm" / cevap ile düşer).
@@ -3864,6 +3865,7 @@ def teacher_badges_v2(
         at_risk_count=at_risk,
         support_answered_count=support_answered,
         support_inbox_pending=pending_count_teacher(db, user),
+        unlinked_test_tasks=sum(count_unlinked(db, [s.id for s in students]).values()),
         checked_at=now,
     )
 

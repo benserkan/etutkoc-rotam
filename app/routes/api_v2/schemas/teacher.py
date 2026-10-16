@@ -363,6 +363,8 @@ class TeacherBadgesResponse(BaseModel):
     at_risk_count: int
     support_answered_count: int = 0
     support_inbox_pending: int = 0
+    # 2026-10-16: test sayısı yazılmış ama konuya/kaynağa bağlanmamış görev sayısı
+    unlinked_test_tasks: int = 0
     checked_at: datetime
 
 

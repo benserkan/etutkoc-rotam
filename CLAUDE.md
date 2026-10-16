@@ -789,6 +789,39 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
 
 ---
 
+## KONUSUZ TEST GÖREVLERİ → MÜFREDAT KONUSU (2026-10-16, Açı Seçkin Kurs saha bulgusu, migration YOK)
+
+- **Bulgu:** Açı rehber öğretmeni #167 (14 öğrenci) 260 görevin 223'ünü "Diğer" etkinliği olarak, ders+konu+test
+  sayısını SERBEST METNE yazarak verdi ("Matematik · TRİGO" + not "AÇI 2 TEST"). Kalemsiz → etkinlik sayıldı →
+  kurum kohort/uyum/karne, müfredat, konu performansı, analitik BOŞ (kohort 7/8/10/11. sınıf 0/0/—). 10. sınıflara
+  hiç kitap atanmamış. Konuya bağlı kaynaksız kalem (topic_id + N) verilseydi her şey dolardı (14-15 Ekim'den beri).
+- **TEK MERKEZ `app/services/task_topic_link.py`** (deterministik, yapay zekâsız, belirsizde ASLA bağlamaz):
+  `extract_test_count` ("2 test", "3 adet test", "2 yaprak test") · `split_title` ("Ders · detay") ·
+  `resolve_subject` (all-subjects kuralıyla aynı) · `suggest_topic` (kısa yazım önek eşleşmesi + kısaltma köprüsü
+  ebob/ebok/okek→OBEB-OKEK/Çarpanlar, trigo→trigonometri; aynı adlı konu sınıflar arası tekilleşir, kendi sınıfı
+  öne; **tema/ünite yazılmışsa alt konuları seçenek** — görev yalnız alt konuya bağlanır; okul dersinde yoksa
+  **TYT karşılığı** seçenekleri [Maarif Edebiyat'ta dil bilgisi yok]) · `is_unlinked_test_task` (kalemsiz +
+  bloksuz + Diğer/Özet/Tekrar + metinde N test; VIDEO hariç) · `unlinked_test_tasks` / `count_unlinked` (SQL'de
+  `~Task.book_items.any()`) · `convert_task` (kaynaksız konu kalemi ekler, tip TEST; tamamlanmış görev → çözülen =
+  planlanan; başlık/not/tarih/taslak korunur; tema → `topic_is_theme`, ikinci dönüşüm → `already_linked`).
+- **Uçlar** `api_v2/task_topic_link.py` (prefix /teacher, sahiplik 404): POST `/students/{id}/task-topic-suggest` ·
+  GET `/students/{id}/subject-topics` · GET `/unlinked-test-tasks` · POST `/unlinked-test-tasks/convert`
+  (satır başı savepoint; audit USER_UPDATE `op=task_topic_link`). Koç rozeti `unlinked_test_tasks`.
+- **Web:** (1) "Diğer" formu: metinde N test → amber panel (`topic-link-panel.tsx`, `useTopicLink`; 500 ms gecikmeli
+  öneri; kesin öneri seçili gelir, tahmin gelmez; "Tüm konular") → konu seçiliyse görev TEST + topic kalemi olarak
+  kaydedilir. (2) YENİ `/teacher/unlinked-tasks` "Konusuz Görevler" (menü + rozet): öğrenci gruplu, kesin satırlar
+  işaretli, satırda konu seçici + test sayısı + kesin/tahmin/seç rozeti, alt çubukta toplu bağlama. (3) Kurum kohort:
+  "Görev" sütunu (yapılan/verilen, her tür) + satırda "N konusuz test görevi" + amber bant; planlanan test ipucu
+  kaynaksız konulu testi de anlatır.
+- **Canlı ölçüm (Açı, salt okuma):** 184 konusuz test görevi → kesin 81 · tahmin 51 · tema-seçenek 39 · bulunamadı 13.
+- Test YENİ `test_task_topic_link.py` 17/17 · YENİ `live_task_topic_link.py` 15/15 (form kesin/tahmin, toplu sayfa,
+  koyu tema 4,5, 390px) · institution 18 · p2 19 · compliance 10 · teacher_read 12 · weekly_plan 15 · curriculum 25 ·
+  student_mutations 12 · sourceless_dyb 6 · warning_ack 11 · gorev 83/83 · web tsc + eslint (tam) temiz.
+- **BİLİNÇLİ YAPILMADI:** mobil koç görev ekleme ekranında aynı uyarı (koç yazmayı web'de yapıyor) · öğrencinin
+  kalemsiz göreve girdiği "çözdüğüm soru" kurum tablolarına eklenmedi (birim belirsiz; oran %100'ü aşıyordu).
+
+---
+
 ## DENEME ANALİZİ Faz 1-3 — CANLI (2026-10-02)
 
 - **Faz 1** (`7b3c43a`): alt sekmeler (Genel Bakış/Net Gelişimi/Konu Analizi/Sınav Davranışı/Tüm

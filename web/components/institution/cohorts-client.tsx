@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   BarChart3,
@@ -79,6 +80,8 @@ export function CohortsClient({ initial, tab }: Props) {
 
       <WoWGrid wow={wow} />
 
+      <UnlinkedBanner cohorts={cohorts} />
+
       <TabBar tabs={tabs} active={active_tab} />
 
       {cohorts.length === 0 ? (
@@ -88,7 +91,7 @@ export function CohortsClient({ initial, tab }: Props) {
           <Card>
             <CardContent className="p-4">
               <h3 className="text-sm font-medium mb-3">
-                Gruplara göre tamamlama oranı (son 7 gün, test + deneme)
+                Gruplara göre test tamamlama oranı (son 7 gün)
               </h3>
               <CohortBarChart cohorts={cohorts} />
             </CardContent>
@@ -109,7 +112,7 @@ export function CohortsClient({ initial, tab }: Props) {
                     <th className="text-right px-4 py-2 font-medium">
                       <ColumnHint
                         label="Planlanan test"
-                        hint="Son 7 günde (bugün dahil) gruptaki öğrencilere yayınlanan soru bankası testlerinin toplamı. Denemeler, etkinlik görevleri ve taslaklar sayılmaz."
+                        hint="Son 7 günde (bugün dahil) gruptaki öğrencilere yayınlanan testlerin toplamı: soru bankasından verilen testler + kitap seçilmeden bir müfredat konusuna bağlanarak verilen testler. Denemeler, etkinlik (Diğer/Video/Özet/Tekrar) görevleri ve taslaklar sayılmaz."
                       />
                     </th>
                     <th className="text-right px-4 py-2 font-medium">
@@ -122,6 +125,12 @@ export function CohortsClient({ initial, tab }: Props) {
                       <ColumnHint
                         label="Tamamlama"
                         hint="Çözülen ÷ planlanan (son 7 gün). Yeşil %70 ve üstü, sarı %40–69, kırmızı %40 altı."
+                      />
+                    </th>
+                    <th className="text-right px-4 py-2 font-medium">
+                      <ColumnHint
+                        label="Görev"
+                        hint="Son 7 günde (bugün dahil) yayınlanan görevlerden öğrencinin tamamladığı / verilen görev sayısı. Her tür görev sayılır (test, deneme, etkinlik). Test hacmi 0 olsa da grubun çalışıp çalışmadığını gösterir."
                       />
                     </th>
                     <th className="text-right px-4 py-2 font-medium">
@@ -142,6 +151,29 @@ export function CohortsClient({ initial, tab }: Props) {
           </Card>
         </>
       )}
+    </div>
+  );
+}
+
+function UnlinkedBanner({ cohorts }: { cohorts: CohortStatsItem[] }) {
+  const unlinked = cohorts.reduce((a, c) => a + c.unlinked_test_tasks, 0);
+  const total = cohorts.reduce((a, c) => a + c.gorev_total, 0);
+  if (unlinked === 0) return null;
+  return (
+    <div className="rounded-md border border-amber-200 bg-amber-50 text-amber-900 px-3 py-2.5 text-sm flex items-start gap-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+      <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
+      <div>
+        <strong>
+          Son 7 günde verilen {total} görevin {unlinked} tanesi test sayısıyla
+          ama bir konuya ya da kaynağa bağlanmadan verildi.
+        </strong>{" "}
+        Bu görevler &ldquo;Diğer&rdquo; etkinliği olarak yazıldığı için içindeki
+        testler planlanan/çözülen test, müfredat ilerlemesi ve konu performansı
+        hesaplarına giremiyor. Koçlar{" "}
+        kendi panellerindeki <strong>Konusuz test görevleri</strong> ekranından bu
+        görevleri tek tek onaylayarak konuya bağlayabilir; bağlanan görevler
+        tablolara geriye dönük olarak yansır.
+      </div>
     </div>
   );
 }
@@ -316,6 +348,20 @@ function CohortRow({ cohort }: { cohort: CohortStatsItem }) {
         )}
       >
         {cohort.weekly_rate_pct == null ? "—" : `%${cohort.weekly_rate_pct}`}
+      </td>
+      <td className="px-4 py-2 text-right tabular-nums">
+        {cohort.gorev_total === 0 ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          <>
+            {cohort.gorev_done}/{cohort.gorev_total}
+            {cohort.unlinked_test_tasks > 0 ? (
+              <span className="block text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                {cohort.unlinked_test_tasks} konusuz test görevi
+              </span>
+            ) : null}
+          </>
+        )}
       </td>
       <td className="px-4 py-2 text-right">
         {cohort.at_risk_pct != null && cohort.at_risk_pct > 0 ? (

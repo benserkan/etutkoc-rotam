@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { extractTestCount } from "@/lib/api/task-topic-link";
+import { TopicLinkPanel, useTopicLink } from "./topic-link-panel";
 import {
   AlertTriangle,
   BookOpen,
@@ -1484,6 +1486,27 @@ function OtherForm({
   const [subjectId, setSubjectId] = React.useState<number | "">("");
   const [title, setTitle] = React.useState("");
   const [notes, setNotes] = React.useState("");
+  // 2026-10-16: metinde "N test" varsa konuya bağlama önerisi (Açı saha bulgusu —
+  // serbest metinli test görevleri hiçbir tabloya girmiyordu). Öneri sorgusu
+  // yazım bitince (yarım saniye) çalışır.
+  const [probe, setProbe] = React.useState({ title: "", notes: "" });
+  const probeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  function scheduleProbe(nextTitle: string, nextNotes: string) {
+    if (probeTimer.current) clearTimeout(probeTimer.current);
+    probeTimer.current = setTimeout(
+      () => setProbe({ title: nextTitle.trim(), notes: nextNotes.trim() }),
+      500,
+    );
+  }
+  const testCount = extractTestCount(probe.notes, probe.title);
+  const link = useTopicLink(
+    studentId,
+    subjectId === "" ? null : subjectId,
+    probe.title,
+    probe.notes,
+    testCount,
+  );
+  const linking = link.enabled && link.topicId !== null && testCount !== null;
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1492,6 +1515,36 @@ function OtherForm({
     const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
     // Başlık formatı: "{ders} · {başlık}"
     const fullTitle = `${subjectName} · ${title.trim()}`;
+    if (linking && link.topicId !== null && testCount !== null) {
+      // Konuya bağlı test görevi: kaynaksız konu kalemi → müfredat, konu
+      // performansı ve kurum tablolarına girer (rezerv/kapasite yok).
+      create.mutate(
+        {
+          body: {
+            date: dayDate,
+            type: "test",
+            title: fullTitle,
+            scheduled_hour: scheduledHour,
+            period: period,
+            notes: notes.trim() || null,
+            items: [
+              { book_id: null, section_id: null, topic_id: link.topicId, planned_count: testCount },
+            ],
+          },
+        },
+        {
+          onSuccess: () => {
+            setTitle("");
+            setNotes("");
+            setProbe({ title: "", notes: "" });
+            link.reset();
+            onAfterAdd();
+          },
+        },
+      );
+      return;
+    }
+
     create.mutate(
       {
         body: {
@@ -1508,6 +1561,7 @@ function OtherForm({
         onSuccess: () => {
           setTitle("");
           setNotes("");
+          setProbe({ title: "", notes: "" });
           onAfterAdd();
         },
       },
@@ -1541,7 +1595,10 @@ function OtherForm({
           <Input
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              scheduleProbe(e.target.value, notes);
+            }}
             maxLength={200}
             placeholder="Örn. Konu özeti hazırla"
           />
@@ -1551,7 +1608,10 @@ function OtherForm({
           <Input
             type="text"
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={(e) => {
+              setNotes(e.target.value);
+              scheduleProbe(title, e.target.value);
+            }}
             maxLength={300}
             placeholder="Detay açıklama"
           />
@@ -1563,11 +1623,29 @@ function OtherForm({
           />
         </div>
       </div>
-      <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
-        <Info className="size-3" aria-hidden />
-        Ders seçimi zorunlu — programa &quot;{`{ders}`} · {`{başlık}`}&quot;
-        olarak düşer.
-      </p>
+      {link.enabled && subjectId !== "" && testCount !== null ? (
+        <TopicLinkPanel
+          studentId={studentId}
+          subjectId={subjectId}
+          count={testCount}
+          suggestion={link.suggestion}
+          loading={link.loading}
+          value={link.topicId}
+          onChange={link.setTopicId}
+        />
+      ) : null}
+      {linking ? (
+        <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+          <Info className="size-3" aria-hidden />
+          Görev &quot;{testCount} test&quot; olarak seçilen konuya bağlı kaydedilecek.
+        </p>
+      ) : (
+        <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
+          <Info className="size-3" aria-hidden />
+          Ders seçimi zorunlu — programa &quot;{`{ders}`} · {`{başlık}`}&quot;
+          olarak düşer.
+        </p>
+      )}
     </form>
   );
 }

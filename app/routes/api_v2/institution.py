@@ -1855,6 +1855,9 @@ def institution_cohorts_v2(
             at_risk_count=c.at_risk_count,
             at_risk_pct=c.at_risk_pct,
             rate_color=c.rate_color,
+            gorev_total=c.gorev_total,
+            gorev_done=c.gorev_done,
+            unlinked_test_tasks=c.unlinked_test_tasks,
         )
         for c in cohorts
     ]

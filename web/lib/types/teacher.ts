@@ -347,6 +347,8 @@ export interface TeacherBadgesResponse {
   at_risk_count: number;
   support_answered_count: number;
   support_inbox_pending: number;
+  /** Test sayısı yazılmış ama konuya/kaynağa bağlanmamış görev (2026-10-16) */
+  unlinked_test_tasks: number;
   checked_at: string;
 }
 

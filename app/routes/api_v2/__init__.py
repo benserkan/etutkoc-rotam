@@ -57,6 +57,7 @@ from app.routes.api_v2 import exam_progress as v2_exam_progress
 from app.routes.api_v2 import self_study as v2_self_study
 from app.routes.api_v2 import video_basket as v2_video_basket
 from app.routes.api_v2 import weekly_skeleton as v2_weekly_skeleton
+from app.routes.api_v2 import task_topic_link as v2_task_topic_link
 from app.routes.api_v2 import pool as v2_pool
 from app.routes.api_v2 import pool_student as v2_pool_student
 from app.routes.api_v2 import student as v2_student
@@ -105,6 +106,7 @@ router.include_router(v2_exam_progress.router)
 router.include_router(v2_self_study.router)
 router.include_router(v2_video_basket.router)
 router.include_router(v2_weekly_skeleton.router)
+router.include_router(v2_task_topic_link.router)
 router.include_router(v2_pool.router)
 router.include_router(v2_pool_student.router)
 router.include_router(v2_appointments.router)

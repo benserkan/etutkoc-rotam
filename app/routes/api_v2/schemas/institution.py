@@ -415,6 +415,10 @@ class CohortStatsItem(BaseModel):
     at_risk_count: int
     at_risk_pct: int | None = None
     rate_color: str  # green / amber / red / slate
+    # Görev bazlı (2026-10-16): test hacmi yokken tablo boş görünmesin
+    gorev_total: int = 0
+    gorev_done: int = 0
+    unlinked_test_tasks: int = 0   # test sayısı yazılmış ama konuya/kaynağa bağlanmamış görev
 
 
 class WeekOverWeekInfo(BaseModel):

@@ -359,6 +359,11 @@ export interface CohortStatsItem {
   at_risk_count: number;
   at_risk_pct: number | null;
   rate_color: string; // "green" | "amber" | "red" | "slate"
+  /** Son 7 gün yayınlanan görev (her tür) — test hacmi 0 iken de çalışma görünsün */
+  gorev_total: number;
+  gorev_done: number;
+  /** Test sayısı yazılmış ama konuya/kaynağa bağlanmamış görev (tablolara giremez) */
+  unlinked_test_tasks: number;
 }
 
 export type WoWDirection = "up" | "down" | "flat" | "unknown";
