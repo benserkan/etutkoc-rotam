@@ -1855,7 +1855,7 @@ def _email_health_for_dashboard(db: Session) -> AdminEmailHealth:
 
 
 def _users_invalidate() -> list[str]:
-    return ["admin:dashboard", "admin:users", "admin:institutions"]
+    return ["admin:dashboard", "admin:users", "admin:people", "admin:institutions"]
 
 
 @router.get("/users", response_model=AdminUserListResponse)

@@ -1,24 +1,15 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowRight,
   CheckCircle2,
   Clipboard,
   FlaskConical,
-  Filter,
   Loader2,
-  Lock,
-  Plus,
-  Users,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -28,22 +19,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { adminKeys, getAdminUsers } from "@/lib/api/admin";
 import { useCreateAdminUser } from "@/lib/hooks/use-admin-mutations";
 import type {
   AdminRole,
   AdminUserCreateResult,
-  AdminUserListItem,
-  AdminUserListResponse,
   InstitutionRefBrief,
 } from "@/lib/types/admin";
 
-interface Props {
-  initial: AdminUserListResponse;
-  initialRole: string | null;
-  initialInstitutionId: number | null;
-  initialQ: string | null;
-}
 
 const ROLE_OPTIONS: { value: AdminRole; label: string }[] = [
   { value: "super_admin", label: "Süper Admin" },
@@ -53,327 +35,8 @@ const ROLE_OPTIONS: { value: AdminRole; label: string }[] = [
   { value: "parent", label: "Veli" },
 ];
 
-const ROLE_COLOR: Record<AdminRole, string> = {
-  super_admin: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-  institution_admin: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
-  teacher: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-  student: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  parent: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-};
 
-/**
- * Kullanıcılar listesi — Jinja `users_list.html` feature parity.
- *
- * Filter form (URL-based) + 500-cap table + Yeni Kullanıcı Dialog.
- * Yeni kullanıcı oluşunca tek seferlik geçici şifre dialog'da "Kopyala" ile gösterilir.
- */
-export function AdminUsersClient({
-  initial,
-  initialRole,
-  initialInstitutionId,
-  initialQ,
-}: Props) {
-  const router = useRouter();
-  const q = useQuery<AdminUserListResponse>({
-    queryKey: adminKeys.users(initialRole, initialInstitutionId, initialQ),
-    queryFn: () =>
-      getAdminUsers(initialRole, initialInstitutionId, initialQ),
-    initialData: initial,
-    staleTime: 30_000,
-  });
-  const data = q.data ?? initial;
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [demoOpen, setDemoOpen] = React.useState(false);
-  const [tempPwResult, setTempPwResult] =
-    React.useState<AdminUserCreateResult | null>(null);
-
-  // Filter form state
-  const [searchQ, setSearchQ] = React.useState(initialQ ?? "");
-  const [filterRole, setFilterRole] = React.useState(initialRole ?? "");
-  const [filterInst, setFilterInst] = React.useState(
-    initialInstitutionId != null ? String(initialInstitutionId) : "",
-  );
-
-  function applyFilters(e: React.FormEvent) {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQ.trim()) params.set("q", searchQ.trim());
-    if (filterRole) params.set("role", filterRole);
-    if (filterInst) params.set("institution_id", filterInst);
-    router.push(`/admin/users${params.toString() ? "?" + params.toString() : ""}`);
-  }
-
-  return (
-    <div className="space-y-5">
-      <header className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <Link
-            href="/admin"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Panel
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-            <Users className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
-            Kullanıcılar
-          </h1>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            onClick={() => setDemoOpen(true)}
-            className="border-amber-300 text-amber-900 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-500/25"
-            title="Tanıtım için hazır kurum/koç/öğrenci/veli ekosistemi oluştur"
-          >
-            <FlaskConical className="size-4" aria-hidden />
-            Demo Aç
-          </Button>
-          <Button
-            onClick={() => setCreateOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            <Plus className="size-4" aria-hidden />
-            Yeni Kullanıcı
-          </Button>
-        </div>
-      </header>
-      <DemoEcosystemDialog open={demoOpen} onClose={() => setDemoOpen(false)} />
-
-      {/* Filter form */}
-      <Card>
-        <CardContent className="p-3">
-          <form
-            onSubmit={applyFilters}
-            className="flex items-end gap-3 flex-wrap"
-          >
-            <div className="flex-1 min-w-[200px]">
-              <Label htmlFor="q" className="text-[11px] uppercase tracking-wide">
-                Arama
-              </Label>
-              <Input
-                id="q"
-                value={searchQ}
-                onChange={(e) => setSearchQ(e.target.value)}
-                placeholder="ad veya e-posta"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label
-                htmlFor="role"
-                className="text-[11px] uppercase tracking-wide"
-              >
-                Rol
-              </Label>
-              <select
-                id="role"
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="mt-1 px-3 py-2 border border-input rounded text-sm bg-card"
-              >
-                <option value="">— Tümü —</option>
-                {ROLE_OPTIONS.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label
-                htmlFor="inst"
-                className="text-[11px] uppercase tracking-wide"
-              >
-                Kurum
-              </Label>
-              <select
-                id="inst"
-                value={filterInst}
-                onChange={(e) => setFilterInst(e.target.value)}
-                className="mt-1 px-3 py-2 border border-input rounded text-sm bg-card"
-              >
-                <option value="">— Tümü —</option>
-                {data.institutions.map((i) => (
-                  <option key={i.id} value={String(i.id)}>
-                    {i.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button type="submit" className="bg-slate-700 hover:bg-slate-800 text-white">
-                <Filter className="size-4" aria-hidden />
-                Filtrele
-              </Button>
-              <Link
-                href="/admin/users"
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Temizle
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
-      {data.items.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center text-sm text-muted-foreground">
-            Filtreyle eşleşen kullanıcı yok.
-          </CardContent>
-        </Card>
-      ) : (
-        <UsersTable items={data.items} truncated={data.truncated} />
-      )}
-
-      <CreateUserDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        institutions={data.institutions}
-        onCreated={(result) => {
-          setCreateOpen(false);
-          setTempPwResult(result);
-        }}
-      />
-
-      <TempPasswordDialog
-        result={tempPwResult}
-        onClose={() => {
-          setTempPwResult(null);
-          router.refresh();
-        }}
-      />
-    </div>
-  );
-}
-
-function UsersTable({
-  items,
-  truncated,
-}: {
-  items: AdminUserListItem[];
-  truncated: boolean;
-}) {
-  return (
-    <Card>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-muted-foreground text-xs">
-            <tr>
-              <th className="text-left px-4 py-2 font-medium">Ad</th>
-              <th className="text-left px-4 py-2 font-medium">E-posta</th>
-              <th className="text-left px-4 py-2 font-medium">Rol</th>
-              <th className="text-left px-4 py-2 font-medium">Kurum</th>
-              <th className="text-left px-4 py-2 font-medium">Son Giriş</th>
-              <th className="text-left px-4 py-2 font-medium">Durum</th>
-              <th className="text-right px-4 py-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {items.map((u) => (
-              <UserRow key={u.id} user={u} />
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {truncated && (
-        <div className="px-4 py-2 text-xs text-muted-foreground italic border-t border-border">
-          İlk 500 kullanıcı gösteriliyor — daha dar filtre uygula.
-        </div>
-      )}
-    </Card>
-  );
-}
-
-function UserRow({ user }: { user: AdminUserListItem }) {
-  return (
-    <tr className={cn(!user.is_active && "bg-muted/30 text-muted-foreground")}>
-      <td className="px-4 py-2 font-medium">
-        <Link
-          href={`/admin/users/${user.id}`}
-          className="hover:text-indigo-700"
-        >
-          {user.full_name}
-        </Link>
-        {user.is_demo ? (
-          <span
-            className="ml-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200"
-            title={user.demo_label ? `Demo: ${user.demo_label}` : "Demo hesap"}
-          >
-            <FlaskConical className="size-2.5" aria-hidden />
-            Demo{user.demo_label ? ` · ${user.demo_label}` : ""}
-          </span>
-        ) : null}
-      </td>
-      <td className="px-4 py-2 font-mono text-xs">{user.email}</td>
-      <td className="px-4 py-2">
-        <span
-          className={cn(
-            "text-[10px] px-1.5 py-0.5 rounded border",
-            ROLE_COLOR[user.role],
-          )}
-        >
-          {user.role_label}
-        </span>
-      </td>
-      <td className="px-4 py-2 text-muted-foreground">
-        {user.institution ? (
-          user.institution.name
-        ) : user.role === "parent" && (user.via_children_institutions?.length ?? 0) > 0 ? (
-          <span>{user.via_children_institutions!.join(", ")} <span className="text-xs">(çocuğu)</span></span>
-        ) : user.role === "parent" ? (
-          <span className="italic">{(user.children?.length ?? 0) > 0 ? "bağımsız koç" : "çocuğa bağlı değil"}</span>
-        ) : (
-          <span className="italic">bağımsız</span>
-        )}
-        {user.role === "student" && user.coach && (
-          <div className="text-xs">Koç: <Link href={`/admin/users/${user.coach.id}`} className="text-indigo-600 hover:underline dark:text-indigo-300">{user.coach.name}</Link></div>
-        )}
-        {user.role === "parent" && (user.children?.length ?? 0) > 0 && (
-          <div className="mt-0.5 space-y-0.5 text-xs">
-            {user.children!.map((c) => (
-              <div key={c.id}>
-                Velisi: <Link href={`/admin/users/${c.id}`} className="text-indigo-600 hover:underline dark:text-indigo-300">{c.name}</Link>
-                {c.coach_name ? <span> · koç {c.coach_name}</span> : null}
-              </div>
-            ))}
-          </div>
-        )}
-      </td>
-      <td className="px-4 py-2 text-muted-foreground text-xs tabular-nums">
-        {user.last_login_at ? formatDateTime(user.last_login_at) : "—"}
-      </td>
-      <td className="px-4 py-2">
-        {user.locked_now ? (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 inline-flex items-center gap-0.5">
-            <Lock className="size-2.5" aria-hidden />
-            kilitli
-          </span>
-        ) : user.is_active ? (
-          <span className="text-emerald-700 dark:text-emerald-300 text-[10px]">●</span>
-        ) : (
-          <span className="text-muted-foreground/70 text-[10px]">pasif</span>
-        )}
-      </td>
-      <td className="px-4 py-2 text-right">
-        <Link
-          href={`/admin/users/${user.id}`}
-          className="text-xs text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 inline-flex items-center gap-0.5"
-        >
-          Detay
-          <ArrowRight className="size-3" aria-hidden />
-        </Link>
-      </td>
-    </tr>
-  );
-}
-
-// ============================================================================
-// Create dialog
-// ============================================================================
-
-function CreateUserDialog({
+export function CreateUserDialog({
   open,
   onOpenChange,
   institutions,
@@ -600,14 +263,6 @@ export function TempPasswordDialog({
   );
 }
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mn = String(d.getMinutes()).padStart(2, "0");
-  return `${dd}.${mm} ${hh}:${mn}`;
-}
 
 // =============================================================================
 // M5 — Demo Ekosistem Dialog
@@ -642,7 +297,7 @@ const DEMO_KINDS: Array<{
   },
 ];
 
-function DemoEcosystemDialog({
+export function DemoEcosystemDialog({
   open,
   onClose,
 }: {

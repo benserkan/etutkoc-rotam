@@ -3524,3 +3524,64 @@ export interface ProspectCreateBody {
   opt_in?: boolean;
   note?: string | null;
 }
+
+// ── /admin/people — rol sekmeleri + aktivite (2026-10-17) ──────────────────
+export type PeopleRole = "teacher" | "student" | "parent" | "institution_admin" | "super_admin";
+export type PeopleActivity = "all" | "today" | "week" | "silent" | "never";
+export type PeopleSort = "activity" | "name" | "created";
+
+export interface PersonRef {
+  id: number;
+  name: string;
+  institution_name: string | null;
+  coach_name: string | null;
+  grade_label: string | null;
+}
+
+export interface PersonRow {
+  id: number;
+  full_name: string;
+  email: string;
+  role: PeopleRole;
+  role_label: string;
+  is_active: boolean;
+  locked_now: boolean;
+  must_change_password: boolean;
+  is_demo: boolean;
+  demo_label: string | null;
+  last_active_at: string | null;
+  created_at: string | null;
+  institution_id: number | null;
+  institution_name: string | null;
+  grade_label: string | null;
+  coach: PersonRef | null;
+  gorev_7d_done: number | null;
+  gorev_7d_total: number | null;
+  program_mode: string | null;
+  student_count: number | null;
+  plan_label: string | null;
+  plan_state: "trial" | "active" | "past_due" | "payment_pending" | "free" | "institution" | null;
+  plan_note: string | null;
+  children: PersonRef[];
+}
+
+export interface PeopleResponse {
+  role: PeopleRole;
+  activity: PeopleActivity;
+  role_counts: Record<PeopleRole, number>;
+  activity_counts: Record<PeopleActivity, number>;
+  total: number;
+  page: number;
+  page_size: number;
+  items: PersonRow[];
+  institutions: InstitutionRefBrief[];
+}
+
+export interface PeopleQuery {
+  role: PeopleRole;
+  activity: PeopleActivity;
+  q: string;
+  institutionId: number | null;
+  sort: PeopleSort;
+  page: number;
+}

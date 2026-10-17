@@ -26,6 +26,7 @@ from app.routes.api_v2 import admin_conversion as v2_admin_conversion
 from app.routes.api_v2 import plan_assistant as v2_plan_assistant
 from app.routes.api_v2 import site_assistant as v2_site_assistant
 from app.routes.api_v2 import admin_membership as v2_admin_membership
+from app.routes.api_v2 import admin_people as v2_admin_people
 from app.routes.api_v2 import admin_prospects as v2_admin_prospects
 from app.routes.api_v2 import admin_campaign_links as v2_admin_campaign_links
 from app.routes.api_v2 import campaign_public as v2_campaign_public
@@ -81,6 +82,7 @@ router.include_router(v2_offers_public.router)
 router.include_router(v2_brand_public.router)
 router.include_router(v2_membership_public.router)
 router.include_router(v2_admin_membership.router)
+router.include_router(v2_admin_people.router)
 router.include_router(v2_admin_book_catalog.router)
 router.include_router(v2_admin_prospects.router)
 router.include_router(v2_admin_campaign_links.router)

@@ -114,6 +114,8 @@ export const adminKeys = {
       String(years),
       includeArchived ? "1" : "0",
     ] as const,
+  people: (p: PeopleQuery) =>
+    ["admin", "people", p.role, p.activity, p.q, p.institutionId ?? "", p.sort, p.page] as const,
   users: (
     role: string | null,
     institutionId: number | null,
@@ -352,6 +354,17 @@ export function adminInstitutionBackupDownloadUrl(id: number): string {
 // =============================================================================
 // P3 — Users fetchers
 // =============================================================================
+
+export function peopleQueryString(p: PeopleQuery): string {
+  const qs = new URLSearchParams({ role: p.role, activity: p.activity, sort: p.sort, page: String(p.page) });
+  if (p.q.trim()) qs.set("q", p.q.trim());
+  if (p.institutionId != null) qs.set("institution_id", String(p.institutionId));
+  return qs.toString();
+}
+
+export function getAdminPeople(p: PeopleQuery) {
+  return api<PeopleResponse>(`/api/v2/admin/people?${peopleQueryString(p)}`);
+}
 
 export function getAdminUsers(
   role: string | null = null,
@@ -781,7 +794,7 @@ export function previewAdminWhatsAppTemplate(body: WaTemplatePreviewBody) {
 // M5 ext — Demo seansları listesi
 // =============================================================================
 
-import type { DemoSessionListResponse } from "@/lib/types/admin";
+import type { DemoSessionListResponse, PeopleQuery, PeopleResponse } from "@/lib/types/admin";
 
 export function getAdminDemoSessions(): Promise<DemoSessionListResponse> {
   return api<DemoSessionListResponse>("/api/v2/admin/demo-sessions");
