@@ -74,6 +74,8 @@ def main() -> int:
         admin = mk(db, "admin", UserRole.SUPER_ADMIN)
         coach = mk(db, "koc", UserRole.TEACHER, institution_id=inst.id)
         solo = mk(db, "solo", UserRole.TEACHER, plan="solo_free", post_trial_plan="solo_pro")
+        trial = mk(db, "trial", UserRole.TEACHER, plan="solo_trial", trial_ends_at=now + timedelta(days=5),
+                   post_trial_plan="solo_pro")
         s1 = mk(db, "s1", UserRole.STUDENT, teacher_id=coach.id, institution_id=inst.id,
                 grade_level=9, last_seen_at=now - timedelta(minutes=5))
         s2 = mk(db, "s2", UserRole.STUDENT, teacher_id=coach.id, institution_id=inst.id,
@@ -86,7 +88,7 @@ def main() -> int:
         t.book_items = [TaskBookItem(label="x", planned_count=2, completed_count=2)]
         db.add(t)
         db.commit()
-        ids = {k: v.id for k, v in dict(admin=admin, coach=coach, solo=solo, s1=s1, s2=s2, s3=s3, par=par).items()}
+        ids = {k: v.id for k, v in dict(admin=admin, coach=coach, solo=solo, trial=trial, s1=s1, s2=s2, s3=s3, par=par).items()}
         inst_id = inst.id
 
     try:
@@ -95,8 +97,8 @@ def main() -> int:
         r = c.get(f"/api/v2/admin/people?role=student{q}")
         chk("200", r.status_code == 200, r.text[:200])
         d = r.json()
-        chk("rol sayıları (2 koç · 3 öğrenci · 1 veli)",
-            d["role_counts"]["teacher"] == 2 and d["role_counts"]["student"] == 3 and d["role_counts"]["parent"] == 1,
+        chk("rol sayıları (3 koç · 3 öğrenci · 1 veli)",
+            d["role_counts"]["teacher"] == 3 and d["role_counts"]["student"] == 3 and d["role_counts"]["parent"] == 1,
             d["role_counts"])
         ac = d["activity_counts"]
         chk("aktivite kümeleri bugün 1 · hafta 1 · hiç 1", (ac["today"], ac["week"], ac["never"]) == (1, 1, 1), ac)
@@ -118,6 +120,16 @@ def main() -> int:
         chk("bağımsız koç paket durumu: ödeme bekleniyor",
             tch[ids["solo"]]["plan_state"] == "payment_pending", tch[ids["solo"]])
         chk("kurumlu koç plan_state=institution", tch[ids["coach"]]["plan_state"] == "institution")
+        ind = c.get(f"/api/v2/admin/people?role=teacher&independent=true{q}").json()
+        chk("bağımsız görünüm kurumlu koçu dışlar (2)", ind["total"] == 2, ind["total"])
+        pc = ind["plan_counts"]
+        chk("paket sayıları: deneme 1 · ödeme bekliyor 1 · ücretsiz 0",
+            (pc["trial"], pc["payment_pending"], pc["free"]) == (1, 1, 0), pc)
+        r = c.get(f"/api/v2/admin/people?role=teacher&independent=true&plan=trial{q}").json()
+        chk("plan=trial süzgeci + satır durumu trial",
+            [i["id"] for i in r["items"]] == [ids["trial"]] and r["items"][0]["plan_state"] == "trial", r["items"])
+        r = c.get(f"/api/v2/admin/people?role=teacher&independent=true&plan=payment_pending{q}").json()
+        chk("plan=payment_pending → yalnız deneme bitmiş koç", [i["id"] for i in r["items"]] == [ids["solo"]], r["items"])
         r = c.get(f"/api/v2/admin/people?role=parent&institution_id={inst_id}{q}")
         chk("kurum süzgeci veliyi çocuğu üzerinden yakalar", r.json()["total"] == 1, r.json()["total"])
         r = c.get(f"/api/v2/admin/people?role=student&page_size=10&page=2{q}")

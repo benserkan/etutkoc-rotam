@@ -120,7 +120,7 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin/institutions", label: "Kurumlar", icon: Building2 },
       { href: "/admin/users", label: "Kullanıcılar", icon: Users },
-      { href: "/admin/independent-teachers", label: "Bağımsız Öğretmenler", icon: Users },
+      { href: "/admin/independent-teachers", label: "Bağımsız Koçlar", icon: Users },
     ],
   },
   {

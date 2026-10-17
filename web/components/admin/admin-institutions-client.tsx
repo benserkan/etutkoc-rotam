@@ -12,12 +12,12 @@ import {
   ImageIcon,
   Loader2,
   Plus,
+  Search,
   Upload,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -32,408 +32,251 @@ import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import { useCreateInstitution } from "@/lib/hooks/use-admin-mutations";
 import { buildInstitutionPlanOptions, institutionPlanLabel } from "@/lib/institution-plans";
 import type {
-  InstitutionFilterLevel,
+  HealthLevel,
   InstitutionListItem,
   InstitutionListResponse,
   InstitutionMutationResult,
-  InstitutionSort,
 } from "@/lib/types/admin";
 import type { PricingCatalog } from "@/lib/types/pricing";
 
 interface Props {
   initial: InstitutionListResponse;
-  sort: InstitutionSort;
-  filterLevel: InstitutionFilterLevel | null;
+  initialLevel?: LevelFilter;
 }
 
-const SORT_OPTIONS: { value: InstitutionSort; label: string }[] = [
-  { value: "health", label: "Sağlık Durumu" },
-  { value: "name", label: "Ada Göre" },
-  { value: "created", label: "En Yeniler Üstte" },
+export type LevelFilter = "all" | HealthLevel;
+type InstSort = "health" | "name" | "students" | "activity";
+
+const LEVELS: { key: LevelFilter; label: string; hint: string; dot: string }[] = [
+  { key: "all", label: "Tümü", hint: "Tüm kurumlar", dot: "bg-slate-400" },
+  { key: "critical", label: "Acil ilgi", hint: "Sağlık puanı en kötü kademede — ayrılma riski yüksek", dot: "bg-rose-600" },
+  { key: "risk", label: "Riskli", hint: "Birden çok olumsuz işaret var", dot: "bg-orange-500" },
+  { key: "watch", label: "Gözlem", hint: "Tek tük işaret — izlemeye değer", dot: "bg-amber-400" },
+  { key: "healthy", label: "Sağlıklı", hint: "Olumsuz işaret yok ya da çok az", dot: "bg-emerald-600" },
 ];
 
-const FILTER_OPTIONS: {
-  value: InstitutionFilterLevel | null;
-  label: string;
-}[] = [
-  { value: null, label: "Hepsi" },
-  { value: "unhealthy", label: "Sorunlu Olanlar" },
-  { value: "critical", label: "Sadece Acil" },
-];
+const LEVEL_RING: Record<HealthLevel, string> = {
+  critical: "ring-rose-600 text-rose-800 dark:text-rose-200",
+  risk: "ring-orange-500 text-orange-800 dark:text-orange-200",
+  watch: "ring-amber-400 text-amber-800 dark:text-amber-200",
+  healthy: "ring-emerald-600 text-emerald-800 dark:text-emerald-200",
+};
+
+function trLower(s: string) {
+  return s.toLocaleLowerCase("tr");
+}
+
+function lastSeen(item: InstitutionListItem): string | null {
+  const vals = [item.last_teacher_login, item.last_student_login].filter(Boolean) as string[];
+  return vals.length ? vals.sort().slice(-1)[0] : null;
+}
+
+function agoText(iso: string | null): string {
+  if (!iso) return "hiç giriş yok";
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return "bugün";
+  if (days === 1) return "dün";
+  return `${days} gün önce`;
+}
 
 /**
- * Kurumlar listesi — Jinja `institutions_list.html` feature parity.
- *
- * 4 health KPI + sort/filter chip-bar + table (sağlık/ad/plan/öğretmen/öğrenci/
- * aktif%/durum/aksiyonlar) + Yeni Kurum dialog. shadcn flavored.
+ * Kurumlar — Kullanıcılar sayfasıyla aynı dil (2026-10-17): sağlık çipleri
+ * (sayılı), arama, paket süzgeci, sıralama, kart satırlar. Liste küçük
+ * olduğundan süzme/sıralama istemcide; sağlık süzgeci URL'de (?level=).
  */
-export function AdminInstitutionsClient({
-  initial,
-  sort,
-  filterLevel,
-}: Props) {
+export function AdminInstitutionsClient({ initial, initialLevel = "all" }: Props) {
+  const router = useRouter();
   const q = useQuery<InstitutionListResponse>({
-    queryKey: adminKeys.institutions(sort, filterLevel),
-    queryFn: () => getAdminInstitutions(sort, filterLevel),
+    queryKey: adminKeys.institutions("health", null),
+    queryFn: () => getAdminInstitutions("health", null),
     initialData: initial,
     staleTime: 30_000,
   });
   const data = q.data ?? initial;
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [level, setLevel] = React.useState<LevelFilter>(initialLevel);
+  const [term, setTerm] = React.useState("");
+  const [plan, setPlan] = React.useState("");
+  const [sort, setSort] = React.useState<InstSort>("health");
+
+  function pickLevel(l: LevelFilter) {
+    setLevel(l);
+    router.replace(l === "all" ? "/admin/institutions" : `/admin/institutions?level=${l}`, { scroll: false });
+  }
+
+  const counts: Record<LevelFilter, number> = {
+    all: data.items.length,
+    critical: data.summary.critical,
+    risk: data.summary.risk,
+    watch: data.summary.watch,
+    healthy: data.summary.healthy,
+  };
+  const plans = [...new Set(data.items.map((i) => i.institution.plan ?? ""))].filter(Boolean);
+  const t = trLower(term.trim());
+  const shown = data.items
+    .filter((i) => level === "all" || i.level === level)
+    .filter((i) => !plan || i.institution.plan === plan)
+    .filter((i) => !t || trLower(i.institution.name).includes(t) || trLower(i.institution.slug).includes(t))
+    .sort((a, b) => {
+      if (sort === "name") return a.institution.name.localeCompare(b.institution.name, "tr");
+      if (sort === "students") return b.student_count - a.student_count;
+      if (sort === "activity") return (lastSeen(b) ?? "").localeCompare(lastSeen(a) ?? "");
+      return b.score - a.score;
+    });
 
   return (
     <div className="space-y-5">
-      <header className="flex items-start justify-between gap-3 flex-wrap">
+      <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link
-            href="/admin"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Panel
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
+          <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">← Panel</Link>
+          <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
             <Building2 className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
             Kurumlar
           </h1>
-          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Risk durumu ve son 7 günlük aktivite özetiyle. Ayrılma riski yüksek
-            olanlar üstte.
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Sağlık durumuna göre süz; puan yükseldikçe ayrılma riski artar. Satırda son 7 günde giriş yapan koç ve
+            öğrenci oranı görünür.
           </p>
         </div>
-        <Button
-          onClick={() => setCreateOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white"
-        >
-          <Plus className="size-4" aria-hidden />
-          Yeni Kurum
+        <Button onClick={() => setCreateOpen(true)} className="bg-indigo-700 text-white hover:bg-indigo-800">
+          <Plus className="size-4" aria-hidden /> Yeni Kurum
         </Button>
       </header>
 
-      {/* Health KPI rozetleri */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <HealthKpi
-          label="Sağlıklı"
-          value={data.summary.healthy}
-          tone="emerald"
-          emoji="🟢"
-        />
-        <HealthKpi
-          label="Gözlem"
-          value={data.summary.watch}
-          tone="yellow"
-          emoji="🟡"
-        />
-        <HealthKpi
-          label="Risk Altında"
-          value={data.summary.risk}
-          tone="amber"
-          emoji="🟠"
-        />
-        <HealthKpi
-          label="Acil İlgi"
-          value={data.summary.critical}
-          tone="rose"
-          emoji="🔴"
-        />
-      </div>
-
-      {/* Sort + Filter chip-bar */}
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-muted-foreground font-semibold uppercase tracking-wider">
-          Sırala:
-        </span>
-        {SORT_OPTIONS.map((opt) => {
-          const params = new URLSearchParams();
-          params.set("sort", opt.value);
-          if (filterLevel) params.set("filter_level", filterLevel);
+      <div className="flex flex-wrap gap-1.5 rounded-xl border bg-card p-2" role="radiogroup" aria-label="Sağlık durumu"
+           data-section="inst:levels">
+        {LEVELS.map((l) => {
+          const active = level === l.key;
           return (
-            <Link
-              key={opt.value}
-              href={`/admin/institutions?${params.toString()}`}
-              className={cn(
-                "px-2 py-1 rounded border transition",
-                sort === opt.value
-                  ? "bg-indigo-50 text-indigo-700 border-indigo-200 font-medium dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200"
-                  : "bg-card text-muted-foreground border-border hover:border-foreground/40",
-              )}
-            >
-              {opt.label}
-            </Link>
-          );
-        })}
-        <span className="text-muted-foreground/40 mx-2">|</span>
-        <span className="text-muted-foreground font-semibold uppercase tracking-wider">
-          Filtre:
-        </span>
-        {FILTER_OPTIONS.map((opt) => {
-          const params = new URLSearchParams();
-          params.set("sort", sort);
-          if (opt.value) params.set("filter_level", opt.value);
-          return (
-            <Link
-              key={opt.label}
-              href={`/admin/institutions?${params.toString()}`}
-              className={cn(
-                "px-2 py-1 rounded border transition",
-                filterLevel === opt.value
-                  ? "bg-rose-50 text-rose-700 border-rose-200 font-medium dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200"
-                  : "bg-card text-muted-foreground border-border hover:border-foreground/40",
-              )}
-            >
-              {opt.label}
-            </Link>
+            <button key={l.key} type="button" role="radio" aria-checked={active} title={l.hint}
+                    onClick={() => pickLevel(l.key)}
+                    className={cn("inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
+                      active ? "bg-indigo-700 text-white shadow-sm" : "text-foreground hover:bg-muted")}>
+              <span className={cn("size-2 rounded-full", l.dot)} aria-hidden />
+              {l.label}
+              <span className={cn("rounded-full px-1.5 text-xs tabular-nums", active ? "bg-white/20" : "bg-muted")}>
+                {counts[l.key]}
+              </span>
+            </button>
           );
         })}
       </div>
 
-      {/* Table veya empty */}
-      {data.items.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center text-sm text-muted-foreground">
-            {filterLevel
-              ? "Bu filtreye uyan kurum yok."
-              : "Henüz kurum yok. Sağ üstten ekle."}
-          </CardContent>
-        </Card>
-      ) : (
-        <InstitutionsTable items={data.items} />
-      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Kurum adı ara"
+                 aria-label="Kurum ara" className="h-9 pl-8" />
+        </div>
+        <select aria-label="Paket" value={plan} onChange={(e) => setPlan(e.target.value)}
+                className="h-9 rounded-md border border-input bg-card px-2 text-sm">
+          <option value="">Tüm paketler</option>
+          {plans.map((p) => <option key={p} value={p}>{institutionPlanLabel(p)}</option>)}
+        </select>
+        <select aria-label="Sıralama" value={sort} onChange={(e) => setSort(e.target.value as InstSort)}
+                className="h-9 rounded-md border border-input bg-card px-2 text-sm">
+          <option value="health">Risk (yüksek önce)</option>
+          <option value="activity">Son aktivite</option>
+          <option value="students">Öğrenci sayısı</option>
+          <option value="name">Ada göre</option>
+        </select>
+      </div>
 
-      <CreateInstitutionDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-      />
+      <section className="overflow-hidden rounded-xl border bg-card" data-section="inst:list">
+        <div className="border-b px-4 py-2 text-xs text-muted-foreground">{shown.length} / {data.items.length} kurum</div>
+        {shown.length === 0 ? (
+          <p className="px-4 py-12 text-center text-sm text-muted-foreground">
+            {data.items.length === 0 ? "Henüz kurum yok. Sağ üstten ekle." : "Bu süzgeçle eşleşen kurum yok."}
+          </p>
+        ) : (
+          <ul className="divide-y">{shown.map((i) => <InstitutionItem key={i.institution.id} item={i} />)}</ul>
+        )}
+      </section>
+
+      <CreateInstitutionDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
 
-function HealthKpi({
-  label,
-  value,
-  tone,
-  emoji,
-}: {
-  label: string;
-  value: number;
-  tone: "emerald" | "yellow" | "amber" | "rose";
-  emoji: string;
-}) {
-  const borderClass = {
-    emerald: "border-emerald-200",
-    yellow: "border-yellow-200",
-    amber: "border-amber-200",
-    rose: "border-rose-200",
-  }[tone];
-  const textClass = {
-    emerald: "text-emerald-700 dark:text-emerald-300",
-    yellow: "text-yellow-700 dark:text-yellow-300",
-    amber: "text-amber-700 dark:text-amber-300",
-    rose: "text-rose-700 dark:text-rose-300",
-  }[tone];
-  return (
-    <Card className={cn("border", borderClass)}>
-      <CardContent className="p-3">
-        <div className="text-[11px] text-muted-foreground uppercase tracking-wider inline-flex items-center gap-1">
-          <span>{emoji}</span> {label}
-        </div>
-        <div className={cn("text-2xl font-semibold tabular-nums mt-1", textClass)}>
-          {value}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function InstitutionsTable({ items }: { items: InstitutionListItem[] }) {
-  return (
-    <Card>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-muted-foreground text-xs">
-            <tr>
-              <th className="text-left px-4 py-2 font-medium">Sağlık</th>
-              <th className="text-left px-4 py-2 font-medium">Ad</th>
-              <th className="text-left px-4 py-2 font-medium">Plan</th>
-              <th className="text-right px-4 py-2 font-medium">Öğretmen</th>
-              <th className="text-right px-4 py-2 font-medium">Öğrenci</th>
-              <th className="text-left px-4 py-2 font-medium">
-                Son 7 Gün Aktivite
-              </th>
-              <th className="text-left px-4 py-2 font-medium">Durum</th>
-              <th className="text-right px-4 py-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {items.map((item) => (
-              <InstitutionRow key={item.institution.id} item={item} />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
-
-function InstitutionRow({ item }: { item: InstitutionListItem }) {
+function InstitutionItem({ item }: { item: InstitutionListItem }) {
   const [open, setOpen] = React.useState(false);
   const inst = item.institution;
+  const seen = lastSeen(item);
   return (
-    <tr>
-      <td className="px-4 py-3 align-top">
-        <div className="inline-flex items-center gap-1.5 flex-wrap">
-          <span className="text-base">{item.level_emoji}</span>
-          <ScoreBadge score={item.score} color={item.level_color} />
-          <span className="text-[11px] text-muted-foreground">
-            {item.level_label}
-          </span>
-        </div>
-        {item.indicators.length > 0 && (
-          <details
-            className="mt-1"
-            open={open}
-            onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
-          >
-            <summary className="text-[10px] text-muted-foreground/70 cursor-pointer hover:text-muted-foreground list-none inline-flex items-center gap-0.5">
-              <ChevronDown
-                className={cn(
-                  "size-3 transition-transform",
-                  open && "rotate-180",
-                )}
-                aria-hidden
-              />
-              {item.indicators.length} sebep
-            </summary>
-            <ul className="mt-1 text-[11px] text-foreground/80 space-y-0.5 pl-1">
+    <li className={cn("grid gap-x-4 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1.5fr)_auto]",
+                      !inst.is_active && "bg-muted/40")}
+        data-institution-id={inst.id}>
+      <div className="flex min-w-0 items-start gap-3">
+        <span className={cn("mt-0.5 grid size-10 shrink-0 place-items-center rounded-full bg-card text-sm font-semibold tabular-nums ring-2",
+                            LEVEL_RING[item.level])}
+              title={`Sağlık puanı ${item.score} — ${item.level_label} (yüksek = riskli)`}>{item.score}</span>
+        <div className="min-w-0">
+          <Link href={`/admin/institutions/${inst.id}`} className="break-words font-medium hover:underline">{inst.name}</Link>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="rounded bg-sky-700 px-1.5 py-0.5 font-medium text-white">{institutionPlanLabel(inst.plan)}</span>
+            <span className="text-muted-foreground">{item.level_label}</span>
+            {!inst.is_active && <span className="rounded bg-slate-600 px-1.5 py-0.5 text-white">pasif</span>}
+          </div>
+          {item.indicators.length > 0 && (
+            <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open}
+                    className="mt-1 inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground">
+              <ChevronDown className={cn("size-3 transition-transform", open && "rotate-180")} aria-hidden />
+              {item.indicators.length} işaret — neden?
+            </button>
+          )}
+          {open && (
+            <ul className="mt-1 space-y-0.5 text-xs">
               {item.indicators.map((ind) => (
-                <li key={ind.code} title={ind.detail}>
-                  <span className="text-rose-600 dark:text-rose-300">●</span> {ind.title}
-                  <span className="text-muted-foreground/70 ml-1">
-                    +{ind.weight} puan
-                  </span>
+                <li key={ind.code} className="break-words">
+                  <span className="font-medium">{ind.title}</span>
+                  <span className="text-muted-foreground"> · {ind.detail} (+{ind.weight})</span>
                 </li>
               ))}
             </ul>
-          </details>
-        )}
-      </td>
-      <td className="px-4 py-3 align-top">
-        <Link
-          href={`/admin/institutions/${inst.id}`}
-          className="font-medium hover:text-indigo-700"
-        >
-          {inst.name}
-        </Link>
-        <div className="text-[11px] text-muted-foreground font-mono">
-          {inst.slug}
-        </div>
-      </td>
-      <td className="px-4 py-3 align-top">
-        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
-          {institutionPlanLabel(inst.plan)}
-        </span>
-      </td>
-      <td className="px-4 py-3 text-right tabular-nums align-top">
-        {item.teacher_count}
-      </td>
-      <td className="px-4 py-3 text-right tabular-nums align-top">
-        {item.student_count}
-      </td>
-      <td className="px-4 py-3 align-top text-xs">
-        {item.teacher_active_pct != null && (
-          <ActivityBar
-            label="Ö"
-            pct={item.teacher_active_pct}
-            tone="indigo"
-            title="Son 7 günde giriş yapan öğretmen oranı"
-          />
-        )}
-        {item.student_active_pct != null && (
-          <ActivityBar
-            label="Ö"
-            pct={item.student_active_pct}
-            tone="emerald"
-            title="Son 7 günde giriş yapan öğrenci oranı"
-          />
-        )}
-        {item.teacher_active_pct == null &&
-          item.student_active_pct == null && (
-            <span className="text-muted-foreground/60">—</span>
           )}
-      </td>
-      <td className="px-4 py-3 align-top">
-        {inst.is_active ? (
-          <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
-            Aktif
-          </span>
-        ) : (
-          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200">
-            Pasif
-          </span>
-        )}
-      </td>
-      <td className="px-4 py-3 text-right whitespace-nowrap align-top">
-        <Link
-          href={`/admin/revenue/institutions/${inst.id}`}
-          className="text-xs text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 inline-flex items-center gap-0.5"
-        >
-          Ticari 360
-          <ArrowRight className="size-3" aria-hidden />
-        </Link>
-        <Link
-          href={`/admin/institutions/${inst.id}`}
-          className="ml-3 text-xs text-muted-foreground hover:text-foreground"
-        >
-          Yönetim
-        </Link>
-      </td>
-    </tr>
-  );
-}
-
-function ActivityBar({
-  label,
-  pct,
-  tone,
-  title,
-}: {
-  label: string;
-  pct: number;
-  tone: "indigo" | "emerald";
-  title: string;
-}) {
-  const barColor = tone === "indigo" ? "bg-indigo-500" : "bg-emerald-500";
-  return (
-    <div className="flex items-center gap-1.5 mb-0.5" title={title}>
-      <span className="text-[10px] text-muted-foreground w-4">{label}</span>
-      <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-        <div
-          className={cn("h-full", barColor)}
-          style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-        />
+        </div>
       </div>
-      <span className="text-[10px] text-muted-foreground tabular-nums">
-        %{pct}
-      </span>
-    </div>
+
+      <div className="min-w-0 space-y-1.5 text-sm">
+        <div>
+          <span className="tabular-nums">{item.teacher_count}</span> koç · <span className="tabular-nums">{item.student_count}</span> öğrenci
+        </div>
+        <ActivityBar label="Koç" pct={item.teacher_active_pct} tone="indigo" title="Son 7 günde giriş yapan koç oranı" />
+        <ActivityBar label="Öğrenci" pct={item.student_active_pct} tone="emerald" title="Son 7 günde giriş yapan öğrenci oranı" />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end sm:justify-start">
+        <span className="whitespace-nowrap text-xs text-muted-foreground" title="Koç ya da öğrencinin en son girişi">
+          son giriş {agoText(seen)}
+        </span>
+        <div className="flex gap-2">
+          <Link href={`/admin/revenue/institutions/${inst.id}`}
+                className="inline-flex items-center gap-0.5 rounded-md border px-2 py-1 text-xs hover:bg-muted">
+            Ticari 360 <ArrowRight className="size-3" aria-hidden />
+          </Link>
+          <Link href={`/admin/institutions/${inst.id}`} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">Yönetim</Link>
+        </div>
+      </div>
+    </li>
   );
 }
 
-function ScoreBadge({ score, color }: { score: number; color: string }) {
-  const map: Record<string, string> = {
-    rose: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-    amber: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-    yellow: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-200",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  };
+function ActivityBar({ label, pct, tone, title }: {
+  label: string; pct: number | null; tone: "indigo" | "emerald"; title: string;
+}) {
   return (
-    <span
-      className={cn(
-        "text-xs px-1.5 py-0.5 rounded font-mono font-semibold border tabular-nums",
-        map[color] ?? "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
+    <div className="flex items-center gap-2 text-xs" title={title}>
+      <span className="w-14 text-muted-foreground">{label}</span>
+      {pct == null ? <span className="text-muted-foreground">—</span> : (
+        <>
+          <span className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
+            <span className={cn("block h-full", tone === "indigo" ? "bg-indigo-600" : "bg-emerald-600")}
+                  style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+          </span>
+          <span className="tabular-nums text-muted-foreground">%{pct} aktif</span>
+        </>
       )}
-    >
-      {score}
-    </span>
+    </div>
   );
 }
 

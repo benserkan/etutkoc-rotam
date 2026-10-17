@@ -51,6 +51,7 @@ import { useImpersonateUser, useResetUserPassword } from "@/lib/hooks/use-admin-
 import type {
   AdminUserCreateResult,
   PeopleActivity,
+  PeoplePlan,
   PeopleQuery,
   PeopleResponse,
   PeopleRole,
@@ -73,6 +74,15 @@ const ACTIVITY: { key: PeopleActivity; label: string; hint: string; dot: string 
   { key: "week", label: "Bu hafta", hint: "Son 7 günde görüldü, bugün değil", dot: "bg-sky-500" },
   { key: "silent", label: "7+ gün sessiz", hint: "Son görülme 7 günden eski", dot: "bg-amber-500" },
   { key: "never", label: "Hiç girmedi", hint: "Hesap açıldı, hiç giriş yapılmadı", dot: "bg-rose-500" },
+];
+
+const PLAN_CHIPS: { key: PeoplePlan; label: string; hint: string; dot: string }[] = [
+  { key: "all", label: "Tümü", hint: "Tüm bağımsız koçlar", dot: "bg-slate-400" },
+  { key: "trial", label: "Denemede", hint: "14 günlük deneme sürüyor", dot: "bg-sky-600" },
+  { key: "payment_pending", label: "Ödeme bekleniyor", hint: "Deneme bitti, seçtiği paketin ödemesi yapılmadı", dot: "bg-amber-600" },
+  { key: "active", label: "Aktif abone", hint: "Ödemesi yapılmış abonelik (iptal edilmiş ama dönemi süren dahil)", dot: "bg-emerald-600" },
+  { key: "past_due", label: "Yenileme gecikti", hint: "Dönem bitti, yenileme ödemesi yok", dot: "bg-rose-600" },
+  { key: "free", label: "Ücretsiz", hint: "Keşif paketinde, ödeme niyeti yok", dot: "bg-slate-500" },
 ];
 
 const PLAN_TONE: Record<string, string> = {
@@ -102,6 +112,7 @@ function initials(name: string) {
 }
 
 export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleResponse; initialQuery: PeopleQuery }) {
+  const independent = !!initialQuery.independent;
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = React.useState<PeopleQuery>(initialQuery);
@@ -144,10 +155,12 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
           <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">← Panel</Link>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
             <Users className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
-            Kullanıcılar
+            {independent ? "Bağımsız Koçlar" : "Kullanıcılar"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Rol seç, aktiviteye göre süz. Liste varsayılan olarak en son görülen kişiden başlar.
+            {independent
+              ? "Kuruma bağlı olmayan koçlar — paket durumuna ve aktiviteye göre süz. Liste en son görülen koçtan başlar."
+              : "Rol seç, aktiviteye göre süz. Liste varsayılan olarak en son görülen kişiden başlar."}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -161,7 +174,27 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
         </div>
       </header>
 
-      {/* Rol sekmeleri */}
+      {independent ? (
+        <div className="flex flex-wrap gap-1.5 rounded-xl border bg-card p-2" role="radiogroup" aria-label="Paket durumu" data-section="people:plans">
+          {PLAN_CHIPS.map((c) => {
+            const active = (query.plan ?? "all") === c.key;
+            return (
+              <button key={c.key} type="button" role="radio" aria-checked={active} title={c.hint}
+                      onClick={() => update({ plan: c.key })}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
+                        active ? "bg-indigo-700 text-white shadow-sm" : "text-foreground hover:bg-muted",
+                      )}>
+                <span className={cn("size-2 rounded-full", c.dot)} aria-hidden />
+                {c.label}
+                <span className={cn("rounded-full px-1.5 text-xs tabular-nums", active ? "bg-white/20" : "bg-muted")}>
+                  {data.plan_counts?.[c.key] ?? 0}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
       <nav aria-label="Rol" className="flex flex-wrap gap-1 rounded-xl border bg-card p-1" data-section="people:roles">
         {ROLE_TABS.map((t) => {
           const Icon = t.icon;
@@ -182,6 +215,7 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
           );
         })}
       </nav>
+      )}
 
       {/* Araçlar + aktivite çipleri */}
       <div className="flex flex-col gap-3">
@@ -191,12 +225,12 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
             <Input value={searchText} onChange={(e) => setSearchText(e.target.value)}
                    placeholder="Ad veya e-posta ara" aria-label="Kişi ara" className="h-9 pl-8" />
           </div>
-          <select aria-label="Kurum" value={query.institutionId ?? ""}
+          {!independent && <select aria-label="Kurum" value={query.institutionId ?? ""}
                   onChange={(e) => update({ institutionId: e.target.value ? Number(e.target.value) : null })}
                   className="h-9 rounded-md border border-input bg-card px-2 text-sm">
             <option value="">Tüm kurumlar</option>
             {data.institutions.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-          </select>
+          </select>}
           <select aria-label="Sıralama" value={query.sort}
                   onChange={(e) => update({ sort: e.target.value as PeopleSort })}
                   className="h-9 rounded-md border border-input bg-card px-2 text-sm">
@@ -397,6 +431,9 @@ function RowActions({ p, onTempPw }: {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuItem asChild><Link href={`/admin/users/${p.id}`}><UserRound className="size-4" aria-hidden /> Detay</Link></DropdownMenuItem>
+          {p.role === "teacher" && !p.institution_id && (
+            <DropdownMenuItem asChild><Link href={`/admin/revenue/users/${p.id}`}><ShieldCheck className="size-4" aria-hidden /> Ticari 360</Link></DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem disabled={isAdmin || !p.is_active} onSelect={() => setImpOpen(true)}>
             <VenetianMask className="size-4" aria-hidden /> Sahte oturum aç

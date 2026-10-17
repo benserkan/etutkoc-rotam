@@ -115,7 +115,7 @@ export const adminKeys = {
       includeArchived ? "1" : "0",
     ] as const,
   people: (p: PeopleQuery) =>
-    ["admin", "people", p.role, p.activity, p.q, p.institutionId ?? "", p.sort, p.page] as const,
+    ["admin", "people", p.role, p.activity, p.q, p.institutionId ?? "", p.sort, p.page, p.independent ? "ind" : "", p.plan ?? "all"] as const,
   users: (
     role: string | null,
     institutionId: number | null,
@@ -359,6 +359,8 @@ export function peopleQueryString(p: PeopleQuery): string {
   const qs = new URLSearchParams({ role: p.role, activity: p.activity, sort: p.sort, page: String(p.page) });
   if (p.q.trim()) qs.set("q", p.q.trim());
   if (p.institutionId != null) qs.set("institution_id", String(p.institutionId));
+  if (p.independent) qs.set("independent", "true");
+  if (p.plan && p.plan !== "all") qs.set("plan", p.plan);
   return qs.toString();
 }
 

@@ -3575,9 +3575,15 @@ export interface PeopleResponse {
   page_size: number;
   items: PersonRow[];
   institutions: InstitutionRefBrief[];
+  plan_counts: Partial<Record<PeoplePlan, number>>;
 }
 
+export type PeoplePlan = "all" | "trial" | "active" | "payment_pending" | "past_due" | "free";
+
 export interface PeopleQuery {
+  /** true → yalnız bağımsız koçlar (Bağımsız Öğretmenler sayfası) */
+  independent?: boolean;
+  plan?: PeoplePlan;
   role: PeopleRole;
   activity: PeopleActivity;
   q: string;

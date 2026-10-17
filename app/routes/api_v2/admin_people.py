@@ -36,6 +36,7 @@ ROLE_LABELS = {
     "institution_admin": "Kurum yöneticisi", "super_admin": "Süper admin",
 }
 Activity = Literal["all", "today", "week", "silent", "never"]
+PlanFilter = Literal["all", "trial", "active", "payment_pending", "past_due", "free"]
 
 
 class PersonRef(BaseModel):
@@ -86,6 +87,7 @@ class PeopleResponse(BaseModel):
     page_size: int
     items: list[PersonRow]
     institutions: list[dict]
+    plan_counts: dict[str, int] = {}
 
 
 class SetActiveBody(BaseModel):
@@ -133,6 +135,30 @@ def _base_query(db: Session, q: str | None, institution_id: int | None):
     return query
 
 
+def _plan_filter(q, plan: str, now: datetime):
+    """_plan_info ile aynı öncelik sırası, SQL'de: deneme > gecikti > aktif > ödeme bekliyor > ücretsiz."""
+    from app.services.pricing import is_paid_plan_code
+    from app.services.plans import PLAN_CATALOG
+
+    paid = [c for c in PLAN_CATALOG if is_paid_plan_code(c)]
+    trial = (User.trial_ends_at.isnot(None)) & (User.trial_ends_at > now)
+    past_due = User.subscription_status == "past_due"
+    active = User.subscription_status.in_(["active", "canceled"])
+    pending = User.post_trial_plan.in_(paid)
+    if plan == "trial":
+        return q.filter(trial)
+    if plan == "past_due":
+        return q.filter(~trial, past_due)
+    if plan == "active":
+        return q.filter(~trial, active)
+    if plan == "payment_pending":
+        return q.filter(~trial, or_(User.subscription_status.is_(None), ~(past_due | active)), pending)
+    if plan == "free":
+        return q.filter(~trial, or_(User.subscription_status.is_(None), ~(past_due | active)),
+                        or_(User.post_trial_plan.is_(None), ~pending))
+    return q
+
+
 def _plan_info(u: User, now: datetime) -> tuple[str | None, str | None, str | None]:
     from app.services.plans import PLAN_CATALOG, is_trial_active
     from app.services.pricing import is_paid_plan_code
@@ -155,6 +181,9 @@ def _plan_info(u: User, now: datetime) -> tuple[str | None, str | None, str | No
     if u.post_trial_plan and is_paid_plan_code(u.post_trial_plan):
         target = PLAN_CATALOG.get(u.post_trial_plan)
         return (label, "payment_pending", f"ödeme bekleniyor · {target.label if target else u.post_trial_plan}")
+    if is_paid_plan_code(u.plan):
+        # Bütünlük taramasının "ödeme kaydı olmayan ücretli plan" vakası (test/demo hesapları)
+        return (label, "free", "ödeme kaydı yok")
     return (label, "free", None)
 
 
@@ -167,6 +196,8 @@ def admin_people_v2(
     sort: Literal["activity", "name", "created"] = Query("activity"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=10, le=200),
+    independent: bool = Query(False, description="Yalnız bağımsız koçlar (kurumsuz öğretmen)"),
+    plan: PlanFilter = Query("all"),
     _: User = Depends(_require_super_admin),
     db: Session = Depends(get_db),
 ):
@@ -184,6 +215,12 @@ def admin_people_v2(
     role_counts = {k: role_counts.get(k, 0) for k in ROLE_KEYS}
 
     in_role = base.filter(User.role == UserRole(role))
+    plan_counts: dict[str, int] = {}
+    if independent:
+        in_role = in_role.filter(User.role == UserRole.TEACHER, User.institution_id.is_(None))
+        for key in ("all", "trial", "active", "payment_pending", "past_due", "free"):
+            plan_counts[key] = _plan_filter(in_role, key, now).count()
+        in_role = _plan_filter(in_role, plan, now)
     activity_counts = {"all": in_role.count()}
     for key in ("today", "week", "silent", "never"):
         activity_counts[key] = _activity_filter(in_role, key, la, today_start, week_ago).count()
@@ -207,6 +244,7 @@ def admin_people_v2(
     return PeopleResponse(
         role=role, activity=activity, role_counts=role_counts, activity_counts=activity_counts,
         total=total, page=page, page_size=page_size, items=items, institutions=insts,
+        plan_counts=plan_counts,
     )
 
 
