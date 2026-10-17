@@ -186,7 +186,8 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
     return StudentTaskItem(
         id=item.id,
         book_id=item.book_id,
-        book_name=book.name if book else (item.label or "Deneme"),
+        # Kitapsız kalem: etiket > (konulu kaynaksız test) "Kaynaksız" > kitapsız deneme
+        book_name=book.name if book else (item.label or ("Kaynaksız" if topic is not None else "Deneme")),
         book_type=book.type.value if (book and book.type) else None,
         subject_id=subject.id if subject else None,
         subject_name=subject.name if subject else None,
