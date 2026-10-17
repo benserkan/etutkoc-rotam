@@ -343,7 +343,18 @@ export interface InstitutionRefBrief {
   slug: string;
 }
 
+export interface AdminUserPersonRef {
+  id: number;
+  name: string;
+  institution_name: string | null;
+  coach_name: string | null;
+}
+
 export interface AdminUserListItem {
+  /** Öğrencinin koçu; velinin çocukları (koç + kurum) — 2026-10-17 */
+  coach?: AdminUserPersonRef | null;
+  children?: AdminUserPersonRef[];
+  via_children_institutions?: string[];
   id: number;
   email: string;
   full_name: string;

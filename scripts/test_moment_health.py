@@ -211,6 +211,33 @@ def main() -> int:
             report = {r_.key: r_.silent_user_ids for r_ in moments.silent_moment_report(db)}
             check("panele döndüğünde tekrar sessiz sayılır (kırılma tespiti sürüyor)",
                   ids["crit"] in report["trial_critical"], str(report))
+
+        print("\n7) SAHA VAKASI: deneme bitti (trial_ends_at SİLİNDİ), koç bitişten sonra girmedi")
+        with SessionLocal() as db:
+            # Neslihan (#176): 16 Eki 21:06 son ziyaret, 17 Eki 03:15 deneme bitti →
+            # solo_free + post_trial_plan, trial_ends_at=None. "Ödemen bekleniyor"
+            # bandı gösterilemezdi → sessiz SAYILMAMALI (eskiden since=None → alarm).
+            from app.models import PlanChangeHistory
+            u = db.get(User, ids["ok"])
+            u.plan = "solo_free"; u.trial_ends_at = None; u.post_trial_plan = "solo_pro"
+            db.add(PlanChangeHistory(owner_type="user", owner_id=u.id, from_plan="solo_trial",
+                                     to_plan="solo_free", reason="trial_expired",
+                                     note="test", occurred_at=now - timedelta(hours=1)))
+            db.query(PanelVisitEvent).filter(PanelVisitEvent.user_id == u.id).update(
+                {"created_at": now - timedelta(hours=8)}, synchronize_session=False)
+            db.commit()
+            report = {r_.key: r_.silent_user_ids for r_ in moments.silent_moment_report(db)}
+            check("bitişten önce son ziyaret → payment_pending sessiz SAYILMAZ",
+                  ids["ok"] not in report["payment_pending"], str(report))
+            db.query(PanelVisitEvent).filter(PanelVisitEvent.user_id == u.id).update(
+                {"created_at": now - timedelta(minutes=5)}, synchronize_session=False)
+            db.commit()
+            report = {r_.key: r_.silent_user_ids for r_ in moments.silent_moment_report(db)}
+            check("bitişten sonra girip bant sunulmadıysa → sessiz sayılır",
+                  ids["ok"] in report["payment_pending"], str(report))
+            db.execute(sa_delete(PlanChangeHistory).where(PlanChangeHistory.owner_id == u.id,
+                                                          PlanChangeHistory.note == "test"))
+            db.commit()
     finally:
         with SessionLocal() as db:
             db.execute(sa_delete(MomentEvent).where(

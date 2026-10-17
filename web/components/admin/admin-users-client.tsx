@@ -320,8 +320,25 @@ function UserRow({ user }: { user: AdminUserListItem }) {
       <td className="px-4 py-2 text-muted-foreground">
         {user.institution ? (
           user.institution.name
+        ) : user.role === "parent" && (user.via_children_institutions?.length ?? 0) > 0 ? (
+          <span>{user.via_children_institutions!.join(", ")} <span className="text-xs">(çocuğu)</span></span>
+        ) : user.role === "parent" ? (
+          <span className="italic">{(user.children?.length ?? 0) > 0 ? "bağımsız koç" : "çocuğa bağlı değil"}</span>
         ) : (
           <span className="italic">bağımsız</span>
+        )}
+        {user.role === "student" && user.coach && (
+          <div className="text-xs">Koç: <Link href={`/admin/users/${user.coach.id}`} className="text-indigo-600 hover:underline dark:text-indigo-300">{user.coach.name}</Link></div>
+        )}
+        {user.role === "parent" && (user.children?.length ?? 0) > 0 && (
+          <div className="mt-0.5 space-y-0.5 text-xs">
+            {user.children!.map((c) => (
+              <div key={c.id}>
+                Velisi: <Link href={`/admin/users/${c.id}`} className="text-indigo-600 hover:underline dark:text-indigo-300">{c.name}</Link>
+                {c.coach_name ? <span> · koç {c.coach_name}</span> : null}
+              </div>
+            ))}
+          </div>
         )}
       </td>
       <td className="px-4 py-2 text-muted-foreground text-xs tabular-nums">

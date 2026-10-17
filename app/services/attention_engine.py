@@ -329,22 +329,35 @@ def _detect_recent_critical_audits(
 
 
 def _detect_unack_alarms(db: Session) -> list[AttentionItem]:
-    """Onaylanmamış AlarmEvent'ler — severity'lerine göre."""
+    """Onaylanmamış AlarmEvent'ler — son 72 saat, kural başına TEK kart.
+
+    2026-10-17: süre sınırı yoktu + her tetik ayrı kart → Ağustos'tan kalma 6
+    özdeş "Açık abuse sinyali" kartı Dikkat Odası'nı dolduruyordu. Pencere sol
+    menü rozetiyle (72 s) aynı; çözülmüş alarm sayılmaz.
+    """
+    cutoff = _now() - timedelta(hours=72)
     rows = (
         db.query(AlarmEvent)
-        .filter(AlarmEvent.acknowledged_at.is_(None))
+        .filter(AlarmEvent.acknowledged_at.is_(None),
+                AlarmEvent.resolved_at.is_(None),
+                AlarmEvent.triggered_at >= cutoff)
         .order_by(desc(AlarmEvent.triggered_at))
-        .limit(8)
+        .limit(200)
         .all()
     )
+    by_rule: dict[str, list] = {}
+    for r in rows:
+        by_rule.setdefault(r.rule_key, []).append(r)
     items: list[AttentionItem] = []
     icons = {"critical": "🚨", "warn": "⚠️", "info": "ℹ️"}
-    for r in rows:
+    for group in list(by_rule.values())[:8]:
+        r = group[0]  # en yeni tetik
+        n = len(group)
         sev = r.severity if r.severity in SEVERITY_RANK else "warn"
         items.append(AttentionItem(
             severity=sev,
             icon=icons.get(sev, "🔔"),
-            title=f"Alarm: {r.rule_name}",
+            title=f"Alarm: {r.rule_name}" + (f" ({n} kez)" if n > 1 else ""),
             description=f"Değer {r.value} (eşik {r.threshold}). Henüz görülmedi.",
             action_url="/admin/security-monitor/alarms",
             action_label="Onayla",

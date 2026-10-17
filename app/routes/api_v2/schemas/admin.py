@@ -425,6 +425,14 @@ class InstitutionRefBrief(BaseModel):
     slug: str
 
 
+class AdminUserPersonRef(BaseModel):
+    """Liste satırında bağlantılı kişi (velinin çocuğu / öğrencinin koçu)."""
+    id: int
+    name: str
+    institution_name: str | None = None
+    coach_name: str | None = None
+
+
 class AdminUserListItem(BaseModel):
     """admin/users tablosu satırı — User + institution_label."""
     id: int
@@ -450,6 +458,12 @@ class AdminUserListItem(BaseModel):
     # M5 ext — demo etiketi (listede amber rozet için)
     is_demo: bool = False
     demo_label: str | None = None
+    # 2026-10-17 — bağlantılar: velinin kurumu kendi alanında boş olduğu için
+    # "bağımsız" görünüyordu; veli → çocuklar (koç + kurum), öğrenci → koç.
+    coach: AdminUserPersonRef | None = None
+    children: list[AdminUserPersonRef] = []
+    # Veli için çocuklarından türetilen kurumlar (kendi institution_id'si yok)
+    via_children_institutions: list[str] = []
 
 
 class AdminUserListResponse(BaseModel):

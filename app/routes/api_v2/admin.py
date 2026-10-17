@@ -1741,6 +1741,49 @@ def _user_to_admin_item(u: User) -> AdminUserListItem:
     )
 
 
+def _attach_user_links(db: Session, users: list[User], items: list[AdminUserListItem]) -> None:
+    """Velinin çocukları (koç + kurum) ve öğrencinin koçu — toplu sorgu, N+1 yok."""
+    from app.models.parent import ParentStudentLink
+    from app.routes.api_v2.schemas.admin import AdminUserPersonRef
+
+    parent_ids = [u.id for u in users if u.role == UserRole.PARENT]
+    links = (
+        db.query(ParentStudentLink.parent_id, ParentStudentLink.student_id)
+        .filter(ParentStudentLink.parent_id.in_(parent_ids)).all()
+        if parent_ids else []
+    )
+    student_ids = {sid for _, sid in links} | {u.id for u in users if u.role == UserRole.STUDENT}
+    students = (
+        {s.id: s for s in db.query(User).options(joinedload(User.institution))
+         .filter(User.id.in_(student_ids)).all()} if student_ids else {}
+    )
+    coach_ids = {s.teacher_id for s in students.values() if s.teacher_id}
+    coaches = (
+        {c.id: c for c in db.query(User).filter(User.id.in_(coach_ids)).all()} if coach_ids else {}
+    )
+
+    def ref(s: User) -> AdminUserPersonRef:
+        c = coaches.get(s.teacher_id) if s.teacher_id else None
+        return AdminUserPersonRef(
+            id=s.id, name=s.full_name,
+            institution_name=s.institution.name if s.institution_id and s.institution else None,
+            coach_name=c.full_name if c else None,
+        )
+
+    kids: dict[int, list[AdminUserPersonRef]] = {}
+    for pid, sid in links:
+        if sid in students:
+            kids.setdefault(pid, []).append(ref(students[sid]))
+    for u, it in zip(users, items):
+        if u.role == UserRole.PARENT:
+            it.children = kids.get(u.id, [])
+            it.via_children_institutions = sorted(
+                {k.institution_name for k in it.children if k.institution_name})
+        elif u.role == UserRole.STUDENT and u.teacher_id and u.teacher_id in coaches:
+            c = coaches[u.teacher_id]
+            it.coach = AdminUserPersonRef(id=c.id, name=c.full_name)
+
+
 def _email_health_for_dashboard(db: Session) -> AdminEmailHealth:
     """Panonun e-posta kesintisi bandı — alarm kuralıyla AYNI eşik/pencere.
 
@@ -1837,7 +1880,16 @@ def admin_list_users_v2(
         except KeyError:
             pass
     if institution_id is not None and institution_id > 0:
-        query = query.filter(User.institution_id == institution_id)
+        # Veli kendi institution_id'sini taşımaz → çocuğu o kurumdaysa da listelenir.
+        from app.models.parent import ParentStudentLink
+        child_inst_parents = (
+            db.query(ParentStudentLink.parent_id)
+            .join(User, User.id == ParentStudentLink.student_id)
+            .filter(User.institution_id == institution_id)
+        )
+        query = query.filter(
+            (User.institution_id == institution_id) | (User.id.in_(child_inst_parents))
+        )
     if q and q.strip():
         like = f"%{q.strip()}%"
         query = query.filter(
@@ -1855,8 +1907,10 @@ def admin_list_users_v2(
     inst_refs = [
         _institution_to_ref_brief(i) for i in institutions if i is not None
     ]
+    items = [_user_to_admin_item(u) for u in users]
+    _attach_user_links(db, users, items)
     return AdminUserListResponse(
-        items=[_user_to_admin_item(u) for u in users],
+        items=items,
         total_returned=len(users),
         truncated=truncated,
         institutions=[i for i in inst_refs if i is not None],

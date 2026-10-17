@@ -150,8 +150,25 @@ def _since_trial_critical(db: Session, user: User, now: datetime) -> datetime | 
 
 
 def _since_trial_end(db: Session, user: User, now: datetime) -> datetime | None:
-    """Deneme bitişi — paywall/ödeme-bekliyor bantları o an doğar."""
-    return getattr(user, "trial_ends_at", None)
+    """Deneme bitişi — paywall/ödeme-bekliyor bantları o an doğar.
+
+    Deneme bitince expire_trials trial_ends_at'i SİLER; o yüzden bitiş anı plan
+    geçmişindeki son 'trial_expired' kaydından okunur. (Eskiden None dönüyordu →
+    bitişten ÖNCEKİ son ziyaret "bandı görebilirdi" sayılıp alarm yanlış çalıyordu.)
+    """
+    end = getattr(user, "trial_ends_at", None)
+    if end is not None:
+        return end
+    from app.models import PlanChangeHistory
+    from sqlalchemy import select
+    return db.scalar(
+        select(PlanChangeHistory.occurred_at)
+        .where(PlanChangeHistory.owner_type == "user",
+               PlanChangeHistory.owner_id == user.id,
+               PlanChangeHistory.reason == "trial_expired")
+        .order_by(PlanChangeHistory.occurred_at.desc())
+        .limit(1)
+    )
 
 
 @dataclass(frozen=True)
