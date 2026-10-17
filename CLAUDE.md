@@ -859,6 +859,17 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
   doğru: yalnız denetim olayı + alarm gösterir, sayfa gezintisi değil. (e) Bütünlük: `nevin80` çocuğa bağlı olmayan
   veli + 4 bilinen test/demo "ödeme kaydı olmayan ücretli plan". (f) 7 açık abuse sinyali hepsi `info` (alarm üretmez).
 - Test: YENİ `test_api_v2_admin_people` 22/22 · admin_users 26 · admin_institutions 23 · canlı tarayıcı 9/9 + 9/9.
+- **Denetim yeniden** (`/admin/audit`, menü "Denetim"): YENİ `app/services/admin_activity_log.py` + `GET /admin/audit/feed`.
+  audit_logs neredeyse yalnız giriş/çıkıştı (30 günde 652 giriş); asıl işler alan tablolarındaydı → TEK akış: audit
+  (Türkçe başlık + kategori security/admin/coaching/student/commercial/system + önem critical/warn/info + okunur ayrıntı
+  [_KEY_LABELS/_VALUE_LABELS] + cihaz [UA→"Chrome · Windows"] + `_via_admin` → "sahte oturumda: X"; user_update `op`/
+  target_type bazlı başlıklar `_UPDATE_TITLES`) + alan olayları (deneme karnesi/sonucu · öğrenci ekleme · program yayını
+  öğrenci+saat gruplu · görev tamamlama öğrenci+gün gruplu · seans · kitap koç+saat gruplu · destek/görev talebi · veli
+  daveti · yanlış soru · ödeme). Kişi odağı (`actor_id`) → olayları + gezdiği sayfalar (panel_visit_events, ziyaret +
+  dakika). "Son kritik olaylar" kutusu kategori süzgecinden bağımsız en üstte. Silinmiş aktör "Silinmiş kullanıcı (#id)".
+  Eski `GET /admin/audit` ucu duruyor; eski web istemcisi silindi. **KURAL: yeni audit eylemi/op eklenince
+  `_ACTION_META`/`_UPDATE_TITLES`'e Türkçe başlık; yeni kullanıcı işi audit'e yazılmıyorsa `_domain_events`'e kaynak.**
+  Test `test_api_v2_admin_audit_feed` 11/11 · canlı tarayıcı 9/9 · canlı 7 gün 590 olay 0,3 sn.
 
 ---
 
