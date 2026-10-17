@@ -114,6 +114,8 @@ export const adminKeys = {
       String(years),
       includeArchived ? "1" : "0",
     ] as const,
+  auditFeed: (p: AuditFeedQuery) =>
+    ["admin", "audit", "feed", p.days, p.category, p.severity, p.actorId ?? "", p.q, p.role, p.page] as const,
   people: (p: PeopleQuery) =>
     ["admin", "people", p.role, p.activity, p.q, p.institutionId ?? "", p.sort, p.page, p.independent ? "ind" : "", p.plan ?? "all"] as const,
   users: (
@@ -354,6 +356,20 @@ export function adminInstitutionBackupDownloadUrl(id: number): string {
 // =============================================================================
 // P3 — Users fetchers
 // =============================================================================
+
+export function auditFeedQueryString(p: AuditFeedQuery): string {
+  const qs = new URLSearchParams({ days: String(p.days), page: String(p.page) });
+  if (p.category !== "all") qs.set("category", p.category);
+  if (p.severity !== "all") qs.set("severity", p.severity);
+  if (p.actorId != null) qs.set("actor_id", String(p.actorId));
+  if (p.q.trim()) qs.set("q", p.q.trim());
+  if (p.role) qs.set("role", p.role);
+  return qs.toString();
+}
+
+export function getAdminAuditFeed(p: AuditFeedQuery) {
+  return api<AuditFeedResponse>(`/api/v2/admin/audit/feed?${auditFeedQueryString(p)}`);
+}
 
 export function peopleQueryString(p: PeopleQuery): string {
   const qs = new URLSearchParams({ role: p.role, activity: p.activity, sort: p.sort, page: String(p.page) });
@@ -796,7 +812,7 @@ export function previewAdminWhatsAppTemplate(body: WaTemplatePreviewBody) {
 // M5 ext — Demo seansları listesi
 // =============================================================================
 
-import type { DemoSessionListResponse, PeopleQuery, PeopleResponse } from "@/lib/types/admin";
+import type { AuditFeedQuery, AuditFeedResponse, DemoSessionListResponse, PeopleQuery, PeopleResponse } from "@/lib/types/admin";
 
 export function getAdminDemoSessions(): Promise<DemoSessionListResponse> {
   return api<DemoSessionListResponse>("/api/v2/admin/demo-sessions");

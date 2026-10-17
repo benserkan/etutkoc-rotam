@@ -534,7 +534,7 @@ function FailedLoginsBanner({ count }: { count: number }) {
           </Link>{" "}
           ·{" "}
           <Link
-            href="/admin/audit?action=login_failed"
+            href="/admin/audit?days=1&category=security&severity=warn"
             className="underline font-medium hover:text-amber-950"
           >
             Audit log

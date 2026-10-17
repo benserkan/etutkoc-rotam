@@ -126,7 +126,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Denetim",
     links: [
-      { href: "/admin/audit", label: "Audit Log", icon: FileText },
+      { href: "/admin/audit", label: "Denetim", icon: FileText },
       { href: "/admin/kvkk", label: "KVKK", icon: Scale },
       { href: "/admin/system-health", label: "Altyapı Sağlığı", icon: Stethoscope },
       { href: "/admin/announcements", label: "Duyurular", icon: Megaphone },

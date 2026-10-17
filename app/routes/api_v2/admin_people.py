@@ -366,3 +366,23 @@ def admin_set_user_active_v2(
               "message": "Hesap aktif edildi" if u.is_active else "Hesap pasife alındı"},
         invalidate=_users_invalidate(),
     )
+
+
+@router.get("/audit/feed")
+def admin_audit_feed_v2(
+    days: int = Query(7, ge=1, le=90),
+    category: Literal["all", "security", "admin", "coaching", "student", "commercial", "system"] = Query("all"),
+    severity: Literal["all", "critical", "warn"] = Query("all"),
+    actor_id: int | None = Query(None),
+    q: str | None = Query(None, max_length=120),
+    role: Literal["teacher", "student", "parent", "institution_admin", "super_admin"] | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=10, le=200),
+    _: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Denetim akışı — audit_logs + alan olayları (deneme, öğrenci, program, görev…) Türkçe cümleyle."""
+    from app.services.admin_activity_log import build_feed
+
+    return build_feed(db, days=days, category=category, severity=severity, actor_id=actor_id,
+                      q=q, role=role, page=page, page_size=page_size)

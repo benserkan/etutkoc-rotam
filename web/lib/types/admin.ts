@@ -3591,3 +3591,69 @@ export interface PeopleQuery {
   sort: PeopleSort;
   page: number;
 }
+
+// ── /admin/audit/feed — birleşik denetim akışı (2026-10-17) ────────────────
+export type AuditCategory = "security" | "admin" | "coaching" | "student" | "commercial" | "system";
+export type AuditSeverity = "critical" | "warn" | "info";
+
+export interface AuditPerson {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  role_label: string;
+}
+
+export interface AuditFeedItem {
+  key: string;
+  at: string;
+  category: AuditCategory;
+  category_label: string;
+  severity: AuditSeverity;
+  title: string;
+  actor: AuditPerson | null;
+  actor_text: string | null;
+  via_admin: AuditPerson | null;
+  target_name: string | null;
+  target_role_label: string | null;
+  target_extra: string | null;
+  target_url: string | null;
+  ip: string | null;
+  device: string | null;
+  details: { label: string; value: string }[];
+}
+
+export interface AuditFeedResponse {
+  days: number;
+  category: "all" | AuditCategory;
+  severity: "all" | "critical" | "warn";
+  total: number;
+  page: number;
+  page_size: number;
+  items: AuditFeedItem[];
+  /** Dönemdeki en yeni 6 kritik olay — kategori süzgecinden bağımsız, en üstte */
+  recent_critical: AuditFeedItem[];
+  counts: {
+    categories: Record<AuditCategory, number>;
+    severity: Record<AuditSeverity, number>;
+    all: number;
+    failed_logins: number;
+    actors_active: number;
+  };
+  top_actors: (AuditPerson & { count: number })[];
+  focus: (AuditPerson & {
+    last_active_at: string | null;
+    pages: { route_key: string; label: string; visits: number; minutes: number; last_at: string | null }[];
+  }) | null;
+  category_labels: Record<AuditCategory, string>;
+}
+
+export interface AuditFeedQuery {
+  days: number;
+  category: "all" | AuditCategory;
+  severity: "all" | "critical" | "warn";
+  actorId: number | null;
+  q: string;
+  role: string;
+  page: number;
+}
