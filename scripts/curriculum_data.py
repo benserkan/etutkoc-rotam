@@ -44,6 +44,9 @@ LGS_CURRICULUM: dict[str, dict] = {
             ("Sözcükte Anlam", 8),
             ("Cümlede Anlam", 8),
             ("Paragrafta Anlam", 8),
+            # 2026-10-17 (koç talebi #22): LGS Türkçe'de grafik/tablo/görsel
+            # yorumlama soruları düzenli çıkar; yayınevi kitaplarında ayrı ünite.
+            ("Görsel, Tablo ve Grafik Okuma", 8),
             ("Metin Türleri", 8),
             ("Sözel Mantık", 8),
             ("Fiilimsiler", 8),
@@ -1234,6 +1237,9 @@ EXAM_CURRICULUM: dict[str, dict] = {
             # "(Karma)". Enerji konuları (Maarif 10. sınıf "Enerji" teması)
             # eklendi — 10. sınıf GİS karnelerinde vardı, listede olmadığı için
             # "Canlıların Ortak Özellikleri"ne yapıştırılıyordu.
+            # 2026-10-17 (koç talebi #21): "Yaşam Bilimi Biyoloji" ünitesinin ilk
+            # konusu; soru bankalarında ayrı bölüm (Biyotik vb.), listede yoktu.
+            ("Bilimsel Yöntem", 9),
             ("Canlıların Ortak Özellikleri", 9),
             ("İnorganik Bileşikler", 9), ("Organik Bileşikler", 9), ("Enzimler", 9),
             ("Canlıların Temel Bileşenleri (Karma)", 9),

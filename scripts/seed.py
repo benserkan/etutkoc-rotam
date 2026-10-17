@@ -146,6 +146,15 @@ def seed_curriculum(db: Session, *, only_model: str | None = None) -> dict[str, 
             # "topics" (düz) — units'ten BAĞIMSIZ işlenir (ikisi bir arada olabilir)
             for topic_order, (topic_name, topic_grade) in enumerate(spec.get("topics", [])):
                 if (topic_name, topic_grade, None) in existing_keys:
+                    # Liste sırası = müfredat sırası (öneri motoru Topic.order okur);
+                    # araya konu eklenince mevcutların sırası da kayar.
+                    cur = db.query(Topic).filter(
+                        Topic.subject_id == subject.id, Topic.name == topic_name,
+                        Topic.grade_level == topic_grade, Topic.parent_id.is_(None),
+                        Topic.is_builtin.is_(True),
+                    ).first()
+                    if cur is not None and cur.order != topic_order:
+                        cur.order = topic_order
                     continue
                 db.add(Topic(
                     subject_id=subject.id,
