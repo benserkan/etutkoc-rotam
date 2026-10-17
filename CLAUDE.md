@@ -838,6 +838,30 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
   "X/Y görev" sayımı değişmedi. YENİ `test_day_partial_pct.py` 9/9 · gorev 83/83 · student_read 11 ·
   student_mutations 12 · teacher_read 12 · weekly_plan 15 · pool_student 29.
 
+## SÜPER ADMİN — Kullanıcılar / Kurumlar / Bağımsız Koçlar yeni dil + genel kontrol (2026-10-17, CANLI, migration YOK)
+
+- **Kullanıcılar** (`/admin/users`): YENİ `GET /admin/people` (`api_v2/admin_people.py`) — rol sekmeleri (sayılı) +
+  aktivite kümeleri (bugün TR / bu hafta / 7+ gün sessiz / hiç girmedi; son aktivite = last_seen ∨ last_login) +
+  arama + kurum/sıra süzgeci + sayfalama 50; role özgü sütun: öğrenci kurum·koç·sınıf·son 7 gün görev % (settled);
+  koç öğrenci sayısı + paket durumu (trial/active/past_due/payment_pending/free + "ödeme kaydı yok"); veli çocuklar
+  (koç + kurum), kurum adı çocuktan; kurum süzgeci veliyi çocuktan yakalar. Satır ⋯: sahte oturum (gerekçe), şifre
+  sıfırla/kilit aç, WhatsApp, pasife al/aktif et (YENİ `POST /admin/users/{id}/set-active` — kurum alanına dokunmaz).
+  Eski `GET /admin/users` duruyor (+ children/coach alanları). Web `admin-people-client.tsx`.
+- **Bağımsız Koçlar** (`/admin/independent-teachers`, menü adı değişti): aynı istemci `independent=true` +
+  paket çipleri (`plan=` + `plan_counts`); eski 4-bant tablo silindi.
+- **Kurumlar**: sağlık çipleri (?level=), arama, paket/sıra süzgeci istemcide, kart satırlar; "Ö/Ö" etiketi → Koç/Öğrenci.
+- **Genel kontrol bulguları:** (a) "moment sessiz" alarmı YANLIŞTI — deneme bitince `trial_ends_at` silindiği için
+  `payment_pending` başlangıcı bulunamıyor, bitişten önceki ziyaret sayılıyordu → `moments._since_trial_end` plan
+  geçmişindeki `trial_expired` anına bakar (test_moment_health 20/20, senaryo 7). Neslihan #176 bitişten sonra panele
+  girmedi; bandı ilk girişte görecek. (b) Dikkat Odası alarm kartları 72 s + kural başına tek kart
+  (test_attention_alarm_window 3/3; Ağustos'tan 6 özdeş abuse kartı vardı). (c) Kohort hatası (#26) 89caff6 ile zaten
+  düzelmişti, Video Sepeti (#25) eski — ikisi notla çözüldü; 2 moment alarmı "yanlış alarm" işaretlendi. (d) Canlı Akış
+  doğru: yalnız denetim olayı + alarm gösterir, sayfa gezintisi değil. (e) Bütünlük: `nevin80` çocuğa bağlı olmayan
+  veli + 4 bilinen test/demo "ödeme kaydı olmayan ücretli plan". (f) 7 açık abuse sinyali hepsi `info` (alarm üretmez).
+- Test: YENİ `test_api_v2_admin_people` 22/22 · admin_users 26 · admin_institutions 23 · canlı tarayıcı 9/9 + 9/9.
+
+---
+
 ## KONUSUZ TEST GÖREVLERİ → MÜFREDAT KONUSU (2026-10-16, Açı Seçkin Kurs saha bulgusu, migration YOK)
 
 - **Bulgu:** Açı rehber öğretmeni #167 (14 öğrenci) 260 görevin 223'ünü "Diğer" etkinliği olarak, ders+konu+test
