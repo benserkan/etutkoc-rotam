@@ -1,0 +1,146 @@
+{
+ "name": "Açı Yayınları 10. Sınıf Türk Dili ve Edebiyatı Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "subject": "Türk Dili ve Edebiyatı",
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 10,
+ "target_grade_max": 10,
+ "sections": [
+  {
+   "label": "İslamiyet Öncesi Türk Şiiri",
+   "test_count": 3
+  },
+  {
+   "label": "İsim ve Sıfat",
+   "test_count": 6
+  },
+  {
+   "label": "Anonim Halk Şiiri",
+   "test_count": 2
+  },
+  {
+   "label": "Âşık Tarzı Halk Şiiri",
+   "test_count": 2
+  },
+  {
+   "label": "Masal",
+   "test_count": 1
+  },
+  {
+   "label": "Anlam (Tema 1: Sözün Ezgisi)",
+   "test_count": 8
+  },
+  {
+   "label": "Yazım Bilgisi - Noktalama Bilgisi (Tema 1: Sözün Ezgisi)",
+   "test_count": 4
+  },
+  {
+   "label": "Tema Değerlendirme Testi (Karma) (Tema 1: Sözün Ezgisi)",
+   "test_count": 1
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 1: Sözün Ezgisi)",
+   "test_count": 1
+  },
+  {
+   "label": "Divan Şiiri",
+   "test_count": 5
+  },
+  {
+   "label": "Saf Şiir",
+   "test_count": 2
+  },
+  {
+   "label": "Zamir - Edat - Bağlaç - Ünlem",
+   "test_count": 5
+  },
+  {
+   "label": "Söyleşi (Sohbet)",
+   "test_count": 1
+  },
+  {
+   "label": "Anlam (Tema 2: Kelimelerin Ritmi)",
+   "test_count": 8
+  },
+  {
+   "label": "Yazım Bilgisi - Noktalama Bilgisi (Tema 2: Kelimelerin Ritmi)",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 2: Kelimelerin Ritmi)",
+   "test_count": 2
+  },
+  {
+   "label": "Destan",
+   "test_count": 2
+  },
+  {
+   "label": "Mesnevi",
+   "test_count": 2
+  },
+  {
+   "label": "Halk Hikâyesi",
+   "test_count": 2
+  },
+  {
+   "label": "Fabl",
+   "test_count": 1
+  },
+  {
+   "label": "Zarf (Belirteç)",
+   "test_count": 3
+  },
+  {
+   "label": "Anlam (Tema 3: Dinden Bugüne)",
+   "test_count": 8
+  },
+  {
+   "label": "Yazım Bilgisi - Noktalama Bilgisi (Tema 3: Dinden Bugüne)",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 3: Dinden Bugüne)",
+   "test_count": 2
+  },
+  {
+   "label": "Dede Korkut Hikâyeleri",
+   "test_count": 1
+  },
+  {
+   "label": "Fiiller (Eylemler)",
+   "test_count": 4
+  },
+  {
+   "label": "Şiir (Tanzimat ve Fecriati Dönemi)",
+   "test_count": 4
+  },
+  {
+   "label": "Roman (Servetifünun Dönemi)",
+   "test_count": 2
+  },
+  {
+   "label": "Hikâye (Millî Edebiyat Dönemi)",
+   "test_count": 2
+  },
+  {
+   "label": "Anlam (Tema 4: Nesillerin Mirası)",
+   "test_count": 8
+  },
+  {
+   "label": "Yazım Bilgisi - Noktalama Bilgisi (Tema 4: Nesillerin Mirası)",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 4: Nesillerin Mirası)",
+   "test_count": 2
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (4 tema: Sözün Ezgisi, Kelimelerin Ritmi, Dinden Bugüne, Nesillerin Mirası). Bölüm = üst bantta 8,8pt konu başlığı; Anlam ve Yazım-Noktalama her temada tekrar ettiği için tema adıyla ayrıştırıldı; bu bölümler kendi Karma testlerini de içerir.",
+  "Tema 1 test 27 (s.57-58) içindekilerde 'Tema Değerlendirme Testi', bantta 'Bağlam Temelli' yazıyor; ayrı satır yapıldı.",
+  "Tema 3 test 24 (s.161-164) ve Tema 4 test 27 (s.217-220) 4 sayfalık tek test (s.219-220 bandında da '27' yazıyor, soru no 5-8 kesintisiz sürüyor); 1'er test sayıldı."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 8,8pt konu + KKT/ÖTT/BT etiketi), test no TEMA içinde 1'den başlıyor: Tema1 1-28, Tema2 1-27, Tema3 1-24, Tema4 1-27, zincirler kesintisiz = 106 test. İçindekiler (s.4) sayfa aralıklarıyla birebir. Sayfa: 4 ön + 104 test×2 + 2 test×4 = 220, cevap anahtarı s.221. Cevap anahtarındaki tema başı test sayıları da 28/27/24/27."
+}

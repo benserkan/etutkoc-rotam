@@ -1,0 +1,55 @@
+{
+ "name": "Okyanus KonuTik TYT Paragraf Soru Bankası",
+ "publisher": "Okyanus Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Sözcükte ve Söz Öbeklerinde Anlam",
+   "test_count": 12
+  },
+  {
+   "label": "Cümlenin Anlamı ve Yorumu",
+   "test_count": 18
+  },
+  {
+   "label": "Anlatım Biçimleri",
+   "test_count": 16
+  },
+  {
+   "label": "Paragrafın Yapısı",
+   "test_count": 20
+  },
+  {
+   "label": "Paragrafta Ana Düşünce - Konu",
+   "test_count": 36
+  },
+  {
+   "label": "Paragrafta Yardımcı Düşünce",
+   "test_count": 38
+  },
+  {
+   "label": "Beceri Temelli Sorular",
+   "test_count": 5
+  },
+  {
+   "label": "Paragraf Bilgisi Denemeleri (12 deneme, her biri 22 soru)",
+   "test_count": 12
+  },
+  {
+   "label": "Anlam Bilgisi Denemeleri (5 deneme, her biri 28 soru)",
+   "test_count": 5
+  }
+ ],
+ "warnings": [
+  "Metin katmanlı PDF; PyMuPDF ile üst bant (17pt 'TEST N' / 'DENEME N') tarandı, AI kullanılmadı. Tahmin yok.",
+  "Bölüm 1-6: her test tek sayfa (4-6 soru). Bölüm 7 Beceri Temelli: 5 test, testler 4-6 sayfa (7-8 soru).",
+  "Denemeler kullanıcı talimatıyla blok başına tek satır, test_count = deneme sayısı; iki ayrı deneme bloğu olduğu için iki satır.",
+  "Gövdede s.114 bandında dizgi hatası '5. ÜNİTE' (diğerleri '5. BÖLÜM') — sayımı etkilemez.",
+  "Cevap anahtarında 4. bölüm adı 'Paragrafta Yapı'; kitap gövdesi/içindekiler 'Paragrafın Yapısı' — gövde adı kullanıldı."
+ ],
+ "evidence": "İçindekiler (s.4) sayfa aralıkları: B1 5-18, B2 19-38, B3 39-56, B4 57-78, B5 79-116, B6 117-156, B7 157-179, Paragraf Bilgisi Den. 182-241, Anlam Bilgisi Den. 242-276, Cevap anahtarı 277-279. Gövde bantları: B1 TEST 1-12 (s.7-18), B2 1-18 (s.21-38), B3 1-16 (s.41-56), B4 1-20 (s.59-78), B5 1-36 (s.81-116), B6 1-38 (s.119-156), B7 1-5 (s.158-179) — her bölümün ilk 1-2 sayfası konu anlatımı; zincirlerin hepsi kesintisiz. Cevap anahtarı 'Test N' sayımı bölüm başına birebir aynı (12/18/16/20/36/38/5). Denemeler: DENEME 1-12 her biri 5 sayfa, soru numaraları 1..22; Anlam DENEME 1-5 her biri 7 sayfa, 1..28. Toplam konu testi 145 + 17 deneme = 162."
+}

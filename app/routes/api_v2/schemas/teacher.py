@@ -402,6 +402,7 @@ class TeacherTaskItem(BaseModel):
     # Kaynaksız konu kalemi (kitap yok, müfredat konusu var) — TEST birimidir,
     # deneme değil (2026-10-16: arayüz kitapsız her kalemi deneme sanıyordu).
     topic_id: int | None = None
+    curriculum_topic_id: int | None = None  # kitaplı: bölüm konusu · kaynaksız: kalem konusu
     planned_count: int
     completed_count: int
     # Section'daki anlık rezerv/tamam durumu (öğretmen kapasiteyi anında görsün)

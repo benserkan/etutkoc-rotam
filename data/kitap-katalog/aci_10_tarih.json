@@ -1,0 +1,96 @@
+{
+ "name": "Açı Yayınları 10. Sınıf Tarih Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "subject": "Tarih",
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 10,
+ "target_grade_max": 10,
+ "sections": [
+  {
+   "label": "Türkistan'dan Türkiye'ye Askerî Gelişmeler",
+   "test_count": 7
+  },
+  {
+   "label": "Türkistan'dan Türkiye'ye Türklerde Devlet ve Ordu Teşkilatları",
+   "test_count": 4
+  },
+  {
+   "label": "Türklerde Sosyoekonomik Hayat ve Şehirleşme",
+   "test_count": 3
+  },
+  {
+   "label": "Türk-İslam Medeniyetinde Bilim, Kültür, Eğitim ve Sanat",
+   "test_count": 3
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Ünite 1: Türkistan'dan Türkiye'ye (1040-1299))",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 1: Türkistan'dan Türkiye'ye (1040-1299))",
+   "test_count": 1
+  },
+  {
+   "label": "Osmanlı Devleti'nin Kuruluşuna Dair Görüşler",
+   "test_count": 2
+  },
+  {
+   "label": "Beylikten Devlete Siyasi ve Askerî Gelişmeler",
+   "test_count": 9
+  },
+  {
+   "label": "Osmanlı Devleti'nde Ordu, Hukuk ve Toprak Sistemi",
+   "test_count": 5
+  },
+  {
+   "label": "Osmanlı Devleti'nin İskân ve İstimâlet Politikası",
+   "test_count": 3
+  },
+  {
+   "label": "Osmanlı Devleti'nin İlim ve İrfan Geleneği",
+   "test_count": 3
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Ünite 2: Beylikten Devlete Osmanlı (1299-1453))",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 2: Beylikten Devlete Osmanlı (1299-1453))",
+   "test_count": 1
+  },
+  {
+   "label": "Osmanlı Devleti'nin Cihan Devleti Hâline Gelmesi",
+   "test_count": 10
+  },
+  {
+   "label": "Osmanlı Devleti'nin Yönetim ve Ordu Yapısında Değişim",
+   "test_count": 3
+  },
+  {
+   "label": "Avrupalıların Sömürgeci Politikaları",
+   "test_count": 3
+  },
+  {
+   "label": "Osmanlı Devleti'nde İsyanlar",
+   "test_count": 3
+  },
+  {
+   "label": "Osmanlı Devleti'nde Bilim, Kültür, Eğitim ve Sanat",
+   "test_count": 1
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Ünite 3: Cihan Devleti Osmanlı (1453-1683))",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 3: Cihan Devleti Osmanlı (1453-1683))",
+   "test_count": 1
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (3 ünite: Türkistan'dan Türkiye'ye, Beylikten Devlete Osmanlı, Cihan Devleti Osmanlı). Bölüm = 8,8pt alt başlık (içindekiler satırları); ünite sonu ÖSYM Tadında ve Bağlam Temelli testler çok konulu, ayrı Karma satır."
+ ],
+ "evidence": "PyMuPDF üst bant taraması: test no ÜNİTE içinde 1'den; Ünite1 1-23, Ünite2 1-27, Ünite3 1-25 kesintisiz = 75 test, hepsi 2 sayfa (KKT konu testleri + ÖTT + BT). İçindekiler (s.4) sayfa aralıklarıyla her satırda birebir. Sayfa: 4 ön + 75×2 = 154, cevap anahtarı s.155."
+}

@@ -1,0 +1,64 @@
+{
+ "name": "3D AYT Fen Bilimleri Simülasyon Denemeleri (10 Deneme)",
+ "publisher": "3D Yayınları",
+ "subject": "AYT Fizik",
+ "type": "genel_deneme",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Deneme 1 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 2 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 3 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 4 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 5 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 6 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 7 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 8 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 9 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 10 (40 soru: Fizik 14 · Kimya 13 · Biyoloji 13)",
+   "test_count": 1,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (2026 baskısı); her denemenin kapağı tek tek doğrulandı, soru sayısı deneme başlığından okundu."
+ ]
+}

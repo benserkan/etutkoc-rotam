@@ -1,0 +1,47 @@
+{
+ "name": "Edebiyat Sokağı AYT Yeni Nesil Edebiyat Soru Bankası",
+ "publisher": "Edebiyat Sokağı Yayınları",
+ "subject": "AYT Edebiyat",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Edebiyat Bilgileri",
+   "test_count": 14
+  },
+  {
+   "label": "Şiir",
+   "test_count": 44
+  },
+  {
+   "label": "Hikâye",
+   "test_count": 15
+  },
+  {
+   "label": "Masal, Fabl, Destan",
+   "test_count": 5
+  },
+  {
+   "label": "Roman",
+   "test_count": 24
+  },
+  {
+   "label": "Tiyatro",
+   "test_count": 11
+  },
+  {
+   "label": "Edebiyat Genel",
+   "test_count": null
+  }
+ ],
+ "warnings": [
+  "Kaynak: YouTube tanıtım videosu (DPf3zZTUV6U); video yalnız ~61/76 sn indirilebildi (YouTube 403), kitap atlanarak çevriliyor — her test sayfası görülmedi.",
+  "İçindekiler yalnız 7 bölüm + başlangıç sayfası veriyor (5, 39, 141, 177, 193, 247, 275); test sayısı yazmıyor.",
+  "Desen (görsel teyitli): bölüm açılışı + 5 sayfa giriş (terim sözlüğü, özet bilgiler, 'Soru Tipi' sayfaları), sonra her test TAM 2 sayfa, test no bölüm başına 1'den başlar. Edebiyat Bilgileri: Test 01 s.11, Test 07 s.23, Test 08 s.25 -> 11-38 = 14 test (zincir tutarlı). Şiir: Test 01 s.53, 03 s.57, 09 s.69 -> 53-140 = 44 test. Tiyatro: Test 01 s.253 (giriş 248-252 görüldü), 253-274 = 11 test.",
+  "TAHMİNİ: Hikâye (15), Masal-Fabl-Destan (5), Roman (24) videoda görülmedi; giriş bloğu diğer bölümler gibi 6 sayfa (açılış dahil) varsayılıp kalan sayfa/2 alındı. Şiir/Edebiyat Bilgileri içinde alt konu girişleri yok varsayıldı (görülen kısımda yoktu).",
+  "Edebiyat Genel (s.275-?): kitabın son sayfası görülmediği için test sayısı bilinmiyor -> null; koç/admin kitaptan doldurmalı."
+ ],
+ "evidence": "Kareler 2 fps çıkarıldı; içindekiler karesi + test sayfası üst bant kırpımları (TEST 01/02/07/08/09, sayfa no 11-13, 22-25, 53-69, 246-257) okundu."
+}

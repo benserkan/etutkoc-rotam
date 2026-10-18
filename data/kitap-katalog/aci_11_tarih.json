@@ -1,0 +1,84 @@
+{
+ "name": "Açı Yayınları 11. Sınıf Tarih Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "subject": "Tarih",
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 11,
+ "target_grade_max": 11,
+ "sections": [
+  {
+   "label": "Osmanlı Devleti'nin 1683-1789 Yılları Arasındaki Siyasi ve Askerî Mücadeleleri",
+   "test_count": 10
+  },
+  {
+   "label": "Lale Devri'nin Devlet ve Toplum Hayatına Etkileri",
+   "test_count": 4
+  },
+  {
+   "label": "1755 Lizbon ve 1766 İstanbul Depremlerinin Etkileri",
+   "test_count": 3
+  },
+  {
+   "label": "Sanayi Devrimi'nin Meydana Getirdiği Siyasi, Sosyal ve Ekonomik Değişim",
+   "test_count": 6
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Ünite 1: Değişen Dünyada Osmanlı (1683-1789))",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 1: Değişen Dünyada Osmanlı (1683-1789))",
+   "test_count": 1
+  },
+  {
+   "label": "Fransız İhtilali'nin Devlet ve Toplum Hayatında Meydana Getirdiği Değişim",
+   "test_count": 8
+  },
+  {
+   "label": "1789-1908 Yılları Arasında Osmanlı Devleti'nde Meydana Gelen Siyasi, Askerî ve İdari Gelişmeler",
+   "test_count": 11
+  },
+  {
+   "label": "1789-1908 Yılları Arasında Osmanlı Devleti'nde Bilim, Sanat ve Teknoloji Alanında Meydana Gelen Gelişmeler",
+   "test_count": 4
+  },
+  {
+   "label": "Osmanlı Devleti'nde Sanayileşme Çabaları",
+   "test_count": 4
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Ünite 2: Dönüşüm Sürecinde Osmanlı (1789-1908))",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 2: Dönüşüm Sürecinde Osmanlı (1789-1908))",
+   "test_count": 1
+  },
+  {
+   "label": "1908-1918 Yılları Arasında Osmanlı Devleti'nde Meydana Gelen Siyasi ve Askerî Gelişmeler",
+   "test_count": 8
+  },
+  {
+   "label": "1908-1918 Yılları Arasında Yaşanan Kitlesel Göç ve Salgınlar",
+   "test_count": 3
+  },
+  {
+   "label": "Osmanlı Devleti'nin İnsanlık Tarihine Katkıları",
+   "test_count": 2
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Ünite 3: Savaşlar Sarmalında Osmanlı (1908-1918))",
+   "test_count": 2
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 3: Savaşlar Sarmalında Osmanlı (1908-1918))",
+   "test_count": 1
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (3 ünite: Değişen Dünyada Osmanlı, Dönüşüm Sürecinde Osmanlı, Savaşlar Sarmalında Osmanlı). Bölüm = alt başlık (içindekiler satırları; bantta yazı boyutu 6,3-8,8pt arasında değişiyor). Ünite sonu ÖSYM Tadında ve Bağlam Temelli testler ayrı Karma satır."
+ ],
+ "evidence": "PyMuPDF üst bant taraması: test no ÜNİTE içinde 1'den; Ünite1 1-28, Ünite2 1-32, Ünite3 1-16 kesintisiz = 76 test, hepsi 2 sayfa. İçindekiler (s.4) sayfa aralıkları her satırda birebir (örn. Siyasi-Askerî-İdari 77-98 = 11 test, Bilim-Sanat 99-106 = 4 test). Sayfa: 4 ön + 76×2 = 156, cevap anahtarı s.157."
+}

@@ -66,6 +66,7 @@ import type {
   TeacherReviewFleetResponse,
   CarryoverCandidatesResponse,
   CurriculumProgressResponse,
+  TopicInsight,
   NextUnitsResponse,
   TeacherReviewResponse,
   TeacherStudentAnalyticsResponse,
@@ -124,6 +125,8 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "parents"] as const,
   carryoverCandidates: (id: number, programId?: number | null) =>
     ["teacher", "me", "students", String(id), "carryover", String(programId ?? "active")] as const,
+  topicInsights: (id: number, topicIds: number[]) =>
+    ["teacher", "me", "students", String(id), "topic-insights", topicIds.join(",")] as const,
   studentCurriculum: (id: number) =>
     ["teacher", "me", "students", String(id), "curriculum"] as const,
   studentNextUnits: (id: number) =>
@@ -490,6 +493,12 @@ export function getTeacherStudentWeek(
   });
   return api<TeacherStudentWeekResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(id))}/week${qs}`,
+  );
+}
+
+export function getTopicInsights(id: number, topicIds: number[]): Promise<{ items: TopicInsight[] }> {
+  return api<{ items: TopicInsight[] }>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/topic-insights?topic_ids=${topicIds.join(",")}`,
   );
 }
 

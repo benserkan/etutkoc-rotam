@@ -1586,6 +1586,26 @@ def teacher_student_topic_performance_v2(
     )
 
 
+@router.get("/students/{student_id}/topic-insights")
+def teacher_student_topic_insights_v2(
+    student_id: int,
+    topic_ids: str = Query(..., max_length=600, description="Virgülle konu id'leri (en çok 60)"),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Hafta ızgarası konu özeti: görevin konusunda ilerleme + kaynak kaynak çözülen/toplam
+    + D/Y/B performansı. Müfredat sekmesi ve Konu Performansı ile aynı servisler. Sahiplik 404."""
+    from app.services.topic_insight import build_topic_insights
+
+    student = _get_owned_student(db, student_id, user.id)
+    try:
+        ids = sorted({int(x) for x in topic_ids.split(",") if x.strip()})[:60]
+    except ValueError:
+        raise HTTPException(status_code=422, detail="invalid_topic_ids")
+    data = build_topic_insights(db, student, user.id, ids)
+    return {"items": [data[i] for i in ids if i in data]}
+
+
 @router.get(
     "/students/{student_id}/curriculum",
     response_model=CurriculumProgressResponse,
@@ -4018,6 +4038,9 @@ def _build_teacher_task_item(
         section_label=sec.label if sec else None,
         topic_name=(sec.topic.name if (sec and sec.topic) else (topic.name if topic else None)),
         topic_id=item.topic_id if item.book_id is None else None,
+        # Müfredat konusu her iki türde: kitaplı → bölümün konusu, kaynaksız → kalem konusu
+        # (hafta ızgarası konu özeti — 2026-10-18)
+        curriculum_topic_id=(sec.topic_id if sec else item.topic_id),
         planned_count=item.planned_count,
         completed_count=item.completed_count,
         section_total_tests=section_total,
@@ -4136,6 +4159,7 @@ def _capacity_invalidate(teacher_id: int, sid: int) -> list[str]:
         f"{base}:books",
         f"{base}:sidebar",
         f"{base}:topic-board",
+        f"{base}:topic-insights",  # hafta ızgarası konu özeti
     ]
 
 

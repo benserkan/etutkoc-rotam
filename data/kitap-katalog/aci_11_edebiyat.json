@@ -1,0 +1,196 @@
+{
+ "name": "Açı Yayınları 11. Sınıf Türk Dili ve Edebiyatı Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "subject": "Türk Dili ve Edebiyatı",
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 11,
+ "target_grade_max": 11,
+ "sections": [
+  {
+   "label": "Edebiyat-Toplum İlişkisi",
+   "test_count": 1
+  },
+  {
+   "label": "Geleneksel Türk Tiyatrosu (Karagöz, Orta Oyunu, Köy Seyirlik Oyunu, Meddah, Kukla)",
+   "test_count": 3
+  },
+  {
+   "label": "Mektup",
+   "test_count": 1
+  },
+  {
+   "label": "E-Posta",
+   "test_count": 1
+  },
+  {
+   "label": "Dilekçe",
+   "test_count": 1
+  },
+  {
+   "label": "Fiilimsi",
+   "test_count": 4
+  },
+  {
+   "label": "Sözcüğün, Sözcük Grubunun Anlamı ve Yorumu (Tema 1: Bir Diyeceğim Var)",
+   "test_count": 2
+  },
+  {
+   "label": "Cümlenin Anlatımı, Anlamı ve Yorumu (Tema 1: Bir Diyeceğim Var)",
+   "test_count": 1
+  },
+  {
+   "label": "Paragrafın Anlatımı, Anlamı ve Yorumu (Tema 1: Bir Diyeceğim Var)",
+   "test_count": 4
+  },
+  {
+   "label": "Yazım Kuralları (Tema 1: Bir Diyeceğim Var)",
+   "test_count": 3
+  },
+  {
+   "label": "Noktalama İşaretleri (Tema 1: Bir Diyeceğim Var)",
+   "test_count": 3
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 1: Bir Diyeceğim Var)",
+   "test_count": 4
+  },
+  {
+   "label": "Hikâye",
+   "test_count": 5
+  },
+  {
+   "label": "Geçiş Dönemi Eserleri",
+   "test_count": 2
+  },
+  {
+   "label": "Âşıklık Geleneği, Orhun Abideleri",
+   "test_count": 2
+  },
+  {
+   "label": "Fiilde Kip",
+   "test_count": 2
+  },
+  {
+   "label": "Fiilde Çatı",
+   "test_count": 2
+  },
+  {
+   "label": "Sözcüğün, Sözcük Grubunun Anlamı ve Yorumu (Tema 2: Kültür Yolculuğu)",
+   "test_count": 1
+  },
+  {
+   "label": "Cümlenin Anlatımı, Anlamı ve Yorumu (Tema 2: Kültür Yolculuğu)",
+   "test_count": 1
+  },
+  {
+   "label": "Paragrafın Anlatımı, Anlamı ve Yorumu (Tema 2: Kültür Yolculuğu)",
+   "test_count": 3
+  },
+  {
+   "label": "Yazım Kuralları (Tema 2: Kültür Yolculuğu)",
+   "test_count": 2
+  },
+  {
+   "label": "Noktalama İşaretleri (Tema 2: Kültür Yolculuğu)",
+   "test_count": 2
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 2: Kültür Yolculuğu)",
+   "test_count": 4
+  },
+  {
+   "label": "Roman",
+   "test_count": 5
+  },
+  {
+   "label": "Biyografi",
+   "test_count": 2
+  },
+  {
+   "label": "Radyo Tiyatrosu",
+   "test_count": 1
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 4
+  },
+  {
+   "label": "Sözcüğün, Sözcük Grubunun Anlamı ve Yorumu (Tema 3: Yaşamın İzinde)",
+   "test_count": 1
+  },
+  {
+   "label": "Cümlenin Anlatımı, Anlamı ve Yorumu (Tema 3: Yaşamın İzinde)",
+   "test_count": 1
+  },
+  {
+   "label": "Paragrafın Anlatımı, Anlamı ve Yorumu (Tema 3: Yaşamın İzinde)",
+   "test_count": 5
+  },
+  {
+   "label": "Yazım Kuralları (Tema 3: Yaşamın İzinde)",
+   "test_count": 2
+  },
+  {
+   "label": "Noktalama İşaretleri (Tema 3: Yaşamın İzinde)",
+   "test_count": 2
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 3: Yaşamın İzinde)",
+   "test_count": 4
+  },
+  {
+   "label": "Küçürek Hikâye",
+   "test_count": 2
+  },
+  {
+   "label": "Modern Türk Tiyatrosu",
+   "test_count": 4
+  },
+  {
+   "label": "Tiyatro Türleri",
+   "test_count": 1
+  },
+  {
+   "label": "Tiyatro Türleri, Unsurları",
+   "test_count": 1
+  },
+  {
+   "label": "Belgesel",
+   "test_count": 1
+  },
+  {
+   "label": "Cümle Türleri",
+   "test_count": 4
+  },
+  {
+   "label": "Sözcüğün, Sözcük Grubunun Anlamı ve Yorumu (Tema 4: Hayatın Aynası)",
+   "test_count": 1
+  },
+  {
+   "label": "Cümlenin Anlatımı, Anlamı ve Yorumu (Tema 4: Hayatın Aynası)",
+   "test_count": 1
+  },
+  {
+   "label": "Paragrafın Anlatımı, Anlamı ve Yorumu (Tema 4: Hayatın Aynası)",
+   "test_count": 2
+  },
+  {
+   "label": "Yazım Kuralları (Tema 4: Hayatın Aynası)",
+   "test_count": 3
+  },
+  {
+   "label": "Noktalama İşaretleri (Tema 4: Hayatın Aynası)",
+   "test_count": 3
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 4: Hayatın Aynası)",
+   "test_count": 4
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (4 tema: Bir Diyeceğim Var, Kültür Yolculuğu, Yaşamın İzinde, Hayatın Aynası). Bu kitapta 8,8pt bant TEMA adı; bölüm = 7,8pt alt başlık (içindekilerdeki satırlar). Her temada tekrar eden dil bilgisi/anlam/yazım satırları tema adıyla ayrıştırıldı."
+ ],
+ "evidence": "PyMuPDF üst bant taraması: test no TEMA içinde 1'den, Tema1 1-28, Tema2 1-26, Tema3 1-27, Tema4 1-27 kesintisiz = 108 test, hepsi 2 sayfa. İçindekiler (s.4) sayfa aralıkları her satırda birebir. Sayfa: 4 ön + 108×2 = 220, cevap anahtarı s.221. Cevap anahtarı tema başı test sayıları da 28/26/27/27."
+}

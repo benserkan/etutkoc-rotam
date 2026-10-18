@@ -1,0 +1,41 @@
+{
+ "name": "Hız ve Renk TYT Tarih Soru Bankası",
+ "publisher": "Hız ve Renk Yayınları",
+ "subject": "TYT Tarih",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {"label": "1. Ünite Tarih ve Zaman / İnsanlığın İlk Dönemleri", "test_count": 4},
+  {"label": "2. Ünite İlk Çağ Uygarlıkları / Orta Çağda Dünya", "test_count": 4},
+  {"label": "3. Ünite İlk ve Orta Çağlarda Türk Dünyası", "test_count": 4},
+  {"label": "4. Ünite İslam Medeniyetinin Doğuşu", "test_count": 4},
+  {"label": "5. Ünite İlk Türk-İslam Devletleri / Selçuklu Türkiyesi", "test_count": 4},
+  {"label": "Hızlı Tarama Testi 1", "test_count": 1},
+  {"label": "6. Ünite Beylikten Devlete Osmanlı Siyaseti (1302-1453)", "test_count": 4},
+  {"label": "7. Ünite Dünya Gücü Osmanlı (1453-1595)", "test_count": 4},
+  {"label": "8. Ünite Osmanlı Kültür ve Uygarlığı", "test_count": 4},
+  {"label": "9. Ünite XVII. Yüzyılda Osmanlı İmparatorluğu", "test_count": 4},
+  {"label": "10. Ünite XVIII. Yüzyılda Osmanlı İmparatorluğu", "test_count": 4},
+  {"label": "11. Ünite Yeni Çağ ve Yakın Çağda Avrupa'daki Gelişmeler", "test_count": 2},
+  {"label": "Hızlı Tarama Testi 2", "test_count": 1},
+  {"label": "12. Ünite XIX. Yüzyılda Osmanlı İmparatorluğu", "test_count": 5},
+  {"label": "13. Ünite XX. Yüzyıl Başlarında Osmanlı Devleti ve Dünya", "test_count": 5},
+  {"label": "14. Ünite Milli Mücadele'nin Hazırlık Dönemi", "test_count": 4},
+  {"label": "15. Ünite BMM'nin Açılması / Sevr Antlaşması", "test_count": 4},
+  {"label": "16. Ünite Milli Mücadele'nin Muharebeler Dönemi ve Lozan", "test_count": 4},
+  {"label": "17. Ünite Atatürkçülük ve Türk İnkılabı", "test_count": 8},
+  {"label": "Hızlı Tarama Testi 3", "test_count": 1},
+  {"label": "18. Ünite İki Savaş Arası Dönemde Türkiye ve Dünya", "test_count": 5},
+  {"label": "19. Ünite II. Dünya Savaşı Sürecinde Türkiye ve Dünya", "test_count": 2},
+  {"label": "20. Ünite II. Dünya Savaşı Sonrasında Türkiye ve Dünya", "test_count": 2},
+  {"label": "21. Ünite Toplumsal Devrim Çağında Dünya ve Türkiye", "test_count": 2},
+  {"label": "22. Ünite 21. Yüzyılın Eşiğinde Türkiye ve Dünya", "test_count": 2},
+  {"label": "Hızlı Tarama Testi 4", "test_count": 1}
+ ],
+ "warnings": [
+  "TAHMİNİ: yayınevinin örnek PDF'inden (lisedestek.com, ISBN 978-605-7530-89-9) içindekiler sayfaları + 'her test 2 sayfa' deseni ile sayfa aralığı / 2 hesaplandı; yalnız 1. ünite (4 test) doğrudan doğrulandı.",
+  "Kitap kendini '85 test, 1098 soru' diye tanıtıyor; bu tahmin 89 test veriyor (fark muhtemelen Hızlı Tarama sayfalarında). Kesin sayı için içindekiler fotoğrafı / kitap gerekir."
+ ]
+}

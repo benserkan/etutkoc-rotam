@@ -21,7 +21,11 @@ import {
 } from "@/lib/hooks/use-teacher-mutations";
 import { cn } from "@/lib/utils";
 import { SubjectTag, subjectColors, subjectTintVars } from "@/components/shared/subject-tag";
-import type { TeacherStudentWeekDay, TeacherTask } from "@/lib/types/teacher";
+import type { TeacherStudentWeekDay, TeacherTask, TopicInsight } from "@/lib/types/teacher";
+import { useQuery } from "@tanstack/react-query";
+import { getTopicInsights, teacherKeys } from "@/lib/api/teacher";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TopicInsightCard, taskTopicIds } from "./topic-insight-card";
 import {
   findSubjectByExactName,
   findSubjectInTitle,
@@ -251,10 +255,15 @@ function SubjGroupBlock({
   onDragState,
   onContext,
   highlightTaskId,
+  insights,
+  insightsLoading = false,
 }: {
   g: SubjGroup;
   dayDate: string;
   highlightTaskId?: number | null;
+  /** Konu özeti (hafta ızgarası hover kartı, 2026-10-18) */
+  insights?: Map<number, TopicInsight>;
+  insightsLoading?: boolean;
   onDragState?: (dragging: boolean) => void;
   onContext?: (t: TeacherTask, dayDate: string, x: number, y: number) => void;
 }) {
@@ -280,11 +289,16 @@ function SubjGroupBlock({
       ) : (
         <SubjectTag name={g.name} size="xs" />
       )}
+      <TooltipProvider delayDuration={300} skipDelayDuration={150}>
       <ul className="mt-0.5 space-y-px">
         {g.tasks.map((t) => {
           const mk = MARK[gorevState(t)];
           const hl = highlightTaskId === t.id;
-          return (
+          const dragHint = t.scheduled_hour == null
+            ? "Sürükle: başka güne taşı · Ctrl ile bırak: kopyala"
+            : "Saat atanmış görev taşınamaz";
+          const hasTopic = !!insights && taskTopicIds(t).length > 0;
+          const row = (
             <li
               key={t.id}
               data-highlight={hl ? "1" : undefined}
@@ -322,12 +336,7 @@ function SubjGroupBlock({
                 hl &&
                   "rounded bg-fuchsia-600 px-1 py-0.5 ring-2 ring-fuchsia-300 [&_*]:!text-white",
               )}
-              title={taskTooltip(
-                t,
-                t.scheduled_hour == null
-                  ? "Sürükle: başka güne taşı · Ctrl ile bırak: kopyala"
-                  : "Saat atanmış görev taşınamaz",
-              )}
+              title={hasTopic ? undefined : taskTooltip(t, dragHint)}
             >
               <span className={cn("shrink-0 font-bold", mk.cls)} aria-hidden>
                 {mk.ch}
@@ -359,8 +368,18 @@ function SubjGroupBlock({
               </span>
             </li>
           );
+          if (!hasTopic) return row;
+          return (
+            <Tooltip key={t.id}>
+              <TooltipTrigger asChild>{row}</TooltipTrigger>
+              <TooltipContent side="right" align="start" className="max-w-none p-3">
+                <TopicInsightCard task={t} insights={insights!} loading={insightsLoading} footer={dragHint} />
+              </TooltipContent>
+            </Tooltip>
+          );
         })}
       </ul>
+      </TooltipProvider>
     </div>
   );
 }
@@ -392,6 +411,23 @@ export function WeekGrid({
   const moveMut = useMoveTaskDate();
   const spreadMut = useSpreadTask();
   const placeVideos = usePlaceVideos(studentId);
+
+  // Konu özeti (hover kartı): haftadaki görevlerin müfredat konuları tek istekte
+  const topicIds = React.useMemo(() => {
+    const set = new Set<number>();
+    for (const d of days) for (const t of d.tasks) for (const id of taskTopicIds(t)) set.add(id);
+    return [...set].sort((a, b) => a - b).slice(0, 60);
+  }, [days]);
+  const insightQ = useQuery({
+    queryKey: teacherKeys.topicInsights(studentId, topicIds),
+    queryFn: () => getTopicInsights(studentId, topicIds),
+    enabled: topicIds.length > 0,
+    staleTime: 30_000,
+  });
+  const insightMap = React.useMemo(
+    () => new Map((insightQ.data?.items ?? []).map((i) => [i.topic_id, i] as const)),
+    [insightQ.data],
+  );
 
   // --- Sağ tık menüsü (koç isteği 2026-09-03): sürükle-bırakın klavye/fare
   // dostu alternatifi. Taşı/Kopyala seçilince ızgara "hedef gün seç" moduna
@@ -723,6 +759,8 @@ export function WeekGrid({
                               g={g}
                               dayDate={day.date}
                               highlightTaskId={highlightTaskId}
+                              insights={insightMap}
+                              insightsLoading={insightQ.isLoading}
                               onDragState={setDragging}
                               onContext={(t, dd, x, y) =>
                                 setMenu({

@@ -1,0 +1,89 @@
+{
+ "name": "3D TYT Fen Bilimleri Simülasyon Denemeleri (15 Deneme)",
+ "publisher": "3D Yayınları",
+ "subject": "TYT Fizik",
+ "type": "genel_deneme",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Deneme 1 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 2 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 3 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 4 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 5 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 6 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 7 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 8 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 9 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 10 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 11 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 12 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 13 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 14 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Deneme 15 (20 soru: Fizik 7 · Kimya 7 · Biyoloji 6)",
+   "test_count": 1,
+   "topic": ""
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (2026 baskısı); her denemenin kapağı tek tek doğrulandı, soru sayısı deneme başlığından okundu."
+ ]
+}

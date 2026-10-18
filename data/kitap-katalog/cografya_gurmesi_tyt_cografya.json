@@ -1,0 +1,256 @@
+{
+ "name": "Coğrafya Gurmesi TYT Coğrafya Soru Bankası",
+ "publisher": "Coğrafya Gurmesi Yayınları",
+ "subject": "TYT Coğrafya",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Doğa ve İnsan",
+   "test_count": 1
+  },
+  {
+   "label": "Coğrafya Bilimi",
+   "test_count": 1
+  },
+  {
+   "label": "Dünya'nın Şekli ve Hareketleri",
+   "test_count": 2
+  },
+  {
+   "label": "Coğrafi Konum",
+   "test_count": 2
+  },
+  {
+   "label": "Harita Bilgisi",
+   "test_count": 1
+  },
+  {
+   "label": "Atmosfer ve İklim",
+   "test_count": 1
+  },
+  {
+   "label": "Sıcaklık",
+   "test_count": 2
+  },
+  {
+   "label": "Basınç",
+   "test_count": 1
+  },
+  {
+   "label": "Rüzgârlar",
+   "test_count": 1
+  },
+  {
+   "label": "Nem ve Yağış",
+   "test_count": 1
+  },
+  {
+   "label": "İklim Tipleri",
+   "test_count": 2
+  },
+  {
+   "label": "Türkiye'de İklim Elemanları",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye'de İklim Tipleri",
+   "test_count": 1
+  },
+  {
+   "label": "Dünya'nın Tektonik Oluşumu",
+   "test_count": 2
+  },
+  {
+   "label": "İç Kuvvetler",
+   "test_count": 2
+  },
+  {
+   "label": "Kayaçlar",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye'de İç Kuvvetler",
+   "test_count": 1
+  },
+  {
+   "label": "Dış Kuvvetler",
+   "test_count": 5
+  },
+  {
+   "label": "Türkiye'de Dış Kuvvetler",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye'de Ana Yeryüzü Şekilleri",
+   "test_count": 1
+  },
+  {
+   "label": "Dünya'da Su Varlığı",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye'de Su Varlığı",
+   "test_count": 1
+  },
+  {
+   "label": "Dünya'da Toprak",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye'de Topraklar",
+   "test_count": 1
+  },
+  {
+   "label": "Dünya'da Bitki",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye'de Bitki",
+   "test_count": 1
+  },
+  {
+   "label": "Ünite Tekrar Testi (4. Ünite)",
+   "test_count": 1
+  },
+  {
+   "label": "Dünya'da ve Türkiye'de Yerleşme",
+   "test_count": 2
+  },
+  {
+   "label": "Nüfusun Özellikleri ve Yapısı",
+   "test_count": 2
+  },
+  {
+   "label": "Nüfusun Tarihsel Değişimi",
+   "test_count": 1
+  },
+  {
+   "label": "Dünya'da Nüfusun Dağılışı",
+   "test_count": 1
+  },
+  {
+   "label": "Nüfus Piramitleri",
+   "test_count": 2
+  },
+  {
+   "label": "Türkiye'de Nüfus",
+   "test_count": 4
+  },
+  {
+   "label": "Göç",
+   "test_count": 2
+  },
+  {
+   "label": "Ekonomik Faaliyetler",
+   "test_count": 2
+  },
+  {
+   "label": "Bölgeler ve Çeşitleri",
+   "test_count": 4
+  },
+  {
+   "label": "Ulaşım",
+   "test_count": 2
+  },
+  {
+   "label": "Çevreyi Kullanma Biçimleri",
+   "test_count": 2
+  },
+  {
+   "label": "Doğal Afetlerin Özellikleri",
+   "test_count": 2
+  },
+  {
+   "label": "Dünya'da Afetler",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye'de Afetler",
+   "test_count": 2
+  },
+  {
+   "label": "Afetlerden Korunma",
+   "test_count": 1
+  },
+  {
+   "label": "Ünite Tekrar Testi (7. Ünite)",
+   "test_count": 1
+  },
+  {
+   "label": "Klon - Doğa ve İnsan, Dünya'nın Şekli ve Hareketleri",
+   "test_count": 1
+  },
+  {
+   "label": "Harita - Doğa ve İnsan, Dünya'nın Şekli ve Hareketleri",
+   "test_count": 1
+  },
+  {
+   "label": "Klon - İklim",
+   "test_count": 1
+  },
+  {
+   "label": "Harita - İklim",
+   "test_count": 1
+  },
+  {
+   "label": "Klon - İç Kuvvetler",
+   "test_count": 1
+  },
+  {
+   "label": "Harita - İç Kuvvetler",
+   "test_count": 1
+  },
+  {
+   "label": "Klon, Harita - Dış Kuvvetler",
+   "test_count": 1
+  },
+  {
+   "label": "Klon - Su, Toprak, Bitki",
+   "test_count": 1
+  },
+  {
+   "label": "Harita - Su, Toprak, Bitki",
+   "test_count": 1
+  },
+  {
+   "label": "Klon - Yerleşme ve Nüfus",
+   "test_count": 2
+  },
+  {
+   "label": "Harita - Yerleşme ve Nüfus",
+   "test_count": 2
+  },
+  {
+   "label": "Klon, Harita - Göç ve Ekonomik Faaliyetler",
+   "test_count": 1
+  },
+  {
+   "label": "Klon - Bölgeler ve Ulaşım",
+   "test_count": 1
+  },
+  {
+   "label": "Harita - Bölgeler ve Ulaşım",
+   "test_count": 1
+  },
+  {
+   "label": "Klon - Çevre, İnsan ve Afet",
+   "test_count": 1
+  },
+  {
+   "label": "Harita - Çevre, İnsan ve Afet",
+   "test_count": 1
+  }
+ ],
+ "warnings": [
+  "Kaynak: YouTube tanıtım videosu (iZ4gkIiOoq8); ~58/79 sn indirilebildi (YouTube 403).",
+  "İçindekiler 8 ünite + her konunun başlangıç sayfasını veriyor (test sayısı yazmıyor). Desen görsel teyitli: her test TAM 2 sayfa, test no ünite başına 1'den; ünite = açılış (tek sayfa) + 'Ünite Hakkında Bilgiler' (çift sayfa) + testler. Test sayısı = konu sayfa aralığı / 2.",
+  "Zincir teyidi: 1. Ünite Test 1 s.7, Test 2 s.9, Test 3 s.11, Test 4 s.13; 2. Ünite Test 5 s.31 (Rüzgârlar), 6 s.33, 7 s.35, 8 s.37; 7. Ünite 'Ünite Tekrar Testi' = TEST 9 (hesapla birebir); 8. Ünite Test 1-4 s.157-163.",
+  "TAHMİNİ: ünitenin son konusu, sonraki ünite açılışının (2 sayfa) öncesine kadar sayıldı (Harita Bilgisi 1, Türkiye'de İklim Tipleri 1, Ekonomik Faaliyetler 2, Ulaşım 2) — açılış sayfası yeri 2. ve 8. ünitede görüldü, diğerlerinde varsayıldı.",
+  "TAHMİNİ: kitabın son sayfası görülmedi; 'Harita - Çevre, İnsan ve Afet' (s.191) 1 test sayıldı.",
+  "5. Ünite içindekiler sütunu eğik çekilmiş; etiket-sayfa eşlemesi sıra ile yapıldı (8 etiket / 8 sayfa no)."
+ ],
+ "evidence": "Toplam 86 test; içindekiler karesi (parmak altı kısım başka karelerden tamamlandı) + test sayfası üst bant TEST numaraları."
+}

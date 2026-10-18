@@ -1,0 +1,263 @@
+{
+ "name": "Bilgi Sarmal TYT Biyoloji Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Canlıların Ortak Özellikleri",
+   "test_count": 2
+  },
+  {
+   "label": "Canlıların Ortak Özellikleri – Grafik Yorum",
+   "test_count": 1
+  },
+  {
+   "label": "Temel Bileşikler – İnorganik Bileşikler",
+   "test_count": 2
+  },
+  {
+   "label": "Temel Bileşikler – Karbonhidratlar",
+   "test_count": 1
+  },
+  {
+   "label": "Temel Bileşikler – Lipitler",
+   "test_count": 1
+  },
+  {
+   "label": "Temel Bileşikler – Proteinler",
+   "test_count": 1
+  },
+  {
+   "label": "Temel Bileşikler – Enzimler",
+   "test_count": 2
+  },
+  {
+   "label": "Temel Bileşikler – Vitaminler",
+   "test_count": 1
+  },
+  {
+   "label": "Temel Bileşikler – Nükleik Asitler",
+   "test_count": 1
+  },
+  {
+   "label": "Temel Bileşikler – ATP, Hormonlar",
+   "test_count": 1
+  },
+  {
+   "label": "Yaşam Bilimi Biyoloji – Ünite Testleri",
+   "test_count": 5
+  },
+  {
+   "label": "Yaşam Bilimi Biyoloji – Simülasyon Testleri",
+   "test_count": 2
+  },
+  {
+   "label": "Yaşam Bilimi Biyoloji – ÖSYM Tipi Testler",
+   "test_count": 2
+  },
+  {
+   "label": "Hücrenin Keşfi, Hücre Teorisi, Hücrenin Kısımları",
+   "test_count": 1
+  },
+  {
+   "label": "Hücre Organelleri – Ribozom, Endoplazmik Retikulum, Golgi Aygıtı",
+   "test_count": 1
+  },
+  {
+   "label": "Hücre Organelleri – Lizozom, Peroksizom, Koful",
+   "test_count": 1
+  },
+  {
+   "label": "Hücre Organelleri – Sentrozom, Mitokondri, Plastitler",
+   "test_count": 1
+  },
+  {
+   "label": "Hücre Organelleri",
+   "test_count": 2
+  },
+  {
+   "label": "Hücre İskeleti, Hücre Zarının Yapısı",
+   "test_count": 1
+  },
+  {
+   "label": "Hücre Zarından Madde Geçişleri",
+   "test_count": 5
+  },
+  {
+   "label": "Hücre – Ünite Testleri",
+   "test_count": 2
+  },
+  {
+   "label": "Hücre – Simülasyon Testleri",
+   "test_count": 2
+  },
+  {
+   "label": "Hücre – ÖSYM Tipi Testler",
+   "test_count": 2
+  },
+  {
+   "label": "Canlıların Çeşitliliği ve Sınıflandırılması",
+   "test_count": 1
+  },
+  {
+   "label": "Bakteriler Âlemi",
+   "test_count": 1
+  },
+  {
+   "label": "Bakteriler ve Arkeler Âlemi",
+   "test_count": 1
+  },
+  {
+   "label": "Protista Âlemi",
+   "test_count": 1
+  },
+  {
+   "label": "Bitkiler Âlemi",
+   "test_count": 1
+  },
+  {
+   "label": "Mantarlar Âlemi",
+   "test_count": 1
+  },
+  {
+   "label": "Hayvanlar Âlemi",
+   "test_count": 3
+  },
+  {
+   "label": "Virüsler",
+   "test_count": 1
+  },
+  {
+   "label": "Canlı Âlemleri – Ünite Testleri",
+   "test_count": 5
+  },
+  {
+   "label": "Canlı Âlemleri – Simülasyon Testleri",
+   "test_count": 2
+  },
+  {
+   "label": "Canlı Âlemleri – ÖSYM Tipi Testler",
+   "test_count": 2
+  },
+  {
+   "label": "Mitoz Bölünme",
+   "test_count": 2
+  },
+  {
+   "label": "Eşeysiz Üreme",
+   "test_count": 2
+  },
+  {
+   "label": "Mayoz Bölünme",
+   "test_count": 2
+  },
+  {
+   "label": "Eşeyli Üreme",
+   "test_count": 1
+  },
+  {
+   "label": "Hücre Bölünmeleri – Ünite Testleri",
+   "test_count": 5
+  },
+  {
+   "label": "Hücre Bölünmeleri – Simülasyon Testleri",
+   "test_count": 2
+  },
+  {
+   "label": "Hücre Bölünmeleri – ÖSYM Tipi Testler",
+   "test_count": 2
+  },
+  {
+   "label": "Genetik Kavramlar",
+   "test_count": 1
+  },
+  {
+   "label": "Gamet Oluşumları",
+   "test_count": 1
+  },
+  {
+   "label": "Mendel Genetiği – Monohibrit ve Dihibrit Çaprazlama",
+   "test_count": 1
+  },
+  {
+   "label": "Mendel Genetiği – Polihibrit Çaprazlama ve Kontrol Çaprazlaması",
+   "test_count": 1
+  },
+  {
+   "label": "Soyağaçları",
+   "test_count": 2
+  },
+  {
+   "label": "Eş Baskınlık ve Çok Alellilik",
+   "test_count": 1
+  },
+  {
+   "label": "Kan Grupları",
+   "test_count": 2
+  },
+  {
+   "label": "Eşeye Bağlı Kalıtım",
+   "test_count": 2
+  },
+  {
+   "label": "Genetik Varyasyonlar ve Biyolojik Çeşitlilik",
+   "test_count": 1
+  },
+  {
+   "label": "Kalıtım – Ünite Testleri",
+   "test_count": 7
+  },
+  {
+   "label": "Kalıtım – Simülasyon Testleri",
+   "test_count": 2
+  },
+  {
+   "label": "Kalıtım – ÖSYM Tipi Testler",
+   "test_count": 2
+  },
+  {
+   "label": "Ekosistemi Etkileyen Faktörler",
+   "test_count": 1
+  },
+  {
+   "label": "Ekosistemde Madde ve Enerji Akışı",
+   "test_count": 2
+  },
+  {
+   "label": "Madde Döngüleri",
+   "test_count": 2
+  },
+  {
+   "label": "Güncel Çevre Sorunları ve İnsan",
+   "test_count": 3
+  },
+  {
+   "label": "Ekosistem Ekolojisi ve Güncel Çevre Sorunları – Ünite Testleri",
+   "test_count": 3
+  },
+  {
+   "label": "Ekosistem Ekolojisi ve Güncel Çevre Sorunları – Simülasyon Testleri",
+   "test_count": 2
+  },
+  {
+   "label": "Ekosistem Ekolojisi ve Güncel Çevre Sorunları – ÖSYM Tipi Testler",
+   "test_count": 2
+  },
+  {
+   "label": "Sarmal Testler",
+   "test_count": 6
+  }
+ ],
+ "warnings": [
+  "2025 baskısı. İçindekiler (s.4-6) her testi tek satır ve sayfa numarasıyla listeliyor; gövde metin katmanından (PyMuPDF, üst bant 15pt 'Test N' + 17.5pt konu başlığı / 17.5pt 'ÜNİTE TESTİ – N', 'SİMÜLASYON TESTİ – N', 'SARMAL TEST – N') sayıldı; iki kaynak 119/119 birebir.",
+  "ÖSYM Tipi testlerin başlığı görsel bant (metin yok); varlıkları sayfalardaki 9pt 'TEST' + 1. soru numarasıyla ve içindekiler sayfa numaralarıyla (49,51,87,89,129,131,165,167,215,217,249,251) doğrulandı.",
+  "Yayınevi tanıtımındaki 'çıkmış sorular' ayrı test olarak basılmamış (içindekilerde de yok) — ünite testleri/ÖSYM tipi içinde; ayrı satır yapılmadı.",
+  "Kazanım testleri ardışık aynı başlıkta birleştirildi (ör. Enzimler Test 9-10 → 2). Hücre Organelleri Test 5-6 alt başlıksız genel organel testleri.",
+  "Sarmal Test 1-6 kümülatif (o sayfaya kadarki tüm konular) → tek satır."
+ ],
+ "evidence": "Ofset: basılı sayfa = PDF indeks+1. Her test tam 2 sayfa; ön kısım 6 s. + 6 ünite kapağı×2 s. + 119 test×2 = 256 = PDF sayfa sayısı. Ünite içi 'Test N' zincirleri boşluksuz: Ü1 1-13, Ü2 1-12, Ü3 1-10, Ü4 1-7, Ü5 1-12, Ü6 1-8; Ünite Testi 5/2/5/5/7/3, Simülasyon 2'şer, ÖSYM Tipi 2'şer, Sarmal 1-6. Toplam 119 test."
+}

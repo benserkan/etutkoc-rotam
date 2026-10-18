@@ -1,0 +1,251 @@
+{
+ "name": "Aromat TYT Kimya Soru Bankası",
+ "publisher": "Aromat Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Simyadan Kimyaya",
+   "test_count": 2
+  },
+  {
+   "label": "Kimyanın Sembolik Dili",
+   "test_count": 3
+  },
+  {
+   "label": "Kimyanın Uğraş Alanları - Kimya Uygulamalarında İş Sağlığı ve Güvenliği",
+   "test_count": 5
+  },
+  {
+   "label": "Ünite Tekrar Testi (Kimya Bilimi)",
+   "test_count": 3
+  },
+  {
+   "label": "Atom Modelleri",
+   "test_count": 2
+  },
+  {
+   "label": "Atomun Yapısı",
+   "test_count": 4
+  },
+  {
+   "label": "Periyodik Sistem",
+   "test_count": 2
+  },
+  {
+   "label": "Periyodik Özelliklerin Değişimi",
+   "test_count": 4
+  },
+  {
+   "label": "Ünite Tekrar Testi (Atom ve Periyodik Sistem)",
+   "test_count": 5
+  },
+  {
+   "label": "Kimyasal Türler",
+   "test_count": 1
+  },
+  {
+   "label": "Kimyasal Türler Arası Etkileşimlerin Sınıflandırılması",
+   "test_count": 1
+  },
+  {
+   "label": "Güçlü Etkileşimler",
+   "test_count": 5
+  },
+  {
+   "label": "Zayıf Etkileşimler",
+   "test_count": 3
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 1
+  },
+  {
+   "label": "Ünite Tekrar Testi (Kimyasal Türler Arası Etkileşimler)",
+   "test_count": 2
+  },
+  {
+   "label": "Maddenin Fiziksel Hâlleri",
+   "test_count": 1
+  },
+  {
+   "label": "Katılar",
+   "test_count": 2
+  },
+  {
+   "label": "Sıvılar",
+   "test_count": 4
+  },
+  {
+   "label": "Gazlar",
+   "test_count": 1
+  },
+  {
+   "label": "Gaz - Plazma - Hâl Değişimi",
+   "test_count": 1
+  },
+  {
+   "label": "Ünite Tekrar Testi (Maddenin Hâlleri)",
+   "test_count": 3
+  },
+  {
+   "label": "Su ve Hayat",
+   "test_count": 1
+  },
+  {
+   "label": "Çevre Kimyası",
+   "test_count": 3
+  },
+  {
+   "label": "Kütlenin Korunumu Yasası",
+   "test_count": 1
+  },
+  {
+   "label": "Sabit Oranlar Yasası",
+   "test_count": 3
+  },
+  {
+   "label": "Katlı Oranlar Yasası",
+   "test_count": 1
+  },
+  {
+   "label": "Kimyanın Temel Kanunları",
+   "test_count": 2
+  },
+  {
+   "label": "Mol Kavramı",
+   "test_count": 4
+  },
+  {
+   "label": "Karışım Problemleri (Mol)",
+   "test_count": 1
+  },
+  {
+   "label": "Formül Bulma",
+   "test_count": 1
+  },
+  {
+   "label": "Kimyasal Tepkimeler ve Denklemler",
+   "test_count": 1
+  },
+  {
+   "label": "Tepkime Türleri - Yanma Tepkimeleri",
+   "test_count": 1
+  },
+  {
+   "label": "Analiz - Sentez Tepkimeleri",
+   "test_count": 1
+  },
+  {
+   "label": "Nötralleşme - Çökme Tepkimeleri",
+   "test_count": 1
+  },
+  {
+   "label": "Tepkime Türleri",
+   "test_count": 2
+  },
+  {
+   "label": "Denklemli Geçiş Problemleri",
+   "test_count": 1
+  },
+  {
+   "label": "Artan Madde Problemleri",
+   "test_count": 1
+  },
+  {
+   "label": "% Verim - Safsızlık Problemleri",
+   "test_count": 1
+  },
+  {
+   "label": "Karışım Problemleri (Kimyasal Hesaplamalar)",
+   "test_count": 1
+  },
+  {
+   "label": "Atom Kütlesi Bulma - Formül Bulma",
+   "test_count": 1
+  },
+  {
+   "label": "Ünite Tekrar Testi (Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar)",
+   "test_count": 2
+  },
+  {
+   "label": "Homojen ve Heterojen Karışımlar",
+   "test_count": 2
+  },
+  {
+   "label": "Çözünme Olayı",
+   "test_count": 1
+  },
+  {
+   "label": "Derişim Birimleri",
+   "test_count": 3
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 3
+  },
+  {
+   "label": "Ayırma ve Saflaştırma Teknikleri",
+   "test_count": 4
+  },
+  {
+   "label": "Ünite Tekrar Testi (Karışımlar)",
+   "test_count": 3
+  },
+  {
+   "label": "Asitler ve Bazlar",
+   "test_count": 3
+  },
+  {
+   "label": "Asit - Baz Tepkimeleri",
+   "test_count": 3
+  },
+  {
+   "label": "Günlük Hayatta Asit Baz",
+   "test_count": 1
+  },
+  {
+   "label": "Tuzlar",
+   "test_count": 1
+  },
+  {
+   "label": "Ünite Tekrar Testi (Asitler, Bazlar ve Tuzlar)",
+   "test_count": 5
+  },
+  {
+   "label": "Temizlik Maddeleri",
+   "test_count": 2
+  },
+  {
+   "label": "Polimerler",
+   "test_count": 1
+  },
+  {
+   "label": "Kozmetik Ürünler - İlaçlar",
+   "test_count": 1
+  },
+  {
+   "label": "Gıdalar",
+   "test_count": 1
+  },
+  {
+   "label": "Yenilebilir Yağ Türleri",
+   "test_count": 1
+  },
+  {
+   "label": "Ünite Tekrar Testi (Kimya Her Yerde)",
+   "test_count": 1
+  }
+ ],
+ "warnings": [
+  "Baskı yılı kapakta/künyede yazmıyor (künyede 'Basım yeri ve tarihi' alanı boş).",
+  "Bölüm = kitabın gövdedeki alt konu başlığı (test bandındaki konu adı); 9 ünitenin her birinin sonunda 'Ünite Tekrar Testi' serisi var, ünite adıyla ayrıştırıldı.",
+  "'Karışım Problemleri' kitapta iki ayrı yerde geçiyor (Mol Kavramı'ndan sonra ve Kimyasal Hesaplamalar bloğunda); etikete parantezle ayrım eklendi.",
+  "Kitapta '~' ayraçlı başlıklar ('Tepkime Türleri ~ Yanma Tepkimeleri') '-' ile yazıldı; 'Fiziksel ve Kimyasal Değişimler' bant başlığından (bölüm kapağında 'Değişmeler').",
+  "Cevap anahtarı sayfası yok (video çözümlü)."
+ ],
+ "evidence": "Metin katmanı PyMuPDF ile tarandı: her test sayfasının üst bandında 15pt ünite adı + 20pt test no + 13.6pt konu adı. 248 test sayfası (PDF s.7-254), her test tam 2 sayfa, 121 benzersiz (konu,no) testi; her konunun zinciri 01..N kesintisiz. Bölüm kapakları (s.6, 67-68, 127-128, 181-182) ve sondaki boş sayfa sayılmadı. İçindekiler (s.5) 9 ünite başlangıç sayfasını veriyor (7/34/68/96/120/128/182/216/242, basılı=PDF+1) — gövdedeki ünite geçişleriyle birebir."
+}

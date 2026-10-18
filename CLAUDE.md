@@ -838,6 +838,23 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
   "X/Y görev" sayımı değişmedi. YENİ `test_day_partial_pct.py` 9/9 · gorev 83/83 · student_read 11 ·
   student_mutations 12 · teacher_read 12 · weekly_plan 15 · pool_student 29.
 
+## HAFTA IZGARASI KONU ÖZETİ — görevin üzerine gelince (2026-10-18, migration YOK)
+
+- Koç ızgarada görevin üzerine gelince (tıklamadan) o görevin MÜFREDAT KONUSU için kısa kart: durum + konu ilerlemesi
+  (çözülen/toplam test, %) · kaynak kaynak çözülen/toplam (en çok 3, görevin kendi kitabı başta, "+N kaynak") · kaynaksız
+  çözülen · D/Y/B + doğruluk + seviye · "N testin M'inde sonuç girilmiş" · son 90 gün deneme doğruluğu · bu görevin
+  satırı (x/y test, bölümde kalan) + sürükle ipucu. Konusuz görevde eski yerel `title` kalır.
+- YENİ `app/services/topic_insight.py` + `GET /teacher/students/{id}/topic-insights?topic_ids=` (≤60, sahiplik 404):
+  YENİ HESAP YOK — `compute_curriculum_progress` (Müfredat sekmesi) + `compute_topic_performance` (Konu Performansı) →
+  sayılar o ekranlarla birebir; müfredat görünümünde olmayan konu için atanmış test kitaplarından yedek hesap.
+- `TeacherTaskItem.curriculum_topic_id` (additive): kitaplı → bölümün konusu, kaynaksız → kalem konusu.
+- Web `weekly-plan/topic-insight-card.tsx` + `week-grid.tsx` (haftadaki konular tek istekte; Radix Tooltip, sağda açılır).
+  `_capacity_invalidate` artık `topic-insights`'ı da bayatlatır.
+- Test YENİ `test_api_v2_topic_insights` 11/11 · weekly_plan 15 · teacher_read 12 · carryover 18 · curriculum 25 ·
+  topic_performance 14 · gorev 83/83 · canlı tarayıcı 5/5 (konsol temiz).
+
+---
+
 ## SÜPER ADMİN — Kullanıcılar / Kurumlar / Bağımsız Koçlar yeni dil + genel kontrol (2026-10-17, CANLI, migration YOK)
 
 - **Kullanıcılar** (`/admin/users`): YENİ `GET /admin/people` (`api_v2/admin_people.py`) — rol sekmeleri (sayılı) +

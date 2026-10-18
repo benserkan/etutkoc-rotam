@@ -1,0 +1,305 @@
+{
+ "name": "Coğrafya Gurmesi TYT Coğrafya 1. Aşama Maarif Soru Bankası",
+ "publisher": "Coğrafya Gurmesi Yayınları",
+ "subject": "Coğrafya",
+ "curriculum_model": "maarif_lise",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 10,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Coğrafya Biliminin Konusu",
+   "test_count": 1
+  },
+  {
+   "label": "Coğrafya Biliminin Bölümleri",
+   "test_count": 1
+  },
+  {
+   "label": "Coğrafya Biliminin Bölümleri ve Niçin Coğrafya Öğrenmeliyiz?",
+   "test_count": 1
+  },
+  {
+   "label": "Coğrafya Biliminin Gelişimi",
+   "test_count": 1
+  },
+  {
+   "label": "Coğrafi Bakış",
+   "test_count": 1
+  },
+  {
+   "label": "Gurme Sorular (1. Ünite: Coğrafyanın Doğası)",
+   "test_count": 1
+  },
+  {
+   "label": "Harita ve Harita Bileşenleri",
+   "test_count": 1
+  },
+  {
+   "label": "Koordinat Sistemi",
+   "test_count": 1
+  },
+  {
+   "label": "Yerel Saat, Ortak Saat, Ulusal Saat",
+   "test_count": 2
+  },
+  {
+   "label": "Projeksiyonlar",
+   "test_count": 1
+  },
+  {
+   "label": "Haritada Ölçek Kavramı",
+   "test_count": 1
+  },
+  {
+   "label": "Haritada Dağılış Yöntemleri",
+   "test_count": 2
+  },
+  {
+   "label": "Haritalarda Yer Şekillerinin Gösterilmesi",
+   "test_count": 2
+  },
+  {
+   "label": "Türkiye'nin Coğrafi Konumu",
+   "test_count": 1
+  },
+  {
+   "label": "Mavi Vatan, Gök Vatan, Kıbrıs",
+   "test_count": 1
+  },
+  {
+   "label": "CBS, Uzaktan Algılama ve GPS",
+   "test_count": 1
+  },
+  {
+   "label": "CBS ve UA'nın AYDES ve TAMP",
+   "test_count": 1
+  },
+  {
+   "label": "Gurme Sorular (2. Ünite: Mekânsal Bilgi Teknolojileri)",
+   "test_count": 1
+  },
+  {
+   "label": "Hava Olayları, İklim Elemanlarının Ölçülmesi",
+   "test_count": 3
+  },
+  {
+   "label": "Aşırı Hava Olayları - Halk Takvimi, Hava Tahmini",
+   "test_count": 2
+  },
+  {
+   "label": "İklim Sistemi - Bileşenleri ve Atmosferin Katmanları",
+   "test_count": 2
+  },
+  {
+   "label": "İklim Sisteminin Değişkenleri - Sıcaklık",
+   "test_count": 2
+  },
+  {
+   "label": "Türkiye'de Sıcaklık",
+   "test_count": 1
+  },
+  {
+   "label": "İklim Sisteminin Değişkenleri - Basınç",
+   "test_count": 2
+  },
+  {
+   "label": "İklim Sisteminin Değişkenleri - Rüzgâr",
+   "test_count": 2
+  },
+  {
+   "label": "İklim Sisteminin Değişkenleri - Nemlilik ve Yağış",
+   "test_count": 2
+  },
+  {
+   "label": "Dünya'da ve Türkiye'de İklimler",
+   "test_count": 3
+  },
+  {
+   "label": "Küresel İklim Değişikliği",
+   "test_count": 2
+  },
+  {
+   "label": "Yerin Katmanları",
+   "test_count": 1
+  },
+  {
+   "label": "Levhalar ve Levha Hareketleri",
+   "test_count": 2
+  },
+  {
+   "label": "Levha Hareketleri ve Volkanizma",
+   "test_count": 2
+  },
+  {
+   "label": "Kayaçlar",
+   "test_count": 1
+  },
+  {
+   "label": "Levha Hareketleri ve Depremler",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye Tektoniği",
+   "test_count": 1
+  },
+  {
+   "label": "Jeolojik Zamanlar",
+   "test_count": 1
+  },
+  {
+   "label": "Ayrışma Süreçleri",
+   "test_count": 1
+  },
+  {
+   "label": "Aşınma, Taşınma ve Birikme Süreçleri",
+   "test_count": 1
+  },
+  {
+   "label": "Akarsu Aşındırma ve Biriktirmesi",
+   "test_count": 2
+  },
+  {
+   "label": "Karstik Süreçler",
+   "test_count": 1
+  },
+  {
+   "label": "Kıyı Aşınım Süreçleri",
+   "test_count": 2
+  },
+  {
+   "label": "Buzul Süreçleri",
+   "test_count": 2
+  },
+  {
+   "label": "Rüzgâr Süreçleri",
+   "test_count": 1
+  },
+  {
+   "label": "Beşeri Faaliyetler ve Yeryüzü Şekilleri",
+   "test_count": 1
+  },
+  {
+   "label": "Gurme Sorular (3. Ünite: Doğal Sistemler ve Süreçler)",
+   "test_count": 1
+  },
+  {
+   "label": "Nüfusun Tarihsel Değişimi ve Geleceği",
+   "test_count": 1
+  },
+  {
+   "label": "Nüfusun Dağılışı ve Göçler",
+   "test_count": 2
+  },
+  {
+   "label": "Demografik Dönüşüm ve Piramitler",
+   "test_count": 2
+  },
+  {
+   "label": "Nüfus Politikaları",
+   "test_count": 2
+  },
+  {
+   "label": "Yerleşmelerin Kuruluşu",
+   "test_count": 1
+  },
+  {
+   "label": "Yerleşme Tipleri ve Türkiye'de Yerleşmeler",
+   "test_count": 2
+  },
+  {
+   "label": "Yerleşmelerin Fonksiyonları",
+   "test_count": 2
+  },
+  {
+   "label": "Gurme Sorular (4. Ünite: Beşeri Sistemler ve Süreçler)",
+   "test_count": 1
+  },
+  {
+   "label": "Ekonomik Faaliyetleri Etkileyen Faktörler",
+   "test_count": 3
+  },
+  {
+   "label": "Ekonomik Faaliyetlerin Özellikleri",
+   "test_count": 2
+  },
+  {
+   "label": "Ekonomik Faaliyet Türleri ve Gelişmişlik",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye Ekonomisinin Sektörel Dağılımı",
+   "test_count": 1
+  },
+  {
+   "label": "Gurme Sorular (5. Ünite: Ekonomik Faaliyetler ve Etkileri)",
+   "test_count": 1
+  },
+  {
+   "label": "Tehlike, Risk ve Afet",
+   "test_count": 1
+  },
+  {
+   "label": "Tehlike, Risk ve Afet Uygulama",
+   "test_count": 1
+  },
+  {
+   "label": "Afet Türleri",
+   "test_count": 2
+  },
+  {
+   "label": "Türkiye'de Afetler",
+   "test_count": 2
+  },
+  {
+   "label": "Bütüncül Afet Yönetimi",
+   "test_count": 1
+  },
+  {
+   "label": "Mekânsal Bilgi Teknolojileri ve Afetler",
+   "test_count": 1
+  },
+  {
+   "label": "Afetlerle Mücadelede İyi Uygulama Örnekleri",
+   "test_count": 2
+  },
+  {
+   "label": "Afetlere Karşı Dirençli Yaşam Alanları",
+   "test_count": 1
+  },
+  {
+   "label": "Afetlerden Korunma ve Afet Bilinci",
+   "test_count": 2
+  },
+  {
+   "label": "Gurme Sorular (6. Ünite: Afetler ve Sürdürülebilir Çevre)",
+   "test_count": 1
+  },
+  {
+   "label": "Bölge Sınırları ve Değişimi",
+   "test_count": 3
+  },
+  {
+   "label": "Türk Dünyası",
+   "test_count": 4
+  },
+  {
+   "label": "Gurme Sorular (7. Ünite: Bölgeler, Ülkeler ve Küresel Bağlantılar)",
+   "test_count": 1
+  },
+  {
+   "label": "Bağlam Temelli Denemeler (8 deneme, 5'er soru)",
+   "test_count": 8
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF (metin katmanı yok); yapı sayfa üst şeridi kontak föyleriyle gözle sayıldı, Gemini/AI kullanılmadı.",
+  "Test numaraları ÜNİTE başına 1'den başlar (1. ünite TEST 1-6, 2. ünite 1-15, 3. ünite 1-42, 4. ünite 1-13, 5. ünite 1-8, 6. ünite 1-14, 7. ünite 1-8); tüm zincirler kesintisiz, her test 2 sayfa.",
+  "Her ünitenin son testi 'Gurme Sorular' (içindekilerde ayrı satır, bantta TEST-N); 1 test sayıldı. 7. ünitenin TEST-8'i (s.229-230) bantta dizgi hatasıyla 'Türk Dünyası - 4' başlığı taşıyor; içindekiler s.229'u 'Gurme Sorular' gösterdiği ve sayfa düzeni (tek harita + 1-6. sorular) Gurme formatında olduğu için Gurme Sorular olarak etiketlendi.",
+  "Ardışık aynı konulu testler ('- 1', '- 2' ekli) tek satırda birleştirildi; ünite adları satırlarda yok (konu adlarıyla).",
+  "Bağlam Temelli Denemeler: 8 deneme, her biri 1 sayfa ve 5 soru (önsöz: ünite bazında 5 soruluk setler; 3. ünite için 2 deneme); her deneme 1 test sayıldı — istenirse bu satır kaldırılabilir/azaltılabilir.",
+  "subject 'Coğrafya' + MAARIF_LISE 9-10 brief talimatıyla seçildi (kitap TYT 1. aşama hazırlık ama Maarif 9-10 konularını işliyor)."
+ ],
+ "evidence": "İçindekiler s.4 (idx 3) okundu: 1. Ünite 5 / Gurme 17 · 2. Ünite 19 / Gurme 49 · 3. Ünite 51 / Gurme 135 · 4. Ünite 137 / Gurme 163 · 5. Ünite 165 / Gurme 181 · 6. Ünite 183 / Gurme 211 · 7. Ünite 213 / Gurme 229 · Denemeler 231 (PDF idx = basılı - 1). 240 sayfanın tamamının üst şeritleri 15 kontak föyde tarandı: her testin iki sayfasında da 'TEST - N' bandı + konu başlığı var; ünite sayfa aralıkları (ünite kapağı + notlar sayfası hariç) 12/30/84/26/16/28/16 sayfa = 6/15/42/13/8/14/8 test (sayfa/test = 2,0 birebir); Gurme başlangıç sayfaları içindekilerle birebir. Denemeler idx 232-239: '1. DENEME'..'8. DENEME' bantları. Toplam 114 test (106 konu+gurme + 8 deneme)."
+}

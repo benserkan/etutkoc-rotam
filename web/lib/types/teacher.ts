@@ -378,6 +378,8 @@ export interface TeacherTaskItem {
   topic_name: string | null;
   /** Kaynaksız konu kalemi: kitap yok ama müfredat konusu var → TEST birimi (deneme değil) */
   topic_id?: number | null;
+  /** Müfredat konusu: kitaplı → bölümün konusu · kaynaksız → kalem konusu */
+  curriculum_topic_id?: number | null;
   planned_count: number;
   completed_count: number;
   section_total_tests: number;
@@ -2819,4 +2821,33 @@ export interface ExamAverages {
   total: number | null;
   source: "auto" | "manual";
   subjects: Record<string, number>;
+}
+
+// ── Hafta ızgarası konu özeti (2026-10-18) ──────────────────────────────────
+export interface TopicInsight {
+  topic_id: number;
+  name: string;
+  subject: string | null;
+  status: "tamamlandi" | "devam" | "planlandi" | "baslanmadi" | "kaynak_yok";
+  status_label: string;
+  pct: number;
+  closed: boolean;
+  test_total: number;
+  completed: number;
+  reserved: number;
+  sourceless_completed: number;
+  sources: { book: string; solved: number; total: number }[];
+  perf: {
+    tests_solved: number;
+    correct: number;
+    wrong: number;
+    blank: number;
+    accuracy_pct: number | null;
+    tests_with_result: number;
+    level: string;
+    level_label: string | null;
+    exam_answered: number;
+    exam_accuracy_pct: number | null;
+    last_solved_at: string | null;
+  } | null;
 }
