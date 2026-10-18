@@ -1166,6 +1166,8 @@ def _summary_agreement(read: dict) -> int:
         k = _subject_key(q.get("subject"))
         counts[k] = counts.get(k, 0) + 1
     skeys = {_subject_key(s.get("name")) for s in read.get("subjects") or []}
+    dup = {k for k in skeys
+           if sum(1 for s in read.get("subjects") or [] if _subject_key(s.get("name")) == k) > 1}
     score = 0
     for s in read.get("subjects") or []:
         qn = s.get("questions")
@@ -1175,7 +1177,7 @@ def _summary_agreement(read: dict) -> int:
         n = counts.get(sk, 0)
         if n != qn:  # şemsiye ders (Matematik = Matematik + Geometri)
             n += sum(counts.get(ck, 0) for ck in _SUMMARY_UMBRELLAS.get(sk, ())
-                     if ck not in skeys)
+                     if ck not in skeys or sk in dup)
         if n == qn:
             score += 1
     return score
@@ -1246,15 +1248,20 @@ def _umbrella_merge(
     key: tuple[str | None, str], rs: list[dict], questions: int | None,
     buckets: dict[tuple[str | None, str], list[dict]],
     summary_keys: set[tuple[str | None, str]],
+    aggregate: bool = False,
 ) -> list[dict]:
-    """Şemsiye özet satırı için alt ders kovalarını kat (koşullu)."""
+    """Şemsiye özet satırı için alt ders kovalarını kat (koşullu).
+
+    `aggregate`: özette aynı anahtarlı İKİ satır var (toplu "TYT-MATEMATİK 40" + alt
+    "MATEMATİK"/"GEOMETRİ" satırları — ELİT KARMA, 2026-10-18). Toplu satır alt dersin
+    kendi özeti olsa da alt dersi kapsar."""
     part, sk = key
     children = _SUMMARY_UMBRELLAS.get(sk)
     if not children or questions is None or len(rs) == questions:
         return rs
     extra: list[dict] = []
     for ck in children:
-        if (part, ck) in summary_keys:
+        if (part, ck) in summary_keys and not aggregate:
             continue  # alt dersin kendi özeti var → ayrı sayılır
         extra += buckets.get((part, ck), [])
     if extra and len(rs) + len(extra) == questions:
@@ -1273,6 +1280,10 @@ def _summary_groups(read: dict, rows: list[dict]):
         buckets.setdefault((r.get("exam_part"), _subject_key(r.get("subject_raw"))), []).append(r)
     summary_keys = {(s.get("part"), _subject_key(s["name"]))
                     for s in read.get("subjects") or []}
+    key_count: dict[tuple[str | None, str], int] = {}
+    for s in read.get("subjects") or []:
+        k = (s.get("part"), _subject_key(s["name"]))
+        key_count[k] = key_count.get(k, 0) + 1
     for s in read.get("subjects") or []:
         key = (s.get("part"), _subject_key(s["name"]))
         rs = buckets.get(key)
@@ -1282,7 +1293,9 @@ def _summary_groups(read: dict, rows: list[dict]):
                 key, rs = cands[0]
         if rs is None:
             continue  # özetteki üst bölüm başlığı (örn. "TYT-SOSYAL") — satırlar alt derste
-        yield s, _umbrella_merge(key, rs, s.get("questions"), buckets, summary_keys)
+        orig = (s.get("part"), _subject_key(s["name"]))
+        yield s, _umbrella_merge(key, rs, s.get("questions"), buckets, summary_keys,
+                                 aggregate=key_count.get(orig, 0) > 1)
 
 
 def _tally(rs: list[dict]) -> dict[str, int]:
