@@ -1,0 +1,270 @@
+{
+ "name": "Açı Yayınları 8. Sınıf Türkçe Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Sözcükte Anlam I",
+   "test_count": 8,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Sözcükte Anlam II",
+   "test_count": 4,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Söz Sanatları",
+   "test_count": 3,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "1. Bölüm Değerlendirme Testi (Sözcükte Anlam)",
+   "test_count": 1,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Söz Gruplarında Anlam – Deyimler",
+   "test_count": 3,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Söz Gruplarında Anlam – Atasözleri / Özdeyişler",
+   "test_count": 3,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Söz Gruplarında Anlam – İkilemeler ve Kalıplaşmamış Sözler",
+   "test_count": 3,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "2. Bölüm Değerlendirme Testi (Söz Gruplarında Anlam)",
+   "test_count": 1,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Cümlede Anlam – Anlatımına Göre Cümleler",
+   "test_count": 3,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümlede Anlam – Duygu Belirten Cümleler",
+   "test_count": 3,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümlede Anlam – İçeriklerine Göre Cümleler",
+   "test_count": 2,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümlede Anlam – Cümle Yorumlama",
+   "test_count": 2,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümlede Anlam – Cümle Oluşturma / Cümle Tamamlama",
+   "test_count": 3,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "3. Bölüm Değerlendirme Testi (Cümlede Anlam)",
+   "test_count": 1,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Metnin Yapısı",
+   "test_count": 6,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metnin Dil ve Anlatımı",
+   "test_count": 3,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Hikâye Unsurları / Metinler Arası Karşılaştırma",
+   "test_count": 3,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metin Türleri",
+   "test_count": 3,
+   "topic": "Metin Türleri"
+  },
+  {
+   "label": "Anlatım Teknikleri",
+   "test_count": 3,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 3,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "4. Bölüm Değerlendirme Testi (Metnin Anlamı ve Yapısı)",
+   "test_count": 1,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Fiilimsiler – İsim-Fiil (Ad-Eylem)",
+   "test_count": 3,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Fiilimsiler – Sıfat-Fiil (Ortaç)",
+   "test_count": 3,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Fiilimsiler – Zarf-Fiil (Bağ-Fiil)",
+   "test_count": 3,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "5. Bölüm Değerlendirme Testi (Fiilimsiler)",
+   "test_count": 1,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Cümlenin Ögeleri – Temel Ögeler",
+   "test_count": 3,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Cümlenin Ögeleri – Yardımcı Ögeler",
+   "test_count": 3,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "6. Bölüm Değerlendirme Testi (Cümlenin Ögeleri)",
+   "test_count": 1,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Fiilde Çatı – Öznesine Göre Çatılar",
+   "test_count": 3,
+   "topic": "Fiilde Çatı"
+  },
+  {
+   "label": "Fiilde Çatı – Nesnesine Göre Çatılar",
+   "test_count": 2,
+   "topic": "Fiilde Çatı"
+  },
+  {
+   "label": "7. Bölüm Değerlendirme Testi (Fiilde Çatı)",
+   "test_count": 1,
+   "topic": "Fiilde Çatı"
+  },
+  {
+   "label": "Cümle Türleri – Yükleminin Türüne ve Yerine Göre Cümleler",
+   "test_count": 4,
+   "topic": "Cümle Türleri"
+  },
+  {
+   "label": "Cümle Türleri – Anlamına Göre Cümleler",
+   "test_count": 3,
+   "topic": "Cümle Türleri"
+  },
+  {
+   "label": "Cümle Türleri – Yapısına Göre Cümleler",
+   "test_count": 4,
+   "topic": "Cümle Türleri"
+  },
+  {
+   "label": "8. Bölüm Değerlendirme Testi (Cümle Türleri)",
+   "test_count": 1,
+   "topic": "Cümle Türleri"
+  },
+  {
+   "label": "Noktalama İşaretleri I",
+   "test_count": 4,
+   "topic": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Noktalama İşaretleri II",
+   "test_count": 4,
+   "topic": "Noktalama İşaretleri"
+  },
+  {
+   "label": "9. Bölüm Değerlendirme Testi (Noktalama İşaretleri)",
+   "test_count": 1,
+   "topic": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Yazım Kuralları – Büyük Harflerin Kullanıldığı Yerler",
+   "test_count": 3,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Yazım Kuralları – Sayıların ve Kısaltmaların Yazımı",
+   "test_count": 3,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Yazım Kuralları – İkilemelerin, Pekiştirmelerin ve Birleşik Sözcüklerin Yazımı",
+   "test_count": 3,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Yazım Kuralları – Ki, Mi ve De’nin Yazımı",
+   "test_count": 3,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "10. Bölüm Değerlendirme Testleri (Yazım Kuralları)",
+   "test_count": 2,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Anlatım Bozuklukları",
+   "test_count": 4,
+   "topic": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "11. Bölüm Değerlendirme Testi (Anlatım Bozuklukları)",
+   "test_count": 1,
+   "topic": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "Mantık - Muhakeme – Görsel Yorumlama / Grafik Okuma",
+   "test_count": 3,
+   "topic": "Görsel, Tablo ve Grafik Okuma"
+  },
+  {
+   "label": "Mantık - Muhakeme – Sözel Mantık",
+   "test_count": 3,
+   "topic": "Sözel Mantık"
+  },
+  {
+   "label": "12. Bölüm Değerlendirme Testleri (Mantık - Muhakeme)",
+   "test_count": 2
+  },
+  {
+   "label": "Metne Dayalı Karma Sorular I",
+   "test_count": 2
+  },
+  {
+   "label": "Metne Dayalı Karma Sorular II",
+   "test_count": 2
+  },
+  {
+   "label": "Metne Dayalı Karma Sorular III",
+   "test_count": 4
+  }
+ ],
+ "warnings": [
+  "Gövde taraması: her alt konu Öğreten · Geliştiren · Sınav Tadında testleri; bölüm sonunda Bölüm Değerlendirme Testi (Bölüm 10 ve 12'de 2'şer). Testler 2-4 sayfa (Mantık-Muhakeme ve bölüm değerlendirmelerinde 4-10 sayfa, az soru) — çok sayfalı testler soru numaralarının kesintisiz sürmesiyle tek test sayıldı.",
+  "Test numarası bölüm içinde süren sayaç; 13 zincir kesintisiz. s.81'de bant 'Geliştiren' (T08'in 2. sayfası) — gövde metnindeki 'öğreten' sözcüğü tür tespitini şaşırttı, elle T08'e katıldı.",
+  "Bölüm 12 değerlendirmeleri (grafik + sözel mantık karışık) ve Bölüm 13 'Metne Dayalı Karma Sorular' bilinçli olarak müfredat konusuna eşlenmedi.",
+  "Bölüm 2 (Söz Gruplarında Anlam: deyim/atasözü/ikileme) LGS müfredatında ayrı konu olmadığından 'Sözcükte Anlam'a eşlendi; Bölüm 4 alt konuları (Metin Türleri hariç) 'Paragrafta Anlam'a."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (BÖLÜM no + 'Test NN' 15.2pt + 'BÖLÜM / ALT KONU' 8.5pt + test türü). 13 bölümün sayfa aralığı içindekilerle (s.5) birebir (6-41, 42-65, 66-95, 96-143, 144-165, 166-185, 186-203, 204-229, 230-249, 250-277, 278-289, 290-327, 328-343); cevap anahtarı s.344. 127 konu testi + 14 bölüm değerlendirme = 141 test; s.6-343 arası bantsız sayfa yok."
+}

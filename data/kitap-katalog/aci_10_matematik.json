@@ -1,0 +1,73 @@
+{
+ "name": "Açı Yayınları 10. Sınıf Matematik Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "target_grade_min": 10,
+ "target_grade_max": 10,
+ "curriculum_model": "maarif_lise",
+ "subject": "Matematik",
+ "sections": [
+  {
+   "label": "Geometrik Şekiller",
+   "test_count": 20
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 1: Geometrik Şekiller)",
+   "test_count": 2
+  },
+  {
+   "label": "İstatistiksel Araştırma Süreci",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 2: İstatistiksel Araştırma Süreci)",
+   "test_count": 2
+  },
+  {
+   "label": "Sayılar",
+   "test_count": 18
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 3: Sayılar)",
+   "test_count": 2
+  },
+  {
+   "label": "Nicelikler ve Değişimler",
+   "test_count": 30
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 4: Nicelikler ve Değişimler)",
+   "test_count": 2
+  },
+  {
+   "label": "Sayma, Algoritma ve Bilişim",
+   "test_count": 19
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 5: Sayma, Algoritma ve Bilişim)",
+   "test_count": 2
+  },
+  {
+   "label": "Analitik İnceleme",
+   "test_count": 10
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 6: Analitik İnceleme)",
+   "test_count": 2
+  },
+  {
+   "label": "Veriden Olasılığa",
+   "test_count": 9
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 7: Veriden Olasılığa)",
+   "test_count": 1
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (7 tema: Geometrik Şekiller, İstatistiksel Araştırma Süreci, Sayılar, Nicelikler ve Değişimler, Sayma-Algoritma-Bilişim, Analitik İnceleme, Veriden Olasılığa). Bu kitapta ALT BAŞLIK YOK: içindekiler (s.4) yalnız tema düzeyinde, test bantlarında da yalnız tema adı var → bölüm = tema. Alt konuya bölmek soru içeriğinden tahmin gerektirirdi, yapılmadı.",
+  "Konu Kavrama (KKT) ve ÖSYM Tadında (ÖTT) testleri tema içinde karışık sıralı ve hepsi aynı temaya ait → tema satırında sayıldı; Bağlam Temelli (BT) testleri her temada ayrı Karma satır (Tema 1'de test 7 BT tema ortasında)."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 8,8pt tema adı + KKT/ÖTT/BT etiketi; 2. sayfalarda tema no x≈540, test no x≈89 — buna göre ayrıştırıldı). Test no TEMA içinde 1'den: 22/7/20/32/21/12/10 kesintisiz = 124 test, hepsi 2 sayfa. İçindekiler tema sayfa aralıkları (5-48, 49-62, 63-102, 103-166, 167-208, 209-232, 233-252) birebir: 4 ön + 124×2 = 252, cevap anahtarı s.253 (tema başı test sayıları da 22/7/20/32/21/12/10)."
+}

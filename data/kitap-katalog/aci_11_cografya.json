@@ -1,0 +1,115 @@
+{
+ "name": "Açı Yayınları 11. Sınıf Coğrafya Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 11,
+ "target_grade_max": 11,
+ "subject": "Coğrafya",
+ "sections": [
+  {
+   "label": "Mekânsal Sorunların Çözümüne Coğrafya Biliminin Katkıları",
+   "test_count": 6
+  },
+  {
+   "label": "Mekânsal Bilgi Teknolojileri",
+   "test_count": 4
+  },
+  {
+   "label": "Su Kaynaklarının Özellikleri ve Su Kaynaklarına Giriş - Denizler ve Okyanuslar",
+   "test_count": 1
+  },
+  {
+   "label": "Göller",
+   "test_count": 1
+  },
+  {
+   "label": "Akarsular",
+   "test_count": 2
+  },
+  {
+   "label": "Buzullar ve Bataklıklar",
+   "test_count": 1
+  },
+  {
+   "label": "Yer Altı Suları ve Kaynaklar",
+   "test_count": 2
+  },
+  {
+   "label": "Su Kaynakları (Karma) (Ünite 3: Doğal Sistemler ve Süreçler)",
+   "test_count": 21
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Ünite 3: Doğal Sistemler ve Süreçler)",
+   "test_count": 2
+  },
+  {
+   "label": "Yerleşmelerin Mekânsal Organizasyonları",
+   "test_count": 4
+  },
+  {
+   "label": "Yerleşmelerin Etki Alanları",
+   "test_count": 13
+  },
+  {
+   "label": "Tarımsal Faaliyetler",
+   "test_count": 4
+  },
+  {
+   "label": "Tarım Uygulamalarında Sürdürülebilirlik",
+   "test_count": 4
+  },
+  {
+   "label": "Stratejik ve Kritik Madenler",
+   "test_count": 3
+  },
+  {
+   "label": "Enerji Kaynakları",
+   "test_count": 3
+  },
+  {
+   "label": "Sanayileşmenin Mekânsal Etkileri",
+   "test_count": 3
+  },
+  {
+   "label": "Gezegen Sınırları",
+   "test_count": 5
+  },
+  {
+   "label": "Küresel İklim Değişikliği",
+   "test_count": 6
+  },
+  {
+   "label": "Türkiye'de Suyun Sürdürülebilir Kullanımı",
+   "test_count": 5
+  },
+  {
+   "label": "Türkiye'nin Kültürel Hinterlandı",
+   "test_count": 4
+  },
+  {
+   "label": "Tarımsal Üretim: Hollanda",
+   "test_count": 3
+  },
+  {
+   "label": "Sanayileşme Süreci - Almanya ve Mısır",
+   "test_count": 4
+  },
+  {
+   "label": "Madencilik Faaliyetleri - Avustralya",
+   "test_count": 3
+  },
+  {
+   "label": "Enerji Kaynakları - Rusya ve Suudi Arabistan",
+   "test_count": 4
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (7 ünite: Coğrafyanın Doğası, Mekânsal Bilgi Teknolojileri, Doğal Sistemler ve Süreçler, Beşerî Sistemler ve Süreçler, Ekonomik Faaliyetler ve Etkileri, Afetler ve Sürdürülebilir Çevre, Bölgeler-Ülkeler ve Küresel Bağlantılar). İçindekiler yalnız ünite düzeyinde; alt başlıklar üst banttaki 8,8/7,8pt satırdan alındı.",
+  "Konu döngüsü içindeki ÖSYM Tadında ve Bağlam Temelli testler bantta o alt başlığı taşıdığı için konuya sayıldı (ör. Tarımsal Faaliyetler = 2 KKT + 1 ÖTT + 1 BT).",
+  "Ünite 3'te konu konu testler yalnız T1-T7 (T3-T4 bantta 'Akarsular I/II', birleştirildi); T8-T28 bantta sırasıyla 'Su Kaynaklarına Giriş', 'Su Kaynakları' ve 'Sular' yazıyor ve sorular tüm su konularını karışık soruyor → tek 'Su Kaynakları (Karma)' satırı (21 test). Ünite 3 sonu 2 Bağlam Temelli test ayrı Karma satırı. Ünite 4'te 'Yerleşmelerin Mekânsal Organizasyonları-I/II/III' ve 'Yerleşmelerin Etki Alanları-I…VII' numaralı bant adları tek satırda birleştirildi.",
+  "Bazı Ünite 5 sayfalarında bantta 'TEMA 05' yazıyor (dizgi farkı), test zinciri kesintisiz."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 17,2pt KKT/ÖTT/BT etiketi + ünite/alt başlık), test no ÜNİTE içinde 1'den: Ü1 1-6, Ü2 1-4, Ü3 1-30, Ü4 1-17, Ü5 1-17, Ü6 1-16, Ü7 1-18 kesintisiz = 108 test, hepsi 2 sayfa. İçindekiler (s.4) sayfa aralıkları birebir (5-16=6, 17-24=4, 25-84=30, 85-118=17, 119-152=17, 153-184=16, 185-220=18). Sayfa: 4 ön + 108×2 = 220, cevap anahtarı s.221-223."
+}

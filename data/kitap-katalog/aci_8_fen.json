@@ -1,0 +1,202 @@
+{
+ "name": "Açı Yayınları 8. Sınıf Fen Bilimleri Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimlerin Oluşumu",
+   "test_count": 5,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "İklim ve Hava Hareketleri",
+   "test_count": 5,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "1. Ünite Değerlendirme Testleri (Mevsimler ve İklim)",
+   "test_count": 2,
+   "topic": "Mevsimler ve İklim"
+  },
+  {
+   "label": "DNA ve Genetik Kod",
+   "test_count": 4,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Kalıtım",
+   "test_count": 5,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Mutasyon",
+   "test_count": 1,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Modifikasyon",
+   "test_count": 1,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Mutasyon – Modifikasyon",
+   "test_count": 2,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Adaptasyon",
+   "test_count": 2,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Biyoteknoloji",
+   "test_count": 3,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Testleri (DNA ve Genetik Kod)",
+   "test_count": 2,
+   "topic": "DNA ve Genetik Kod"
+  },
+  {
+   "label": "Katı Basıncı",
+   "test_count": 5,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Sıvı Basıncı",
+   "test_count": 1,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Sıvı ve Gaz Basıncı",
+   "test_count": 4,
+   "topic": "Basınç"
+  },
+  {
+   "label": "3. Ünite Değerlendirme Testleri (Basınç)",
+   "test_count": 2,
+   "topic": "Basınç"
+  },
+  {
+   "label": "Periyodik Sistem",
+   "test_count": 5,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişim",
+   "test_count": 4,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Kimyasal Tepkimeler",
+   "test_count": 5,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Asitler ve Bazlar",
+   "test_count": 6,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Maddenin Isı ile Etkileşimi",
+   "test_count": 5,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Türkiye’de Kimya Endüstrisi",
+   "test_count": 3,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Testleri (Madde ve Endüstri)",
+   "test_count": 2,
+   "topic": "Madde ve Endüstri"
+  },
+  {
+   "label": "Makaralar",
+   "test_count": 2,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Kaldıraçlar",
+   "test_count": 2,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Makaralar – Kaldıraçlar",
+   "test_count": 1,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Eğik Düzlem",
+   "test_count": 2,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Çıkrık, Vida, Kasnak, Dişli Çark",
+   "test_count": 3,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "5. Ünite Değerlendirme Testleri (Basit Makineler)",
+   "test_count": 2,
+   "topic": "Basit Makineler"
+  },
+  {
+   "label": "Besin Zinciri ve Enerji Akışı",
+   "test_count": 3,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Enerji Dönüşümleri",
+   "test_count": 7,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Madde Döngüleri ve Çevre Sorunları",
+   "test_count": 2,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Sürdürülebilir Kalkınma",
+   "test_count": 3,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "6. Ünite Değerlendirme Testleri (Enerji Dönüşümleri ve Çevre Bilimi)",
+   "test_count": 2,
+   "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektriklenme",
+   "test_count": 3,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "Elektrik Yüklü Cisimler",
+   "test_count": 4,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "Elektrik Enerjisinin Dönüşümü",
+   "test_count": 4,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  },
+  {
+   "label": "7. Ünite Değerlendirme Testleri (Elektrik Yükleri ve Elektrik Enerjisi)",
+   "test_count": 2,
+   "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması: her alt konu Öğreten · Geliştiren · Sınav Tadında testleri (2'şer sayfa); ünite sonunda 2 Ünite Değerlendirme Testi (4'er sayfa, 12-15 soru; son ünitenin 2. testi 2 sayfa/7 soru).",
+  "Test numarası ünite içinde 01'den süren sayaç (ör. Ünite 4: 01-28); 7 ünitenin zincirleri kesintisiz. Ünite değerlendirmeleri kendi 01-02 numarasıyla."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (ÜNİTE no + 'Test NN' 15.2pt + alt konu 9pt + test türü). 7 ünite sayfa aralıkları içindekilerle (s.5) birebir: 6-33/34-77/78-105/106-169/170-197/198-235/236-263; cevap anahtarı s.264. Konu testleri 102 + ünite değerlendirme 14 = 116 test; ön 5 sayfa + 258 test sayfası, boşluk yok. Çok sayfalı testler soru numaralarının kesintisiz sürmesiyle doğrulandı."
+}

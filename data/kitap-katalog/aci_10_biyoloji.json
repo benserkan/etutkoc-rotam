@@ -1,0 +1,110 @@
+{
+ "name": "Açı Yayınları 10. Sınıf Biyoloji Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 10,
+ "target_grade_max": 10,
+ "subject": "Biyoloji",
+ "sections": [
+  {
+   "label": "Canlılar İçin Enerjinin Önemi",
+   "test_count": 5
+  },
+  {
+   "label": "Işık Enerjisi Kullanılarak Besin Sentezi (Fotosentez)",
+   "test_count": 5
+  },
+  {
+   "label": "Fotosentezde Kullanılan ve Üretilen Maddeler",
+   "test_count": 2
+  },
+  {
+   "label": "Işık Enerjisi Kullanılmadan Besin Sentezi (Kemosentez)",
+   "test_count": 2
+  },
+  {
+   "label": "Fotosentez ve Kemosentez",
+   "test_count": 7
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 1: Enerji - Fotosentez)",
+   "test_count": 3
+  },
+  {
+   "label": "Sindirim ve Canlılarda Sindirim Yapısı",
+   "test_count": 4
+  },
+  {
+   "label": "İnsanda Sindirim Sistemi",
+   "test_count": 9
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 1: Enerji - Sindirim Sistemi)",
+   "test_count": 3
+  },
+  {
+   "label": "Hücresel Solunum",
+   "test_count": 5
+  },
+  {
+   "label": "Besinlerin Solunuma Katılma Yolları",
+   "test_count": 2
+  },
+  {
+   "label": "Fermantasyon",
+   "test_count": 5
+  },
+  {
+   "label": "Solunum ve Fermantasyon",
+   "test_count": 4
+  },
+  {
+   "label": "Enerji-Metabolizma İlişkisi",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 1: Enerji - Hücresel Solunum)",
+   "test_count": 3
+  },
+  {
+   "label": "Ekosistem Bileşenleri",
+   "test_count": 3
+  },
+  {
+   "label": "Komünite Ekolojisi",
+   "test_count": 6
+  },
+  {
+   "label": "Popülasyon Ekolojisi",
+   "test_count": 5
+  },
+  {
+   "label": "Ekosistemde Madde ve Enerji Akışı",
+   "test_count": 8
+  },
+  {
+   "label": "Madde Döngüleri",
+   "test_count": 5
+  },
+  {
+   "label": "Ekolojik Sürdürülebilirlik / Çevre Kirliliği / Ekolojik Ayak İzi",
+   "test_count": 9
+  },
+  {
+   "label": "Biyolojik Kaynakların ve Biyoçeşitliliğinin Korunması / Atık Yönetimi",
+   "test_count": 3
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 2: Ekoloji)",
+   "test_count": 4
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (Tema 1: Enerji, Tema 2: Ekoloji). Bölüm = içindekilerdeki alt başlık (s.4, sayfa aralıklı) = test bandındaki 8,8pt konu satırı; ÖSYM Tadında testler kendi alt başlığının bandını taşıyıp aralığın içinde olduğundan o konuya sayıldı.",
+  "Bağlam Temelli testler (çok konulu, ayrı bandlı) Karma satır; Tema 1'de üç ayrı blok olduğu için bandındaki konu adıyla ayrıştırıldı (Fotosentez / Sindirim Sistemi / Hücresel Solunum).",
+  "Tema 1 test 61 (s.125-126) bandı 'Hücresel Solunum ve Fermantasyon' (ÖTT) ama içindekilerde 'Enerji-Metabolizma İlişkisi' (117-126) aralığında; oraya sayıldı."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + TEMA etiketi + 8,8pt konu + KKT/KAT/ÖTT/BT türü). Test no TEMA boyunca süren sayaç: Tema1 1-64, Tema2 1-43 kesintisiz = 107 test, hepsi 2 sayfa. İçindekiler (s.4) her alt başlık aralığı /2 = bant sayımıyla birebir. Sayfa: 4 ön + 107×2 = 218, cevap anahtarı s.219-221."
+}

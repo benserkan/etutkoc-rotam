@@ -1,0 +1,117 @@
+{
+ "name": "Açı Yayınları 8. Sınıf İngilizce Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "İngilizce",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Friendship",
+   "test_count": 5,
+   "topic": "Friendship"
+  },
+  {
+   "label": "1. Ünite Değerlendirme Testleri (Friendship)",
+   "test_count": 3,
+   "topic": "Friendship"
+  },
+  {
+   "label": "Teen Life",
+   "test_count": 6,
+   "topic": "Teen Life"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Testleri (Teen Life)",
+   "test_count": 2,
+   "topic": "Teen Life"
+  },
+  {
+   "label": "In The Kitchen",
+   "test_count": 6,
+   "topic": "In the Kitchen"
+  },
+  {
+   "label": "3. Ünite Değerlendirme Testleri (In The Kitchen)",
+   "test_count": 2,
+   "topic": "In the Kitchen"
+  },
+  {
+   "label": "On The Phone",
+   "test_count": 4,
+   "topic": "On the Phone"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Testleri (On The Phone)",
+   "test_count": 2,
+   "topic": "On the Phone"
+  },
+  {
+   "label": "The Internet",
+   "test_count": 4,
+   "topic": "The Internet"
+  },
+  {
+   "label": "5. Ünite Değerlendirme Testleri (The Internet)",
+   "test_count": 2,
+   "topic": "The Internet"
+  },
+  {
+   "label": "Adventures",
+   "test_count": 6,
+   "topic": "Adventures"
+  },
+  {
+   "label": "6. Ünite Değerlendirme Testleri (Adventures)",
+   "test_count": 2,
+   "topic": "Adventures"
+  },
+  {
+   "label": "Tourism",
+   "test_count": 9,
+   "topic": "Tourism"
+  },
+  {
+   "label": "7. Ünite Değerlendirme Testleri (Tourism)",
+   "test_count": 2,
+   "topic": "Tourism"
+  },
+  {
+   "label": "Chores",
+   "test_count": 6,
+   "topic": "Chores, Please!"
+  },
+  {
+   "label": "8. Ünite Değerlendirme Testleri (Chores)",
+   "test_count": 2,
+   "topic": "Chores, Please!"
+  },
+  {
+   "label": "Science",
+   "test_count": 4,
+   "topic": "Science"
+  },
+  {
+   "label": "9. Ünite Değerlendirme Testleri (Science)",
+   "test_count": 2,
+   "topic": "Science"
+  },
+  {
+   "label": "Natural Forces",
+   "test_count": 4,
+   "topic": "Natural Forces"
+  },
+  {
+   "label": "10. Ünite Değerlendirme Testleri (Natural Forces)",
+   "test_count": 2,
+   "topic": "Natural Forces"
+  }
+ ],
+ "warnings": [
+  "Gövde taraması: her ünite (Theme) Öğreten · Geliştiren · Sınav Tadında testleri + ünite sonunda 2 (Unit 1'de 3) Ünite Değerlendirme Testi; her test 2 sayfa.",
+  "Bölüm = ünite (Theme) adı; ünite değerlendirmeleri ayrı satır, aynı temaya eşli."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (UNIT no + 'Test NN' + tema adı + test türü). 10 ünitenin sayfa aralığı içindekilerle (s.5) birebir (6-21 … 144-155); cevap anahtarı s.156. 54 konu testi + 21 ünite değerlendirme = 75 test, hepsi 2 sayfa: 5 ön sayfa + 150 = 155."
+}

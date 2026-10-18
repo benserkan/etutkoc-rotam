@@ -1,0 +1,94 @@
+{
+ "name": "Açı Yayınları 11. Sınıf Matematik Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 11,
+ "target_grade_max": 11,
+ "subject": "Matematik",
+ "sections": [
+  {
+   "label": "İstatistiksel Araştırma Süreci",
+   "test_count": 8
+  },
+  {
+   "label": "Çokgenler-Dörtgenler",
+   "test_count": 7
+  },
+  {
+   "label": "Yamuk-Deltoid",
+   "test_count": 9
+  },
+  {
+   "label": "Paralelkenar-Eşkenar Dörtgen",
+   "test_count": 9
+  },
+  {
+   "label": "Dikdörtgen-Kare",
+   "test_count": 9
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 2: Geometrik Şekiller)",
+   "test_count": 1
+  },
+  {
+   "label": "Birim Çember ve Trigonometrik Referans Fonksiyonlar",
+   "test_count": 11
+  },
+  {
+   "label": "Trigonometrik Fonksiyonlarda Dönüşümler",
+   "test_count": 6
+  },
+  {
+   "label": "Trigonometrik Değerlerin Karşılaştırılması ve İndirgeme",
+   "test_count": 4
+  },
+  {
+   "label": "Trigonometrik Denklemler",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 3: Nicelikler ve Değişimler 1)",
+   "test_count": 3
+  },
+  {
+   "label": "Üstel Referans Fonksiyon",
+   "test_count": 5
+  },
+  {
+   "label": "Üstel Fonksiyonun Tersi ve Logaritma Fonksiyonu",
+   "test_count": 5
+  },
+  {
+   "label": "Logaritmanın Özellikleri",
+   "test_count": 7
+  },
+  {
+   "label": "Logaritmik Fonksiyonlarda Dönüşümler",
+   "test_count": 5
+  },
+  {
+   "label": "Üstel ve Logaritmik Denklemler",
+   "test_count": 4
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 4: Nicelikler ve Değişimler 2)",
+   "test_count": 2
+  },
+  {
+   "label": "Fonksiyonlarda Bileşke Kavramı ve Bileşke Fonksiyonun Cebirsel Temsili",
+   "test_count": 21
+  },
+  {
+   "label": "Bağlam Temelli Sorular (Karma) (Tema 5: Nicelikler ve Değişimler 3)",
+   "test_count": 2
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (5 tema: İstatistiksel Araştırma Süreci, Geometrik Şekiller, Nicelikler ve Değişimler 1-2-3). İçindekiler (s.4) yalnız TEMA düzeyinde; alt başlıklar üst banttaki 7,8pt satırdan ve cevap anahtarı başlıklarından alındı.",
+  "Konu Kavrama (KKT), Konu Analiz (KAT) ve ÖSYM Tadında (ÖTT) testleri her konunun kendi döngüsünde yer aldığı için o konuya sayıldı; Tema 2'de her alt başlığın sonundaki Bağlam Temelli test de o konuya dahil. Yalnız tema sonu Bağlam Temelli testler (Tema 2 T35, Tema 3 T26-28, Tema 4 T27-28, Tema 5 T22-23) ayrı Karma satırı.",
+  "Tema 3'te bantta alt başlık YOK; Tema 4'te bant her testte 'Üstel Referans Fonksiyon' yazıyor ama T6'dan itibaren sorular logaritma. Bu iki temadaki bölüm adları ve sınırları kitapta basılı değil, soru içeriğinden ve ÖTT döngü sınırlarından çıkarıldı (Tema 3: T1-11 birim çember/sin-cos-tan-cot referans fonksiyonları/periyot, T12-17 germe-öteleme dönüşümleri, T18-21 değer karşılaştırma ve indirgeme, T22-25 trigonometrik denklemler; Tema 4: T1-5 üstel fonksiyon, T6-10 ters fonksiyon ve logaritma fonksiyonu, T11-17 logaritma özellikleri, T18-22 dönüşümler, T23-26 üstel/logaritmik denklemler). Test sayıları kesin; yalnız bu iki temadaki bölümleme yorumdur, istenirse tema düzeyinde birleştirilebilir."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 17,2pt KKT/KAT/ÖTT/BT etiketi + 8,8pt tema + 7,8pt alt başlık), test no TEMA içinde 1'den: Tema1 1-8, Tema2 1-35, Tema3 1-28, Tema4 1-28, Tema5 1-23 kesintisiz = 122 test, hepsi 2 sayfa. İçindekiler sayfa aralıkları birebir (5-20, 21-90, 91-146, 147-202, 203-248). Sayfa: 4 ön + 122×2 = 248, cevap anahtarı s.249-254 (tema başı test sayıları ve alt başlıkları bantlarla aynı)."
+}

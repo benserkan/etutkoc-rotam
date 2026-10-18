@@ -1,0 +1,131 @@
+{
+ "name": "Açı Yayınları 10. Sınıf Kimya Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 10,
+ "target_grade_max": 10,
+ "subject": "Kimya",
+ "sections": [
+  {
+   "label": "Kimyasal Tepkimelerin Oluşumu",
+   "test_count": 4
+  },
+  {
+   "label": "Mol Kavramı",
+   "test_count": 13
+  },
+  {
+   "label": "Kimyasal Tepkimelerin Denkleştirilmesi",
+   "test_count": 2
+  },
+  {
+   "label": "Kimyasal Hesaplamalar",
+   "test_count": 10
+  },
+  {
+   "label": "Kimyasal Tepkime Türleri",
+   "test_count": 2
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Tema 1: Etkileşim)",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 1: Etkileşim)",
+   "test_count": 2
+  },
+  {
+   "label": "Gazların Genel Özellikleri",
+   "test_count": 2
+  },
+  {
+   "label": "Basınç-Hacim İlişkisi",
+   "test_count": 4
+  },
+  {
+   "label": "Hacim-Sıcaklık İlişkisi",
+   "test_count": 4
+  },
+  {
+   "label": "Basınç-Sıcaklık İlişkisi",
+   "test_count": 4
+  },
+  {
+   "label": "Hacim-Mol İlişkisi",
+   "test_count": 4
+  },
+  {
+   "label": "Kinetik Teori ve İdeal Gaz Denklemi",
+   "test_count": 4
+  },
+  {
+   "label": "Graham Difüzyon ve Efüzyon Yasası",
+   "test_count": 2
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Tema 1: Gazlar)",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 1: Gazlar)",
+   "test_count": 2
+  },
+  {
+   "label": "Çözünme Olayının Sınıflandırılması",
+   "test_count": 5
+  },
+  {
+   "label": "Derişim Birimleri",
+   "test_count": 4
+  },
+  {
+   "label": "Çözünürlük",
+   "test_count": 4
+  },
+  {
+   "label": "Çözünürlüğe Etki Eden Faktörler",
+   "test_count": 4
+  },
+  {
+   "label": "Çözeltilerin Sınıflandırılması",
+   "test_count": 3
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 6
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Tema 2: Çeşitlilik)",
+   "test_count": 10
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 2: Çeşitlilik)",
+   "test_count": 3
+  },
+  {
+   "label": "Yeşil Kimya, Çevresel ve Ekolojik Sürdürülebilirlik",
+   "test_count": 3
+  },
+  {
+   "label": "Atmosferdeki Tepkimeler ve Küresel Sorunlar",
+   "test_count": 5
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Tema 3: Sürdürülebilirlik)",
+   "test_count": 3
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 3: Sürdürülebilirlik)",
+   "test_count": 2
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (Tema 1: Etkileşim [+ Gazlar bloğu, içindekilerde Tema 1 altında], Tema 2: Çeşitlilik, Tema 3: Sürdürülebilirlik). İçindekiler yalnız tema/blok aralığı veriyor; bölüm adları test bandındaki 8,8pt konu satırından.",
+  "Kitap her blokta önce tüm konuların Konu Kavrama Testlerini, sonra Konu Analiz Testlerini sıralıyor; bölüm = konu, KKT+KAT birleşik sayıldı (ör. Mol Kavramı 8 KKT + 5 KAT = 13). Sayfa sırası bu yüzden bölüm sırasıyla birebir değil.",
+  "ÖSYM Tadında ve Bağlam Temelli testlerin bandında yalnız tema/blok adı var (çok konulu) → blok başına ayrı Karma satır.",
+  "Tema 1 test 18 bandı 'Kimyasal Tepkimelerin Oluşması' (dizgi varyantı) → 'Kimyasal Tepkimelerin Oluşumu'na sayıldı."
+ ],
+ "evidence": "PyMuPDF üst bant taraması. Test no blok içinde 1'den süren sayaç: Etkileşim 1-38, Gazlar 1-31, Çeşitlilik 1-39, Sürdürülebilirlik 1-13 kesintisiz = 121 test, hepsi 2 sayfa. İçindekiler blok aralıkları (5-80, 81-142, 143-220, 221-246) test sayılarıyla birebir (76/2=38, 62/2=31, 78/2=39, 26/2=13). Sayfa: 4 ön + 121×2 = 246, cevap anahtarı s.247."
+}

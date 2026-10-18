@@ -1,0 +1,131 @@
+{
+ "name": "Açı Yayınları 11. Sınıf Kimya Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 11,
+ "target_grade_max": 11,
+ "subject": "Kimya",
+ "sections": [
+  {
+   "label": "Tepkimelerde Meydana Gelen Enerji Değişimi",
+   "test_count": 2
+  },
+  {
+   "label": "Bağ Enerjileriyle Tepkime Entalpisinin Hesaplanması",
+   "test_count": 6
+  },
+  {
+   "label": "Standart Oluşum Entalpisi - Standart Tepkime Entalpisi",
+   "test_count": 7
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Tema 1: Enerji)",
+   "test_count": 2
+  },
+  {
+   "label": "Kimyasal Tepkimelerin Gerçekleşmesi İçin Gerekli Şartlar",
+   "test_count": 4
+  },
+  {
+   "label": "Tepken ve Ürün Derişimleriyle Ortalama Tepkime Hızlarının Hesaplanması",
+   "test_count": 3
+  },
+  {
+   "label": "Tepkime Hızına Etki Eden Faktörler",
+   "test_count": 6
+  },
+  {
+   "label": "Kimyasal Tepkimelerin Hız Denklemi",
+   "test_count": 7
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 1: Kimyasal Tepkimelerde Enerji)",
+   "test_count": 1
+  },
+  {
+   "label": "Tersinir Tepkimelerin Özellikleri - Fiziksel ve Kimyasal Değişimlerde Denge",
+   "test_count": 5
+  },
+  {
+   "label": "Denge Sabiti İfadesinin Yazılması",
+   "test_count": 5
+  },
+  {
+   "label": "Tepkime Oranı",
+   "test_count": 1
+  },
+  {
+   "label": "Dengeyi Etkileyen Faktörler",
+   "test_count": 8
+  },
+  {
+   "label": "ÖSYM Tadında Test (Karma) (Tema 2: Denge)",
+   "test_count": 1
+  },
+  {
+   "label": "Saf Suyun Otoiyonizasyonu - Asit ve Baz Teorileri",
+   "test_count": 5
+  },
+  {
+   "label": "Kuvvetli Asit-Zayıf Asitlerde ve Kuvvetli Baz-Zayıf Bazlarda pH-pOH Hesaplanması",
+   "test_count": 7
+  },
+  {
+   "label": "Nötralleşme",
+   "test_count": 6
+  },
+  {
+   "label": "Kuvvetli Asit - Kuvvetli Baz Titrasyonları",
+   "test_count": 5
+  },
+  {
+   "label": "ÖSYM Tadında Testler (Karma) (Tema 2: Asit-Baz Çözeltilerinde Denge)",
+   "test_count": 2
+  },
+  {
+   "label": "Suda Az Çözünen Tuzların Molar Çözünürlükleri",
+   "test_count": 8
+  },
+  {
+   "label": "Çözünürlüğe Etki Eden Faktörler",
+   "test_count": 4
+  },
+  {
+   "label": "ÖSYM Tadında Test (Karma) (Tema 2: Çözünürlük Dengesi)",
+   "test_count": 1
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 2: Denge)",
+   "test_count": 1
+  },
+  {
+   "label": "Nanoteknoloji ve Sürdürülebilirlik",
+   "test_count": 1
+  },
+  {
+   "label": "Nanoteknolojik Ürünlerin Potansiyel Fayda ve Zararları",
+   "test_count": 3
+  },
+  {
+   "label": "Yeşil Hidrojen Enerjisi",
+   "test_count": 1
+  },
+  {
+   "label": "ÖSYM Tadında Test (Karma) (Tema 3: Nanoteknoloji ve Sürdürülebilirlik)",
+   "test_count": 1
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Tema 3: Nanoteknoloji ve Sürdürülebilirlik)",
+   "test_count": 1
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (3 tema; tema adları kitapta basılı değil, gruplar: Enerji / Tepkime Hızı · Denge / Asit-Baz / Çözünürlük · Nanoteknoloji). Bölüm = alt başlık; içindekiler aynı konuyu önce Konu Kavrama sonra Konu Analiz bloğunda iki kez listeliyor → tek satırda toplandı.",
+  "'Tersinir Tepkimelerin Özellikleri Fiziksel ve Kimyasal Değişimlerde Denge' (1 KKT + 1 KAT) ile 'Tersinir Tepkimelerin Özellikleri' (3 KAT) tek satırda birleştirildi (5).",
+  "Grup sonu ÖTT/BT testleri grup adıyla ayrı Karma satır; yalnız Tema 1 Hız grubunun 2 ÖTT'si (test 19-20) içindekilerde ve cevap anahtarında 'Kimyasal Tepkimelerin Hız Denklemi' altında → konuya dahil.",
+  "3 Bağlam Temelli test 4 sayfa (s.79-82, 199-202, 215-218; soru no kesintisiz, bantta aynı numara) → 1'er test. Tema 2 BT (s.199-202) içindekilerde 'Denge 199-201 + Asit-Baz Çözeltilerinde Denge 202' diye bölünmüş ama tek test (#14)."
+ ],
+ "evidence": "PyMuPDF üst bant taraması: test no her tema grubunda 1'den — Tema1 1-17 + 1-21, Tema2 1-20 + 1-25 + 1-14, Tema3 1-7 = 104 test, zincirler kesintisiz. Cevap anahtarı (s.219-224) aynı blokları ve başlıkları birebir veriyor. İçindekiler (s.4) aralıkları birebir. Sayfa: 4 ön + 101×2 + 3×4 = 218, cevap anahtarı s.219."
+}

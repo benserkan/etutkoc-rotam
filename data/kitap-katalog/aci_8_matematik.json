@@ -1,0 +1,102 @@
+{
+ "name": "Açı Yayınları 8. Sınıf Matematik Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Çarpanlar ve Katlar",
+   "test_count": 10,
+   "topic": "Çarpanlar ve Katlar"
+  },
+  {
+   "label": "Üslü İfadeler",
+   "test_count": 10,
+   "topic": "Üslü İfadeler"
+  },
+  {
+   "label": "1. Ünite Değerlendirme Testi (Çarpanlar ve Katlar – Üslü İfadeler)",
+   "test_count": 1
+  },
+  {
+   "label": "Kareköklü İfadeler",
+   "test_count": 15,
+   "topic": "Kareköklü İfadeler"
+  },
+  {
+   "label": "Veri Analizi",
+   "test_count": 6,
+   "topic": "Veri Analizi"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Testi (Kareköklü İfadeler – Veri Analizi)",
+   "test_count": 1
+  },
+  {
+   "label": "Basit Olayların Olma Olasılığı",
+   "test_count": 10,
+   "topic": "Basit Olayların Olasılığı"
+  },
+  {
+   "label": "Cebirsel İfadeler",
+   "test_count": 11,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler"
+  },
+  {
+   "label": "3. Ünite Değerlendirme Testi (Olasılık – Cebirsel İfadeler)",
+   "test_count": 1
+  },
+  {
+   "label": "Doğrusal Denklemler",
+   "test_count": 10,
+   "topic": "Doğrusal Denklemler"
+  },
+  {
+   "label": "Eşitsizlikler",
+   "test_count": 8,
+   "topic": "Eşitsizlikler"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Testi (Doğrusal Denklemler – Eşitsizlikler)",
+   "test_count": 1
+  },
+  {
+   "label": "Üçgenler",
+   "test_count": 10,
+   "topic": "Üçgenler"
+  },
+  {
+   "label": "Eşlik ve Benzerlik",
+   "test_count": 7,
+   "topic": "Eşlik ve Benzerlik"
+  },
+  {
+   "label": "5. Ünite Değerlendirme Testi (Üçgenler – Eşlik ve Benzerlik)",
+   "test_count": 1
+  },
+  {
+   "label": "Dönüşüm Geometrisi",
+   "test_count": 8,
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Geometrik Cisimler",
+   "test_count": 10,
+   "topic": "Geometrik Cisimler"
+  },
+  {
+   "label": "6. Ünite Değerlendirme Testi (Dönüşüm Geometrisi – Geometrik Cisimler)",
+   "test_count": 1
+  }
+ ],
+ "warnings": [
+  "Gövde taraması: konu başına Öğreten · Geliştiren · Sınav Tadında testleri; her ünite (2 konu) sonunda TEK Ünite Değerlendirme Testi (4-6 sayfa, 8-12 soru; 6. ünitede 2 sayfa/4 soru).",
+  "Test numarası ünite boyunca süren sayaç (ör. Ünite 1: Çarpanlar 01-10, Üslü 11-20, Ünite Değerlendirme 21); 6 zincir kesintisiz.",
+  "Ünite değerlendirme satırları iki konuyu kapsadığından bilinçli olarak müfredat konusuna eşlenmedi."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (ÜNİTE no + 'Test NN' + konu adı 8.5pt + test türü). 12 konunun sayfa aralığı içindekilerle (s.5) birebir (6-25, 26-49, 50-79, 80-99, 100-119, 120-147, 148-167, 168-187, 188-207, 208-227, 228-243, 244-265); cevap anahtarı s.266. 115 konu testi + 6 ünite değerlendirme = 121; çok sayfalı testlerde (Veri Analizi T21 4 sayfa, ünite değerlendirmeleri 4-6 sayfa) soru numaraları kesintisiz."
+}

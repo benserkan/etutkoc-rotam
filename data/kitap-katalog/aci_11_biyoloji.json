@@ -1,0 +1,97 @@
+{
+ "name": "Açı Yayınları 11. Sınıf Biyoloji Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 11,
+ "target_grade_max": 11,
+ "subject": "Biyoloji",
+ "sections": [
+  {
+   "label": "Canlılık ve Tepki",
+   "test_count": 2
+  },
+  {
+   "label": "Bitkilerde Hormonların Meyve Olgunlaşmasına ve Bitki Gelişimine Etkisi",
+   "test_count": 3
+  },
+  {
+   "label": "Bitkilerde Tepki Mekanizması",
+   "test_count": 3
+  },
+  {
+   "label": "Bitkilerde Yönelme Hareketi",
+   "test_count": 3
+  },
+  {
+   "label": "Duyu Reseptörleri ve Duyu Organları",
+   "test_count": 8
+  },
+  {
+   "label": "Hayvanlarda Sinir Sistemi",
+   "test_count": 2
+  },
+  {
+   "label": "İnsanda Sinir Sistemi",
+   "test_count": 7
+  },
+  {
+   "label": "Refleks Mekanizması",
+   "test_count": 2
+  },
+  {
+   "label": "Harekete Dayalı Tepki",
+   "test_count": 6
+  },
+  {
+   "label": "İskelet Kaslarının Mekanizması",
+   "test_count": 5
+  },
+  {
+   "label": "Bağışıklık Sistemi ve Alerji",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Testler (Karma) (Tema 1)",
+   "test_count": 8
+  },
+  {
+   "label": "Homeostazinin Canlılar İçin Önemi ve Sinir Sisteminin Etkileri",
+   "test_count": 8
+  },
+  {
+   "label": "Endokrin Sistemin Homeostazi İşlevi",
+   "test_count": 8
+  },
+  {
+   "label": "Dolaşım Sistemi ve Homeostazi Arasındaki İlişki",
+   "test_count": 7
+  },
+  {
+   "label": "Solunum Sisteminin Homeostazinin Sağlanmasındaki Rolü",
+   "test_count": 7
+  },
+  {
+   "label": "Boşaltım Sisteminin Homeostazi İşlevi",
+   "test_count": 7
+  },
+  {
+   "label": "Homeostazinin Sağlanmasında Sistemlerin Eş Güdümlü Çalışması",
+   "test_count": 4
+  },
+  {
+   "label": "Homeostazinin Sağlanamadığı Durumlarda Oluşabilecek Sağlık Sorunları",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Testler (Karma) (Tema 2)",
+   "test_count": 7
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (2 tema: Tepki, Homeostazi; tema adları kitapta basılı değil). Bölüm = içindekiler alt başlığı. ÖSYM Tadında testler konunun içinde (içindekiler aralığı + cevap anahtarı) → konuya dahil.",
+  "Tema sonundaki Bağlam Temelli testler ayrı Karma satır: Tema 1 test 47-54 (s.97-112; 47 Yönelme, 48-51 Duyu-Sinir-Refleks-Hareket karma, 52-54 Bağışıklık), Tema 2 test 47-53 (s.205-218; her biri bir Tema 2 konusuna ait). İçindekiler bunları son konunun (Bağışıklık 87-112, Sağlık Sorunları 195-218) aralığına katıyor."
+ ],
+ "evidence": "PyMuPDF üst bant taraması: test no TEMA içinde 1'den — Tema1 1-54, Tema2 1-53, kesintisiz = 107 test, hepsi 2 sayfa (bantta konu satırı bazı sayfalarda değişse de numara aynı). Cevap anahtarı (s.219-224) konu başlıkları ve test numaralarıyla birebir. Sayfa: 4 ön + 107×2 = 218, cevap anahtarı s.219."
+}

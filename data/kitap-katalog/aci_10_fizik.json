@@ -1,0 +1,82 @@
+{
+ "name": "Açı Yayınları 10. Sınıf Fizik Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 10,
+ "target_grade_max": 10,
+ "subject": "Fizik",
+ "sections": [
+  {
+   "label": "Sabit Hızlı Hareket",
+   "test_count": 7
+  },
+  {
+   "label": "Bir Boyutta Sabit İvmeli Hareket",
+   "test_count": 8
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 1: Kuvvet ve Hareket)",
+   "test_count": 2
+  },
+  {
+   "label": "İş-Enerji-Güç",
+   "test_count": 11
+  },
+  {
+   "label": "Enerji Biçimleri",
+   "test_count": 7
+  },
+  {
+   "label": "Mekanik Enerji",
+   "test_count": 7
+  },
+  {
+   "label": "Enerji Kaynakları",
+   "test_count": 2
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 2: İş-Enerji-Güç)",
+   "test_count": 2
+  },
+  {
+   "label": "Elektrik",
+   "test_count": 28
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 3: Elektrik)",
+   "test_count": 2
+  },
+  {
+   "label": "Periyodik Hareketler",
+   "test_count": 3
+  },
+  {
+   "label": "Dalgaların Temel Kavramları ve Dalgaların Sınıflandırılması",
+   "test_count": 9
+  },
+  {
+   "label": "Dalgaların Yayılma Süratini Etkileyen Faktörler",
+   "test_count": 3
+  },
+  {
+   "label": "Su Dalgalarında Yansıma ve Kırılma",
+   "test_count": 3
+  },
+  {
+   "label": "Rezonans ve Deprem",
+   "test_count": 3
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 4: Dalgalar)",
+   "test_count": 2
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (4 ünite: Kuvvet ve Hareket, İş-Enerji-Güç, Elektrik, Dalgalar). İçindekiler yalnız ünite aralığı veriyor; bölüm adları test bandındaki 8,8pt konu satırından (büyük harf bantlar ASCII 'I' ile basılmış, Türkçe düzene çevrildi). ÖSYM Tadında testler kendi konu bandını taşıdığı için o konuya sayıldı; yalnız Bağlam Temelli testler ünite başına Karma satır.",
+  "Ünite 3 Elektrik'te bantta alt konu YOK (hepsi 'ELEKTRİK'); seri iki döngü halinde (1-20 KKT/KAT/ÖTT, 21-28 yeniden KKT/KAT/ÖTT — ikincisi üreteç bağlanması ağırlıklı) ama kitap adlandırmadığı için tek 'Elektrik' bölümü (28) yapıldı.",
+  "Ünite 4 test 3 (ÖTT, bantta yalnız 'DALGALAR', içerik sarkaç/salıncak) Periyodik Hareketler'e; test 15 (ÖTT, 'Dalgaların Hızını Etkileyen Faktörler ve Periyodik Hareketler') Dalgaların Yayılma Süratini Etkileyen Faktörler'e; test 18 (KAT, 'Su Dalgalarında Yansıma ve Kırılma, Rezonans ve Deprem') Su Dalgalarında Yansıma ve Kırılma'ya sayıldı."
+ ],
+ "evidence": "PyMuPDF üst bant taraması. Test no ÜNİTE içinde 1'den: Ü1 1-17, Ü2 1-29, Ü3 1-30, Ü4 1-23 kesintisiz = 99 test, hepsi 2 sayfa. İçindekiler ünite aralıkları (5-38, 39-96, 97-156, 157-202) /2 ile birebir. Sayfa: 4 ön + 99×2 = 202, cevap anahtarı s.203."
+}

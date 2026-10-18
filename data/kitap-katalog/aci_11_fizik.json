@@ -1,0 +1,69 @@
+{
+ "name": "Açı Yayınları 11. Sınıf Fizik Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "curriculum_model": "maarif_lise",
+ "target_grade_min": 11,
+ "target_grade_max": 11,
+ "subject": "Fizik",
+ "sections": [
+  {
+   "label": "Bir Boyutta Sabit İvmeli Hareket",
+   "test_count": 8
+  },
+  {
+   "label": "İki Boyutta Sabit İvmeli Hareket",
+   "test_count": 9
+  },
+  {
+   "label": "Newton'ın Hareket Yasaları",
+   "test_count": 16
+  },
+  {
+   "label": "Düzgün Çembersel Hareket",
+   "test_count": 9
+  },
+  {
+   "label": "Elektriksel Kuvvet ve Elektriksel Alan",
+   "test_count": 13
+  },
+  {
+   "label": "Mıknatıslar",
+   "test_count": 3
+  },
+  {
+   "label": "Elektromanyetizma",
+   "test_count": 14
+  },
+  {
+   "label": "Manyetik Akı ve İndüksiyon",
+   "test_count": 11
+  },
+  {
+   "label": "Transformatörler",
+   "test_count": 10
+  },
+  {
+   "label": "Işık Akısı ve Aydınlanma",
+   "test_count": 4
+  },
+  {
+   "label": "Düzlem ve Küresel Aynalar",
+   "test_count": 11
+  },
+  {
+   "label": "Kırılma",
+   "test_count": 8
+  },
+  {
+   "label": "Mercekler",
+   "test_count": 7
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (3 ünite: Kuvvet ve Hareket, Elektrik ve Manyetizma, Optik; Klasik 11'de Optik yok). Bölüm = içindekiler satırı (13 konu).",
+  "ÖSYM Tadında (ÖTT) ve Bağlam Temelli (BT) testler bu kitapta KONU bandı taşıyor ve içindekilerde konunun sayfa aralığı içinde (ör. İki Boyutta 21-38 = 4 KKT + 2 KAT + 2 ÖTT + 1 BT); ayrı Karma satırı açılmadı, konuya dahil edildi. Konu başı BT: İki Boyutta 1, Newton 2, Çembersel 1, Elektriksel Kuvvet 2, Transformatörler 2, Mercekler 2."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 9pt ÜNİTE + 8,8pt konu + KKT/KAT/ÖTT/BT etiketi). Test no ÜNİTE içinde 1'den: Ünite1 1-42, Ünite2 1-51, Ünite3 1-30, kesintisiz = 123 test, hepsi 2 sayfa. İçindekiler (s.4) sayfa aralıkları her konuda birebir (ör. Newton 39-70 = 16 test, Elektromanyetizma 121-148 = 14). Sayfa: 4 ön + 123×2 = 250, cevap anahtarı s.251-254."
+}

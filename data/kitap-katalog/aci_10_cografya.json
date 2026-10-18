@@ -1,0 +1,130 @@
+{
+ "name": "Açı Yayınları 10. Sınıf Coğrafya Soru Bankası",
+ "publisher": "Açı Yayınları",
+ "type": "soru_bankasi",
+ "target_graduate": false,
+ "target_grade_min": 10,
+ "target_grade_max": 10,
+ "curriculum_model": "maarif_lise",
+ "subject": "Coğrafya",
+ "sections": [
+  {
+   "label": "Coğrafi Bakış Açısı",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 1: Coğrafyanın Doğası)",
+   "test_count": 1
+  },
+  {
+   "label": "Mekânsal Verilerin Haritaya Aktarımı ve Uzaktan Algılama",
+   "test_count": 3
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 2: Mekânsal Bilgi Teknolojileri)",
+   "test_count": 1
+  },
+  {
+   "label": "Tektonik Süreçler",
+   "test_count": 6
+  },
+  {
+   "label": "Kayaçlar",
+   "test_count": 2
+  },
+  {
+   "label": "Tektonik Süreçler ve Kayaçlar (Karma)",
+   "test_count": 3
+  },
+  {
+   "label": "Jeolojik Zamanlar ve Türkiye'nin Jeolojik Geçmişi",
+   "test_count": 1
+  },
+  {
+   "label": "Türkiye'nin Tektonik Yapısı",
+   "test_count": 3
+  },
+  {
+   "label": "Aşınım ve Birikim Süreçlerinde İklimin ve Suyun Etkisi",
+   "test_count": 3
+  },
+  {
+   "label": "Çözünebilen Kayaçlarda Oluşan Yer Şekilleri (Karstik Şekiller)",
+   "test_count": 1
+  },
+  {
+   "label": "Dalga ve Akıntıların Oluşturduğu Yeryüzü Şekilleri",
+   "test_count": 2
+  },
+  {
+   "label": "Rüzgârlar ve Buzulların Oluşturduğu Yeryüzü Şekilleri",
+   "test_count": 2
+  },
+  {
+   "label": "Akarsu, Rüzgâr ve Buzulların Oluşturduğu Yeryüzü Şekilleri (Karma)",
+   "test_count": 2
+  },
+  {
+   "label": "Türkiye'de Dış Kuvvetler",
+   "test_count": 5
+  },
+  {
+   "label": "Türkiye'nin Ana Yer Şekilleri",
+   "test_count": 2
+  },
+  {
+   "label": "Tektonik Süreçler, Kayaçlar ve Aşınım-Birikim Süreçleri (Karma)",
+   "test_count": 3
+  },
+  {
+   "label": "Yeryüzü Şekilleri ile Beşerî Faaliyetler Arasındaki İlişki",
+   "test_count": 2
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 3: Doğal Sistemler ve Süreçler)",
+   "test_count": 4
+  },
+  {
+   "label": "Yerleşmelerin Kuruluşu ve Gelişimi",
+   "test_count": 15
+  },
+  {
+   "label": "Yerleşmelerin Fonksiyonları",
+   "test_count": 10
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 4: Beşerî Sistemler ve Süreçler)",
+   "test_count": 2
+  },
+  {
+   "label": "Ekonomik Faaliyetler",
+   "test_count": 7
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 5: Ekonomik Faaliyetler ve Etkileri)",
+   "test_count": 1
+  },
+  {
+   "label": "Afetler",
+   "test_count": 13
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 6: Afetler ve Sürdürülebilir Çevre)",
+   "test_count": 1
+  },
+  {
+   "label": "Türk Kültürünün Mekânsal Özellikleri",
+   "test_count": 5
+  },
+  {
+   "label": "Bağlam Temelli Test (Karma) (Ünite 7: Bölgeler, Ülkeler ve Küresel Bağlantılar)",
+   "test_count": 1
+  }
+ ],
+ "warnings": [
+  "Maarif modeli (7 ünite; kitapta 'Türkiye Yüzyılı Maarif Modeli' ibaresi). Bölüm = içindekiler alt başlığı (bantta 7,8pt alt başlık, -I/-II ekleriyle). ÖSYM Tadında testler alt başlık taşıdığı için kendi konusunda sayıldı; çok konulu ÖTT grupları içindekilerde ayrı satır olduğu için ayrı (Karma) satır.",
+  "Bağlam Temelli testler her ünitede ayrı Karma satır. Ünite 3 BT'nin 1'i (test 16, s.55-56, bantta 'Tektonik Süreçler') ünite ortasında; içindekilerde Türkiye'nin Tektonik Yapısı aralığına (49-56) düşüyor, Karma satıra katıldı.",
+  "İçindekilerdeki dizgi hataları düzeltildi: 'Teknotik' → Tektonik, 'Akınlatıların' → Akıntıların; Ünite 7 adı 'Bölgeler Ülkeler ve Küresel Bağlantılar' virgüllü yazıldı."
+ ],
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 8,8pt ünite adı + 7,8pt alt başlık + KKT/ÖTT/BT etiketi). Test no ÜNİTE içinde 1'den: 6/4/41/27/8/14/6 kesintisiz = 106 test, hepsi 2 sayfa. İçindekiler (s.4) sayfa aralıkları her alt başlıkta birebir (örn. Türkiye'de Dış Kuvvetler 77-86 = 5 test, Yerleşmelerin Kuruluşu 107-136 = 15 test, Afetler 177-204 = 14 test [13 + BT]). Sayfa: 4 ön + 106×2 = 216, cevap anahtarı s.217."
+}
