@@ -40,6 +40,23 @@ type Choice =
   | { kind: "topic"; topic: PoolTopicOut }
   | { kind: "none" };
 
+/** Son seçilen yer — ekledikten sonra liste baştan değil buradan açılır (koç art arda aynı bölgeden verir). */
+type Anchor = { tab: "books" | "topics"; bookId?: number; sectionId?: number; topicId?: number; grade?: number | null };
+
+/** Kaydırılabilir listede işaretli satırı görünür yap (yalnız listeyi kaydırır, sayfayı değil). */
+function useScrollToAnchor(ref: React.RefObject<HTMLElement | null>, selector: string | null, ready: boolean) {
+  const doneRef = React.useRef(false);
+  React.useLayoutEffect(() => {
+    if (doneRef.current || !ready || !selector || !ref.current) return;
+    const box = ref.current;
+    const el = box.querySelector<HTMLElement>(selector);
+    if (!el) return;
+    doneRef.current = true;
+    const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+    box.scrollTop = Math.max(0, top - 44);
+  });
+}
+
 function trLower(s: string): string {
   return s.toLocaleLowerCase("tr-TR");
 }
@@ -61,11 +78,13 @@ export function AddPanel({ studentId, data, subjectId, onSubject }: {
   const [choice, setChoice] = React.useState<Choice | null>(null);
   // "tyt" = TYT (Maarif) çipinden seçildi → konular yalnız 9-10. sınıf (Maarif 11+)
   const [scope, setScope] = React.useState<"all" | "tyt">("all");
+  const [anchor, setAnchor] = React.useState<Anchor | null>(null);
   const [lastSubject, setLastSubject] = React.useState(subjectId);
   // Ders dışarıdan (eksik ders şeridi) değişince seçim sıfırlanır — render sırasında (effect değil)
   if (lastSubject !== subjectId) {
     setLastSubject(subjectId);
     setChoice(null);
+    setAnchor(null);
     setScope("all");
     if (subjectId != null) setMode("steps");
   }
@@ -115,7 +134,7 @@ export function AddPanel({ studentId, data, subjectId, onSubject }: {
                 summary={subj ? `${subj.name}${scope === "tyt" ? ` · TYT (Maarif) · ${tytMax - 1}-${tytMax}. sınıf konuları` : subj.group === "sinav" ? " · sınav dersi" : data.curriculum_label ? ` · ${data.curriculum_label}` : ""}${sourceCountLabel(subj) ? ` · ${sourceCountLabel(subj)}` : ""}` : null}
                 onEdit={subj ? () => onSubject(null) : undefined}>
             <SubjectPicker data={data} studentId={studentId}
-                           onPick={(id, sc) => { onSubject(id); setLastSubject(id); setChoice(null); setScope(sc); }} />
+                           onPick={(id, sc) => { onSubject(id); setLastSubject(id); setChoice(null); setAnchor(null); setScope(sc); }} />
           </Step>
 
           {/* 2 — Nereden? */}
@@ -130,7 +149,13 @@ export function AddPanel({ studentId, data, subjectId, onSubject }: {
                 studentGrade={data.student.is_graduate ? null : data.student.grade_level}
                 books={books}
                 booksLoading={booksQ.isLoading}
-                onPick={setChoice}
+                anchor={anchor}
+                onPick={(c) => {
+                  setChoice(c);
+                  setAnchor(c.kind === "book" ? { tab: "books", bookId: c.book.book_id, sectionId: c.section.section_id }
+                    : c.kind === "topic" ? { tab: "topics", topicId: c.topic.topic_id, grade: c.topic.grade_level }
+                    : { tab: "topics" });
+                }}
               />
             )}
           </Step>
@@ -302,12 +327,12 @@ function SubjectPicker({ data, studentId, onPick }: {
 
 // ---------------------------------------------------------------- 2 nereden?
 
-function SourcePicker({ studentId, subject, maxGrade, studentGrade, books, booksLoading, onPick }: {
+function SourcePicker({ studentId, subject, maxGrade, studentGrade, books, booksLoading, anchor, onPick }: {
   studentId: number; subject: PoolSubjectOut; maxGrade: number | null; studentGrade: number | null; books: PoolBookOut[]; booksLoading: boolean;
-  onPick: (c: Choice) => void;
+  anchor: Anchor | null; onPick: (c: Choice) => void;
 }) {
   const hasBooks = subject.book_count + subject.deneme_count > 0;
-  const [tab, setTab] = React.useState<"books" | "topics">(hasBooks ? "books" : "topics");
+  const [tab, setTab] = React.useState<"books" | "topics">(anchor?.tab ?? (hasBooks ? "books" : "topics"));
   return (
     <div className="space-y-3">
       <div className="grid gap-2 sm:grid-cols-2" role="tablist" aria-label="Kalem nereden">
@@ -322,7 +347,8 @@ function SourcePicker({ studentId, subject, maxGrade, studentGrade, books, books
       </div>
       {tab === "books" ? (
         hasBooks ? (
-          <BookList books={books} loading={booksLoading} onPick={(book, section) => onPick({ kind: "book", book, section })} />
+          <BookList books={books} loading={booksLoading} anchorBook={anchor?.bookId ?? null}
+                    anchorSection={anchor?.sectionId ?? null} onPick={(book, section) => onPick({ kind: "book", book, section })} />
         ) : (
           <div className="rounded-lg border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">
             Bu derste öğrencinin sistemde kayıtlı kitabı yok. Kitap atamak için öğrencinin Kitaplar sekmesini kullan ya da
@@ -341,6 +367,7 @@ function SourcePicker({ studentId, subject, maxGrade, studentGrade, books, books
           )}
           <TopicPicker studentId={studentId} subjectId={subject.id} subjectName={subject.name} maxGrade={maxGrade}
                        studentGrade={studentGrade} examSubject={subject.group === "sinav"}
+                       anchorTopic={anchor?.topicId ?? null} anchorGrade={anchor?.topicId != null ? anchor.grade ?? null : undefined}
                        onPick={(t) => onPick(t === "none" ? { kind: "none" } : { kind: "topic", topic: t })} />
         </>
       )}
@@ -365,10 +392,13 @@ function SourceOption({ active, onClick, icon, title, hint }: {
   );
 }
 
-function BookList({ books, loading, onPick }: {
-  books: PoolBookOut[]; loading: boolean; onPick: (b: PoolBookOut, s: PoolBookSectionOut) => void;
+function BookList({ books, loading, anchorBook, anchorSection, onPick }: {
+  books: PoolBookOut[]; loading: boolean; anchorBook: number | null; anchorSection: number | null;
+  onPick: (b: PoolBookOut, s: PoolBookSectionOut) => void;
 }) {
-  const [open, setOpen] = React.useState<number | null>(null);
+  const [open, setOpen] = React.useState<number | null>(anchorBook);
+  const listRef = React.useRef<HTMLUListElement | null>(null);
+  useScrollToAnchor(listRef, anchorSection != null ? `[data-section-id="${anchorSection}"]` : null, !loading);
   if (loading) return <p className="text-xs text-muted-foreground">Kitaplar yükleniyor…</p>;
   const openId = open ?? books[0]?.book_id ?? null;
   return (
@@ -394,14 +424,15 @@ function BookList({ books, loading, onPick }: {
               <ChevronDown className={cn("mt-0.5 size-4 shrink-0 text-muted-foreground transition", isOpen && "rotate-180")} aria-hidden />
             </button>
             {isOpen && (
-              <ul className="max-h-80 overflow-y-auto border-t p-1">
+              <ul ref={b.book_id === anchorBook ? listRef : undefined} className="max-h-80 overflow-y-auto border-t p-1">
                 {b.sections.length === 0 && <li className="px-2 py-3 text-xs text-muted-foreground">Kitabın bölümü yok — kitap detayından bölüm ekle.</li>}
                 {b.sections.map((s) => {
                   const full = s.available <= 0;
                   return (
                     <li key={s.section_id}>
                       <button type="button" onClick={() => onPick(b, s)} data-section-id={s.section_id}
-                              className="flex w-full items-center gap-2 rounded-md px-3 py-1 text-left text-sm transition hover:bg-cyan-500/10">
+                              className={cn("flex w-full items-center gap-2 rounded-md px-3 py-1 text-left text-sm transition hover:bg-cyan-500/10",
+                                s.section_id === anchorSection && b.book_id === anchorBook && "bg-cyan-500/10 ring-1 ring-cyan-600/50")}>
                         <span className="min-w-0 flex-1">
                           <span className={cn("block break-words", full ? "text-muted-foreground" : "text-foreground")}>{s.label}</span>
                           {s.topic_name && s.topic_name !== s.label && (
@@ -429,11 +460,14 @@ function BookList({ books, loading, onPick }: {
   );
 }
 
-function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, studentGrade = null, examSubject = false, onPick }: {
+function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, studentGrade = null, examSubject = false,
+  anchorTopic = null, anchorGrade, onPick }: {
   studentId: number; subjectId: number; subjectName: string; maxGrade?: number | null;
   studentGrade?: number | null; examSubject?: boolean;
+  anchorTopic?: number | null; anchorGrade?: number | null;
   onPick: (t: PoolTopicOut | "none") => void;
 }) {
+  const listRef = React.useRef<HTMLDivElement | null>(null);
   const q = useQuery({
     queryKey: poolKeys.topics(studentId, subjectId),
     queryFn: () => getPoolTopics(studentId, subjectId),
@@ -449,7 +483,10 @@ function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, stude
   for (const x of topics) gradeCounts.set(x.grade_level, (gradeCounts.get(x.grade_level) ?? 0) + 1);
   const grades = [...gradeCounts.keys()].sort((a, b) => (b ?? -1) - (a ?? -1));
   const multiGrade = grades.length > 1;
-  const [gradeSel, setGradeSel] = React.useState<number | "all" | null>(null);
+  // son seçilen konunun sınıfı açık gelir (yoksa o konu süzgeç dışında kalır)
+  const [gradeSel, setGradeSel] = React.useState<number | "all" | null>(
+    anchorGrade === undefined ? null : anchorGrade ?? "all");
+  useScrollToAnchor(listRef, anchorTopic != null ? `[data-topic-id="${anchorTopic}"]` : null, !!q.data);
   // "Kendi sınıfı" = öğrencinin GERÇEK sınıfı (listedeki en büyük sınıf değil). Sınav dersinde (TYT/AYT)
   // sınıf ayrımı yapılmaz: 12. sınıf öğrencide TYT konuları 9-10. sınıfa ait olsa da "kendi sınıfı" sayılmaz.
   const ownGrade = !examSubject && maxGrade == null && studentGrade != null && gradeCounts.has(studentGrade) ? studentGrade : null;
@@ -490,7 +527,7 @@ function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, stude
           <PenLine className="size-4" aria-hidden /> Konusuz
         </Button>
       </div>
-      <div className="max-h-96 space-y-3 overflow-y-auto rounded-lg border bg-background p-1.5">
+      <div ref={listRef} className="max-h-96 space-y-3 overflow-y-auto rounded-lg border bg-background p-1.5">
         {q.isLoading && <p className="px-2 py-3 text-xs text-muted-foreground">Konular yükleniyor…</p>}
         {byGrade.map(([g, units]) => {
           const tone = gradeTone(g);
@@ -508,7 +545,7 @@ function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, stude
                 {[...units.entries()].map(([u, list]) => (
                   <div key={u || "-"} className="py-1">
                     {u && <div className="px-3 pb-0.5 pt-1 text-[11px] font-semibold text-muted-foreground">{u}</div>}
-                    {list.map((x) => <TopicRow key={x.topic_id} t={x} showUnit={false} onPick={() => onPick(x)} />)}
+                    {list.map((x) => <TopicRow key={x.topic_id} t={x} showUnit={false} marked={x.topic_id === anchorTopic} onPick={() => onPick(x)} />)}
                   </div>
                 ))}
               </div>
@@ -553,11 +590,12 @@ function GradeChip({ active, grade, count, own, onClick }: {
   );
 }
 
-function TopicRow({ t, showUnit = true, onPick }: { t: PoolTopicOut; showUnit?: boolean; onPick: () => void }) {
+function TopicRow({ t, showUnit = true, marked = false, onPick }: { t: PoolTopicOut; showUnit?: boolean; marked?: boolean; onPick: () => void }) {
   const done = t.status === "kapali";
   return (
-    <button type="button" onClick={onPick}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition hover:bg-cyan-500/10">
+    <button type="button" onClick={onPick} data-topic-id={t.topic_id}
+            className={cn("flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition hover:bg-cyan-500/10",
+              marked && "bg-cyan-500/10 ring-1 ring-cyan-600/50")}>
       <span className="min-w-0 flex-1 break-words">
         <span className={cn("text-foreground", done && "text-muted-foreground")}>{t.name}</span>
         {showUnit && t.unit_name && <span className="ml-1 text-xs text-muted-foreground">· {t.unit_name}</span>}

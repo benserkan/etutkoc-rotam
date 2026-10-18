@@ -454,6 +454,45 @@ def remove_item(db: Session, item: PoolItem, actor: User) -> PoolItem:
     return item
 
 
+def item_min_quantity(db: Session, item: PoolItem) -> int:
+    """Kalem miktarının inebileceği en küçük değer: yapılan (öğrenci kaydı + seans işareti) +
+    öğrencinin kabında hâlâ açık duran (henüz yapılmamış) birimler. Altına inilirse kap görevi
+    havuzda olmayan birimi taşır."""
+    sync_item_progress(db, item)
+    open_in_cup = 0
+    for t in _cup_tasks(db, item):
+        if t.status == TaskStatus.COMPLETED:
+            continue
+        if t.book_items:
+            open_in_cup += sum(max(0, int(bi.planned_count or 0) - int(bi.completed_count or 0)) for bi in t.book_items)
+        else:
+            open_in_cup += _units_from_title(t)
+    return max(1, item.done_units + open_in_cup)
+
+
+def set_item_quantity(db: Session, item: PoolItem, quantity: int, actor: User) -> PoolItem:
+    """Rehber kalemin miktarını düzeltir (7 test → 5 test). Yalnız açık dönemde; yapılan + kaptaki
+    açık birimlerin altına inmez. Rezerv yok (havuz kalemi kitap sayacına rezerv açmaz)."""
+    if item.removed_at is not None:
+        raise PoolError("item_removed", "Bu kalem havuzdan kaldırılmış.")
+    if not item.period.is_open:
+        raise PoolError("period_closed", "Kapalı dönemin kalemi düzenlenemez.")
+    if quantity < 1:
+        raise PoolError("bad_quantity", "Miktar en az 1 olmalı; hiç verilmeyecekse kalemi kaldır.")
+    mn = item_min_quantity(db, item)
+    if quantity < mn:
+        done = item.done_units
+        raise PoolError(
+            "below_done",
+            f"En az {mn} olabilir: {done} {item.unit} yapıldı"
+            + (f", {mn - done} {item.unit} öğrencinin kabında bekliyor" if mn > done else "") + ".",
+        )
+    item.quantity = quantity
+    item.completed = min(item.quantity, item.completed or 0)
+    db.flush()
+    return item
+
+
 def approve_item(db: Session, item: PoolItem, actor: User, approved: bool) -> PoolItem:
     """K38: öğrencinin eklediği kalemi seansta onayla/reddet."""
     if item.source != SOURCE_STUDENT:

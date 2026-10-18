@@ -838,6 +838,20 @@ deploy YOK, migration YOK — Adım 5'in `n8p1u4v5u99q` başı aynen):**
   "X/Y görev" sayımı değişmedi. YENİ `test_day_partial_pct.py` 9/9 · gorev 83/83 · student_read 11 ·
   student_mutations 12 · teacher_read 12 · weekly_plan 15 · pool_student 29.
 
+## HAVUZ EKLEME — liste konum hafızası + kalem miktar düzeltme (2026-10-18, migration YOK)
+
+- Saha (koç): kitabın 25. bölümünden kalem verince "Nereden?" listesi başa dönüyordu → art arda ekleme için her
+  seferinde yeniden kaydırma. `pool-add-panel.tsx`: AddPanel son seçimi (`Anchor`: sekme + kitap/bölüm ya da
+  konu/sınıf) tutar; adım 2 yeniden açılınca aynı sekme, aynı kitap açık, liste o satıra kaydırılmış ve işaretli
+  (`useScrollToAnchor` yalnız listeyi kaydırır, sayfayı değil); konu yolunda son konunun sınıf süzgeci korunur.
+  Ders değişince hafıza sıfırlanır.
+- Kalem miktarı düzenlenemiyordu (yalnız sil vardı). YENİ `pool_mode.item_min_quantity` + `set_item_quantity`
+  (açık dönem; en az = yapılan [öğrenci kaydı + seans işareti] + öğrencinin kabında açık duran birim; altı 422
+  `below_done` "En az N olabilir: …") + POST `/teacher/students/{id}/pool/items/{iid}/quantity`. Web: havuz
+  satırındaki "7 test" rozeti tıklanır → satır içi sayı + Kaydet/Vazgeç (Enter/Esc); etkinlikte yok.
+- Test YENİ `test_pool_item_quantity.py` 7/7 · YENİ `live_pool_add_anchor.py` 4/4 · pool editor 41 · student 29 ·
+  foundation 53 · cup_resize 13 · live_pool_editor 34 · tsc + eslint temiz.
+
 ## HAFTA IZGARASI KONU ÖZETİ — görevin üzerine gelince (2026-10-18, migration YOK)
 
 - Koç ızgarada görevin üzerine gelince (tıklamadan) o görevin MÜFREDAT KONUSU için kısa kart: durum + konu ilerlemesi

@@ -423,6 +423,12 @@ export function useDeletePoolItem(studentId: number) {
   );
 }
 
+export function useSetPoolItemQuantity(studentId: number) {
+  return useBundleMutation<{ item_id: number; quantity: number }>(
+    studentId, (b) => `${base(studentId)}/pool/items/${b.item_id}/quantity`, "Miktar güncellendi", "Miktar değiştirilemedi",
+  );
+}
+
 export function useApprovePoolItem(studentId: number) {
   return useBundleMutation<{ item_id: number; approved: boolean }>(
     studentId, (b) => `${base(studentId)}/pool/items/${b.item_id}/approve`, null, "Onay işlenemedi",

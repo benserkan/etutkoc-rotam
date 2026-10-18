@@ -291,6 +291,10 @@ class PoolItemBody(BaseModel):
     exam_result_id: int | None = None
 
 
+class PoolQuantityBody(BaseModel):
+    quantity: int = Field(ge=1, le=500)
+
+
 class PoolApproveBody(BaseModel):
     approved: bool = True
 

@@ -25,7 +25,7 @@ from app.models.user import TRACK_LABELS
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.pool import (
     ClassPositionBody, LessonDaysBody, ParseBody, ParseChip, ParseResponse, PeriodCloseBody,
-    PeriodOpenBody, PoolApproveBody, PoolBundleResponse, PoolClassGroupOut, PoolItemBody,
+    PeriodOpenBody, PoolApproveBody, PoolBundleResponse, PoolQuantityBody, PoolClassGroupOut, PoolItemBody,
     PoolItemOut, PoolPeriodBrief, PoolPeriodOut, PoolStudentOut, PoolSubjectOut, PoolSummaryOut,
     PoolTopicOut, PoolTopicSource, PoolTopicsResponse, PoolVolumeHint, ProgramModeBody,
 )
@@ -613,6 +613,18 @@ def delete_item(student_id: int, item_id: int, user: User = Depends(_require_tea
                 db: Session = Depends(get_db)):
     student = _get_owned_student(db, student_id, user.id)
     pm.remove_item(db, _item_or_404(db, student, item_id), user)
+    return _bundle_mut(db, user, student)
+
+
+@router.post("/students/{student_id}/pool/items/{item_id}/quantity",
+             response_model=MutationResponse[PoolBundleResponse])
+def set_item_quantity(student_id: int, item_id: int, body: PoolQuantityBody,
+                      user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
+    student = _get_owned_student(db, student_id, user.id)
+    try:
+        pm.set_item_quantity(db, _item_or_404(db, student, item_id), body.quantity, user)
+    except PoolError as e:
+        raise _http(e)
     return _bundle_mut(db, user, student)
 
 

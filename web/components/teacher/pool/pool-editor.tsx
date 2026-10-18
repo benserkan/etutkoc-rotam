@@ -32,7 +32,7 @@ import { PeriodHistory } from "./pool-period-history";
 import { DayStrip, SubjectProgress, aggregateSubjects } from "./pool-progress";
 import {
   getPool, poolKeys, SOURCE_LABELS, UNIT_LABELS,
-  useApprovePoolItem, useClosePeriod, useDeletePoolItem, useOpenPeriod,
+  useApprovePoolItem, useClosePeriod, useDeletePoolItem, useOpenPeriod, useSetPoolItemQuantity,
   useSetExpected, useSetLessonDays,
   type PoolBundleResponse, type PoolItemOut,
 } from "@/lib/api/pool";
@@ -191,6 +191,7 @@ function WatchView({ studentId, data, onEdit }: { studentId: number; data: PoolB
   const done = items.filter((i) => i.remaining === 0 && !pending.includes(i));
   const order = new Map(aggregateSubjects(items).map((a, i) => [a.name, i]));
   const rowProps = (it: PoolItemOut) => ({
+    studentId,
     onDelete: () => { if (window.confirm("Bu kalemi havuzdan kaldır? (iz kalır)")) del.mutate({ item_id: it.id }); },
     onApprove: (ok: boolean) => approve.mutate({ item_id: it.id, approved: ok }),
   });
@@ -741,7 +742,7 @@ function PoolList({ studentId, data, onPickSubject }: {
                   <span className="text-xs text-muted-foreground">{list.length} kalem · {gUnits} birim</span>
                 </div>
                 <ul className="space-y-1.5">
-                  {list.map((it) => <ItemRow key={it.id} it={it}
+                  {list.map((it) => <ItemRow key={it.id} it={it} studentId={studentId}
                                              onDelete={() => { if (window.confirm("Bu kalemi havuzdan kaldır? (iz kalır)")) del.mutate({ item_id: it.id }); }}
                                              onApprove={(ok) => approve.mutate({ item_id: it.id, approved: ok })} />)}
                 </ul>
@@ -755,7 +756,20 @@ function PoolList({ studentId, data, onPickSubject }: {
   );
 }
 
-function ItemRow({ it, onDelete, onApprove }: { it: PoolItemOut; onDelete: () => void; onApprove: (ok: boolean) => void }) {
+function ItemRow({ it, studentId, onDelete, onApprove }: {
+  it: PoolItemOut; studentId: number; onDelete: () => void; onApprove: (ok: boolean) => void;
+}) {
+  const setQty = useSetPoolItemQuantity(studentId);
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(String(it.quantity));
+  const draftN = Number(draft);
+  const draftOk = Number.isInteger(draftN) && draftN >= 1 && draftN <= 500;
+  const editable = it.unit !== "etkinlik";
+  function saveQty() {
+    if (!draftOk) return;
+    if (draftN === it.quantity) { setEditing(false); return; }
+    setQty.mutate({ item_id: it.id, quantity: draftN }, { onSuccess: () => setEditing(false) });
+  }
   const pending = it.source === "ogrenci" && it.approval === "bekliyor";
   const done = it.remaining === 0;
   const pct = it.quantity > 0 ? Math.round((100 * (it.quantity - it.remaining)) / it.quantity) : 0;
@@ -770,9 +784,36 @@ function ItemRow({ it, onDelete, onApprove }: { it: PoolItemOut; onDelete: () =>
             {it.label && (it.topic_name || it.section_label) && <span className="text-muted-foreground"> · {it.label}</span>}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="rounded-md bg-muted px-1.5 py-0.5 font-medium tabular-nums text-foreground">
-              {it.quantity} {UNIT_LABELS[it.unit]}
-            </span>
+            {editing ? (
+              <span className="inline-flex items-center gap-1" data-section="pool:item:qty-edit">
+                <Input value={draft} inputMode="numeric" autoFocus aria-label="Yeni miktar"
+                       onChange={(e) => setDraft(e.target.value)}
+                       onKeyDown={(e) => { if (e.key === "Enter") saveQty(); if (e.key === "Escape") { setEditing(false); setDraft(String(it.quantity)); } }}
+                       className="h-7 w-16 text-center text-sm" />
+                <span className="text-foreground">{UNIT_LABELS[it.unit]}</span>
+                <Button type="button" size="sm" className="h-7 bg-cyan-700 px-2 text-white hover:bg-cyan-800 hover:text-white"
+                        disabled={!draftOk || setQty.isPending} onClick={saveQty}>
+                  Kaydet
+                </Button>
+                <Button type="button" size="sm" variant="ghost" className="h-7 px-2"
+                        onClick={() => { setEditing(false); setDraft(String(it.quantity)); }}>
+                  Vazgeç
+                </Button>
+              </span>
+            ) : editable ? (
+              <Hint text="Miktarı değiştir (örn. 7 test → 5 test). Yapılan ve öğrencinin kabındaki testlerin altına inilmez.">
+                <button type="button" onClick={() => { setDraft(String(it.quantity)); setEditing(true); }}
+                        aria-label={`Miktarı değiştir (${it.quantity} ${UNIT_LABELS[it.unit]})`}
+                        className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-medium tabular-nums text-foreground ring-cyan-600 transition hover:ring-1">
+                  {it.quantity} {UNIT_LABELS[it.unit]}
+                  <PencilLine className="size-3 text-muted-foreground" aria-hidden />
+                </button>
+              </Hint>
+            ) : (
+              <span className="rounded-md bg-muted px-1.5 py-0.5 font-medium tabular-nums text-foreground">
+                {it.quantity} {UNIT_LABELS[it.unit]}
+              </span>
+            )}
             {it.completed > 0 && <span>{it.completed} yapıldı · {it.remaining} kaldı</span>}
             {it.book_total != null && (
               <span className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-foreground" title="Kitabın bu bölümündeki ilerleme (kitap sayacı)">
