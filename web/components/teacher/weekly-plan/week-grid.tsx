@@ -336,7 +336,8 @@ function SubjGroupBlock({
                 hl &&
                   "rounded bg-fuchsia-600 px-1 py-0.5 ring-2 ring-fuchsia-300 [&_*]:!text-white",
               )}
-              title={hasTopic ? undefined : taskTooltip(t, dragHint)}
+              // Boş title: gün sütununun "düzenlemek için tıkla" ipucu konu kartının üstüne binmesin
+              title={hasTopic ? "" : taskTooltip(t, dragHint)}
             >
               <span className={cn("shrink-0 font-bold", mk.cls)} aria-hidden>
                 {mk.ch}
