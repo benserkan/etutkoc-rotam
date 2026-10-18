@@ -431,18 +431,16 @@ function BookList({ books, loading, anchorBook, anchorSection, onPick }: {
                   return (
                     <li key={s.section_id}>
                       <button type="button" onClick={() => onPick(b, s)} data-section-id={s.section_id}
-                              className={cn("flex w-full items-center gap-2 rounded-md px-3 py-1 text-left text-sm transition hover:bg-cyan-500/10",
+                              className={cn("flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition hover:bg-cyan-500/10",
                                 s.section_id === anchorSection && b.book_id === anchorBook && "bg-cyan-500/10 ring-1 ring-cyan-600/50")}>
                         <span className="min-w-0 flex-1">
                           <span className={cn("block break-words", full ? "text-muted-foreground" : "text-foreground")}>{s.label}</span>
                           {s.topic_name && s.topic_name !== s.label && (
                             <span className="block break-words text-[11px] text-muted-foreground">müfredat: {s.topic_name}</span>
                           )}
+                          <SectionTally s={s} unit={b.is_deneme ? "deneme" : "test"} />
                         </span>
                         {s.is_last && <span className="rounded bg-cyan-700 px-1.5 py-0.5 text-[10px] font-semibold text-white">SON</span>}
-                        {s.in_pool > 0 && (
-                          <span className="rounded bg-sky-700 px-1.5 py-0.5 text-[10px] font-semibold text-white" title="Bu dönemin havuzunda bekleyen">{s.in_pool} havuzda</span>
-                        )}
                         <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-xs tabular-nums",
                           full ? "text-muted-foreground" : "bg-muted text-foreground")}>
                           {full ? (s.remaining > 0 ? "hepsi havuzda" : "bitti") : `${s.available} kaldı`}
@@ -457,6 +455,27 @@ function BookList({ books, loading, anchorBook, anchorSection, onPick }: {
         );
       })}
     </div>
+  );
+}
+
+/** Bölüm sayacı: toplam · çözülen · havuzda (· gün gün programda) + üç parçalı çubuk. */
+function SectionTally({ s, unit }: { s: PoolBookSectionOut; unit: string }) {
+  const total = s.test_count;
+  if (!total) return null;
+  const reserved = Math.max(0, total - s.completed - s.remaining);
+  const w = (n: number) => `${Math.min(100, (100 * n) / total)}%`;
+  return (
+    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground" data-section-tally>
+      <span className="flex h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-muted" aria-hidden>
+        <span className="bg-emerald-600" style={{ width: w(s.completed) }} />
+        <span className="bg-sky-600" style={{ width: w(s.in_pool) }} />
+        <span className="bg-amber-500" style={{ width: w(reserved) }} />
+      </span>
+      <span className="tabular-nums"><span className="font-medium text-foreground">{total}</span> {unit}</span>
+      <span className="tabular-nums">· <span className="font-medium text-emerald-700 dark:text-emerald-300">{s.completed}</span> çözüldü</span>
+      {s.in_pool > 0 && <span className="tabular-nums">· <span className="font-medium text-sky-700 dark:text-sky-300">{s.in_pool}</span> havuzda</span>}
+      {reserved > 0 && <span className="tabular-nums" title="Gün gün programda verilmiş, henüz çözülmemiş">· <span className="font-medium text-amber-700 dark:text-amber-300">{reserved}</span> programda</span>}
+    </span>
   );
 }
 

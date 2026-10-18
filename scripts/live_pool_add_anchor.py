@@ -137,6 +137,11 @@ def main() -> int:
               return {{ top: ul.scrollTop, inView: a.top >= b.top - 1 && a.bottom <= b.bottom + 1,
                         marked: el.className.includes('ring-1') }};
             }}""")
+            tally = page.locator(sel).inner_text()
+            check("A0 bölüm satırında sayaç: '8 test · 0 çözüldü · 3 havuzda'",
+                  "8 test" in tally and "0 çözüldü" in tally and "3 havuzda" in tally, tally)
+            page.locator('[data-section="pool:add:books"]').screenshot(path=os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..", ".shots", "pool_section_tally.png"))
             check("A1 eklemeden sonra kitap listesi Bölüm 25'te açılır (kaydırılmış + görünür + işaretli)",
                   st["top"] > 100 and st["inView"] and st["marked"], st)
 
