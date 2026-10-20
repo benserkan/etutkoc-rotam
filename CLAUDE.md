@@ -6,7 +6,15 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
-## DENEME GÖREVLERİ — D1+D1b+D2+D3 YERELDE TAMAM (2026-10-20, COMMIT/DEPLOY YOK)
+## DENEME GÖREVLERİ + BRANŞ ANALİZİ + HAFTALIK İLERLEME + VİDEO HAVUZ — CANLI (2026-10-20, commit `a1ee8bd`)
+
+**Deploy (2026-10-20):** yedek `pre_deneme_20261020_1853.dump` (69 MB) → git pull → web/worker/next rebuild
+(Plausible derlemede durduruldu) → prod head **`t4v7a0b1a66w`** (5 migration: p0r3w6x7w22s → q1s4x7y8x33t →
+r2t5y8z9y44u → s3u6z9a0z55v → t4v7a0b1a66w) · 5 yeni kolon + `deneme_result_reminders` cron'u doğrulandı · web log
+temiz · healthz/login 200. Mobil OTA `10abe9af` (runtime 1.0.0, android+ios). Aşağıdaki "YEREL / deploy bekliyor"
+notları artık canlı.
+
+## (eski başlık) DENEME GÖREVLERİ — D1+D1b+D2+D3 YERELDE TAMAM
 
 **Bağlam:** öğrenci detay sayfası yeniden tasarımı (haftalık ilerleme + geçmiş haftalarla kıyas +
 eğilim/projeksiyon + önlem) planlanırken branş denemesi verisinin toplanmadığı görüldü: canlıda 318
