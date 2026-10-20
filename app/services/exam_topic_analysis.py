@@ -139,7 +139,11 @@ def build_exam_topic_analysis(
     # branş denemesi ayrı seri (exam_scope); "kapanırsa +X net/deneme" aynı kapsamda anlamlı.
     from app.services import exam_scope
     section_options = exam_scope.series_options(exams_all)
-    skey = exam_scope.resolve_series(section, section_options)
+    # İstenen seride soru-satırlı deneme yoksa BAŞKA seriye sessizce geçilmez (canlı denetim
+    # 2026-10-20: panel serisi elle girilen TYT genel iken analiz TYT Matematik branşını
+    # "TYT" başlığıyla gösterebiliyordu) → boş sonuç + `series_missing`.
+    series_missing = bool(section) and section not in {o["value"] for o in section_options}
+    skey = None if series_missing else exam_scope.resolve_series(section, section_options)
     sec: ExamSection | None = ExamSection(exam_scope.section_of_key(skey)) if skey else None
     _opt = next((o for o in section_options if o["value"] == skey), None)
 
@@ -153,6 +157,7 @@ def build_exam_topic_analysis(
         "exams": [], "topics": [], "opportunities": [],
         "forgotten": [], "improved": [],
         "unmatched_questions": 0, "analyzed_question_count": 0,
+        "series_missing": series_missing,
         # Boş sonuçta da dönem bilgisi gitmeli — UI seçiciyi çizebilsin.
         "period": grade_period_service.build_filter_meta(db, student.id, win),
     }
@@ -268,7 +273,8 @@ def build_exam_topic_analysis(
                 (forgotten if is_forgot else improved).append(item)
 
     topics_out.sort(key=lambda t: (-t["total"], t["subject_name"], t["topic_name"]))
-    opportunities.sort(key=lambda o: -o["net_gain_per_exam"])
+    # Eşit kazançta sıra belirli olsun (ders, konu) — aksi hâlde sözlük sırasına bağlıydı.
+    opportunities.sort(key=lambda o: (-o["net_gain_per_exam"], o["subject_name"], o["topic_name"]))
     forgotten.sort(key=lambda t: t["last_accuracy"] - t["first_accuracy"])
     improved.sort(key=lambda t: (t["first_accuracy"] - t["last_accuracy"]))
 
@@ -286,6 +292,7 @@ def build_exam_topic_analysis(
         "improved": improved,
         "unmatched_questions": unmatched,
         "analyzed_question_count": analyzed,
+        "series_missing": False,
         "period": grade_period_service.build_filter_meta(db, student.id, win),
     }
 

@@ -19,17 +19,17 @@ import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 import {
-  BehaviorTab,
-  OverviewTab,
-  ProgressTab,
   previousExam,
 } from "@/components/teacher/exams/exam-analytics";
+import { ExamOverviewTab } from "@/components/shared/exam-ov/exam-overview-tab";
+import { ExamBehaviorTab, ExamProgressTab } from "@/components/shared/exam-ov/exam-progress-behavior-tabs";
 import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
 import { Button } from "@/components/ui/button";
 import { getParentExams, parentP2Keys } from "@/lib/api/parent";
 import { fmtNet, fmtTRDate } from "@/lib/exam-format";
 import type { ExamResultRow } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+import { ExamKindSwitch, ProgramExamsSection } from "@/components/shared/program-exams-section";
 import { examSeriesOptions, rowSeries } from "@/lib/exam-format";
 
 const SECTION_TONE: Record<string, string> = {
@@ -56,6 +56,8 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
   const examsQ = useQuery({ queryKey: parentP2Keys.exams(studentId), queryFn: () => getParentExams(studentId) });
   const rows = React.useMemo(() => examsQ.data?.rows ?? [], [examsQ.data]);
   const [tab, setTab] = React.useState<Tab>("overview");
+  const [view, setView] = React.useState<"karne" | "program">("karne");
+  const programRows = examsQ.data?.program_rows ?? [];
   const [detailId, setDetailId] = React.useState<number | null>(null);
 
   const sectionsInfo = React.useMemo(() => examSeriesOptions(rows), [rows]);
@@ -82,6 +84,19 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
         </p>
         <DemoHint contextKey="ai-insight" role="parent" className="mt-2" />
       </div>
+
+      <ExamKindSwitch value={view} onChange={setView} karneCount={rows.length} programCount={programRows.length} />
+
+      {view === "program" ? (
+        programRows.length === 0 ? (
+          <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+            Programdaki deneme görevlerinin sonuçları burada listelenir. Henüz sonucu girilmiş deneme yok.
+          </p>
+        ) : (
+          <ProgramExamsSection rows={programRows} audience="parent" />
+        )
+      ) : (
+      <>
 
       <div className="flex flex-wrap gap-2">
         <Link
@@ -151,13 +166,13 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
 
           <div role="tabpanel">
             {tab === "overview" ? (
-              <OverviewTab rows={sectionRows} studentId={null} onOpenDetail={(r) => setDetailId(r.id)} />
+              <ExamOverviewTab source={{ kind: "parent", studentId }} series={activeSection} rows={sectionRows} studentName={studentName} onOpenDetail={(r) => setDetailId(r.id)} />
             ) : tab === "progress" ? (
-              <ProgressTab rows={sectionRows} />
+              <ExamProgressTab source={{ kind: "parent", studentId }} series={activeSection} />
             ) : tab === "topics" ? (
               <ExamTopicAnalysis parentStudentId={studentId} section={activeSection} />
             ) : tab === "behavior" ? (
-              <BehaviorTab rows={sectionRows} />
+              <ExamBehaviorTab source={{ kind: "parent", studentId }} series={activeSection} />
             ) : tab === "report" ? (
               <ExamProgressReport
                 source={{ kind: "parent", studentId }}
@@ -189,6 +204,8 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
           }}
         />
       ) : null}
+      </>
+      )}
     </div>
   );
 }

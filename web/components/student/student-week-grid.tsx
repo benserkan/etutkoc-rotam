@@ -43,6 +43,8 @@ const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
 
 function taskUnit(t: StudentTask): string {
   if (t.work_block_unit) return t.work_block_unit; // serbest blok birimi öncelikli
+  // Deneme kalemi (D1): 1 kalem = 1 deneme → birim "deneme" (soru DEĞİL).
+  if (t.items.some((x) => x.exam_kind)) return "deneme";
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
   if (it && it.book_id == null && it.is_test_unit === false) return "soru"; // kitapsız tam deneme
   if (it && it.book_id == null && it.is_test_unit == null) return "soru";

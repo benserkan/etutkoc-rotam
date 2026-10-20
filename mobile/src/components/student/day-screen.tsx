@@ -13,6 +13,8 @@ import {
   requestQuestion,
   requestRemove,
   setItemCompleted,
+  setDenemeResults,
+  type DenemeResultRow,
   studentKeys,
   uncompleteTask,
   type StudentTask,
@@ -35,6 +37,11 @@ export function DayScreen({ date, safeTop = true }: { date?: string; safeTop?: b
   const refreshAll = () => qc.invalidateQueries({ queryKey: ["student"] });
 
   async function quickToggle(task: StudentTask) {
+    // Deneme görevi (D2): hızlı tik yerine sonuç sayfası açılır (her deneme ayrı girilir).
+    if (task.status !== "completed" && task.items.some((it) => it.exam_kind)) {
+      setOpenTask(task);
+      return;
+    }
     setQuickBusyId(task.id);
     try {
       const done =
@@ -126,6 +133,9 @@ export function DayScreen({ date, safeTop = true }: { date?: string; safeTop?: b
                 });
               }
             })
+          }
+          onSaveDeneme={(rows: DenemeResultRow[]) =>
+            runAction(() => setDenemeResults(openTask.id, rows))
           }
           onCompleteActivity={(solved) =>
             runAction(() =>

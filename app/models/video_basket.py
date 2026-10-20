@@ -60,6 +60,11 @@ class VideoBasketItem(Base):
     source_id: Mapped[int | None] = mapped_column(
         ForeignKey("video_sources.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    # Havuz modundaki öğrencide: video havuza kalem olarak eklendi (2026-10-20). Öğrenci kaba
+    # alınca o güne açılan görev `task_id`'ye yazılır; kalem silinince bağ boşalır → sepete döner.
+    pool_item_id: Mapped[int | None] = mapped_column(
+        ForeignKey("pool_items.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     # Programa konduğu görev (NULL = sepette bekliyor)
     task_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True, index=True

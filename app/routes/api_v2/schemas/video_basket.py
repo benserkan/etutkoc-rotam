@@ -14,10 +14,13 @@ class VideoItemOut(BaseModel):
     role: str
     role_label: str
     order: int
-    #: waiting (sepette) | planned (programda) | watched (görev tamamlandı)
+    #: waiting (sepette) | pooled (havuzda, öğrenci henüz kaba almadı) | planned (programda/kapta)
+    #: | watched (görev tamamlandı)
     status: str
     task_id: int | None = None
     task_date: str | None = None
+    #: havuz modundaki öğrencide videonun bağlı olduğu havuz kalemi
+    pool_item_id: int | None = None
 
 
 class VideoGroupOut(BaseModel):
@@ -60,6 +63,23 @@ class VideoBasketResponse(BaseModel):
     waiting_count: int
     #: Günlük video toplamı bu dakikayı geçince uyarı verilir (sınır değil).
     day_warn_minutes: int = 60
+    #: "gun_gun" | "havuz" — havuz öğrencisinde videolar güne değil havuza eklenir
+    program_mode: str = "gun_gun"
+    #: havuz öğrencisinin açık dönemi var mı (yoksa "Havuza ekle" kapalı)
+    pool_period_open: bool = False
+    pooled_count: int = 0
+
+
+class VideoToPoolBody(BaseModel):
+    """Seçili videolar havuza: aynı konu grubu → tek havuz kalemi (etkinlik, 1 birim)."""
+    item_ids: list[int] = Field(min_length=1, max_length=300)
+    day_hint: str | None = None
+    teacher_homework: bool = False
+
+
+class VideoToPoolResult(BaseModel):
+    pool_item_ids: list[int]
+    videos: int
 
 
 class VideoImportBody(BaseModel):

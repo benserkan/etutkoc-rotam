@@ -275,10 +275,10 @@ def parent_student_exams_v2(
                     "message": "Öğrenci bulunamadı."},
         )
     from app.models.exam_result import ExamResult
-    from app.routes.api_v2.teacher import _build_exam_row, _exam_section_options
-    from app.routes.api_v2.schemas.teacher import (
-        ExamListSummary, StudentExamListResponse,
+    from app.routes.api_v2.teacher import (
+        _build_exam_row, _exam_section_options, exam_list_summary, split_program_exams,
     )
+    from app.routes.api_v2.schemas.teacher import StudentExamListResponse
     from app.services import grade_period_service
 
     # P3: veli de varsayılan olarak BU dönemin denemelerini görür; geçen yıl
@@ -290,26 +290,17 @@ def parent_student_exams_v2(
     if win.end is not None:
         q = q.filter(ExamResult.exam_date <= win.end)
     exams = q.order_by(ExamResult.exam_date.desc(), ExamResult.id.desc()).all()
-    rows = []
-    for e in exams:
+    def _row(e):
         r = _build_exam_row(e, created_by_name=None)
         r.note = None  # koça-özel not veliye gösterilmez
-        rows.append(r)
-    nets = [e.net for e in exams]
-    count = len(nets)
-    last_net = nets[0] if nets else None
-    first_net = nets[-1] if nets else None
-    summary = ExamListSummary(
-        count=count,
-        avg_net=round(sum(nets) / count, 2) if count else 0.0,
-        best_net=round(max(nets), 2) if nets else 0.0,
-        last_net=last_net,
-        first_net=first_net,
-        trend_delta=round(last_net - first_net, 2) if (count >= 2) else None,
-    )
+        return r
+
+    analysis, program = split_program_exams(exams)
     return StudentExamListResponse(
-        summary=summary, rows=rows, section_options=_exam_section_options(),
+        summary=exam_list_summary(analysis), rows=[_row(e) for e in analysis],
+        section_options=_exam_section_options(),
         period=grade_period_service.build_filter_meta(db, student.id, win),
+        program_rows=[_row(e) for e in program],
     )
 
 

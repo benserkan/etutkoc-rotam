@@ -17,6 +17,7 @@ export function ExamAddActions({
   pdfCount = 0,
   total = 0,
   note,
+  extra,
 }: {
   onImport: (file: File | null) => void;
   /** Verilmezse (öğrenci yüzeyi) yalnız PDF kutusu tam genişlikte çizilir. */
@@ -25,6 +26,8 @@ export function ExamAddActions({
   total?: number;
   /** PDF kutusuna eklenecek kısa not (örn. "koçun kontrol edip düzeltebilir"). */
   note?: string;
+  /** Üçüncü kart (koç: "Branş denemeleri analizi" girişi). */
+  extra?: React.ReactNode;
 }) {
   const [over, setOver] = React.useState(false);
   const manualCount = total - pdfCount;
@@ -32,7 +35,8 @@ export function ExamAddActions({
     <div
       className={cn(
         "grid gap-3",
-        onManual && "md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]",
+        onManual && !extra && "md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]",
+        onManual && extra && "md:grid-cols-2 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)]",
       )}
     >
       <button
@@ -114,6 +118,7 @@ export function ExamAddActions({
           </span>
         </button>
       ) : null}
+      {extra}
     </div>
   );
 }

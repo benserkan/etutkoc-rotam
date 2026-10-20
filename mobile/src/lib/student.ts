@@ -22,6 +22,13 @@ export interface StudentTaskItem {
   correct: number | null;
   wrong: number | null;
   blank: number | null;
+  /** Deneme kalemi (D1/D2): 1 satır = 1 deneme; soru sayısı esnek, süre isteğe bağlı. */
+  exam_kind?: "brans" | "genel" | null;
+  exam_section?: string | null;
+  question_count?: number | null;
+  duration_minutes?: number | null;
+  net?: number | null;
+  result_pending?: boolean;
 }
 
 export type TaskStatus = "pending" | "in_progress" | "completed" | string;
@@ -182,6 +189,8 @@ export interface ExamSummary {
 export interface StudentExamsResponse {
   summary: ExamSummary;
   rows: ExamRow[];
+  /** Programdaki deneme görevlerinden — analize karışmaz (2026-10-20) */
+  program_rows?: ExamRow[];
 }
 
 export const studentKeys = {
@@ -307,6 +316,24 @@ export function setItemCompleted(
   return apiRequest(`/api/v2/student/tasks/${taskId}/items/${itemId}/set-completed`, {
     method: "POST",
     body,
+  });
+}
+
+// ====== Deneme sonuçları (D2) — bir görevdeki tüm denemeler tek seferde ======
+export interface DenemeResultRow {
+  item_id: number;
+  solved: boolean;
+  correct?: number | null;
+  wrong?: number | null;
+  blank?: number | null;
+  question_count?: number | null;
+  duration_minutes?: number | null;
+}
+
+export function setDenemeResults(taskId: number, rows: DenemeResultRow[]): Promise<unknown> {
+  return apiRequest(`/api/v2/student/tasks/${taskId}/deneme-results`, {
+    method: "POST",
+    body: { rows },
   });
 }
 
@@ -495,4 +522,30 @@ export function updateGoalProgress(goalId: number, current_value: number): Promi
 }
 export function toggleGoal(goalId: number, achieved: boolean): Promise<unknown> {
   return apiRequest(`/api/v2/student/goals/${goalId}/toggle`, { method: "POST", body: { achieved } });
+}
+
+// ====== Sonucu girilmemiş denemeler (D3) ======
+export interface DenemePendingRow {
+  task_id: number;
+  item_id: number;
+  date: string;
+  task_title: string;
+  label: string;
+  exam_kind: string;
+  question_count: number | null;
+  days_waiting: number;
+  exam_section: string | null;
+  duration_minutes: number | null;
+}
+
+export interface DenemePendingResponse {
+  count: number;
+  tasks: number;
+  rows: DenemePendingRow[];
+}
+
+export const denemePendingKey = ["student", "deneme-pending"] as const;
+
+export function getDenemePending(): Promise<DenemePendingResponse> {
+  return apiRequest<DenemePendingResponse>("/api/v2/student/deneme-pending");
 }

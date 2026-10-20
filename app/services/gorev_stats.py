@@ -97,6 +97,12 @@ def classify_gorev(task: Task) -> str:
         return "etkinlik"
     # Soru-hacimli görev. Görevde tek kalem olduğu için ilk kalem belirleyici.
     items = task.book_items
+    # DENEME KALEMİ (D1, 2026-10-20): exam_kind dolu → branş = deneme, genel =
+    # tam_deneme. Kitapsız branş denemesi (özel ders hocasının denemesi) de
+    # deneme sayılır; konu/kitap kuralından ÖNCE bakılır.
+    kinds = {getattr(it, "exam_kind", None) for it in items} - {None}
+    if kinds:
+        return "tam_deneme" if kinds == {"genel"} else "deneme"
     # KAYNAKSIZ KONU görevi (2026-09-07): kitapsız AMA topic_id dolu → koç
     # müfredattan konu verdi, kaynak belirtmedi. Bu bir DENEME değil TEST'tir;
     # tam_deneme sayılırsa deneme sayıları şişer (DENEME≠TEST kuralı).
@@ -169,7 +175,20 @@ def primary_subject(task: Task):
     for it in task.book_items:
         if it.book is None and getattr(it, "topic", None) is not None:
             return it.topic.subject
+    # Kitapsız branş denemesi (D1): ders kalemin kendisinde.
+    for it in task.book_items:
+        if it.book is None and getattr(it, "exam_subject", None) is not None:
+            return it.exam_subject
     return None
+
+
+def deneme_units(task: Task) -> tuple[int, int]:
+    """(planlanan, tamamlanan) DENEME ADEDİ. Yeni deneme kalemlerinde (exam_kind
+    dolu) her kalem bir denemedir; eski kayıtlarda görev başına 1 deneme sayılır."""
+    items = [it for it in task.book_items if getattr(it, "exam_kind", None)]
+    if items:
+        return len(items), sum(1 for it in items if (it.completed_count or 0) > 0)
+    return 1, (1 if gorev_done(task) else 0)
 
 
 @dataclass
@@ -211,6 +230,10 @@ class GorevSummary:
     test_completed: int = 0
     deneme_planned: int = 0
     deneme_completed: int = 0
+    # DENEME ADEDİ (D1): yeni deneme kalemlerinde kalem başına 1, eski kayıtlarda
+    # görev başına 1. Ekranlardaki "N deneme" sayısı buradan okunur.
+    deneme_units: int = 0
+    deneme_units_done: int = 0
     # Ders bazında TEST görevleri (sıralı)
     subjects: list[SubjectGorev] = field(default_factory=list)
     # Denemeler ayrı liste
@@ -269,8 +292,10 @@ def summarize(tasks: list[Task]) -> GorevSummary:
         elif cat in ("deneme", "tam_deneme"):
             s.deneme_planned += p
             s.deneme_completed += c
-            book = _primary_book(t)
-            subj = book.subject if book is not None else None
+            _du, _dd = deneme_units(t)
+            s.deneme_units += _du
+            s.deneme_units_done += _dd
+            subj = primary_subject(t)
             s.denemeler.append(DenemeGorev(
                 title=t.title or "Deneme",
                 subject_name=(subj.name if subj else None),

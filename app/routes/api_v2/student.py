@@ -97,6 +97,7 @@ from app.routes.api_v2.schemas.student import (
     DayNoteResponse,
     DayNoteSaveBody,
     SetCompletedBody,
+    DenemeResultsBody,
     StudentBooksResponse,
     StudentDayResponse,
     StudentExamsResponse,
@@ -167,6 +168,11 @@ def item_is_test_unit(item: TaskBookItem) -> bool:
     havuzdan kaynak seçmeden verdiği görev) TEST birimidir: completed = test, D/Y/B = soru.
     Yalnız kitapsız + konusuz etiket kalemi (tam deneme) soru birimidir (2026-10-14 düzeltmesi:
     kaynaksız konulu kalem deneme sanılıp D+Y+B ≤ test sayısı kuralına takılıyordu)."""
+    # Deneme kalemi (exam_kind dolu, D1 2026-10-20): completed = deneme adedi, D/Y/B = soru.
+    # Üst sınır YOK — öğrencinin kaynağında koçun yazdığından farklı soru sayısı
+    # olabilir (koç 6 dedi, kitapta 7 soru); sistem tutarsızlık diye zorlamaz.
+    if getattr(item, "exam_kind", None):
+        return True
     return item.book_id is not None or getattr(item, "topic_id", None) is not None
 
 
@@ -179,6 +185,8 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
     # kaynaksız konulu kalemde konunun dersi).
     book = item.book
     subject = book.subject if book else (topic.subject if topic is not None else None)
+    if subject is None and book is None:
+        subject = getattr(item, "exam_subject", None)  # kitapsız branş denemesi (D1)
 
     # max_completable: kalemin planlı sayısını şimdilik tavan say.
     # Daha fazlasını yapmak için CHANGE talebi → öğretmen onayı (mevcut akış).
@@ -203,7 +211,25 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
         correct=item.correct_count,
         wrong=item.wrong_count,
         blank=item.blank_count,
+        exam_kind=item.exam_kind,
+        exam_section=item.exam_section,
+        question_count=item.question_count,
+        duration_minutes=item.duration_minutes,
+        net=_deneme_net(item),
+        result_pending=_deneme_pending(item),
     )
+
+
+def _deneme_net(item: TaskBookItem) -> float | None:
+    from app.services.deneme_service import is_exam_item, item_net
+
+    return item_net(item) if is_exam_item(item) else None
+
+
+def _deneme_pending(item: TaskBookItem) -> bool:
+    from app.services.deneme_service import result_pending
+
+    return result_pending(item)
 
 
 def _validate_result_distribution(
@@ -458,7 +484,7 @@ def _build_day_summary(tasks: list[Task]) -> DaySummary:
         gorev_done=g.gorev_done,
         test_planned=g.test_planned,
         test_completed=g.test_completed,
-        deneme_count=g.cat_total["deneme"] + g.cat_total["tam_deneme"],
+        deneme_count=g.deneme_units,
         etkinlik_count=g.cat_total["etkinlik"],
     )
 
@@ -698,7 +724,7 @@ def student_week_v2(
             gorev_done=_g.gorev_done,
             test_planned=_g.test_planned,
             test_completed=_g.test_completed,
-            deneme_count=_g.cat_total["deneme"] + _g.cat_total["tam_deneme"],
+            deneme_count=_g.deneme_units,
             etkinlik_count=_g.cat_total["etkinlik"],
             tasks=[_build_task(db, t, today) for t in day_tasks],
         ))
@@ -968,29 +994,23 @@ def student_exams_v2(
     Denemeyi koç girer; öğrenci yalnız görür (net gelişimi + son denemeler).
     Serializer koç ucuyla ortak (_build_exam_row); created_by öğrenciye gösterilmez.
     """
-    from app.routes.api_v2.teacher import _build_exam_row  # ortak serializer (lazy)
-    from app.routes.api_v2.schemas.teacher import ExamListSummary
+    from app.routes.api_v2.teacher import (  # ortak serializer (lazy)
+        _build_exam_row, exam_list_summary, split_program_exams,
+    )
 
     exams = (
         _exam_period_query(db, user.id, period)
         .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc())
         .all()
     )
-    rows = [_build_exam_row(e, created_by_name=None) for e in exams]
-    for r in rows:
+    def _row(e):
+        r = _build_exam_row(e, created_by_name=None)
         r.note = None  # koça özel not öğrenciye gitmez — öğrenciye not exam-shares ile
-    nets = [e.net for e in exams]
-    count = len(nets)
-    last_net = nets[0] if nets else None  # DESC → ilk = en yeni
-    first_net = nets[-1] if nets else None
-    summary = ExamListSummary(
-        count=count,
-        avg_net=round(sum(nets) / count, 2) if count else 0.0,
-        best_net=round(max(nets), 2) if nets else 0.0,
-        last_net=last_net,
-        first_net=first_net,
-        trend_delta=round(last_net - first_net, 2) if (count >= 2 and last_net is not None and first_net is not None) else None,
-    )
+        return r
+
+    analysis, program = split_program_exams(exams)
+    rows = [_row(e) for e in analysis]
+    summary = exam_list_summary(analysis)
     from app.services import grade_period_service as _gps
 
     _win = _gps.resolve_window(db, user.id, period)  # meta için (filtre yukarıda)
@@ -998,6 +1018,7 @@ def student_exams_v2(
         summary=summary,
         rows=rows,
         period=_gps.build_filter_meta(db, user.id, _win),
+        program_rows=[_row(e) for e in program],
     )
 
 
@@ -1596,6 +1617,82 @@ def set_item_completed_v2(
         data=_build_task(db, task, date.today()),
         invalidate=_invalidate_keys_for_task(task, user),
     )
+
+
+# ============================================================================
+# D2 — Deneme sonuçları (bir görevdeki tüm denemeler tek seferde)
+# ============================================================================
+
+
+@router.post(
+    "/tasks/{task_id}/deneme-results",
+    response_model=MutationResponse[StudentTask],
+)
+def set_deneme_results_v2(
+    task_id: int,
+    body: DenemeResultsBody,
+    background: BackgroundTasks = None,  # type: ignore[assignment]
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Deneme görevinin satırlarına sonuç: her deneme çözüldü mü, D/Y/B, soru sayısı (esnek),
+    süre. D/Y verilmeyen çözülmüş deneme "sonuç bekliyor" kalır (2 gün sonra hatırlatma)."""
+    from app.services.deneme_service import DenemeResultError, DenemeRow, apply_results
+
+    task = _get_own_task(db, task_id, user.id)
+    _ensure_not_future(task)
+    _ensure_pool_entry_open(db, task)
+    previously_completed = task.status == TaskStatus.COMPLETED
+    try:
+        apply_results(db, task, [DenemeRow(**r.model_dump()) for r in body.rows])
+    except DenemeResultError as e:
+        db.rollback()
+        raise HTTPException(status_code=422, detail={"error": "validation", "code": e.code, "message": e.message})
+    except ReservationError as e:
+        db.rollback()
+        raise _reservation_error_response(e)
+
+    total_planned = sum(i.planned_count for i in task.book_items)
+    total_done = sum(i.completed_count for i in task.book_items)
+    if total_done == 0:
+        task.status = TaskStatus.PENDING
+        task.completed_at = None
+    elif total_done >= total_planned:
+        task.status = TaskStatus.COMPLETED
+        task.completed_at = task.completed_at or datetime.now(timezone.utc)
+    else:
+        task.status = TaskStatus.PARTIAL
+        task.completed_at = None
+    if task.status == TaskStatus.COMPLETED and not previously_completed:
+        _fire_task_completed_event_safe(db, user)
+        _evaluate_badges_safe(db, user.id)
+    _sync_pool_item(db, task)
+    db.commit()
+    db.refresh(task)
+    if background is not None and total_done > 0 and user.teacher_id:
+        background.add_task(_push_coach_progress_bg, user.id, user.full_name or "Öğrenci", user.teacher_id)
+    # D3: sonuçlu deneme Denemeler'e yazıldı (deneme_bridge) → listeler/grafikler tazelenir
+    exam_keys = ["student:exams", "student:deneme-pending"]
+    if user.teacher_id:
+        exam_keys += [f"teacher:{user.teacher_id}:students:{user.id}:exams",
+                      f"teacher:{user.teacher_id}:students:{user.id}:deneme-pending",
+                      f"teacher:{user.teacher_id}:students:{user.id}:deneme-analysis",
+                      f"teacher:{user.teacher_id}:students:{user.id}:weekly-progress"]
+    return MutationResponse[StudentTask](
+        data=_build_task(db, task, date.today()),
+        invalidate=_invalidate_keys_for_task(task, user) + exam_keys,
+    )
+
+
+@router.get("/deneme-pending")
+def student_deneme_pending(
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Çözdüğün ama sonucunu girmediğin denemeler (D3)."""
+    from app.routes.api_v2.deneme_tasks import build_pending_response
+
+    return build_pending_response(db, user.id)
 
 
 # ============================================================================

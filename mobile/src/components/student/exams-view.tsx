@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
+import { ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
 import { ExamAddActions } from "@/components/exams/exam-add-actions";
 import { ExamImportFlow } from "@/components/exams/exam-import-flow";
 import { ProgressReportCard } from "@/components/exams/progress-report-card";
@@ -171,6 +172,8 @@ export function ExamsView({
   const selGroup = groups.find((g) => g.key === sel) ?? groups[0];
   const [importOpen, setImportOpen] = React.useState(false);
   const [detailId, setDetailId] = React.useState<number | null>(null);
+  const [view, setView] = React.useState<"karne" | "program">("karne");
+  const programRows = data.program_rows ?? [];
   const qc = useQueryClient();
   const sharesQ = useQuery({ queryKey: examProgressKeys.shares(null), queryFn: () => getExamShares(null) });
   const shares = sharesQ.data?.shares ?? {};
@@ -201,6 +204,17 @@ export function ExamsView({
           refresh ? <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#0e7490" /> : undefined
         }
       >
+        <ExamKindToggle value={view} onChange={setView} karneCount={data.rows.length} programCount={programRows.length} />
+        {view === "program" ? (
+          programRows.length === 0 ? (
+            <Text className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+              Programındaki deneme görevlerinin sonuçları burada listelenir. Henüz sonucu girilmiş deneme yok.
+            </Text>
+          ) : (
+            <ProgramExamsCard rows={programRows} audience="student" />
+          )
+        ) : (
+        <>
         {s.count === 0 ? (
           <View className="mt-10 items-center gap-3 px-6">
             <Ionicons name="bar-chart-outline" size={44} color="#94a3b8" />
@@ -298,6 +312,8 @@ export function ExamsView({
               ))}
             </View>
           </>
+        )}
+        </>
         )}
       </ScrollView>
       <ExamImportFlow visible={importOpen} onClose={() => setImportOpen(false)} />

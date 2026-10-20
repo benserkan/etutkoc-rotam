@@ -42,6 +42,10 @@ export interface PoolItemOut {
   created_at: string | null;
   book_completed: number | null;
   book_total: number | null;
+  /** Deneme kalemi (D1b): quantity = deneme adedi, question_count = deneme başına soru. */
+  exam_kind?: "brans" | "genel" | null;
+  exam_section?: string | null;
+  question_count?: number | null;
 }
 
 export interface PoolSummaryOut {
@@ -415,6 +419,19 @@ export function useAddPoolItem(studentId: number) {
   return useBundleMutation<PoolItemBody>(
     studentId, () => `${base(studentId)}/pool/items`, "Havuza eklendi", "Kalem eklenemedi",
   );
+}
+
+/** Deneme formundan havuza deneme kalemi (D1b) — kaba alınınca her deneme ayrı satır. */
+export function useAddPoolDeneme(studentId: number) {
+  return useBundleMutation<{
+    kind: "brans" | "genel";
+    count: number;
+    question_count?: number | null;
+    subject_id?: number | null;
+    book_id?: number | null;
+    genel_key?: string | null;
+    name?: string | null;
+  }>(studentId, () => `${base(studentId)}/pool/deneme-items`, "Havuza deneme eklendi", "Deneme eklenemedi");
 }
 
 export function useDeletePoolItem(studentId: number) {

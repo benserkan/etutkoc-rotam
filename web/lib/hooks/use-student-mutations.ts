@@ -652,3 +652,31 @@ export function useGoalToggle() {
     },
   });
 }
+
+
+// --------------------------- Deneme sonuçları (D2) ---------------------------
+
+/** Bir görevdeki denemelerin sonuçları tek seferde (1 satır = 1 deneme). */
+export function useSetDenemeResults(dateIso: string) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<StudentTask>,
+    ApiError,
+    { task: StudentTask; rows: import("@/components/shared/deneme-result-dialog").DenemeRowOutput[] }
+  >({
+    mutationKey: ["student", "mutate-task", dateIso, "deneme-results"],
+    mutationFn: ({ task, rows }) =>
+      api<MutationResponse<StudentTask>>(`/api/v2/student/tasks/${task.id}/deneme-results`, {
+        method: "POST",
+        body: JSON.stringify({ rows }),
+      }),
+    onError: (err) => {
+      toast.error("Sonuç kaydedilemedi", { description: errorMessage(err, "Sunucu hatası.") });
+    },
+    onSuccess: (res) => {
+      patchTaskInDayCache(qc, dateIso, res.data.id, () => res.data);
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Deneme sonucu kaydedildi");
+    },
+  });
+}

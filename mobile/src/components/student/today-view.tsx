@@ -9,6 +9,7 @@ import { DemoHint } from "@/components/demos/demo-hint";
 import type { StudentDayResponse, StudentTask } from "@/lib/student";
 import { activityLabel, linkButtonLabel, openTaskLink, taskLabel as displayLabel } from "@/lib/task-display";
 import { PoolBanner } from "@/components/student/pool-banner";
+import { DenemePendingCard } from "@/components/student/deneme-pending-card";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
 
 const TR_DAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
@@ -34,6 +35,8 @@ function gorevState(t: StudentTask): GState {
 const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
 function taskUnit(t: StudentTask): string {
   if (t.work_block_unit) return t.work_block_unit;
+  // Deneme kalemi (D1/D2): 1 satır = 1 deneme → birim "deneme" (soru değil)
+  if (t.items.some((x) => x.exam_kind)) return "deneme";
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
   if (it && it.book_id == null) return "soru";
   if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
@@ -109,6 +112,8 @@ export function TodayView({
       <PoolBanner />
       {/* Sıradaki online görüşme (varsa) — dokun: Görüşmelerim */}
       <NextAppointmentBanner />
+      {/* Sonucu girilmemiş denemeler (D3) — yoksa çizilmez */}
+      <DenemePendingCard />
       {/* Özet kart (gradient native'de çalışmaz → solid marka rengi) */}
       <View className="rounded-2xl bg-brand-700 p-5">
         <Text className="text-xs font-semibold uppercase tracking-wider text-brand-100">

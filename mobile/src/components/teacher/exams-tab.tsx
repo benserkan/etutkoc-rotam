@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from "reac
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
+import { ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
 import { ExamAddActions } from "@/components/exams/exam-add-actions";
 import { ExamImportFlow } from "@/components/exams/exam-import-flow";
 import { ProgressReportCard } from "@/components/exams/progress-report-card";
@@ -311,6 +312,8 @@ export function ExamsTabView({
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
   const [detailId, setDetailId] = React.useState<number | null>(null);
+  const [view, setView] = React.useState<"karne" | "program">("karne");
+  const programRows = data.program_rows ?? [];
   const qc = useQueryClient();
   const sharesQ = useQuery({
     queryKey: examProgressKeys.shares(studentId ?? -1),
@@ -340,6 +343,17 @@ export function ExamsTabView({
 
   return (
     <View className="gap-4 px-4 py-4">
+        <ExamKindToggle value={view} onChange={setView} karneCount={data.rows.length} programCount={programRows.length} />
+        {view === "program" ? (
+          programRows.length === 0 ? (
+            <Text className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+              Programdaki deneme görevlerinin sonuçları burada listelenir. Ayrıntılı ders ders analiz web panelinde.
+            </Text>
+          ) : (
+            <ProgramExamsCard rows={programRows} audience="coach" />
+          )
+        ) : (
+        <>
       {/* Özet + ekle */}
       <View className="rounded-2xl bg-brand-700 p-5">
         <Text className="text-xs font-semibold uppercase tracking-wider text-brand-100">
@@ -469,6 +483,8 @@ export function ExamsTabView({
         </View>
       )}
 
+        </>
+        )}
       <FormSheet visible={sheetOpen} title="Deneme sonucu gir" onClose={() => setSheetOpen(false)}>
         <ExamForm
           sections={data.section_options}

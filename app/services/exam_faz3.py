@@ -346,7 +346,8 @@ def _tyt_score(nets: dict[str, float]) -> float:
 
 
 def score_estimate(db: Session, student: User) -> dict:
-    exams = (db.query(ExamResult).filter(ExamResult.student_id == student.id)
+    from app.models.exam_result import analysis_exam_filter
+    exams = (db.query(ExamResult).filter(ExamResult.student_id == student.id, analysis_exam_filter())
              .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc()).all())
     # 2026-10-06: puan YALNIZ GENEL denemelerden — 20 soruluk branş denemesi tüm
     # sınavın puanını temsil etmez (exam_scope).
@@ -354,9 +355,14 @@ def score_estimate(db: Session, student: User) -> dict:
     branch_only = {e.section for e in exams if exam_scope.classify(e) == "brans"}
     exams = [e for e in exams if exam_scope.classify(e) == "genel"]
     branch_only -= {e.section for e in exams}
+    # Puan yalnız DERS DAĞILIMI olan denemeden hesaplanabilir: toplam-yalnız (elle) girilen
+    # denemede ders netleri bilinmez → "TYT 100" gibi anlamsız puan çıkıyordu (canlı denetim
+    # 2026-10-20, 2 öğrenci). Bu tür denemeler atlanır, koça söylenir.
+    no_rows = [e for e in exams if not _subject_rows(e)]
     latest: dict[ExamSection, ExamResult] = {}
     for e in exams:
-        latest.setdefault(e.section, e)
+        if _subject_rows(e):
+            latest.setdefault(e.section, e)
     out = {"generated_at": datetime.now(timezone.utc).isoformat(), "kind": None,
            "scores": [], "inputs": [], "calibration": [], "warnings": [],
            "disclaimer": ("Tahmini ham puandır: son denemelerin netleri, ÖSYM/MEB katsayı yapısıyla "
@@ -368,7 +374,21 @@ def score_estimate(db: Session, student: User) -> dict:
             + ", ".join(EXAM_SECTION_LABELS[s] for s in sorted(branch_only, key=lambda x: x.value))
             + " genel denemesi girilmeli.")
 
-    if ExamSection.LGS in latest:
+    newest_no_rows = {}
+    for e in no_rows:
+        newest_no_rows.setdefault(e.section, e)
+    for sec, e in newest_no_rows.items():
+        base = latest.get(sec)
+        if base is None or e.exam_date > base.exam_date:
+            out["warnings"].append(
+                f"{e.title} ({EXAM_SECTION_LABELS[sec]}) yalnız toplam netle girilmiş; ders dağılımı "
+                "olmadığı için puana katılamadı"
+                + (f" — tahmin {base.exam_date.strftime('%d.%m.%Y')} tarihli denemeden." if base else "."))
+
+    # Sınav ailesi = en son GENEL denemenin ailesi: eski LGS denemesi lise öğrencisinin
+    # TYT/AYT tahminini engellememeli (exams tarihe göre azalan sırada).
+    newest = next((e for e in exams if _subject_rows(e)), None)
+    if ExamSection.LGS in latest and newest is not None and newest.section == ExamSection.LGS:
         e = latest[ExamSection.LGS]
         nets, unknown = _group_nets(e, _lgs_group)
         weighted = sum(nets.get(g, 0.0) * c for g, c in LGS_COEF.items())

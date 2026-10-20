@@ -11,6 +11,7 @@ import {
   ExternalLink,
   GripVertical,
   History,
+  Inbox,
   Loader2,
   PencilLine,
   RefreshCw,
@@ -34,6 +35,7 @@ import {
   usePatchVideoGroup,
   usePatchVideoSource,
   useUnplaceVideo,
+  useVideosToPool,
   VIDEO_MIME,
   videoBasketKeys,
   type VideoBasketResponse,
@@ -81,7 +83,10 @@ function shortDate(iso: string): string {
  *  bekliyor: hiç verilmedi · programda: bugün/ileri bir güne verildi ·
  *  izlenmedi: geçmiş bir güne verildi ama görev tamamlanmadı · izlendi: görev
  *  tamamlandı. Dört durum zemin tonu + dolgulu rozetle ayrışır. */
-type VideoState = "bekliyor" | "programda" | "izlenmedi" | "izlendi";
+type VideoState = "bekliyor" | "havuzda" | "programda" | "izlenmedi" | "izlendi";
+
+/** Havuz modundaki öğrenci: videolar güne sürüklenmez, havuza kalem olarak eklenir. */
+const PoolCtx = React.createContext<{ pool: boolean; open: boolean }>({ pool: false, open: false });
 
 function todayIso(): string {
   const d = new Date();
@@ -92,6 +97,7 @@ function todayIso(): string {
 
 function videoState(v: VideoItem, today: string): VideoState {
   if (v.status === "watched") return "izlendi";
+  if (v.status === "pooled") return "havuzda";
   if (v.status === "planned") {
     return v.task_date && v.task_date < today ? "izlenmedi" : "programda";
   }
@@ -100,6 +106,11 @@ function videoState(v: VideoItem, today: string): VideoState {
 
 const STATE_META: Record<VideoState, { label: string; row: string; badge: string }> = {
   bekliyor: { label: "Verilmedi", row: "", badge: "bg-slate-500 text-white" },
+  havuzda: {
+    label: "Havuzda",
+    row: "border-l-4 border-l-violet-500 bg-violet-500/10",
+    badge: "bg-violet-700 text-white",
+  },
   programda: {
     label: "Programda",
     row: "border-l-4 border-l-sky-500 bg-sky-500/10",
@@ -116,7 +127,7 @@ const STATE_META: Record<VideoState, { label: string; row: string; badge: string
     badge: "bg-emerald-700 text-white",
   },
 };
-const STATE_ORDER: VideoState[] = ["izlendi", "izlenmedi", "programda", "bekliyor"];
+const STATE_ORDER: VideoState[] = ["izlendi", "izlenmedi", "programda", "havuzda", "bekliyor"];
 
 export function VideoBasketFloat({
   studentId,
@@ -138,6 +149,8 @@ export function VideoBasketFloat({
     staleTime: 30_000,
   });
   const waiting = q.data?.waiting_count ?? 0;
+  const pool = q.data?.program_mode === "havuz";
+  const poolOpen = !!q.data?.pool_period_open;
   // Sepet LİSTE LİSTE gösterilir: yeni getirilen liste eskisine karışmaz.
   // null = otomatik (en son kullanılan, sepette videosu olan liste).
   const [picked, setPicked] = React.useState<ListFilter | null>(null);
@@ -165,7 +178,7 @@ export function VideoBasketFloat({
         : groups.filter((g) => g.source_id === active);
 
   return (
-    <>
+    <PoolCtx.Provider value={{ pool, open: poolOpen }}>
       {!open ? (
         <button
           type="button"
@@ -173,6 +186,7 @@ export function VideoBasketFloat({
           onClick={() => setOpen(true)}
           data-floating
           data-section="week:video-basket-fab"
+          data-testid="video-basket-fab"
           // Rota'ya sor düğmesi sağ altta (bottom ~1.5rem) → Video Sepeti onun
           // ÜSTÜNDE durur, üst üste binmez (2026-10-08). Sürüklenince yeri kalır.
           style={{ ...fab.handleProps.style, ...fab.style }}
@@ -236,10 +250,25 @@ export function VideoBasketFloat({
                 onShow={(sid) => setPicked(sid)}
               />
             ) : null}
-            <p className="px-3 pb-2 text-[11px] text-muted-foreground">
-              Videoyu ya da grubun başlığını Hafta Izgarası&apos;ndaki bir güne sürükle.
-              Aynı gün + aynı konu tek görevde toplanır.
-            </p>
+            {pool ? (
+              <p
+                className={cn(
+                  "mx-3 mb-2 rounded-md px-2 py-1.5 text-[11px]",
+                  poolOpen
+                    ? "bg-violet-500/10 text-foreground"
+                    : "bg-amber-200 font-medium text-amber-950 dark:text-amber-950",
+                )}
+              >
+                {poolOpen
+                  ? "Bu öğrenci haftalık havuzda: grubun başlığındaki “Havuza ekle” ile videolar havuza tek kalem olarak girer. Öğrenci kabına aldığı gün izler; izleyince kalem tamamlanır."
+                  : "Açık havuz dönemi yok: videoları havuza eklemek için önce dönemi aç."}
+              </p>
+            ) : (
+              <p className="px-3 pb-2 text-[11px] text-muted-foreground">
+                Videoyu ya da grubun başlığını Hafta Izgarası&apos;ndaki bir güne sürükle.
+                Aynı gün + aynı konu tek görevde toplanır.
+              </p>
+            )}
             {q.isLoading && !q.data ? (
               <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin" aria-hidden /> Yükleniyor…
@@ -283,7 +312,7 @@ export function VideoBasketFloat({
           </div>
         </div>
       )}
-    </>
+    </PoolCtx.Provider>
   );
 }
 
@@ -662,6 +691,8 @@ function GroupCard({
   const [copyOpen, setCopyOpen] = React.useState(false);
   const patchGroup = usePatchVideoGroup(studentId);
   const delGroup = useDeleteVideoGroup(studentId);
+  const poolCtx = React.useContext(PoolCtx);
+  const toPool = useVideosToPool(studentId);
   const items = onlyWaiting ? group.items.filter((i) => i.status === "waiting") : group.items;
   const waitingIds = group.items.filter((i) => i.status === "waiting").map((i) => i.id);
   const stateCounts = STATE_ORDER.map((st) => ({
@@ -672,15 +703,17 @@ function GroupCard({
   return (
     <div className="rounded-lg border border-border">
       <div
-        draggable={waitingIds.length > 0 && !editing}
+        draggable={waitingIds.length > 0 && !editing && !poolCtx.pool}
         onDragStart={(e) =>
           startDrag(e, { itemIds: waitingIds, label: `${group.label} (${waitingIds.length} video)` })
         }
         className={cn(
           "flex items-start gap-1.5 rounded-t-lg bg-muted/40 px-2 py-1.5",
-          waitingIds.length > 0 && "cursor-grab active:cursor-grabbing",
+          waitingIds.length > 0 && !poolCtx.pool && "cursor-grab active:cursor-grabbing",
         )}
-        title={waitingIds.length > 0 ? "Bekleyen videoların tümünü bir güne sürükle" : undefined}
+        title={
+          waitingIds.length > 0 && !poolCtx.pool ? "Bekleyen videoların tümünü bir güne sürükle" : undefined
+        }
       >
         <GripVertical className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
         <div className="min-w-0 flex-1">
@@ -729,6 +762,27 @@ function GroupCard({
               ))}
             </div>
           ) : null}
+          {poolCtx.pool && waitingIds.length > 0 ? (
+            <button
+              type="button"
+              disabled={!poolCtx.open || toPool.isPending}
+              onClick={() => toPool.mutate({ item_ids: waitingIds })}
+              data-testid="video-group-to-pool"
+              className="mt-1 inline-flex items-center gap-1 rounded-md bg-violet-700 px-2 py-1 text-[11px] font-semibold text-white hover:bg-violet-800 disabled:opacity-50"
+              title={
+                group.subject_name
+                  ? "Bekleyen videolar havuza tek kalem olarak eklenir"
+                  : "Önce grubun dersi seçilmeli (videoyu getirirken ders seç)"
+              }
+            >
+              {toPool.isPending ? (
+                <Loader2 className="size-3 animate-spin" aria-hidden />
+              ) : (
+                <Inbox className="size-3" aria-hidden />
+              )}
+              Havuza ekle ({waitingIds.length} video)
+            </button>
+          ) : null}
         </div>
         <div className="flex shrink-0 items-center">
           <IconBtn label="Grubu yeniden adlandır" onClick={() => { setLabel(group.label); setEditing((v) => !v); }}>
@@ -762,7 +816,7 @@ function GroupCard({
       {collapsed ? null : (
         <ul className="divide-y divide-border/60">
           {items.map((v) => (
-            <VideoRow key={v.id} v={v} state={videoState(v, today)} />
+            <VideoRow key={v.id} studentId={studentId} v={v} state={videoState(v, today)} />
           ))}
         </ul>
       )}
@@ -792,11 +846,13 @@ function IconBtn({
   );
 }
 
-function VideoRow({ v, state }: { v: VideoItem; state: VideoState }) {
+function VideoRow({ studentId, v, state }: { studentId: number; v: VideoItem; state: VideoState }) {
   const patch = usePatchVideo();
   const del = useDeleteVideo();
   const unplace = useUnplaceVideo();
-  const waiting = v.status === "waiting";
+  const poolCtx = React.useContext(PoolCtx);
+  const toPool = useVideosToPool(studentId);
+  const waiting = v.status === "waiting" && !poolCtx.pool;
   const tone = ROLE_TONE[v.role] ?? ROLE_TONE.anlatim;
   return (
     <li
@@ -828,7 +884,11 @@ function VideoRow({ v, state }: { v: VideoItem; state: VideoState }) {
           </select>
           {state !== "bekliyor" ? (
             <span className={cn("rounded px-1 font-medium", STATE_META[state].badge)}>
-              {state === "programda" ? "programda" : STATE_META[state].label.toLocaleLowerCase("tr")}
+              {state === "programda"
+                ? poolCtx.pool
+                  ? "kapta"
+                  : "programda"
+                : STATE_META[state].label.toLocaleLowerCase("tr")}
               {v.task_date ? ` · ${shortDate(v.task_date)}` : ""}
             </span>
           ) : null}
@@ -844,12 +904,17 @@ function VideoRow({ v, state }: { v: VideoItem; state: VideoState }) {
         >
           <ExternalLink className="size-3" aria-hidden />
         </a>
-        {v.status === "planned" ? (
+        {poolCtx.pool && v.status === "waiting" && poolCtx.open ? (
+          <IconBtn label="Yalnız bu videoyu havuza ekle" onClick={() => toPool.mutate({ item_ids: [v.id] })}>
+            <Inbox className="size-3" aria-hidden />
+          </IconBtn>
+        ) : null}
+        {v.status === "planned" && !poolCtx.pool ? (
           <IconBtn label="Programdan çıkar (sepete dön)" onClick={() => unplace.mutate({ itemId: v.id })}>
             <Undo2 className="size-3" aria-hidden />
           </IconBtn>
         ) : null}
-        {v.status !== "watched" ? (
+        {v.status === "waiting" || (v.status === "planned" && !poolCtx.pool) ? (
           <IconBtn
             label="Sepetten sil"
             onClick={() => {

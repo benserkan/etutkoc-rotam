@@ -1042,8 +1042,15 @@ def pool_reminders(db: Session, *, now: datetime) -> dict:
     return reminders(db, now=now)
 
 
+def deneme_result_reminders(db: Session, *, now: datetime) -> dict:
+    """Günlük 19:00 TR — sonucu girilmemiş denemeler için öğrenciye hatırlatma (D2)."""
+    from app.services.deneme_service import run_result_reminders
+    return run_result_reminders(db, now=now)
+
+
 JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "daily_summary": daily_summary,
+    "deneme_result_reminders": deneme_result_reminders,
     # Haftalık görev havuzu (dershane modu) — gün sonu kapanış + hatırlatmalar
     "pool_daily_close": pool_daily_close,
     "pool_reminders": pool_reminders,

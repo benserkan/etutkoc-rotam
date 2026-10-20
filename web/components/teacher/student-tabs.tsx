@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Activity,
   AlertTriangle,
   ArrowUpCircle,
   BarChart3,
@@ -75,6 +74,7 @@ import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
 import { TopicPerformancePanel } from "@/components/shared/topic-performance-panel";
 import { CurriculumPanel } from "@/components/teacher/curriculum-panel";
 import { StudentDevHub } from "@/components/teacher/student-dev-hub";
+import { StudentWeeklyProgress } from "@/components/teacher/student-weekly-progress";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -90,6 +90,7 @@ type TabKey =
   | "curriculum"
   | "topics"
   | "exams"
+  | "program-exams"
   | "wrongs"
   | "sessions"
   | "surveys"
@@ -142,6 +143,7 @@ function isValidTab(v: string): v is TabKey {
     v === "curriculum" ||
     v === "topics" ||
     v === "exams" ||
+    v === "program-exams" ||
     v === "wrongs" ||
     v === "sessions" ||
     v === "surveys" ||
@@ -170,7 +172,11 @@ interface Props {
 export function StudentTabs({ studentId, initial }: Props) {
   const q = useTeacherStudent(studentId, initial);
   const data = q.data ?? initial;
-  const active = useHashTab();
+  // "#program-exams" ayrı sekme DEĞİL (2026-10-20, kullanıcı: menüyü iki satıra itiyordu):
+  // Denemeler sekmesi içinde "Branş denemeleri" görünümünü açar; bağlantılar bozulmasın diye
+  // hash geçerli kalır, sekme şeridinde "Denemeler" seçili görünür.
+  const rawActive = useHashTab();
+  const active: TabKey = rawActive === "program-exams" ? "exams" : rawActive;
   const qc = useQueryClient();
 
   function selectTab(key: TabKey) {
@@ -188,13 +194,6 @@ export function StudentTabs({ studentId, initial }: Props) {
   }
 
   const s = data.student;
-  // Bugün/Hafta KPI'ları görev-bazlı (etkinlik/"Diğer" dahil); Hız/Tutarlılık/
-  // Hedef Tutturma soru-hacmi (volume) olarak kalır.
-  const today = Math.round((data.program_summary.today_task_pct ?? 0) * 100);
-  const week = Math.round((data.program_summary.week_task_pct ?? 0) * 100);
-  const consistency = Math.round((data.program_summary.consistency_7d ?? 0) * 100);
-  const hitRate = Math.round((data.program_summary.hit_rate_7d ?? 0) * 100);
-  const rate7d = data.program_summary.rate_7d ?? 0;
 
   return (
     <div className="space-y-6">
@@ -309,21 +308,20 @@ export function StudentTabs({ studentId, initial }: Props) {
           role="tabpanel"
           id="tab-panel-summary"
           aria-labelledby="tab-summary"
-          className="space-y-4"
+          className="space-y-10"
         >
-          <MetricsStrip
-            today={today}
-            todayCompleted={data.program_summary.today_tasks_done ?? 0}
-            todayPlanned={data.program_summary.today_tasks_total ?? 0}
-            week={week}
-            weekCompleted={data.program_summary.week_tasks_done ?? 0}
-            weekPlanned={data.program_summary.week_tasks_total ?? 0}
-            rate7d={rate7d}
-            consistency={consistency}
-            hitRate={hitRate}
-            studentId={studentId}
-          />
+          {/* 2026-10-20: haftalık ilerleme (manşet + gidişat + önlemler + 13 başlık + deneme).
+              Eski üst özet şeridi kaldırıldı; uyarı ve ayar kartları en altta katlı. */}
+          <StudentWeeklyProgress studentId={studentId} />
 
+          <details className="group rounded-2xl border border-border bg-card px-5 py-4">
+            <summary className="flex min-h-[28px] cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-bold">
+              Diğer sinyaller ve öğrenci kartları
+              <span className="text-xs font-normal text-muted-foreground group-open:hidden">
+                uyarı özeti · görev/test dökümü · dönemler · yapay zekâ · talepler
+              </span>
+            </summary>
+            <div className="mt-4 space-y-4">
           <StatusSummary studentId={studentId} data={data} />
 
           <GorevBreakdownCard
@@ -381,6 +379,8 @@ export function StudentTabs({ studentId, initial }: Props) {
               </CardContent>
             </Card>
           </section>
+            </div>
+          </details>
         </div>
       ) : null}
 
@@ -408,7 +408,12 @@ export function StudentTabs({ studentId, initial }: Props) {
 
       {active === "exams" ? (
         <div role="tabpanel" id="tab-panel-exams" aria-labelledby="tab-exams">
-          <StudentExamsPanel studentId={studentId} studentName={s.full_name} />
+          <StudentExamsPanel
+            studentId={studentId}
+            studentName={s.full_name}
+            branchView={rawActive === "program-exams"}
+            onBranchView={(open) => selectTab(open ? "program-exams" : "exams")}
+          />
         </div>
       ) : null}
 
@@ -1141,115 +1146,6 @@ function GorevBreakdownCard({
       </CardContent>
     </Card>
   );
-}
-
-// =============================================================================
-// Metrik şeridi (5 KPI — Jinja metrics_strip.html parite)
-// =============================================================================
-
-function MetricsStrip({
-  today,
-  todayCompleted,
-  todayPlanned,
-  week,
-  weekCompleted,
-  weekPlanned,
-  rate7d,
-  consistency,
-  hitRate,
-  studentId,
-}: {
-  today: number;
-  todayCompleted: number;
-  todayPlanned: number;
-  week: number;
-  weekCompleted: number;
-  weekPlanned: number;
-  rate7d: number;
-  consistency: number;
-  hitRate: number;
-  studentId: number;
-}) {
-  const base = `/teacher/students/${studentId}`;
-  return (
-    <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-      <Kpi
-        label="Bugün"
-        value={`%${today}`}
-        sub={`${todayCompleted}/${todayPlanned}`}
-        href={`${base}/day`}
-      />
-      <Kpi
-        label="Son 7 Gün"
-        value={`%${week}`}
-        sub={`${weekCompleted}/${weekPlanned}`}
-        href={`${base}/week`}
-      />
-      <Kpi
-        label="Hız (7g)"
-        value={rate7d.toFixed(1)}
-        sub="test / gün"
-        icon={<Activity className="size-3.5 text-muted-foreground" aria-hidden />}
-        href={`${base}/dna`}
-      />
-      <Kpi
-        label="Tutarlılık"
-        value={`%${consistency}`}
-        sub="son 7 günün kaçında aktif"
-        emphasize={
-          consistency >= 80 ? "good" : consistency >= 50 ? "warn" : "bad"
-        }
-        href={`${base}/dna`}
-      />
-      <Kpi
-        label="Hedef Tutturma"
-        value={`%${hitRate}`}
-        sub="planlanan→tamamlanan (7g)"
-        emphasize={hitRate >= 80 ? "good" : hitRate >= 50 ? "warn" : "bad"}
-        href={`${base}/week`}
-      />
-    </section>
-  );
-}
-
-function Kpi({
-  label,
-  value,
-  sub,
-  emphasize,
-  icon,
-  href,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  emphasize?: "good" | "warn" | "bad";
-  icon?: React.ReactNode;
-  href?: string;
-}) {
-  const valueClass = {
-    good: "text-emerald-600 dark:text-emerald-300",
-    warn: "text-amber-600 dark:text-amber-300",
-    bad: "text-rose-600 dark:text-rose-300",
-  }[emphasize ?? ("none" as never)];
-  const inner = (
-    <CardContent className="p-4 space-y-1">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1.5">
-        {icon}
-        {label}
-      </p>
-      <p className={cn("text-2xl font-semibold tabular-nums", valueClass)}>{value}</p>
-      {sub ? <p className="text-xs text-muted-foreground">{sub}</p> : null}
-    </CardContent>
-  );
-  if (href) {
-    return (
-      <Card className="transition hover:border-cyan-300 hover:shadow-sm">
-        <Link href={href} className="block">{inner}</Link>
-      </Card>
-    );
-  }
-  return <Card>{inner}</Card>;
 }
 
 // =============================================================================

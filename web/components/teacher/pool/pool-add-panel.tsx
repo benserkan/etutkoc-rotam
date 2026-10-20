@@ -22,9 +22,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  BookMarked, BookOpen, Check, ChevronDown, Layers, ListTree, Lock, NotebookPen, PenLine, Plus, Search, Sparkles, Wand2,
+  BookMarked, BookOpen, Check, ChevronDown, ClipboardCheck, Layers, ListTree, Lock, NotebookPen, PenLine, Plus, Search, Sparkles, Wand2,
 } from "lucide-react";
 
+import { DenemeForm } from "@/components/teacher/weekly-plan/deneme-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -74,7 +75,7 @@ export function AddPanel({ studentId, data, subjectId, onSubject }: {
   subjectId: number | null;
   onSubject: (id: number | null) => void;
 }) {
-  const [mode, setMode] = React.useState<"steps" | "free">("steps");
+  const [mode, setMode] = React.useState<"steps" | "free" | "deneme">("steps");
   const [choice, setChoice] = React.useState<Choice | null>(null);
   // "tyt" = TYT (Maarif) çipinden seçildi → konular yalnız 9-10. sınıf (Maarif 11+)
   const [scope, setScope] = React.useState<"all" | "tyt">("all");
@@ -122,10 +123,15 @@ export function AddPanel({ studentId, data, subjectId, onSubject }: {
         <div className="flex w-full rounded-lg bg-muted p-0.5 text-xs font-medium sm:w-auto [&>button]:flex-1 sm:[&>button]:flex-none" role="tablist" aria-label="Ekleme yolu">
           <TabBtn active={mode === "steps"} onClick={() => setMode("steps")} icon={<ListTree className="size-3.5" aria-hidden />}>Adım adım</TabBtn>
           <TabBtn active={mode === "free"} onClick={() => setMode("free")} icon={<Wand2 className="size-3.5" aria-hidden />}>Hızlı yaz</TabBtn>
+          <TabBtn active={mode === "deneme"} onClick={() => setMode("deneme")} icon={<ClipboardCheck className="size-3.5" aria-hidden />}>Deneme</TabBtn>
         </div>
       </header>
 
-      {mode === "free" ? (
+      {mode === "deneme" ? (
+        <div className="@container px-4 py-4">
+          <DenemeForm studentId={studentId} target="pool" onAfterAdd={() => undefined} />
+        </div>
+      ) : mode === "free" ? (
         <FreeText studentId={studentId} data={data} subjectId={subjectId} />
       ) : (
         <ol className="divide-y">

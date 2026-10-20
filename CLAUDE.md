@@ -6,6 +6,290 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## DENEME GÖREVLERİ — D1+D1b+D2+D3 YERELDE TAMAM (2026-10-20, COMMIT/DEPLOY YOK)
+
+**Bağlam:** öğrenci detay sayfası yeniden tasarımı (haftalık ilerleme + geçmiş haftalarla kıyas +
+eğilim/projeksiyon + önlem) planlanırken branş denemesi verisinin toplanmadığı görüldü: canlıda 318
+tamamlanmış branş denemesinin yalnız 17'sinde (%5) D/Y var; çoklu deneme tek satıra toplanıyor; görevde
+girilen sonuç Denemeler sistemine akmıyor. Kullanıcı sırası: **D1 tanıma → D2 öğrenci sonuç penceresi
+(web+mobil) → D3 Denemeler köprüsü (görev sonucu → ExamResult branş kaydı) + geçmiş eksikleri tamamlama →
+D4 analiz servisi → SONRA öğrenci detay sayfası** (haftalık uyum manşet + test hacmi yanında · 13 başlık ·
+taban = güncel sınıf dönemindeki tüm program haftaları, öğrencinin NORMAL ARALIĞI [ortalama değil] ·
+3 hafta üst üste düşüş = eğilim bilgisi + projeksiyon + önlem önerileri · deneme analizleri ana sayfada).
+Kararlar: köprü EVET · süre alanı D2'de, yanlış konu seçimi sonra · "sonra gireceğim" + 2 gün hatırlatma ·
+çoklu deneme = ayrı sonuç satırları · **öğrenci soru sayısında ESNEK** (koç 6 dedi, kitapta 7 → zorlama yok).
+- **Model:** `task_book_items` + `exam_kind` (brans|genel; NULL = eski davranış) · `exam_section` ·
+  `subject_id` (kitapsız branşın dersi, FK SET NULL) · `question_count`. **Kural: exam_kind dolu = 1 kalem =
+  1 deneme (planned_count=1)**; "×2" = 1 görev 2 kalem. Eski kayıtlar değişmedi.
+- **TEK MERKEZ `app/services/deneme_service.py`:** sınav standart soru sayıları (LGS/TYT/AYT ders bazında) ·
+  soru sayısı sırası koç > bölüm adı "(N soru)" > kitap `avg_questions_per_test` > standart · öğrencinin
+  deneme kitapları + sıradaki denemeler · `pick_sections` (kitap biterse kapasite aşımıyla, engel değil) ·
+  genel türler (LGS tam/sayısal/sözel, TYT, AYT SAY/EA/SÖZ, YDT, okul) · **koç kalıpları** (son 120 gün,
+  tüm öğrencileri, ders ADIyla eşleşir → tek tık şablon çipi; ayrı tablo yok) · başlık üretimi.
+- **Tanıma ortak noktada:** `teacher._create_task_with_items` → `_normalize_deneme_items`: deneme kitabından
+  gelen her kalem (görev kutusu, test formu, şablon, yay, devret, iskelet) N deneme kalemine açılır.
+  Yay/devret kitapsız kopyada `item_exam_kw` ile alanlar korunur; çözülmüş deneme devredilmez.
+- **Uçlar** (`api_v2/deneme_tasks.py`): GET `/teacher/students/{id}/deneme-options` · POST `.../deneme-tasks`
+  {kind, count ≤10, question_count, subject_id | book_id | genel_key, name}. Koçun girdiği soru sayısı
+  kitapta kayıtlı değilse kitaba yazılır. `_capacity_invalidate`'e `deneme-options` eklendi.
+- **Sayım:** `gorev_stats.classify_gorev` exam_kind'ı önce okur (branş → deneme, genel → tam_deneme) ·
+  `deneme_units` + `GorevSummary.deneme_units` → "N deneme" sayıları (koç/öğrenci gün-hafta başlığı, veli,
+  bildirim) artık kalem başına (eski kayıtta görev başına 1) · `week_test_deneme_for` aynı · kitapsız branşın
+  dersi `primary_subject` + Ders Dağılımı'na girer. Test hacmine HİÇ girmez.
+- **Öğrenci girişi (geçici, D2'ye kadar):** `item_is_test_unit` exam kaleminde True → D/Y/B tavanı yok.
+- **Web:** YENİ `weekly-plan/deneme-form.tsx` (sık verilen kalıp çipleri · Branş/Genel · ders · kaynak
+  KARTLARI [uzun kitap adı kırpılmasın diye select değil] · adet 1-4/başka · soru [kaynağı yazılı] · ad ·
+  "Ekle · N deneme"); eski DenemeForm + hazır liste silindi. Test formunda deneme kitabı → "Adet (deneme)".
+  Birim yardımcıları (ızgara, öğrenci ızgarası, 2 yazdırma, gün kartı "2 deneme · 6 soru", sonuç rozeti)
+  exam kalemini "deneme" sayar. `lib/api/deneme.ts` + `useCreateDenemeTask`.
+- Test YENİ `test_api_v2_deneme_tasks.py` **42/42** · YENİ `live_deneme_form.py` **19/19** (+ kırpma ölçümü,
+  konsol, 390px, `.shots/deneme_form_{dark,mobile}.png`) · gorev 83/83 · weekly_plan 15 · teacher_read 12 ·
+  student_read 11 · student_mutations 12 · carryover 18/20 · spread 19 · capacity 8 · blank 10 · templates 11 ·
+  skeleton 27/22 · topic_link 23 · projection 11 · parent 20/14 · card 23 · migration down/up sınandı.
+  (`test_student_email_fallback` 4 FAIL — önceden bilinen, bu işle ilgisiz.)
+- **DEPLOY BİLİNÇLİ BEKLİYOR:** D1 tek başına canlıya çıkarsa öğrenci yeni deneme kalemini eski "test"
+  formuyla görür → D2 (öğrenci sonuç penceresi web+mobil) ile birlikte çıkacak.
+- **D1b — HAVUZ BAĞLANDI (aynı gün, migration `q1s4x7y8x33t`, kullanıcı "önce havuzu bağla"):** havuz kalemine
+  `exam_kind` / `exam_section` / `question_count` (pool_items, additive). Bulgu: havuz kap görevi
+  `put_in_cup` içinde ayrı kuruluyordu → D1 tanıması çalışmıyordu; kitaplı deneme tek satır, kitapsız deneme
+  "planned = deneme adedi" yazılıp eski soru-birimli kurala takılıyordu (öğrenci 2 denemede D+Y ≤ 2 — ESKİ
+  HATA, canlıda havuz denemesi olmadığı için kimseyi etkilememişti).
+  · `pool_mode.add_item` deneme alanları + dersiz GENEL deneme (subject None yalnız unit=deneme+genel;
+    paketlerde "Genel deneme" adıyla) · `_deneme_meta` (eski exam_kind'sız deneme kalemleri de tanınır) ·
+    `put_in_cup` → `_exam_cup_items` her deneme ayrı satır (rezerv yok); kitaplı: kalemin bölümünden başlar,
+    AYNI dönemde aynı kitaptan kaba alınmış bölümleri atlar · `resize_cup` deneme dalı (artınca satır ekler,
+    azalınca işaretlenmemiş satırı siler) · `close_day` deneme dalı (çözülmeyen satır silinir, havuza döner) ·
+    `_refresh_exam_cup` başlık + durum. Birim hesabı değişmedi (deneme = adet).
+  · Uç POST `/teacher/students/{id}/pool/deneme-items` (deneme_tasks.py; kaynaklı / kaynaksız branş / genel).
+  · Web: havuz editörüne "Deneme" sekmesi (`DenemeForm target="pool"` — aynı form, "Havuza ekle"), kalem
+    satırında "deneme başına N soru". `useAddPoolDeneme`.
+  · Test YENİ `test_pool_deneme.py` **32/32** · YENİ `live_pool_deneme.py` **7/7** (+ `.shots/pool_deneme_*`) ·
+    havuz takımı foundation 53 · editor 41 · session 22 · student 29 · flags 47 · step5 34 · step6 26 · step7 30 ·
+    resize 13 · book_source 16 · groups 20 · signals 12 · quantity 7 · avoid 4 · kurum 15 · mod geçişi 22 ·
+    deneme 42 · gorev 83/83 · migration down/up.
+- **D2 — ÖĞRENCİ SONUÇ PENCERESİ, YERELDE TAMAM (aynı gün, migration `r2t5y8z9y44u`):** `task_book_items` +
+  `duration_minutes` + `result_reminded_at` + cron `deneme_result_reminders` (günlük 16:00 UTC = 19:00 TR, bool
+  bind). TEK MERKEZ `deneme_service.apply_results` (öğrenci + koç ortak): satır başına çözdüm/çözmedim · D/Y →
+  boş verilmezse soru − D − Y · **soru sayısı ESNEK** (öğrencinin yazdığı kalemin `question_count`'una yazılır) ·
+  D+Y+B > soru → 422 `result_exceeds_questions` ("soru sayısını düzelt") · D/Y'siz çözülen = "sonuç bekliyor"
+  (`result_pending`) · rezerv/kitap sayacı `set_item_completion` ile · `item_net` (LGS 3, diğer 4) ·
+  `run_result_reminders` (2+ gün sonuçsuz → öğrenciye TEK push, satır başına bir kez; koça kırmızı yok).
+  · Uçlar POST `/student/tasks/{id}/deneme-results` (gelecek gün 400 future_task_blocked, havuz geç kayıt
+    kilidi, kap kalemi senkron, koça ilerleme push'u) + POST `/teacher/tasks/{id}/deneme-results` (sahiplik 404).
+    Kalem yanıtlarına `duration_minutes` / `net` / `result_pending`. Koç `/result` ucu deneme kalemine tavan
+    uygulamıyordu-sanıyordu (kitapsız deneme "≤ tamamlanan") → düzeltildi.
+  · Web YENİ `components/shared/deneme-result-dialog.tsx` (satır kartları: Çözdüm/Çözmedim · Doğru/Yanlış/Boş
+    [otomatik yer tutucu]/Soru/Süre · canlı net + ceza notu · aşımda uyarı + Kaydet kapalı · "Sonucu sonra
+    gireceğim"; `denemeSummary` çip metni). Öğrenci `task-card`: deneme görevinde satır listesi + çipler
+    (yeşil sonuç/net/süre · kehribar "sonuç bekliyor" · gri "çözülmedi") + "Sonuçları gir/düzenle"; tik pencereyi
+    açar; rozet "Deneme". Koç `task-item-result-badge` deneme kaleminde aynı pencere (audience coach).
+    Hook'lar `useSetDenemeResults` / `useSetDenemeResultsCoach`.
+  · Mobil (JS-only → OTA): `task-sheet` `DenemeSection` (aynı kurallar) + "Deneme" rozeti · `day-screen` hızlı tik
+    deneme görevinde sayfayı açar + `setDenemeResults` · Bugün birimi "deneme".
+  · Test YENİ `test_api_v2_deneme_results.py` **22/22** · YENİ `live_deneme_results.py` **15/15** (öğrenci +
+    koç, koyu tema, 390px, konsol; `.shots/deneme_results_{dark,mobile}.png`) · YENİ `live_mobile_deneme_results.py`
+    **7/7** (Expo web; `.shots/mobile_deneme_results.png`) · deneme 42 · havuz deneme 32 · student_mut 12 ·
+    student_read 11 · blank 10 · sourceless 6 · teacher_read 12 · weekly_plan 15 · pool_student 29 · resize 13 ·
+    foundation 53 · requests 18 · gorev 83/83 · migration down/up. Web tsc+eslint, mobil tsc (yalnız app/preview).
+- **D3 — GÖREV DENEMESİ → DENEMELER KÖPRÜSÜ + SONUCU EKSİK DENEMELER, YERELDE TAMAM (aynı gün, migration
+  `s3u6z9a0z55v` ← r2t5y8z9y44u):** `exam_results.task_book_item_id` (FK CASCADE, tekil). YENİ TEK MERKEZ
+  `app/services/deneme_bridge.py` — **SQLAlchemy `before_flush` dinleyicisi** (app/models/__init__ sonunda kayıtlı):
+  sonucu değiştiren HER yol (öğrenci/koç sonuç penceresi, geri alma, görev taşıma/silme, gün sonu) aynı kuralla
+  eşitlenir. Kural: kayıt yalnız SONUÇ girilince (çözüldü + D/Y) açılır, `import_source="task"`; "sonucu sonra"
+  ve "çözmedim" kayıt açmaz; sonuç silinir/çözmedim/geri alınırsa kayıt silinir; görev başka güne taşınınca deneme
+  tarihi taşınır. Branş → ders kırılımı tek satır (dersin adı) → seri `tyt~matematik`; genel → seri `tyt`; soru
+  standardın %60'ının altındaysa (LGS Sayısal Bölüm 40/90) genel seriye KARIŞMAZ ("Sayısal bölüm" serisi). Kapsam
+  `analysis_meta.scope`'a yalnız otomatik sınıflama yanılırsa yazılır ("koç işaretledi" görünmesin). Başlık:
+  kaynaklıda "Kitap — DENEME 3", kaynaksızda görev adı (×N/soru atılır) + "· 1. deneme". Koç aynı denemeyi PDF'ten
+  "yerine yaz" ile aktarırsa kayıt PDF'e döner, görev artık dokunmaz. **Veliye otomatik duyuru YOK.**
+  · Koç Denemeler'den görev kaydını düzenleyemez → 409 `task_linked` (silebilir). Sonuç uçları Denemeler +
+    bekleyen önbelleğini bayatlatır (`student:exams`, `…:exams`, `…:deneme-pending`).
+  · "Sonucu eksik denemeler": `deneme_service.pending_result_rows` → GET `/student/deneme-pending` + GET
+    `/teacher/students/{id}/deneme-pending` (satır: tarih, numaralı ad, soru, gün). Web YENİ paylaşılan
+    `components/shared/deneme-pending-card.tsx` (amber kart, satırda "Sonucu gir" → aynı sonuç penceresi; boşsa
+    çizilmez) → öğrenci Bugün + Denemelerim, koç Denemeler sekmesi. Denemeler listesinde indigo **"Programdan"**
+    rozeti, görev kaydında düzenle düğmesi yok. Mobil (OTA): YENİ `components/student/deneme-pending-card.tsx`
+    (Bugün'de; FormSheet D/Y/Soru/Süre + canlı boş/net) + Denemeler satırında "Programdaki deneme görevinden".
+  · **Geçmiş ~300 sonuçsuz canlı kayıt geriye dönük Denemeler'e TAŞINMADI (bilinçli):** D1 öncesi kayıtlarda
+    birden çok deneme tek satırda toplu (planned>1) → deneme serisine girerse net grafiği bozulur; bunlar D4'te
+    yalnız doğruluk hesabına girer. Canlıda exam_kind'lı kalem henüz yok → köprünün dolduracağı eski veri yok.
+  · Test YENİ `test_api_v2_deneme_bridge.py` **33/33** · YENİ `live_deneme_bridge.py` **19/19** (öğrenci kartı →
+    sonuç → Denemelerim rozet → koç kart → koç sonuç → kart kaybolur; koyu tema, 390px, kırpma, konsol;
+    `.shots/deneme_pending_{dark,mobile}.png`) · YENİ `live_mobile_deneme_pending.py` **5/5**
+    (`.shots/mobile_deneme_pending.png`) · deneme_results 22 · deneme_tasks 42 · pool_deneme 32 · teacher_exams 19 ·
+    exam_scope 21 · exam_progress 31 · faz3 32 · duplicate_guard 22 · student_mut 12 · student_read 11 ·
+    teacher_read 12 · weekly_plan 15 · blank 10 · sourceless 6 · pool foundation 53 / student 29 / session 22 /
+    flags 47 · gorev 83/83 · canlı D2 15 + mobil 7 + form 19 · migration down/up · bekçi head `s3u6z9a0z55v`.
+    **TEST DERSİ:** köprü kayıt açtığından deneme testlerinin temizliği önce `ExamResult`'ı siler (yoksa id yeniden
+    kullanımıyla sonraki testin öğrencisine sızar — teacher_exams/duplicate_guard yanlış kırmızı verdi).
+- **D3b — PROGRAM DENEMELERİ ANALİZE KARIŞMAZ (aynı gün, kullanıcı kararı; migration YOK):** köprünün açtığı kayıt
+  (import_source="task") Denemeler analiz listesine düşüyordu; kullanıcı: "Denemeler sekmesi = konu analizli deneme
+  sistemi; branş D/Y sonuçları ayrı yerde toplanmalı, deneme kartlarıyla karışmamalı". TEK MERKEZ
+  `models/exam_result`: `SOURCE_TASK` · `is_program_exam` · `analysis_exam_filter()` (köprü de buradan import eder).
+  Liste uçları (koç/öğrenci/veli) `teacher.split_program_exams` + `exam_list_summary` → `rows`/`summary` YALNIZ
+  karne/elle girilen denemeler, yeni `program_rows` ayrı (additive). Gelişim raporu (`exam_progress`) + puan tahmini
+  (`exam_faz3.score_estimate`) program denemesini görmez. Web paylaşılan `shared/program-exams-section.tsx`
+  ("Programdaki denemeler", seri gruplu, katlanır, `data-section="exams:program"`) koç Denemeler + öğrenci
+  Denemelerim + veli Denemeler'in altında; mobil `exams/program-exams-card.tsx` 3 yüzeyde (OTA bekler).
+  **BİLİNÇLİ DOKUNULMADI (D4'te ele alınacak):** analitik deneme bloğu, veli pano "son deneme", veli maili kıyası,
+  haftalık raporlar, kurum akademik, student_flags/exam_drop, Rota paketi hâlâ tüm ExamResult'ı okur.
+  Test bridge **35/35** (2a/2a2/2e/5c yeni sözleşme) · live_deneme_bridge **19/19** (+`.shots/program_exams_dark.png`)
+  · teacher_exams 19 · exam_progress 31 · faz3 32 · parent 20 · student_read 11 · web tsc+eslint · mobil tsc.
+- **D4 — PROGRAM DENEMESİ ANALİZ SERVİSİ, YERELDE TAMAM (aynı gün, migration YOK):** YENİ TEK MERKEZ
+  `app/services/deneme_analysis.py` `build_deneme_analysis` (salt okuma, AI yok, kredi yok). Seri = köprü kayıtları
+  (import_source="task") `exam_scope.exam_scope` ile (Denemeler ile aynı kural); süre/soru kalemden. Seri başına: net,
+  **net %** (net ÷ soru — farklı soru sayılı denemeler kıyaslanır), doğruluk D/(D+Y), boş oranı, soru başı dakika ·
+  **normal aralık** = net %'nin çeyrekler arası bandı (≥4 deneme; ortalama DEĞİL) + son denemenin konumu · **üst üste
+  düşüş** sayısı (3+ → işaret) · eğilim (son ≤8 denemeye en küçük kareler) + 4 deneme sonrası tahmini net % ·
+  kıyaslar: aynı dersin test doğruluğu (soru bankası + konulu kaynaksız kalem, 90g) ve karne/elle GENEL denemelerdeki
+  ders doğruluğu (90g) · D1 öncesi toplu branş kalemleri seriye girmez, yalnız `legacy_accuracy`/`combined_accuracy`
+  · sonucu bekleyen ders bazında · işaretler decline / below_normal / test_gap (≥15 puan) / blank (≥%25).
+  **Sıralama hatası bulundu+düzeltildi:** aynı gündeki denemeler kayıt id'sine göre diziliyordu (köprü flush sırası
+  rastgele) → kalem id'sine göre (analiz + `split_program_exams` listesi).
+  Uç GET `/teacher/students/{id}/deneme-analysis` (deneme_tasks.py, sahiplik 404) · sonuç uçlarının invalidate
+  listesine `…:deneme-analysis` · web `lib/api/deneme.ts` tipleri + `getDenemeAnalysis` + `denemeKeys.analysis`
+  (UI YOK — öğrenci detay sayfası tasarımında kullanılacak). Test YENİ `test_api_v2_deneme_analysis.py` **21/21** ·
+  bridge 35 · results 22 · tasks 42 · teacher_exams 19 · parent 20 · student_read 11.
+- **ÖĞRENCİ DETAY SAYFASI — TASARIM TASLAĞI (2026-10-20, kod YOK):** taslak https://claude.ai/artifact/6ZAiycM3hCeg4vrY67dYox
+  (Emir'in canlı serisinden türetilmiş, isim "Örnek Öğrenci"). Bölümler: (1) "Bu hafta nasıl gidiyor?" manşet = görev
+  uyumu + çözülen test (normal aralık şeridi, AYNI GÜNE KADAR kıyas, bugün sayılmaz) + "Böyle giderse" + 7 gün kartı
+  (üzerine gelince/dokununca yapılmayan görevler) · (2) Haftalar arası gidişat: SON 8 HAFTA nokta grafiği + normal bant
+  + dönem özeti (hafta sayısı, ortanca, en iyi, en düşük); "Tüm dönem" görünümü haftaları AYA toplar · (3) Önerilen
+  önlemler (ölçüme dayalı + "Seansa ekle") · (4) 13 başlık KART olarak (Gelişim/İlerleme/Risk grup açıklamalı; her
+  kartta hep görünür açıklama, normal aralık şeridi, bu hafta + geçen hafta işareti, 6 haftalık mini grafik; başlık
+  numaraları gösterilmez) · (5) Deneme analizi (D4) · (6) eski uyarı/ayar kartları en altta katlı.
+  **Kullanıcı kararları:** üstteki eski özet şeridi (Son 7 gün/Hız/Tutarlılık/Hedef tutturma) KALKAR · önlem
+  düğmeleri mevcut sayfalara gider ("Fizik görevlerini aç" vb.) · koçun kurduğu öğrenci hatırlatması/uyarı sistemi
+  AYRI İŞ (ilk sürümde düğme yok).
+- **ÖĞRENCİ DETAY · HAFTALIK İLERLEME — WEB YERELDE TAMAM (2026-10-20, migration YOK, commit/deploy YOK):**
+  YENİ TEK MERKEZ `app/services/weekly_progress.py` `build_weekly_progress` (salt okuma, AI/kredi yok). Hafta = program
+  haftası (`_weeks`: çakışan programlarda sonra açılan bugünü taşırsa önceki kırpılır). Aynı nokta k = bugünden önceki
+  gün sayısı (bugün sayılmaz; hafta bittiyse tam hafta). Taban = geçmiş haftalar, güncel sınıf dönemi içi, ilk 2 alışma
+  haftası ve <4 günlük hafta hariç; <4 taban → "insufficient"; hiç kayıt yoksa (max 0) da insufficient. "Genelde" =
+  çeyrekler arası bant; normalin altı below, geçmişin en kötüsü critical (yöne göre: night/boş gün/boş soru/talep "az
+  iyi", yük nötr high/low). Eğilim: son 12 tam haftada sondan geriye kesintisiz kötüleşme ≥3. Kartlar: test_done ·
+  accuracy (sonuç kapsamı) · exam_net (karne genel, aynı seri) · wrong_archive · new_topics (konunun ilk çalışıldığı gün,
+  tüm geçmiş) · load (tam hafta görev) · gorev_pct · ontime (TR saati, ertesi gün 05:00'e kadar gününde) · night
+  (00–05) · empty_days · blank · balance (son 3 hafta + bu hafta, en geride ders ≥30 puan → kaçınılan) · requests
+  (talep + devir). Gün gün (yapılmayan görevler, ilk tik, olağan başlama `usual_first_tick`) · son 8 hafta grafiği +
+  dönem özeti · "böyle giderse" (aynı nokta temposu × tam hafta bandı + son 4 hafta eğimi) · önlemler (kalan görevler /
+  kaçınılan ders / ritim / yük / doğruluk / D4 deneme işaretleri; her biri cta_href + "Seansa ekle" gündem metni) ·
+  `deneme` = D4 analizi. Uç GET `/teacher/students/{id}/weekly-progress` (YENİ `api_v2/weekly_progress.py`, sahiplik
+  404); `_invalidate_for_task` + deneme sonuç uçları `…:weekly-progress` bayatlatır. Web YENİ
+  `components/teacher/student-weekly-progress.tsx` (5 renkli bölüm + `Ruler` cetveli + gün kartı açılır listesi;
+  "Seansa ekle" mevcut `useAddAgendaItems`) + `lib/api/weekly-progress.ts`; Genel sekmesinde eski MetricsStrip
+  SİLİNDİ, StatusSummary/GorevBreakdown/dönemler/AI/talep kartları en altta `<details>` içinde.
+  Canlı veriyle salt-okuma denendi (Emir: Pazartesi 3 test görevi bırakılmış → çözülen test "geçmişin en kötüsü";
+  Taha: taban 1 hafta → veri az). Test YENİ `test_api_v2_weekly_progress.py` **20/20** · YENİ `live_weekly_progress.py`
+  **17/17** (+`.shots/weekly_progress_{light,dark,mobile}.png`) · teacher_read 12 · teacher_students 15 · weekly_plan 15 ·
+  requests 18 · deneme_analysis 21 · bridge 35 · run_gorev_checks 83/83 · web tsc+eslint temiz.
+  **YAPILMADI:** mobil koç öğrenci detayı (aynı uçtan beslenebilir) · koçun kurduğu öğrenci hatırlatması (ayrı iş).
+  **Düzeltme (2026-10-20, yerel test bulgusu — "Henüz program haftası yok"):** hafta yalnız WeeklyProgram'dan
+  türüyordu → (a) program kaydı açılmadan görev eklenen gün-gün öğrenci (#410) ve (b) havuz öğrencisi (#414) boş
+  kalıyordu. `_weeks(db, student, today)`: programa düşmeyen görev günleri Pzt–Paz **takvim haftası**
+  (`kind="takvim"`, komşu program haftasına göre kırpılır) · havuz öğrencisinde her **çalışma dönemi** bir hafta
+  (`kind="donem"`; seans günü yeni döneme ait, açık dönem beklenen seansın bir gün öncesine/bugüne kadar).
+  `week.kind` yanıtta; web başlığı "Bu dönem…" + havuzda "Havuzu aç". weekly_progress testi **26/26** (9a-11).
+  İkinci bulgu (#414, havuz→gün gün→havuz): kapanış günü yalnız o gün yeni dönem AÇILDIYSA yeni döneme aittir,
+  açılmadıysa kapanan dönemde kalır (15 Eki görevleri kayboluyordu); dönem dışı görev günleri de takvim haftasıyla
+  tamamlanır; havuzda boş gün "kap boş". Yerel 207 aktif öğrencide tarama: 73 dolu · 134 hiç görevi yok · 0 hata ·
+  "görevi var ama boş" 0. **DERS: yeni analiz sayfası yalnız tohum veriyle değil, yereldeki TÜM öğrencilerle
+  taranmadan "bitti" denmez (programsız görev, havuz, mod geçişi gibi düzensiz durumlar).**
+  Üçüncü bulgu (#2 Yiğit, Haziran 8. sınıf haftaları): geçmiş haftalar artık YALNIZ güncel sınıf döneminden
+  (grafik/eğilim/ders dengesi dahil) · "geçen hafta" ancak ≤7 gün bitişikse · ders dengesi son 28 gün · bilgi
+  kartları (talep/devir, yanlış arşivi, dengeli ders) yeni `status="info"` → "Her zamanki" rozeti basılmaz
+  (dengelide "Dengeli") · biten haftada cümleler "O hafta…", havuzda "…dönem" · rozetler yönden bağımsız
+  ("Normalden iyi/kötü"; gece/boş-soruda az değer iyi). YERELDE GRAFİK GÖRMEK İÇİN: hiçbir yerel öğrencide
+  ≥4 dönem-içi geçmiş hafta yok → `python -m scripts.seed_weekly_progress_demo` (Demo Öğretmen altında
+  "Örnek Öğrenci (Haftalık İlerleme)", 9+1 hafta, branş denemeleri köprüyle; `--delete` siler).
+- **DENEME ANALİZİ YENİDEN TASARIM — DENETİM + TASLAK (2026-10-20, kod YOK, onay bekliyor):** kullanıcı: "toplantılarda
+  deneme analizine çok önem veriyorlar; modern ve mükemmel; her parametre canlı veriyle modellenip test edilsin".
+  YENİ salt-okuma denetçileri: `scripts/audit_exam_integrity.py` (A1-A6: soru satırı↔toplam, net formülü, ders kırılımı,
+  mükerrer, eşleşme) + `scripts/audit_exam_metrics.py` (M1-M9: servis çıktısı ↔ ham veriden bağımsız kâhin; canlıda
+  `docker compose cp` + `exec web python /tmp/...`). CANLI SONUÇ (11 gerçek öğrenci, 47 deneme, 4.247 soru): konu
+  analizi 972/972 · gelişim raporu 68/70 (2 fark = bilinçli "<3 denemede eğim yok") · net formülü hatasız. GERÇEK
+  bulgular: (1) ders neti tek tek 0'a kırpılıyor (Emir #161 "Temel Matematik" 0D 1Y → 0, olması gereken −0,25; ders
+  toplamı 95,25 ≠ net 95) + eşleşmeyen tek soru ayrı "ders" satırı · (2) kırılımsız TYT genel → "TYT 100 puan" uyarısız
+  (2 öğrenci) · (3) Seçmeli Felsefe %100 boş satırı kırılımda kalıyor (Yağmur, Davranış'ı şişirir) · (4) 105 gün önceki
+  denemede "ritim" uyarısı · (5) kodda var canlıda henüz yok: LGS genel → YKS tahmini engeli, konu analizi seri kayması.
+  Kod incelemesi kataloğu (11 şüphe) scratchpad `exam_metric_catalog.md`'de. Tasarım taslağı (Taha'nın gerçek 6 TYT
+  denemesi, ad gizli): https://claude.ai/artifact/5BNmamUnD1v7u2vYbVxXnP — tek akış: son deneme + kaçan net ayrıştırması
+  · gidişat (normal bant + tahmin) · ders×deneme ısı tablosu (tam puana oran) · net fırsatı + unutulan/gelişen ·
+  konu×deneme · sınav davranışı · puan tahmini (karne kalibrasyonu) · seans gündemi.
+- **DENEME ANALİZİ YENİ TASARIM — YERELDE TAMAM (2026-10-20, migration YOK, commit/deploy YOK):** kullanıcı kararı:
+  7 alt sekme KORUNUR, Genel Bakış = taslak, diğerleri taslağın diliyle modern/tablolu.
+  · **Canlı fikstür:** `scripts/export_exam_fixture.py` (prod, anonim) → `scripts/import_exam_fixture.py` → yerelde
+    "Canlı Örnek 1–9" (#450–458, `canli-ornek-N@lgs.local`, Demo Öğretmen; #452 = Taha verisi). Hesaplar canlıyla birebir.
+  · **Backend düzeltmeleri:** `subject_net()` (ders neti negatif olabilir; import + elle giriş) · eşleşmeyen tek soru
+    ayrı ders satırı açmaz + "temel matematik"→matematik · puan tahmini yalnız ders kırılımlı denemeden, kırılımsız için
+    uyarı, aile = en son genel deneme · konu analizi istenen seride PDF yoksa `series_missing` (başka seriye kaymaz) +
+    fırsat sırası kararlı · gelişim raporu geçmiş dönemde ritim uyarısı vermez.
+  · **TEK MERKEZ `app/services/exam_overview.py`** + GET `/teacher/students/{id}/exam-overview` · `/student/exam-overview`
+    · `/parent/students/{id}/exam-overview` (öğrenci/veliye seans gündemi yok). `scripts/test_exam_overview.py` **461/461**.
+  · **Web (`components/shared/exam-ov/`):** `ov-ui.tsx` ortak parçalar · Genel Bakış `exam-overview-tab.tsx` · YENİ
+    `exam-progress-behavior-tabs.tsx`: **Net Gelişimi** (6 ölçü + büyük gidişat grafiği + deneme deneme tablo [D/Y/B
+    çubuğu, önceki fark, normal aralık konumu] + ders başına mini çizgi kartları + ders×deneme tablosu) · **Sınav
+    Davranışı** (ders tablosu: yanlış/boş/pay çubuğu/deneme başına kaçan net/eğilim + denemeden denemeye yanlış-boş;
+    LGS/YKS ceza metni doğru). Üç sekme aynı veri paketinden → sayılar ayrışamaz.
+  · **Konu Analizi** (`exam-topic-analysis.tsx` yeniden yazıldı, aynı ad/props/anahtar): özet şerit (soru · konu · zayıf
+    konu · toplam fırsat) + ders süzgeci + "Hangi derste ne kadar net kaçıyor" ders tablosu (tıkla→süz) + numaralı net
+    fırsatı tablosu (10 + tümünü göster) + unutulan/gelişen (kanıtlı kartlar, her sütun 4 + tümünü göster) + TAM konu ×
+    deneme tablosu (sıralama: en çok soru / en zayıf; 20 + tümü) + series_missing boş durumu.
+  · **Tüm Denemeler** (koç): tablo düzeni — Tarih · Deneme · Net · D/Y/B çubuğu · aynı serideki önceki denemeye fark ·
+    işlemler (tek satır); dar ekranda eski kart düzenine iner. Gelişim Raporu + Puan Tahmini zaten KPI/tablo → dokunulmadı.
+  · Öğrenci + veli panelleri de yeni Genel Bakış / Net Gelişimi / Sınav Davranışı'na bağlandı (eski `OverviewTab/
+    ProgressTab/BehaviorTab` artık kullanılmıyor, `exam-analytics.tsx`'te duruyor). Gidişat grafiği dar ekranda en az
+    600px, kart içinde kayar (390px'te okunmuyordu).
+  · Test: tarayıcıda koç 7 sekme (açık/koyu) + öğrenci 7 sekme (açık/koyu, 390px) + veli 7 sekme (koyu): yatay taşma 0,
+    konsol hatası 0 · live_deneme_bridge 21/21 · live_exam_parent_announce 21/21 (test alt sekmeye geçecek şekilde
+    güncellendi) · exam_overview 461 · topic_analysis 15 · faz3 32 · web tsc + eslint (tam) temiz.
+  · **KALAN:** mobil uygulamada aynı tasarım · deploy sonrası prod'da mevcut kayıtlar için ders kırılımı yeniden hesap
+    (`rebuild_subject_nets`) · Taha'da 40 Türkçe sorusunun 20'sinin "Paragrafta Yardımcı Düşünce"ye bağlanması
+    (eşleme yığılması şüphesi) incelenmedi.
+- **D3b REVİZYONU — BRANŞ DENEMELERİ AYRI SEKME (2026-10-20, kullanıcı: "elmalar armutlara karışmış"):** "Programdaki
+  denemeler" bölümü + "Sonucu eksik denemeler" kartı Denemeler sayfalarının DİBİNE eklenmişti → karne analiziyle karışıyordu.
+  Denemeler sayfaları (koç `student-exams-panel`, öğrenci `student-exams-client`, veli `parent-exams-insight-client`, mobil
+  3 ekran) **canlıdaki (HEAD) haline döndürüldü**. Koç: öğrenci detayına YENİ sekme **"Branş Denemeleri"** (`#program-exams`,
+  Akademik grubu, `student-program-exams-panel.tsx`): açıklama + sonucu eksik denemeler + D4 işaretleri + ders ders
+  `SeriesCard` (haftalık ilerlemeden export) + liste. Öğrenci/veli web + mobil: sayfa üstünde iki parçalı seçici
+  **"Karne denemeleri | Branş denemeleri"** (`ExamKindSwitch` / RN `ExamKindToggle`); varsayılan karne = canlıdaki içerik.
+  Haftalık ilerleme deneme bölümündeki bağlantı yeni sekmeye gider. `live_deneme_bridge` **21/21** (30: koç Denemeler'de
+  program bölümü/kart YOK · 2c2: öğrenci varsayılan görünümde YOK). Görsel 7/11'deki adsız ders satırı ÜRÜN DEĞİL, örnek
+  betiğin hatalı `subject_nets`'iydi (anahtar "subject" yazılmıştı, doğrusu "name") — düzeltildi.
+- **BRANŞ DENEMELERİ → DENEMELER İÇİNE + ANALİZ YENİDEN TASARIM (2026-10-20, migration YOK):** kullanıcı: ayrı üst
+  sekme menüyü iki satıra itiyordu. "Branş Denemeleri" sekmesi KALDIRILDI; Denemeler sekmesinde PDF/elle kartlarının
+  yanına 3. kart **"Branş denemeleri analizi"** (`ExamAddActions extra`; özet: deneme · ders · ort. net % · bekleyen ·
+  dikkat). `#program-exams` hash'i geçerli kalır → Denemeler sekmesi seçili + branş görünümü (`StudentExamsPanel
+  branchView/onBranchView`; "Karne denemelerine dön"). Backend `deneme_analysis` ek açılar (additive): seri başına en
+  iyi/en düşük · istikrar (eğilim doğrusundan sapma std; high/mid/low = Düzenli/Orta/Dalgalı) · ivme (son k − önceki k,
+  k≤3) · kaçan net (yanlış×(1+1/ceza) + boş, deneme başına) · ort. net/soru · ilk/son tarih · ortalama aralık · son
+  deneme kaç gün önce; yanıtta `overview` (toplamlar, en güçlü/zayıf/yükselen/gerileyen/en düzenli ders, son 8 hafta
+  ritmi). Sayfa (`student-program-exams-panel.tsx` yeniden yazıldı): KPI şeridi · öne çıkanlar · koçun bakacağı yerler
+  (tıkla→ders) · ders karnesi tablosu (normal aralık cetveli, eğilim, ivme, istikrar, deneme/test/genel doğruluk, boş,
+  ritim) · dersler yan yana net % grafiği · ders×deneme ısı tablosu · haftalık ritim · seçili dersin derin analizi
+  (bant + kesikli tahmin, D/Y/B sütunları, kaçan net ayrıştırması, üç yerde doğruluk, süre). Demo tohum 3 branş
+  (Matematik yatay · Türkçe yükselen · Fizik düşen). Test deneme_analysis **30/30** (7a-7i yeni) · YENİ
+  `live_branch_exams.py` **20/20** (tek satır menü, 3 kart aynı satırda, 7 bölüm, satır→derin analiz, geri, koyu tema,
+  390px; `.shots/branch_*`) · weekly_progress 26 · bridge 35 · results 22 · live_deneme_bridge 21 · tsc+eslint temiz.
+- **VİDEO SEPETİ → HAFTALIK HAVUZ (2026-10-20, migration `t4v7a0b1a66w` ← s3u6z9a0z55v):** havuz öğrencisinde Video
+  Sepeti yoktu (`/week` editör yerine kart gösteriyor). `video_basket_items.pool_item_id` (FK SET NULL). Havuz
+  editörüne (`/pool`) aynı yüzen `VideoBasketFloat`; sepet yanıtı `program_mode` + `pool_period_open` + `pooled_count`,
+  yeni durum `pooled` ("Havuzda", mor). Havuz öğrencisinde sürükle-bırak YOK: grup başlığında **"Havuza ekle (N video)"**
+  + satırda tek video. Uç POST `/teacher/students/{id}/video-basket/to-pool` {item_ids}: aynı konu grubu → TEK havuz
+  kalemi (etkinlik, 1 birim — K42 ile tutarlı; etiket "Grup — N video (X dk)"; dersi seçilmemiş grup 422
+  subject_required; gün-gün öğrenci 409 not_havuz; açık dönem yok 409). `put_in_cup` etkinlik dalı: kalemin bekleyen
+  videoları varsa görev TaskType.VIDEO + link ilk video + videolar göreve bağlanır (öğrenci görevde tek tek açar).
+  Kaptan geri al / gün sonu silme / dönem silme / mod geçişi → `detach_task_videos` (video yeniden havuzda);
+  kalem kaldır → `release_pool_videos` (sepete döner); devir → `_move_videos` (yeni kaleme). Test YENİ
+  `test_video_pool.py` **22/22** · YENİ `live_video_pool.py` **7/7** (+`.shots/video_pool_*`) · video_basket 62 ·
+  live_video_basket 21 · pool student 29 / foundation 53 / editor 41 / step6 26 / step7 30 / flags 47 / mode switch
+  22 / cup_resize 13. BİLİNÇLİ: bir grup tek gün kalemidir (bölmek için tek video "havuza ekle").
+- **SIRADA:** kullanıcı yerelde inceler → gerekirse ince ayar → mobil koç öğrenci detayı. Deploy D1+D1b+D2+D3+D3b+D4 +
+  haftalık ilerleme birlikte bekliyor (migration zinciri p0r3w6x7w22s → q1s4x7y8x33t → r2t5y8z9y44u → s3u6z9a0z55v → t4v7a0b1a66w;
+  kullanıcı onayıyla; mobil OTA).
+
+---
+
 ## HAFTALIK GÖREV HAVUZU (dershane modu) — TASARIM KİLİTLİ, ADIM 1–6 YERELDE (2026-10-13)
 
 **ÜÇ ÇERÇEVE (kullanıcı):** (1) yalnız yerelde; **onaysız canlıya alınmaz** (SSH deploy kuralı bu

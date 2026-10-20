@@ -61,6 +61,13 @@ def compute_net(correct: int, wrong: int, section: ExamSection) -> float:
     return round(max(raw, 0.0), 2)
 
 
+def subject_net(correct: int, wrong: int, section: ExamSection) -> float:
+    """DERS neti — negatif OLABİLİR (0 doğru 1 yanlış = −0,25). Yalnız TOPLAM net 0'a
+    kırpılır; ders netleri kırpılırsa ders toplamı toplam netten büyük çıkar (2026-10-20,
+    canlı denetim: 95,25 ≠ 95)."""
+    return round(correct - (wrong / section_penalty(section)), 2)
+
+
 class ExamResult(Base):
     __tablename__ = "exam_results"
     __table_args__ = (
@@ -106,6 +113,11 @@ class ExamResult(Base):
     import_pdf_data: Mapped[bytes | None] = deferred(
         mapped_column(LargeBinary, nullable=True)
     )
+    # Görev denemesi köprüsü (D3, 2026-10-20): görevde girilen sonuçtan açılan kayıt
+    # (import_source="task"); kalem silinince kayıt da gider.
+    task_book_item_id: Mapped[int | None] = mapped_column(
+        ForeignKey("task_book_items.id", ondelete="CASCADE"), nullable=True, unique=True
+    )
     # JSON metin: evren/kapsam, puan-sıralama, doğrulama sonuçları, güven bilgisi.
     analysis_meta: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -124,6 +136,24 @@ class ExamResult(Base):
 
     def __repr__(self) -> str:
         return f"<ExamResult s={self.student_id} {self.section.value} net={self.net}>"
+
+
+# --- Program denemesi ayrımı (2026-10-20, kullanıcı kararı) ---
+# Görevde girilen D/Y'den köprüyle açılan kayıt (import_source="task") soru-satırı
+# ve konu eşlemesi TAŞIMAZ. Deneme ANALİZ sistemi (Denemeler listesi/özeti, net
+# grafiği, gelişim raporu, puan tahmini) yalnız karne/elle girilen denemelerle
+# çalışır; program denemeleri ayrı "Programdaki denemeler" bölümünde durur.
+SOURCE_TASK = "task"
+
+
+def is_program_exam(exam: "ExamResult") -> bool:
+    return (exam.import_source or "") == SOURCE_TASK
+
+
+def analysis_exam_filter():
+    """SQL süzgeci: deneme analiz yüzeylerine giren kayıtlar (program denemesi hariç)."""
+    from sqlalchemy import or_
+    return or_(ExamResult.import_source.is_(None), ExamResult.import_source != SOURCE_TASK)
 
 
 # --- Soru sonucu sabitleri (düz VARCHAR — enum migration'sız) ---

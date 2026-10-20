@@ -295,6 +295,7 @@ from app.models.exam_result import (
     ExamResultQuestion,
     ExamTopicAlias,
     compute_net,
+    subject_net,
     section_penalty,
 )
 from app.models.support_request import (
@@ -710,6 +711,7 @@ __all__ = [
     "ExamTarget",
     "AssistantMessage",
     "compute_net",
+    "subject_net",
     "section_penalty",
     "ALIAS_SOURCE_AI",
     "ALIAS_SOURCE_COACH",
@@ -945,3 +947,6 @@ __all__ = [
     "AssistantMessage",
     "SessionAgendaItem",
 ]
+
+# Görev denemesi → Denemeler köprüsü (D3): before_flush dinleyicisini kaydet.
+from app.services import deneme_bridge as _deneme_bridge  # noqa: E402,F401

@@ -29,6 +29,8 @@ class StudentExamsResponse(BaseModel):
     rows: list[ExamResultRow]
     # P3: hangi sınıf dönemine göre süzüldü
     period: "PeriodFilterMeta | None" = None
+    # Program denemeleri — analiz listesinden ayrı (2026-10-20)
+    program_rows: list[ExamResultRow] = []
 
 
 # Task.type enum — app/models/task.py:TaskType ile birebir 5 değer
@@ -90,6 +92,14 @@ class StudentTaskItem(BaseModel):
     correct: int | None = None
     wrong: int | None = None
     blank: int | None = None
+    # Deneme kalemi (D1): 'brans'|'genel' + sınav türü + deneme başına soru (başlangıç).
+    exam_kind: str | None = None
+    exam_section: str | None = None
+    question_count: int | None = None
+    # D2: süre (dk) · net (sonuç girildiyse) · çözüldü ama sonuç bekliyor
+    duration_minutes: int | None = None
+    net: float | None = None
+    result_pending: bool = False
 
 
 class StudentTask(BaseModel):
@@ -763,3 +773,19 @@ class GoalToggleBody(BaseModel):
     achieved=True → ACHIEVED; achieved=False → ACTIVE (rollback).
     """
     achieved: bool
+
+
+
+class DenemeResultRowBody(BaseModel):
+    """Bir denemenin sonucu (D2). solved=False → çözülmedi; D/Y yok → sonucu sonra gireceğim."""
+    item_id: int
+    solved: bool = True
+    correct: int | None = None
+    wrong: int | None = None
+    blank: int | None = None
+    question_count: int | None = None
+    duration_minutes: int | None = None
+
+
+class DenemeResultsBody(BaseModel):
+    rows: list[DenemeResultRowBody]

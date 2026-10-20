@@ -390,6 +390,15 @@ export interface TeacherTaskItem {
   correct_count: number | null;
   wrong_count: number | null;
   blank_count: number | null;
+  /** Deneme kalemi (D1): 'brans' | 'genel'; 1 kalem = 1 deneme. */
+  exam_kind?: "brans" | "genel" | null;
+  exam_section?: string | null;
+  /** Deneme başına soru (koçun başlangıç değeri; öğrenci esnek değiştirir). */
+  question_count?: number | null;
+  /** D2: süre (dk) · net (sonuç girildiyse) · çözüldü ama sonuç bekliyor */
+  duration_minutes?: number | null;
+  net?: number | null;
+  result_pending?: boolean;
 }
 
 export interface TaskItemResultBody {
@@ -2263,6 +2272,8 @@ export interface StudentExamListResponse {
   section_options: ExamSectionOption[];
   /** P3 — hangi sınıf dönemine göre süzüldü. */
   period?: PeriodFilterMeta | null;
+  /** Programdaki deneme görevlerinden gelen sonuçlar — analize karışmaz (2026-10-20). */
+  program_rows?: ExamResultRow[];
 }
 
 // =============================================================================

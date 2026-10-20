@@ -325,6 +325,28 @@ export function useCreateTask(studentId: number) {
   });
 }
 
+// --------------------------- Deneme görevi (D1) -------------------------------
+
+export function useCreateDenemeTask(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<TeacherTask>,
+    ApiError,
+    { body: import("@/lib/api/deneme").DenemeTaskBody }
+  >({
+    mutationFn: ({ body }) =>
+      api<MutationResponse<TeacherTask>>(
+        `/api/v2/teacher/students/${studentId}/deneme-tasks`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (err) => showError(err, "Deneme eklenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      showWarnings(res, "Deneme eklendi");
+    },
+  });
+}
+
 // --------------------------- Devret (carryover) ------------------------------
 
 export function useCarryover(studentId: number) {
@@ -2431,6 +2453,29 @@ export function useSetStudentsClassGroup() {
           ? `${r.updated_count} öğrenci “${r.class_group}” şubesine alındı`
           : `${r.updated_count} öğrencinin şubesi kaldırıldı`,
       );
+    },
+  });
+}
+
+
+// --------------------------- Deneme sonuçları — koç (D2) ---------------------------
+
+export function useSetDenemeResultsCoach() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<TeacherTask>,
+    ApiError,
+    { taskId: number; rows: import("@/components/shared/deneme-result-dialog").DenemeRowOutput[] }
+  >({
+    mutationFn: ({ taskId, rows }) =>
+      api<MutationResponse<TeacherTask>>(`/api/v2/teacher/tasks/${taskId}/deneme-results`, {
+        method: "POST",
+        body: JSON.stringify({ rows }),
+      }),
+    onError: (err) => showError(err, "Deneme sonucu kaydedilemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Deneme sonucu kaydedildi");
     },
   });
 }

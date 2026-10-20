@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { TaskVideoList } from "@/components/ui/task-video-list";
-import type { CanRequestMatrix, StudentTask } from "@/lib/student";
+import type { DenemeResultRow, CanRequestMatrix, StudentTask } from "@/lib/student";
 import { activityLabel, linkButtonLabel, openTaskLink, taskLabel as displayLabel } from "@/lib/task-display";
 
 const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
@@ -174,6 +174,7 @@ export function TaskSheetContent({
   busy,
   error,
   onSaveItems,
+  onSaveDeneme,
   onCompleteActivity,
   onUncomplete,
   canRequest,
@@ -186,6 +187,7 @@ export function TaskSheetContent({
   busy: boolean;
   error: string | null;
   onSaveItems: (updates: ItemUpdate[]) => void;
+  onSaveDeneme?: (rows: DenemeResultRow[]) => void;
   onCompleteActivity: (solvedCount: number | null) => void;
   onUncomplete: () => void;
   canRequest?: CanRequestMatrix;
@@ -194,6 +196,7 @@ export function TaskSheetContent({
   onSubmitRequest?: (kind: RequestKind, payload: RequestPayload) => void;
   onRequestReplace?: () => void;
 }) {
+  const isExam = task.items.some((it) => it.exam_kind);
   const [rows, setRows] = React.useState<Row[]>(() => buildRows(task));
   const [solved, setSolved] = React.useState("");
   const isActivity = rows.length === 0;
@@ -243,7 +246,11 @@ export function TaskSheetContent({
         ) : null}
         <View className="flex-row flex-wrap items-center gap-2">
           <Text className="text-lg font-bold text-slate-900">{title}</Text>
-          {task.type !== "test" ? (
+          {isExam ? (
+            <View className="rounded-full bg-indigo-600 px-2 py-0.5">
+              <Text className="text-[10px] font-semibold text-white">Deneme</Text>
+            </View>
+          ) : task.type !== "test" ? (
             <View className="rounded-full bg-violet-600 px-2 py-0.5">
               <Text className="text-[10px] font-semibold text-white">{activityLabel(task.type)}</Text>
             </View>
@@ -264,7 +271,9 @@ export function TaskSheetContent({
 
       <TaskDetails task={task} />
 
-      {isActivity ? (
+      {isExam && onSaveDeneme ? (
+        <DenemeSection task={task} busy={busy} error={error} onSaveDeneme={onSaveDeneme} />
+      ) : isActivity ? (
         <View className="gap-3">
           <Text className="text-sm text-slate-600">
             {isVideo
@@ -484,6 +493,7 @@ export function TaskSheet(props: {
   busy: boolean;
   error: string | null;
   onSaveItems: (updates: ItemUpdate[]) => void;
+  onSaveDeneme?: (rows: DenemeResultRow[]) => void;
   onCompleteActivity: (solvedCount: number | null) => void;
   onUncomplete: () => void;
   onClose: () => void;
@@ -513,5 +523,152 @@ export function TaskSheet(props: {
         </KeyboardAvoidingView>
       </View>
     </Modal>
+  );
+}
+
+
+// =============================================================================
+// Deneme bölümü (D2) — her deneme bir satır: çözdüm/çözmedim · D · Y · B (otomatik) ·
+// soru (esnek) · süre; net anında. "Sonucu sonra gireceğim" çözüldü sayar.
+// =============================================================================
+
+interface DRow {
+  itemId: number;
+  label: string;
+  section: string | null | undefined;
+  solved: boolean;
+  correct: string;
+  wrong: string;
+  blank: string;
+  qn: string;
+  dur: string;
+  origQn: number | null | undefined;
+}
+
+function DenemeSection({
+  task,
+  busy,
+  error,
+  onSaveDeneme,
+}: {
+  task: StudentTask;
+  busy: boolean;
+  error: string | null;
+  onSaveDeneme: (rows: DenemeResultRow[]) => void;
+}) {
+  const [rows, setRows] = React.useState<DRow[]>(() =>
+    task.items
+      .filter((it) => it.exam_kind)
+      .map((it) => ({
+        itemId: it.id,
+        label: it.section_label || it.book_name || "Deneme",
+        section: it.exam_section,
+        solved: true,
+        correct: it.correct != null ? String(it.correct) : "",
+        wrong: it.wrong != null ? String(it.wrong) : "",
+        blank: it.blank != null ? String(it.blank) : "",
+        qn: it.question_count != null ? String(it.question_count) : "",
+        dur: it.duration_minutes != null ? String(it.duration_minutes) : "",
+        origQn: it.question_count,
+      })),
+  );
+  const set = (id: number, p: Partial<DRow>) =>
+    setRows((rs) => rs.map((r) => (r.itemId === id ? { ...r, ...p } : r)));
+
+  const calc = rows.map((r) => {
+    const c = parseNum(r.correct);
+    const w = parseNum(r.wrong);
+    const qn = parseNum(r.qn);
+    const typedB = parseNum(r.blank);
+    const has = c != null || w != null;
+    const autoB = has && qn != null ? Math.max(0, qn - (c ?? 0) - (w ?? 0)) : null;
+    const total = (c ?? 0) + (w ?? 0) + (typedB ?? autoB ?? 0);
+    const over = has && qn != null && total > qn;
+    const net = has ? (c ?? 0) - (w ?? 0) / (r.section === "lgs" ? 3 : 4) : null;
+    return { r, c, w, qn, typedB, autoB, has, over, net };
+  });
+  const invalid = calc.some((x) => x.r.solved && x.over);
+
+  function build(withResults: boolean): DenemeResultRow[] {
+    return calc.map((x) => {
+      if (!x.r.solved) return { item_id: x.r.itemId, solved: false };
+      const o: DenemeResultRow = { item_id: x.r.itemId, solved: true };
+      if (x.qn != null && x.qn !== x.r.origQn) o.question_count = x.qn;
+      const dur = parseNum(x.r.dur);
+      if (dur != null && dur > 0) o.duration_minutes = dur;
+      if (withResults && x.has) {
+        o.correct = x.c ?? 0;
+        o.wrong = x.w ?? 0;
+        if (x.typedB != null) o.blank = x.typedB;
+      }
+      return o;
+    });
+  }
+
+  return (
+    <View className="gap-4">
+      <Text className="text-sm text-slate-600">
+        Her denemenin doğru ve yanlışını gir; boş kendiliğinden hesaplanır. Kaynağındaki soru sayısı
+        farklıysa “Soru”yu düzelt.
+      </Text>
+      {calc.map(({ r, autoB, has, over, net }, i) => (
+        <View key={r.itemId} className={`gap-3 rounded-2xl border p-3 ${r.solved ? "border-slate-200" : "border-dashed border-slate-300 bg-slate-50"}`}>
+          <View className="flex-row items-center justify-between gap-2">
+            <Text className="flex-1 text-sm font-semibold text-slate-800">
+              {rows.length > 1 ? `${i + 1}. ` : ""}{r.label}
+            </Text>
+            <View className="flex-row rounded-full border border-slate-300 p-0.5">
+              {[true, false].map((v) => (
+                <Pressable
+                  key={String(v)}
+                  onPress={() => set(r.itemId, { solved: v })}
+                  className={`rounded-full px-3 py-1 ${r.solved === v ? "bg-brand-700" : ""}`}
+                >
+                  <Text className={`text-xs font-semibold ${r.solved === v ? "text-white" : "text-slate-500"}`}>
+                    {v ? "Çözdüm" : "Çözmedim"}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          {r.solved ? (
+            <>
+              <View className="flex-row gap-2">
+                <NumField label="Doğru" value={r.correct} onChangeText={(v) => set(r.itemId, { correct: v })} />
+                <NumField label="Yanlış" value={r.wrong} onChangeText={(v) => set(r.itemId, { wrong: v })} />
+                <NumField label={autoB != null && r.blank === "" ? `Boş (${autoB})` : "Boş"} value={r.blank}
+                          onChangeText={(v) => set(r.itemId, { blank: v })} />
+              </View>
+              <View className="flex-row gap-2">
+                <NumField label="Soru" value={r.qn} onChangeText={(v) => set(r.itemId, { qn: v })} />
+                <NumField label="Süre (dk)" value={r.dur} onChangeText={(v) => set(r.itemId, { dur: v })} />
+              </View>
+              <Text className={`text-xs ${over ? "text-rose-600" : "text-slate-500"}`}>
+                {over
+                  ? "Doğru + yanlış + boş soru sayısından fazla — soru sayısını düzelt."
+                  : has && net != null
+                    ? `Net ${net.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`
+                    : "Sonucu şimdi girmezsen deneme çözüldü sayılır, sonuç bekler."}
+              </Text>
+            </>
+          ) : null}
+        </View>
+      ))}
+      {error ? <Text className="text-sm text-rose-600">{error}</Text> : null}
+      <Pressable
+        onPress={() => onSaveDeneme(build(true))}
+        disabled={busy || invalid}
+        className={`items-center rounded-xl py-3.5 ${busy || invalid ? "bg-brand-700/50" : "bg-brand-700 active:bg-brand-800"}`}
+      >
+        <Text className="text-base font-semibold text-white">{busy ? "Kaydediliyor…" : "Kaydet"}</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => onSaveDeneme(build(false))}
+        disabled={busy}
+        className="items-center rounded-xl border border-slate-300 py-3 active:bg-slate-100"
+      >
+        <Text className="text-sm font-semibold text-slate-700">Sonucu sonra gireceğim</Text>
+      </Pressable>
+    </View>
   );
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Eye, MessageSquareQuote, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronDown, Eye, MessageSquareQuote } from "lucide-react";
 
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamAddActions } from "@/components/shared/exam-add-actions";
@@ -10,12 +10,13 @@ import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
 import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
+import { DenemePendingCard } from "@/components/shared/deneme-pending-card";
+import { ExamKindSwitch, ProgramExamsSection } from "@/components/shared/program-exams-section";
 import {
-  BehaviorTab,
-  OverviewTab,
-  ProgressTab,
   previousExam,
 } from "@/components/teacher/exams/exam-analytics";
+import { ExamOverviewTab } from "@/components/shared/exam-ov/exam-overview-tab";
+import { ExamBehaviorTab, ExamProgressTab } from "@/components/shared/exam-ov/exam-progress-behavior-tabs";
 import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
 import { examProgressKeys, getExamShares } from "@/lib/api/exam-progress";
 import type { ExamShareInfo } from "@/lib/types/exam-progress";
@@ -91,6 +92,8 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
     [rows, activeSection],
   );
   const [tab, setTab] = React.useState<Tab>("overview");
+  const [view, setView] = React.useState<"karne" | "program">("karne");
+  const programRows = q.data?.program_rows ?? [];
   const [detailId, setDetailId] = React.useState<number | null>(null);
   const sharesQ = useQuery({
     queryKey: examProgressKeys.shares({ kind: "student" }),
@@ -116,6 +119,22 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
           Deneme sonuçların ve konu analizin. Sonuç PDF&apos;ini kendin de yükleyebilirsin.
         </p>
       </div>
+
+      <ExamKindSwitch value={view} onChange={setView} karneCount={rows.length} programCount={programRows.length} />
+
+      {view === "program" ? (
+        <>
+          <DenemePendingCard audience={{ kind: "student" }} />
+          {programRows.length === 0 ? (
+            <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+              Programındaki deneme görevlerinin sonuçları burada listelenir. Henüz sonucu girilmiş deneme yok.
+            </p>
+          ) : (
+            <ProgramExamsSection rows={programRows} audience="student" />
+          )}
+        </>
+      ) : (
+      <>
 
       <ExamAddActions
         onImport={(f) => {
@@ -188,16 +207,13 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
 
           <div role="tabpanel">
             {tab === "overview" ? (
-              <div className="space-y-4">
-                <SummaryStrip rows={sectionRows} />
-                <OverviewTab rows={sectionRows} studentId={null} onOpenDetail={(r) => setDetailId(r.id)} />
-              </div>
+              <ExamOverviewTab source={{ kind: "student" }} series={activeSection} rows={sectionRows} onOpenDetail={(r) => setDetailId(r.id)} />
             ) : tab === "progress" ? (
-              <ProgressTab rows={sectionRows} />
+              <ExamProgressTab source={{ kind: "student" }} series={activeSection} />
             ) : tab === "topics" ? (
               <ExamTopicAnalysis section={activeSection} />
             ) : tab === "behavior" ? (
-              <BehaviorTab rows={sectionRows} />
+              <ExamBehaviorTab source={{ kind: "student" }} series={activeSection} />
             ) : tab === "score" ? (
               <ScoreEstimatePanel source={{ kind: "student" }} />
             ) : tab === "report" ? (
@@ -234,61 +250,9 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
         PDF analizi yapay zekâ ile yapılır ve koçunun kredi havuzundan düşer.
         Satır düzeltmeleri (konu/sonuç) koçun panelinden yapılır.
       </p>
+      </>
+      )}
     </div>
-  );
-}
-
-function SummaryStrip({ rows }: { rows: ExamResultRow[] }) {
-  // rows: TEK sınav türü, DESC (en yeni ilk)
-  const count = rows.length;
-  const nets = rows.map((r) => r.net);
-  const avg = count ? nets.reduce((a, b) => a + b, 0) / count : 0;
-  const best = count ? Math.max(...nets) : 0;
-  const last = count ? rows[0].net : null;
-  const first = count ? rows[count - 1].net : null;
-  const delta = count >= 2 && last != null && first != null ? last - first : null;
-  const items: { label: string; value: string; extra?: React.ReactNode }[] = [
-    { label: "Deneme", value: String(count) },
-    { label: "Ortalama net", value: avg.toFixed(2) },
-    { label: "En iyi net", value: best.toFixed(2) },
-    {
-      label: "Son net",
-      value: last != null ? last.toFixed(2) : "—",
-      extra:
-        delta != null ? (
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 text-[10px] font-medium",
-              delta >= 0
-                ? "text-emerald-700 dark:text-emerald-300"
-                : "text-rose-700 dark:text-rose-300",
-            )}
-          >
-            {delta >= 0 ? (
-              <TrendingUp className="size-3" aria-hidden />
-            ) : (
-              <TrendingDown className="size-3" aria-hidden />
-            )}
-            {delta >= 0 ? "+" : ""}
-            {delta.toFixed(2)}
-          </span>
-        ) : undefined,
-    },
-  ];
-  return (
-    <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {items.map((it) => (
-        <div key={it.label} className="rounded-md border border-border bg-card px-3 py-2">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl font-semibold tabular-nums text-foreground">
-              {it.value}
-            </span>
-            {it.extra}
-          </div>
-          <div className="text-[11px] text-muted-foreground">{it.label}</div>
-        </div>
-      ))}
-    </section>
   );
 }
 

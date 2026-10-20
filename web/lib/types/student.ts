@@ -41,6 +41,14 @@ export interface StudentTaskItem {
   correct: number | null;
   wrong: number | null;
   blank: number | null;
+  /** Deneme kalemi (D1): 'brans' | 'genel'; 1 kalem = 1 deneme. */
+  exam_kind?: "brans" | "genel" | null;
+  exam_section?: string | null;
+  question_count?: number | null;
+  /** D2: süre (dk) · net (sonuç girildiyse) · çözüldü ama sonuç bekliyor */
+  duration_minutes?: number | null;
+  net?: number | null;
+  result_pending?: boolean;
 }
 
 export type TaskPeriod = "morning" | "noon" | "evening";
@@ -525,4 +533,6 @@ import type { ExamListSummary, ExamResultRow } from "@/lib/types/teacher";
 export interface StudentExamsResponse {
   summary: ExamListSummary;
   rows: ExamResultRow[];
+  /** Programdaki deneme görevlerinden gelen sonuçlar — analize karışmaz. */
+  program_rows?: ExamResultRow[];
 }

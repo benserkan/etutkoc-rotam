@@ -30,6 +30,10 @@ class PoolItemOut(BaseModel):
     book_completed: int | None = None  # kitaplı kalem: bölümde çözülen (kitap sayacı) — ilerleme takibi
     book_total: int | None = None      # kitaplı kalem: bölümün test sayısı
     created_at: str | None = None
+    # Deneme kalemi (D1b): quantity = deneme adedi; question_count = deneme başına soru.
+    exam_kind: str | None = None
+    exam_section: str | None = None
+    question_count: int | None = None
 
 
 class PoolSummaryOut(BaseModel):

@@ -403,9 +403,9 @@ def week_test_deneme_for(db: Session, student_id: int, end_date: date) -> WeekTe
         cat = gorev_stats.classify_gorev(t)
         if cat in ("deneme", "tam_deneme"):
             # DENEME = ADET (soru hacmi DEĞİL): kaç deneme planlandı / tamamlandı.
-            res.deneme_planned += 1
-            if gorev_stats.gorev_done(t):
-                res.deneme_completed += 1
+            dp, dc = gorev_stats.deneme_units(t)
+            res.deneme_planned += dp
+            res.deneme_completed += dc
     return res
 
 

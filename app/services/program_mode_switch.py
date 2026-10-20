@@ -163,6 +163,10 @@ def _clean_future(db: Session, student: User, effective_on: date) -> dict:
             src = db.get(Task, t.carried_from_task_id)
             if src is not None and src.carried_at is not None:
                 src.carried_at = None
+        if t.pool_item_id is not None:
+            from app.services.pool_mode import detach_task_videos
+
+            detach_task_videos(db, t.id)
         db.delete(t)
         deleted += 1
     db.flush()

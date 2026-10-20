@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DemoHint } from "@/components/demos/demo-hint";
 import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
+import { ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
 import { ProgressReportCard } from "@/components/exams/progress-report-card";
 import { ScoreEstimateCard } from "@/components/exams/score-estimate-card";
 import { TopicAnalysisCard } from "@/components/exams/topic-analysis-card";
@@ -40,6 +41,8 @@ export default function ParentChildExamsRoute() {
   const exams = examsQ.data;
   const rows = React.useMemo(() => exams?.rows ?? [], [exams]);
   const [detailId, setDetailId] = React.useState<number | null>(null);
+  const [view, setView] = React.useState<"karne" | "program">("karne");
+  const programRows = exams?.program_rows ?? [];
   const detail = rows.find((r) => r.id === detailId) ?? null;
 
   const sections = React.useMemo(() => {
@@ -83,6 +86,17 @@ export default function ParentChildExamsRoute() {
         refreshControl={<RefreshControl refreshing={examsQ.isRefetching} onRefresh={refresh} tintColor="#0e7490" />}
       >
         <DemoHint contextKey="ai-insight" role="parent" />
+        <ExamKindToggle value={view} onChange={setView} karneCount={rows.length} programCount={programRows.length} />
+        {view === "program" ? (
+          programRows.length === 0 ? (
+            <Text className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+              Programdaki deneme görevlerinin sonuçları burada listelenir. Henüz sonucu girilmiş deneme yok.
+            </Text>
+          ) : (
+            <ProgramExamsCard rows={programRows} audience="parent" />
+          )
+        ) : (
+        <>
         <Pressable
           onPress={() => router.back()}
           className="flex-row items-center gap-2.5 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4 active:bg-cyan-100"
@@ -197,6 +211,8 @@ export default function ParentChildExamsRoute() {
               );
             })}
           </>
+        )}
+        </>
         )}
         <View className="h-6" />
       </ScrollView>

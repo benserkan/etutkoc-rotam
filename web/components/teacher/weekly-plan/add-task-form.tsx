@@ -48,8 +48,8 @@ import {
   useCreateTask,
   useCreateWorkBlock,
 } from "@/lib/hooks/use-teacher-mutations";
-import { useTeacherStudent } from "@/lib/hooks/use-teacher-queries";
 import { TaskQuickAdd } from "./task-quick-add";
+import { DenemeForm } from "./deneme-form";
 import type {
   BookOptionsResponse,
   ReviewStruggleResponse,
@@ -61,94 +61,6 @@ import type {
   WorkBlockListResponse,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
-
-// ---------------------------------------------------------------------------
-// Deneme presetleri — öğrencinin sınav hedefi ve sınıf seviyesine göre
-// gösterilen deneme türleri. Tıklanınca title + planlanan soru sayısı doldurur.
-// ---------------------------------------------------------------------------
-
-interface DenemePreset {
-  title: string;
-  count: number;
-}
-
-interface DenemePresetGroup {
-  group: string;
-  items: DenemePreset[];
-}
-
-// LGS hazırlık öğrencisi (8. sınıf)
-const DENEME_LGS: DenemePresetGroup[] = [
-  {
-    group: "LGS",
-    items: [
-      { title: "LGS Tam Deneme", count: 90 },
-      { title: "LGS Sözel Bölüm", count: 50 },
-      { title: "LGS Sayısal Bölüm", count: 40 },
-    ],
-  },
-];
-
-// YKS hazırlık öğrencisi (11-12 + mezun)
-const DENEME_YKS: DenemePresetGroup[] = [
-  {
-    group: "TYT",
-    items: [
-      { title: "TYT Genel Deneme", count: 120 },
-      { title: "TYT Türkçe Branş", count: 40 },
-      { title: "TYT Sosyal Branş", count: 20 },
-      { title: "TYT Matematik Branş", count: 40 },
-      { title: "TYT Fen Bilimleri Branş", count: 20 },
-    ],
-  },
-  {
-    group: "AYT",
-    items: [
-      { title: "AYT Genel Deneme", count: 80 },
-      { title: "AYT Matematik Branş", count: 40 },
-      { title: "AYT Fizik Branş", count: 14 },
-      { title: "AYT Kimya Branş", count: 13 },
-      { title: "AYT Biyoloji Branş", count: 13 },
-      { title: "AYT Türk Dili-Edebiyatı Branş", count: 24 },
-      { title: "AYT Tarih Branş", count: 21 },
-      { title: "AYT Coğrafya Branş", count: 17 },
-    ],
-  },
-  {
-    group: "YDT",
-    items: [{ title: "YDT (Yabancı Dil) Deneme", count: 80 }],
-  },
-];
-
-// 9-10 ara sınıf (sınav hedefi henüz yok)
-const DENEME_LISE_ARA: DenemePresetGroup[] = [
-  {
-    group: "Sınıf Denemesi",
-    items: [
-      { title: "Sınıf Genel Deneme", count: 40 },
-      { title: "Sınıf Sözel Bölüm", count: 20 },
-      { title: "Sınıf Sayısal Bölüm", count: 20 },
-    ],
-  },
-];
-
-function pickPresetGroups(
-  examTarget: string | null | undefined,
-  gradeLevel: number | null | undefined,
-): DenemePresetGroup[] {
-  // Öncelikle exam_target — kesin sınav hedefi varsa onu kullan
-  if (examTarget === "LGS" || examTarget === "lgs") return DENEME_LGS;
-  if (examTarget === "YKS" || examTarget === "yks") return DENEME_YKS;
-  // Mezun (graduate) genelde YKS hedefli
-  // 8. sınıf default LGS
-  if (gradeLevel === 8) return DENEME_LGS;
-  // 11-12 default YKS
-  if (gradeLevel === 11 || gradeLevel === 12) return DENEME_YKS;
-  // 9-10 ara
-  if (gradeLevel === 9 || gradeLevel === 10) return DENEME_LISE_ARA;
-  // Bilinmiyor → tüm grupları göster (LGS + YKS) — kullanıcı seçer
-  return [...DENEME_LGS, ...DENEME_YKS];
-}
 
 // "deneme" yalnız UI sekmesi; backend'e type="other" + kitapsız kalem gönderir
 // (tasktype enum'una değer eklemeden — ikinci migration gerekmez).
@@ -537,7 +449,10 @@ function TestForm({
       ? Math.max(0, wanted - selectedSection.remaining)
       : 0;
   // Kutu TEST sayısıdır; 15'ten büyük sayı çoğu zaman soru sayısıdır.
-  const looksLikeQuestions = Number.isFinite(wanted) && wanted > 15;
+  // Deneme kitabında birim DENEME (1 kalem = 1 deneme; backend her denemeyi ayrı açar).
+  const isDenemeBook = !sourceless && Boolean(sectionsQ.data?.is_deneme);
+  const unitWord = isDenemeBook ? "deneme" : "test";
+  const looksLikeQuestions = !isDenemeBook && Number.isFinite(wanted) && wanted > 15;
 
   const topics = topicsQ.data?.topics ?? [];
   const selectedTopic = topicId === "" ? undefined : topics.find((t) => t.topic_id === topicId);
@@ -689,14 +604,14 @@ function TestForm({
           )}
         </div>
         <div className="@2xl:col-span-2">
-          <Label>Adet (test)</Label>
+          <Label>Adet ({unitWord})</Label>
           <Input
             type="number"
             min={1}
             value={plannedCount}
             onChange={(e) => setPlannedCount(e.target.value)}
             className="text-right tabular-nums"
-            aria-label="Test sayısı"
+            aria-label={isDenemeBook ? "Deneme sayısı" : "Test sayısı"}
           />
         </div>
         <div className="@2xl:col-span-1 flex justify-end">
@@ -745,178 +660,14 @@ function TestForm({
           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             <b>{selectedSection.label}</b> bölümünde kayıtlı kapasite{" "}
-            {selectedSection.remaining === 0 ? "kalmadı" : `${selectedSection.remaining} test`}
-            {" "}— <b>{overflow} test</b> aşılacak. Görev yine de oluşturulur; kitabın test
-            sayısı gerçeği her zaman yansıtmaz.
+            {selectedSection.remaining === 0 ? "kalmadı" : `${selectedSection.remaining} ${unitWord}`}
+            {" "}— <b>{overflow} {unitWord}</b> aşılacak. Görev yine de oluşturulur; kitaptaki
+            sayı gerçeği her zaman yansıtmaz.
           </span>
         </p>
       ) : null}
       {statsQ.data && !sourceless ? <SectionStatsMini stats={statsQ.data} /> : null}
     </form>
-  );
-}
-
-// =============================================================================
-// DENEME TİPİ (kitapsız, soru sayılı) — tam LGS/TYT denemesi
-// =============================================================================
-
-function DenemeForm({
-  studentId,
-  dayDate,
-  period,
-  onAfterAdd,
-}: {
-  studentId: number;
-  dayDate: string;
-  period: TaskPeriod | null;
-  onAfterAdd: () => void;
-}) {
-  const create = useCreateTask(studentId);
-  const [hour, setHour] = React.useState("");
-  const [title, setTitle] = React.useState("");
-  const [count, setCount] = React.useState("");
-
-  // Öğrencinin sınav hedefi + sınıf seviyesini cache'ten al (student detail
-  // sayfası zaten bu query'yi yüklemiş; useTeacherStudent 30s stale).
-  const studentQ = useTeacherStudent(studentId);
-  const profile = studentQ.data?.student;
-  const examTarget = profile?.exam_target ?? null;
-  const gradeLevel = profile?.grade_level ?? null;
-
-  const presetGroups = React.useMemo(
-    () => pickPresetGroups(examTarget, gradeLevel),
-    [examTarget, gradeLevel],
-  );
-
-  function applyPreset(preset: DenemePreset) {
-    setTitle(preset.title);
-    setCount(String(preset.count));
-  }
-
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const name = title.trim();
-    const n = Number(count);
-    if (!name || !Number.isFinite(n) || n < 1) return;
-    const scheduledHour = hour === "" ? null : Number(hour);
-    create.mutate(
-      {
-        body: {
-          date: dayDate,
-          type: "other", // backend: kitapsız kalem; tasktype enum'una deneme eklenmedi
-          title: name,
-          scheduled_hour: scheduledHour,
-          period: period,
-          // Kitapsız "deneme" kalemi: ders/kitap yok, sadece etiket + soru sayısı.
-          items: [{ book_id: null, section_id: null, label: name, planned_count: n }],
-        },
-      },
-      {
-        onSuccess: () => {
-          setTitle("");
-          setCount("");
-          onAfterAdd();
-        },
-      },
-    );
-  }
-
-  return (
-    <form onSubmit={onSubmit} className="space-y-2">
-      <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
-        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
-        <div className="@2xl:col-span-6">
-          <Label>Deneme adı</Label>
-          <Input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={200}
-            placeholder="Örn. Mebi LGS Tam Deneme 7"
-          />
-        </div>
-        <div className="@2xl:col-span-3">
-          <Label>Soru sayısı</Label>
-          <Input
-            type="number"
-            min={1}
-            value={count}
-            onChange={(e) => setCount(e.target.value)}
-            placeholder="örn. 90"
-            className="text-right tabular-nums"
-          />
-        </div>
-        <div className="@2xl:col-span-2 flex justify-end">
-          <SubmitButton
-            pending={create.isPending}
-            disabled={!title.trim() || !count || Number(count) < 1}
-          />
-        </div>
-      </div>
-
-      <DenemePresetDropdown
-        groups={presetGroups}
-        onPick={applyPreset}
-      />
-
-      <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
-        <Info className="size-3" aria-hidden />
-        Tam deneme ders/kitap seçmeden eklenir; çözülen soru sayısına sayar.
-        Sonuç/net girişi için öğrenci profilindeki &quot;Denemeler&quot; sekmesini kullan.
-      </p>
-    </form>
-  );
-}
-
-/**
- * Tek native `<select>` dropdown — mobil-uyumlu (iOS/Android native picker).
- * 13 chip yan yana yerine tek tıkla seçim + optgroup ile sınav kategorisi.
- * Seçim yan etkisi: title + count doldurur; sonra reset (kullanıcı tekrar
- * "hazır seç" yapabilir).
- */
-function DenemePresetDropdown({
-  groups,
-  onPick,
-}: {
-  groups: DenemePresetGroup[];
-  onPick: (preset: DenemePreset) => void;
-}) {
-  const [value, setValue] = React.useState("");
-
-  function onSelect(v: string) {
-    setValue(v);
-    if (!v) return;
-    // value formatı: "{group_idx}:{item_idx}"
-    const [gi, ii] = v.split(":").map(Number);
-    const preset = groups[gi]?.items[ii];
-    if (preset) onPick(preset);
-    // Dropdown'u sıfırla — kullanıcı tekrar seçebilsin
-    setTimeout(() => setValue(""), 0);
-  }
-
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-        <Info className="size-3" aria-hidden />
-        Hızlı seç:
-      </span>
-      <select
-        value={value}
-        onChange={(e) => onSelect(e.target.value)}
-        className="px-2.5 py-1 border border-input bg-background rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition min-w-[240px]"
-      >
-        <option value="">— hazır deneme türü seç —</option>
-        {groups.map((g, gi) => (
-          <optgroup key={g.group} label={g.group}>
-            {g.items.map((it, ii) => (
-              <option key={it.title} value={`${gi}:${ii}`}>
-                {it.title} · {it.count} soru
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-    </div>
   );
 }
 

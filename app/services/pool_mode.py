@@ -333,9 +333,15 @@ def delete_period(db: Session, period: StudyPeriod) -> PeriodDeleteImpact:
             if _task_has_progress(t):
                 t.pool_item_id = None
             else:
+                detach_task_videos(db, t.id)
                 for bi in list(t.book_items or []):
                     db.delete(bi)
                 db.delete(t)
+        release_pool_videos(db, ids)
+        from app.models.video_basket import VideoBasketItem
+
+        db.query(VideoBasketItem).filter(VideoBasketItem.pool_item_id.in_(ids)).update(
+            {VideoBasketItem.pool_item_id: None}, synchronize_session=False)
         db.query(PoolItem).filter(PoolItem.parent_item_id.in_(ids)).update(
             {PoolItem.parent_item_id: None}, synchronize_session=False)
     db.flush()
@@ -386,13 +392,18 @@ def _check_subject_allowed(student: User, subject: Subject) -> None:
 
 
 def add_item(
-    db: Session, *, period: StudyPeriod, student: User, subject: Subject,
+    db: Session, *, period: StudyPeriod, student: User, subject: Subject | None,
     quantity: int | None, unit: str, topic: Topic | None = None, book: Book | None = None,
     section: BookSection | None = None, label: str | None = None, day_hint: date | None = None,
     source: str = SOURCE_COACH, created_by: User | None = None, teacher_homework: bool = False,
     exam_result_id: int | None = None, parent_item: PoolItem | None = None,
+    exam_kind: str | None = None, exam_section: str | None = None,
+    question_count: int | None = None,
 ) -> PoolItem:
-    """Havuza kalem ekler. Rezerv AÇMAZ. Doğrulamalar K16 / K25 / kaynak sahipliği."""
+    """Havuza kalem ekler. Rezerv AÇMAZ. Doğrulamalar K16 / K25 / kaynak sahipliği.
+
+    Deneme kalemi (unit=deneme, D1b): quantity = deneme adedi; tür/sınav/soru verilmezse
+    kitaptan ya da dersin sınav standardından doldurulur (deneme_service)."""
     if not period.is_open:
         raise PoolError("period_closed", "Kapalı döneme kalem eklenemez.")
     if unit not in POOL_UNITS:
@@ -403,8 +414,13 @@ def add_item(
         quantity = quantity or 1
     if quantity is None or quantity < 1:
         raise PoolError("quantity_required", "Bu kalemde miktar zorunlu (örn. 4 test).")
-    _check_subject_allowed(student, subject)
-    if topic is not None and topic.subject_id != subject.id:
+    if subject is None:
+        # Yalnız GENEL deneme dersiz olabilir (LGS/TYT/AYT tam deneme — D1b).
+        if not (unit == UNIT_DENEME and exam_kind == "genel"):
+            raise PoolError("subject_required", "Ders seçin.")
+    else:
+        _check_subject_allowed(student, subject)
+    if topic is not None and (subject is None or topic.subject_id != subject.id):
         raise PoolError("topic_subject_mismatch", "Konu seçilen derse ait değil.")
     if section is not None:
         if book is None or section.book_id != book.id:
@@ -417,7 +433,7 @@ def add_item(
                       StudentBook.archived_at.is_(None)).first())
         if sb is None:
             raise PoolError("book_not_assigned", "Bu kitap öğrenciye atanmış değil.")
-        if book.subject_id and book.subject_id != subject.id:
+        if book.subject_id and subject is not None and book.subject_id != subject.id:
             raise PoolError("book_subject_mismatch", "Kitap seçilen derse ait değil.")
     if (topic is None and book is None and unit in TOPIC_REQUIRED_UNITS
             and source not in TOPIC_REQUIRED_EXEMPT_SOURCES):
@@ -430,9 +446,23 @@ def add_item(
     if not label and topic is None and book is None and unit != UNIT_ETKINLIK:
         # Konu da kaynak da yok: en azından ne çalışılacağı yazılmalı (K14 serbest metin)
         raise PoolError("label_required", "Konu ya da kaynak seçilmedi; ne çalışılacağını yaz.")
+    if question_count is not None and not (1 <= question_count <= 200):
+        raise PoolError("invalid_question_count", "Soru sayısı 1 ile 200 arasında olmalı.")
+    if unit == UNIT_DENEME:
+        from app.services import deneme_service as _ds
+
+        if exam_kind is None:
+            exam_kind = (_ds.EXAM_KIND_GENEL
+                         if book is not None and book.type == _ds.DENEME_BOOK_TYPES[1]
+                         else _ds.EXAM_KIND_BRANS)
+        if exam_section is None:
+            exam_section = _ds.exam_section_for_subject(book.subject if book is not None else subject)
+        if question_count is None:
+            question_count, _src = _ds.resolve_question_count(
+                book=book, section=section, subject=(book.subject if book is not None else subject))
     approval = APPROVAL_PENDING if source == SOURCE_STUDENT else APPROVAL_NA
     it = PoolItem(
-        period_id=period.id, student_id=student.id, subject_id=subject.id,
+        period_id=period.id, student_id=student.id, subject_id=subject.id if subject else None,
         topic_id=topic.id if topic else None, book_id=book.id if book else None,
         book_section_id=section.id if section else None, label=(label or None),
         quantity=quantity, unit=unit, day_hint=day_hint, source=source,
@@ -440,6 +470,9 @@ def add_item(
         created_by_id=created_by.id if created_by else None, exam_result_id=exam_result_id,
         parent_item_id=parent_item.id if parent_item else None,
         carry_count=(parent_item.carry_count + 1) if parent_item else 0,
+        exam_kind=exam_kind if unit == UNIT_DENEME else None,
+        exam_section=exam_section if unit == UNIT_DENEME else None,
+        question_count=question_count if unit == UNIT_DENEME else None,
     )
     db.add(it)
     db.flush()
@@ -447,11 +480,42 @@ def add_item(
 
 
 def remove_item(db: Session, item: PoolItem, actor: User) -> PoolItem:
-    """Rehber kalemi siler — iz kalır (removed_at)."""
+    """Rehber kalemi siler — iz kalır (removed_at). Kaba alınmamış videoları sepete döner."""
     item.removed_at = _now()
     item.removed_by_id = actor.id
+    release_pool_videos(db, [item.id])
     db.flush()
     return item
+
+
+# ---------------------------------------------------------------- video sepeti köprüsü (2026-10-20)
+
+def pool_item_videos(db: Session, item_id: int) -> list:
+    from app.models.video_basket import VideoBasketItem
+
+    return (db.query(VideoBasketItem).filter(VideoBasketItem.pool_item_id == item_id)
+            .order_by(VideoBasketItem.order, VideoBasketItem.id).all())
+
+
+def release_pool_videos(db: Session, item_ids: list[int]) -> None:
+    """Kalem kaldırıldı/silindi: henüz göreve bağlanmamış videoların havuz bağı kopar (sepete döner).
+    İzlenen/göreve bağlı videolar kalemi tarihçe olarak tutar."""
+    from app.models.video_basket import VideoBasketItem
+
+    if not item_ids:
+        return
+    db.query(VideoBasketItem).filter(VideoBasketItem.pool_item_id.in_(item_ids),
+                                     VideoBasketItem.task_id.is_(None)).update(
+        {VideoBasketItem.pool_item_id: None}, synchronize_session=False)
+
+
+def detach_task_videos(db: Session, task_id: int) -> None:
+    """Kap görevi silinmeden önce videoların görev bağını boşalt (dev SQLite'ta FK kapalı;
+    prod PG'de SET NULL zaten yapar). Havuz bağı kalır → video yeniden havuzda bekler."""
+    from app.models.video_basket import VideoBasketItem
+
+    db.query(VideoBasketItem).filter(VideoBasketItem.task_id == task_id).update(
+        {VideoBasketItem.task_id: None}, synchronize_session=False)
 
 
 def item_min_quantity(db: Session, item: PoolItem) -> int:
@@ -516,7 +580,7 @@ def carry_item(
     subject = db.get(Subject, item.subject_id) if item.subject_id else None
     if subject is None:
         raise PoolError("subject_missing", "Kalemin dersi silinmiş.")
-    return add_item(
+    new = add_item(
         db, period=target, student=student, subject=subject, quantity=qty, unit=item.unit,
         topic=db.get(Topic, item.topic_id) if item.topic_id else None,
         book=db.get(Book, item.book_id) if item.book_id else None,
@@ -524,6 +588,17 @@ def carry_item(
         label=item.label, source=SOURCE_CARRY, created_by=coach,
         teacher_homework=item.teacher_homework, parent_item=item,
     )
+    _move_videos(db, item, new)
+    return new
+
+
+def _move_videos(db: Session, old: PoolItem, new: PoolItem) -> None:
+    """Devirde kaba alınmamış videolar yeni döneme geçen kaleme taşınır."""
+    from app.models.video_basket import VideoBasketItem
+
+    db.query(VideoBasketItem).filter(VideoBasketItem.pool_item_id == old.id,
+                                     VideoBasketItem.task_id.is_(None)).update(
+        {VideoBasketItem.pool_item_id: new.id}, synchronize_session=False)
 
 
 # ---------------------------------------------------------------- kap (günün görevi)
@@ -557,6 +632,77 @@ def _units_from_title(task: Task) -> int:
         return 1
 
 
+def _deneme_meta(db: Session, item: PoolItem, book: Book | None) -> tuple[str, str | None, int | None] | None:
+    """Kalem deneme mi? (tür, sınav, soru) — eski deneme kalemleri (exam_kind boş) de tanınır."""
+    from app.services import deneme_service as _ds
+
+    is_deneme_book = book is not None and book.type in _ds.DENEME_BOOK_TYPES
+    if item.unit != UNIT_DENEME and not item.exam_kind and not is_deneme_book:
+        return None
+    subject = book.subject if book is not None else (db.get(Subject, item.subject_id) if item.subject_id else None)
+    kind = item.exam_kind or (_ds.EXAM_KIND_GENEL if book is not None and book.type == _ds.DENEME_BOOK_TYPES[1]
+                              else _ds.EXAM_KIND_BRANS)
+    sec = item.exam_section or _ds.exam_section_for_subject(subject)
+    qn = item.question_count
+    if qn is None:
+        section = db.get(BookSection, item.book_section_id) if item.book_section_id else None
+        qn, _src = _ds.resolve_question_count(book=book, section=section, subject=subject)
+    return kind, sec, qn
+
+
+def _exam_sections_for(db: Session, item: PoolItem, book: Book, count: int, exclude: set[int]) -> list[BookSection]:
+    """Kitaplı deneme kalemi için sıradaki `count` deneme: kalemin bölümünden başlar, bu kalemin
+    daha önce kaba alınmış bölümlerini atlar; kitap biterse son bölüm tekrar kullanılır."""
+    secs = sorted(book.sections, key=lambda x: (x.order or 0, x.id))
+    if not secs:
+        return []
+    start = next((i for i, x in enumerate(secs) if x.id == item.book_section_id), 0)
+    used = set(exclude)
+    # Bu dönemde AYNI kitaptan kaba alınmış tüm denemeler atlanır (aynı kitaptan iki kalem
+    # ikisi de "DENEME 1"den başlamasın).
+    sibling_ids = [r[0] for r in db.query(PoolItem.id).filter(
+        PoolItem.period_id == item.period_id, PoolItem.book_id == book.id).all()]
+    if sibling_ids:
+        for bi in (db.query(TaskBookItem).join(Task, Task.id == TaskBookItem.task_id)
+                   .filter(Task.pool_item_id.in_(sibling_ids), TaskBookItem.book_section_id.isnot(None)).all()):
+            used.add(bi.book_section_id)
+    ordered = secs[start:] + secs[:start]
+    picked = [x for x in ordered if x.id not in used][:count]
+    while len(picked) < count:
+        picked.append(picked[-1] if picked else ordered[0])
+    return picked
+
+
+def _exam_cup_items(db: Session, *, item: PoolItem, book: Book | None, kind: str, exam_section: str | None,
+                    question_count: int | None, count: int, exclude: set[int],
+                    start_index: int = 0) -> list[TaskBookItem]:
+    """Kap görevinin deneme kalemleri — 1 kalem = 1 deneme (rezerv yok)."""
+    fields = dict(exam_kind=kind, exam_section=exam_section, question_count=question_count,
+                  planned_count=1, completed_count=0)
+    if book is not None:
+        return [TaskBookItem(book_id=book.id, book_section_id=sec.id, reservation_released_at=_now(), **fields)
+                for sec in _exam_sections_for(db, item, book, count, exclude)]
+    base = item.label or "Deneme"
+    total = start_index + count
+    return [TaskBookItem(book_id=None, book_section_id=None, subject_id=item.subject_id,
+                         label=(f"{base} {start_index + i + 1}/{total}" if total > 1 else base), **fields)
+            for i in range(count)]
+
+
+def _exam_cup_title(db: Session, *, item: PoolItem, book: Book | None, items: list[TaskBookItem],
+                    question_count: int | None) -> str:
+    from app.services import deneme_service as _ds
+
+    subject = book.subject if book is not None else (db.get(Subject, item.subject_id) if item.subject_id else None)
+    labels = []
+    for bi in items:
+        sec = db.get(BookSection, bi.book_section_id) if bi.book_section_id else None
+        labels.append(sec.label if sec else "")
+    return _ds.compose_title(kind=items[0].exam_kind if items else _ds.EXAM_KIND_BRANS, count=len(items),
+                             question_count=question_count, subject=subject, book=book,
+                             section_labels=labels, custom_name=(item.label if book is None else None))
+
+
 def put_in_cup(db: Session, *, item: PoolItem, day: date, count: int | None = None) -> Task:
     """K34: kalemi (ya da bir kısmını) o günün kabına koyar → o güne görev yazar.
 
@@ -588,6 +734,21 @@ def put_in_cup(db: Session, *, item: PoolItem, day: date, count: int | None = No
     order = (db.query(func.coalesce(func.max(Task.order), 0))
              .filter(Task.student_id == item.student_id, Task.date == day).scalar() or 0) + 1
 
+    meta = _deneme_meta(db, item, book)
+    if meta is not None:
+        kind, sec, qn = meta
+        items = _exam_cup_items(db, item=item, book=book, kind=kind, exam_section=sec,
+                                question_count=qn, count=qty, exclude=set())
+        task = Task(student_id=item.student_id, date=day,
+                    type=TaskType.TEST if book is not None else TaskType.OTHER,
+                    title=_exam_cup_title(db, item=item, book=book, items=items, question_count=qn),
+                    status=TaskStatus.PENDING, order=order, is_draft=False, published_at=_now(),
+                    pool_item_id=item.id, book_items=items)
+        db.add(task)
+        item.cup_attempts = (item.cup_attempts or 0) + 1
+        db.flush()
+        return task
+
     is_test_like = item.unit in (UNIT_TEST, UNIT_DENEME) or (item.unit != UNIT_ETKINLIK and book is not None)
     # Kalemler görevle BİRLİKTE kurulur (task.book_items=...): ilişki daha sonra tembel
     # yüklenirse dev SQLite'ta (cascade kapalı) id'si yeniden kullanılan eski görevin yetim
@@ -615,11 +776,19 @@ def put_in_cup(db: Session, *, item: PoolItem, day: date, count: int | None = No
         pre = f"{subject.name} · " if subject else ""
         items = ([TaskBookItem(book_id=None, book_section_id=None, label=what, planned_count=qty, completed_count=0)]
                  if item.unit == UNIT_DENEME else [])
-        task = Task(student_id=item.student_id, date=day, type=TaskType.OTHER,
-                    title=f"{pre}{what} · {qty} {item.unit}", status=TaskStatus.PENDING,
+        vids = [v for v in pool_item_videos(db, item.id) if v.task_id is None] if item.unit == UNIT_ETKINLIK else []
+        task = Task(student_id=item.student_id, date=day, type=TaskType.VIDEO if vids else TaskType.OTHER,
+                    # video kalemi 1 birimdir (K42); başlık sepet başlığıyla aynı ("… — 3 video (45 dk)")
+                    title=(f"{pre}{what}" if vids else f"{pre}{what} · {qty} {item.unit}")[:255],
+                    status=TaskStatus.PENDING,
                     order=order, is_draft=False, published_at=_now(), pool_item_id=item.id,
-                    book_items=items)
+                    book_items=items, link_url=vids[0].url if vids else None)
         db.add(task)
+        if vids:
+            # Video kalemi: videolar bu güne açılan göreve bağlanır (öğrenci görevde tek tek açar)
+            db.flush()
+            for v in vids:
+                v.task_id = task.id
     item.cup_attempts = (item.cup_attempts or 0) + 1
     db.flush()
     return task
@@ -650,6 +819,8 @@ def resize_cup(db: Session, *, task: Task, count: int) -> Task:
     item = db.get(PoolItem, task.pool_item_id)
     if item is None or item.removed_at is not None or not item.period.is_open:
         raise PoolError("period_closed", "Dönem kapalı; kap düzeltilemez.")
+    if task.book_items and any(bi.exam_kind for bi in task.book_items):
+        return _resize_exam_cup(db, task=task, item=item, count=count)
     if not task.book_items or len(task.book_items) != 1:
         raise PoolError("not_resizable", "Bu görevin sayısı yok (etkinlik); havuza geri alabilirsin.")
     bi = task.book_items[0]
@@ -681,6 +852,60 @@ def resize_cup(db: Session, *, task: Task, count: int) -> Task:
     db.flush()
     sync_item_progress(db, item)
     return task
+
+
+def _resize_exam_cup(db: Session, *, task: Task, item: PoolItem, count: int) -> Task:
+    """Deneme kap görevinde sayı = deneme satırı sayısı: artırınca yeni deneme satırı eklenir,
+    azaltınca işaretlenmemiş satırlar silinir."""
+    rows = sorted(task.book_items, key=lambda b: b.id)
+    done = sum(1 for b in rows if (b.completed_count or 0) > 0)
+    mx = cup_max_count(db, task) or 0
+    if count < 1:
+        raise PoolError("bad_count", "En az 1 olmalı; hiç çözmeyeceksen havuza geri al.")
+    if count < done:
+        raise PoolError("below_done", f"Bu görevde {done} denemeyi işaretledin; önce işaretlediğini düzelt.")
+    if count > mx:
+        raise PoolError("bad_count", f"En fazla {mx} deneme olabilir (havuzdaki kalan).")
+    book = db.get(Book, rows[0].book_id) if rows and rows[0].book_id else None
+    if count > len(rows):
+        first = rows[0]
+        extra = _exam_cup_items(
+            db, item=item, book=book, kind=first.exam_kind, exam_section=first.exam_section,
+            question_count=first.question_count, count=count - len(rows),
+            exclude={b.book_section_id for b in rows if b.book_section_id}, start_index=len(rows))
+        for bi in extra:
+            task.book_items.append(bi)
+    elif count < len(rows):
+        removable = [b for b in reversed(rows) if (b.completed_count or 0) == 0][: len(rows) - count]
+        for b in removable:
+            task.book_items.remove(b)
+            db.delete(b)
+    db.flush()
+    _refresh_exam_cup(db, task=task, item=item)
+    sync_item_progress(db, item)
+    return task
+
+
+def _refresh_exam_cup(db: Session, *, task: Task, item: PoolItem) -> None:
+    """Deneme kap görevinin başlığını + durumunu satırlardan yeniden kur."""
+    rows = sorted(task.book_items, key=lambda x: x.id or 0)
+    if not rows:
+        return
+    book = db.get(Book, rows[0].book_id) if rows[0].book_id else None
+    if book is None:
+        n = len(rows)
+        base = item.label or "Deneme"
+        for i, b in enumerate(rows):
+            b.label = f"{base} {i + 1}/{n}" if n > 1 else base
+    task.title = _exam_cup_title(db, item=item, book=book, items=rows, question_count=rows[0].question_count)
+    done = sum(1 for b in rows if (b.completed_count or 0) > 0)
+    if done >= len(rows) and task.status != TaskStatus.COMPLETED:
+        task.status = TaskStatus.COMPLETED
+        task.completed_at = _now()
+    elif done < len(rows) and task.status == TaskStatus.COMPLETED:
+        task.status = TaskStatus.PARTIAL if done > 0 else TaskStatus.PENDING
+        task.completed_at = None
+    db.flush()
 
 
 def preview_distribution(items: list[PoolItem], *, start: date, days: int,
@@ -744,8 +969,22 @@ def close_day(db: Session, *, student: User, day: date) -> dict:
             continue
         done = sum(int(bi.completed_count or 0) for bi in t.book_items)
         if done <= 0:
+            detach_task_videos(db, t.id)
             db.delete(t)
             removed += 1
+            continue
+        if any(bi.exam_kind for bi in t.book_items):
+            # Deneme kap görevi (1 satır = 1 deneme): çözülmeyen deneme satırı silinir (havuza döner).
+            for bi in [b for b in t.book_items if (b.completed_count or 0) == 0]:
+                t.book_items.remove(bi)
+                db.delete(bi)
+            db.flush()
+            it_ = db.get(PoolItem, t.pool_item_id)
+            if it_ is not None:
+                _refresh_exam_cup(db, task=t, item=it_)
+            t.status = TaskStatus.COMPLETED
+            t.completed_at = t.completed_at or _now()
+            shrunk += 1
             continue
         for bi in t.book_items:
             bi.planned_count = int(bi.completed_count or 0)

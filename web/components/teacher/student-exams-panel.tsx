@@ -7,6 +7,8 @@ import {
   Mail,
   MailCheck,
   ChevronDown,
+  ChevronRight,
+  ClipboardList,
   Eye,
   FileCog,
   Loader2,
@@ -24,13 +26,10 @@ import {
   PeriodSwitcher,
 } from "@/components/shared/period-switcher";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
+import { ExamOverviewTab } from "@/components/shared/exam-ov/exam-overview-tab";
 import { ExamParentAnnounceDialog } from "@/components/teacher/exam-parent-announce-dialog";
-import {
-  BehaviorTab,
-  OverviewTab,
-  ProgressTab,
-  previousExam,
-} from "@/components/teacher/exams/exam-analytics";
+import { previousExam } from "@/components/teacher/exams/exam-analytics";
+import { ExamBehaviorTab, ExamProgressTab } from "@/components/shared/exam-ov/exam-progress-behavior-tabs";
 import { examSeriesOptions, rowSeries } from "@/lib/exam-format";
 import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
 import { ExamStudentShareButton } from "@/components/teacher/exams/exam-student-share";
@@ -65,6 +64,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { StudentProgramExamsPanel } from "@/components/teacher/student-program-exams-panel";
+import { denemeKeys, getDenemeAnalysis } from "@/lib/api/deneme";
+import { SplitBar, fmtNum } from "@/components/shared/exam-ov/ov-ui";
+
+const fmtNet = (v: number) => fmtNum(v);
 
 // Sınav türü → sabit ton (Tailwind purge güvenli)
 const SECTION_TONE: Record<ExamSectionValue, string> = {
@@ -112,9 +116,69 @@ const EXAM_TABS: { key: ExamTab; label: string; hint: string }[] = [
 interface Props {
   studentId: number;
   studentName?: string | null;
+  /** true → karne denemeleri yerine "Branş denemeleri analizi" görünümü (#program-exams). */
+  branchView?: boolean;
+  onBranchView?: (open: boolean) => void;
 }
 
-export function StudentExamsPanel({ studentId, studentName }: Props) {
+/**
+ * Denemeler sekmesindeki üçüncü kart (2026-10-20): branş denemeleri eskiden ayrı bir
+ * üst sekmeydi ve menüyü iki satıra itiyordu. Kart, programdaki branş denemelerinin
+ * kısa özetini gösterip analiz görünümünü açar.
+ */
+function BranchEntryCard({ studentId, onOpen }: { studentId: number; onOpen: () => void }) {
+  const q = useQuery({
+    queryKey: denemeKeys.analysis(studentId),
+    queryFn: () => getDenemeAnalysis(studentId),
+    staleTime: 30_000,
+  });
+  const ov = q.data?.overview;
+  const pending = q.data?.summary.pending ?? 0;
+  const branch = (q.data?.series ?? []).filter((x) => x.kind === "brans");
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      data-testid="branch-exams-entry"
+      className="group flex items-start gap-3 rounded-xl border-2 border-teal-600/40 bg-card p-4 text-left transition hover:border-teal-600 hover:bg-teal-500/5 dark:border-teal-400/40 dark:hover:border-teal-400"
+    >
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white">
+        <ClipboardList className="size-5" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1 text-sm font-semibold text-foreground">
+          Branş denemeleri analizi
+          <ChevronRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
+        </span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          Programdan verilen branş denemeleri: ders ders net yüzdesi, eğilim, normal aralık, testlerle kıyas.
+        </span>
+        <span className="mt-1.5 flex flex-wrap gap-1.5 text-[11px] font-semibold">
+          {ov && ov.exams > 0 ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-foreground">
+              {ov.exams} deneme · {ov.subjects} ders
+            </span>
+          ) : (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+              {q.isLoading ? "yükleniyor…" : "henüz sonuç yok"}
+            </span>
+          )}
+          {ov?.avg_net_pct != null ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-foreground">ort. net %{Math.round(ov.avg_net_pct)}</span>
+          ) : null}
+          {pending > 0 ? (
+            <span className="rounded-full bg-amber-200 px-2 py-0.5 text-amber-950 dark:text-amber-950">{pending} sonuç bekliyor</span>
+          ) : null}
+          {branch.some((x) => x.decline_run >= 3 || x.last_position === "below") ? (
+            <span className="rounded-full bg-orange-600 px-2 py-0.5 text-white">dikkat</span>
+          ) : null}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+export function StudentExamsPanel({ studentId, studentName, branchView, onBranchView }: Props) {
   // P3: varsayılan GÜNCEL dönem — geçen yılın denemeleri "bu yılın gidişatı"
   // tablosunu bozmaz; seçiciyle geri getirilir (veri hiçbir zaman silinmez).
   const [period, setPeriod] = React.useState<string | undefined>(undefined);
@@ -157,6 +221,10 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
     ? previousExam(rows.filter((r) => rowSeries(r) === rowSeries(detailRow)), detailRow)
     : null;
 
+  if (branchView) {
+    return <StudentProgramExamsPanel studentId={studentId} onBack={() => onBranchView?.(false)} />;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -180,6 +248,9 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
         onManual={() => setAddOpen(true)}
         pdfCount={(data?.rows ?? []).filter((r) => r.import_source === "pdf_import").length}
         total={data?.rows.length ?? 0}
+        extra={
+          onBranchView ? <BranchEntryCard studentId={studentId} onOpen={() => onBranchView(true)} /> : undefined
+        }
       />
 
       <ExamImportDialog
@@ -263,18 +334,20 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
 
           <div role="tabpanel">
             {tab === "overview" ? (
-              <OverviewTab
+              <ExamOverviewTab
+                source={{ kind: "teacher", studentId }}
+                series={activeSeries}
+                period={period}
                 rows={sectionRows}
-                studentId={studentId}
                 studentName={studentName}
                 onOpenDetail={(r) => setDetailId(r.id)}
               />
             ) : tab === "progress" ? (
-              <ProgressTab rows={sectionRows} />
+              <ExamProgressTab source={{ kind: "teacher", studentId }} series={activeSeries} period={period} />
             ) : tab === "topics" ? (
               <ExamTopicAnalysis studentId={studentId} section={activeSeries} period={period} />
             ) : tab === "behavior" ? (
-              <BehaviorTab rows={sectionRows} />
+              <ExamBehaviorTab source={{ kind: "teacher", studentId }} series={activeSeries} period={period} />
             ) : tab === "score" ? (
               <ScoreEstimatePanel source={{ kind: "teacher", studentId }} />
             ) : tab === "report" ? (
@@ -286,9 +359,21 @@ export function StudentExamsPanel({ studentId, studentName }: Props) {
               />
             ) : (
               <ul className="space-y-2">
+                <li
+                  aria-hidden
+                  className="hidden px-3 text-xs font-semibold text-muted-foreground md:grid md:grid-cols-[76px_minmax(0,1fr)_76px_140px_64px_auto] md:gap-x-3"
+                >
+                  <span>Tarih</span>
+                  <span>Deneme</span>
+                  <span className="text-right">Net</span>
+                  <span>Doğru · yanlış · boş</span>
+                  <span className="text-right" title="Aynı serideki bir önceki denemeye göre">Fark</span>
+                  <span className="w-[340px] text-right">İşlemler</span>
+                </li>
                 {data.rows.map((row) => (
                   <ExamRow
                     key={row.id}
+                    prev={previousExam(rows.filter((r) => rowSeries(r) === rowSeries(row)), row)}
                     row={row}
                     studentId={studentId}
                     sectionOptions={data.section_options ?? []}
@@ -376,13 +461,16 @@ function ExamRow({
   sectionOptions,
   share,
   onOpenDetail,
+  prev,
 }: {
   row: ExamResultRow;
   studentId: number;
   sectionOptions: StudentExamListResponse["section_options"];
   share: ExamShareInfo | null;
   onOpenDetail: () => void;
+  prev: ExamResultRow | null;
 }) {
+  const diff = prev ? row.net - prev.net : null;
   const [open, setOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [importEditOpen, setImportEditOpen] = React.useState(false);
@@ -407,23 +495,23 @@ function ExamRow({
     <li>
       <Card>
         <CardContent className="p-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {/* Net kutusu: "120.00" 6 haneye kadar çıkar — dar sabit genişlikte
-                başlığa yapışıyordu (saha, 2026-09-05). */}
-            <div className="text-center shrink-0 w-24">
-              <p className="text-2xl font-semibold tabular-nums leading-none whitespace-nowrap">
-                {row.net.toFixed(2)}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 md:grid md:grid-cols-[76px_minmax(0,1fr)_76px_140px_64px_auto] md:gap-x-3">
+            <div className="hidden text-xs tabular-nums text-muted-foreground md:block">
+              {formatTRDate(row.exam_date)}
+            </div>
+            {/* Net: mobilde solda büyük, masaüstünde kendi sütununda */}
+            <div className="w-20 shrink-0 text-center md:hidden">
+              <p className="text-2xl font-extrabold tabular-nums leading-none whitespace-nowrap">
+                {fmtNet(row.net)}
               </p>
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">
-                net
-              </p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">net</p>
             </div>
             <div className="min-w-0 flex-1 basis-48">
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={onOpenDetail}
-                  className="text-left font-medium break-words hover:underline"
+                  className="text-left font-semibold leading-snug break-words hover:underline"
                   title="Deneme detayını aç"
                 >
                   {row.title}
@@ -439,12 +527,13 @@ function ExamRow({
                 <ExamScopeSelect row={row} />
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {formatTRDate(row.exam_date)} ·{" "}
-                <span className="text-emerald-600 dark:text-emerald-300">{row.total_correct}D</span>{" "}
-                <span className="text-rose-600 dark:text-rose-300">{row.total_wrong}Y</span>{" "}
-                <span className="text-muted-foreground">{row.total_blank}B</span>
+                <span className="md:hidden">{formatTRDate(row.exam_date)} · </span>
+                <span className="text-emerald-700 dark:text-emerald-300">{row.total_correct}D</span>{" "}
+                <span className="text-rose-700 dark:text-rose-300">{row.total_wrong}Y</span>{" "}
+                <span>{row.total_blank}B</span>
                 {" · "}
                 {row.total_questions} soru
+                {row.import_source === "pdf_import" ? " · PDF'ten" : " · elle girildi"}
               </p>
               {row.note ? (
                 <p className="text-xs text-muted-foreground mt-1 italic">
@@ -452,8 +541,27 @@ function ExamRow({
                 </p>
               ) : null}
             </div>
+            <div className="hidden text-right text-xl font-extrabold tabular-nums md:block">{fmtNet(row.net)}</div>
+            <div className="hidden md:block">
+              <SplitBar
+                parts={[
+                  { value: row.total_correct, className: "bg-emerald-500", label: `${row.total_correct} doğru` },
+                  { value: row.total_wrong, className: "bg-rose-600", label: `${row.total_wrong} yanlış` },
+                  { value: row.total_blank, className: "bg-slate-400", label: `${row.total_blank} boş` },
+                ]}
+              />
+            </div>
+            <div
+              className={cn(
+                "hidden text-right text-sm font-bold tabular-nums md:block",
+                diff == null ? "text-muted-foreground" : diff > 0 ? "text-emerald-700 dark:text-emerald-300" : diff < 0 ? "text-rose-700 dark:text-rose-300" : "",
+              )}
+              title={prev ? `Aynı serideki bir önceki deneme: ${prev.title} (${fmtNet(prev.net)} net)` : "Bu serinin ilk denemesi"}
+            >
+              {diff == null ? "—" : fmtNum(diff, { plus: true })}
+            </div>
             {/* dar ekranda işlemler alt satıra iner (390px'te satırı taşırıyordu) */}
-            <div className="flex w-full flex-wrap items-center justify-end gap-1 sm:w-auto sm:shrink-0">
+            <div className="flex w-full flex-wrap items-center justify-end gap-0 sm:w-auto sm:shrink-0 md:w-[340px] md:flex-nowrap">
               <Button
                 variant="ghost"
                 size="sm"

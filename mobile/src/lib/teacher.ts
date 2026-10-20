@@ -93,6 +93,8 @@ export interface ExamSectionOption {
 export interface TeacherExamsResponse {
   summary: ExamSummary;
   rows: ExamRow[];
+  /** Programdaki deneme görevlerinden — analize karışmaz (2026-10-20) */
+  program_rows?: ExamRow[];
   section_options: ExamSectionOption[];
 }
 export interface ExamSubjectInput {

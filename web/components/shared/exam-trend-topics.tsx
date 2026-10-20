@@ -38,6 +38,8 @@ import { cn } from "@/lib/utils";
 
 type Kind = "forgotten" | "improved";
 
+const TREND_STEP = 4;
+
 function pct(v: number): string {
   return `%${Math.round(v * 100)}`;
 }
@@ -353,6 +355,7 @@ export function ExamTrendTopics({
 }) {
   const [sel, setSel] = React.useState<{ t: AnalysisTrendTopic; kind: Kind } | null>(null);
   const [queued, setQueued] = React.useState<Set<number>>(() => new Set());
+  const [expanded, setExpanded] = React.useState<Set<Kind>>(() => new Set());
   if (!forgotten.length && !improved.length) return null;
 
   const column = (kind: Kind, items: AnalysisTrendTopic[]) => {
@@ -383,7 +386,7 @@ export function ExamTrendTopics({
         </div>
         {items.length ? (
           <ul className="space-y-2">
-            {items.map((t) => (
+            {(expanded.has(kind) ? items : items.slice(0, TREND_STEP)).map((t) => (
               <TrendCard
                 key={t.topic_id}
                 t={t}
@@ -400,14 +403,37 @@ export function ExamTrendTopics({
             {isF ? "Düşüş gösteren konu yok." : "Belirgin gelişen konu henüz yok."}
           </p>
         )}
+        {items.length > TREND_STEP ? (
+          <button
+            type="button"
+            onClick={() =>
+              setExpanded((s) => {
+                const n = new Set(s);
+                if (n.has(kind)) n.delete(kind);
+                else n.add(kind);
+                return n;
+              })
+            }
+            className="rounded-full border border-border px-3 py-1 text-xs font-semibold hover:bg-muted"
+          >
+            {expanded.has(kind) ? "Daha az göster" : `Tümünü göster (${items.length} konu)`}
+          </button>
+        ) : null}
       </div>
     );
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h5 className="text-sm font-semibold text-foreground">Konu değişimleri</h5>
+    <section className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:p-6" data-section="exam-trend-topics">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-bold tracking-wider text-orange-800 dark:text-orange-300">KONU DEĞİŞİMLERİ</div>
+          <h3 className="mt-1 text-lg font-extrabold leading-snug sm:text-xl">Unutulan ve gelişen konular</h3>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            İlk denemeler ile son denemeler kıyaslanır; her kartta kıyasın kaç soruya dayandığı ve deneme deneme sonuç
+            yazar. &ldquo;Kanıtı gör&rdquo; hangi soruda ne işaretlendiğini gösterir.
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <span className="size-2.5 rounded-full bg-emerald-500" /> hepsi doğru
@@ -434,6 +460,6 @@ export function ExamTrendTopics({
         open={sel != null}
         onOpenChange={(v) => !v && setSel(null)}
       />
-    </div>
+    </section>
   );
 }

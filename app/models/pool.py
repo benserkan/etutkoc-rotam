@@ -228,6 +228,11 @@ class PoolItem(Base):
     label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit: Mapped[str] = mapped_column(String(16), nullable=False)
+    # DENEME KALEMİ (D1b, 2026-10-20): unit=deneme iken quantity = deneme adedi; kaba
+    # alınınca her deneme ayrı görev kalemi olur. app.services.deneme_service.
+    exam_kind: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    exam_section: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    question_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Kaplardaki görevlerden türetilen tamamlanan birim (sync_item_progress yazar) —
     # ÖĞRENCİNİN kaydı; erken uyarı yalnız buna bakar (K18).
     completed: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")

@@ -66,6 +66,8 @@ export const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
 
 function taskUnit(t: TeacherTask): string {
   if (t.work_block_unit) return t.work_block_unit; // serbest blok birimi öncelikli
+  // Deneme kalemi (D1): 1 kalem = 1 deneme → birim "deneme" (soru DEĞİL).
+  if (t.items.some((x) => x.exam_kind)) return "deneme";
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
   if (it && it.book_id == null && it.topic_id != null) return "test"; // kaynaksız konu kalemi
   if (it && it.book_id == null) return "soru"; // kitapsız tam deneme

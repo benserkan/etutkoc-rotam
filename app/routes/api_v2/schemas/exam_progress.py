@@ -34,6 +34,7 @@ class ProgressStats(BaseModel):
     slope: float | None = None
     last_date: str
     days_since_last: int
+    rhythm_applies: bool = True
 
 
 class ProgressSubject(BaseModel):
@@ -262,3 +263,26 @@ class ScoreEstimateResponse(BaseModel):
     calibration: list[ScoreCalibration] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     disclaimer: str
+
+
+
+class ExamOverviewResponse(BaseModel):
+    """Deneme analizi · Genel Bakış paketi (app/services/exam_overview.py — tek merkez).
+
+    Alt bloklar sözlük olarak taşınır; alan sözleşmesi servis + `web/lib/types/exam-overview.ts`
+    + `scripts/test_exam_overview.py` (canlı fikstür) ile sabitlenir.
+    """
+    series: str | None = None
+    series_label: str | None = None
+    series_options: list[dict] = []
+    is_general: bool = False
+    count: int = 0
+    period: dict | None = None
+    last: dict | None = None
+    loss: dict | None = None
+    trend: dict | None = None
+    subjects: list[dict] = []
+    topics: dict | None = None
+    behavior: dict | None = None
+    score: dict | None = None
+    agenda: list[dict] = []

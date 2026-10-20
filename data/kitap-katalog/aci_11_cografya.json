@@ -10,106 +10,136 @@
  "sections": [
   {
    "label": "Mekânsal Sorunların Çözümüne Coğrafya Biliminin Katkıları",
-   "test_count": 6
+   "test_count": 6,
+   "topic": "Mekânsal Sorunlar ve Coğrafya Bilimi"
   },
   {
    "label": "Mekânsal Bilgi Teknolojileri",
-   "test_count": 4
+   "test_count": 4,
+   "topic": "Web Tabanlı CBS"
   },
   {
    "label": "Su Kaynaklarının Özellikleri ve Su Kaynaklarına Giriş - Denizler ve Okyanuslar",
-   "test_count": 1
+   "test_count": 1,
+   "topic": "Su Kaynakları"
   },
   {
    "label": "Göller",
-   "test_count": 1
+   "test_count": 1,
+   "topic": "Su Kaynakları"
   },
   {
    "label": "Akarsular",
-   "test_count": 2
+   "test_count": 2,
+   "topic": "Su Kaynakları"
   },
   {
    "label": "Buzullar ve Bataklıklar",
-   "test_count": 1
+   "test_count": 1,
+   "topic": "Su Kaynakları"
   },
   {
    "label": "Yer Altı Suları ve Kaynaklar",
-   "test_count": 2
+   "test_count": 1,
+   "topic": "Su Kaynakları"
   },
   {
-   "label": "Su Kaynakları (Karma) (Ünite 3: Doğal Sistemler ve Süreçler)",
-   "test_count": 21
+   "label": "Türkiye'nin Su Kaynakları (ÖSYM Tadında Test)",
+   "test_count": 1,
+   "topic": "Türkiye'nin Su Kaynakları"
+  },
+  {
+   "label": "Su Kaynakları (Karma)",
+   "test_count": 21,
+   "topic": "Su Kaynakları"
   },
   {
    "label": "Bağlam Temelli Sorular (Karma) (Ünite 3: Doğal Sistemler ve Süreçler)",
-   "test_count": 2
+   "test_count": 2,
+   "topic": ""
   },
   {
    "label": "Yerleşmelerin Mekânsal Organizasyonları",
-   "test_count": 4
+   "test_count": 4,
+   "topic": "Yerleşmelerin Mekânsal Organizasyonu"
   },
   {
    "label": "Yerleşmelerin Etki Alanları",
-   "test_count": 13
+   "test_count": 13,
+   "topic": "Yerleşmelerin Etki Alanları"
   },
   {
    "label": "Tarımsal Faaliyetler",
-   "test_count": 4
+   "test_count": 4,
+   "topic": "Tarımsal Faaliyetler ve Sürdürülebilirlik"
   },
   {
    "label": "Tarım Uygulamalarında Sürdürülebilirlik",
-   "test_count": 4
+   "test_count": 4,
+   "topic": "Tarımsal Faaliyetler ve Sürdürülebilirlik"
   },
   {
    "label": "Stratejik ve Kritik Madenler",
-   "test_count": 3
+   "test_count": 3,
+   "topic": "Madenler ve Enerji Kaynakları"
   },
   {
    "label": "Enerji Kaynakları",
-   "test_count": 3
+   "test_count": 3,
+   "topic": "Madenler ve Enerji Kaynakları"
   },
   {
    "label": "Sanayileşmenin Mekânsal Etkileri",
-   "test_count": 3
+   "test_count": 3,
+   "topic": "Sanayileşmenin Mekânsal Etkileri"
   },
   {
    "label": "Gezegen Sınırları",
-   "test_count": 5
+   "test_count": 5,
+   "topic": "Gezegen Sınırı ve Küresel İklim Değişikliği"
   },
   {
    "label": "Küresel İklim Değişikliği",
-   "test_count": 6
+   "test_count": 6,
+   "topic": "Gezegen Sınırı ve Küresel İklim Değişikliği"
   },
   {
    "label": "Türkiye'de Suyun Sürdürülebilir Kullanımı",
-   "test_count": 5
+   "test_count": 5,
+   "topic": "Suyun Sürdürülebilir Kullanımı"
   },
   {
    "label": "Türkiye'nin Kültürel Hinterlandı",
-   "test_count": 4
+   "test_count": 4,
+   "topic": "Türkiye'nin Kültürel Hinterlandı"
   },
   {
    "label": "Tarımsal Üretim: Hollanda",
-   "test_count": 3
+   "test_count": 3,
+   "topic": "Örnek Ülkeler (Tarım, Sanayi, Enerji)"
   },
   {
    "label": "Sanayileşme Süreci - Almanya ve Mısır",
-   "test_count": 4
+   "test_count": 4,
+   "topic": "Örnek Ülkeler (Tarım, Sanayi, Enerji)"
   },
   {
    "label": "Madencilik Faaliyetleri - Avustralya",
-   "test_count": 3
+   "test_count": 3,
+   "topic": "Örnek Ülkeler (Tarım, Sanayi, Enerji)"
   },
   {
    "label": "Enerji Kaynakları - Rusya ve Suudi Arabistan",
-   "test_count": 4
+   "test_count": 4,
+   "topic": "Örnek Ülkeler (Tarım, Sanayi, Enerji)"
   }
  ],
  "warnings": [
   "Maarif modeli (7 ünite: Coğrafyanın Doğası, Mekânsal Bilgi Teknolojileri, Doğal Sistemler ve Süreçler, Beşerî Sistemler ve Süreçler, Ekonomik Faaliyetler ve Etkileri, Afetler ve Sürdürülebilir Çevre, Bölgeler-Ülkeler ve Küresel Bağlantılar). İçindekiler yalnız ünite düzeyinde; alt başlıklar üst banttaki 8,8/7,8pt satırdan alındı.",
   "Konu döngüsü içindeki ÖSYM Tadında ve Bağlam Temelli testler bantta o alt başlığı taşıdığı için konuya sayıldı (ör. Tarımsal Faaliyetler = 2 KKT + 1 ÖTT + 1 BT).",
-  "Ünite 3'te konu konu testler yalnız T1-T7 (T3-T4 bantta 'Akarsular I/II', birleştirildi); T8-T28 bantta sırasıyla 'Su Kaynaklarına Giriş', 'Su Kaynakları' ve 'Sular' yazıyor ve sorular tüm su konularını karışık soruyor → tek 'Su Kaynakları (Karma)' satırı (21 test). Ünite 3 sonu 2 Bağlam Temelli test ayrı Karma satırı. Ünite 4'te 'Yerleşmelerin Mekânsal Organizasyonları-I/II/III' ve 'Yerleşmelerin Etki Alanları-I…VII' numaralı bant adları tek satırda birleştirildi.",
+  "Ünite 3 T1-T6 konu konu (T3-T4 bantta 'Akarsular I/II', birleştirildi). T7 (ÖTT) bantta 'Yer Altı Suları ve Kaynaklar' yazıyor ama 10 sorusunun neredeyse tamamı Türkiye'nin su varlığı, deniz yetki alanları, GAP, KKTC'ye su temini, Türkiye'de su baskısı → ayrı 'Türkiye'nin Su Kaynakları' satırı.",
+  "Ünite 3 T8-T28 (21 test; bantta T8 'Su Kaynaklarına Giriş', T9-11 'Su Kaynakları', T12-28 'Sular') soru soru okundu: HER testte okyanus/deniz, göl, akarsu, kaynak/yer altı suyu ve Türkiye örnekleri karışık; ardışık alt konu bloğu YOK → tek 'Su Kaynakları (Karma)' satırı, topic 'Su Kaynakları'. Ünite 3 sonu 2 Bağlam Temelli test ayrı Karma satırı (topic boş). Ünite 4'te numaralı bant adları (I/II/III, I…VII) birleştirildi.",
   "Bazı Ünite 5 sayfalarında bantta 'TEMA 05' yazıyor (dizgi farkı), test zinciri kesintisiz."
  ],
- "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 17,2pt KKT/ÖTT/BT etiketi + ünite/alt başlık), test no ÜNİTE içinde 1'den: Ü1 1-6, Ü2 1-4, Ü3 1-30, Ü4 1-17, Ü5 1-17, Ü6 1-16, Ü7 1-18 kesintisiz = 108 test, hepsi 2 sayfa. İçindekiler (s.4) sayfa aralıkları birebir (5-16=6, 17-24=4, 25-84=30, 85-118=17, 119-152=17, 153-184=16, 185-220=18). Sayfa: 4 ön + 108×2 = 220, cevap anahtarı s.221-223."
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 17,2pt KKT/ÖTT/BT etiketi + ünite/alt başlık), test no ÜNİTE içinde 1'den: Ü1 1-6, Ü2 1-4, Ü3 1-30, Ü4 1-17, Ü5 1-17, Ü6 1-16, Ü7 1-18 kesintisiz = 108 test, hepsi 2 sayfa. İçindekiler (s.4) sayfa aralıkları birebir (5-16=6, 17-24=4, 25-84=30, 85-118=17, 119-152=17, 153-184=16, 185-220=18). Sayfa: 4 ön + 108×2 = 220, cevap anahtarı s.221-223. Satır aralıkları: Mekânsal Sorunların Çözümüne Coğrafya Biliminin Katkıları: Ü1 T1-6; Mekânsal Bilgi Teknolojileri: Ü2 T1-4; Su Kaynaklarının Özellikleri ve Su Kaynaklarına Giriş - Denizler ve Okyanuslar: Ü3 T1; Göller: Ü3 T2; Akarsular: Ü3 T3-4; Buzullar ve Bataklıklar: Ü3 T5; Yer Altı Suları ve Kaynaklar: Ü3 T6; Türkiye'nin Su Kaynakları (ÖSYM Tadında Test): Ü3 T7; Su Kaynakları (Karma): Ü3 T8-28; Bağlam Temelli Sorular (Karma) (Ünite 3: Doğal Sistemler ve Süreçler): Ü3 T29-30; Yerleşmelerin Mekânsal Organizasyonları: Ü4 T1-4; Yerleşmelerin Etki Alanları: Ü4 T5-17; Tarımsal Faaliyetler: Ü5 T1-4; Tarım Uygulamalarında Sürdürülebilirlik: Ü5 T5-8; Stratejik ve Kritik Madenler: Ü5 T9-11; Enerji Kaynakları: Ü5 T12-14; Sanayileşmenin Mekânsal Etkileri: Ü5 T15-17; Gezegen Sınırları: Ü6 T1-5; Küresel İklim Değişikliği: Ü6 T6-11; Türkiye'de Suyun Sürdürülebilir Kullanımı: Ü6 T12-16; Türkiye'nin Kültürel Hinterlandı: Ü7 T1-4; Tarımsal Üretim: Hollanda: Ü7 T5-7; Sanayileşme Süreci - Almanya ve Mısır: Ü7 T8-11; Madencilik Faaliyetleri - Avustralya: Ü7 T12-14; Enerji Kaynakları - Rusya ve Suudi Arabistan: Ü7 T15-18."
 }

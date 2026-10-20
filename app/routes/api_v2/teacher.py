@@ -113,8 +113,10 @@ from app.models import (
     UserRole,
     WeekNote,
     compute_net,
+    subject_net,
 )
 from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
+from app.routes.api_v2.schemas.student import DenemeResultsBody
 from app.routes.api_v2.schemas.common import task_video_refs, MutationResponse
 from app.routes.api_v2.schemas.teacher import (
     ExamNotifyParentsBody,
@@ -1135,7 +1137,7 @@ def _build_gorev_breakdown(g):
         gorev_total=g.gorev_total, gorev_done=g.gorev_done, gorev_pct=g.gorev_pct,
         test_planned=g.test_planned, test_completed=g.test_completed,
         deneme_planned=g.deneme_planned, deneme_completed=g.deneme_completed,
-        deneme_count=g.cat_total["deneme"] + g.cat_total["tam_deneme"],
+        deneme_count=g.deneme_units,
         deneme_done=g.cat_done["deneme"] + g.cat_done["tam_deneme"],
         etkinlik_count=g.cat_total["etkinlik"], etkinlik_done=g.cat_done["etkinlik"],
         subjects=[
@@ -1366,6 +1368,36 @@ def _get_owned_exam(db: Session, exam_id: int, teacher_id: int) -> ExamResult:
     return exam
 
 
+def split_program_exams(exams: list[ExamResult]) -> tuple[list[ExamResult], list[ExamResult]]:
+    """(analiz denemeleri, program denemeleri) — sıra korunur.
+
+    Program denemesi (görevden açılan, import_source="task") konu analizi taşımaz;
+    Denemeler analiz listesine/özetine karışmaz (2026-10-20 kullanıcı kararı).
+    """
+    from app.models.exam_result import is_program_exam
+    analysis = [e for e in exams if not is_program_exam(e)]
+    program = [e for e in exams if is_program_exam(e)]
+    # Aynı gündeki program denemeleri "1., 2. deneme" sırasıyla (kalem id) — yeni önce.
+    program.sort(key=lambda e: (e.exam_date, e.task_book_item_id or 0, e.id), reverse=True)
+    return analysis, program
+
+
+def exam_list_summary(exams: list[ExamResult]) -> ExamListSummary:
+    """Liste özeti — exams DESC sıralı (ilk = en yeni)."""
+    nets = [e.net for e in exams]
+    count = len(nets)
+    last_net = nets[0] if nets else None
+    first_net = nets[-1] if nets else None
+    return ExamListSummary(
+        count=count,
+        avg_net=round(sum(nets) / count, 2) if count else 0.0,
+        best_net=round(max(nets), 2) if nets else 0.0,
+        last_net=last_net,
+        first_net=first_net,
+        trend_delta=round(last_net - first_net, 2) if count >= 2 else None,
+    )
+
+
 def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamResultRow:
     subjects: list[ExamSubjectRow] = []
     if exam.subject_nets:
@@ -1529,7 +1561,7 @@ def _validate_and_compute_exam(body: "ExamCreateBody") -> dict:
             tb += b
             subject_payload.append({
                 "name": name, "correct": c, "wrong": w, "blank": b,
-                "net": compute_net(c, w, section),
+                "net": subject_net(c, w, section),  # ders neti negatif olabilir
             })
         total_correct, total_wrong, total_blank = tc, tw, tb
     else:
@@ -1860,29 +1892,16 @@ def teacher_student_exams_v2(
         ):
             names[uid] = full_name
 
-    rows = [
-        _build_exam_row(e, created_by_name=names.get(e.created_by_id) if e.created_by_id else None)
-        for e in exams
-    ]
+    def _row(e: ExamResult) -> ExamResultRow:
+        return _build_exam_row(e, created_by_name=names.get(e.created_by_id) if e.created_by_id else None)
 
-    nets = [e.net for e in exams]
-    count = len(nets)
-    # exams DESC sıralı → ilk eleman en yeni, son eleman en eski
-    last_net = nets[0] if nets else None
-    first_net = nets[-1] if nets else None
-    summary = ExamListSummary(
-        count=count,
-        avg_net=round(sum(nets) / count, 2) if count else 0.0,
-        best_net=round(max(nets), 2) if nets else 0.0,
-        last_net=last_net,
-        first_net=first_net,
-        trend_delta=round(last_net - first_net, 2) if (count >= 2) else None,
-    )
+    analysis, program = split_program_exams(exams)
     return StudentExamListResponse(
-        summary=summary,
-        rows=rows,
+        summary=exam_list_summary(analysis),
+        rows=[_row(e) for e in analysis],
         section_options=_exam_section_options(),
         period=grade_period_service.build_filter_meta(db, student.id, win),
+        program_rows=[_row(e) for e in program],
     )
 
 
@@ -2025,6 +2044,13 @@ def teacher_update_exam_v2(
     Net/toplamlar create ile aynı kuralla yeniden hesaplanır. created_by_id
     DEĞİŞMEZ (kaydı kim girdiyse o kalır)."""
     exam = _get_owned_exam(db, exam_id, user.id)
+    if exam.import_source == "task":
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "task_linked",
+                    "message": "Bu deneme programdaki görevden geldi — sonucu görevden düzelt "
+                               "(haftalık programda denemenin sonuç rozeti)."},
+        )
     f = _validate_and_compute_exam(body)
     exam.title = f["title"]
     exam.exam_date = f["exam_date"]
@@ -4027,6 +4053,8 @@ def _build_teacher_task_item(
     topic = item.topic if (item.book is None and item.topic_id) else None
     if subj is None and topic is not None:
         subj = topic.subject
+    if subj is None and item.book is None and getattr(item, "exam_subject", None) is not None:
+        subj = item.exam_subject  # kitapsız branş denemesi (D1)
     return TeacherTaskItem(
         id=item.id,
         book_id=item.book_id,
@@ -4050,7 +4078,25 @@ def _build_teacher_task_item(
         correct_count=item.correct_count,
         wrong_count=item.wrong_count,
         blank_count=item.blank_count,
+        exam_kind=item.exam_kind,
+        exam_section=item.exam_section,
+        question_count=item.question_count,
+        duration_minutes=item.duration_minutes,
+        net=(_ds_net(item) if item.exam_kind else None),
+        result_pending=_ds_pending(item),
     )
+
+
+def _ds_net(item: TaskBookItem) -> float | None:
+    from app.services.deneme_service import item_net
+
+    return item_net(item)
+
+
+def _ds_pending(item: TaskBookItem) -> bool:
+    from app.services.deneme_service import result_pending
+
+    return result_pending(item)
 
 
 def _build_teacher_task(db: Session, task: Task) -> TeacherTask:
@@ -4160,6 +4206,7 @@ def _capacity_invalidate(teacher_id: int, sid: int) -> list[str]:
         f"{base}:sidebar",
         f"{base}:topic-board",
         f"{base}:topic-insights",  # hafta ızgarası konu özeti
+        f"{base}:deneme-options",  # Deneme formu: sıradaki denemeler + kalıplar (D1)
     ]
 
 
@@ -4173,6 +4220,8 @@ def _invalidate_for_task(task: Task, teacher_id: int) -> list[str]:
         f"teacher:{teacher_id}:students:{sid}:week",
         f"teacher:{teacher_id}:students:{sid}:summary",
         f"teacher:{teacher_id}:students:{sid}:sidebar",
+        # Öğrenci detayı — haftalık ilerleme (yük, gün gün, uyum)
+        f"teacher:{teacher_id}:students:{sid}:weekly-progress",
         # Serbest iş blokları: bağlı görev ekle/sil/düzenle → dağıtılan/kalan değişir
         f"teacher:{teacher_id}:students:{sid}:work-blocks",
         # Haftalık İskelet: görev eklenince/silinince hayalet hücreler ve CANLI
@@ -4385,6 +4434,89 @@ def _ensure_topic_accessible(db: Session, topic_id: int | None, student: User) -
         )
 
 
+def _normalize_deneme_items(db: Session, items: list) -> list:
+    """Deneme kitabından gelen, deneme alanı taşımayan kalemleri 1 kalem = 1 deneme
+    olarak açar (planned N → N kalem). Diğer kalemler aynen döner."""
+    from app.services import deneme_service as _ds
+
+    out: list = []
+    book_cache: dict[int, Book | None] = {}
+    for it in items:
+        if it.book_id is None or getattr(it, "exam_kind", None):
+            out.append(it)
+            continue
+        if it.book_id not in book_cache:
+            book_cache[it.book_id] = db.get(Book, it.book_id)
+        book = book_cache[it.book_id]
+        if book is None or book.type not in _ds.DENEME_BOOK_TYPES:
+            out.append(it)
+            continue
+        section = db.get(BookSection, it.section_id) if it.section_id else None
+        qn, _src = _ds.resolve_question_count(book=book, section=section, subject=book.subject)
+        kind = (_ds.EXAM_KIND_BRANS if book.type == _ds.DENEME_BOOK_TYPES[0]
+                else _ds.EXAM_KIND_GENEL)
+        n = max(1, int(it.planned_count or 1))
+        for _ in range(n):
+            out.append(TaskItemBody(
+                book_id=it.book_id, section_id=it.section_id, planned_count=1,
+                allow_over_capacity=bool(getattr(it, "allow_over_capacity", False)),
+                exam_kind=kind,
+                exam_section=_ds.exam_section_for_subject(book.subject),
+                question_count=qn,
+            ))
+    return out
+
+
+def _ensure_exam_subject_accessible(db: Session, subject_id: int | None, student: User) -> None:
+    """Kitapsız branş denemesinin dersi: resmi ders ya da bu koçun dersi olmalı."""
+    if subject_id is None:
+        return
+    from app.models import Subject
+
+    subj = db.get(Subject, subject_id)
+    if subj is None or not (subj.is_builtin or subj.teacher_id == student.teacher_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "subject_not_found",
+                    "message": "Seçilen ders bulunamadı."},
+        )
+
+
+def item_exam_kw(it) -> dict:
+    """Kayıtlı kalemin deneme alanları — kopyalama yolları (yay/devret) için."""
+    if not getattr(it, "exam_kind", None):
+        return {}
+    return {"exam_kind": it.exam_kind, "exam_section": it.exam_section,
+            "subject_id": it.subject_id, "question_count": it.question_count}
+
+
+def _exam_fields(it) -> dict:
+    """Kalem gövdesindeki deneme alanları (D1). exam_kind yoksa hepsi boş — eski
+    davranış birebir. Deneme kaleminde planned_count 1 olmalı (1 kalem = 1 deneme)."""
+    kind = getattr(it, "exam_kind", None)
+    if kind is None:
+        return {}
+    if it.planned_count != 1:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "deneme_item_count",
+                    "message": "Deneme kaleminde planlanan sayı 1 olmalı (her kalem bir deneme)."},
+        )
+    qn = getattr(it, "question_count", None)
+    if qn is not None and not (1 <= qn <= 200):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_question_count",
+                    "message": "Soru sayısı 1 ile 200 arasında olmalı."},
+        )
+    return {
+        "exam_kind": kind,
+        "exam_section": getattr(it, "exam_section", None),
+        "subject_id": getattr(it, "subject_id", None),
+        "question_count": qn,
+    }
+
+
 def _create_task_with_items(
     db: Session,
     *,
@@ -4424,9 +4556,18 @@ def _create_task_with_items(
             },
         )
 
+    # DENEME TANIMA (D1): deneme kitabından gelen kalem hangi yoldan gelirse gelsin
+    # (görev kutusu, test formu, şablon, yay, devret, iskelet) 1 kalem = 1 deneme
+    # olarak açılır ve deneme alanlarını taşır.
+    pre_exam = any(getattr(it, "exam_kind", None) for it in payload.items)
+    single_book_origin = (
+        len(payload.items) == 1 and payload.items[0].book_id is not None
+    )
+    items = _normalize_deneme_items(db, payload.items)
+
     # Kalemler geçerli mi (kitap-bölüm uyumu + atama + sayım)? Kitapsız "deneme"
     # kalemi (book_id None) kitap doğrulaması + rezerv ATLAR; yalnız sayı kontrolü.
-    for it in payload.items:
+    for it in items:
         _ensure_count_positive(it.planned_count)
         if it.book_id is None:
             # Kitapsız kalem — kapasite/atama yok. topic_id verilmişse
@@ -4434,6 +4575,7 @@ def _create_task_with_items(
             # müfredattan (builtin) ya da bu koçun kendi konusu olmalı.
             # Aksi hâlde başka koçun/öğrencinin konusu göreve bağlanabilirdi.
             _ensure_topic_accessible(db, getattr(it, "topic_id", None), student)
+            _ensure_exam_subject_accessible(db, getattr(it, "subject_id", None), student)
             continue
         _ensure_section_belongs_to_book(db, it.book_id, it.section_id)
         _ensure_student_book_assigned(db, student.id, it.book_id)
@@ -4492,7 +4634,7 @@ def _create_task_with_items(
     db.add(task)
     db.flush()
 
-    for it in payload.items:
+    for it in items:
         if it.book_id is None:
             # Kitapsız kalem: rezerv/kapasite YOK.
             #   · topic_id doluysa  → KAYNAKSIZ KONU görevi (2026-09-07):
@@ -4512,6 +4654,7 @@ def _create_task_with_items(
                 label=(getattr(it, "label", None) or fallback_label),
                 planned_count=it.planned_count,
                 completed_count=0,
+                **_exam_fields(it),
             ))
             continue
         # reserve_item kapasite aşımında ReservationError fırlatır — koç
@@ -4542,14 +4685,33 @@ def _create_task_with_items(
             book_section_id=it.section_id,
             planned_count=it.planned_count,
             completed_count=0,
+            **_exam_fields(it),
         ))
     db.flush()
 
     # Tek kitap-kalemli görevde başlığı otomatik üret — tek-kalem düzenleme ile
     # tutarlı. Frontend 'Görev' placeholder'ı yerine 'Kitap — Bölüm: N test'.
     # (Kitapsız deneme/etkinlik kalemleri kendi label/başlığını korur.)
-    book_items = [it for it in payload.items if it.book_id is not None]
-    if len(payload.items) == 1 and len(book_items) == 1:
+    book_items = [it for it in items if it.book_id is not None]
+    exam_items = [it for it in items if getattr(it, "exam_kind", None)]
+    if exam_items and not pre_exam and single_book_origin:
+        # Deneme kitabından tek kalem geldi ve N denemeye açıldı → deneme başlığı.
+        from app.services import deneme_service as _ds
+
+        b0 = db.get(Book, exam_items[0].book_id)
+        labels = []
+        for it in exam_items:
+            sec = db.get(BookSection, it.section_id) if it.section_id else None
+            labels.append(sec.label if sec else "")
+        task.title = _ds.compose_title(
+            kind=exam_items[0].exam_kind, count=len(exam_items),
+            question_count=int(exam_items[0].question_count or 0) or 0,
+            subject=(b0.subject if b0 else None), book=b0, section_labels=labels,
+        ) if (exam_items[0].question_count or 0) else (task.title or "Deneme")
+        db.flush()
+    elif pre_exam:
+        pass  # /deneme-tasks başlığı kendisi kurar
+    elif len(items) == 1 and len(book_items) == 1:
         bi = book_items[0]
         book = db.query(Book).filter(Book.id == bi.book_id).first()
         section = db.query(BookSection).filter(BookSection.id == bi.section_id).first()
@@ -4557,13 +4719,13 @@ def _create_task_with_items(
             task.title = _compose_single_item_title(book, section, bi.planned_count)
             db.flush()
     elif (
-        len(payload.items) == 1
-        and getattr(payload.items[0], "topic_id", None)
+        len(items) == 1
+        and getattr(items[0], "topic_id", None)
         and (task.title or "").strip() in ("", "Görev", "—")
     ):
         # Kaynaksız (konuya bağlı) tek kalem: yer tutucu "Görev" yerine
         # "Konu — N test" (hızlı görev kutusunun başlığıyla aynı biçim).
-        ti = payload.items[0]
+        ti = items[0]
         from app.models import Topic as _Topic
 
         topic = db.get(_Topic, ti.topic_id)
@@ -4778,6 +4940,8 @@ def teacher_student_week_v2(
             for _it in _t.book_items:
                 if _it.book is None and _it.topic is not None and _it.topic.subject is not None:
                     subjects_map.setdefault(_it.topic.subject.id, _it.topic.subject)
+                elif _it.book is None and getattr(_it, "exam_subject", None) is not None:
+                    subjects_map.setdefault(_it.exam_subject.id, _it.exam_subject)  # kitapsız branş (D1)
     subjects = sorted(subjects_map.values(), key=lambda s: (s.order, s.name))
 
     # Öğrenme modeli — request başına 1 kez
@@ -4862,7 +5026,7 @@ def teacher_student_week_v2(
             test_completed=_g.test_completed,
             deneme_planned=_g.deneme_planned,
             deneme_completed=_g.deneme_completed,
-            deneme_count=_g.cat_total["deneme"] + _g.cat_total["tam_deneme"],
+            deneme_count=_g.deneme_units,
             etkinlik_count=_g.cat_total["etkinlik"],
             tasks=tt,
             draft_count=draft_count,
@@ -5389,9 +5553,12 @@ def teacher_carryover_v2(
                 elif it.book_id is None:
                     # kitapsız (deneme/blok-counter) kalem
                     rem = max(0, it.planned_count - it.completed_count)
+                    if it.exam_kind and rem <= 0:
+                        continue  # çözülmüş deneme devredilmez (1 kalem = 1 deneme)
                     items.append(TaskItemBody(
                         book_id=None, section_id=None,
                         label=it.label or src.title, planned_count=(rem or it.planned_count),
+                        **item_exam_kw(it),
                     ))
             src_type = src.type.value if hasattr(src.type, "value") else str(src.type)
             # Section'lı kalem varsa "test"; yoksa kaynak tipini koru (etkinlik).
@@ -5786,7 +5953,8 @@ def _spread_alloc_for_day(
         if it.book_id is None:
             # Kitapsız kalem — rezerv yok, aynen kopyala.
             out.append(TaskItemBody(book_id=None, section_id=None,
-                                    label=it.label, planned_count=want))
+                                    label=it.label, planned_count=want,
+                                    **item_exam_kw(it)))
             got_total += want
             continue
         section = db.get(BookSection, it.book_section_id)
@@ -6155,7 +6323,8 @@ def teacher_set_task_item_result_v2(
         correct=body.correct,
         wrong=body.wrong,
         blank=body.blank,
-        is_book_item=(item.book_id is not None or item.topic_id is not None),
+        is_book_item=(item.book_id is not None or item.topic_id is not None
+                      or item.exam_kind is not None),
     )
 
     try:
@@ -6192,6 +6361,61 @@ def teacher_set_task_item_result_v2(
     return MutationResponse[TeacherTask](
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
+    )
+
+
+@router.post(
+    "/tasks/{task_id}/deneme-results",
+    response_model=MutationResponse[TeacherTask],
+)
+def teacher_set_deneme_results_v2(
+    task_id: int,
+    body: DenemeResultsBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Koç deneme sonuçlarını girer/düzeltir (seansta öğrenci adına) — öğrenciyle aynı servis (D2)."""
+    from app.services.deneme_service import DenemeResultError, DenemeRow, apply_results
+
+    task = _get_owned_task(db, task_id, user.id)
+    try:
+        apply_results(db, task, [DenemeRow(**r.model_dump()) for r in body.rows])
+    except DenemeResultError as e:
+        db.rollback()
+        raise HTTPException(status_code=422, detail={"error": "validation", "code": e.code, "message": e.message})
+    except ReservationError as e:
+        db.rollback()
+        raise _reservation_to_http(e)
+    total_planned = sum(i.planned_count for i in task.book_items)
+    total_done = sum(i.completed_count for i in task.book_items)
+    if total_done == 0:
+        task.status = TaskStatus.PENDING
+        task.completed_at = None
+    elif total_done >= total_planned:
+        task.status = TaskStatus.COMPLETED
+        task.completed_at = task.completed_at or datetime.now(timezone.utc)
+    else:
+        task.status = TaskStatus.PARTIAL
+        task.completed_at = None
+    if task.pool_item_id is not None:
+        from app.models.pool import PoolItem
+        from app.services.pool_mode import sync_item_progress
+
+        pi = db.get(PoolItem, task.pool_item_id)
+        if pi is not None:
+            sync_item_progress(db, pi)
+    db.commit()
+    db.refresh(task)
+    sid = task.student_id
+    return MutationResponse[TeacherTask](
+        data=_build_teacher_task(db, task),
+        # D3: sonuçlu deneme Denemeler'e yazıldı (deneme_bridge)
+        invalidate=_invalidate_for_task(task, user.id) + [
+            f"teacher:{user.id}:students:{sid}:exams",
+            f"teacher:{user.id}:students:{sid}:deneme-pending",
+            f"teacher:{user.id}:students:{sid}:deneme-analysis",
+            f"teacher:{user.id}:students:{sid}:weekly-progress",
+        ],
     )
 
 

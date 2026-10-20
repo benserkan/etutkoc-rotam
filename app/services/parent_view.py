@@ -390,7 +390,7 @@ def student_week(db: Session, parent: User, student_id: int, start: date) -> dic
             "gorev_done": _g.gorev_done,
             "test_planned": _g.test_planned,
             "test_completed": _g.test_completed,
-            "deneme_count": _g.cat_total["deneme"] + _g.cat_total["tam_deneme"],
+            "deneme_count": _g.deneme_units,
             "etkinlik_count": _g.cat_total["etkinlik"],
         })
 

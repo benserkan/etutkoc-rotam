@@ -414,6 +414,14 @@ class TeacherTaskItem(BaseModel):
     correct_count: int | None = None
     wrong_count: int | None = None
     blank_count: int | None = None
+    # Deneme kalemi (D1): 'brans'|'genel' + sınav türü + deneme başına soru.
+    exam_kind: str | None = None
+    exam_section: str | None = None
+    question_count: int | None = None
+    # D2: süre · net · sonuç bekliyor
+    duration_minutes: int | None = None
+    net: float | None = None
+    result_pending: bool = False
 
 
 class TeacherTask(BaseModel):
@@ -886,6 +894,12 @@ class TaskItemBody(BaseModel):
     # sayısı gerçeği her zaman yansıtmaz; envanter koçun programını
     # engellememeli. Varsayılan False → eski davranış (422) korunur.
     allow_over_capacity: bool = False
+    # DENEME KALEMİ (D1, 2026-10-20) — dolu ise 1 kalem = 1 deneme (planned_count=1).
+    # Genelde /deneme-tasks ucu doldurur; ayrıntı: app.services.deneme_service.
+    exam_kind: Literal["brans", "genel"] | None = None
+    exam_section: str | None = None
+    subject_id: int | None = None        # kitapsız branş denemesinin dersi
+    question_count: int | None = None    # deneme başına soru (öğrenci esnek değiştirir)
 
 
 class TaskCreateBody(BaseModel):
@@ -2399,6 +2413,9 @@ class StudentExamListResponse(BaseModel):
     section_options: list[ExamSectionOption]
     # P3: hangi sınıf dönemine göre süzüldü
     period: PeriodFilterMeta | None = None
+    # Programdaki deneme görevlerinden gelen sonuçlar (konu analizi yok) — analiz
+    # listesine/özetine KARIŞMAZ, ayrı bölümde gösterilir (2026-10-20).
+    program_rows: list[ExamResultRow] = []
 
 
 # =============================================================================

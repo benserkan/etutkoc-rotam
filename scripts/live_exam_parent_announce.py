@@ -239,6 +239,11 @@ def main() -> int:
             if tab:
                 tab.click()
                 page.wait_for_timeout(2000)
+            # Deneme analizi alt sekmeleri (2026-10-02): duyuru zarfı "Tüm Denemeler"de
+            sub = page.query_selector('[role="tab"]:has-text("Tüm Denemeler"), button:has-text("Tüm Denemeler")')
+            if sub:
+                sub.click()
+                page.wait_for_timeout(1500)
 
             before = mail_count(ids["parent"])
 

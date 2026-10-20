@@ -257,7 +257,9 @@ def build_progress_report(db: Session, student: User, *, section: str | None = N
     from app.services.exam_topic_analysis import build_exam_topic_analysis
 
     win = grade_period_service.resolve_window(db, student.id, period)
-    q = db.query(ExamResult).filter(ExamResult.student_id == student.id)
+    from app.models.exam_result import analysis_exam_filter
+    # Program denemeleri (görevden, konu analizi yok) gelişim raporuna girmez.
+    q = db.query(ExamResult).filter(ExamResult.student_id == student.id, analysis_exam_filter())
     if win.start is not None:
         q = q.filter(ExamResult.exam_date >= win.start)
     if win.end is not None:
@@ -313,6 +315,9 @@ def build_progress_report(db: Session, student: User, *, section: str | None = N
         "slope": _slope(nets[-SLOPE_WINDOW:]),
         "last_date": last["exam_date"],
         "days_since_last": (date.today() - exams[-1].exam_date).days,
+        # Ritim uyarısı yalnız BUGÜNE uzanan görünümde anlamlı; geçmiş bir dönem
+        # incelenirken "son deneme 200 gün önce" uyarısı yanıltır (2026-10-20 denetim).
+        "rhythm_applies": win.end is None or win.end >= date.today(),
     }
 
     # ders gidişatı (subject_nets; ad bazında birleşir)
@@ -455,7 +460,7 @@ def _commentary(stats, series, subjects, tinfo, penalty) -> list[dict]:
             if tinfo.get("per_week_needed"):
                 txt += f" Hedef tarihe kadar haftada {_fmt(tinfo['per_week_needed'])} net artış gerekiyor."
             out.append({"tone": "info" if (stats["slope"] or 0) > 0 else "warn", "text": txt})
-    if stats["days_since_last"] >= STALE_DAYS:
+    if stats.get("rhythm_applies", True) and stats["days_since_last"] >= STALE_DAYS:
         out.append({"tone": "warn", "text": f"Son deneme {stats['days_since_last']} gün önce — "
                     "deneme ritmi düştü."})
     return out
@@ -506,7 +511,7 @@ def _actions(stats, series, subjects, tinfo, opps, forgotten, last_exam_id) -> l
         add("behavior:wrong", "behavior", 2, "Yanlış oranını düşür",
             f"Son denemede {last['wrong']} yanlış — emin olunmayan soruda eleme yapıp "
             "gerekirse boş bırakma stratejisi konuşulmalı.")
-    if stats["days_since_last"] >= STALE_DAYS:
+    if stats.get("rhythm_applies", True) and stats["days_since_last"] >= STALE_DAYS:
         add("rhythm", "rhythm", 3, "Deneme ritmini yeniden kur",
             f"Son deneme {stats['days_since_last']} gün önce; düzenli (1-2 haftada bir) deneme önerilir.")
     if tinfo and tinfo["gap"] > 0 and (stats["slope"] is None or stats["slope"] <= 0):

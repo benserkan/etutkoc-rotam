@@ -129,7 +129,7 @@ def student_pool(user: User = Depends(_require_student), db: Session = Depends(g
         subj = names["subjects"].get(it.subject_id)
         t = cup_by_item.get(it.id)
         items.append(StudentPoolItemOut(
-            id=it.id, subject_id=it.subject_id, subject_name=subj.name if subj else "—",
+            id=it.id, subject_id=it.subject_id, subject_name=subj.name if subj else ("Genel deneme" if it.exam_kind == "genel" else "—"),
             title=_title(it, names), book_name=names["books"].get(it.book_id).name if it.book_id in names["books"] else None,
             quantity=it.quantity, unit=it.unit, done=it.done_units, remaining=it.remaining,
             day_hint=it.day_hint.isoformat() if it.day_hint else None, source=it.source,
@@ -237,6 +237,7 @@ def cup_return(task_id: int, user: User = Depends(_require_student), db: Session
                                                      "message": "Bu kalemde işaretlediğin kısım var; kalan gün sonunda havuza döner."})
     day = t.date
     item = db.get(PoolItem, t.pool_item_id)
+    pm.detach_task_videos(db, t.id)
     db.delete(t)
     db.flush()
     if item is not None:
@@ -371,7 +372,7 @@ def period_detail_response(db: Session, period, *, audience: str, today: date | 
         creator = names["users"].get(it.created_by_id) if it.created_by_id else None
         coach_view = audience == "teacher"
         return PoolPeriodDetailItem(
-            id=it.id, subject_id=it.subject_id, subject_name=subj.name if subj else "—", title=_title(it, names),
+            id=it.id, subject_id=it.subject_id, subject_name=subj.name if subj else ("Genel deneme" if it.exam_kind == "genel" else "—"), title=_title(it, names),
             topic_name=top.name if top else None, book_name=book.name if book else None,
             section_label=sec.label if sec else None, label=it.label, quantity=it.quantity, unit=it.unit,
             completed=int(it.completed or 0), session_marked=int(it.session_marked or 0),

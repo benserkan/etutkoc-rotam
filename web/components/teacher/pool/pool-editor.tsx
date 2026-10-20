@@ -9,6 +9,7 @@
  * Gün-gün editöre (/week) dokunmaz; öğrenci havuz modunda değilse geçiş kartı.
  */
 import * as React from "react";
+import { VideoBasketFloat } from "@/components/teacher/weekly-plan/video-basket-float";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -123,6 +124,8 @@ export function PoolEditor({ studentId, initial, initialView }: {
         </>
       ) : (
         <>
+          {/* Video Sepeti (2026-10-20): havuz öğrencisinde videolar güne değil havuza kalem olarak eklenir */}
+          <VideoBasketFloat studentId={studentId} subjects={data.subjects.map((s) => ({ id: s.id, name: s.name }))} />
           <PeriodBar studentId={studentId} data={data} />
           <PoolFlagsCard flags={data.flags} compact />
           {period && watching ? (
@@ -814,6 +817,9 @@ function ItemRow({ it, studentId, onDelete, onApprove }: {
                 {it.quantity} {UNIT_LABELS[it.unit]}
               </span>
             )}
+            {it.exam_kind && it.question_count ? (
+              <span className="tabular-nums">deneme başına {it.question_count} soru</span>
+            ) : null}
             {it.completed > 0 && <span>{it.completed} yapıldı · {it.remaining} kaldı</span>}
             {it.book_total != null && (
               <span className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-foreground" title="Kitabın bu bölümündeki ilerleme (kitap sayacı)">

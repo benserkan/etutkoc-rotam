@@ -44,6 +44,8 @@ from app.routes.api_v2.schemas.video_basket import (
     VideoSourceDeleteBody,
     VideoSourceOut,
     VideoSourcePatchBody,
+    VideoToPoolBody,
+    VideoToPoolResult,
 )
 from app.routes.api_v2.teacher import (
     _create_task_with_items,
@@ -108,8 +110,20 @@ def _subject_accessible(db: Session, subject_id: int | None, coach: User) -> Sub
     return s
 
 
-def _item_status(it: VideoBasketItem) -> str:
+def _pool_alive(db: Session, pool_item_id: int | None) -> bool:
+    """Video havuz kalemine bağlı ve kalem hâlâ açık dönemde, kaldırılmamış mı?"""
+    if pool_item_id is None:
+        return False
+    from app.models.pool import PoolItem
+
+    pi = db.get(PoolItem, pool_item_id)
+    return bool(pi is not None and pi.removed_at is None and pi.period is not None and pi.period.is_open)
+
+
+def _item_status(it: VideoBasketItem, db: Session | None = None) -> str:
     if it.task_id is None or it.task is None:
+        if db is not None and _pool_alive(db, it.pool_item_id):
+            return "pooled"
         return "waiting"
     return "watched" if it.task.status == TaskStatus.COMPLETED else "planned"
 
@@ -254,9 +268,11 @@ def get_video_basket(student_id: int, user: User = Depends(_require_teacher),
 
     groups: dict[str, VideoGroupOut] = {}
     waiting = 0
+    pooled = 0
     for it in items:
-        st = _item_status(it)
+        st = _item_status(it, db)
         waiting += st == "waiting"
+        pooled += st == "pooled"
         g = groups.get(it.group_key)
         if g is None:
             g = groups[it.group_key] = VideoGroupOut(
@@ -269,15 +285,22 @@ def get_video_basket(student_id: int, user: User = Depends(_require_teacher),
             id=it.id, youtube_id=it.youtube_id, title=it.title, url=it.url,
             channel_title=it.channel_title, duration_min=it.duration_min, role=it.role,
             role_label=VIDEO_ROLE_LABELS.get(it.role, it.role), order=it.order, status=st,
-            task_id=it.task_id if st != "waiting" else None,
-            task_date=it.task.date.isoformat() if st != "waiting" and it.task else None,
+            task_id=it.task_id if st in ("planned", "watched") else None,
+            task_date=it.task.date.isoformat() if st in ("planned", "watched") and it.task else None,
+            pool_item_id=it.pool_item_id if st != "waiting" else None,
         ))
         g.total_min += it.duration_min or 0
         g.waiting_count += st == "waiting"
+    from app.services import pool_mode as pm
+
+    student = db.get(User, student_id)
+    mode = pm.mode_of(student) if student is not None else "gun_gun"
     return VideoBasketResponse(
         youtube_configured=yt.is_configured(), groups=list(groups.values()),
         waiting_count=waiting, day_warn_minutes=DAY_WARN_MINUTES,
         sources=_source_rows(db, user.id, student_id),
+        program_mode=mode, pooled_count=pooled,
+        pool_period_open=bool(mode == "havuz" and pm.get_open_period(db, student_id) is not None),
     )
 
 
@@ -525,6 +548,66 @@ def place_videos(student_id: int, body: VideoPlaceBody,
     return MutationResponse[VideoPlaceResult](
         data=VideoPlaceResult(task_ids=[t.id for t in touched], day_minutes=minutes),
         invalidate=list(dict.fromkeys(inv)), warnings=warnings,
+    )
+
+
+@router.post("/students/{student_id}/video-basket/to-pool",
+             response_model=MutationResponse[VideoToPoolResult])
+def videos_to_pool(student_id: int, body: VideoToPoolBody,
+                   user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
+    """Havuz modundaki öğrenci (2026-10-20): seçili videolar güne değil HAVUZA eklenir.
+    Aynı konu grubu → tek havuz kalemi (etkinlik = 1 birim, K42); öğrenci kaba alınca videolar o
+    güne açılan video görevine bağlanır. Yalnız bekleyen (programda/havuzda olmayan) videolar."""
+    from app.models.pool import UNIT_ETKINLIK
+    from app.routes.api_v2.pool import _keys as pool_keys
+    from app.services import pool_mode as pm
+    from app.services.pool_mode import PoolError
+
+    student = _get_owned_student(db, student_id, user.id)
+    assert_active_coaching(db, user)
+    if pm.mode_of(student) != "havuz":
+        raise _err(409, "not_havuz", "Öğrenci haftalık havuz modunda değil; videoları programdaki güne sürükle.")
+    period = pm.get_open_period(db, student.id)
+    if period is None:
+        raise _err(409, "no_open_period", "Açık havuz dönemi yok; önce dönemi aç.")
+    rows = {r.id: r for r in db.query(VideoBasketItem).filter(
+        VideoBasketItem.student_id == student.id, VideoBasketItem.id.in_(body.item_ids))}
+    if len(rows) != len(set(body.item_ids)):
+        raise _err(404, "video_not_found", "Video bulunamadı.")
+    free = [r for r in sorted(rows.values(), key=lambda r: (r.order, r.id))
+            if _item_status(r, db) == "waiting"]
+    if not free:
+        raise _err(409, "nothing_to_pool", "Seçili videolar zaten havuzda ya da programda.")
+    day_hint = _parse_iso_date(body.day_hint) if body.day_hint else None
+
+    by_group: dict[str, list[VideoBasketItem]] = {}
+    for r in free:
+        by_group.setdefault(r.group_key, []).append(r)
+    created: list[int] = []
+    for vids in by_group.values():
+        first = vids[0]
+        subject = db.get(Subject, first.subject_id) if first.subject_id else None
+        if subject is None:
+            raise _err(422, "subject_required",
+                       f"\"{first.group_label}\" grubunun dersi seçilmemiş; önce grubun dersini seç.")
+        topic = db.get(Topic, first.topic_id) if first.topic_id else None
+        if topic is not None and topic.subject_id != subject.id:
+            topic = None
+        label = _task_title(None, first.group_label, vids)
+        try:
+            item = pm.add_item(db, period=period, student=student, subject=subject, quantity=1,
+                               unit=UNIT_ETKINLIK, topic=topic, label=label, day_hint=day_hint,
+                               created_by=user, teacher_homework=body.teacher_homework)
+        except PoolError as e:
+            raise _err(422, e.code, e.message)
+        for v in vids:
+            v.pool_item_id = item.id
+        created.append(item.id)
+    db.commit()
+    inv = [_basket_key(user.id, student.id), *pool_keys(user.id, student.id), f"student:{student.id}:pool"]
+    return MutationResponse[VideoToPoolResult](
+        data=VideoToPoolResult(pool_item_ids=created, videos=len(free)),
+        invalidate=list(dict.fromkeys(inv)),
     )
 
 

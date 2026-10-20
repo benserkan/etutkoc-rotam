@@ -84,6 +84,9 @@ _SUBJECT_ALIASES: dict[str, str] = {
     "sosyal bilgiler": "sosyal bilimler",
     "yabanci dil": "ingilizce",
     "matematik geometri": "matematik",
+    # Paraf TYT karnesi bölüm adı (canlı denetim 2026-10-20, Emir #161): eşleşmeyen tek soru
+    # "Temel Matematik" adıyla ayrı ders satırı oluyordu → TYT Matematik'e katılır.
+    "temel matematik": "matematik",
     "fen": "fen bilimleri",
     # AYT sınav dersi "AYT Felsefe Grubu"; belgeler kısaca "Felsefe" der.
     # TYT'de de simetrik güvenli: "TYT Felsefe" adı da aynı kanona iner.
@@ -455,6 +458,27 @@ def _subject_key(name: str | None) -> str:
         key = " ".join(toks)
     return _SUBJECT_ALIASES.get(key, key)
 
+
+
+def _merge_unmatched_groups(groups: list[dict]) -> list[dict]:
+    """Konusu müfredata bağlanamayan sorular belgenin ham ders adıyla AYRI grup oluyordu
+    ("Temel Matematik" 0D 1Y) — aynı kanonik derse çözülen EŞLEŞMİŞ grup varsa onun içine
+    katılır (sahte ders satırı olmaz; toplam değişmez). Karşılığı yoksa (ör. "Sosyal
+    Bilimler") `unmatched` grup olduğu gibi kalır."""
+    matched = {}
+    for g in groups:
+        if not g.get("unmatched"):
+            matched.setdefault(_subject_key(g["name"]), g)
+    out = []
+    for g in groups:
+        tgt = matched.get(_subject_key(g["name"])) if g.get("unmatched") else None
+        if tgt is not None and tgt is not g:
+            for k in ("correct", "wrong", "blank", "questions"):
+                if k in g:
+                    tgt[k] = tgt.get(k, 0) + g[k]
+            continue
+        out.append(g)
+    return out
 
 def _subjects_by_key(subjects: list[Subject]) -> dict[str, Subject]:
     # LİSTE SIRASI öncelik: havuzlar omurgayı başa koyar (okul → sınav; AYT →
@@ -1828,7 +1852,7 @@ def analyze(
             elif r["result"] == EQ_RESULT_BOS:
                 g["blank"] += 1
         for g in groups.values():
-            g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
+            g["net"] = round(g["correct"] - g["wrong"] / penalty, 2)  # ders neti negatif olabilir
             keys = {_subject_key(g["name"])}
             if display_map:
                 keys |= {k for k, v in display_map.items() if v == g["name"]}
@@ -2057,11 +2081,11 @@ def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
     # girmez, boşları toplamdan düşer (exam_subjects TEK MERKEZ; net değişmez)
     from app.services.exam_subjects import split_untaken_groups
     kept_groups, dropped_groups = split_untaken_groups(
-        list(groups.values()), section, student.track)
+        _merge_unmatched_groups(list(groups.values())), section, student.track)
     totals["blank"] -= sum(g["blank"] for g in dropped_groups)
     subject_payload = []
     for g in kept_groups:
-        g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
+        g["net"] = round(g["correct"] - g["wrong"] / penalty, 2)  # ders neti negatif olabilir
         subject_payload.append(g)
 
     net = compute_net(totals["correct"], totals["wrong"], section)
@@ -2285,10 +2309,10 @@ def rebuild_subject_nets(db: Session, exam: ExamResult, student: User) -> bool:
     # satırlardan yeniden kurulur ki eski kayıtların "103 boş"u düzelsin
     from app.services.exam_subjects import split_untaken_groups
     kept_groups, _dropped = split_untaken_groups(
-        list(groups.values()), section, student.track)
+        _merge_unmatched_groups(list(groups.values())), section, student.track)
     payload: list[dict] = []
     for g in kept_groups:
-        g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
+        g["net"] = round(g["correct"] - g["wrong"] / penalty, 2)  # ders neti negatif olabilir
         payload.append(g)
     tc = sum(g["correct"] for g in kept_groups)
     tw = sum(g["wrong"] for g in kept_groups)
@@ -2394,7 +2418,7 @@ def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
             g["blank"] += 1
     subjects_out: list[dict] = []
     for g in groups.values():
-        g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
+        g["net"] = round(g["correct"] - g["wrong"] / penalty, 2)  # ders neti negatif olabilir
         g["doc_net"] = None
         subjects_out.append(g)
 

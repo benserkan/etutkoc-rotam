@@ -10,6 +10,7 @@ import { NotebookPen } from "lucide-react";
 import type { StudentDayResponse, StudentTask, TaskPeriod } from "@/lib/types/student";
 import { LoadingState } from "@/components/loading-state";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
+import { DenemePendingCard } from "@/components/shared/deneme-pending-card";
 import { ShareExperiencePrompt } from "@/components/testimonials/share-experience-prompt";
 import { ErrorState } from "@/components/error-state";
 
@@ -91,6 +92,8 @@ export function DayClient({ initial, demoHint }: Props) {
       <DayHeader day={day} havuz={havuz} onRequestAdd={() => setComm({ mode: "add" })} />
 
       <QuickAccessStrip excludeHrefs={["/student/day"]} />
+
+      <DenemePendingCard audience={{ kind: "student" }} />
 
       <ShareExperiencePrompt />
 

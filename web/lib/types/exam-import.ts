@@ -254,6 +254,8 @@ export interface ExamTopicAnalysisResponse {
   improved: AnalysisTrendTopic[];
   unmatched_questions: number;
   analyzed_question_count: number;
+  /** İstenen seride PDF'ten aktarılmış deneme yok (başka seriye kaymaz). */
+  series_missing?: boolean;
 }
 
 /** Seçici köprü: denemenin bir yanlış sorusu (arşiv durumu işaretli). */

@@ -244,6 +244,8 @@ class ExamTopicAnalysisResponse(BaseModel):
     improved: list[AnalysisTrendTopic]
     unmatched_questions: int
     analyzed_question_count: int
+    # İstenen seride soru-satırlı (karneden okunmuş) deneme yok — başka seriye geçilmedi
+    series_missing: bool = False
     # P3: hangi sınıf dönemine göre süzüldü
     period: "PeriodFilterMeta | None" = None
 

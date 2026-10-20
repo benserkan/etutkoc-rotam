@@ -10,7 +10,8 @@ import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
 
 export type VideoRole = "anlatim" | "soru" | "tekrar" | "diger";
-export type VideoStatus = "waiting" | "planned" | "watched";
+/** pooled: havuz öğrencisinde havuza eklendi, öğrenci henüz kaba almadı (2026-10-20). */
+export type VideoStatus = "waiting" | "pooled" | "planned" | "watched";
 
 export interface VideoItem {
   id: number;
@@ -25,6 +26,7 @@ export interface VideoItem {
   status: VideoStatus;
   task_id: number | null;
   task_date: string | null;
+  pool_item_id?: number | null;
 }
 
 export interface VideoGroup {
@@ -62,6 +64,10 @@ export interface VideoBasketResponse {
   sources: VideoSource[];
   waiting_count: number;
   day_warn_minutes: number;
+  /** "havuz" öğrencisinde videolar güne değil havuza eklenir */
+  program_mode?: "gun_gun" | "havuz";
+  pool_period_open?: boolean;
+  pooled_count?: number;
 }
 
 export interface VideoImportResult {
@@ -169,6 +175,28 @@ export function usePlaceVideos(studentId: number) {
       const w = res.warnings ?? [];
       if (w.length) toast.warning("Video eklendi — günün video süresi uzun", { description: w.join(" · ") });
       else toast.success("Video programa eklendi (taslak)");
+    },
+  });
+}
+
+/** Havuz öğrencisi: seçili videolar havuza (aynı konu grubu → tek havuz kalemi). */
+export function useVideosToPool(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{ pool_item_ids: number[]; videos: number }>,
+    ApiError,
+    { item_ids: number[] }
+  >({
+    mutationFn: (body) =>
+      api(`/api/v2/teacher/students/${studentId}/video-basket/to-pool`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (e) => err(e, "Videolar havuza eklenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const n = res.data.pool_item_ids.length;
+      toast.success(`${res.data.videos} video havuza eklendi (${n} kalem) — öğrenci kabına alınca izler`);
     },
   });
 }

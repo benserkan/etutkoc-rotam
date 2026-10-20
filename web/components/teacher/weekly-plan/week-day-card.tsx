@@ -1061,7 +1061,10 @@ function SortableTaskRow({
   const isDeneme =
     !isBlock &&
     !task.block_detached &&
-    task.items.some((it) => it.book_id === null && it.topic_id == null);
+    (task.items.some((it) => it.book_id === null && it.topic_id == null) ||
+      task.items.some((it) => it.exam_kind));
+  // Yeni deneme kalemi (D1): kalem sayısı = deneme adedi, question_count = deneme başına soru.
+  const examItems = task.items.filter((it) => it.exam_kind);
   // Dersi olmayan etkinlik satırları (video/özet/tekrar/diğer) için tip-renkli şerit.
   const ACTIVITY_ACCENT: Record<string, string> = {
     video: "#38bdf8", ozet: "#34d399", tekrar: "#a78bfa", other: "#94a3b8",
@@ -1198,6 +1201,11 @@ function SortableTaskRow({
           {isBlock && task.planned_count > 0 ? (
             <span className="text-[11px] text-violet-700 dark:text-violet-300 font-medium tabular-nums">
               {task.planned_count} {task.work_block_unit ?? "test"}
+            </span>
+          ) : examItems.length > 0 ? (
+            <span className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium tabular-nums">
+              {examItems.length} deneme
+              {examItems[0].question_count ? ` · ${examItems[0].question_count} soru` : ""}
             </span>
           ) : isDeneme && task.planned_count > 0 ? (
             <span className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium tabular-nums">

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
 from app.models import ExamResult, User
 from app.routes.api_v2.schemas.exam_progress import (
+    ExamOverviewResponse,
     AgendaQueueAddBody,
     AgendaQueueIdsBody,
     AgendaQueueItem,
@@ -315,3 +316,34 @@ def parent_exam_topic_analysis(student_id: int, section: str | None = None, peri
     child = _parent_child(db, user, student_id)
     return ExamTopicAnalysisResponse(**exam_topic_analysis.build_exam_topic_analysis(
         db, child, section=section, period=period))
+
+
+# ---------------------------------------------------------------- genel bakış (2026-10-20)
+
+def _overview(db: Session, student: User, series: str | None, period: str | None, *, coach: bool) -> dict:
+    from app.services.exam_overview import build_exam_overview
+    data = build_exam_overview(db, student, series=series, period=period)
+    if not coach:
+        data["agenda"] = []  # seans gündemi koça özel
+    return data
+
+
+@router.get("/teacher/students/{student_id}/exam-overview", response_model=ExamOverviewResponse)
+def teacher_exam_overview(student_id: int, series: str | None = None, period: str | None = None,
+                          user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
+    """Genel Bakış: son deneme + kaçan net, gidişat, ders × deneme, fırsatlar, davranış, puan, gündem."""
+    student = _get_owned_student(db, student_id, user.id)
+    return _overview(db, student, series, period, coach=True)
+
+
+@router.get("/student/exam-overview", response_model=ExamOverviewResponse)
+def student_exam_overview(series: str | None = None, period: str | None = None,
+                          user: User = Depends(_require_student), db: Session = Depends(get_db)):
+    return _overview(db, user, series, period, coach=False)
+
+
+@router.get("/parent/students/{student_id}/exam-overview", response_model=ExamOverviewResponse)
+def parent_exam_overview(student_id: int, series: str | None = None, period: str | None = None,
+                         user: User = Depends(_require_parent), db: Session = Depends(get_db)):
+    child = _parent_child(db, user, student_id)
+    return _overview(db, child, series, period, coach=False)

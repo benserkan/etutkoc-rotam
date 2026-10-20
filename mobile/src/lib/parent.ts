@@ -191,6 +191,8 @@ import type { ExamRow, ExamSummary } from "./student";
 export interface ParentExamsResponse {
   summary: ExamSummary;
   rows: ExamRow[];
+  /** Programdaki deneme görevlerinden — analize karışmaz (2026-10-20) */
+  program_rows?: ExamRow[];
   section_options: { value: string; label: string }[];
 }
 export interface ParentInsightData {

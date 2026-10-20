@@ -176,11 +176,29 @@ class TaskBookItem(Base):
     reservation_released_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # DENEME KALEMİ (D1, 2026-10-20 — migration p0r3w6x7w22s). Doluysa 1 kalem =
+    # 1 deneme (planned_count = 1). 'brans' | 'genel'; NULL = eski davranış.
+    # Ayrıntı ve tek merkez: app.services.deneme_service.
+    exam_kind: Mapped[str | None] = mapped_column(String(8), nullable=True, index=True)
+    # Sınav türü (ExamSection değeri: lgs / tyt / ayt_say …) — net cezası + seri.
+    exam_section: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # Kitapsız branş denemesinin dersi (kitaplıda ders kitaptan okunur).
+    subject_id: Mapped[int | None] = mapped_column(
+        ForeignKey("subjects.id", ondelete="SET NULL"), nullable=True
+    )
+    # Deneme başına soru sayısı — koçun verdiği başlangıç değeri; öğrenci
+    # sonuç girerken kendi kaynağındaki sayıya göre değiştirebilir (esnek).
+    question_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # D2: öğrencinin girdiği süre (dk, isteğe bağlı) · sonucu girilmemiş deneme için
+    # hatırlatmanın gittiği an (bir kez; migration r2t5y8z9y44u).
+    duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    result_reminded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     task: Mapped["Task"] = relationship("Task", back_populates="book_items")
     book: Mapped["Book | None"] = relationship("Book")
     section: Mapped["BookSection | None"] = relationship("BookSection")
     topic: Mapped["Topic | None"] = relationship("Topic")
+    exam_subject: Mapped["Subject | None"] = relationship("Subject", foreign_keys=[subject_id])
 
     def __repr__(self) -> str:
         return f"<TaskBookItem {self.planned_count} from section {self.book_section_id}>"

@@ -36,6 +36,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  DenemeResultDialog,
+  denemeSummary,
+} from "@/components/shared/deneme-result-dialog";
+import {
   CompleteSheet,
   type CompleteSheetResult,
 } from "@/components/shared/complete-sheet";
@@ -44,6 +48,7 @@ import {
   useCompleteTask,
   useDebouncedSetItem,
   useSetItemCompleted,
+  useSetDenemeResults,
   useUncompleteTask,
 } from "@/lib/hooks/use-student-mutations";
 import type { CommMode } from "./comm-modal";
@@ -77,11 +82,17 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
   // doğru/yanlış/boş penceresi kendiliğinden açılır — "Sonucu girmeden geç" ile atlanabilir.
   // Sonuç girilmeyen test konu performansına doğruluk olarak yansımaz.
   const [askItemId, setAskItemId] = React.useState<number | null>(null);
+  // Deneme görevi (D2): her deneme ayrı satır; işaretlerken sonuç penceresi açılır.
+  const examItems = task.items.filter((it) => it.exam_kind);
+  const isExamTask = examItems.length > 0;
+  const [examOpen, setExamOpen] = React.useState(false);
 
   function toggleAll() {
     if (blocked) return;
     if (isCompleted) {
       uncomplete.mutate({ task });
+    } else if (isExamTask) {
+      setExamOpen(true);
     } else {
       const target = task.items.find(
         (it) =>
@@ -118,7 +129,13 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
             >
               {task.title || "—"}
             </h3>
-            <TypeBadge type={task.type} />
+            {isExamTask ? (
+              <span className="inline-flex items-center rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+                Deneme
+              </span>
+            ) : (
+              <TypeBadge type={task.type} />
+            )}
             {task.link_url && (task.videos?.length ?? 0) < 2 ? (
               <a
                 href={task.link_url}
@@ -160,7 +177,15 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
       </header>
 
       <div className="border-t border-border/70 px-4 py-3 space-y-2">
-        {task.items.length > 0 ? (
+        {isExamTask ? (
+          <DenemeTaskRows
+            task={task}
+            dateIso={dateIso}
+            blocked={blocked}
+            open={examOpen}
+            setOpen={setExamOpen}
+          />
+        ) : task.items.length > 0 ? (
           task.items.map((item) => (
             <ItemRow
               key={item.id}
@@ -883,5 +908,96 @@ function MenuItem({
       </span>
       <span>{label}</span>
     </button>
+  );
+}
+
+
+// =============================================================================
+// Deneme görevi (D2) — her deneme bir satır + ortak sonuç penceresi
+// =============================================================================
+
+function DenemeTaskRows({
+  task,
+  dateIso,
+  blocked,
+  open,
+  setOpen,
+}: {
+  task: StudentTask;
+  dateIso: string;
+  blocked: boolean;
+  open: boolean;
+  setOpen: (v: boolean) => void;
+}) {
+  const save = useSetDenemeResults(dateIso);
+  const items = task.items.filter((it) => it.exam_kind);
+  const pending = items.filter((it) => it.result_pending).length;
+  const q = items[0]?.question_count;
+
+  function rowLabel(it: StudentTaskItem): string {
+    return it.section_label || it.book_name || "Deneme";
+  }
+
+  return (
+    <>
+      <ul className="space-y-1.5" aria-label="Denemeler">
+        {items.map((it) => {
+          const sm = denemeSummary({
+            completed: it.completed, correct: it.correct, wrong: it.wrong, blank: it.blank,
+            net: it.net, durationMinutes: it.duration_minutes, resultPending: it.result_pending,
+          });
+          return (
+            <li key={it.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="min-w-0 break-words">{rowLabel(it)}</span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
+                  sm.tone === "done"
+                    ? "bg-emerald-600 text-white"
+                    : sm.tone === "pending"
+                      ? "bg-amber-500 text-amber-950"
+                      : "bg-muted text-muted-foreground",
+                )}
+              >
+                {sm.text}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <p className="text-xs text-muted-foreground">
+          {q ? `Deneme başına ${q} soru` : "Deneme"}
+          {pending > 0 ? ` · ${pending} denemenin sonucu bekleniyor` : ""}
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          disabled={blocked}
+          onClick={() => setOpen(true)}
+          className="bg-cyan-700 text-white hover:bg-cyan-800"
+        >
+          {items.some((it) => it.completed > 0) ? "Sonuçları düzenle" : "Sonuçları gir"}
+        </Button>
+      </div>
+      <DenemeResultDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={task.title || "Deneme sonuçları"}
+        saving={save.isPending}
+        rows={items.map((it) => ({
+          id: it.id,
+          label: rowLabel(it),
+          examSection: it.exam_section,
+          questionCount: it.question_count,
+          completed: it.completed,
+          correct: it.correct,
+          wrong: it.wrong,
+          blank: it.blank,
+          durationMinutes: it.duration_minutes,
+        }))}
+        onSubmit={(rows) => save.mutate({ task, rows }, { onSuccess: () => setOpen(false) })}
+      />
+    </>
   );
 }

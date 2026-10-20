@@ -9,65 +9,268 @@
  "subject": "Matematik",
  "sections": [
   {
-   "label": "Geometrik Şekiller",
-   "test_count": 20
+   "label": "Dik Üçgende Trigonometrik Oranlar",
+   "test_count": 5,
+   "topic": "Dik Üçgende Trigonometrik Oranlar"
+  },
+  {
+   "label": "Trigonometrik Özdeşlikler",
+   "test_count": 1,
+   "topic": "Trigonometrik Özdeşlikler"
+  },
+  {
+   "label": "Üçgende Yardımcı Elemanlar (Açıortay, Kenarortay, Özel Noktalar)",
+   "test_count": 5,
+   "topic": "Üçgende Yardımcı Elemanlar"
+  },
+  {
+   "label": "Üçgende Alan",
+   "test_count": 4,
+   "topic": "Üçgende Alan"
+  },
+  {
+   "label": "Sinüs ve Kosinüs Teoremleri",
+   "test_count": 2,
+   "topic": "Sinüs ve Kosinüs Teoremleri"
+  },
+  {
+   "label": "Trigonometri ve Yardımcı Elemanlar (Karma)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Üçgende Yardımcı Elemanlar (ÖSYM Tadında)",
+   "test_count": 1,
+   "topic": "Üçgende Yardımcı Elemanlar"
+  },
+  {
+   "label": "Üçgende Alan (ÖSYM Tadında)",
+   "test_count": 1,
+   "topic": "Üçgende Alan"
   },
   {
    "label": "Bağlam Temelli Test (Karma) (Tema 1: Geometrik Şekiller)",
-   "test_count": 2
+   "test_count": 2,
+   "topic": ""
   },
   {
-   "label": "İstatistiksel Araştırma Süreci",
-   "test_count": 5
+   "label": "İstatistiksel Araştırma Süreci (İki Kategorik Değişken, İki Yönlü Tablo)",
+   "test_count": 5,
+   "topic": "İki Kategorik Değişken (İki Yönlü Tablo, Koşullu Sıklık)"
   },
   {
    "label": "Bağlam Temelli Test (Karma) (Tema 2: İstatistiksel Araştırma Süreci)",
-   "test_count": 2
+   "test_count": 2,
+   "topic": ""
   },
   {
-   "label": "Sayılar",
-   "test_count": 18
+   "label": "Asal Sayılar, Asal Çarpanlar ve Bölenler",
+   "test_count": 6,
+   "topic": "Bölünebilme, Asal Çarpanlar, OBEB ve OKEK"
+  },
+  {
+   "label": "OBEB ve OKEK",
+   "test_count": 4,
+   "topic": "Bölünebilme, Asal Çarpanlar, OBEB ve OKEK"
+  },
+  {
+   "label": "Bölme ve Bölünebilme Kuralları",
+   "test_count": 5,
+   "topic": "Bölünebilme, Asal Çarpanlar, OBEB ve OKEK"
+  },
+  {
+   "label": "Sayılar Karma Tekrar (Asal Çarpanlar, OBEB-OKEK, Bölünebilme)",
+   "test_count": 2,
+   "topic": "Bölünebilme, Asal Çarpanlar, OBEB ve OKEK"
+  },
+  {
+   "label": "Bölünebilme (ÖSYM Tadında)",
+   "test_count": 1,
+   "topic": "Bölünebilme, Asal Çarpanlar, OBEB ve OKEK"
   },
   {
    "label": "Bağlam Temelli Test (Karma) (Tema 3: Sayılar)",
-   "test_count": 2
+   "test_count": 2,
+   "topic": ""
   },
   {
-   "label": "Nicelikler ve Değişimler",
-   "test_count": 30
+   "label": "Fonksiyon Kavramı ve Özellikleri",
+   "test_count": 6,
+   "topic": ""
+  },
+  {
+   "label": "Doğrusal Fonksiyonlar",
+   "test_count": 2,
+   "topic": "Doğrusal Fonksiyonlar ve Mutlak Değer Fonksiyonu"
+  },
+  {
+   "label": "Karesel Fonksiyonlar",
+   "test_count": 5,
+   "topic": "Karesel Fonksiyonlar"
+  },
+  {
+   "label": "Karekök Fonksiyonlar",
+   "test_count": 3,
+   "topic": "Karekök ve Rasyonel Fonksiyonlar"
+  },
+  {
+   "label": "Rasyonel Fonksiyonlar",
+   "test_count": 4,
+   "topic": "Karekök ve Rasyonel Fonksiyonlar"
+  },
+  {
+   "label": "Fonksiyonların Tersi",
+   "test_count": 4,
+   "topic": "Fonksiyonların Tersi"
+  },
+  {
+   "label": "Fonksiyonlar (Karma)",
+   "test_count": 3,
+   "topic": ""
+  },
+  {
+   "label": "Karesel Fonksiyonlar (ÖSYM Tadında)",
+   "test_count": 1,
+   "topic": "Karesel Fonksiyonlar"
+  },
+  {
+   "label": "İlgili Denklem ve Eşitsizlikler",
+   "test_count": 2,
+   "topic": "İlgili Denklem ve Eşitsizlikler"
   },
   {
    "label": "Bağlam Temelli Test (Karma) (Tema 4: Nicelikler ve Değişimler)",
-   "test_count": 2
+   "test_count": 2,
+   "topic": ""
   },
   {
-   "label": "Sayma, Algoritma ve Bilişim",
-   "test_count": 19
+   "label": "Toplama ve Çarpma Yoluyla Sayma",
+   "test_count": 4,
+   "topic": "Sayma Stratejileri"
+  },
+  {
+   "label": "Sıralama (Permütasyon)",
+   "test_count": 4,
+   "topic": "Sayma Stratejileri"
+  },
+  {
+   "label": "Seçme (Kombinasyon)",
+   "test_count": 4,
+   "topic": "Sayma Stratejileri"
+  },
+  {
+   "label": "Pascal Üçgeni",
+   "test_count": 1,
+   "topic": "Sayma Stratejileri"
+  },
+  {
+   "label": "Algoritma ve Akış Şemaları",
+   "test_count": 3,
+   "topic": "Cebirsel İşlemlerin Algoritmik Yapısı"
+  },
+  {
+   "label": "Sayma Stratejileri (Karma Tekrar)",
+   "test_count": 1,
+   "topic": "Sayma Stratejileri"
+  },
+  {
+   "label": "Sayma Stratejileri (ÖSYM Tadında)",
+   "test_count": 2,
+   "topic": "Sayma Stratejileri"
   },
   {
    "label": "Bağlam Temelli Test (Karma) (Tema 5: Sayma, Algoritma ve Bilişim)",
-   "test_count": 2
+   "test_count": 2,
+   "topic": ""
   },
   {
-   "label": "Analitik İnceleme",
-   "test_count": 10
+   "label": "Noktanın Analitiği",
+   "test_count": 1,
+   "topic": "Noktanın Analitiği"
+  },
+  {
+   "label": "İki Nokta Arası Uzaklık",
+   "test_count": 2,
+   "topic": "İki Nokta Arası Uzaklık"
+  },
+  {
+   "label": "Orta Nokta, Ağırlık Merkezi ve Bölen Nokta",
+   "test_count": 2,
+   "topic": "Noktanın Analitiği"
+  },
+  {
+   "label": "Doğrunun Analitiği (Eğim ve Doğru Denklemi)",
+   "test_count": 3,
+   "topic": "Doğrunun Analitiği"
+  },
+  {
+   "label": "Doğrunun Analitiği (ÖSYM Tadında)",
+   "test_count": 2,
+   "topic": "Doğrunun Analitiği"
   },
   {
    "label": "Bağlam Temelli Test (Karma) (Tema 6: Analitik İnceleme)",
-   "test_count": 2
+   "test_count": 2,
+   "topic": ""
   },
   {
-   "label": "Veriden Olasılığa",
-   "test_count": 9
+   "label": "Örnek Uzay ve Olasılık",
+   "test_count": 1,
+   "topic": "Deneysel ve Teorik Olasılık"
+  },
+  {
+   "label": "Koşullu Olasılık",
+   "test_count": 1,
+   "topic": "Koşullu Olasılık"
+  },
+  {
+   "label": "Bağımsız Olaylar",
+   "test_count": 1,
+   "topic": "Bağımlı ve Bağımsız Olaylar"
+  },
+  {
+   "label": "Koşullu Olasılık (ÖSYM Tadında)",
+   "test_count": 1,
+   "topic": "Koşullu Olasılık"
+  },
+  {
+   "label": "Bağımlı ve Bağımsız Olaylar",
+   "test_count": 1,
+   "topic": "Bağımlı ve Bağımsız Olaylar"
+  },
+  {
+   "label": "Bayes Teoremi",
+   "test_count": 1,
+   "topic": "Bayes Teoremi"
+  },
+  {
+   "label": "Olasılık (Karma)",
+   "test_count": 1,
+   "topic": ""
+  },
+  {
+   "label": "Koşullu Olasılık ve Bayes (ÖSYM Tadında)",
+   "test_count": 1,
+   "topic": "Koşullu Olasılık"
+  },
+  {
+   "label": "Bayes Teoremi (ÖSYM Tadında)",
+   "test_count": 1,
+   "topic": "Bayes Teoremi"
   },
   {
    "label": "Bağlam Temelli Test (Karma) (Tema 7: Veriden Olasılığa)",
-   "test_count": 1
+   "test_count": 1,
+   "topic": ""
   }
  ],
  "warnings": [
-  "Maarif modeli (7 tema: Geometrik Şekiller, İstatistiksel Araştırma Süreci, Sayılar, Nicelikler ve Değişimler, Sayma-Algoritma-Bilişim, Analitik İnceleme, Veriden Olasılığa). Bu kitapta ALT BAŞLIK YOK: içindekiler (s.4) yalnız tema düzeyinde, test bantlarında da yalnız tema adı var → bölüm = tema. Alt konuya bölmek soru içeriğinden tahmin gerektirirdi, yapılmadı.",
-  "Konu Kavrama (KKT) ve ÖSYM Tadında (ÖTT) testleri tema içinde karışık sıralı ve hepsi aynı temaya ait → tema satırında sayıldı; Bağlam Temelli (BT) testleri her temada ayrı Karma satır (Tema 1'de test 7 BT tema ortasında)."
+  "Alt konu bölümü SORU İÇERİĞİNDEN yapıldı (kitap bantlarında yalnız tema adı var). Her testin iki sayfasının soru metni (PyMuPDF metin katmanı) okunup baskın konuya atandı; tema toplamları ve test sayıları değişmedi (22/7/20/32/21/12/10 = 124).",
+  "Tema 1'de Bağlam Temelli T7 tema ortasında; BT satırı orijinaldeki gibi tek satır (2 test: T7 + T22) olarak tema sonunda korundu.",
+  "10. sınıf listesinde karşılığı olmayan 2 blok için 9. sınıf Maarif adı kullanıldı (aynı Matematik dersinde var): Tema 4 T7-T8 → 'Doğrusal Fonksiyonlar ve Mutlak Değer Fonksiyonu', Tema 7 T1 → 'Deneysel ve Teorik Olasılık'. İstenmezse topic boş bırakılmalı.",
+  "Tema 4 T1-T6 genel fonksiyon kavramı/özellikleri (10. sınıf listesinde ayrı başlık yok) → topic boş.",
+  "Karma satırlar (topic boş): Tema 1 T19 ÖTT, Tema 4 T25-T27, Tema 7 T7. Tema 3 T16-T17 ve Tema 5 T17 karma ama tek müfredat başlığı içinde kaldığı için o başlığa bağlandı.",
+  "ÖTT (ÖSYM Tadında) testleri komşu konu satırına katılmadı, kitap sırasını korumak için ayrı '(ÖSYM Tadında)' satırı yapıldı (yalnız aynı konunun kesintisiz devamı olduğunda birleştirildi: Karesel T11-T13, Karekök T16, Rasyonel T18-T20, OBEB-OKEK T9-T10, Kombinasyon T10, Sayma T4, Asal çarpanlar T5)."
  ],
- "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 8,8pt tema adı + KKT/ÖTT/BT etiketi; 2. sayfalarda tema no x≈540, test no x≈89 — buna göre ayrıştırıldı). Test no TEMA içinde 1'den: 22/7/20/32/21/12/10 kesintisiz = 124 test, hepsi 2 sayfa. İçindekiler tema sayfa aralıkları (5-48, 49-62, 63-102, 103-166, 167-208, 209-232, 233-252) birebir: 4 ön + 124×2 = 252, cevap anahtarı s.253 (tema başı test sayıları da 22/7/20/32/21/12/10)."
+ "evidence": "PyMuPDF üst bant taraması (15,2pt test no + 8,8pt tema adı + KKT/ÖTT/BT etiketi; 2. sayfalarda tema no x≈540, test no x≈89 — buna göre ayrıştırıldı). Test no TEMA içinde 1'den: 22/7/20/32/21/12/10 kesintisiz = 124 test, hepsi 2 sayfa. İçindekiler tema sayfa aralıkları (5-48, 49-62, 63-102, 103-166, 167-208, 209-232, 233-252) birebir: 4 ön + 124×2 = 252, cevap anahtarı s.253 (tema başı test sayıları da 22/7/20/32/21/12/10). | ALT KONU SATIRLARI: Dik Üçgende Trigonometrik Oranlar = Tema 1 T1-T5 (trig oranlar, özel açılar, birim çember) ; Trigonometrik Özdeşlikler = Tema 1 T6 ; Üçgende Yardımcı Elemanlar (Açıortay, Kenarortay, Özel Noktalar) = Tema 1 T8-T12 (T8-T9 açıortay, T10-T11 kenarortay/ağırlık merkezi, T12 çevrel çember/diklik merkezi) ; Üçgende Alan = Tema 1 T13-T16 (T15 sinüslü alan, T16 alan oranları) ; Sinüs ve Kosinüs Teoremleri = Tema 1 T17 kosinüs, T18 sinüs teoremi ; Trigonometri ve Yardımcı Elemanlar (Karma) = Tema 1 T19 ÖTT (trig alan + ağırlık merkezi karışık) ; Üçgende Yardımcı Elemanlar (ÖSYM Tadında) = Tema 1 T20 ÖTT açıortay/ağırlık merkezi ; Üçgende Alan (ÖSYM Tadında) = Tema 1 T21 ÖTT ; Bağlam Temelli Test (Karma) (Tema 1: Geometrik Şekiller) = Tema 1 T7 + T22 BT ; İstatistiksel Araştırma Süreci (İki Kategorik Değişken, İki Yönlü Tablo) = Tema 2 T1-T5 (araştırma sorusu, iki yönlü/göreli/koşullu sıklık tablosu, yanlılık) ; Bağlam Temelli Test (Karma) (Tema 2: İstatistiksel Araştırma Süreci) = Tema 2 T6-T7 BT ; Asal Sayılar, Asal Çarpanlar ve Bölenler = Tema 3 T1-T6 (asal/aralarında asal, asal çarpanlar, pozitif bölen sayısı; T5 ÖTT) ; OBEB ve OKEK = Tema 3 T7-T10 (T9-T10 ÖTT problemleri) ; Bölme ve Bölünebilme Kuralları = Tema 3 T11-T15 (T11 bölme, T12 2-5, T13 3-9, T14 4-8, T15 karma kurallar) ; Sayılar Karma Tekrar (Asal Çarpanlar, OBEB-OKEK, Bölünebilme) = Tema 3 T16-T17 (türsüz karma tekrar, tek müfredat başlığı içinde) ; Bölünebilme (ÖSYM Tadında) = Tema 3 T18 ÖTT ; Bağlam Temelli Test (Karma) (Tema 3: Sayılar) = Tema 3 T19-T20 BT ; Fonksiyon Kavramı ve Özellikleri = Tema 4 T1-T6 (fonksiyon tanımı/grafiği, tanım-görüntü kümesi, sıfır, işaret, artan-azalan, maks-min, bire bir/örten, tek-çift) ; Doğrusal Fonksiyonlar = Tema 4 T7-T8 (doğrusal referans fonksiyon, dönüşümler, modelleme) ; Karesel Fonksiyonlar = Tema 4 T9-T13 (karesel referans + dönüşümler; T11-T13 ÖTT) ; Karekök Fonksiyonlar = Tema 4 T14-T16 (T16 ÖTT) ; Rasyonel Fonksiyonlar = Tema 4 T17-T20 (T18-T20 ÖTT) ; Fonksiyonların Tersi = Tema 4 T21-T24 (doğrusal, rasyonel, karesel, karekök fonksiyonların tersi) ; Fonksiyonlar (Karma) = Tema 4 T25-T27 (türsüz karma: grafik modelleme, karesel/karekök/rasyonel/doğrusal karışık) ; Karesel Fonksiyonlar (ÖSYM Tadında) = Tema 4 T28 ÖTT (maks-min, gelir modelleme) ; İlgili Denklem ve Eşitsizlikler = Tema 4 T29-T30 ÖTT (iki fonksiyonun eşitliği/karşılaştırılması, modelleme) ; Bağlam Temelli Test (Karma) (Tema 4: Nicelikler ve Değişimler) = Tema 4 T31-T32 BT ; Toplama ve Çarpma Yoluyla Sayma = Tema 5 T1-T4 (T4 ÖTT) ; Sıralama (Permütasyon) = Tema 5 T5-T8 (dizilimler, tekrarlı permütasyon, en kısa yol; T8 karma sayma) ; Seçme (Kombinasyon) = Tema 5 T9-T12 (T10 ÖTT, T11-T12 geometrik kombinasyon) ; Pascal Üçgeni = Tema 5 T13 ; Algoritma ve Akış Şemaları = Tema 5 T14-T16 (doğal dil algoritma, akış şeması, döngü) ; Sayma Stratejileri (Karma Tekrar) = Tema 5 T17 (türsüz; 7 sayma + 1 algoritma sorusu) ; Sayma Stratejileri (ÖSYM Tadında) = Tema 5 T18-T19 ÖTT ; Bağlam Temelli Test (Karma) (Tema 5: Sayma, Algoritma ve Bilişim) = Tema 5 T20-T21 BT ; Noktanın Analitiği = Tema 6 T1 (sayı doğrusu, bölgeler, eksenlere uzaklık) ; İki Nokta Arası Uzaklık = Tema 6 T2-T3 ; Orta Nokta, Ağırlık Merkezi ve Bölen Nokta = Tema 6 T4-T5 ; Doğrunun Analitiği (Eğim ve Doğru Denklemi) = Tema 6 T6-T8 ; Doğrunun Analitiği (ÖSYM Tadında) = Tema 6 T9-T10 ÖTT (paralel/dik doğrular, kesişim, uzaklık) ; Bağlam Temelli Test (Karma) (Tema 6: Analitik İnceleme) = Tema 6 T11-T12 BT ; Örnek Uzay ve Olasılık = Tema 7 T1 (örnek uzay, temel olasılık) ; Koşullu Olasılık = Tema 7 T2 ; Bağımsız Olaylar = Tema 7 T3 (iki kutu/atıcılık; birkaç tablo-koşullu soru) ; Koşullu Olasılık (ÖSYM Tadında) = Tema 7 T4 ÖTT ; Bağımlı ve Bağımsız Olaylar = Tema 7 T5 (iadeli/iadesiz çekiliş) ; Bayes Teoremi = Tema 7 T6 ; Olasılık (Karma) = Tema 7 T7 (türsüz; koşullu + bağımsız + Bayes karışık) ; Koşullu Olasılık ve Bayes (ÖSYM Tadında) = Tema 7 T8 ÖTT (baskın koşullu, 2 Bayes sorusu) ; Bayes Teoremi (ÖSYM Tadında) = Tema 7 T9 ÖTT ; Bağlam Temelli Test (Karma) (Tema 7: Veriden Olasılığa) = Tema 7 T10 BT"
 }

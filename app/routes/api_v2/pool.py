@@ -66,7 +66,8 @@ def _item_out(db: Session, it: PoolItem, names: dict) -> PoolItemOut:
     sec = names["sections"].get(it.book_section_id) if it.book_section_id else None
     creator = names["users"].get(it.created_by_id) if it.created_by_id else None
     return PoolItemOut(
-        id=it.id, subject_id=it.subject_id, subject_name=subj.name if subj else "—",
+        id=it.id, subject_id=it.subject_id,
+        subject_name=subj.name if subj else ("Genel deneme" if it.exam_kind == "genel" else "—"),
         topic_id=it.topic_id, topic_name=top.name if top else None,
         book_id=it.book_id, book_name=book.name if book else None,
         section_id=it.book_section_id, section_label=sec.label if sec else None,
@@ -80,6 +81,7 @@ def _item_out(db: Session, it: PoolItem, names: dict) -> PoolItemOut:
         book_completed=(names.get("progress", {}).get((it.student_id, it.book_section_id), 0)
                         if it.book_section_id else None),
         book_total=(int(sec.test_count or 0) if sec else None),
+        exam_kind=it.exam_kind, exam_section=it.exam_section, question_count=it.question_count,
     )
 
 
