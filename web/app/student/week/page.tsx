@@ -5,6 +5,7 @@ import { apiServer } from "@/lib/api-server";
 import type { StudentWeekResponse } from "@/lib/types/student";
 import { Button } from "@/components/ui/button";
 import { PrintMenu } from "@/components/student/print-menu";
+import { ShareProgramButton } from "@/components/student/share-program-dialog";
 import { StudentWeekGrid } from "@/components/student/student-week-grid";
 import { DemoHint } from "@/components/demos/demo-hint";
 
@@ -22,6 +23,8 @@ export default async function StudentWeekPage({ searchParams }: PageProps) {
   const qs = start ? `?start=${encodeURIComponent(start)}` : "";
   const week = await apiServer<StudentWeekResponse>(`/api/v2/student/week${qs}`);
   const totalPct = Math.round(week.total_pct * 100);
+  // "Günü yazdır": haftada bugün varsa bugün, yoksa haftanın ilk günü
+  const dayDate = week.days.find((d) => d.is_today)?.date ?? week.start_date;
 
   return (
     <div className="space-y-5">
@@ -48,7 +51,12 @@ export default async function StudentWeekPage({ searchParams }: PageProps) {
           ) : null}{" "}
           · <span className="font-medium text-foreground">%{totalPct}</span>
         </p>
-        <PrintMenu startDate={week.start_date} />
+        <ShareProgramButton
+          printUrl={`/student/week/print?start=${week.start_date}`}
+          fileName={`haftalik-program-${week.start_date}.pdf`}
+          title={`Haftalık programım (${week.start_date} – ${week.end_date})`}
+        />
+        <PrintMenu startDate={week.start_date} dayDate={dayDate} />
       </header>
 
       <DemoHint contextKey="week" role="student" />

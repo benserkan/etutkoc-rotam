@@ -17,6 +17,7 @@ import {
   Trash2,
   MessageCircle,
   ExternalLink,
+  Trophy,
   Undo2,
 } from "lucide-react";
 import { linkButtonLabel } from "@/lib/task-links";
@@ -86,6 +87,9 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
   const examItems = task.items.filter((it) => it.exam_kind);
   const isExamTask = examItems.length > 0;
   const [examOpen, setExamOpen] = React.useState(false);
+  // Deneme görevi programda öne çıkar (2026-10-21): eski kayıtlar exam_kind taşımayabilir —
+  // deneme kitabı / kitapsız tam deneme de "deneme" sayılır (görsel vurgu için).
+  const denemeKind = examTaskKind(task);
 
   function toggleAll() {
     if (blocked) return;
@@ -106,12 +110,31 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
 
   return (
     <article
+      data-deneme={denemeKind ?? undefined}
       className={cn(
         "rounded-lg border bg-card transition-opacity",
         isCompleted ? "border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/10" : "border-border",
+        denemeKind && !isCompleted
+          ? "border-indigo-300 border-l-4 border-l-indigo-600 bg-indigo-500/[0.06] shadow-sm dark:border-indigo-500/40 dark:border-l-indigo-400"
+          : "",
         blocked ? "opacity-70" : "",
       )}
     >
+      {denemeKind ? (
+        <div className="flex items-center gap-2 rounded-t-lg bg-indigo-700 px-4 py-1.5 text-white">
+          <Trophy className="size-3.5" aria-hidden />
+          <span className="text-[11px] font-bold uppercase tracking-wider">
+            {denemeKind === "genel" ? "Genel deneme" : "Branş denemesi"}
+          </span>
+          {examItems[0]?.question_count ? (
+            <span className="text-[11px] text-indigo-100">
+              · {examItems.length > 1 ? `${examItems.length} deneme × ` : ""}
+              {examItems[0].question_count} soru
+            </span>
+          ) : null}
+          <span className="ml-auto text-[11px] text-indigo-100">Sınav provası — süre tutarak çöz</span>
+        </div>
+      ) : null}
       <header className="flex items-start gap-3 px-4 py-3">
         <ToggleButton
           status={task.status}
@@ -129,13 +152,7 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
             >
               {task.title || "—"}
             </h3>
-            {isExamTask ? (
-              <span className="inline-flex items-center rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
-                Deneme
-              </span>
-            ) : (
-              <TypeBadge type={task.type} />
-            )}
+            {denemeKind ? null : <TypeBadge type={task.type} />}
             {task.link_url && (task.videos?.length ?? 0) < 2 ? (
               <a
                 href={task.link_url}
@@ -159,7 +176,7 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
           </div>
           <TaskVideoLinks videos={task.videos ?? []} />
           <p className="text-xs text-muted-foreground mt-1 tabular-nums">
-            {task.completed_count} / {task.planned_count} tamam ·{" "}
+            {task.completed_count} / {task.planned_count} {denemeKind ? "deneme çözüldü" : "tamam"} ·{" "}
             {Math.round(task.pct * 100)}%
           </p>
         </div>
@@ -215,6 +232,18 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
       </div>
     </article>
   );
+}
+
+/** Görev bir deneme mi? branş/genel ya da null (vurgu için; eski kayıtlar da tanınır). */
+function examTaskKind(task: StudentTask): "brans" | "genel" | null {
+  const ex = task.items.find((it) => it.exam_kind);
+  if (ex) return ex.exam_kind === "genel" ? "genel" : "brans";
+  const b = task.items.find((it) => it.book_type === "brans_denemesi" || it.book_type === "genel_deneme");
+  if (b) return b.book_type === "genel_deneme" ? "genel" : "brans";
+  if (task.items.length > 0 && task.items.every((it) => it.book_id == null && it.is_test_unit === false)) {
+    return "genel";
+  }
+  return null;
 }
 
 // =============================================================================

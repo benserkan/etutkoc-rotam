@@ -6,6 +6,30 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## ÖĞRENCİ GELİŞİM SAYFASI + YAZDIR/PAYLAŞ + DENEME VURGUSU (2026-10-21, migration YOK)
+
+- **Yazdır menüsü** (`student/print-menu.tsx`): "Veli raporu" kalktı → **Günü yazdır** (YENİ `(print)/student/day/print`,
+  A4 dikey, D/Y/B yazma alanlı) · **Haftayı yazdır** · **Deneme sonuçlarını yazdır** (YENİ `(print)/student/exams/print`,
+  tür başına tablo + programdaki branş denemeleri). Ortak başlık `components/print/print-brand.tsx`.
+- **Paylaş** (`/student/week`, `share-program-dialog.tsx`): yazdırma sayfası görünmez iframe'de çizilir →
+  html-to-image + jsPDF (YENİ bağımlılıklar `html-to-image@1.11.11`, `jspdf@2.5.2`) → telefonda sistem paylaşımı
+  (WhatsApp) dosyayla, bilgisayarda PDF iner + WhatsApp Web açılır; "PDF olarak indir". PDF önce hazırlanır, paylaş
+  ikinci dokunuşta (uzun işlem dokunuş iznini düşürür).
+- **Gelişim** (`/student/progress`, menüde "Gelişim" 3. sırada; Konu Performansı "Daha fazla"ya indi): YENİ uçlar
+  `api_v2/student_progress.py` GET `/student/analytics` + `/student/weekly-progress` — koçun hesabıyla AYNI
+  (`teacher.build_student_analytics` ortak fonksiyona ayrıldı; koç uyarıları + "Seansa ekle" önlemleri öğrenciye
+  gitmez). Sayfa: hero (sınava kalan gün, tempo/düzenlilik/seri/aktif gün, kaynak bitirme) · bu hafta (cetvel + gün
+  gün) · haftadan haftaya · ritim takvimi + gün tutturma · derslerim + müfredat · denemelerim · net kaybettiğim
+  konular · daha derine in. Bugün sayfasındaki eski "Sınav projeksiyonu" kartı → **`ProgressSummaryCard`** (aynı
+  önbellek/sayılar; havuz öğrencisinde de görünür). `projection-card.tsx` silindi.
+- **Deneme görevi vurgusu** (task-card + öğrenci hafta ızgarası): indigo şerit "Branş denemesi / Genel deneme · N
+  soru", "TEST" rozeti yok. **Eski deneme görevleri** (D1 öncesi, exam_kind'sız → öğrenci "çözdüğüm test" formu
+  görüyordu): `scripts/backfill_open_deneme_items.py` (kuru varsayılan, `--since`, yalnız tamamlanmamış görevler;
+  planned N → N deneme kalemi, rezerv toplamı aynı).
+- Yan düzeltme: Bugün sayfasındaki eski React "key" uyarısı (demoHint). Test YENİ `test_api_v2_student_progress` 7/7 ·
+  YENİ `live_student_progress.py` 15/15 · analytics_rich 10 · student_read 11 · teacher_read 12 · deneme_results 22 ·
+  live_deneme_results 15 · live_deneme_bridge 21 · live_student_pool_web 19 · tsc + eslint (tam) temiz.
+
 ## DENEME GÖREVLERİ + BRANŞ ANALİZİ + HAFTALIK İLERLEME + VİDEO HAVUZ — CANLI (2026-10-20, commit `a1ee8bd`)
 
 **Deploy (2026-10-20):** yedek `pre_deneme_20261020_1853.dump` (69 MB) → git pull → web/worker/next rebuild

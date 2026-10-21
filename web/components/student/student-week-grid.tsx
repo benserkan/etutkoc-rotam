@@ -52,6 +52,12 @@ function taskUnit(t: StudentTask): string {
   return "test";
 }
 
+function isDenemeTask(t: StudentTask): boolean {
+  return t.items.some(
+    (x) => x.exam_kind || (x.book_type != null && DENEME_TYPES.has(x.book_type)),
+  ) || (t.items.length > 0 && t.items.every((x) => x.book_id == null && x.is_test_unit === false));
+}
+
 function taskLabel(t: StudentTask): string {
   const bookItems = t.items.filter((it) => it.book_id != null);
   const first = bookItems[0] ?? t.items[0];
@@ -192,6 +198,11 @@ function SubjGroupBlock({ g }: { g: SubjGroup }) {
                 {mk.ch}
               </span>
               <span className="min-w-0 flex-1 text-foreground/90 break-words">
+                {isDenemeTask(t) ? (
+                  <span className="mr-1 inline-block rounded bg-indigo-700 px-1 text-[8.5px] font-bold uppercase leading-[14px] tracking-wide text-white">
+                    Deneme
+                  </span>
+                ) : null}
                 {taskLabel(t)}
                 {isActivity(t) ? (
                   (t.solved_count ?? 0) > 0 ? (

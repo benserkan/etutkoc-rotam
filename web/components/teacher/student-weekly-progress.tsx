@@ -41,7 +41,7 @@ const STATUS_LABEL: Record<string, string> = {
   low: "Her zamankinden az",
 };
 
-function StatusChip({ card }: { card: WPCard }) {
+export function StatusChip({ card }: { card: WPCard }) {
   // Kıyas yapılmayan bilgi kartı: "Her zamanki" gibi yanıltıcı bir rozet basma.
   if (card.status === "info" && card.key !== "balance") return null;
   let label = STATUS_LABEL[card.status] ?? card.status;

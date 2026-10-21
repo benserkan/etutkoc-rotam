@@ -19,7 +19,7 @@ import { PoolBanner } from "./pool-banner";
 import { getStudentPool, studentPoolKey } from "@/lib/api/pool-student";
 import { ResourceSidebar } from "./resource-sidebar";
 import { TaskCard } from "./task-card";
-import { ProjectionCard } from "./projection-card";
+import { ProgressSummaryCard } from "./progress-summary-card";
 import { CommModal, type CommMode } from "./comm-modal";
 
 interface Props {
@@ -78,8 +78,9 @@ export function DayClient({ initial, demoHint }: Props) {
   // Haftalık havuz öğrencisinde gün gün program yok: sınav projeksiyonu (gün gün plana göre) gizlenir,
   // boş gün "kabın boş — havuzdan al" der, "Yeni görev iste" yerine "Havuza kalem ekle" (2026-10-13).
   const havuz = poolQ.data?.mode === "havuz";
-  const showProjection =
-    !havuz && day.projection && (day.is_today || day.is_future) && !day.is_past;
+  // Sınava hazırlık özeti (2026-10-21): bugün/ileri günlerde; havuz öğrencisinde gün gün plan
+  // projeksiyonu yok → yalnız haftalık/dönem göstergeleri. Ayrıntı: Gelişim sayfası.
+  const showSummary = (day.is_today || day.is_future) && !day.is_past;
 
   return (
     <div className="space-y-4">
@@ -87,7 +88,7 @@ export function DayClient({ initial, demoHint }: Props) {
           tarih gezgini ve düğmelerden önce (yalnız havuz öğrencisinde render olur) */}
       <PoolBanner />
 
-      {demoHint}
+      {demoHint ? <div key="demo-hint">{demoHint}</div> : null}
 
       <DayHeader day={day} havuz={havuz} onRequestAdd={() => setComm({ mode: "add" })} />
 
@@ -100,8 +101,8 @@ export function DayClient({ initial, demoHint }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         {/* Sol kolon: görev listesi + projeksiyon */}
         <div className="space-y-3 min-w-0">
-          {showProjection && day.projection ? (
-            <ProjectionCard projection={day.projection} />
+          {showSummary ? (
+            <ProgressSummaryCard />
           ) : null}
 
           {day.tasks.length === 0 && havuz ? (

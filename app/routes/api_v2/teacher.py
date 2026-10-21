@@ -10319,6 +10319,13 @@ def teacher_student_analytics_v2(
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
+    """Öğrenci analitik sekmesi (koç). Hesap `build_student_analytics`'te — öğrenci Gelişim
+    sayfası da aynı fonksiyonu kullanır (sayılar iki yüzde birebir)."""
+    student = _get_owned_student(db, student_id, user.id)
+    return build_student_analytics(db, student, user.id)
+
+
+def build_student_analytics(db: Session, student: User, coach_id: int | None):
     """Öğrenci analitik sekmesi — 30 gün trend + ders bazlı dağılım.
 
     Eşdeğer Jinja: app/routes/teacher_student_detail.py:65-72 (trend serileri) +
@@ -10335,7 +10342,6 @@ def teacher_student_analytics_v2(
     from app.models.curriculum import EXAM_SECTION_LABELS, ExamSection
     from app.models.exam_result import ExamResult
 
-    student = _get_owned_student(db, student_id, user.id)
     today = date.today()
 
     # --- 30 gün TEST trendi (mevcut) — yalnız soru bankası ---
@@ -10528,7 +10534,7 @@ def teacher_student_analytics_v2(
     ]
     curriculum_out = None
     try:
-        cpr = _cp.compute_curriculum_progress(db, student, user.id)
+        cpr = _cp.compute_curriculum_progress(db, student, coach_id)
         pj = cpr.projection
         curriculum_out = AnalyticsCurriculum(
             focus_grade=cpr.focus_grade, coverage_pct=cpr.overall_coverage_pct,

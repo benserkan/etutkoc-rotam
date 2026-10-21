@@ -70,7 +70,7 @@ export function DayHeader({ day, onRequestAdd, havuz = false }: Props) {
 
         <div className="flex-1" />
 
-        <PrintMenu startDate={day.date} />
+        <PrintMenu startDate={day.date} dayDate={day.date} />
 
         {havuz ? (
           <Button asChild variant="outline" size="sm" title="Öğretmen ödevi ya da kendi ek çalışman — havuzuna ekle; rehberin seansta onaylar">

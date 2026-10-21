@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FileText, Printer, Users } from "lucide-react";
+import { CalendarDays, CalendarRange, Printer, Trophy } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -9,21 +9,18 @@ import { Button } from "@/components/ui/button";
 interface Props {
   /** Hangi haftanın yazdırılacağı — "YYYY-MM-DD" formatında hafta başlangıç günü. */
   startDate: string;
+  /** "Günü yazdır" için gün — verilmezse startDate. */
+  dayDate?: string;
   /** Custom etiket — default "Yazdır". */
   label?: string;
 }
 
 /**
- * Yazdırma menüsü — Jinja'da yaşayan A4 print sayfalarına çıkış noktası.
- *
- * Sözleşme:
- *   - Print sayfaları FastAPI Jinja'da kalır (hibrit kalıcı karar,
- *     `project_nextjs_migration.md` ve Caddyfile `@prints` matcher'ı).
- *   - Bu component yalnız `<a target="_blank">` ile o sayfalara açılır.
- *   - Dev'de Next.js `next.config.ts` rewrite'ı `/student/.../print` path'lerini
- *     FastAPI'ye geçirir; prod'da Caddy aynı işi yapar — URL değişmez.
+ * Yazdırma menüsü (2026-10-21): Günü / Haftayı / Deneme sonuçlarını yazdır.
+ * Hepsi Next.js `(print)` sayfaları — yeni sekmede açılır, oradan yazdırılır ya da PDF kaydedilir.
+ * (Eski "Veli raporu yazdır" kaldırıldı: veli raporu velinin kendi panelinde.)
  */
-export function PrintMenu({ startDate, label = "Yazdır" }: Props) {
+export function PrintMenu({ startDate, dayDate, label = "Yazdır" }: Props) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -66,17 +63,24 @@ export function PrintMenu({ startDate, label = "Yazdır" }: Props) {
           )}
         >
           <PrintLink
+            href={`/student/day/print?date=${encodeURIComponent(dayDate ?? startDate)}`}
+            icon={<CalendarDays className="size-3.5" />}
+            title="Günü yazdır"
+            description="Günün görevleri, A4 dikey — doğru/yanlış yazma alanlı"
+            onClick={() => setOpen(false)}
+          />
+          <PrintLink
             href={`/student/week/print${q}`}
-            icon={<FileText className="size-3.5" />}
-            title="Haftalık planı yazdır"
+            icon={<CalendarRange className="size-3.5" />}
+            title="Haftayı yazdır"
             description="7 günlük çalışma planı, A4 yatay"
             onClick={() => setOpen(false)}
           />
           <PrintLink
-            href={`/student/weekly-report/print${q}`}
-            icon={<Users className="size-3.5" />}
-            title="Veli raporu yazdır"
-            description="Veli paylaşımı için haftalık performans (klasik biçim)"
+            href="/student/exams/print"
+            icon={<Trophy className="size-3.5" />}
+            title="Deneme sonuçlarını yazdır"
+            description="Tüm denemelerin netleri, ders ders, A4 dikey"
             onClick={() => setOpen(false)}
           />
         </div>
