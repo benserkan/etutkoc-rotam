@@ -1,0 +1,179 @@
+{
+ "name": "Fenomen 8A Matematik Soru Bankası",
+ "publisher": "Fenomen Okul",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (WhatsApp Scan 18.04.41). İçindekiler test listeli: Kazanım / Kalıplaşmış İkiz / Orijinal Yeni Nesil testleri tek tek sayıldı (birebir).",
+  "Kapak: 1357 soru; 6 ünite (8A = tüm yıl). Cevap anahtarı yok sayıldı."
+ ],
+ "sections": [
+  {
+   "label": "Çarpanlar ve Katlar (Test 1-4)",
+   "test_count": 4,
+   "topic": "Çarpanlar ve Katlar",
+   "source": "toc_listed"
+  },
+  {
+   "label": "EBOB / EKOK (Test 5-10)",
+   "test_count": 6,
+   "topic": "Çarpanlar ve Katlar",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Aralarında Asal Sayılar (Test 11-14)",
+   "test_count": 4,
+   "topic": "Çarpanlar ve Katlar",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Tam Sayıların Tam Sayı Kuvvetleri (Test 1-4)",
+   "test_count": 4,
+   "topic": "Üslü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Üslü İfadelerde Çarpma ve Bölme İşlemi (Test 5-9)",
+   "test_count": 5,
+   "topic": "Üslü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Ondalık Gösterimlerin Çözümlemesi (Test 10-12)",
+   "test_count": 3,
+   "topic": "Üslü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Çok Küçük ve Çok Büyük Sayıların Bilimsel Gösterimi (Test 13-16)",
+   "test_count": 4,
+   "topic": "Üslü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Tam Kare Doğal Sayılar ve Karekökleri (Test 1-4)",
+   "test_count": 4,
+   "topic": "Kareköklü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Tam Kare Olmayan Sayıların Karekökü ve Farklı Gösterim (Test 5-8)",
+   "test_count": 4,
+   "topic": "Kareköklü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Kareköklü İfadelerle Çarpma ve Bölme (Test 9-12)",
+   "test_count": 4,
+   "topic": "Kareköklü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Kareköklü İfadelerle Toplama ve Çıkarma (Test 13-16)",
+   "test_count": 4,
+   "topic": "Kareköklü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Ondalık Gösterimlerin Karekökleri ve Gerçek Sayılar (Test 17-20)",
+   "test_count": 4,
+   "topic": "Kareköklü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Veri Analizi (Test 1-4)",
+   "test_count": 4,
+   "topic": "Veri Analizi",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Olasılık (Test 1-4)",
+   "test_count": 4,
+   "topic": "Basit Olayların Olasılığı",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Cebirsel İfadeler ve Özdeşlikler (Test 1-6)",
+   "test_count": 6,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Bir Bilinmeyenli Denklemler (Test 1-5)",
+   "test_count": 5,
+   "topic": "Doğrusal Denklemler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Koordinat Sistemi ve Doğrusal İlişki (Test 1-8)",
+   "test_count": 8,
+   "topic": "Doğrusal Denklemler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Eğim (Test 1-5)",
+   "test_count": 5,
+   "topic": "Doğrusal Denklemler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Eşitsizlikler (Test 1-5)",
+   "test_count": 5,
+   "topic": "Eşitsizlikler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Üçgende Yardımcı Elemanlar (Test 1-4)",
+   "test_count": 4,
+   "topic": "Üçgenler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Üçgende Kenar ve Açı Bağıntıları, Çizim Şartları (Test 5-9)",
+   "test_count": 5,
+   "topic": "Üçgenler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Pisagor Bağıntısı (Test 10-14)",
+   "test_count": 5,
+   "topic": "Üçgenler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Eşlik ve Benzerlik (Test 15-18)",
+   "test_count": 4,
+   "topic": "Eşlik ve Benzerlik",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Dönüşüm Geometrisi: Öteleme ve Yansıma (Test 1-4)",
+   "test_count": 4,
+   "topic": "Dönüşüm Geometrisi",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Dik Prizmalar (Test 1-3)",
+   "test_count": 3,
+   "topic": "Geometrik Cisimler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Dik Silindir (Test 1-4)",
+   "test_count": 4,
+   "topic": "Geometrik Cisimler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Dik Piramit ve Dik Koni (Test 1-4)",
+   "test_count": 4,
+   "topic": "Geometrik Cisimler",
+   "source": "toc_listed"
+  }
+ ]
+}

@@ -6,6 +6,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## CAFER SET "YENİ GELENLER 2" — 14 LGS KİTABI KATALOGDA (2026-10-21, prod id 328-341, migration YOK)
+
+- 16 tarama (kapak + içindekiler, metin katmanı yok). **2'si zaten katalogda** (Zoom İnkılap #140 · Bumerang Fen
+  Etkinlikli #129 — test sayıları birebir) → atlandı. JSON'lar `data/kitap-katalog/lgs/lgs8_*` (üretici scratchpad
+  `build_yg2.py`), prod `--no-map` + sabit `topic`.
+- **İçindekilerden birebir:** Fenomen 8A Mat 120 · Fenomen 8 Anlam Bilgisi 132 · Sinan Kuzucu Geometri Tabanlı Mat 20
+  (testler ~10 sayfa) · Süper 8 Fen 1. Dönem (Nitelik) 42 (konu başına Kazanım/Yorumlama/Portal) · Hız 36 Haftalık Din
+  Denemeleri 46 (yanıt anahtarından; kapak 45 diyor, anahtarda D-46 ek).
+- **Sayfa ÷ 2 TAHMİNİ (web + Telegram'da PDF yok/indirilemedi):** Dinlendiren Din SB 98 (kapak 910 soru ile tutarlı) ·
+  Hız Türkçe SB 134 · Hız Paragraf 86 · Hız Din SB 96 · Karekök Türkçe SB 142 · Jett 7→8 Türkçe Yaz 83 · Benim Hocam
+  İnkılap 116 (kapak toplamı kesin) · My Teacher Test Book 8 200 (kapak toplamı kesin, ünite başı 20) · Ankara Güçlendiren
+  İnkılap 97 (ilk 3 ünite koç katkısı #289 ile birebir = sayfa/2; #289 hâlâ pending — reddedilebilir).
+- Telegram'da bulunan ama indirilmeyen (güvenlik kuralı: güvenilmeyen kaynaktan indirme yok): "KAREKÖK LGS TÜRKÇE SB
+  2020.pdf" (50 MB) · "8 İnkılap Güçlendiren S B @oksitpdflgs.pdf" (20 MB) — kullanıcı indirirse kesin sayımla `--reset`.
+
 ## ÖĞRENCİ GELİŞİM SAYFASI + YAZDIR/PAYLAŞ + DENEME VURGUSU (2026-10-21, migration YOK)
 
 - **Yazdır menüsü** (`student/print-menu.tsx`): "Veli raporu" kalktı → **Günü yazdır** (YENİ `(print)/student/day/print`,

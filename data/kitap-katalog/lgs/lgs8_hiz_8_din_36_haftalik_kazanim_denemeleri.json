@@ -1,0 +1,60 @@
+{
+ "name": "Hız Yayınları 8. Sınıf Din Kültürü ve Ahlak Bilgisi 36 Haftalık Kazanım Denemeleri",
+ "publisher": "Hız Yayınları",
+ "subject": "Din Kültürü ve Ahlak Bilgisi",
+ "curriculum_model": "lgs",
+ "type": "brans_denemesi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [],
+ "notes": [
+  "Kaynak: kapak + yanıt anahtarı fotoğrafı (Scan 18.29.53). Yanıt anahtarında Deneme-01…46 (her biri 10 soru) tek tek listeli → birebir 46 deneme.",
+  "Kapak: 36 haftalık + 4 tatil + 5 ünite = 45; anahtarda ek D-46 var (haftalık 36 = 7+8+7+8+6, D-46 ayrı).",
+  "Ünite ataması anahtardaki 'N. Ünite D-xx' işaretlerinden; tatil denemeleri karma (eşleşmesiz)."
+ ],
+ "sections": [
+  {
+   "label": "1. Ünite Kader İnancı — Haftalık Denemeler (D-01…07) + Ünite Denemesi (D-08)",
+   "test_count": 8,
+   "topic": "Kader İnancı",
+   "source": "toc_listed"
+  },
+  {
+   "label": "2. Ünite Zekât ve Sadaka — Haftalık (D-09, 10, 12…17) + Ünite Denemesi (D-18)",
+   "test_count": 9,
+   "topic": "Zekât, Hac ve Kurban İbadeti",
+   "source": "toc_listed"
+  },
+  {
+   "label": "3. Ünite Din ve Hayat — Haftalık (D-19…22, 25…27) + Ünite Denemesi (D-28)",
+   "test_count": 8,
+   "topic": "Din ve Hayat",
+   "source": "toc_listed"
+  },
+  {
+   "label": "4. Ünite Hz. Muhammed'in Örnekliği — Haftalık (D-29…36) + Ünite Denemesi (D-37)",
+   "test_count": 9,
+   "topic": "Hz. Muhammed'in Örnekliği",
+   "source": "toc_listed"
+  },
+  {
+   "label": "5. Ünite Kur'an-ı Kerim — Haftalık (D-39…44) + Ünite Denemesi (D-45)",
+   "test_count": 7,
+   "topic": "Kur'an-ı Kerim ve Özellikleri",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Tatil Denemeleri (1. Ara D-11 · Yarıyıl D-23, D-24 · 2. Ara D-38)",
+   "test_count": 4,
+   "topic": null,
+   "source": "toc_listed"
+  },
+  {
+   "label": "Deneme 46 (son deneme)",
+   "test_count": 1,
+   "topic": null,
+   "source": "toc_listed"
+  }
+ ]
+}

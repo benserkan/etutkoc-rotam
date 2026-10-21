@@ -1,0 +1,259 @@
+{
+ "name": "Hız Yayınları 8. Sınıf Din Kültürü ve Ahlak Bilgisi Soru Bankası",
+ "publisher": "Hız Yayınları",
+ "subject": "Din Kültürü ve Ahlak Bilgisi",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.31.53). Test sayısı yok; test = sayfa aralığı ÷ 2. 'Bir Peygamber/Ayet/Sure Tanıyorum' 2 sayfalık bölümler 1 test sayıldı (okuma sayfasıysa koç siler).",
+  "İnternette ve Telegram'da PDF bulunamadı."
+ ],
+ "sections": [
+  {
+   "label": "Kader ve Kaza İnancı",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 9,
+   "page_end": 14,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "İnsan İradesi ve Kader",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 15,
+   "page_end": 20,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "Kaderle İlgili Kavramlar",
+   "test_count": 5,
+   "source": "page_estimate",
+   "page_start": 21,
+   "page_end": 30,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "Bir Peygamber Tanıyorum: Hz. Musa (a.s.)",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 31,
+   "page_end": 32,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "Bir Ayet Tanıyorum: Ayet el-Kürsi",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 33,
+   "page_end": 34,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "1. Ünite Değerlendirme Testleri",
+   "test_count": 8,
+   "source": "page_estimate",
+   "page_start": 35,
+   "page_end": 51,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "İslam'ın Paylaşma ve Yardımlaşmaya Verdiği Önem",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 52,
+   "page_end": 55,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Zekât ve Sadaka İbadeti",
+   "test_count": 6,
+   "source": "page_estimate",
+   "page_start": 56,
+   "page_end": 67,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Zekât ve Sadakanın Bireysel ve Toplumsal Faydaları",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 68,
+   "page_end": 73,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Bir Peygamber Tanıyorum: Hz. Şuayb (a.s.)",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 74,
+   "page_end": 75,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Bir Sure Tanıyorum: Maûn Suresi",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 76,
+   "page_end": 77,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Testleri",
+   "test_count": 7,
+   "source": "page_estimate",
+   "page_start": 78,
+   "page_end": 92,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Din, Birey ve Toplum",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 93,
+   "page_end": 98,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "Dinin Temel Gayesi",
+   "test_count": 6,
+   "source": "page_estimate",
+   "page_start": 99,
+   "page_end": 110,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "Bir Peygamber Tanıyorum: Hz. Yusuf (a.s.)",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 111,
+   "page_end": 116,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "Bir Sure Tanıyorum: Asr Suresi",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 117,
+   "page_end": 118,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "3. Ünite Değerlendirme Testleri",
+   "test_count": 5,
+   "source": "page_estimate",
+   "page_start": 119,
+   "page_end": 129,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav.) Doğruluğu ve Güvenilir Kişiliği",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 130,
+   "page_end": 133,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav.) Merhametli ve Affedici Oluşu",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 134,
+   "page_end": 137,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav.) İstişareye Önem Vermesi",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 138,
+   "page_end": 141,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav.) Davasındaki Cesaret ve Kararlılığı",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 142,
+   "page_end": 145,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav.) Hakkı Gözetmedeki Hassasiyeti",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 146,
+   "page_end": 149,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav.) İnsanlara Değer Vermesi",
+   "test_count": 4,
+   "source": "page_estimate",
+   "page_start": 150,
+   "page_end": 157,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "Bir Sure Tanıyorum: Kureyş Suresi",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 158,
+   "page_end": 159,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Testleri",
+   "test_count": 6,
+   "source": "page_estimate",
+   "page_start": 160,
+   "page_end": 172,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "İslam Dininin Temel Kaynakları",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 173,
+   "page_end": 176,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  },
+  {
+   "label": "Kur'an-ı Kerim'in Ana Konuları",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 177,
+   "page_end": 182,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  },
+  {
+   "label": "Kur'an-ı Kerim'in Temel Özellikleri",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 183,
+   "page_end": 188,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  },
+  {
+   "label": "Bir Peygamber Tanıyorum: Hz. Nuh (a.s.)",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 189,
+   "page_end": 190,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  },
+  {
+   "label": "5. Ünite Değerlendirme Testleri",
+   "test_count": 7,
+   "source": "page_estimate",
+   "page_start": 191,
+   "page_end": 204,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  }
+ ]
+}

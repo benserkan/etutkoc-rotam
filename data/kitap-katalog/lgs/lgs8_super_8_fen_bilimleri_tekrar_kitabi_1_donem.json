@@ -1,0 +1,101 @@
+{
+ "name": "Süper 8 Fen Bilimleri Tekrar Kitabı (1. Dönem)",
+ "publisher": "Nitelik Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.15.37). Her konu: konu anlatımı + Kazanım Ölçme Testi + Yorumlama Testi + Portal Test → 3 test/konu (içindekilerde adıyla listeli).",
+  "1. dönem konuları (4 ünite). Portal Test bazen 4 sayfa; 1 test sayıldı."
+ ],
+ "sections": [
+  {
+   "label": "Mevsimlerin Oluşumu (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Mevsimler ve İklim",
+   "source": "toc_listed"
+  },
+  {
+   "label": "İklim ve Hava Hareketleri (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Mevsimler ve İklim",
+   "source": "toc_listed"
+  },
+  {
+   "label": "DNA ve Genetik Kod (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "DNA ve Genetik Kod",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Kalıtım (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "DNA ve Genetik Kod",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Mutasyon ve Modifikasyon (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "DNA ve Genetik Kod",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Adaptasyon (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "DNA ve Genetik Kod",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Biyoteknoloji (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "DNA ve Genetik Kod",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Katı Basıncı (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Basınç",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Sıvı Basıncı (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Basınç",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Gaz Basıncı (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Basınç",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Periyodik Sistem (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Madde ve Endüstri",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Madde ve Endüstri",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Kimyasal Tepkimeler (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Madde ve Endüstri",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Asitler ve Bazlar (Kazanım Ölçme · Yorumlama · Portal Test)",
+   "test_count": 3,
+   "topic": "Madde ve Endüstri",
+   "source": "toc_listed"
+  }
+ ]
+}

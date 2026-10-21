@@ -1,0 +1,123 @@
+{
+ "name": "Karekök 8. Sınıf Türkçe Soru Bankası (LGS)",
+ "publisher": "Karekök Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.22.33). İçindekilerde yalnız 13 bölüm başlığı; test = sayfa aralığı ÷ 2 (bölüm içi konu anlatımı sayfaları varsa fazla sayım olabilir).",
+  "Telegram'da 'KAREKÖK LGS TÜRKÇE SB 2020.pdf' (50,4 MB, 2027 LGS PDF DENİZİ) bulundu; indirilemediği için sayım yapılamadı — indirilirse kesin sayıyla güncellenebilir (baskı farkı olabilir)."
+ ],
+ "sections": [
+  {
+   "label": "Sözcükte Anlam",
+   "test_count": 26,
+   "source": "page_estimate",
+   "page_start": 7,
+   "page_end": 58,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Cümlede Anlam",
+   "test_count": 28,
+   "source": "page_estimate",
+   "page_start": 59,
+   "page_end": 114,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Paragraf",
+   "test_count": 21,
+   "source": "page_estimate",
+   "page_start": 115,
+   "page_end": 156,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Fiilimsiler",
+   "test_count": 7,
+   "source": "page_estimate",
+   "page_start": 157,
+   "page_end": 170,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 9,
+   "source": "page_estimate",
+   "page_start": 171,
+   "page_end": 188,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Fiil Çatısı",
+   "test_count": 6,
+   "source": "page_estimate",
+   "page_start": 189,
+   "page_end": 200,
+   "topic": "Fiilde Çatı"
+  },
+  {
+   "label": "Cümle Türleri",
+   "test_count": 9,
+   "source": "page_estimate",
+   "page_start": 201,
+   "page_end": 218,
+   "topic": "Cümle Türleri"
+  },
+  {
+   "label": "Anlatım Bozuklukları",
+   "test_count": 6,
+   "source": "page_estimate",
+   "page_start": 219,
+   "page_end": 230,
+   "topic": "Anlatım Bozuklukları"
+  },
+  {
+   "label": "Yazım Kuralları",
+   "test_count": 5,
+   "source": "page_estimate",
+   "page_start": 231,
+   "page_end": 240,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 5,
+   "source": "page_estimate",
+   "page_start": 241,
+   "page_end": 250,
+   "topic": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Yazı Türleri",
+   "test_count": 4,
+   "source": "page_estimate",
+   "page_start": 251,
+   "page_end": 258,
+   "topic": "Metin Türleri"
+  },
+  {
+   "label": "Görsel ve Grafik Okuma - Yorumlama",
+   "test_count": 6,
+   "source": "page_estimate",
+   "page_start": 259,
+   "page_end": 270,
+   "topic": "Görsel, Tablo ve Grafik Okuma"
+  },
+  {
+   "label": "Sözel Mantık",
+   "test_count": 10,
+   "source": "page_estimate",
+   "page_start": 271,
+   "page_end": 290,
+   "topic": "Sözel Mantık"
+  }
+ ]
+}

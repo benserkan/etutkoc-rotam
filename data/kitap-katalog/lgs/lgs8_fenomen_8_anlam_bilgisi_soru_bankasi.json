@@ -1,0 +1,275 @@
+{
+ "name": "Fenomen 8 Anlam Bilgisi Soru Bankası",
+ "publisher": "Fenomen Okul",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.17.51). İçindekiler test listeli: 6 bölüm, Test 1-N her alt başlıkta numaralı (birebir 132 test, her test 2 sayfa).",
+  "Kapak: 1052 soru (~8 soru/test)."
+ ],
+ "sections": [
+  {
+   "label": "Gerçek, Mecaz ve Terim Anlamlı Sözcükler",
+   "test_count": 2,
+   "topic": "Sözcükte Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Eş-Zıt-Yakın Anlamlı, Eş Sesli Sözcükler",
+   "test_count": 2,
+   "topic": "Sözcükte Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Çok Anlamlılık, Kalıplaşmamış Söz Grupları",
+   "test_count": 2,
+   "topic": "Sözcükte Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Nicel ve Nitel Anlamlı Sözcükler",
+   "test_count": 1,
+   "topic": "Sözcükte Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Somut / Soyut Anlamlı Sözcükler",
+   "test_count": 1,
+   "topic": "Sözcükte Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "İkilemeler, Pekiştirmeler, Yansıma, Genel-Özel Anlamlı Sözcükler",
+   "test_count": 1,
+   "topic": "Sözcükte Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Deyimler",
+   "test_count": 2,
+   "topic": "Sözcükte Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Sözcükte Anlam (Karma)",
+   "test_count": 9,
+   "topic": "Sözcükte Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Öznel ve Nesnel Anlatımlı Cümleler",
+   "test_count": 2,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Neden-Sonuç, Amaç-Sonuç, Koşul-Sonuç Cümleleri",
+   "test_count": 2,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Cümle Yorumlama",
+   "test_count": 1,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Cümle Oluşturma, Tamamlama, Birleştirme",
+   "test_count": 2,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Doğrudan ve Dolaylı Anlatım, Örtülü Anlam, Aşamalı Durum",
+   "test_count": 1,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Cümlelerin İfade Ettiği Anlam Özellikleri",
+   "test_count": 2,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Cümleye Hâkim Olan Duygular",
+   "test_count": 2,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Atasözü ve Özdeyiş",
+   "test_count": 2,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Cümlede Anlam (Karma)",
+   "test_count": 6,
+   "topic": "Cümlede Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Konu",
+   "test_count": 2,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Başlık",
+   "test_count": 1,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Anahtar Sözcük",
+   "test_count": 1,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Ana Fikir - Ana Duygu",
+   "test_count": 4,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Yardımcı Fikir",
+   "test_count": 4,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Soru - Cevap",
+   "test_count": 3,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Metnin Yapısı",
+   "test_count": 1,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Metin Oluşturma, Metin Tamamlama",
+   "test_count": 2,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Metni İkiye Bölme",
+   "test_count": 2,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Akışı Bozan Cümle",
+   "test_count": 2,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Geçiş ve Bağlantı İfadeleri",
+   "test_count": 1,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Duyular, Duygular, Karakter",
+   "test_count": 1,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Hikâye Unsurları, Anlatıcı Ağzı",
+   "test_count": 3,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Metin Karşılaştırma",
+   "test_count": 2,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Metinde Anlam (Karma)",
+   "test_count": 21,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Anlatım Biçimleri",
+   "test_count": 4,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 4,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Anlatım İlkeleri",
+   "test_count": 2,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Dil ve Anlatım",
+   "test_count": 2,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Medya Metinleri",
+   "test_count": 2,
+   "topic": "Metin Türleri",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Metinde Anlatım (Karma)",
+   "test_count": 6,
+   "topic": "Paragrafta Anlam",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Sözel Mantık",
+   "test_count": 11,
+   "topic": "Sözel Mantık",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Grafik Okuma",
+   "test_count": 2,
+   "topic": "Görsel, Tablo ve Grafik Okuma",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Tablo Okuma",
+   "test_count": 2,
+   "topic": "Görsel, Tablo ve Grafik Okuma",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Görsel, Harita Okuma",
+   "test_count": 2,
+   "topic": "Görsel, Tablo ve Grafik Okuma",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Görsel, Grafik, Tablo Okuma (Karma)",
+   "test_count": 5,
+   "topic": "Görsel, Tablo ve Grafik Okuma",
+   "source": "toc_listed"
+  }
+ ]
+}

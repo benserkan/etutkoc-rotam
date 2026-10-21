@@ -1,0 +1,388 @@
+{
+ "name": "Benim Hocam 8. Sınıf İnkılap Tarihi Benim Soru Bankam",
+ "publisher": "Benim Hocam Yayınları",
+ "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [
+  "TAHMİNİ bölüm dağılımı — kapaktaki toplam (116 test) kesin, bölümlere sayfa aralığı ÷ 2 ile dağıtıldı."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.26.05). Kapak: 116 test · 847 soru. İçindekilerde test sayısı yok.",
+  "Sayfa 5-238 = 234 sayfa ≈ 117 test → kapaktaki 116 ile tutarlı (2 sayfa/test). İnternette ve Telegram'da PDF bulunamadı.",
+  "Toplamı kapaktaki 116 teste eşitlemek için 7. Ünite Değerlendirme 1 test alındı (sayfa hesabı 117 veriyordu)."
+ ],
+ "sections": [
+  {
+   "label": "Gelişen Avrupa ve Güç Kaybeden Osmanlı",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 5,
+   "page_end": 10,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "Mustafa Kemal'in Çocukluğu ve Öğrenim Hayatı",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 11,
+   "page_end": 16,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "Mustafa Kemal'in Fikir Hayatı",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 17,
+   "page_end": 22,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "Mustafa Kemal'in Askerlik Hayatı",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 23,
+   "page_end": 28,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "1. Ünite Değerlendirme",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 29,
+   "page_end": 34,
+   "topic": "Bir Kahraman Doğuyor"
+  },
+  {
+   "label": "I. Dünya Savaşı",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 35,
+   "page_end": 40,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "I. Dünya Savaşı'nda Osmanlı Devleti",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 41,
+   "page_end": 46,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "Mondros Ateşkes Antlaşması",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 47,
+   "page_end": 52,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "Kuvâ-yı Millîye Hareketi ve Cemiyetler",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 53,
+   "page_end": 58,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "Millî Mücadele Hazırlık Dönemi",
+   "test_count": 4,
+   "source": "page_estimate",
+   "page_start": 59,
+   "page_end": 66,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "Misakımillî'nin Kabulü ve BMM'nin Açılışı",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 67,
+   "page_end": 72,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "BMM'ye Karşı Ayaklanmalar",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 73,
+   "page_end": 78,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "Sevr Antlaşması",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 79,
+   "page_end": 84,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "2. Ünite Değerlendirme",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 85,
+   "page_end": 90,
+   "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+  },
+  {
+   "label": "Millî Mücadele'de Doğu ve Güney Cepheleri",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 91,
+   "page_end": 96,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Millî Mücadele'de Batı Cephesi",
+   "test_count": 4,
+   "source": "page_estimate",
+   "page_start": 97,
+   "page_end": 104,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Maarif Kongresi",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 105,
+   "page_end": 108,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Tekâlif-i Millîye Emirleri",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 109,
+   "page_end": 112,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Sakarya Meydan Muharebesi - Büyük Taarruz",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 113,
+   "page_end": 118,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Lozan Barış Antlaşması",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 119,
+   "page_end": 124,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Millî Mücadele'nin Sanat ve Edebiyata Yansımaları",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 125,
+   "page_end": 128,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "3. Ünite Değerlendirme",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 129,
+   "page_end": 134,
+   "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+  },
+  {
+   "label": "Atatürk İlkeleri",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 135,
+   "page_end": 140,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Siyasi Alanda Yapılan İnkılaplar",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 141,
+   "page_end": 146,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Hukuk Alanında Yapılan İnkılaplar",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 147,
+   "page_end": 150,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Eğitim ve Kültür Alanında Yapılan İnkılaplar",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 151,
+   "page_end": 156,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Toplumsal Alanda Yapılan İnkılaplar",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 157,
+   "page_end": 162,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Ekonomik Alanda Yapılan İnkılaplar",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 163,
+   "page_end": 168,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Sağlık Alanındaki Gelişmeler",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 169,
+   "page_end": 172,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Cumhuriyetin Sağladığı Kazanımlar",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 173,
+   "page_end": 176,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Atatürk İlke ve İnkılaplarını Oluşturan Temel Esaslar",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 177,
+   "page_end": 180,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "4. Ünite Değerlendirme",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 181,
+   "page_end": 186,
+   "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+  },
+  {
+   "label": "Demokratikleşme Yolunda Atılan Adımlar",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 187,
+   "page_end": 192,
+   "topic": "Demokratikleşme Çabaları"
+  },
+  {
+   "label": "Mustafa Kemal'e Suikast Girişimi",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 193,
+   "page_end": 196,
+   "topic": "Demokratikleşme Çabaları"
+  },
+  {
+   "label": "Türkiye Cumhuriyeti'ne Yönelik Tehditler",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 197,
+   "page_end": 200,
+   "topic": "Demokratikleşme Çabaları"
+  },
+  {
+   "label": "5. Ünite Değerlendirme",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 201,
+   "page_end": 206,
+   "topic": "Demokratikleşme Çabaları"
+  },
+  {
+   "label": "Türk Dış Politikasının Temel İlke ve Amaçları",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 207,
+   "page_end": 210,
+   "topic": "Atatürk Dönemi Türk Dış Politikası"
+  },
+  {
+   "label": "Atatürk Dönemi Türk Dış Politikası",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 211,
+   "page_end": 216,
+   "topic": "Atatürk Dönemi Türk Dış Politikası"
+  },
+  {
+   "label": "Hatay'ın Türkiye'ye Katılması",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 217,
+   "page_end": 218,
+   "topic": "Atatürk Dönemi Türk Dış Politikası"
+  },
+  {
+   "label": "6. Ünite Değerlendirme",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 219,
+   "page_end": 224,
+   "topic": "Atatürk Dönemi Türk Dış Politikası"
+  },
+  {
+   "label": "Atatürk'ün Ölümü ve Ölümünün Yansımaları",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 225,
+   "page_end": 226,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  },
+  {
+   "label": "Atatürk'ün Eserleri",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 227,
+   "page_end": 228,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  },
+  {
+   "label": "II. Dünya Savaşı ve Türkiye'nin İzlediği Denge Siyaseti",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 229,
+   "page_end": 230,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  },
+  {
+   "label": "II. Dünya Savaşı'nın Türkiye'ye Etkileri",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 231,
+   "page_end": 232,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  },
+  {
+   "label": "Türkiye'nin Çok Partili Hayata Geçişi",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 233,
+   "page_end": 234,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  },
+  {
+   "label": "7. Ünite Değerlendirme",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 235,
+   "page_end": 238,
+   "topic": "Atatürk'ün Ölümü ve Sonrası"
+  }
+ ]
+}

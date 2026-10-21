@@ -1,0 +1,331 @@
+{
+ "name": "Jett 7'den 8'e Geçenler İçin Türkçe Yaz Tatil Kitabı (1. Çeyrek)",
+ "publisher": "Ünlüler Karması",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "konu_anlatimli",
+ "target_grade_min": 7,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.23.46). 7'den 8'e geçiş yaz kitabı; test = sayfa aralığı ÷ 2 (konu özeti/etkinlik sayfaları varsa fazla sayım).",
+  "İnternette ve Telegram'da PDF bulunamadı. 'Örnektir, para ile satılmaz' tanıtım baskısı."
+ ],
+ "sections": [
+  {
+   "label": "Çok Anlamlılık, Gerçek-Mecaz-Terim Anlam",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 4,
+   "page_end": 7,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Eş, Zıt Anlamlı ve Eş Sesli Sözcükler",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 8,
+   "page_end": 11,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Yabancı Sözcükler, Yansıma, Somut-Soyut-Nitel-Nicel-Genel-Özel Anlam",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 12,
+   "page_end": 15,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Geçiş ve Bağlantı İfadeleri",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 16,
+   "page_end": 19,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "İkilemeler, Pekiştirmeler, Deyimler, Kalıp İfadeler",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 20,
+   "page_end": 23,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Atasözleri ve Özdeyişler",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 24,
+   "page_end": 27,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Kalıplaşmamış Söz Öbekleri",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 28,
+   "page_end": 29,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Sözcükte Anlam Karma Test",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 30,
+   "page_end": 35,
+   "topic": "Sözcükte Anlam"
+  },
+  {
+   "label": "Cümlede Eş-Yakın-Örtülü Anlam, Cümle Oluşturma",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 36,
+   "page_end": 39,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Anlatım Özelliklerine Göre Cümleler (Öznel-Nesnel)",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 40,
+   "page_end": 43,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Anlam İlişkilerine Göre Cümleler (Neden-Amaç-Koşul)",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 44,
+   "page_end": 47,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümlede Kavramlar ve Duygular",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 48,
+   "page_end": 51,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Cümlede Anlam Karma Test",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 52,
+   "page_end": 57,
+   "topic": "Cümlede Anlam"
+  },
+  {
+   "label": "Metnin Konusu, Başlığı, Anahtar Sözcükleri, Ana Düşüncesi",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 58,
+   "page_end": 63,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Yardımcı Düşünce, Soru-Cevap",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 64,
+   "page_end": 69,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metnin Bölümleri ve Yapısı",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 70,
+   "page_end": 73,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Hikâye Unsurları ve Anlatıcı",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 74,
+   "page_end": 77,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Söz Sanatları",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 78,
+   "page_end": 81,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Anlatım Biçimleri",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 82,
+   "page_end": 85,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları, Dil ve Anlatım",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 86,
+   "page_end": 89,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metin Türleri",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 90,
+   "page_end": 93,
+   "topic": "Metin Türleri"
+  },
+  {
+   "label": "Metin Karşılaştırma",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 94,
+   "page_end": 95,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Bağlam Temelli Sorular",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 96,
+   "page_end": 97,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metinde Anlam Karma Test",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 98,
+   "page_end": 103,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Görsel Yorumlama",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 104,
+   "page_end": 107,
+   "topic": "Görsel, Tablo ve Grafik Okuma"
+  },
+  {
+   "label": "Grafik Tablo Okuma",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 108,
+   "page_end": 111,
+   "topic": "Görsel, Tablo ve Grafik Okuma"
+  },
+  {
+   "label": "Sözel Mantık",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 112,
+   "page_end": 113,
+   "topic": "Sözel Mantık"
+  },
+  {
+   "label": "Görsel-Grafik-Tablo-Sözel Mantık Karma Test",
+   "test_count": 4,
+   "source": "page_estimate",
+   "page_start": 114,
+   "page_end": 121,
+   "topic": null
+  },
+  {
+   "label": "İsim-Fiiller",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 122,
+   "page_end": 125,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Sıfat-Fiiller",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 126,
+   "page_end": 129,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Zarf-Fiiller",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 130,
+   "page_end": 133,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Fiilimsiler Karma Test",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 134,
+   "page_end": 139,
+   "topic": "Fiilimsiler"
+  },
+  {
+   "label": "Cümlenin Temel Ögeleri",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 140,
+   "page_end": 143,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Cümlenin Yardımcı Ögeleri",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 144,
+   "page_end": 147,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Cümlenin Ögeleri Karma Test",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 148,
+   "page_end": 153,
+   "topic": "Cümlenin Ögeleri"
+  },
+  {
+   "label": "Yazım Kuralları (Büyük Harf, Sayı, Kısaltma)",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 154,
+   "page_end": 157,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Yazım Kuralları (de, ki, mi; Birleşik Sözcükler)",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 158,
+   "page_end": 161,
+   "topic": "Yazım Kuralları"
+  },
+  {
+   "label": "Noktalama İşaretleri (Nokta, Virgül, Soru, Ünlem, Eğik Çizgi, Yay Ayraç)",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 162,
+   "page_end": 165,
+   "topic": "Noktalama İşaretleri"
+  },
+  {
+   "label": "Noktalama İşaretleri (İki Nokta, Üç Nokta, Noktalı Virgül, Kesme, Tırnak, Çizgi)",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 166,
+   "page_end": 169,
+   "topic": "Noktalama İşaretleri"
+  }
+ ]
+}

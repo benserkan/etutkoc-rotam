@@ -1,0 +1,219 @@
+{
+ "name": "Hız Yayınları 8. Sınıf Paragraf Okula Destek Soru Bankası",
+ "publisher": "Hız Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.16.53). Test sayısı yazmıyor; test = sayfa aralığı ÷ 2 (kapakta 'özet konu anlatımı' var → hafif fazla sayım olabilir).",
+  "İnternette ve Telegram'da PDF bulunamadı."
+ ],
+ "sections": [
+  {
+   "label": "Konu",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 11,
+   "page_end": 15,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Başlık",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 16,
+   "page_end": 20,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Ana Düşünce / Ana Duygu",
+   "test_count": 5,
+   "source": "page_estimate",
+   "page_start": 21,
+   "page_end": 31,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Yardımcı Düşünce",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 32,
+   "page_end": 38,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Paragrafta Anlam Karma Test",
+   "test_count": 5,
+   "source": "page_estimate",
+   "page_start": 39,
+   "page_end": 49,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metin Oluşturma",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 50,
+   "page_end": 52,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metin Tamamlama",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 53,
+   "page_end": 57,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metni İkiye Bölme",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 58,
+   "page_end": 60,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metnin Akışını Bozan Cümle",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 61,
+   "page_end": 63,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Paragrafta Yapı Karma Test",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 64,
+   "page_end": 68,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Anlatım Biçimleri",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 69,
+   "page_end": 73,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 3,
+   "source": "page_estimate",
+   "page_start": 74,
+   "page_end": 80,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Hikâye Unsurları",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 81,
+   "page_end": 83,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Anlatıcı Türleri",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 84,
+   "page_end": 86,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Geçiş ve Bağlantı İfadeleri",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 87,
+   "page_end": 89,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Gerçek ve Kurgusal Unsurlar",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 90,
+   "page_end": 92,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Dil ve Anlatım Özellikleri",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 93,
+   "page_end": 97,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metin Karşılaştırma",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 98,
+   "page_end": 102,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Metin Türleri",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 103,
+   "page_end": 105,
+   "topic": "Metin Türleri"
+  },
+  {
+   "label": "Söz Sanatları",
+   "test_count": 1,
+   "source": "page_estimate",
+   "page_start": 106,
+   "page_end": 108,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Paragrafta Anlatım Karma Test",
+   "test_count": 5,
+   "source": "page_estimate",
+   "page_start": 109,
+   "page_end": 119,
+   "topic": "Paragrafta Anlam"
+  },
+  {
+   "label": "Görsel Okuma",
+   "test_count": 11,
+   "source": "page_estimate",
+   "page_start": 120,
+   "page_end": 142,
+   "topic": "Görsel, Tablo ve Grafik Okuma"
+  },
+  {
+   "label": "Tablo ve Grafik Yorumlama",
+   "test_count": 11,
+   "source": "page_estimate",
+   "page_start": 143,
+   "page_end": 165,
+   "topic": "Görsel, Tablo ve Grafik Okuma"
+  },
+  {
+   "label": "Sözel Mantık ve Muhakeme",
+   "test_count": 15,
+   "source": "page_estimate",
+   "page_start": 166,
+   "page_end": 196,
+   "topic": "Sözel Mantık"
+  },
+  {
+   "label": "Sözel Mantık ve Görsel Okuma Karma Test",
+   "test_count": 5,
+   "source": "page_estimate",
+   "page_start": 197,
+   "page_end": 206,
+   "topic": null
+  }
+ ]
+}

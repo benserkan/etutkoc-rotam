@@ -1,0 +1,79 @@
+{
+ "name": "My Teacher Test Book 8 (Vocabulary + Test Book for LGS)",
+ "publisher": "My Teacher ELT",
+ "subject": "İngilizce",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [
+  "TAHMİNİ ünite dağılımı — kapaktaki toplam (200 kazanım testi) kesin, 10 üniteye eşit (20) dağıtıldı."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.28.24). Kapak: 400 kelime · 200 kazanım testi · 400 LGS sorusu. İçindekilerde yalnız ünite + başlangıç sayfası (ünite başına 18-24 sayfa).",
+  "İnternette ve Telegram'da PDF bulunamadı. Tanıtım baskısı."
+ ],
+ "sections": [
+  {
+   "label": "Unit 1 - Friendship",
+   "test_count": 20,
+   "topic": "Friendship",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 2 - Teen Life",
+   "test_count": 20,
+   "topic": "Teen Life",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 3 - In the Kitchen",
+   "test_count": 20,
+   "topic": "In the Kitchen",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 4 - On the Phone",
+   "test_count": 20,
+   "topic": "On the Phone",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 5 - Internet",
+   "test_count": 20,
+   "topic": "The Internet",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 6 - Adventures",
+   "test_count": 20,
+   "topic": "Adventures",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 7 - Tourism",
+   "test_count": 20,
+   "topic": "Tourism",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 8 - Chores",
+   "test_count": 20,
+   "topic": "Chores, Please!",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 9 - Science",
+   "test_count": 20,
+   "topic": "Science",
+   "source": "cover_total_split"
+  },
+  {
+   "label": "Unit 10 - Natural Forces",
+   "test_count": 20,
+   "topic": "Natural Forces",
+   "source": "cover_total_split"
+  }
+ ]
+}

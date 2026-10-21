@@ -1,0 +1,205 @@
+{
+ "name": "Dinlendiren 8 Din Kültürü ve Ahlak Bilgisi Soru Bankası",
+ "publisher": "Eker Test",
+ "subject": "Din Kültürü ve Ahlak Bilgisi",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.00.53). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı = sayfa aralığı ÷ 2 (TAHMİN).",
+  "İnternette/Telegram'da bu kitabın PDF'i bulunamadı (yalnız 'Eker Test 8 Sınıf Konu Anlatımlı Soru Bankası' adlı 21,5 MB'lık farklı olabilecek bir dosya var, indirilmedi).",
+  "Açık Uçlu Yazılı Sınavlar (her ünitede 4 sayfa) test sayılmadı.",
+  "Kalibrasyon: kapakta 910 soru; tahmini ~98 test × ~9,3 soru ile tutarlı."
+ ],
+ "sections": [
+  {
+   "label": "Kader ve Kaza İnancı",
+   "test_count": 4,
+   "source": "page_estimate",
+   "page_start": 9,
+   "page_end": 16,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "İnsan İradesi ve Kader",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 17,
+   "page_end": 20,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "Kader ile İlgili Kavramlar",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 21,
+   "page_end": 24,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "Hz. Musa (as) - Ayet'el-Kürsi ve Anlamı",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 25,
+   "page_end": 29,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "1. Ünite Çoktan Seçmeli Ünite Denemeleri",
+   "test_count": 11,
+   "source": "page_estimate",
+   "page_start": 34,
+   "page_end": 56,
+   "topic": "Kader İnancı"
+  },
+  {
+   "label": "İslâm'ın Paylaşma ve Yardımlaşmaya Verdiği Önem",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 57,
+   "page_end": 60,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Zekât ve Sadaka İbadeti",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 61,
+   "page_end": 64,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Zekât ve Sadakanın Bireysel ve Toplumsal Faydaları",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 65,
+   "page_end": 68,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Hz. Şuayb (as) - Mâun Suresi",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 69,
+   "page_end": 73,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "2. Ünite Çoktan Seçmeli Ünite Denemeleri",
+   "test_count": 11,
+   "source": "page_estimate",
+   "page_start": 78,
+   "page_end": 100,
+   "topic": "Zekât, Hac ve Kurban İbadeti"
+  },
+  {
+   "label": "Din, Birey ve Toplum",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 101,
+   "page_end": 104,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "Dinin Temel Gayesi",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 105,
+   "page_end": 108,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "Hz. Yusuf (as) - Asr Suresi",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 109,
+   "page_end": 113,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "3. Ünite Çoktan Seçmeli Ünite Denemeleri",
+   "test_count": 11,
+   "source": "page_estimate",
+   "page_start": 118,
+   "page_end": 140,
+   "topic": "Din ve Hayat"
+  },
+  {
+   "label": "Hz. Muhammed'in Doğruluğu, Merhameti ve İstişaresi",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 141,
+   "page_end": 144,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "Hz. Muhammed'in Davasında Hakkı Gözetmesi, Cesaret ve Kararlılığı",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 145,
+   "page_end": 148,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "Hz. Muhammed'in İnsana Değer Vermesi / Kureyş Suresi",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 149,
+   "page_end": 153,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "4. Ünite Çoktan Seçmeli Ünite Denemeleri",
+   "test_count": 11,
+   "source": "page_estimate",
+   "page_start": 158,
+   "page_end": 180,
+   "topic": "Hz. Muhammed'in Örnekliği"
+  },
+  {
+   "label": "İslâm Dininin Temel Kaynakları",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 181,
+   "page_end": 184,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  },
+  {
+   "label": "Kur'an-ı Kerim'in Ana Konuları",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 185,
+   "page_end": 188,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  },
+  {
+   "label": "Kur'an-ı Kerim'in Temel Özellikleri / Hz. Nuh (as)",
+   "test_count": 2,
+   "source": "page_estimate",
+   "page_start": 189,
+   "page_end": 193,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  },
+  {
+   "label": "5. Ünite Çoktan Seçmeli Ünite Denemeleri",
+   "test_count": 11,
+   "source": "page_estimate",
+   "page_start": 198,
+   "page_end": 219,
+   "topic": "Kur'an-ı Kerim ve Özellikleri"
+  },
+  {
+   "label": "Merkezi Sınava Hazırlık Genel Denemeleri",
+   "test_count": 7,
+   "source": "page_estimate",
+   "page_start": 220,
+   "page_end": 233,
+   "topic": null
+  }
+ ]
+}

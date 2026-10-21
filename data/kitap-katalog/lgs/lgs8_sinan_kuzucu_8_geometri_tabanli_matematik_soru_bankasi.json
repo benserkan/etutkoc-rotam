@@ -1,0 +1,91 @@
+{
+ "name": "Sinan Kuzucu 8. Sınıf Geometri Tabanlı Matematik Soru Bankası",
+ "publisher": "Sinan Kuzucu Yayınları",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "warnings": [
+  "Testler uzun (~10 sayfa); kitap 'test' dediği için her biri 1 test sayıldı."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler (Scan 18.10.43). İçindekiler test listeli (birebir 20 test).",
+  "Uzun testler: her test ~10 sayfa (geometri tabanlı yeni nesil sorular); koç bir testi birden çok güne bölebilir."
+ ],
+ "sections": [
+  {
+   "label": "Çarpanlar ve Katlar (Test 1-2)",
+   "test_count": 2,
+   "topic": "Çarpanlar ve Katlar",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Üslü İfadeler (Test 1-2)",
+   "test_count": 2,
+   "topic": "Üslü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Kareköklü İfadeler (Test 1-3)",
+   "test_count": 3,
+   "topic": "Kareköklü İfadeler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Veri Analizi (Test 1)",
+   "test_count": 1,
+   "topic": "Veri Analizi",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Basit Olayların Olma Olasılığı (Test 1)",
+   "test_count": 1,
+   "topic": "Basit Olayların Olasılığı",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Cebirsel İfadeler ve Özdeşlikler (Test 1-2)",
+   "test_count": 2,
+   "topic": "Cebirsel İfadeler ve Özdeşlikler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Doğrusal Denklemler (Test 1-2)",
+   "test_count": 2,
+   "topic": "Doğrusal Denklemler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Eşitsizlikler (Test 1)",
+   "test_count": 1,
+   "topic": "Eşitsizlikler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Üçgenler (Test 1-2)",
+   "test_count": 2,
+   "topic": "Üçgenler",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Eşlik ve Benzerlik (Test 1)",
+   "test_count": 1,
+   "topic": "Eşlik ve Benzerlik",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Dönüşüm Geometrisi (Test 1)",
+   "test_count": 1,
+   "topic": "Dönüşüm Geometrisi",
+   "source": "toc_listed"
+  },
+  {
+   "label": "Geometrik Cisimler (Test 1-2)",
+   "test_count": 2,
+   "topic": "Geometrik Cisimler",
+   "source": "toc_listed"
+  }
+ ]
+}
