@@ -197,7 +197,12 @@ def _subject(t) -> str:
 def _unit(t) -> str:
     if t.work_block_unit:
         return t.work_block_unit
-    if _is_deneme(t):
+    if any(it.exam_kind for it in t.items):
+        return "deneme"
+    it = next((x for x in t.items if x.book_id is not None), t.items[0] if t.items else None)
+    if it is not None and it.book_id is None and it.is_test_unit is False:
+        return "soru"  # kitapsız tam deneme: planlanan = soru sayısı (web ile aynı)
+    if it is not None and it.book_type in DENEME_BOOK_TYPES:
         return "deneme"
     return "test"
 
@@ -352,7 +357,7 @@ def build_day_pdf(db: Session, user: User, day_iso: str | None) -> tuple[bytes, 
             for t in ts:
                 deneme = _is_deneme(t)
                 act = _activity(t)
-                head = (t.title or "—") + ("" if act else f"   {t.completed_count}/{t.planned_count} {'deneme' if deneme else 'test'}")
+                head = (t.title or "—") + ("" if act else f"   {t.completed_count}/{t.planned_count} {_unit(t)}")
                 lines = cv.wrap(head, 9.5, w - 26, bold=True)
                 books = [it for it in t.items if it.book_id is not None or it.topic_name]
                 sub = [f"· {it.section_label or it.topic_name or it.book_name} ({it.planned})" for it in books] if len(books) > 1 else []
