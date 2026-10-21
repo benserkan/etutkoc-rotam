@@ -4,6 +4,13 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DevHubView } from "@/components/student/dev-hub-view";
+import { ProgressOverview } from "@/components/student/progress-overview";
+import {
+  getStudentAnalytics,
+  getStudentTopicFocus,
+  getStudentWeeklyProgress,
+  progressKeys,
+} from "@/lib/student-progress";
 import {
   getStudentDna,
   getStudentFocus,
@@ -21,6 +28,10 @@ export default function StudentGelisimScreen() {
   const goals = useQuery({ queryKey: studentDevKeys.goals, queryFn: getStudentGoals });
   const surveys = useQuery({ queryKey: surveyKeys.studentList, queryFn: getStudentSurveys });
   const wrong = useQuery({ queryKey: wrongKeys.list, queryFn: getWrongQuestions });
+  // Gelişim özeti (2026-10-21) — web /student/progress ile aynı uçlar
+  const prog = useQuery({ queryKey: progressKeys.analytics, queryFn: getStudentAnalytics });
+  const weekly = useQuery({ queryKey: progressKeys.weekly, queryFn: getStudentWeeklyProgress });
+  const focusTopics = useQuery({ queryKey: progressKeys.focus, queryFn: getStudentTopicFocus });
 
   const loading = dna.isLoading || focus.isLoading || review.isLoading || goals.isLoading;
   const ready = dna.data && focus.data && review.data && goals.data;
@@ -28,6 +39,7 @@ export default function StudentGelisimScreen() {
 
   function refetchAll() {
     void dna.refetch(); void focus.refetch(); void review.refetch(); void goals.refetch();
+    void prog.refetch(); void weekly.refetch(); void focusTopics.refetch();
   }
 
   return (
@@ -63,6 +75,11 @@ export default function StudentGelisimScreen() {
           pendingWrong={wrong.data?.counts.due ?? 0}
           refreshing={refreshing}
           onRefresh={refetchAll}
+          header={
+            prog.data ? (
+              <ProgressOverview a={prog.data} w={weekly.data} focus={focusTopics.data ?? []} />
+            ) : null
+          }
         />
       )}
     </SafeAreaView>

@@ -82,7 +82,9 @@ export function DevHubView({
   pendingWrong = 0,
   refreshing = false,
   onRefresh,
+  header,
 }: {
+  header?: React.ReactNode;
   dna: DnaResponse;
   focus: FocusResponse;
   review: ReviewResponse;
@@ -109,6 +111,7 @@ export function DevHubView({
       contentContainerClassName="px-4 py-4 gap-4"
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined}
     >
+      {header}
       {/* Rehber — Rota'nın sesli tanıtım turu */}
       <Pressable
         onPress={() => router.push("/guide")}

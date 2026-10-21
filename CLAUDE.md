@@ -26,6 +26,15 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   soru", "TEST" rozeti yok. **Eski deneme görevleri** (D1 öncesi, exam_kind'sız → öğrenci "çözdüğüm test" formu
   görüyordu): `scripts/backfill_open_deneme_items.py` (kuru varsayılan, `--since`, yalnız tamamlanmamış görevler;
   planned N → N deneme kalemi, rezerv toplamı aynı).
+- **MOBİL (aynı gün, OTA):** Gelişim sekmesinin üstüne `ProgressOverview` (hero · bu hafta · haftadan haftaya ·
+  ritim · derslerim · denemelerim · net kaybettiğim konular; altında eski DNA/Odak/Tekrar/Hedef kartları) · Bugün'de
+  `ProgressSummaryCard` (dokun → Gelişim) · Bugün + Hafta'da **"PDF / Paylaş"** (gün / hafta / denemeler) · deneme
+  satırları indigo vurgulu, hafta kartında "N deneme". **Mobil PDF = SUNUCUDA** (`app/services/program_pdf.py`,
+  PyMuPDF ile doğrudan çizim, DejaVu font — Dockerfile'a `fonts-dejavu-core`): POST `/student/pdf-link` {kind, date}
+  → 15 dk geçerli imzalı `/api/v2/pdf/{token}` (çerezsiz açılır, süresi dolunca 410) → `Linking.openURL` ile
+  telefonun PDF görüntüleyicisinde açılır, oradan WhatsApp'a paylaşılır. Yeni yerel modül YOK (OTA yeterli).
+  Yan düzeltme: mobil Bugün'de kaynaksız konu testi "soru" yazıyordu → "test". Test smoke 15/15 · YENİ
+  `live_mobile_progress.py` 9/9 (Expo web 390px).
 - Yan düzeltme: Bugün sayfasındaki eski React "key" uyarısı (demoHint). Test YENİ `test_api_v2_student_progress` 7/7 ·
   YENİ `live_student_progress.py` 15/15 · analytics_rich 10 · student_read 11 · teacher_read 12 · deneme_results 22 ·
   live_deneme_results 15 · live_deneme_bridge 21 · live_student_pool_web 19 · tsc + eslint (tam) temiz.

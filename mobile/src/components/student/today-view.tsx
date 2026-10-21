@@ -11,6 +11,8 @@ import { activityLabel, linkButtonLabel, openTaskLink, taskLabel as displayLabel
 import { PoolBanner } from "@/components/student/pool-banner";
 import { DenemePendingCard } from "@/components/student/deneme-pending-card";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
+import { ProgressSummaryCard } from "@/components/student/progress-summary-card";
+import { PdfMenuButton } from "@/components/student/pdf-menu";
 
 const TR_DAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
 const TR_MONTHS = [
@@ -38,7 +40,8 @@ function taskUnit(t: StudentTask): string {
   // Deneme kalemi (D1/D2): 1 satır = 1 deneme → birim "deneme" (soru değil)
   if (t.items.some((x) => x.exam_kind)) return "deneme";
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
-  if (it && it.book_id == null) return "soru";
+  // Kitapsız: konulu kaynaksız kalem test birimidir; yalnız kitapsız tam deneme "soru"
+  if (it && it.book_id == null) return it.is_test_unit === false ? "soru" : "test";
   if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
   return "test";
 }
@@ -49,6 +52,15 @@ function isActivity(t: StudentTask): boolean {
 // yalnız ilk bölüm "Vektörler" deyip içinde Tork testi taşımasın (Taha sahası).
 function taskLabel(t: StudentTask): string {
   return displayLabel(t.items, t.title);
+}
+/** Deneme görevi mi? (2026-10-21) — vurgu için; eski kayıtlar exam_kind taşımayabilir. */
+function denemeKind(t: StudentTask): "brans" | "genel" | null {
+  const ex = t.items.find((x) => x.exam_kind);
+  if (ex) return ex.exam_kind === "genel" ? "genel" : "brans";
+  const b = t.items.find((x) => x.book_type && DENEME_TYPES.has(x.book_type));
+  if (b) return b.book_type === "genel_deneme" ? "genel" : "brans";
+  if (t.items.length > 0 && t.items.every((x) => x.book_id == null && x.is_test_unit === false)) return "genel";
+  return null;
 }
 function subjectOf(t: StudentTask): string | null {
   const it = t.items.find((x) => x.subject_id != null);
@@ -138,6 +150,14 @@ export function TodayView({
         ) : null}
       </View>
 
+      {/* PDF / Paylaş — web'deki Yazdır menüsünün karşılığı */}
+      <View className="flex-row justify-end">
+        <PdfMenuButton dayDate={day.date} weekStart={day.date} />
+      </View>
+
+      {/* Sınava hazırlık özeti → Gelişim sekmesi */}
+      {day.is_today ? <ProgressSummaryCard /> : null}
+
       {/* Günün notu (autosave) */}
       <DayNoteCard date={day.date} initial={day.day_note ?? ""} />
 
@@ -157,14 +177,16 @@ export function TodayView({
           {day.tasks.map((t) => {
             const st = gorevState(t);
             const subj = subjectOf(t);
+            const dk = denemeKind(t);
             const busy = busyTaskId === t.id;
             const blocked = t.is_future_blocked;
             return (
               <View
                 key={t.id}
-                className={`flex-row items-center gap-3 rounded-2xl border bg-white p-4 ${
-                  st === "done" ? "border-emerald-200" : "border-slate-200"
+                className={`flex-row items-center gap-3 rounded-2xl border p-4 ${
+                  st === "done" ? "border-emerald-200 bg-white" : dk ? "border-indigo-300 bg-indigo-50" : "border-slate-200 bg-white"
                 } ${blocked ? "opacity-50" : ""}`}
+                style={dk && st !== "done" ? { borderLeftWidth: 5, borderLeftColor: "#4f46e5" } : undefined}
               >
                 {/* Sol: hızlı "yaptım" (sayı sormaz) */}
                 <Pressable
@@ -188,7 +210,15 @@ export function TodayView({
                   disabled={blocked}
                 >
                   <View className="flex-1">
-                    {subj ? (
+                    {dk ? (
+                      <View className="mb-0.5 flex-row items-center gap-1 self-start rounded-md bg-indigo-700 px-2 py-0.5">
+                        <Ionicons name="trophy" size={10} color="#fff" />
+                        <Text className="text-[10px] font-bold uppercase tracking-wide text-white">
+                          {dk === "genel" ? "Genel deneme" : "Branş denemesi"}
+                          {t.items[0]?.question_count ? ` · ${t.items[0].question_count} soru` : ""}
+                        </Text>
+                      </View>
+                    ) : subj ? (
                       <Text className="text-[11px] font-bold uppercase tracking-wide text-brand-700">{subj}</Text>
                     ) : null}
                     <Text

@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { StudentWeekDay, StudentWeekResponse } from "@/lib/student";
 import { DemoHint } from "@/components/demos/demo-hint";
+import { PdfMenuButton } from "@/components/student/pdf-menu";
 import { splitExamPrefix, subjectColors } from "@/lib/subject-colors";
 
 const TR_MONTHS_SHORT = [
@@ -58,6 +59,9 @@ function DayCard({ day, onPress }: { day: StudentWeekDay; onPress: () => void })
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   const subjects = distinctSubjects(day);
   const hasTasks = total > 0 || day.tasks.length > 0;
+  const denemeCount = day.tasks.filter((t) =>
+    t.items.some((x) => x.exam_kind || x.book_type === "brans_denemesi" || x.book_type === "genel_deneme"),
+  ).length;
 
   return (
     <Pressable
@@ -96,6 +100,14 @@ function DayCard({ day, onPress }: { day: StudentWeekDay; onPress: () => void })
               style={{ width: `${Math.min(100, pct)}%` }}
             />
           </View>
+          {denemeCount > 0 ? (
+            <View className="mt-2 flex-row items-center gap-1 self-start rounded-md bg-indigo-700 px-2 py-0.5">
+              <Ionicons name="trophy" size={10} color="#fff" />
+              <Text className="text-[10px] font-bold uppercase text-white">
+                {denemeCount} deneme
+              </Text>
+            </View>
+          ) : null}
           {subjects.length > 0 ? (
             // Ders etiketleri — web ile aynı renk sistemi (2026-10-08): dolgulu
             // renkli etiket + TYT/AYT işareti. Hepsi gösterilir (eskisi 4'ten
@@ -168,9 +180,16 @@ export function WeekView({
           </Pressable>
         </View>
 
-        <Text className="text-center text-xs text-slate-500">
-          Bu hafta {week.total_gorev_done}/{week.total_gorev} görev · %{pct}
-        </Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-xs text-slate-500">
+            Bu hafta {week.total_gorev_done}/{week.total_gorev} görev · %{pct}
+          </Text>
+          <PdfMenuButton
+            compact
+            weekStart={week.start_date}
+            dayDate={week.days.find((d) => d.is_today)?.date ?? week.start_date}
+          />
+        </View>
 
         {week.days.map((d) => (
           <DayCard key={d.date} day={d} onPress={() => onOpenDay(d.date)} />
