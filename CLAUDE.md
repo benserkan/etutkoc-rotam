@@ -29,6 +29,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   + dönem geçmişi kartı + havuz öğrencisinin /week kartı bağlantıları · öğrenci `/student/history` "Program geçmişim"
   (menü + Havuzum). NOT: havuz "Dönem geçmişi" kartı yalnız kapanmış dönem varken çizilir — geçmişe giriş artık zaman
   çizelgesi. Mobil BİLİNÇLİ yok (sonraki iş).
+- **ÖĞRENCİ KALEM EKLEME EŞLEŞMELİ + MOBİL (aynı gün, commit `284dadc`, OTA `1ccf06b9`):** öğrenci "Kalem ekle" artık
+  koçun akışı: ders (kitap sayısı rozetli) → **Kitabımdan** (bölüm + kalan) ya da **Müfredat konusundan** (koçun
+  TopicPicker'ı, sınıf çipleri) → miktar (test/soru/sayfa + aralık · konusuzda yalnız sayfa/etkinlik · not · öğretmen
+  ödevi). YENİ GET `/student/pool/topics` + `/student/pool/books` (koç uçlarıyla AYNI payload: `pool.pool_topics_payload`
+  / `pool_books_payload` / `pool_subject_or_404`). POST `/student/pool/items` +book_id/section_id/page_from/page_to,
+  konu enjeksiyon koruması (builtin ya da kendi koçunun konusu), **öğrencinin test/soru kalemi de konu/kitap ister**
+  (`TOPIC_REQUIRED_EXEMPT_SOURCES` yalnız devir). Onaylanınca yüzdeye + müfredat "planlandı"ya girer. Koç onay
+  listesinde "kitaba/müfredata bağlı · konusuz" rozeti. `StudentPoolResponse` +student_id/grade_level, subject
+  +book_count. Web `student/pool-add-dialog.tsx` (koçun `BookList`/`TopicPicker`/`SourceOption` dışa açıldı,
+  TopicPicker `topicsQuery`+`audience`). Mobil `components/pool/student-add-item-sheet.tsx` + `(app)/program-history.tsx`
+  (`?student=ID` koç / parametresiz öğrenci; hafta salt okunur gün gün; dönem → PeriodDetailSheet) — girişler: koç
+  öğrenci detayı kartı, öğrenci Gelişim kartı + Havuzum saat düğmesi; typed routes elle. Test YENİ
+  `test_student_pool_item_linked.py` 16/16 · YENİ `live_student_pool_add_linked.py` 10/10 · YENİ
+  `live_mobile_pool_add_history.py` 6/6 · live_student_pool_web 19 · live_mobile_pool 13 (iki eski test yeni akışa
+  uyarlandı) · step7 30 (öğrenci tohumu sayfa) · havuz suite'leri yeşil.
 - Test YENİ `test_mode_switch_followups.py` **20/20** (düzeltme öncesi kodda sahadaki hatayı üretir) · weekly_progress
   26 · program_mode_switch 22 · carryover 20/18 · summer_cron 13 · dead_reserve_cutoff 6 · pool_flags 47 · foundation
   53 · pool_editor 41 · book_grid 17 · weekly_plan 15 · teacher_read 12 · student_read 11 · tarayıcıda canlı
