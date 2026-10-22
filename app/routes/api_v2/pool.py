@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import BackgroundTasks, APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -466,8 +466,8 @@ def mode_switch_preview(student_id: int, to: str = Query(pattern="^(gun_gun|havu
 
 
 @router.post("/students/{student_id}/program-mode/switch", response_model=MutationResponse[PoolBundleResponse])
-def mode_switch(student_id: int, body: ModeSwitchBody, user: User = Depends(_require_teacher),
-                db: Session = Depends(get_db)):
+def mode_switch(student_id: int, body: ModeSwitchBody, background_tasks: BackgroundTasks,
+                user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
     """Gün gün ↔ havuz geçişi: ileri tarihli dokunulmamış görevler silinir, rezervler iade edilir,
     kısmen çözülmüş görev kalır; geçiş kaydı yazılır. Havuza geçişte isteğe bağlı ilk dönem açılır."""
     student = _get_owned_student(db, student_id, user.id)
@@ -486,6 +486,11 @@ def mode_switch(student_id: int, body: ModeSwitchBody, user: User = Depends(_req
         db.rollback()
         raise HTTPException(status_code=409, detail={"error": "conflict", "code": e.code, "message": e.message})
     db.commit()
+    from app.services.student_email_fallback import notify_student_program_mode_bg
+
+    background_tasks.add_task(
+        notify_student_program_mode_bg, student.id, body.to_mode, eff.isoformat(),
+        nxt.isoformat() if (nxt and body.to_mode == PROGRAM_MODE_HAVUZ and body.open_first_period) else None)
     return MutationResponse(data=get_pool(student.id, user, db), invalidate=_mode_keys(user.id, student.id))
 
 
@@ -818,8 +823,8 @@ def session_mark(student_id: int, item_id: int, body: SessionMarkBody,
 
 @router.post("/students/{student_id}/pool/session/finish",
              response_model=MutationResponse[PoolBundleResponse])
-def session_finish(student_id: int, body: SessionFinishBody, user: User = Depends(_require_teacher),
-                   db: Session = Depends(get_db)):
+def session_finish(student_id: int, body: SessionFinishBody, background_tasks: BackgroundTasks,
+                   user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
     """K22/K32: seansı bitir → dönem kapanır, seans kaydı, yeni dönem, kalem kalem devir."""
     student = _get_owned_student(db, student_id, user.id)
     period = _open_or_404(db, student)
@@ -839,6 +844,9 @@ def session_finish(student_id: int, body: SessionFinishBody, user: User = Depend
             db.rollback()
             raise _http(e, 409)
         db.commit()
+        from app.services.student_email_fallback import notify_student_program_mode_bg
+
+        background_tasks.add_task(notify_student_program_mode_bg, student.id, "gun_gun", closed.isoformat(), None)
         return MutationResponse(data=get_pool(student.id, user, db),
                                 invalidate=[*_keys(user.id, student.id),
                                             f"teacher:{user.id}:students:{student.id}"])

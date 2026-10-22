@@ -1,0 +1,43 @@
+Subject: ETÜTKOÇ Rotam · {{ title }}
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+    {% include "_brand_header.html" %}
+
+    <h2 style="font-size: 16px; color: #0f172a; margin: 0 0 12px;">Merhaba {{ student_name }}</h2>
+    <p style="margin: 0 0 12px; line-height: 1.55;">{{ body }}</p>
+
+    {% if havuz %}
+    <div style="background: #ecfeff; border-left: 4px solid #0e7490; padding: 12px 16px; border-radius: 4px; margin: 12px 0; line-height: 1.55;">
+      <b>Nasıl çalışır?</b><br>
+      &bull; Koçun haftanın görevlerini havuzuna yazar.<br>
+      &bull; Her gün Havuzum sayfasından o gün çalışacaklarını <b>kaba</b> alırsın; bunlar Bugün sayfana düşer.<br>
+      &bull; Çözdüklerini her zamanki gibi işaretlersin; yapamadıkların gün sonunda havuza geri döner.<br>
+      {% if expected_next_on %}&bull; Sıradaki görüşmen: <b>{{ expected_next_on }}</b>.{% endif %}
+    </div>
+    <p style="margin: 20px 0 0;">
+      <a href="{{ app_base_url }}/student/pool"
+         style="display: inline-block; background: #0e7490; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">
+        Havuzumu aç &rarr;
+      </a>
+    </p>
+    {% else %}
+    <p style="margin: 20px 0 0;">
+      <a href="{{ app_base_url }}/student/day"
+         style="display: inline-block; background: #0e7490; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">
+        Bugün sayfasına git &rarr;
+      </a>
+    </p>
+    {% endif %}
+
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+    <p style="margin: 0; font-size: 10px; color: #94a3b8;">
+      Mobil uygulama kurulu olmadığı için bu bildirim e-postayla gönderildi.<br>
+      {% include "_brand_footer.html" %}
+    </p>
+  </div>
+</body>
+</html>

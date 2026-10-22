@@ -79,6 +79,7 @@ class Week:
     start: date
     end: date
     kind: str = "program"  # program | takvim (programsız görev günleri) | donem (havuz)
+    cut: bool = False  # mod geçişiyle kırpılmış program haftası (eğilim dizisine girmez)
 
     @property
     def days(self) -> int:
@@ -151,12 +152,40 @@ def _period_weeks(db: Session, student_id: int, today: date) -> list[Week]:
     return out
 
 
+def _merge_program_and_period_weeks(programs: list[Week], periods: list[Week]) -> list[Week]:
+    """Havuz dönemleri önceliklidir; program haftası dönemle çakışan kısımdan kırpılır.
+
+    Mod geçişinde (gün gün → havuz ya da tersi) yarıda kalan program haftası kaybolmaz:
+    dönemden önceki (ya da sonraki) parçası kendi haftası olarak kalır ve `cut` işaretlenir.
+    """
+    out = list(periods)
+    for w in programs:
+        segs = [(w.start, w.end)]
+        for p in periods:
+            nxt = []
+            for a, b in segs:
+                if p.end < a or p.start > b:
+                    nxt.append((a, b))
+                    continue
+                if a < p.start:
+                    nxt.append((a, p.start - timedelta(days=1)))
+                if b > p.end:
+                    nxt.append((p.end + timedelta(days=1), b))
+            segs = nxt
+        for a, b in segs:
+            cut = (a, b) != (w.start, w.end)
+            out.append(Week(w.program_id if (a, b) == segs[0] else -(a.toordinal()) - 2_000_000,
+                            a, b, kind="program", cut=cut))
+    return sorted(out, key=lambda x: x.start)
+
+
 def _weeks(db: Session, student: User, today: date) -> list[Week]:
-    from app.services import pool_mode
-    if pool_mode.is_havuz(student):
-        # Dönem dışında kalan görev günleri (gün güne geçilen aralık vb.) takvim haftasıyla tamamlanır.
-        return _calendar_fill(db, student.id, _period_weeks(db, student.id, today))
-    return _calendar_fill(db, student.id, _program_weeks(db, student.id))
+    # Gün gün program haftaları + havuz dönemleri birlikte: mod değişse de geçmiş haftalar
+    # kendi yapısıyla görünür (havuza geçen öğrencinin eski program haftaları takvime dağılmaz).
+    periods = _period_weeks(db, student.id, today)
+    programs = _program_weeks(db, student.id)
+    weeks = _merge_program_and_period_weeks(programs, periods) if periods else programs
+    return _calendar_fill(db, student.id, weeks)
 
 
 # ---------------------------------------------------------------- ölçüler
@@ -341,7 +370,7 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
     # Geçmiş = güncel sınıf dönemindeki haftalar (önceki sınıfın haftaları kıyasa/grafiğe karışmaz)
     history = [w for w in weeks if w.end < cur.start and (period_start is None or w.start >= period_start)]
     baseline = [w for w in history
-                if w.days >= MIN_WEEK_DAYS and w.program_id not in first_ids
+                if w.days >= MIN_WEEK_DAYS and not w.cut and w.program_id not in first_ids
                 and (period_start is None or w.start >= period_start)]
 
     lo_date = min([w.start for w in history[-12:]] + [cur.start])
@@ -403,7 +432,10 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
         cv = cur_m.get(key)
         base = [m[key] for m in base_ms if m.get(key) is not None]
         status, lo, hi = _status(cv, base, direction)
-        full_series = [m[key] for _, m in full_ms if m.get(key) is not None]
+        # Kırpılmış (mod geçişi) ya da kısa haftalar eğilim dizisine girmez: 3 günlük parça tam
+        # haftayla kıyaslanınca sahte "kötüleşme" üretir.
+        full_series = [m[key] for w, m in full_ms
+                       if m.get(key) is not None and not w.cut and w.days >= MIN_WEEK_DAYS]
         run = _decline_run(full_series, direction) if direction != 0 else 0
         pv = prev_m.get(key) if prev_m else None
         card = {
@@ -464,11 +496,16 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
     cards.sort(key=lambda c: order[c["group"]])
 
     # ----- haftalar grafiği (tam haftalar) + dönem özeti
+    def _range_note(w: Week) -> str:
+        if w.cut:
+            return f"{w.label} · mod geçişiyle kısaldı"
+        return f"{w.label} · havuz dönemi" if w.kind == "donem" else w.label
+
     chart = []
     for w, m in full_ms[-(CHART_WEEKS - 1):]:
-        chart.append({"label": _d(w.start), "range": w.label, "value": m["gorev_pct"],
+        chart.append({"label": _d(w.start), "range": _range_note(w), "value": m["gorev_pct"],
                       "current": False, "in_baseline": w in baseline})
-    chart.append({"label": _d(cur.start), "range": cur.label, "value": cur_m["gorev_pct"],
+    chart.append({"label": _d(cur.start), "range": _range_note(cur), "value": cur_m["gorev_pct"],
                   "current": True, "in_baseline": False})
     base_full = [(w, m["gorev_pct"]) for w, m in full_ms if w in baseline and m["gorev_pct"] is not None]
     full_vals = [v for _, v in base_full]

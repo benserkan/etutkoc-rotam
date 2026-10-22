@@ -145,7 +145,12 @@ export function ModeSwitchDialog({
                 </div>
                 <div className="rounded-md border p-2">
                   <p className="text-lg font-semibold text-foreground">{d.release_tests + d.dead_reserve_tests}</p>
-                  <p className="text-xs text-muted-foreground">test rezervi kitaba iade edilir</p>
+                  <p className="text-xs text-muted-foreground">
+                    test rezervi kitaba iade edilir
+                    {d.dead_reserve_tests > 0 && d.release_tests > 0 && (
+                      <> ({d.release_tests} geçiş günü ve sonrasından + {d.dead_reserve_tests} geçmişte yapılmamışlardan)</>
+                    )}
+                  </p>
                 </div>
               </div>
               {d.delete_tasks.length > 0 && (
@@ -162,7 +167,7 @@ export function ModeSwitchDialog({
               )}
               {d.dead_reserve_tests > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Geçmişte verilip yapılmamış görevlerin {d.dead_reserve_tests} testlik rezervi de serbest bırakılır (görevler geçmişte durur).
+                  Bu {d.dead_reserve_tests} testin rezervi geçmişte verilip yapılmamış görevlerden gelir (yayınlanmamış eski taslaklar dahil); görevler silinmez, geçmişte iz olarak durur.
                 </p>
               )}
               {toMode === "gun_gun" && d.pool_leftover_items > 0 && (

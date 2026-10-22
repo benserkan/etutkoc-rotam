@@ -526,7 +526,12 @@ def _finish(rep: FlagReport, flags: list, period: StudyPeriod | None, summary) -
         rep.headline = rep.primary[0].title
     elif period is not None and summary is not None:
         rep.level = "green"
-        rep.headline = (rep.good[0].title if rep.good else f"Havuz yolunda · %{summary.pct}")
+        if not summary.total_units:
+            # Boş havuz "yolunda" değildir: dönem yeni açıldı, koç henüz kalem yazmadı (ilk gün
+            # pool_empty sinyali bilinçli susar). Yüzde/takvim dili kullanılmaz.
+            rep.headline = "Havuz henüz boş · kalem eklenmesini bekliyor"
+        else:
+            rep.headline = (rep.good[0].title if rep.good else f"Havuz yolunda · %{summary.pct}")
     else:
         rep.headline = "Haftalık görev havuzu"
 

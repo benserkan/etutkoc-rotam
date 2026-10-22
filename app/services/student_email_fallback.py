@@ -31,6 +31,8 @@ logger = logging.getLogger("app.student_email_fallback")
 
 CATEGORY_NEW_PROGRAM = "student_new_program"
 CATEGORY_WEEKLY_SUMMARY = "student_weekly_summary"
+CATEGORY_PROGRAM_MODE = "student_program_mode"
+PROGRAM_MODE_DEDUP = timedelta(hours=1)
 
 # Dedup pencereleri — veli akışıyla aynı semantik (new_program 24s, weekly 6g).
 NEW_PROGRAM_DEDUP = timedelta(hours=24)
@@ -248,3 +250,69 @@ def run_student_weekly_emails(db: Session, *, now: datetime) -> dict:
         counts[result] = counts.get(result, 0) + 1
     logger.info("student_weekly_email cron: %s", counts)
     return counts
+
+
+# =============================================================================
+# 3) Program modu değişti (gün gün ↔ haftalık havuz) → öğrenci bildirimi
+# =============================================================================
+
+
+def notify_student_program_mode(
+    db: Session, *, student: User, to_mode: str, effective_on: date,
+    expected_next_on: date | None = None,
+) -> dict:
+    """Mod geçişini öğrenciye duyur: push (cihaz varsa) + cihazsızsa e-posta.
+
+    Öğrenci uygulamayı açınca habersizce farklı bir ekranla karşılaşmasın. Best-effort —
+    asla raise etmez. Dönen sözlük test/log içindir: {"push": bool, "email": durum}.
+    """
+    from app.models.pool import PROGRAM_MODE_HAVUZ
+    from app.services.push_notifications import safe_push
+
+    havuz = to_mode == PROGRAM_MODE_HAVUZ
+    day = f"{effective_on.day}.{effective_on.month:02d}"
+    if havuz:
+        title = "Programın haftalık havuza geçti"
+        body = (f"{day} itibarıyla görevlerin günlere dağıtılmış gelmeyecek. Her gün Havuzum'dan "
+                "o gün çalışacaklarını kendin seçeceksin.")
+        data = {"type": "student", "screen": "pool"}
+    else:
+        title = "Programın gün gün plana geçti"
+        body = f"{day} itibarıyla koçun görevlerini günlere dağıtarak verecek. Bugün sayfanı takip et."
+        data = {"type": "student", "screen": "today"}
+    out = {"push": False, "email": "skipped"}
+    if _has_device(db, student.id):
+        safe_push(db, user_id=student.id, title=title, body=body, data=data)
+        out["push"] = True
+    skip = _student_guard(db, student, category=CATEGORY_PROGRAM_MODE, within=PROGRAM_MODE_DEDUP)
+    if skip:
+        out["email"] = skip
+        return out
+    ctx = {
+        "student_name": student.full_name, "havuz": havuz, "title": title, "body": body,
+        "effective_on": effective_on.strftime("%d.%m.%Y"),
+        "expected_next_on": expected_next_on.strftime("%d.%m.%Y") if expected_next_on else None,
+    }
+    out["email"] = "sent" if send_email(student.email, CATEGORY_PROGRAM_MODE, ctx) else "failed"
+    return out
+
+
+def notify_student_program_mode_bg(
+    student_id: int, to_mode: str, effective_on_iso: str, expected_next_iso: str | None = None,
+) -> None:
+    """BackgroundTasks sarmalayıcısı — taze session; koçun geçiş isteğini bloklamaz."""
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        student = db.get(User, student_id)
+        if student is None or student.role != UserRole.STUDENT:
+            return
+        res = notify_student_program_mode(
+            db, student=student, to_mode=to_mode, effective_on=date.fromisoformat(effective_on_iso),
+            expected_next_on=date.fromisoformat(expected_next_iso) if expected_next_iso else None)
+        logger.info("program modu bildirimi student=%s → %s", student_id, res)
+    except Exception:
+        logger.exception("program modu bildirimi hatası student=%s", student_id)
+    finally:
+        db.close()

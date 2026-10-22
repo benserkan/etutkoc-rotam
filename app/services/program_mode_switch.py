@@ -92,10 +92,12 @@ def _live_reserve(t: Task) -> int:
 
 
 def _dead_reserve(db: Session, student_id: int, before: date) -> int:
+    from app.services.task_service import dead_draft_clause
+
     rows = (db.query(TaskBookItem)
             .join(Task, Task.id == TaskBookItem.task_id)
             .filter(Task.student_id == student_id, Task.date < before,
-                    Task.status != TaskStatus.COMPLETED, Task.is_draft.is_(False),
+                    Task.status != TaskStatus.COMPLETED, dead_draft_clause(before),
                     TaskBookItem.book_section_id.isnot(None),
                     TaskBookItem.reservation_released_at.is_(None)).all())
     return sum(max(0, int(r.planned_count or 0) - int(r.completed_count or 0)) for r in rows)

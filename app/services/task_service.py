@@ -181,6 +181,24 @@ def release_task_items(db: Session, student_id: int, items: list[TaskBookItem]) 
         # completed kısmı çözüldüye sayılır, geri alınmaz
 
 
+# Hiç yayınlanmamış taslak görev, tarihi bu kadar gün geçince "ölü" sayılır: koç o haftayı
+# yayınlamadan geçmiş demektir; rezervi süresiz kilitli kalmasın (Taha #84: 1–2 Ekim taslakları
+# 3 hafta sonra hâlâ 6 test tutuyordu). Yakın geçmişteki taslak (koç hâlâ düzenliyor olabilir)
+# korunur.
+STALE_DRAFT_DAYS = 7
+
+
+def dead_draft_clause(cutoff_date: date):
+    """Ölü rezerv taramasında görev filtresi: yayında olan, ya da tarihi STALE_DRAFT_DAYS'ten
+    eski bayat taslak. Tek kural — reconcile + mod geçişi önizlemesi aynı tanımı kullanır."""
+    from datetime import timedelta as _td
+
+    from sqlalchemy import or_
+
+    stale_before = min(cutoff_date, date.today() - _td(days=STALE_DRAFT_DAYS))
+    return or_(Task.is_draft.is_(False), Task.date < stale_before)
+
+
 def reconcile_past_reservations(
     db: Session,
     *,
@@ -191,7 +209,7 @@ def reconcile_past_reservations(
     yayında görevlerin yapılmamış rezerv kısmını kapasiteye iade et (idempotent).
 
     Ölü rezerv = `task.date < cutoff_date` AND `status != COMPLETED` AND
-    `is_draft == False` olan görevlerin, henüz serbest bırakılmamış
+    (yayında YA DA STALE_DRAFT_DAYS'ten eski bayat taslak) görevlerin, henüz serbest bırakılmamış
     (reservation_released_at IS NULL) section'lı kalemlerinin (planned - completed)
     kısmı. Görev kaydı (planned/completed/geçmiş) DEĞİŞMEZ — yalnız rezerv kilidi
     kalkar; kalem `reservation_released_at` ile işaretlenir (tekrar iade edilmez).
@@ -207,7 +225,7 @@ def reconcile_past_reservations(
             Task.student_id == student_id,
             Task.date < cutoff_date,
             Task.status != TaskStatus.COMPLETED,
-            Task.is_draft.is_(False),
+            dead_draft_clause(cutoff_date),
             TaskBookItem.book_section_id.isnot(None),
             TaskBookItem.reservation_released_at.is_(None),
         )

@@ -280,7 +280,7 @@ function ModeCard({ studentId, today }: { studentId: number; today: string }) {
       <p className="mt-1 text-sm">
         Haftalık havuz modu dershane öğrencisi içindir: seansta haftanın görevlerini topluca
         yazarsın, günlere sen dağıtmazsın. Geçiş genelde program bittiğinde, yeni hafta başlamadan
-        yapılır: geçiş gününden sonraki dokunulmamış görevler silinir ve rezervleri kitaba iade edilir;
+        yapılır: geçiş günü ve sonrasındaki dokunulmamış görevler silinir ve rezervleri kitaba iade edilir;
         çözülenler müfredatta kalır. Geçmeden önce etkisini görürsün.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -401,7 +401,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
   // days_open = açılıştan bu yana GEÇEN gün (backend days_without_session); bugün dönemin (days_open + 1). günü.
   const dayNo = period.days_open + 1;
   const span = period.expected_next_on ? Math.max(1, daysBetween(period.opened_on, period.expected_next_on)) : null;
-  const expectedPct = span ? Math.min(100, Math.round((100 * period.days_open) / span)) : null;
+  const expectedPct = span && s.total_units > 0 ? Math.min(100, Math.round((100 * period.days_open) / span)) : null;
   const remainingUnits = Math.max(0, s.total_units - s.done_units);
   const avg = data.volume.avg_done_last3;
   const heavy = avg != null && avg > 0 && data.volume.current_total > avg * 1.5;
@@ -505,7 +505,9 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
           value={`%${s.pct}`}
           valueClass={expectedPct == null ? "text-foreground" : ahead ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}
           hint="Yapılan birim ÷ havuzdaki toplam birim. Birim: her test 1; video, deneme ve etkinlik kalemi 1. Öğrencinin kaydı ve senin seansta işaretlediğin birlikte sayılır; onay bekleyen öğrenci kalemi girmez."
-          explain={<>Havuzun <b className="text-foreground">{s.done_units} / {s.total_units}</b> birimi yapıldı{expectedPct != null && <>; dönemin bu gününe kadar beklenen yaklaşık <b className="text-foreground">%{expectedPct}</b> — {ahead ? "takvime göre önde" : "takvime göre geride"}</>}.</>}
+          explain={s.total_units === 0
+            ? <>Havuzda henüz kalem yok; yüzde kalem eklenince hesaplanır.</>
+            : <>Havuzun <b className="text-foreground">{s.done_units} / {s.total_units}</b> birimi yapıldı{expectedPct != null && <>; dönemin bu gününe kadar beklenen yaklaşık <b className="text-foreground">%{expectedPct}</b> — {ahead ? "takvime göre önde" : "takvime göre geride"}</>}.</>}
         >
           <span className="relative mt-2 block h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
             <span className={cn("block h-full rounded-full", ahead || expectedPct == null ? "bg-emerald-500" : "bg-amber-500")} style={{ width: `${Math.min(100, s.pct)}%` }} />
@@ -538,7 +540,9 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
           hint="Kalan birim ÷ seansa kalan gün. Öğrencinin seansa kadar havuzu bitirmesi için ortalama günlük temposu."
           explain={remainingUnits > 0
             ? <>Kalan <b className="text-foreground">{remainingUnits}</b> birim ÷ {s.days_left} gün. Bu tempoyla havuz seansa kadar biter.</>
-            : <>Havuz bitti; seansa kadar yeni iş gerekmiyor.</>}
+            : s.total_units === 0
+              ? <>Havuz henüz boş; kalem eklenince günlük tempo hesaplanır.</>
+              : <>Havuz bitti; seansa kadar yeni iş gerekmiyor.</>}
         />
       </dl>
 
