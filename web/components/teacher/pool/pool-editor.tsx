@@ -848,6 +848,9 @@ function ItemRow({ it, studentId, onDelete, onApprove }: {
               </Badge>
             )}
             {pending && <Badge tone="amber">onay bekliyor</Badge>}
+            {pending && (it.book_id ? <Badge tone="cyan">kitaba bağlı</Badge>
+              : it.topic_id ? <Badge tone="cyan">müfredata bağlı</Badge>
+              : <Badge tone="slate">konusuz</Badge>)}
             {it.source === "ogrenci" && it.approval === "reddedildi" && <Badge tone="rose">reddedildi</Badge>}
             {it.cup_attempts >= 3 && it.remaining > 0 && <Badge tone="rose">{it.cup_attempts} kez kaba girdi</Badge>}
           </div>

@@ -77,6 +77,7 @@ export function DevHubView({
   onOpenReview,
   onOpenGoals,
   onOpenSurveys,
+  onOpenHistory,
   onOpenWrong,
   pendingSurveys = 0,
   pendingWrong = 0,
@@ -95,6 +96,7 @@ export function DevHubView({
   onOpenReview: () => void;
   onOpenGoals: () => void;
   onOpenSurveys?: () => void;
+  onOpenHistory?: () => void;
   onOpenWrong?: () => void;
   pendingSurveys?: number;
   pendingWrong?: number;
@@ -183,6 +185,23 @@ export function DevHubView({
             ) : null}
             <Ionicons name="chevron-forward" size={18} color="#e11d48" />
           </View>
+        </Pressable>
+      ) : null}
+
+      {/* Program geçmişim — önceki gün gün haftalar + havuz dönemleri (2026-10-22) */}
+      {onOpenHistory ? (
+        <Pressable
+          onPress={onOpenHistory}
+          className="flex-row items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
+        >
+          <View className="flex-row items-center gap-3">
+            <Ionicons name="time-outline" size={22} color="#334155" />
+            <View>
+              <Text className="text-[15px] font-semibold text-slate-800">Program geçmişim</Text>
+              <Text className="mt-0.5 text-xs text-slate-500">Önceki haftaların ve havuz dönemlerin</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#64748b" />
         </Pressable>
       ) : null}
 

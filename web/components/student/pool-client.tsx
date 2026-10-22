@@ -14,19 +14,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowRight, CalendarCheck2, History, CalendarRange, Check, ChevronRight, Minus, Plus, Sparkles, Undo2,
+  ArrowRight, CalendarCheck2, History, CalendarRange, Check, ChevronRight, Plus, Sparkles, Undo2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { subjectColors } from "@/components/shared/subject-tag";
 import { cn } from "@/lib/utils";
 import { PoolPeriodDialog } from "@/components/shared/pool-period-dialog";
+import { StudentPoolAddDialog } from "@/components/student/pool-add-dialog";
 import {
   getStudentPool, getStudentPoolPeriod, studentPoolKey, studentPoolPeriodKey, UNIT_LABELS,
-  useAddStudentPoolItem, useCupAdd, useCupReturn,
-  type PoolUnit, type StudentCupTask, type StudentPoolItem, type StudentPoolResponse,
+  useCupAdd, useCupReturn,
+  type StudentCupTask, type StudentPoolItem, type StudentPoolResponse,
 } from "@/lib/api/pool-student";
 
 function fmtDate(iso: string): string {
@@ -212,7 +212,8 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
                      perDay={data.summary?.per_day_needed ?? 0}
                      onPick={(n) => cupAdd.mutate({ item_id: pick.id, count: n }, { onSuccess: () => setPick(null) })} busy={cupAdd.isPending} />
       )}
-      <AddDialog open={addOpen} data={data}
+      <StudentPoolAddDialog open={addOpen} data={data} studentId={data.student_id ?? 0}
+                 studentGrade={data.grade_level ?? null}
                  onOpenChange={(v) => {
                    setAddOpen(v);
                    // Bugün'den "?ekle=1" ile gelindiyse kapanınca adresi temizle (yenilemede yeniden açılmasın)
@@ -502,146 +503,3 @@ function CountDialog({ item, onClose, onPick, busy, cupUnits, perDay }: {
   );
 }
 
-// ---------------------------------------------------------------- kalem ekle (K38)
-
-const QUICK_QTY = [1, 2, 3, 5, 10];
-
-function AddDialog({ open, onOpenChange, data }: { open: boolean; onOpenChange: (v: boolean) => void; data: StudentPoolResponse }) {
-  const add = useAddStudentPoolItem();
-  const [subjectId, setSubjectId] = React.useState<number | null>(null);
-  const [label, setLabel] = React.useState("");
-  const [qty, setQty] = React.useState("");
-  const [unit, setUnit] = React.useState<PoolUnit>("test");
-  const [homework, setHomework] = React.useState(false);
-  const n = Number(qty);
-  const isActivity = unit === "etkinlik";
-  const ok = subjectId != null && label.trim().length > 0 && (isActivity || (Number.isInteger(n) && n > 0));
-  const subj = data.subjects.find((x) => x.id === subjectId) ?? null;
-  const groups: Array<[string, typeof data.subjects]> = [];
-  const okul = data.subjects.filter((x) => x.group !== "sinav");
-  const tyt = data.subjects.filter((x) => x.group === "sinav" && !x.is_ayt);
-  const ayt = data.subjects.filter((x) => x.group === "sinav" && x.is_ayt);
-  if (okul.length) groups.push(["Okul dersleri", okul]);
-  if (tyt.length) groups.push(["TYT", tyt]);
-  if (ayt.length) groups.push(["AYT", ayt]);
-  function reset() { setLabel(""); setQty(""); setHomework(false); }
-  function step(delta: number) {
-    const cur = Number.isInteger(n) && n > 0 ? n : 0;
-    setQty(String(Math.max(1, cur + delta)));
-  }
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Havuza kalem ekle</DialogTitle>
-          <DialogDescription>Ders öğretmeninin verdiği ödev ya da kendi ek çalışman. Rehberin seansta onaylayınca yüzdeye girer.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 text-sm">
-          <section className="space-y-2">
-            <StepTitle n={1} title="Hangi ders?" />
-            {groups.map(([title, list]) => (
-              <div key={title}>
-                {groups.length > 1 && <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>}
-                <div className="flex flex-wrap gap-1.5">
-                  {list.map((x) => {
-                    const c = subjectColors(x.name);
-                    const on = subjectId === x.id;
-                    return (
-                      <button key={x.id} type="button" onClick={() => setSubjectId(x.id)} aria-pressed={on}
-                              className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition",
-                                on ? "border-transparent text-white shadow-sm" : "bg-background text-foreground hover:bg-muted")}
-                              style={on ? { backgroundColor: c.chipStrong } : undefined}>
-                        {!on && <span className="size-2 rounded-full" style={{ backgroundColor: c.rail }} aria-hidden />}
-                        {x.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </section>
-
-          <section className="space-y-2">
-            <StepTitle n={2} title="Ne çalışacaksın?" />
-            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="örn. Palme sayfa 45'e kadar"
-                   aria-label="Ne çalışacaksın" className="h-10" />
-            <label className="flex items-center gap-2 text-xs text-foreground">
-              <input type="checkbox" checked={homework} onChange={(e) => setHomework(e.target.checked)} />
-              Ders / özel ders öğretmenimin verdiği ödev
-            </label>
-          </section>
-
-          <section className="space-y-2">
-            <StepTitle n={3} title="Ne kadar?" />
-            <div className="flex w-full flex-wrap rounded-lg bg-muted p-0.5 text-xs font-medium" role="radiogroup" aria-label="Birim">
-              {data.units.map((u) => (
-                <button key={u} type="button" role="radio" aria-checked={unit === u} onClick={() => setUnit(u)}
-                        className={cn("flex-1 rounded-md px-2.5 py-1.5 transition",
-                          unit === u ? "bg-cyan-700 text-white shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-                  {UNIT_LABELS[u]}
-                </button>
-              ))}
-            </div>
-            {isActivity ? (
-              <p className="text-xs text-muted-foreground">Etkinlik (video, özet, tekrar) tek birim sayılır; miktar gerekmez.</p>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center rounded-lg border">
-                  <button type="button" onClick={() => step(-1)} className="grid size-9 place-items-center text-foreground hover:bg-muted" aria-label="Bir azalt">
-                    <Minus className="size-4" aria-hidden />
-                  </button>
-                  <Input value={qty} onChange={(e) => setQty(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="0"
-                         className="h-9 w-16 rounded-none border-0 text-center text-base font-semibold" aria-label="Miktar" />
-                  <button type="button" onClick={() => step(1)} className="grid size-9 place-items-center text-foreground hover:bg-muted" aria-label="Bir arttır">
-                    <Plus className="size-4" aria-hidden />
-                  </button>
-                </div>
-                {QUICK_QTY.map((v) => (
-                  <button key={v} type="button" onClick={() => setQty(String(v))}
-                          className={cn("min-w-9 rounded-md border px-2.5 py-1.5 text-xs font-semibold tabular-nums",
-                            n === v ? "border-transparent bg-cyan-700 text-white" : "bg-background text-foreground hover:bg-muted")}>
-                    {v}
-                  </button>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <div className="rounded-lg border border-dashed bg-muted/40 p-3 text-xs" data-section="student:pool:add-preview">
-            <div className="mb-1 font-semibold text-foreground">Havuzuna eklenecek</div>
-            {ok && subj ? (
-              <div className="flex flex-wrap items-center gap-1.5 text-foreground">
-                <SubjectPill name={subj.name} size="xs" />
-                <span className="font-medium">{label.trim()}</span>
-                <span className="rounded bg-muted px-1.5 py-0.5 font-semibold">{isActivity ? "1 etkinlik" : `${n} ${UNIT_LABELS[unit]}`}</span>
-                {homework && <span className="rounded bg-violet-700 px-1.5 py-0.5 font-semibold text-white">öğretmen ödevi</span>}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">Ders, ne çalışacağın ve miktarı seç.</p>
-            )}
-            <p className="mt-1 text-muted-foreground">Rehberin seansta kaynağından görüp onaylayınca yüzdeye girer.</p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Vazgeç</Button>
-          <Button disabled={!ok || add.isPending} className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white"
-                  onClick={() => subjectId != null && add.mutate(
-                    { subject_id: subjectId, label: label.trim() || null, quantity: isActivity ? 1 : n, unit, teacher_homework: homework },
-                    { onSuccess: () => { onOpenChange(false); reset(); } },
-                  )}>
-            Havuza ekle
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function StepTitle({ n, title }: { n: number; title: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="grid size-5 place-items-center rounded-full bg-cyan-700 text-[11px] font-bold text-white" aria-hidden>{n}</span>
-      <span className="font-semibold text-foreground">{title}</span>
-    </div>
-  );
-}

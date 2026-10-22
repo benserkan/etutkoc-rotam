@@ -354,13 +354,24 @@ def get_pool(student_id: int, user: User = Depends(_require_teacher),
 @router.get("/students/{student_id}/pool/topics", response_model=PoolTopicsResponse)
 def pool_topics(student_id: int, subject_id: int = Query(...),
                 user: User = Depends(_require_teacher), db: Session = Depends(get_db)) -> PoolTopicsResponse:
-    from app.services.topic_board import build_topic_board
     student = _get_owned_student(db, student_id, user.id)
+    subject = pool_subject_or_404(db, student, user.id, subject_id)
+    return pool_topics_payload(db, student, user.id, subject)
+
+
+def pool_subject_or_404(db: Session, student: User, coach_id: int, subject_id: int) -> Subject:
+    """Havuzda kalem eklenebilen ders (koç ve öğrenci uçları aynı kuralı kullanır)."""
     subject = db.get(Subject, subject_id)
-    if subject is None or subject.id not in {s.id for s in _subjects_for(db, student, user.id)}:
+    if subject is None or subject.id not in {s.id for s in _subjects_for(db, student, coach_id)}:
         raise HTTPException(status_code=404, detail={"error": "not_found", "code": "subject_not_found",
                                                      "message": "Ders bulunamadı."})
-    page = build_topic_board(db, student=student, coach_id=user.id, subject_id=subject.id, allow_subject=subject)
+    return subject
+
+
+def pool_topics_payload(db: Session, student: User, coach_id: int, subject: Subject) -> PoolTopicsResponse:
+    """Dersin müfredat konuları (SON · ŞUBE · havuzda · kitapta var). Koç ve öğrenci aynı listeyi görür."""
+    from app.services.topic_board import build_topic_board
+    page = build_topic_board(db, student=student, coach_id=coach_id, subject_id=subject.id, allow_subject=subject)
     board = next((s for s in page.subjects if s.subject_id == subject.id), None)
 
     # SON: konunun en son havuza girdiği gün (kalem) ya da görev aldığı gün
@@ -384,7 +395,8 @@ def pool_topics(student_id: int, subject_id: int = Query(...),
         if d and (tid not in last or d > last[int(tid)]):
             last[int(tid)] = d
     newest = max(last.values()) if last else None
-    cg = pm.class_group_of(db, student=student, coach=user)
+    coach = db.get(User, coach_id)
+    cg = pm.class_group_of(db, student=student, coach=coach) if coach is not None else None
     pos_topic = None
     if cg is not None:
         pos_topic = (cg.positions.get(str(subject.id)) or {}).get("topic_id")
@@ -1087,10 +1099,12 @@ def pool_books(student_id: int, subject_id: int = Query(...), user: User = Depen
     """Öğrencinin bu dersteki kitapları, kitabın KENDİ bölümleriyle (kalan · havuzda bekleyen · SON).
     Rehber kitapta gördüğünü seçer; konu eşleştirmesine bakmaz. Deneme kitapları dahil."""
     student = _get_owned_student(db, student_id, user.id)
-    subject = db.get(Subject, subject_id)
-    if subject is None or subject.id not in {s.id for s in _subjects_for(db, student, user.id)}:
-        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "subject_not_found",
-                                                     "message": "Ders bulunamadı."})
+    subject = pool_subject_or_404(db, student, user.id, subject_id)
+    return pool_books_payload(db, student, subject)
+
+
+def pool_books_payload(db: Session, student: User, subject: Subject) -> PoolBooksResponse:
+    """Öğrencinin bu dersteki kitapları + bölümleri (koç ve öğrenci ekleme penceresi ortak)."""
     states = pm.student_books_for_subject(db, student, subject.id)
     tids = {x.topic_id for st in states for x in st.sections if x.topic_id}
     tnames = {t.id: t.name for t in db.query(Topic).filter(Topic.id.in_(tids)).all()} if tids else {}

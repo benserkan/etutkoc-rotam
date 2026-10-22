@@ -79,10 +79,10 @@ SOURCE_TEMPLATE = "sablon"         # K26: şube/iskelet önerisi kabul edildi
 POOL_SOURCES = (SOURCE_COACH, SOURCE_STUDENT, SOURCE_EXAM, SOURCE_CARRY, SOURCE_TEMPLATE)
 # KONU ZORUNLULUĞU (koç, 2026-10-14): TEST/SORU birimli kalem kitapsızsa bir KONUYA bağlı olmalı —
 # konusuz test kalemi konu performansına ve müfredat haritasına hiç giremez (D/Y/B girilse de boşa
-# gider) ve görev istatistiğinde "deneme" sanılır. Öğrencinin kendi kalemi (onaya düşer) ve devir
-# (eski kalemin kopyası) muaf.
+# gider) ve görev istatistiğinde "deneme" sanılır. Yalnız devir
+# (eski kalemin kopyası) muaf; öğrencinin kalemi de (onaya düşer) konu ister.
 TOPIC_REQUIRED_UNITS = ("test", "soru")
-TOPIC_REQUIRED_EXEMPT_SOURCES = (SOURCE_STUDENT, SOURCE_CARRY)
+TOPIC_REQUIRED_EXEMPT_SOURCES = (SOURCE_CARRY,)  # 2026-10-22: öğrenci kalemi de konuya/kitaba bağlanır
 
 # ---- onay (yalnız öğrencinin eklediği kalemde anlamlı — K38)
 APPROVAL_NA = "yok"

@@ -111,7 +111,7 @@ def seed() -> dict:
         i_a = pm.add_item(db, period=p1, student=s, subject=tyt, quantity=10, unit="test", book=b, section=sec)
         i_b = pm.add_item(db, period=p1, student=s, subject=fiz, quantity=6, unit="test", topic=t3)
         i_c = pm.add_item(db, period=p1, student=s, subject=fiz, quantity=None, unit="etkinlik", label="Optik videosu")
-        pm.add_item(db, period=p1, student=s, subject=tyt, quantity=3, unit="test", label="Kendi paragrafım",
+        pm.add_item(db, period=p1, student=s, subject=tyt, quantity=3, unit="sayfa", label="Kendi paragrafım",
                     source=SOURCE_STUDENT, created_by=s)
         i_rm = pm.add_item(db, period=p1, student=s, subject=tyt, quantity=5, unit="sayfa", label="Yanlışlıkla eklenen")
         pm.remove_item(db, i_rm, coach)

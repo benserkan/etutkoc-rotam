@@ -60,7 +60,9 @@ export interface StudentPoolResponse {
   cup: StudentCupTask[];
   projection: { date: string; units: number }[];
   lesson_today: string[];
-  subjects: { id: number; name: string }[];
+  subjects: { id: number; name: string; group?: "okul" | "sinav"; is_ayt?: boolean; book_count?: number }[];
+  student_id?: number;
+  grade_level?: number | null;
   /** K41/K46/K48: yönlendirme cümleleri — kırmızı yok, yargı yok. */
   hints: { code: string; title: string; note: string }[];
   /** K60: önceki dönemler (öğrenci görür; yargı yok). */
@@ -79,6 +81,8 @@ export const poolKeys = {
   parent: (studentId: number) => ["parent", "child", studentId, "pool"] as const,
   daily: () => ["teacher", "pool", "daily"] as const,
   pool: ["student", "pool"] as const,
+  topics: (subjectId: number) => ["student", "pool", "topics", subjectId] as const,
+  books: (subjectId: number) => ["student", "pool", "books", subjectId] as const,
 };
 
 export function getStudentPool(): Promise<StudentPoolResponse> {
@@ -95,10 +99,63 @@ export function cupReturn(task_id: number): Promise<Mut> {
   return apiRequest<Mut>(`/api/v2/student/pool/cup/${task_id}/return`, { method: "POST" });
 }
 
-export function addStudentPoolItem(body: {
-  subject_id: number; topic_id?: number | null; label?: string | null; quantity?: number | null; unit: PoolUnit;
-}): Promise<Mut> {
+export interface StudentPoolItemBody {
+  subject_id: number;
+  topic_id?: number | null;
+  book_id?: number | null;
+  section_id?: number | null;
+  page_from?: number | null;
+  page_to?: number | null;
+  label?: string | null;
+  quantity?: number | null;
+  unit: PoolUnit;
+  teacher_homework?: boolean;
+}
+
+export function addStudentPoolItem(body: StudentPoolItemBody): Promise<Mut> {
   return apiRequest<Mut>("/api/v2/student/pool/items", { method: "POST", body });
+}
+
+// ---------------------------------------------------------------- kalem ekleme kaynakları (2026-10-22)
+// Öğrenci de koç gibi kitabının bölümünden ya da müfredat konusundan ekler (web ile aynı uçlar).
+export interface PoolTopic {
+  topic_id: number;
+  name: string;
+  unit_name: string | null;
+  status: string;
+  grade_level: number | null;
+  is_last: boolean;
+  sources: { book_id: number; section_id: number }[];
+}
+
+export interface PoolBookSection {
+  section_id: number;
+  label: string;
+  test_count: number;
+  completed: number;
+  remaining: number;
+  in_pool: number;
+  available: number;
+  topic_name: string | null;
+  is_last: boolean;
+}
+
+export interface PoolBook {
+  book_id: number;
+  name: string;
+  type_label: string;
+  is_deneme: boolean;
+  total_tests: number;
+  completed: number;
+  sections: PoolBookSection[];
+}
+
+export function getStudentPoolTopics(subjectId: number): Promise<{ subject_id: number; subject_name: string; topics: PoolTopic[] }> {
+  return apiRequest(`/api/v2/student/pool/topics?subject_id=${subjectId}`);
+}
+
+export function getStudentPoolBooks(subjectId: number): Promise<{ subject_id: number; subject_name: string; books: PoolBook[] }> {
+  return apiRequest(`/api/v2/student/pool/books?subject_id=${subjectId}`);
 }
 
 export function closePoolDay(date?: string): Promise<Mut> {

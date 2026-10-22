@@ -35,7 +35,7 @@ import {
   getPoolBooks, getPoolTopics, parsePoolText, poolBooksKey, poolKeys, UNIT_LABELS, useAddPoolItem,
   useSetClassPosition,
   type ParseOption, type ParseResponse, type PoolBookOut, type PoolBookSectionOut, type PoolBundleResponse, type PoolItemBody,
-  type PoolSubjectOut, type PoolTopicOut, type PoolUnit,
+  type PoolSubjectOut, type PoolTopicOut, type PoolTopicsResponse, type PoolUnit,
 } from "@/lib/api/pool";
 
 type Choice =
@@ -383,7 +383,7 @@ function SourcePicker({ studentId, subject, maxGrade, studentGrade, books, books
   );
 }
 
-function SourceOption({ active, onClick, icon, title, hint }: {
+export function SourceOption({ active, onClick, icon, title, hint }: {
   active: boolean; onClick: () => void; icon: React.ReactNode; title: string; hint: string;
 }) {
   return (
@@ -400,7 +400,7 @@ function SourceOption({ active, onClick, icon, title, hint }: {
   );
 }
 
-function BookList({ books, loading, anchorBook, anchorSection, onPick }: {
+export function BookList({ books, loading, anchorBook, anchorSection, onPick }: {
   books: PoolBookOut[]; loading: boolean; anchorBook: number | null; anchorSection: number | null;
   onPick: (b: PoolBookOut, s: PoolBookSectionOut) => void;
 }) {
@@ -487,17 +487,20 @@ function SectionTally({ s, unit }: { s: PoolBookSectionOut; unit: string }) {
   );
 }
 
-function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, studentGrade = null, examSubject = false,
-  anchorTopic = null, anchorGrade, onPick }: {
+export function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, studentGrade = null, examSubject = false,
+  anchorTopic = null, anchorGrade, onPick, topicsQuery, audience = "coach" }: {
   studentId: number; subjectId: number; subjectName: string; maxGrade?: number | null;
   studentGrade?: number | null; examSubject?: boolean;
   anchorTopic?: number | null; anchorGrade?: number | null;
   onPick: (t: PoolTopicOut | "none") => void;
+  /** Öğrenci penceresi kendi ucundan çeker (2026-10-22); yoksa koç ucu. */
+  topicsQuery?: { key: readonly unknown[]; fn: () => Promise<PoolTopicsResponse> };
+  audience?: "coach" | "student";
 }) {
   const listRef = React.useRef<HTMLDivElement | null>(null);
   const q = useQuery({
-    queryKey: poolKeys.topics(studentId, subjectId),
-    queryFn: () => getPoolTopics(studentId, subjectId),
+    queryKey: topicsQuery?.key ?? poolKeys.topics(studentId, subjectId),
+    queryFn: topicsQuery?.fn ?? (() => getPoolTopics(studentId, subjectId)),
   });
   const [term, setTerm] = React.useState("");
   const allTopics = q.data?.topics ?? [];
@@ -532,8 +535,10 @@ function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, stude
   return (
     <div className="space-y-2" data-section="pool:add:topics">
       <p className="text-xs text-muted-foreground">
-        {subjectName}{maxGrade ? ` (TYT · ${maxGrade - 1}-${maxGrade}. sınıf Maarif konuları)` : ""} — konu seç. <span className="font-semibold">SON</span> = en son görev verilen,{" "}
-        <span className="font-semibold">ŞUBE</span> = dershanede işlenen.
+        {subjectName}{maxGrade ? ` (TYT · ${maxGrade - 1}-${maxGrade}. sınıf Maarif konuları)` : ""} — konu seç.{" "}
+        {audience === "student"
+          ? <>Konu müfredatına bağlanır; koçun onaylayınca ilerlemene işlenir. <span className="font-semibold">SON</span> = en son çalıştığın konu.</>
+          : <><span className="font-semibold">SON</span> = en son görev verilen, <span className="font-semibold">ŞUBE</span> = dershanede işlenen.</>}
       </p>
       {multiGrade && (
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Sınıf">
@@ -550,7 +555,7 @@ function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null, stude
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Konu ara (tüm sınıflarda)…" className="h-9 pl-8" aria-label="Konu ara" />
         </div>
-        <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => onPick("none")} title="Konuya bağlı olmayan kalem: video, sayfa aralığı, serbest ödev (test/soru kalemi konu ister)">
+        <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => onPick("none")} title="Konuya bağlı olmayan kalem: video, sayfa, serbest ödev (test/soru kalemi konu ister)">
           <PenLine className="size-4" aria-hidden /> Konusuz
         </Button>
       </div>

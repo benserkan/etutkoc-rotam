@@ -70,6 +70,7 @@ export default function StudentGelisimScreen() {
           onOpenReview={() => router.push("/student-review")}
           onOpenGoals={() => router.push("/student-goals")}
           onOpenSurveys={() => router.push("/student-surveys")}
+          onOpenHistory={() => router.push("/program-history")}
           onOpenWrong={() => router.push("/student-wrong-questions")}
           pendingSurveys={surveys.data?.pending.length ?? 0}
           pendingWrong={wrong.data?.counts.due ?? 0}

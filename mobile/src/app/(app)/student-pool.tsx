@@ -2,15 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as React from "react";
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PeriodDetailSheet } from "@/components/pool/period-detail-sheet";
+import { StudentAddItemSheet } from "@/components/pool/student-add-item-sheet";
 import { FormSheet } from "@/components/ui/form-sheet";
 import { ApiError } from "@/lib/api";
 import {
   addStudentPoolItem, cupAdd, cupReturn, getStudentPool, getStudentPoolPeriod, poolKeys, poolPeriodKeys, UNIT_LABELS,
-  type PoolUnit, type StudentPoolItem, type StudentPoolResponse,
+  type StudentPoolItem, type StudentPoolResponse,
 } from "@/lib/pool";
 
 /**
@@ -46,6 +47,10 @@ export default function StudentPoolRoute() {
           <Ionicons name="chevron-back" size={26} color="#334155" />
         </Pressable>
         <Text className="flex-1 text-base font-semibold text-slate-800">Havuzum</Text>
+        <Pressable onPress={() => router.push("/program-history")} hitSlop={6} accessibilityLabel="Program geçmişim"
+                   className="size-9 items-center justify-center rounded-full active:bg-slate-200">
+          <Ionicons name="time-outline" size={20} color="#334155" />
+        </Pressable>
         {q.data?.mode === "havuz" && q.data.period_id ? (
           <Pressable onPress={() => setAddOpen(true)} className="flex-row items-center gap-1 rounded-full bg-brand-700 px-3 py-1.5 active:bg-brand-800">
             <Ionicons name="add" size={16} color="#fff" />
@@ -98,7 +103,7 @@ export default function StudentPoolRoute() {
         />
       ) : null}
       {q.data ? (
-        <AddItemSheet
+        <StudentAddItemSheet
           visible={addOpen}
           data={q.data}
           busy={busy}
@@ -300,48 +305,6 @@ function CountSheet({ item, busy, onClose, onPick }: { item: StudentPoolItem; bu
           </Pressable>
         ) : null}
       </View>
-    </FormSheet>
-  );
-}
-
-function AddItemSheet({ visible, data, busy, onClose, onSubmit }: {
-  visible: boolean; data: StudentPoolResponse; busy: boolean; onClose: () => void;
-  onSubmit: (b: { subject_id: number; label: string | null; quantity: number | null; unit: PoolUnit }) => void;
-}) {
-  const [subjectId, setSubjectId] = React.useState<number | null>(null);
-  const [label, setLabel] = React.useState("");
-  const [qty, setQty] = React.useState("");
-  const [unit, setUnit] = React.useState<PoolUnit>("test");
-  const n = Number(qty);
-  const ok = subjectId != null && label.trim().length > 0 && (unit === "etkinlik" || (Number.isInteger(n) && n > 0));
-  return (
-    <FormSheet visible={visible} title="Havuza kalem ekle" onClose={onClose}>
-      <Text className="text-xs text-slate-500">Ders öğretmeninin verdiği ödev ya da kendi ek çalışman. Rehberin seansta onaylayınca yüzdeye girer.</Text>
-      <Text className="mt-3 text-xs font-semibold text-slate-600">Ders</Text>
-      <View className="mt-1 flex-row flex-wrap gap-1.5">
-        {data.subjects.map((s) => (
-          <Pressable key={s.id} onPress={() => setSubjectId(s.id)} className={`rounded-full border px-3 py-1 ${subjectId === s.id ? "border-brand-700 bg-brand-700" : "border-slate-300 bg-white"}`}>
-            <Text className={`text-xs ${subjectId === s.id ? "text-white" : "text-slate-700"}`}>{s.name}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <Text className="mt-3 text-xs font-semibold text-slate-600">Ne çalışacaksın?</Text>
-      <TextInput value={label} onChangeText={setLabel} placeholder="örn. Palme sayfa 45'e kadar" className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800" />
-      <View className="mt-3 flex-row items-center gap-2">
-        <TextInput value={qty} onChangeText={setQty} keyboardType="number-pad" placeholder="sayı" className="w-20 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800" editable={unit !== "etkinlik"} />
-        {data.units.map((u) => (
-          <Pressable key={u} onPress={() => setUnit(u)} className={`rounded-full border px-2.5 py-1 ${unit === u ? "border-brand-700 bg-brand-700" : "border-slate-300 bg-white"}`}>
-            <Text className={`text-xs ${unit === u ? "text-white" : "text-slate-700"}`}>{UNIT_LABELS[u]}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <Pressable
-        onPress={() => subjectId != null && onSubmit({ subject_id: subjectId, label: label.trim() || null, quantity: unit === "etkinlik" ? 1 : n, unit })}
-        disabled={!ok || busy}
-        className={`mt-4 items-center rounded-xl px-4 py-3 ${ok ? "bg-brand-700 active:bg-brand-800" : "bg-slate-300"}`}
-      >
-        <Text className="font-semibold text-white">Havuza ekle</Text>
-      </Pressable>
     </FormSheet>
   );
 }

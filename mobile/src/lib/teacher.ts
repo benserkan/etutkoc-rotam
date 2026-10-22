@@ -403,8 +403,8 @@ export interface TaskCreateBody {
   link_url?: string | null;
   items: TaskItemBody[];
 }
-export function getTeacherStudentWeek(id: number, start?: string): Promise<TeacherWeekResponse> {
-  const qs = start ? `?start=${encodeURIComponent(start)}` : "";
+export function getTeacherStudentWeek(id: number, start?: string, end?: string): Promise<TeacherWeekResponse> {
+  const qs = start ? `?start=${encodeURIComponent(start)}${end ? `&end=${encodeURIComponent(end)}` : ""}` : "";
   return apiRequest<TeacherWeekResponse>(`/api/v2/teacher/students/${id}/week${qs}`);
 }
 // Öneri kabul/ret (kural-tabanlı motor — kabul gerçek görev oluşturur, ret sistemin

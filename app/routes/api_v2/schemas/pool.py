@@ -501,6 +501,7 @@ class StudentPoolSubject(BaseModel):
     name: str
     group: str = "okul"        # okul | sinav (kalem ekleme penceresinde gruplama)
     is_ayt: bool = False
+    book_count: int = 0        # öğrencinin bu dersteki kitapları (deneme dahil)
 
 
 class StudentPoolHint(BaseModel):
@@ -512,6 +513,8 @@ class StudentPoolHint(BaseModel):
 
 class StudentPoolResponse(BaseModel):
     mode: str
+    student_id: int | None = None
+    grade_level: int | None = None   # kalem ekleme penceresi: konu listesinde "kendi sınıfı"
     period_id: int | None = None
     opened_on: str | None = None
     summary: StudentPoolSummary | None = None
@@ -540,6 +543,11 @@ class StudentCupResizeBody(BaseModel):
 class StudentPoolItemBody(BaseModel):
     subject_id: int
     topic_id: int | None = None
+    # 2026-10-22: öğrenci de koç gibi kitabının bölümünden ya da müfredat konusundan ekler
+    book_id: int | None = None
+    section_id: int | None = None
+    page_from: int | None = Field(default=None, ge=1, le=5000)
+    page_to: int | None = Field(default=None, ge=1, le=5000)
     label: str | None = Field(default=None, max_length=255)
     quantity: int | None = Field(default=None, ge=1, le=500)
     unit: str = Field(pattern="^(test|soru|sayfa|deneme|etkinlik)$")

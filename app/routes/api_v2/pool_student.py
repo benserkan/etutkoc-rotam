@@ -16,6 +16,7 @@ from app.models import Book, BookSection, PoolItem, Subject, Task, TaskStatus, T
 from app.models.pool import APPROVAL_REJECTED, POOL_UNITS, SOURCE_STUDENT
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.pool import (
+    PoolBooksResponse, PoolTopicsResponse,
     StudentCloseDayBody, StudentCupBody, StudentCupResizeBody, StudentCupTask, StudentPoolHint, StudentPoolItemBody,
     StudentPoolItemOut, StudentPoolProjectionDay, StudentPoolProjectionSubject, StudentPoolResponse, StudentPoolSubject,
     StudentPoolSummary,
@@ -100,7 +101,8 @@ def student_pool(user: User = Depends(_require_student), db: Session = Depends(g
     previous = _previous_briefs(db, user.id, period, today) if mode == "havuz" else []
     on_break = _break_out(db, user.id) if mode == "havuz" else None
     if period is None:
-        return StudentPoolResponse(mode=mode, today=today.isoformat(), previous=previous, on_break=on_break)
+        return StudentPoolResponse(mode=mode, today=today.isoformat(), previous=previous, on_break=on_break,
+                                   student_id=user.id, grade_level=user.grade_level)
     live = [it for it in period.items if it.removed_at is None and it.approval != APPROVAL_REJECTED]
     for it in live:
         pm.sync_item_progress(db, it)
@@ -167,17 +169,24 @@ def student_pool(user: User = Depends(_require_student), db: Session = Depends(g
     if coach is not None:
         needs = bool(getattr(user, "is_graduate", False)) or (user.grade_level or 0) >= 11
         locked = needs and user.track is None
+        from sqlalchemy import func as _f
+        from app.models import StudentBook
+        book_counts = dict(db.query(Book.subject_id, _f.count(Book.id))
+                           .join(StudentBook, StudentBook.book_id == Book.id)
+                           .filter(StudentBook.student_id == user.id, StudentBook.archived_at.is_(None))
+                           .group_by(Book.subject_id).all())
         for sub in _subjects_for(db, user, coach.id):
             if locked and sub.exam_section in _AYT and sub.curriculum_model is None:
                 continue
             subs.append(StudentPoolSubject(
-                id=sub.id, name=sub.name,
+                id=sub.id, name=sub.name, book_count=book_counts.get(sub.id, 0),
                 group="sinav" if (sub.exam_section is not None and sub.curriculum_model is None) else "okul",
                 is_ayt=sub.exam_section in _AYT and sub.curriculum_model is None))
     # K41/K46/K48: yönlendirme cümleleri — kırmızı/yargı yok
     from app.services import pool_flags as pf
     hints = [StudentPoolHint(**h) for h in pf.student_hints(pf.evaluate_pool_flags(db, user, today))]
     return StudentPoolResponse(
+        student_id=user.id, grade_level=None if getattr(user, "is_graduate", False) else user.grade_level,
         mode=mode, period_id=period.id, opened_on=period.opened_on.isoformat(),
         summary=StudentPoolSummary(pct=s.pct, total_units=s.total_units, done_units=s.done_units,
                                    items_total=s.items_total, items_done=s.items_done, days_left=s.days_left,
@@ -268,23 +277,61 @@ def student_add_item(body: StudentPoolItemBody, user: User = Depends(_require_st
                      db: Session = Depends(get_db)):
     """K38: öğrenci havuza kalem ekler (öğretmen ödevi, kendi ek çalışması); rehber seansta onaylar."""
     period = _open_or_404(db, user)
-    subject = db.get(Subject, body.subject_id)
-    if subject is None:
-        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "subject_not_found",
-                                                     "message": "Ders bulunamadı."})
+    from app.routes.api_v2.pool import pool_subject_or_404
+    coach = db.get(User, user.teacher_id) if user.teacher_id else None
+    if coach is None:
+        raise HTTPException(status_code=409, detail={"error": "conflict", "code": "no_coach",
+                                                     "message": "Koçun yok; kalem eklenemez."})
+    subject = pool_subject_or_404(db, user, coach.id, body.subject_id)
     topic = db.get(Topic, body.topic_id) if body.topic_id else None
-    if body.topic_id and topic is None:
+    # Enjeksiyon koruması: konu yalnız resmi müfredat ya da koçun kendi konusu olabilir
+    if body.topic_id and (topic is None or not (topic.is_builtin or topic.teacher_id == coach.id)):
         raise HTTPException(status_code=404, detail={"error": "not_found", "code": "topic_not_found",
                                                      "message": "Konu bulunamadı."})
+    book = db.get(Book, body.book_id) if body.book_id else None
+    if body.book_id and book is None:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "book_not_found",
+                                                     "message": "Kitap bulunamadı."})
+    section = db.get(BookSection, body.section_id) if body.section_id else None
+    if body.section_id and section is None:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "section_not_found",
+                                                     "message": "Bölüm bulunamadı."})
+    unit = body.unit
+    if book is not None and unit in ("test", "deneme"):
+        from app.models.book import BookType as _BT
+        unit = "deneme" if book.type in (_BT.BRANS_DENEMESI, _BT.GENEL_DENEME) else "test"
     try:
-        pm.add_item(db, period=period, student=user, subject=subject, quantity=body.quantity, unit=body.unit,
-                    topic=topic, label=body.label, source=SOURCE_STUDENT, created_by=user,
-                    teacher_homework=body.teacher_homework)
+        pm.add_item(db, period=period, student=user, subject=subject, quantity=body.quantity, unit=unit,
+                    topic=topic, book=book, section=section, label=body.label, source=SOURCE_STUDENT,
+                    created_by=user, teacher_homework=body.teacher_homework,
+                    page_from=body.page_from, page_to=body.page_to)
     except PoolError as e:
         raise _http(e)
     db.commit()
     return MutationResponse(data=student_pool(user, db),
                             invalidate=[_key(user.id), f"teacher:{user.teacher_id}:students:{user.id}:pool"])
+
+
+@router.get("/pool/topics", response_model=PoolTopicsResponse)
+def student_pool_topics(subject_id: int, user: User = Depends(_require_student),
+                        db: Session = Depends(get_db)) -> PoolTopicsResponse:
+    """Kalem ekleme penceresi: dersin müfredat konuları (koçun gördüğü liste)."""
+    from app.routes.api_v2.pool import pool_subject_or_404, pool_topics_payload
+    if not user.teacher_id:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "no_coach", "message": "Koç yok."})
+    subject = pool_subject_or_404(db, user, user.teacher_id, subject_id)
+    return pool_topics_payload(db, user, user.teacher_id, subject)
+
+
+@router.get("/pool/books", response_model=PoolBooksResponse)
+def student_pool_books(subject_id: int, user: User = Depends(_require_student),
+                       db: Session = Depends(get_db)) -> PoolBooksResponse:
+    """Kalem ekleme penceresi: öğrencinin bu dersteki kitapları + bölümleri."""
+    from app.routes.api_v2.pool import pool_books_payload, pool_subject_or_404
+    if not user.teacher_id:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "no_coach", "message": "Koç yok."})
+    subject = pool_subject_or_404(db, user, user.teacher_id, subject_id)
+    return pool_books_payload(db, user, subject)
 
 
 @router.post("/pool/close-day", response_model=MutationResponse[StudentPoolResponse])

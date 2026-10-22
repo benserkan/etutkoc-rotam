@@ -127,6 +127,7 @@ export default function TeacherStudentRoute() {
           onOpenDev={() => router.push({ pathname: "/teacher-student-dev", params: { id: String(studentId) } })}
           onOpenTopics={() => router.push({ pathname: "/topic-performance", params: { source: "teacher", id: String(studentId) } })}
           onOpenPool={q.data.student.program_mode === "havuz" ? () => setTab("program") : undefined}
+          onOpenHistory={() => router.push({ pathname: "/program-history", params: { student: String(studentId) } })}
           onSendWa={() => setWaOpen(true)}
           onToggleActive={toggleActive}
           togglingActive={toggling}

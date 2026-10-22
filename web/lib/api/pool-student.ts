@@ -69,7 +69,7 @@ export interface StudentPoolResponse {
     subjects?: { subject_id: number | null; name: string; units: number }[];
   }[];
   lesson_today: string[];
-  subjects: { id: number; name: string; group?: "okul" | "sinav"; is_ayt?: boolean }[];
+  subjects: { id: number; name: string; group?: "okul" | "sinav"; is_ayt?: boolean; book_count?: number }[];
   /** K41/K46/K48: yönlendirme cümleleri — kırmızı yok, yargı yok. */
   hints: { code: string; title: string; note: string }[];
   /** K60: önceki dönemler (öğrenci görür; yargı yok). */
@@ -78,6 +78,9 @@ export interface StudentPoolResponse {
   on_break: { period_id: number; since: string; note: string | null } | null;
   units: PoolUnit[];
   today: string;
+  /** Öğrencinin kimliği ve sınıfı (kalem ekleme penceresindeki konu sınıf süzgeci) */
+  student_id?: number;
+  grade_level?: number | null;
   /** Şube ders programı girilmiş mi — dağılım önerisi buna göre */
   lesson_days_set?: boolean;
 }
@@ -128,10 +131,37 @@ export function useCupResize() {
   );
 }
 
+export interface StudentPoolItemBody {
+  subject_id: number;
+  /** Müfredat konusu (kaynaksız) — 2026-10-22: test/soru kalemi konu ya da kitap ister */
+  topic_id?: number | null;
+  /** Öğrencinin kitabının bölümü (kitap sayacı onaydan sonra ilerler) */
+  book_id?: number | null;
+  section_id?: number | null;
+  page_from?: number | null;
+  page_to?: number | null;
+  label: string | null;
+  quantity: number | null;
+  unit: PoolUnit;
+  teacher_homework?: boolean;
+}
+
 export function useAddStudentPoolItem() {
-  return usePoolMutation<{ subject_id: number; label: string | null; quantity: number | null; unit: PoolUnit; teacher_homework?: boolean }>(
-    () => "/api/v2/student/pool/items", "Havuza eklendi — rehberin seansta onaylayacak", "Eklenemedi",
+  return usePoolMutation<StudentPoolItemBody>(
+    () => "/api/v2/student/pool/items", "Havuza eklendi — koçun onaylayınca ilerlemene işlenir", "Eklenemedi",
   );
+}
+
+// ---------------------------------------------------------------- kalem ekleme kaynakları (2026-10-22)
+export const studentPoolTopicsKey = (subjectId: number) => ["student", "me", "pool", "topics", String(subjectId)] as const;
+export const studentPoolBooksKey = (subjectId: number) => ["student", "me", "pool", "books", String(subjectId)] as const;
+
+export function getStudentPoolTopics(subjectId: number): Promise<import("@/lib/api/pool").PoolTopicsResponse> {
+  return api(`/api/v2/student/pool/topics?subject_id=${subjectId}`);
+}
+
+export function getStudentPoolBooks(subjectId: number): Promise<import("@/lib/api/pool").PoolBooksResponse> {
+  return api(`/api/v2/student/pool/books?subject_id=${subjectId}`);
 }
 
 
