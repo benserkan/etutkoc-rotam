@@ -4874,6 +4874,7 @@ def teacher_student_week_v2(
     student_id: int,
     start_param: str | None = Query(None, alias="start"),
     program_id: int | None = Query(None, alias="program_id"),
+    end_param: str | None = Query(None, alias="end"),
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
@@ -4931,6 +4932,11 @@ def teacher_student_week_v2(
         # Açık gezinme — kullanıcı buton bastı; eski 7-günlük davranış
         start = _parse_iso_date(start_param, fallback=today)
         end = start + timedelta(days=6)
+        if end_param:
+            # Program geçmişi: kırpılmış/takvim haftasını tam aralığıyla göster (1-14 gün)
+            e = _parse_iso_date(end_param, fallback=end)
+            if start <= e <= start + timedelta(days=13):
+                end = e
     else:
         # Default: bugünü içeren aktif program
         active_program = get_active_program(

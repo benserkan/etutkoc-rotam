@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowRight, CalendarCheck2, CalendarRange, Check, ChevronRight, Minus, Plus, Sparkles, Undo2,
+  ArrowRight, CalendarCheck2, History, CalendarRange, Check, ChevronRight, Minus, Plus, Sparkles, Undo2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -109,6 +109,9 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
             <Link href="/student/day"><CalendarCheck2 className="size-4" aria-hidden /> Bugün sayfası</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/student/history"><History className="size-4" aria-hidden /> Program geçmişim</Link>
           </Button>
           <Button onClick={() => setAddOpen(true)} className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white">
             <Plus className="size-4" aria-hidden /> Kalem ekle

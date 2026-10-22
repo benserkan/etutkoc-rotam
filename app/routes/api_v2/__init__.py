@@ -67,6 +67,7 @@ from app.routes.api_v2 import pool_student as v2_pool_student
 from app.routes.api_v2 import student as v2_student
 from app.routes.api_v2 import support as v2_support
 from app.routes.api_v2 import surveys as v2_surveys
+from app.routes.api_v2 import program_history as v2_program_history
 from app.routes.api_v2 import teacher as v2_teacher
 from app.routes.api_v2 import weekly_plan as v2_weekly_plan
 from app.routes.api_v2 import wrong_questions as v2_wrong_questions
@@ -125,6 +126,7 @@ router.include_router(v2_admin_testimonials.router)
 router.include_router(v2_admin_conversion.router)
 router.include_router(v2_plan_assistant.router)
 router.include_router(v2_site_assistant.router)
+router.include_router(v2_program_history.router)
 
 
 @router.get("/ping", include_in_schema=False)

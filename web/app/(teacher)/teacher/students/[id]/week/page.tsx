@@ -63,15 +63,23 @@ export default async function TeacherStudentWeekPage({
           <h1 className="text-lg font-semibold">Bu öğrenci haftalık havuz modunda</h1>
           <p className="mt-1 text-sm">
             {detail.student.full_name ?? "Öğrenci"} için program gün gün değil, haftalık görev havuzuyla
-            yazılır. Gün gün editör bu öğrencide kapalıdır; eski görevleri Bugün/hafta görünümlerinden
-            okunur.
+            yazılır. Gün gün editör bu öğrencide kapalıdır; önceki gün gün haftaları Program geçmişinden
+            salt okunur açılır.
           </p>
-          <Link
-            href={`/teacher/students/${numericId}/pool`}
-            className="mt-3 inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-medium text-white hover:bg-cyan-700"
-          >
-            Haftalık havuzu aç
-          </Link>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={`/teacher/students/${numericId}/pool`}
+              className="inline-flex items-center rounded-md bg-cyan-700 px-3 py-2 text-sm font-medium text-white hover:bg-cyan-800"
+            >
+              Haftalık havuzu aç
+            </Link>
+            <Link
+              href={`/teacher/students/${numericId}#history`}
+              className="inline-flex items-center rounded-md border border-cyan-700 bg-white px-3 py-2 text-sm font-medium text-cyan-900 hover:bg-cyan-50 dark:bg-transparent dark:text-cyan-100 dark:hover:bg-cyan-500/20"
+            >
+              Program geçmişi (önceki haftalar)
+            </Link>
+          </div>
         </div>
       </div>
     );

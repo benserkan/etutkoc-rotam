@@ -13,7 +13,7 @@ import { VideoBasketFloat } from "@/components/teacher/weekly-plan/video-basket-
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CalendarClock, CalendarDays, CalendarRange, Check, ChevronRight, CircleHelp, Eye, Gauge, Inbox, ListChecks, Target,
+  AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CalendarClock, CalendarDays, CalendarRange, Check, ChevronRight, CircleHelp, Eye, Gauge, History, Inbox, ListChecks, Target,
   MessagesSquare, PencilLine, Plus, Trash2, X,
 } from "lucide-react";
 
@@ -111,6 +111,13 @@ export function PoolEditor({ studentId, initial, initialView }: {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {isHavuz && period && <ViewToggle view={view} onChange={setView} />}
+          <Link
+            href={`/teacher/students/${studentId}#history`}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
+            data-testid="pool-program-history-link"
+          >
+            <History className="size-4" aria-hidden /> Program geçmişi
+          </Link>
           <ModeBadge mode={student.program_mode} />
         </div>
       </header>

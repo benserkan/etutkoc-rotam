@@ -14,6 +14,7 @@
  */
 
 import * as React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowDownLeft, ArrowUpRight, CalendarRange, ChevronRight, History, Loader2, Mail, MailCheck,
@@ -112,6 +113,10 @@ export function PeriodHistory({ data }: { data: PoolBundleResponse }) {
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Geçmiş sınırsız saklanır. Bir döneme tıkla: kalem kalem (ne verildi, ne bitti) ve gün gün (hangi gün ne çalıştı).
+            {" "}Gün gün programdan kalan haftalar dahil tüm geçmiş için{" "}
+            <Link href={`/teacher/students/${studentId}#history`} className="font-medium text-cyan-700 underline dark:text-cyan-300">
+              Program geçmişi
+            </Link>.
           </p>
         </div>
       </header>

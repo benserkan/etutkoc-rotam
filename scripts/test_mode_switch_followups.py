@@ -37,6 +37,11 @@ from app.services import analytics, program_mode_switch as pms, push_notificatio
 from app.services import student_email_fallback as sef  # noqa: E402
 from app.services import weekly_progress as wp  # noqa: E402
 from app.services.security import hash_password  # noqa: E402
+from app.services.program_history import build_program_history  # noqa: E402
+from app.services.rate_limit import get_login_limiter  # noqa: E402
+from app.models.suspicious_ip import SuspiciousIp  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from app.main import app  # noqa: E402
 from app.services.student_flags import evaluate_flags  # noqa: E402
 
 PFX = f"msf_{secrets.token_hex(3)}"
@@ -82,6 +87,7 @@ def _task(db, student, day, planned, done, sec, book, draft=False):
 def seed() -> dict:
     with SessionLocal() as db:
         coach = _user(db, "coach", UserRole.TEACHER)
+        _user(db, "other", UserRole.TEACHER)
         sub = Subject(name=f"{PFX} TYT Matematik", teacher_id=coach.id, exam_section=ExamSection.TYT)
         db.add(sub)
         db.flush()
@@ -115,7 +121,7 @@ def seed() -> dict:
         db.add(SectionProgress(student_book_id=sb.id, book_section_id=sec.id,
                                reserved_count=3 + 2 + 4 + 5, completed_count=done_total))
         db.commit()
-        return {"coach": coach.id, "s": s.id, "sb": sb.id, "sec": sec.id, "p4": weeks[-1][0]}
+        return {"coach": coach.id, "other": ids["users"][1], "s": s.id, "sb": sb.id, "sec": sec.id, "p4": weeks[-1][0]}
 
 
 def cleanup():
@@ -138,6 +144,7 @@ def cleanup():
         db.execute(sa_delete(BookSection).where(BookSection.book_id.in_(ids["books"])))
         db.execute(sa_delete(Book).where(Book.id.in_(ids["books"])))
         db.execute(sa_delete(Subject).where(Subject.id.in_(ids["subjects"])))
+        db.execute(sa_delete(SuspiciousIp).where(SuspiciousIp.ip.in_(["testclient", "127.0.0.1"])))
         db.execute(sa_delete(User).where(User.id.in_(u)))
         db.commit()
 
@@ -177,6 +184,48 @@ def main() -> int:
                   f"run={card['trend_run']} {card['verdict']}")
             check("1f grafikte kırpık hafta işaretli",
                   any("mod geçişiyle kısaldı" in r["range"] for r in res["chart"]), f"{res['chart']}")
+
+        # --- 3) program geçmişi zaman çizelgesi
+        with SessionLocal() as db:
+            s = db.get(User, d["s"])
+            ent = build_program_history(db, s, today=today)
+            kinds = [e.kind for e in ent]
+            check("3a en üstte bugünkü geçiş işareti, sonra açık dönem", kinds[:2] == ["switch", "period"], f"{kinds[:4]}")
+            weeks_ = [e for e in ent if e.kind == "week"]
+            check("3b 5 gün gün hafta listelenir (takvime dağılmaz)", len(weeks_) == 5
+                  and all(e.week_kind == "program" for e in weeks_), f"{[(e.start, e.week_kind) for e in weeks_]}")
+            cutw = next((e for e in weeks_ if e.start == d["p4"]), None)
+            check("3c kırpık hafta: cut + 14 test + bitmiş görev sayısı",
+                  cutw is not None and cutw.cut and cutw.test_completed == 14 and cutw.gorev_done == 1,
+                  f"{cutw}")
+            check("3d taslak görevler geçmiş sayısına girmez",
+                  all(e.gorev_total <= 2 for e in weeks_), f"{[(e.start, e.gorev_total) for e in weeks_]}")
+
+        get_login_limiter().reset()
+        c = TestClient(app)
+
+        def login(uid):
+            with SessionLocal() as db:
+                em = db.get(User, uid).email
+            c.cookies.clear()
+            r = c.post("/api/v2/auth/login", json={"email": em, "password": "Xx!234567890ab"})
+            assert r.status_code == 200, r.text
+
+        login(d["coach"])
+        r = c.get(f"/api/v2/teacher/students/{d['s']}/program-history")
+        check("3e koç ucu 200 + havuz modu + dönem/hafta sayısı",
+              r.status_code == 200 and r.json()["program_mode"] == "havuz" and r.json()["weeks_count"] == 5
+              and r.json()["periods_count"] == 1, r.text[:200])
+        r = c.get(f"/api/v2/teacher/students/{d['s']}/week?start={d['p4'].isoformat()}"
+                  f"&end={(today - timedelta(days=1)).isoformat()}")
+        check("3f hafta ucu end parametresiyle kırpık aralığı verir",
+              r.status_code == 200 and r.json()["end_date"] == (today - timedelta(days=1)).isoformat(), r.text[:200])
+        login(d["other"])
+        r = c.get(f"/api/v2/teacher/students/{d['s']}/program-history")
+        check("3g başka koç 404", r.status_code == 404, str(r.status_code))
+        login(d["s"])
+        r = c.get("/api/v2/student/program-history")
+        check("3h öğrenci kendi geçmişini görür", r.status_code == 200 and r.json()["weeks_count"] == 5, r.text[:200])
 
         # --- 5) boş havuz başlığı
         with SessionLocal() as db:

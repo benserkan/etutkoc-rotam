@@ -260,9 +260,12 @@ function SubjGroupBlock({
   highlightTaskId,
   insights,
   insightsLoading = false,
+  readOnly = false,
 }: {
   g: SubjGroup;
   dayDate: string;
+  /** Program geçmişi: sürükleme/sağ tık yok. */
+  readOnly?: boolean;
   highlightTaskId?: number | null;
   /** Konu özeti (hafta ızgarası hover kartı, 2026-10-18) */
   insights?: Map<number, TopicInsight>;
@@ -297,9 +300,12 @@ function SubjGroupBlock({
         {g.tasks.map((t) => {
           const mk = MARK[gorevState(t)];
           const hl = highlightTaskId === t.id;
-          const dragHint = t.scheduled_hour == null
-            ? "Sürükle: başka güne taşı · Ctrl ile bırak: kopyala"
-            : "Saat atanmış görev taşınamaz";
+          const dragHint = readOnly
+            ? ""
+            : t.scheduled_hour == null
+              ? "Sürükle: başka güne taşı · Ctrl ile bırak: kopyala"
+              : "Saat atanmış görev taşınamaz";
+          const canDrag = !readOnly && t.scheduled_hour == null;
           const hasTopic = !!insights && taskTopicIds(t).length > 0;
           const row = (
             <li
@@ -315,8 +321,9 @@ function SubjGroupBlock({
                     }
                   : undefined
               }
-              draggable={t.scheduled_hour == null}
+              draggable={canDrag}
               onDragStart={(e) => {
+                if (!canDrag) return;
                 e.dataTransfer.setData(
                   GRID_TASK_MIME,
                   JSON.stringify({ taskId: t.id, sourceDate: dayDate }),
@@ -326,14 +333,14 @@ function SubjGroupBlock({
               }}
               onDragEnd={() => onDragState?.(false)}
               onContextMenu={(e) => {
-                if (!onContext) return;
+                if (readOnly || !onContext) return;
                 e.preventDefault();
                 e.stopPropagation();
                 onContext(t, dayDate, e.clientX, e.clientY);
               }}
               className={cn(
                 "flex items-start gap-1 text-[10px] leading-snug",
-                t.scheduled_hour == null && "cursor-grab active:cursor-grabbing",
+                canDrag && "cursor-grab active:cursor-grabbing",
                 // Koltuk ızgarasından gelinen görev: DOLGULU ayrı renk (küçük
                 // öğede ton+dark çifti yerine dolgu — kontrast kuralı)
                 hl &&
@@ -397,8 +404,14 @@ export function WeekGrid({
   highlightTaskId = null,
   onClearHighlight,
   ghostsByDate,
+  readOnly = false,
+  title,
 }: {
   studentId: number;
+  /** Program geçmişi: salt okunur ızgara (taşı/kopyala/sil/video bırak kapalı). */
+  readOnly?: boolean;
+  /** Başlık metni (varsayılan "Hafta Izgarası"). */
+  title?: string;
   days: TeacherStudentWeekDay[];
   subjects: SubjectRef[];
   /** İskelet hayaletleri (F1b) — kesikli "öneri" satırları. */
@@ -531,6 +544,7 @@ export function WeekGrid({
 
   const handleDrop = React.useCallback(
     (e: React.DragEvent, targetDate: string, period?: "morning" | "noon" | "evening" | "") => {
+      if (readOnly) return;
       const vraw = e.dataTransfer.getData(VIDEO_MIME);
       if (vraw) {
         e.preventDefault();
@@ -613,7 +627,7 @@ export function WeekGrid({
         { onSuccess: () => toast.success("Görev taşındı") },
       );
     },
-    [days, moveMut, spreadMut, placeVideos],
+    [days, moveMut, spreadMut, placeVideos, readOnly],
   );
 
   const totalTasks = days.reduce((a, d) => a + d.tasks.length, 0);
@@ -628,7 +642,7 @@ export function WeekGrid({
       >
         <LayoutGrid className="size-4 text-muted-foreground flex-shrink-0" aria-hidden />
         <span className="text-sm font-semibold text-foreground">
-          Hafta Izgarası
+          {title ?? "Hafta Izgarası"}
         </span>
         <span className="text-[11px] text-muted-foreground">
           — tüm günler bir bakışta · {totalTasks} görev
@@ -663,6 +677,7 @@ export function WeekGrid({
                     onOpenDay(day.date);
                   }}
                   onDragOver={(e) => {
+                    if (readOnly) return;
                     const isVideo = e.dataTransfer.types.includes(VIDEO_MIME);
                     if (!isVideo && !e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
                     if (isVideo && day.is_past) return;
@@ -692,7 +707,9 @@ export function WeekGrid({
                       ? `${day.dow_label} — buraya ${
                           pending.mode === "move" ? "taşı" : "kopyala"
                         }`
-                      : `${day.dow_label} — düzenlemek için tıkla`
+                      : readOnly
+                        ? `${day.dow_label} — ayrıntı için tıkla`
+                        : `${day.dow_label} — düzenlemek için tıkla`
                   }
                 >
                   <div
@@ -729,6 +746,7 @@ export function WeekGrid({
                           onDragOver={
                             sec.pkey
                               ? (e) => {
+                                  if (readOnly) return;
                                   const isVideo = e.dataTransfer.types.includes(VIDEO_MIME);
                                   if (!isVideo && !e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
                                   if (isVideo && day.is_past) return;
@@ -765,6 +783,7 @@ export function WeekGrid({
                               highlightTaskId={highlightTaskId}
                               insights={insightMap}
                               insightsLoading={insightQ.isLoading}
+                              readOnly={readOnly}
                               onDragState={setDragging}
                               onContext={(t, dd, x, y) =>
                                 setMenu({

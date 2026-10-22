@@ -492,10 +492,12 @@ export function getTeacherStudentWeek(
   id: number,
   start?: string,
   programId?: number | null,
+  end?: string,
 ): Promise<TeacherStudentWeekResponse> {
   const qs = buildQuery({
     start,
     program_id: programId != null ? String(programId) : undefined,
+    end,
   });
   return api<TeacherStudentWeekResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(id))}/week${qs}`,

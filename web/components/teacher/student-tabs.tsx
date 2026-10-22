@@ -15,6 +15,7 @@ import {
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
+  History,
   Library,
   ListChecks,
   Loader2,
@@ -73,6 +74,7 @@ import { StudentParentsPanel } from "@/components/teacher/student-parents-panel"
 import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
 import { TopicPerformancePanel } from "@/components/shared/topic-performance-panel";
 import { CurriculumPanel } from "@/components/teacher/curriculum-panel";
+import { ProgramHistoryPanel } from "@/components/teacher/program-history-panel";
 import { StudentDevHub } from "@/components/teacher/student-dev-hub";
 import { StudentWeeklyProgress } from "@/components/teacher/student-weekly-progress";
 import {
@@ -88,6 +90,7 @@ type TabKey =
   | "summary"
   | "analytics"
   | "curriculum"
+  | "history"
   | "topics"
   | "exams"
   | "program-exams"
@@ -114,6 +117,7 @@ const TAB_GROUPS: Array<{
     tabs: [
       { key: "curriculum", label: "Müfredat", icon: ListChecks },
       { key: "books", label: "Kitaplar", icon: Library },
+      { key: "history", label: "Program geçmişi", icon: History },
     ],
   },
   {
@@ -141,6 +145,7 @@ function isValidTab(v: string): v is TabKey {
     v === "summary" ||
     v === "analytics" ||
     v === "curriculum" ||
+    v === "history" ||
     v === "topics" ||
     v === "exams" ||
     v === "program-exams" ||
@@ -391,6 +396,12 @@ export function StudentTabs({ studentId, initial }: Props) {
           aria-labelledby="tab-analytics"
         >
           <StudentAnalyticsPanel studentId={studentId} />
+        </div>
+      ) : null}
+
+      {active === "history" ? (
+        <div role="tabpanel" id="tab-panel-history" aria-labelledby="tab-history">
+          <ProgramHistoryPanel studentId={studentId} />
         </div>
       ) : null}
 
