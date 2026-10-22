@@ -49,6 +49,17 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   53 · pool_editor 41 · book_grid 17 · weekly_plan 15 · teacher_read 12 · student_read 11 · tarayıcıda canlı
   (zaman çizelgesi, salt okunur hafta, sağ tık kapalı, dönem penceresi, havuz bağlantısı).
 
+## HAVUZ — KOÇ ONAYDAN ÖNCE KALEMİN KONUSUNU DEĞİŞTİRİR (2026-10-22, commit `251506a`, migration YOK, CANLI)
+
+- Öğrencinin eklediği kalem (onay bekliyor) yanlış konuya/kitaba bağlıysa koç onaylamadan düzeltir.
+  `pool_mode.relink_item` (yalnız ilerlemesiz kalem: kaba alınmamış, işaretlenmemiş → yoksa 409 `has_progress`;
+  konu yerleşik ya da koçun; kitap öğrenciye atanmış + arşivsiz; miktar korunur, birim kitapta test/deneme,
+  konuda test/soru/sayfa) + POST `/teacher/students/{id}/pool/items/{iid}/relink` {topic_id | book_id+section_id,
+  approve}. Web: onay satırında "Konuyu değiştir" → `RelinkItemDialog` (pool-add-panel'in SourcePicker'ı;
+  "Kaydet" / "Kaydet ve onayla"). Mobil koç havuz yazmadığı için mobilde yok.
+- Test `test_student_pool_item_linked` 22/22 (15-20 relink) · YENİ `live_pool_relink.py` 6/6 · pool editor 41 ·
+  student 29 · foundation 53 · step7 30 · followups 20.
+
 ## KAYNAKSIZ GÖREVDE BİRİM (test/soru/sayfa) + SAYFA ARALIĞI + TEK DERS LİSTESİ (2026-10-22, migration `u5w8b1c2b77x`, CANLI — commit `9b5befc`, yedek `pre_itemunit_20261022_1001.dump`, OTA `8ef64381`)
 
 - **Saha ihtiyacı (koç):** kayıtlı kitap (Hız Fen) konu anlatımlı + açık uçlu → test sayısıyla bölünemiyor, sayfa
