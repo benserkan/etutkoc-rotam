@@ -6,6 +6,34 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## TAHA #84 HAVUZA GEÇİŞ + PROGRAM GEÇMİŞİ — CANLI (2026-10-22, migration YOK, commit `e6e9036` · `e948915` · `a8fff67`)
+
+- **Saha işlemi:** Taha (#84) canlıda koç hesabıyla site üzerinden 22.10 itibarıyla havuza geçirildi (17–23 Eki
+  programı Perşembe'de kesildi; ilk dönem 22→29 Eki açık, havuz koç tarafından yazılacak). Arka plan doğrulaması:
+  17 görev silindi + 35 test iade · 17–21 Eki yapılmamışların 54 testi serbest · çözülen 1047 değişmedi · drift 0 ·
+  uyarı/risk sustu. Öğrenciye push gönderildi (comm_log `sent`).
+- **Bulunan + düzeltilen:** (1) `weekly_progress._weeks` havuz öğrencisinde WeeklyProgram'ı yok sayıp geçmişi takvim
+  haftalarına dağıtıyordu (17–23 → "12–18 / 19–21") → sahte "3 hafta kötüleşme". Artık program haftaları + havuz
+  dönemleri birleşir (`_merge_program_and_period_weeks`, dönem öncelikli), yarıda kalan hafta `Week.cut` → eğilim/
+  taban dizisine girmez, grafikte "mod geçişiyle kısaldı". (2) Bayat taslak rezervi: `task_service.dead_draft_clause`
+  (`STALE_DRAFT_DAYS=7`) — reconcile + geçiş önizlemesi aynı kural (Taha'da 1–2 Eki taslakları 6 test kilitliyordu).
+  (4) Geçişte öğrenci bildirimi `student_email_fallback.notify_student_program_mode(_bg)` (push; cihazsız → e-posta
+  `student_program_mode.html`), /switch + seansı bitir→gün gün uçlarında BackgroundTasks. (5) Boş havuz "yolunda /
+  takvime göre önde / havuz bitti" demez. (6) Metinler: "geçiş günü ve sonrası", iade toplamı kırılımlı.
+- **Program geçmişi (tam yol):** YENİ `app/services/program_history.py` + `api_v2/program_history.py` → GET
+  `/teacher/students/{id}/program-history` + `/student/program-history` (gün gün haftalar + havuz dönemleri + mod
+  geçişleri, yeni→eski; taslak sayılmaz). Hafta ucu `?start&end` (kırpık aralık). Web: paylaşılan
+  `shared/program-history-timeline.tsx` (ay grupları, süzgeç, rozetler) · koç `teacher/program-history-panel.tsx`
+  (hafta salt okunur: `WeekGrid readOnly` + gün ayrıntısı; dönem → `PoolPeriodDialog`), öğrenci detayında `#history`
+  — **sekme şeridinde DEĞİL** (menüyü iki satıra itiyordu), başlıkta "Program geçmişi" düğmesi · havuz sayfası başlığı
+  + dönem geçmişi kartı + havuz öğrencisinin /week kartı bağlantıları · öğrenci `/student/history` "Program geçmişim"
+  (menü + Havuzum). NOT: havuz "Dönem geçmişi" kartı yalnız kapanmış dönem varken çizilir — geçmişe giriş artık zaman
+  çizelgesi. Mobil BİLİNÇLİ yok (sonraki iş).
+- Test YENİ `test_mode_switch_followups.py` **20/20** (düzeltme öncesi kodda sahadaki hatayı üretir) · weekly_progress
+  26 · program_mode_switch 22 · carryover 20/18 · summer_cron 13 · dead_reserve_cutoff 6 · pool_flags 47 · foundation
+  53 · pool_editor 41 · book_grid 17 · weekly_plan 15 · teacher_read 12 · student_read 11 · tarayıcıda canlı
+  (zaman çizelgesi, salt okunur hafta, sağ tık kapalı, dönem penceresi, havuz bağlantısı).
+
 ## KAYNAKSIZ GÖREVDE BİRİM (test/soru/sayfa) + SAYFA ARALIĞI + TEK DERS LİSTESİ (2026-10-22, migration `u5w8b1c2b77x`, CANLI — commit `9b5befc`, yedek `pre_itemunit_20261022_1001.dump`, OTA `8ef64381`)
 
 - **Saha ihtiyacı (koç):** kayıtlı kitap (Hız Fen) konu anlatımlı + açık uçlu → test sayısıyla bölünemiyor, sayfa
