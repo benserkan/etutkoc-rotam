@@ -117,7 +117,6 @@ const TAB_GROUPS: Array<{
     tabs: [
       { key: "curriculum", label: "Müfredat", icon: ListChecks },
       { key: "books", label: "Kitaplar", icon: Library },
-      { key: "history", label: "Program geçmişi", icon: History },
     ],
   },
   {
@@ -704,6 +703,17 @@ function QuickActions({
         <CalendarRange className="size-4" aria-hidden />
         {profile.program_mode === "havuz" ? "Haftalık Havuz" : "Haftalık Program"}
       </Link>
+      {/* Program geçmişi sekme şeridinde DEĞİL (2026-10-22, kullanıcı: menüyü iki satıra itiyordu);
+          #history hash'i geçerli, panel aynı sayfada açılır. */}
+      <a
+        href="#history"
+        title="Önceki gün gün haftalar ve havuz dönemleri (salt okunur)"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground transition hover:bg-muted"
+        data-testid="student-program-history-link"
+      >
+        <History className="size-4" aria-hidden />
+        Program geçmişi
+      </a>
       <button
         type="button"
         onClick={() => setWaOpen(true)}
