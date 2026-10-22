@@ -6,7 +6,7 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
-## KAYNAKSIZ GÖREVDE BİRİM (test/soru/sayfa) + SAYFA ARALIĞI + TEK DERS LİSTESİ (2026-10-22, migration `u5w8b1c2b77x`, COMMIT/DEPLOY BEKLİYOR)
+## KAYNAKSIZ GÖREVDE BİRİM (test/soru/sayfa) + SAYFA ARALIĞI + TEK DERS LİSTESİ (2026-10-22, migration `u5w8b1c2b77x`, CANLI — commit `9b5befc`, yedek `pre_itemunit_20261022_1001.dump`, OTA `8ef64381`)
 
 - **Saha ihtiyacı (koç):** kayıtlı kitap (Hız Fen) konu anlatımlı + açık uçlu → test sayısıyla bölünemiyor, sayfa
   aralığıyla bölünüyor ("1. gün s. 45–50, 2. gün 51–55"); aralıklar unutuluyordu. Ayrıca gün gün Test formunda ders
