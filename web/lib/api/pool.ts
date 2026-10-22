@@ -46,6 +46,8 @@ export interface PoolItemOut {
   exam_kind?: "brans" | "genel" | null;
   exam_section?: string | null;
   question_count?: number | null;
+  page_from?: number | null;
+  page_to?: number | null;
 }
 
 export interface PoolSummaryOut {
@@ -217,6 +219,9 @@ export interface PoolItemBody {
   teacher_homework?: boolean;
   source?: "rehber" | "deneme" | "sablon";
   exam_result_id?: number | null;
+  /** Sayfa aralığı (unit=sayfa, 2026-10-22) — verilirse miktar aralıktan hesaplanır. */
+  page_from?: number | null;
+  page_to?: number | null;
 }
 
 export interface ParseChip {

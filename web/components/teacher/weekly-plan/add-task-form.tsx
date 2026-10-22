@@ -6,7 +6,6 @@ import {
   extractTestCount,
   getSubjectTopics,
   taskTopicKeys,
-  topicOptionLabel,
   type SubjectTopicsResponse,
 } from "@/lib/api/task-topic-link";
 import { TopicLinkPanel, useTopicLink } from "./topic-link-panel";
@@ -32,7 +31,7 @@ import {
   Video,
 } from "lucide-react";
 
-import type { TaskPeriod } from "@/lib/types/teacher";
+import type { ItemUnit, PageSuggestionResponse, TaskPeriod } from "@/lib/types/teacher";
 
 import {
   getStudentAllSubjects,
@@ -49,6 +48,12 @@ import {
   useCreateWorkBlock,
 } from "@/lib/hooks/use-teacher-mutations";
 import { TaskQuickAdd } from "./task-quick-add";
+import {
+  LinkedTopicChip,
+  PageSuggestionLine,
+  usePageSuggestion,
+  type TaskSeed,
+} from "./task-seed";
 import { DenemeForm } from "./deneme-form";
 import type {
   BookOptionsResponse,
@@ -72,6 +77,9 @@ type TaskType =
   | "ozet"
   | "tekrar"
   | "other";
+
+/** Konuyla açılabilen etkinlik tipleri (görev konuya bağlanır, test sayılmaz). */
+const ACTIVITY_TYPES = new Set<TaskType>(["video", "ozet", "tekrar", "other"]);
 
 const TYPE_TILES: Array<{
   key: TaskType;
@@ -112,6 +120,16 @@ export function AddTaskForm({
   // "Ayrıntılı form" ile açılır (geri dönüş yolu korunur, koç zorlanmaz).
   // Canlı veride görevlerin %78'i TEST; kutu tam onu 3 tıka indiriyor.
   const [detailed, setDetailed] = React.useState(false);
+  // Hızlı kutudaki seçim (2026-10-22): ayrıntılı forma / tip formlarına geçerken
+  // kaybolmasın — koç "DNA ve Genetik Kod"u seçip Özet'e basınca form dolu açılır.
+  const [seed, setSeed] = React.useState<TaskSeed | null>(null);
+  // Ayrıntılı form her açılışta seçimi YENİDEN okusun (key ile yeniden kurulur).
+  const [formKey, setFormKey] = React.useState(0);
+  function openDetailed(t: TaskType) {
+    setType(t);
+    setFormKey((k) => k + 1);
+    setDetailed(true);
+  }
 
   // TEST için: sidebar — yalnız kitap atanmış dersler (cascade ders→kitap→ünite)
   const allSidebarQ = useQuery<SidebarResponse>({
@@ -152,33 +170,70 @@ export function AddTaskForm({
           studentId={studentId}
           dayDate={dayDate}
           period={period}
-          onAfterAdd={onAfterAdd}
+          onAfterAdd={() => {
+            setSeed(null);
+            onAfterAdd();
+          }}
+          initialSeed={seed}
+          onSeedChange={setSeed}
+          onPeriodChange={setPeriod}
+          secondary={
+            seed ? (
+              // Konu seçiliyken ikincil eylemler kartın altbilgisinde (birincil Ekle sağda)
+              <div
+                className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px]"
+                data-section="quick-add:types"
+              >
+                <span className="text-muted-foreground">Bu konuyla:</span>
+                {TYPE_TILES.filter((t) => ACTIVITY_TYPES.has(t.key)).map(({ key, label, Icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => openDetailed(key)}
+                    title={`${seed.topic.topic_name} için ${label.toLocaleLowerCase("tr")} görevi`}
+                    className="inline-flex items-center gap-1 font-medium text-foreground underline-offset-2 hover:underline"
+                  >
+                    <Icon className="size-3.5 text-muted-foreground" aria-hidden />
+                    {label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => openDetailed("test")}
+                  title="Kitap/ünite elle seçmek için — seçimin forma taşınır"
+                  className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                >
+                  Ayrıntılı forma aktar
+                </button>
+              </div>
+            ) : null
+          }
         />
-        <div className="flex flex-wrap items-center gap-1.5">
-          {/* Nadir tipler ana ekranı doldurmasın: canlı veride Video %3,3,
-              Özet/Tekrar %0,3. Tek tıkla ayrıntılı forma geçerler. */}
-          {TYPE_TILES.filter((t) => t.key !== "test").map(({ key, label, Icon }) => (
+        {!seed ? (
+          <div className="flex flex-wrap items-center gap-1.5" data-section="quick-add:types">
+            {/* Nadir tipler ana ekranı doldurmasın: canlı veride Video %3,3,
+                Özet/Tekrar %0,3. Konu seçilince kartın altbilgisine taşınırlar. */}
+            {TYPE_TILES.filter((t) => t.key !== "test").map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => openDetailed(key)}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11.5px] text-foreground hover:bg-muted/60"
+              >
+                <Icon className="size-3" aria-hidden />
+                {label}
+              </button>
+            ))}
             <button
-              key={key}
               type="button"
-              onClick={() => {
-                setType(key);
-                setDetailed(true);
-              }}
-              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11.5px] text-foreground hover:bg-muted/60"
+              onClick={() => openDetailed("test")}
+              title="Kitap ve üniteyi elle seçmek için"
+              className="ml-auto text-[11.5px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
-              <Icon className="size-3" aria-hidden />
-              {label}
+              Ayrıntılı form
             </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setDetailed(true)}
-            className="ml-auto text-[11.5px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
-          >
-            Ayrıntılı form
-          </button>
-        </div>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -195,7 +250,7 @@ export function AddTaskForm({
             onClick={() => setDetailed(false)}
             className="text-[11.5px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            Hızlı ekleme
+            {seed ? "← Hızlı eklemeye dön (seçim korunur)" : "Hızlı ekleme"}
           </button>
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
@@ -226,13 +281,18 @@ export function AddTaskForm({
 
       {type === "test" ? (
         <TestForm
+          key={formKey}
+          seed={seed}
           studentId={studentId}
           dayDate={dayDate}
           subjects={testSubjects}
           bookedSubjectIds={bookedIds}
           period={period}
           onFocusSubject={onFocusSubject}
-          onAfterAdd={onAfterAdd}
+          onAfterAdd={() => {
+            setSeed(null);
+            onAfterAdd();
+          }}
         />
       ) : null}
       {type === "deneme" ? (
@@ -255,42 +315,62 @@ export function AddTaskForm({
       ) : null}
       {type === "video" ? (
         <VideoForm
+          key={formKey}
+          seed={seed}
           studentId={studentId}
           dayDate={dayDate}
           subjects={allSubjects}
           period={period}
           onFocusSubject={onFocusSubject}
-          onAfterAdd={onAfterAdd}
+          onAfterAdd={() => {
+            setSeed(null);
+            onAfterAdd();
+          }}
         />
       ) : null}
       {type === "ozet" ? (
         <OzetForm
+          key={formKey}
+          seed={seed}
           studentId={studentId}
           dayDate={dayDate}
           subjects={allSubjects}
           period={period}
           onFocusSubject={onFocusSubject}
-          onAfterAdd={onAfterAdd}
+          onAfterAdd={() => {
+            setSeed(null);
+            onAfterAdd();
+          }}
         />
       ) : null}
       {type === "tekrar" ? (
         <TekrarForm
+          key={formKey}
+          seed={seed}
           studentId={studentId}
           dayDate={dayDate}
           subjects={allSubjects}
           period={period}
           onFocusSubject={onFocusSubject}
-          onAfterAdd={onAfterAdd}
+          onAfterAdd={() => {
+            setSeed(null);
+            onAfterAdd();
+          }}
         />
       ) : null}
       {type === "other" ? (
         <OtherForm
+          key={formKey}
+          seed={seed}
           studentId={studentId}
           dayDate={dayDate}
           subjects={allSubjects}
           period={period}
           onFocusSubject={onFocusSubject}
-          onAfterAdd={onAfterAdd}
+          onAfterAdd={() => {
+            setSeed(null);
+            onAfterAdd();
+          }}
         />
       ) : null}
     </div>
@@ -360,7 +440,9 @@ function TestForm({
   period,
   onFocusSubject,
   onAfterAdd,
+  seed = null,
 }: {
+  seed?: TaskSeed | null;
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
@@ -372,14 +454,23 @@ function TestForm({
 }) {
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
-  const [subjectId, setSubjectId] = React.useState<number | "">("");
+  // Hızlı kutudan taşınan seçim (2026-10-22) — form kaldığı yerden açılır.
+  const [subjectId, setSubjectId] = React.useState<number | "">(seed?.topic.subject_id ?? "");
   // "none" = kaynaksız (müfredat konusuna bağlı) test — 2026-10-16: kitabı
   // yüklenmemiş öğrenciye de test verilebilsin.
-  const [bookId, setBookId] = React.useState<number | "" | "none">("");
-  const [sectionId, setSectionId] = React.useState<number | "">("");
-  const [topicId, setTopicId] = React.useState<number | "">("");
+  const [bookId, setBookId] = React.useState<number | "" | "none">(
+    seed ? (seed.source ? seed.source.book_id : "none") : "",
+  );
+  const [sectionId, setSectionId] = React.useState<number | "">(seed?.source?.section_id ?? "");
+  const [topicId, setTopicId] = React.useState<number | "">(seed?.topic.topic_id ?? "");
   const [topicOpen, setTopicOpen] = React.useState(false);
-  const [plannedCount, setPlannedCount] = React.useState<string>("");
+  const [plannedCount, setPlannedCount] = React.useState<string>(seed?.count ?? "");
+  // Kaynaksız konulu görevde birim + kitap notu + sayfa aralığı (2026-10-22)
+  const [unit, setUnit] = React.useState<ItemUnit>(seed?.unit ?? "test");
+  const [note, setNote] = React.useState(seed?.note ?? "");
+  const [pageFrom, setPageFrom] = React.useState(seed?.pageFrom ?? "");
+  const [pageTo, setPageTo] = React.useState(seed?.pageTo ?? "");
+  const seedTopicName = seed && !seed.source ? seed.topic.topic_name : null;
 
   const booksQ = useQuery<BookOptionsResponse>({
     queryKey: teacherKeys.studentBooksBySubject(
@@ -414,6 +505,9 @@ function TestForm({
     staleTime: 5 * 60_000,
   });
 
+  // Sayfa görevinde "kaldığı yer": kitap notuna (yoksa konuya) göre son verilen aralık.
+  const pageSugQ = usePageSuggestion(studentId, topicId === "" ? null : topicId, note, sourceless);
+
   const statsQ = useQuery<SectionStatsResponse>({
     queryKey: teacherKeys.studentSectionStats(
       studentId,
@@ -432,6 +526,9 @@ function TestForm({
     setSectionId("");
     setTopicId("");
     setTopicOpen(false);
+    setUnit("test");
+    setPageFrom("");
+    setPageTo("");
     onFocusSubject(num === "" ? null : num);
   }
 
@@ -443,7 +540,13 @@ function TestForm({
         : (sectionsQ.data?.items ?? []).find((s) => s.id === sectionId),
     [sectionsQ.data, sectionId, sourceless],
   );
-  const wanted = Number(plannedCount);
+  // Sayfa biriminde adet aralıktan hesaplanır (bitiş − başlangıç + 1).
+  const pf = Number(pageFrom);
+  const pt = Number(pageTo);
+  const pageMode = sourceless && unit === "sayfa";
+  const rangeValid = pageMode && pageFrom !== "" && pageTo !== "" && pf >= 1 && pt >= pf;
+  const rangeCount = rangeValid ? pt - pf + 1 : 0;
+  const wanted = pageMode ? rangeCount : Number(plannedCount);
   const overflow =
     selectedSection && Number.isFinite(wanted) && wanted > 0
       ? Math.max(0, wanted - selectedSection.remaining)
@@ -451,17 +554,19 @@ function TestForm({
   // Kutu TEST sayısıdır; 15'ten büyük sayı çoğu zaman soru sayısıdır.
   // Deneme kitabında birim DENEME (1 kalem = 1 deneme; backend her denemeyi ayrı açar).
   const isDenemeBook = !sourceless && Boolean(sectionsQ.data?.is_deneme);
-  const unitWord = isDenemeBook ? "deneme" : "test";
-  const looksLikeQuestions = !isDenemeBook && Number.isFinite(wanted) && wanted > 15;
+  const unitWord = isDenemeBook ? "deneme" : sourceless ? unit : "test";
+  const looksLikeQuestions =
+    !isDenemeBook && unitWord === "test" && Number.isFinite(wanted) && wanted > 15;
 
   const topics = topicsQ.data?.topics ?? [];
   const selectedTopic = topicId === "" ? undefined : topics.find((t) => t.topic_id === topicId);
+  const topicLabel = selectedTopic?.name ?? (topicId === seed?.topic.topic_id ? seedTopicName : null);
   const ready = sourceless ? topicId !== "" : realBookId !== null && sectionId !== "";
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!ready) return;
-    const count = Number(plannedCount);
+    const count = pageMode ? rangeCount : Number(plannedCount);
     if (!Number.isFinite(count) || count < 1) return;
     const scheduledHour = hour === "" ? null : Number(hour);
     const item = sourceless
@@ -470,8 +575,12 @@ function TestForm({
           book_id: null,
           section_id: null,
           topic_id: topicId as number,
-          label: selectedTopic?.name ?? "Konu",
+          // Kitap notu (sistemde kayıtlı değilse) görevde kaynak adı olarak görünür
+          label: note.trim() || topicLabel || "Konu",
           planned_count: count,
+          unit,
+          page_from: pageMode ? pf : null,
+          page_to: pageMode ? pt : null,
         }
       : {
           book_id: realBookId as number,
@@ -498,6 +607,8 @@ function TestForm({
           setSectionId("");
           setTopicId("");
           setPlannedCount("");
+          setPageFrom("");
+          setPageTo("");
           onAfterAdd();
         },
       },
@@ -509,35 +620,26 @@ function TestForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
+      {/* YENİDEN SIRALAMA (2026-10-22): seçim alanları → (kaynaksızda) birim/not/aralık →
+          EN ALTTA adet + Ekle. Eskiden Adet + Ekle birim panelinin ÜSTÜNDEYDİ; birim Ekle'den
+          sonra seçiliyormuş gibi okunuyordu. */}
       <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
-        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
-        <div className="@2xl:col-span-2">
+        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-2" />
+        <div className="@2xl:col-span-3">
           <Label>Ders</Label>
           <Select
             value={subjectId === "" ? "" : String(subjectId)}
             onChange={onSubjectChange}
           >
             <option value="">— ders seç —</option>
-            {booked.length > 0 ? (
-              <optgroup label="Kitabı olan dersler">
-                {booked.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </optgroup>
-            ) : null}
-            {others.length > 0 ? (
-              <optgroup
-                label={booked.length > 0 ? "Kitabı yok — kaynaksız verilir" : "Dersler (kaynaksız verilir)"}
-              >
-                {others.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </optgroup>
-            ) : null}
+            {/* Tüm dersler tek listede (2026-10-22): kitabı olan derste de kaynaksız
+                görev verilebilir — Kitap kutusunda "Kaynaksız" her zaman var. */}
+            {[...booked, ...others].map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+                {bookedSubjectIds.has(s.id) ? " · kitabı var" : ""}
+              </option>
+            ))}
           </Select>
         </div>
         <div className="@2xl:col-span-3">
@@ -562,12 +664,11 @@ function TestForm({
                 {b.name}
               </option>
             ))}
-            {subjectId !== "" ? (
-              <option value="none">Kaynaksız (müfredat konusuna bağlı)</option>
-            ) : null}
+            {/* Kısa etiket: dar kutuda kırpılmasın (açıklaması aşağıda) */}
+            {subjectId !== "" ? <option value="none">Kaynaksız</option> : null}
           </Select>
         </div>
-        <div className="@2xl:col-span-3">
+        <div className="@2xl:col-span-4">
           <Label>{sourceless ? "Müfredat konusu" : "Ünite / Deneme"}</Label>
           {sourceless ? (
             <button
@@ -581,7 +682,7 @@ function TestForm({
               )}
             >
               <span className={cn("min-w-0 break-words", !selectedTopic && "text-muted-foreground")}>
-                {selectedTopic ? selectedTopic.name : "— konu ara / seç —"}
+                {topicLabel ?? "— konu ara / seç —"}
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             </button>
@@ -603,20 +704,6 @@ function TestForm({
             </Select>
           )}
         </div>
-        <div className="@2xl:col-span-2">
-          <Label>Adet ({unitWord})</Label>
-          <Input
-            type="number"
-            min={1}
-            value={plannedCount}
-            onChange={(e) => setPlannedCount(e.target.value)}
-            className="text-right tabular-nums"
-            aria-label={isDenemeBook ? "Deneme sayısı" : "Test sayısı"}
-          />
-        </div>
-        <div className="@2xl:col-span-1 flex justify-end">
-          <SubmitButton pending={create.isPending} disabled={!ready || !plannedCount} />
-        </div>
       </div>
       {sourceless && subjectId !== "" && topicOpen ? (
         <TopicPickerPanel
@@ -630,22 +717,64 @@ function TestForm({
           onClose={() => setTopicOpen(false)}
         />
       ) : null}
-      {sourceless && subjectId !== "" ? (
+      {sourceless && topicId !== "" ? (
+        <SourcelessOptions
+          unit={unit}
+          onUnit={(u) => {
+            setUnit(u);
+            if (u !== "sayfa") {
+              setPageFrom("");
+              setPageTo("");
+            }
+          }}
+          note={note}
+          onNote={setNote}
+          pageFrom={pageFrom}
+          pageTo={pageTo}
+          onPageFrom={setPageFrom}
+          onPageTo={setPageTo}
+          rangeInvalid={pageMode && pageFrom !== "" && pageTo !== "" && !rangeValid}
+          suggestion={pageSugQ.data}
+        />
+      ) : null}
+      {sourceless && subjectId !== "" && noBooks ? (
         <p className="flex items-start gap-1.5 text-[11.5px] leading-snug text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>
-            {selectedTopic ? (
-              <b className="text-foreground">
-                {topicOptionLabel(selectedTopic)} ·{" "}
-                {subjects.find((s) => s.id === subjectId)?.name}.{" "}
-              </b>
-            ) : null}
-            {noBooks ? "Öğrencinin bu derste kitabı yok. " : ""}Görev seçtiğin müfredat
-            konusuna bağlı test olarak eklenir; müfredat ilerlemesine, konu performansına ve
-            kurum tablolarına yansır.
-          </span>
+          <span>Öğrencinin bu derste kitabı yok — görev seçtiğin müfredat konusuna bağlanır.</span>
         </p>
       ) : null}
+      {/* Miktar + birincil eylem en altta */}
+      <div className="flex flex-wrap items-end justify-end gap-3" data-section="task-form:submit-row">
+        <div className="w-40">
+          <Label>Adet ({unitWord})</Label>
+          {pageMode ? (
+            <div
+              className="flex h-9 items-center justify-end rounded-md border border-dashed border-input px-3 text-sm tabular-nums text-muted-foreground"
+              aria-label="Sayfa adedi"
+              title="Sayfa aralığından hesaplanır"
+            >
+              {rangeValid ? `${rangeCount} sayfa` : "aralıktan"}
+            </div>
+          ) : (
+            <Input
+              type="number"
+              min={1}
+              value={plannedCount}
+              onChange={(e) => setPlannedCount(e.target.value)}
+              className="text-right tabular-nums"
+              aria-label={
+                isDenemeBook ? "Deneme sayısı" : unitWord === "soru" ? "Soru sayısı" : "Test sayısı"
+              }
+            />
+          )}
+        </div>
+        <div className="w-40">
+          <SubmitButton
+            pending={create.isPending}
+            disabled={!ready || (pageMode ? !rangeValid : !plannedCount)}
+          />
+        </div>
+      </div>
       {looksLikeQuestions ? (
         <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -945,7 +1074,9 @@ function VideoForm({
   period,
   onFocusSubject,
   onAfterAdd,
+  seed = null,
 }: {
+  seed?: TaskSeed | null;
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
@@ -955,15 +1086,20 @@ function VideoForm({
 }) {
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
-  const [subjectId, setSubjectId] = React.useState<number | "">("");
+  // Hızlı kutudan taşınan konu (2026-10-22): ders + metin dolu gelir, görev konuya bağlanır.
+  const [subjectId, setSubjectId] = React.useState<number | "">(seed?.topic.subject_id ?? "");
+  const [linked, setLinked] = React.useState<{ id: number; name: string; subjectId: number } | null>(
+    seed ? { id: seed.topic.topic_id, name: seed.topic.topic_name, subjectId: seed.topic.subject_id } : null,
+  );
+  const subjectOptions = withSeedSubject(subjects, seed);
   const [linkUrl, setLinkUrl] = React.useState("");
-  const [notes, setNotes] = React.useState("");
+  const [notes, setNotes] = React.useState(seed?.topic.topic_name ?? "");
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (subjectId === "" || !linkUrl.trim()) return;
     const scheduledHour = hour === "" ? null : Number(hour);
-    const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    const subjectName = subjectOptions.find((s) => s.id === subjectId)?.name ?? "";
     // Başlık formatı her zaman "{ders} · {içerik}" — render tarafı ders adını
     // parse edip rozet olarak gösterir (Test ile görsel simetri).
     const trimmedNotes = notes.trim();
@@ -983,6 +1119,7 @@ function VideoForm({
           notes: trimmedNotes || null,
           link_url: linkUrl.trim(),
           items: [],
+          topic_id: linked?.id ?? null,
         },
       },
       {
@@ -1006,11 +1143,12 @@ function VideoForm({
             onChange={(v) => {
               const num = v === "" ? "" : Number(v);
               setSubjectId(num as number | "");
+              if (linked && num !== linked.subjectId) setLinked(null);
               onFocusSubject(num === "" ? null : num);
             }}
           >
             <option value="">— ders seç —</option>
-            {subjects.map((s) => (
+            {subjectOptions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
@@ -1044,6 +1182,7 @@ function VideoForm({
           />
         </div>
       </div>
+      {linked ? <LinkedTopicChip name={linked.name} onRemove={() => setLinked(null)} /> : null}
       <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
         <Info className="size-3" aria-hidden />
         Ders seçimi zorunlu — programa &quot;{`{ders}`} videosu&quot; olarak
@@ -1064,7 +1203,9 @@ function OzetForm({
   period,
   onFocusSubject,
   onAfterAdd,
+  seed = null,
 }: {
+  seed?: TaskSeed | null;
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
@@ -1074,14 +1215,19 @@ function OzetForm({
 }) {
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
-  const [subjectId, setSubjectId] = React.useState<number | "">("");
-  const [notes, setNotes] = React.useState("");
+  // Hızlı kutudan taşınan konu (2026-10-22): ders + metin dolu gelir, görev konuya bağlanır.
+  const [subjectId, setSubjectId] = React.useState<number | "">(seed?.topic.subject_id ?? "");
+  const [linked, setLinked] = React.useState<{ id: number; name: string; subjectId: number } | null>(
+    seed ? { id: seed.topic.topic_id, name: seed.topic.topic_name, subjectId: seed.topic.subject_id } : null,
+  );
+  const subjectOptions = withSeedSubject(subjects, seed);
+  const [notes, setNotes] = React.useState(seed?.topic.topic_name ?? "");
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (subjectId === "" || !notes.trim()) return;
     const scheduledHour = hour === "" ? null : Number(hour);
-    const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    const subjectName = subjectOptions.find((s) => s.id === subjectId)?.name ?? "";
     // Başlık: "{ders} · {konu}" — render parse'ı ders rozetine çevirir
     // (görsel olarak Test/Video/Tekrar/Diğer ile aynı düzen).
     create.mutate(
@@ -1094,6 +1240,7 @@ function OzetForm({
           period: period,
           notes: null,
           items: [],
+          topic_id: linked?.id ?? null,
         },
       },
       {
@@ -1116,11 +1263,12 @@ function OzetForm({
             onChange={(v) => {
               const num = v === "" ? "" : Number(v);
               setSubjectId(num as number | "");
+              if (linked && num !== linked.subjectId) setLinked(null);
               onFocusSubject(num === "" ? null : num);
             }}
           >
             <option value="">— ders seç —</option>
-            {subjects.map((s) => (
+            {subjectOptions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
@@ -1144,6 +1292,7 @@ function OzetForm({
           />
         </div>
       </div>
+      {linked ? <LinkedTopicChip name={linked.name} onRemove={() => setLinked(null)} /> : null}
     </form>
   );
 }
@@ -1159,7 +1308,9 @@ function TekrarForm({
   period,
   onFocusSubject,
   onAfterAdd,
+  seed = null,
 }: {
+  seed?: TaskSeed | null;
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
@@ -1169,8 +1320,13 @@ function TekrarForm({
 }) {
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
-  const [subjectId, setSubjectId] = React.useState<number | "">("");
-  const [notes, setNotes] = React.useState("");
+  // Hızlı kutudan taşınan konu (2026-10-22): ders + metin dolu gelir, görev konuya bağlanır.
+  const [subjectId, setSubjectId] = React.useState<number | "">(seed?.topic.subject_id ?? "");
+  const [linked, setLinked] = React.useState<{ id: number; name: string; subjectId: number } | null>(
+    seed ? { id: seed.topic.topic_id, name: seed.topic.topic_name, subjectId: seed.topic.subject_id } : null,
+  );
+  const subjectOptions = withSeedSubject(subjects, seed);
+  const [notes, setNotes] = React.useState(seed?.topic.topic_name ?? "");
 
   const chipsQ = useQuery<ReviewStruggleResponse>({
     queryKey: teacherKeys.studentReviewChips(
@@ -1188,7 +1344,7 @@ function TekrarForm({
     e.preventDefault();
     if (subjectId === "" || !notes.trim()) return;
     const scheduledHour = hour === "" ? null : Number(hour);
-    const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    const subjectName = subjectOptions.find((s) => s.id === subjectId)?.name ?? "";
     // Başlık: "{ders} · {konu}" — render parse'ı ders rozetine çevirir.
     create.mutate(
       {
@@ -1200,6 +1356,7 @@ function TekrarForm({
           period: period,
           notes: null,
           items: [],
+          topic_id: linked?.id ?? null,
         },
       },
       {
@@ -1222,12 +1379,13 @@ function TekrarForm({
             onChange={(v) => {
               const num = v === "" ? "" : Number(v);
               setSubjectId(num as number | "");
+              if (linked && num !== linked.subjectId) setLinked(null);
               setNotes("");
               onFocusSubject(num === "" ? null : num);
             }}
           >
             <option value="">— ders seç —</option>
-            {subjects.map((s) => (
+            {subjectOptions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
@@ -1251,6 +1409,7 @@ function TekrarForm({
           />
         </div>
       </div>
+      {linked ? <LinkedTopicChip name={linked.name} onRemove={() => setLinked(null)} /> : null}
       {subjectId !== "" && chipsQ.data ? (
         <ReviewChips
           data={chipsQ.data}
@@ -1346,7 +1505,9 @@ function OtherForm({
   period,
   onFocusSubject,
   onAfterAdd,
+  seed = null,
 }: {
+  seed?: TaskSeed | null;
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
@@ -1356,8 +1517,13 @@ function OtherForm({
 }) {
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
-  const [subjectId, setSubjectId] = React.useState<number | "">("");
-  const [title, setTitle] = React.useState("");
+  // Hızlı kutudan taşınan konu (2026-10-22): ders + metin dolu gelir, görev konuya bağlanır.
+  const [subjectId, setSubjectId] = React.useState<number | "">(seed?.topic.subject_id ?? "");
+  const [linked, setLinked] = React.useState<{ id: number; name: string; subjectId: number } | null>(
+    seed ? { id: seed.topic.topic_id, name: seed.topic.topic_name, subjectId: seed.topic.subject_id } : null,
+  );
+  const subjectOptions = withSeedSubject(subjects, seed);
+  const [title, setTitle] = React.useState(seed?.topic.topic_name ?? "");
   const [notes, setNotes] = React.useState("");
   // 2026-10-16: metinde "N test" varsa konuya bağlama önerisi (Açı saha bulgusu —
   // serbest metinli test görevleri hiçbir tabloya girmiyordu). Öneri sorgusu
@@ -1385,7 +1551,7 @@ function OtherForm({
     e.preventDefault();
     if (subjectId === "" || !title.trim()) return;
     const scheduledHour = hour === "" ? null : Number(hour);
-    const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    const subjectName = subjectOptions.find((s) => s.id === subjectId)?.name ?? "";
     // Başlık formatı: "{ders} · {başlık}"
     const fullTitle = `${subjectName} · ${title.trim()}`;
     if (linking && link.topicId !== null && testCount !== null) {
@@ -1428,6 +1594,7 @@ function OtherForm({
           period: period,
           notes: notes.trim() || null,
           items: [],
+          topic_id: linked?.id ?? null,
         },
       },
       {
@@ -1452,11 +1619,12 @@ function OtherForm({
             onChange={(v) => {
               const num = v === "" ? "" : Number(v);
               setSubjectId(num as number | "");
+              if (linked && num !== linked.subjectId) setLinked(null);
               onFocusSubject(num === "" ? null : num);
             }}
           >
             <option value="">— ders seç —</option>
-            {subjects.map((s) => (
+            {subjectOptions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
@@ -1519,6 +1687,7 @@ function OtherForm({
           olarak düşer.
         </p>
       )}
+      {linked ? <LinkedTopicChip name={linked.name} onRemove={() => setLinked(null)} /> : null}
     </form>
   );
 }
@@ -1609,7 +1778,7 @@ function SubmitButton({
     <button
       type="submit"
       disabled={pending || disabled}
-      className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-1.5 rounded-md bg-foreground text-background text-sm font-medium hover:bg-foreground/90 disabled:opacity-40 transition"
+      className="inline-flex h-9 items-center justify-center gap-1.5 w-full px-3 py-1.5 rounded-md bg-foreground text-background text-sm font-medium hover:bg-foreground/90 disabled:opacity-40 transition"
     >
       {pending ? (
         <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -1686,4 +1855,141 @@ function StatCell({
       <div className="text-[10px] text-muted-foreground/80">{subtitle}</div>
     </div>
   );
+}
+
+
+const UNIT_OPTIONS: { value: ItemUnit; label: string; hint: string }[] = [
+  { value: "test", label: "Test", hint: "test sayısına girer" },
+  { value: "soru", label: "Soru", hint: "D/Y/B girilir" },
+  { value: "sayfa", label: "Sayfa", hint: "sayfa aralığı" },
+];
+
+/** Kaynaksız konulu görev seçenekleri: birim · kitap notu · sayfa aralığı (2026-10-22). */
+export function SourcelessOptions({
+  unit,
+  onUnit,
+  note,
+  onNote,
+  pageFrom,
+  pageTo,
+  onPageFrom,
+  onPageTo,
+  rangeInvalid,
+  suggestion,
+}: {
+  unit: ItemUnit;
+  onUnit: (u: ItemUnit) => void;
+  note: string;
+  onNote: (v: string) => void;
+  pageFrom: string;
+  pageTo: string;
+  onPageFrom: (v: string) => void;
+  onPageTo: (v: string) => void;
+  rangeInvalid: boolean;
+  suggestion: PageSuggestionResponse | undefined;
+}) {
+  const listId = React.useId();
+  return (
+    <div
+      className="@container space-y-3 rounded-lg border border-cyan-600/30 bg-cyan-500/5 p-3"
+      data-section="task-form:sourceless-options"
+    >
+      <div className="grid grid-cols-1 gap-3 @xl:grid-cols-2">
+        <div>
+          <Label>Birim</Label>
+          <div className="flex gap-1.5" role="radiogroup" aria-label="Birim">
+            {UNIT_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                role="radio"
+                aria-checked={unit === o.value}
+                onClick={() => onUnit(o.value)}
+                className={cn(
+                  "flex-1 rounded-md border px-2 py-1.5 text-left transition",
+                  unit === o.value
+                    ? "border-cyan-700 bg-cyan-700 text-white"
+                    : "border-input bg-background text-foreground hover:bg-muted",
+                )}
+              >
+                <span className="block text-sm font-semibold">{o.label}</span>
+                <span
+                  className={cn(
+                    "block text-[10.5px] leading-tight",
+                    unit === o.value ? "text-cyan-50" : "text-muted-foreground",
+                  )}
+                >
+                  {o.hint}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label>Kitap adı (not · isteğe bağlı)</Label>
+          <Input
+            value={note}
+            onChange={(e) => onNote(e.target.value)}
+            list={listId}
+            maxLength={120}
+            placeholder="örn. Hız Fen"
+            aria-label="Kitap adı notu"
+          />
+          <datalist id={listId}>
+            {(suggestion?.notes ?? []).map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
+          <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+            Görevde kaynak adı olarak görünür; kitabın test sayaçlarına dokunmaz.
+          </p>
+        </div>
+      </div>
+      {unit === "sayfa" ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="w-28">
+              <Label>İlk sayfa</Label>
+              <Input
+                type="number"
+                min={1}
+                value={pageFrom}
+                onChange={(e) => onPageFrom(e.target.value)}
+                className="text-right tabular-nums"
+                aria-label="Başlangıç sayfası"
+              />
+            </div>
+            <span className="pb-2 text-muted-foreground">–</span>
+            <div className="w-28">
+              <Label>Son sayfa</Label>
+              <Input
+                type="number"
+                min={1}
+                value={pageTo}
+                onChange={(e) => onPageTo(e.target.value)}
+                className="text-right tabular-nums"
+                aria-label="Bitiş sayfası"
+              />
+            </div>
+          </div>
+          {rangeInvalid ? (
+            <p className="text-[12px] text-rose-700 dark:text-rose-300">
+              Bitiş sayfası başlangıçtan küçük olamaz.
+            </p>
+          ) : null}
+          <PageSuggestionLine data={suggestion} pageFrom={pageFrom} onPageFrom={onPageFrom} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+
+/** Taşınan konunun dersi etkinlik ders listesinde yoksa listeye eklenir (seçili gelsin). */
+function withSeedSubject(
+  subjects: { id: number; name: string }[],
+  seed: TaskSeed | null,
+): { id: number; name: string }[] {
+  if (!seed || subjects.some((x) => x.id === seed.topic.subject_id)) return subjects;
+  return [...subjects, { id: seed.topic.subject_id, name: seed.topic.subject_name }];
 }

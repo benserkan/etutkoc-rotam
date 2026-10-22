@@ -224,9 +224,10 @@ def main() -> int:
             if row:
                 row.click()
                 page.wait_for_timeout(900)
-                qty = page.query_selector('input[aria-label="Test sayısı"]')
-                val = qty.input_value() if qty else ""
-                check("3. adet öğrenilmiş değerle ön-dolu (koç yazmıyor: 4)",
+                # 2026-10-22 yeni kart: miktar çipleri — öğrenilmiş değer SEÇİLİ gelir
+                on = page.query_selector('[role="group"][aria-label="Miktar"] button[aria-pressed="true"]')
+                val = on.inner_text().strip() if on else ""
+                check("3. adet öğrenilmiş değerle ön-seçili (koç yazmıyor: 4)",
                       val == "4", f"deger={val!r}")
 
                 before = _task_count(ids["student"], day)

@@ -6,6 +6,81 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## KAYNAKSIZ GÖREVDE BİRİM (test/soru/sayfa) + SAYFA ARALIĞI + TEK DERS LİSTESİ (2026-10-22, migration `u5w8b1c2b77x`, COMMIT/DEPLOY BEKLİYOR)
+
+- **Saha ihtiyacı (koç):** kayıtlı kitap (Hız Fen) konu anlatımlı + açık uçlu → test sayısıyla bölünemiyor, sayfa
+  aralığıyla bölünüyor ("1. gün s. 45–50, 2. gün 51–55"); aralıklar unutuluyordu. Ayrıca gün gün Test formunda ders
+  listesi "kitabı olan / kitabı yok" diye bölündüğü için kitaplı derste kaynaksız görev verilemiyor sanılıyordu.
+- **Kullanıcı kararları:** aralık + devam önerisi · kayıtlı kitapta da kaynaksız + kitap NOTU (kitap sayaçlarına
+  dokunulmaz) · sayfa = "yaptım" (adet), soru = D/Y/B.
+- **Migration `u5w8b1c2b77x`** (← t4v7a0b1a66w, additive): `task_book_items.unit` (NULL=test · soru · sayfa) +
+  `page_from/page_to`; `pool_items.page_from/page_to`.
+- **TEK MERKEZ `gorev_stats.item_unit` / `item_quantity_text`** ("s. 45–50" · "20 soru"). Soru/sayfa kalemi:
+  `classify_gorev` → etkinlik (görev % evet, test hacmi hayır) · `item_is_test` / `completion.item_counts` /
+  `test_item_filter` (+`test_unit_filter`) hariç · `student.item_is_test_unit` False (soru: D+Y+B ≤ çözülen) ·
+  konu performansı: soru D/Y girer test sayılmaz, sayfa hiç girmez · müfredat + topic_board: test sayısına girmez ama
+  `curriculum_progress.non_test_sourceless_signals` ile "devam/planlandı" · study_mix + task_quantity + koç gün kartı
+  "Ders dağılımı" (teacher_program) test saymaz.
+- **Görev oluşturma:** `TaskItemBody.unit/page_from/page_to`; `teacher._normalize_item_unit` (sayfada aralıktan
+  adet; ters aralık 422 `invalid_page_range`) · başlık `sourceless_title` "Konu (Not): s. 45–50" · yay/devret
+  (`item_exam_kw`) artık kaynaksız kalemin KONUSUNU + birimini taşır (önceden konu bağı kopyada düşüp görev deneme
+  sanılıyordu — yan bug) — aralık kopyalanmaz, adet korunur.
+- **Devam önerisi:** YENİ `app/services/page_progress.py` + GET `/teacher/students/{id}/page-suggestion?topic_id&note`
+  (kitap notuna göre, yoksa konuya; gün gün görevleri + havuz kalemleri birlikte; en ileri sayfa → next_from; not
+  önerileri = önceki notlar + öğrencinin kitapları). `_capacity_invalidate`'e `page-suggestion`.
+- **Havuz:** `add_item(page_from, page_to)` + PoolItemBody/Out · **`put_in_cup` soru/sayfa KONULU kalemi artık konusunu
+  korur** (önceden boş "Diğer" görevine dönüşüyordu) · resize/set_item_quantity aralığı günceller.
+- **Web:** Test formu ders listesi tek parça ("· kitabı var") · kaynaksız konu seçilince `SourcelessOptions` (birim ·
+  kitap notu datalist · sayfa aralığı + "Son verilen … / N. sayfadan devam et") · CompleteSheet `unit`/`pageRange`
+  (sayfada D/Y gizli) · koç sonuç rozeti "x/y sayfa" · öğrenci kartı aralık + "Sayfa/Soru" rozeti · ızgara/ders
+  dengesi/öğrenci ızgarası/yazdırma/PDF birim + soru/sayfa kalemi deneme sanılmaz · havuz ekleme paneli sayfa aralığı
+  + öneri, havuz listesinde aralık. **Mobil** (OTA bekler): task-sheet sayfa/soru birimi + aralık, today-view birim.
+- **Tur 2 — hızlı kutu + seçim taşıma (aynı gün, kullanıcı: "test vermeyeceğim diyen koçun gidecek yeri yok;
+  ayrıntılı forma geçince seçim kayboluyor"):** (A) birim seçici + kitap notu + sayfa aralığı + devam önerisi artık
+  HIZLI KUTUDA (`task-quick-add.tsx`; kaynaksız başlığı sunucu kurar) · (B) konu seçiliyken alt satır **"Bu konuyla:
+  Video · Özet · Tekrar · Diğer"** → form ders + konu metni dolu + `LinkedTopicChip` ("bağı kaldır") · (C) seçim
+  `AddTaskForm`'da tutulur (YENİ `task-seed.tsx`: `TaskSeed`, `UnitSegment`, `PageSuggestionLine`, `usePageSuggestion`)
+  → "Saat · periyot ekle — Ayrıntılı forma aktar →" TestForm'u dolu açar, "← Hızlı eklemeye dön (seçim korunur)".
+  **Etkinlik-konu bağı (kullanıcı kararı):** `tasks.topic_id` (aynı migration'a eklendi) + `TaskCreateBody.topic_id`
+  (enjeksiyon koruması) + `activity_topic_id/name` yanıtlarda · `non_test_sourceless_signals` konulu etkinliği
+  tamamlanınca "devam", değilse "planlandı" sayar (test sayısına girmez) · yay/devret konuyu taşır. Hızlı kutu "Ekle"
+  cyan-700 (koyu temada 3,68'di) · seçim kartına asgari genişlik (kontroller eklenince metin dikine kırılıyordu) ·
+  **yan düzeltme:** `GuideHint` hidrasyon uyumsuzluğu (önbellekte veri varken ilk çizimde kart basılıyordu; Next hata
+  penceresi live_weekly_skeleton'ı kırıyordu) → `useSyncExternalStore` bağlanma kapısı.
+  Test `test_item_unit_page_range` **33/33** (26-33 etkinlik-konu) · YENİ `live_quick_add_seed.py` **11/11** ·
+  live_weekly_skeleton 15 · live_test_form_sourceless 10 · task_quick_add 14 · topic_link 15 · deneme_form 19 ·
+  quick_add_fuzzy 12 · video_basket 62 · carryover 20/18 · spread 19 · templates 11.
+- **Tur 3 — hızlı kutu YENİDEN TASARIM (aynı gün, kullanıcı: "dağınık ve karışık"):** boş durumda yalnız arama +
+  tip bağlantıları (pasif adet/Ekle kalktı) · konu seçilince TEK SÜTUNLU görev kartı (`data-section="quick-add:composer"`):
+  başlık (konu · ders · kaynak, ✕) → **Nasıl?** (test/soru/sayfa + tek satır dinamik ipucu) → **Miktar** çipleri
+  1-5 + koçun alışkanlığı (nokta işaretli, ön-seçili) + "başka" ya da **Sayfa** aralığı + devam önerisi → **Kaynak** notu →
+  katlı **Saat · periyot** (kart içinde; `onPeriodChange` ayrıntılı forma da yazar) → altbilgi: solda "Bu konuyla:
+  Video · Özet · Tekrar · Diğer · Ayrıntılı forma aktar" (`secondary` prop), sağda birincil **Ekle** (cyan-700). Etiket
+  sütunu `@md:grid-cols-[5rem_1fr]` (dar kapta üste geçer). Ayrıntılı formda sıra düzeltildi: seçim alanları → birim
+  paneli → EN ALTTA adet + Ekle; "Kaynaksız" seçeneği kısa (kırpılmıyordu); tekrarlayan bilgi paragrafı kalktı.
+  Aday listesi `data-testid="quick-add-results"`. Testler yeni düzene uyarlandı: live_task_quick_add 14 (adet artık
+  `aria-pressed` çip) · live_quick_add_fuzzy 12 · live_quick_add_seed **13** (+2c Ekle en altta, 2d kart içinden
+  periyot+saat kaydı) · live_item_unit_page_range 13 · live_weekly_skeleton 15 · live_day_card_redesign 10 ·
+  `.shots/composer_{empty,test,page}_{light,dark}.png`, `detailed_form_dark.png`.
+- **Tur 4 — "Görevi düzenle" penceresi (aynı gün, kullanıcı: "yeni düzeltmeye uygun değil"):** eski pencere yalnız
+  KİTAPLI tek kalemi düzenliyordu (ders listesi yalnız kitaplı dersler, kaynaksız görevde Ders/Kitap/Ünite boş, birim/
+  not/aralık yok). Backend `TaskSingleItemEditBody`: book_id/section_id opsiyonel + topic_id/label/unit/page_from/page_to;
+  `teacher_patch_task_single_item_v2` → `_patch_single_item_sourceless` (kaynaksız↔kaynaksız serbest · kitaplı→kaynaksız
+  bekleyen rezerv iade · kaynaksız→kitaplı yeni rezerv + kaynaksız alanlar temizlenir · çözülen varken çapraz geçiş 422
+  `source_change_with_completed` · çözülenin altına 422 · başlık `sourceless_title`). Web YENİ
+  `weekly-plan/task-edit-form.tsx` (`TaskRichEditForm` + `canRichEdit`: tek kalem + kitaplı ya da konulu; kitapsız deneme/
+  blok eski üst-bilgi formunda): "Ne zaman?" (tarih · saat seçici · tip · periyot segmenti) + "Ne çalışacak?" (tüm dersler
+  "· kitabı var" · Kaynak = kitaplar + "Kaynaksız (müfredat konusu)" · ünite ya da konu seçici · paylaşılan
+  `SourcelessOptions` · miktar çipleri 1-5 + sayı) · Kaydet cyan-700. `page-suggestion?exclude_task_id=` (düzenlenen görev
+  kendi aralığını "son verilen" saymaz). Satıra `data-task-id`. Test YENİ `test_task_edit_sourceless.py` **11/11** · YENİ
+  `live_task_edit_sourceless.py` **9/9** (+`.shots/task_edit_{sourceless_light,dark,mobile}.png`) · unit_page_range 33 ·
+  request_topic_change 13 · weekly_plan 15 · teacher_read 12 · capacity 8 · wrong_topic_delete 20 · tsc+eslint temiz.
+- Test YENİ `test_item_unit_page_range.py` **25/25** · YENİ `live_item_unit_page_range.py` **13/13** (+`.shots/
+  task_form_page_range_{light,dark,mobile}.png`, `student_page_range.png`) · gorev 83 · weekly_plan 15 · teacher_read
+  12 · student_read 11 · student_mut 12 · blank 10 · havuz 53/41/29/22/13/30/16/12 · topic_perf 14 · curriculum 25 ·
+  topic_board 18 · spread 19 · carryover 18 · card 23 · compliance 10 · deneme 42/22 · web tsc+eslint · mobil tsc
+  (yalnız eski `app/preview`).
+
 ## CAFER SET "YENİ GELENLER 2" — 14 LGS KİTABI KATALOGDA (2026-10-21, prod id 328-341, migration YOK)
 
 - 16 tarama (kapak + içindekiler, metin katmanı yok). **2'si zaten katalogda** (Zoom İnkılap #140 · Bumerang Fen

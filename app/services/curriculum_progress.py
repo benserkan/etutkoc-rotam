@@ -21,7 +21,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, case, func, or_
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ from app.models import (
     StudentBook,
     Subject,
     Task,
+    TaskStatus,
     TaskBookItem,
     Topic,
     Track,
@@ -313,6 +314,31 @@ def _recent_topic_ids(db: Session, student: User, days: int = 14) -> set[int]:
         db.query(TopicClosure.topic_id)
         .filter(TopicClosure.student_id == student.id, TopicClosure.closed_at >= since).all())}
     return ids
+
+
+def non_test_sourceless_signals(db: Session, student_id: int) -> tuple[set[int], set[int]]:
+    """Soru/sayfa birimli kaynaksız konulu kalemler (2026-10-22) — (çalışılan, planlanan) konu
+    kimlikleri. Bu kalemler TEST sayısına girmez; konuya "devam/planlandı" sinyali verir."""
+    rows = (
+        db.query(TaskBookItem.topic_id, TaskBookItem.completed_count)
+        .join(Task, Task.id == TaskBookItem.task_id)
+        .filter(Task.student_id == student_id, Task.is_draft.is_(False),
+                TaskBookItem.book_id.is_(None), TaskBookItem.topic_id.isnot(None),
+                TaskBookItem.unit.in_(("soru", "sayfa")))
+        .all()
+    )
+    worked = {int(t) for t, c in rows if (c or 0) > 0}
+    planned = {int(t) for t, c in rows if not (c or 0)}
+    # Konuya bağlı ETKİNLİK görevi (video/özet/tekrar/diğer, tasks.topic_id): tamamlanınca
+    # çalışıldı, değilse planlandı.
+    for tid, st in (
+        db.query(Task.topic_id, Task.status)
+        .filter(Task.student_id == student_id, Task.is_draft.is_(False), Task.topic_id.isnot(None))
+        .all()
+    ):
+        (worked if st == TaskStatus.COMPLETED else planned).add(int(tid))
+    planned -= worked
+    return worked, planned
 
 
 def _compute_projection(
@@ -672,10 +698,14 @@ def compute_curriculum_progress(
             Task.is_draft.is_(False),
             TaskBookItem.book_id.is_(None),
             TaskBookItem.topic_id.isnot(None),
+            or_(TaskBookItem.unit.is_(None), TaskBookItem.unit == "test"),
         )
         .group_by(TaskBookItem.topic_id)
         .all()
     )
+    # Soru/sayfa birimli kaynaksız kalemler (2026-10-22): test sayısına girmez ama
+    # konuyu "çalışıldı/planlandı" yapar.
+    nt_worked, nt_planned = non_test_sourceless_signals(db, student.id)
     sourceless: dict[int, dict] = {
         r.topic_id: {"planned": int(r.planned or 0), "completed": int(r.completed or 0)}
         for r in sourceless_rows
@@ -751,8 +781,8 @@ def compute_curriculum_progress(
             st = _status(
                 has_res, comp, resv, test_total,
                 closed=is_closed,
-                sourceless_completed=sl["completed"],
-                sourceless_planned=sl["planned"],
+                sourceless_completed=sl["completed"] or (1 if t.id in nt_worked else 0),
+                sourceless_planned=sl["planned"] or (1 if t.id in nt_planned else 0),
                 sources_complete=agg_complete(agg),
                 pool_planned=pool_sig.planned.get(t.id, 0),
             )
@@ -1123,7 +1153,9 @@ def recently_covered_units(
         db.query(
             Subject.name.label("subject_name"),
             Topic.name.label("topic_name"),
-            func.sum(TaskBookItem.completed_count).label("tests"),
+            # soru/sayfa birimli kalem konuyu işler ama test sayılmaz (2026-10-22)
+            func.sum(case((or_(TaskBookItem.unit.is_(None), TaskBookItem.unit == "test"),
+                           TaskBookItem.completed_count), else_=0)).label("tests"),
         )
         .select_from(Task)
         .join(TaskBookItem, TaskBookItem.task_id == Task.id)

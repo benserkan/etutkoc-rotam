@@ -93,6 +93,8 @@ export function SubjectMix({
           // Kitapsız + konusuz kalem (tam deneme) ve deneme kitabı test hacmine girmez;
           // kaynaksız KONU kalemi (topic_id) testtir (2026-10-16).
           if (it.book_id == null && it.topic_id == null) continue;
+          // soru/sayfa birimli kaynaksız kalem test hacmine girmez (2026-10-22)
+          if (it.book_id == null && it.unit && it.unit !== "test") continue;
           if (it.book_type && DENEME_TYPES.has(it.book_type)) continue;
           const n = it.planned_count ?? 0;
           row.tests += n;

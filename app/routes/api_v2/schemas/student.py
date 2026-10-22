@@ -96,6 +96,10 @@ class StudentTaskItem(BaseModel):
     exam_kind: str | None = None
     exam_section: str | None = None
     question_count: int | None = None
+    # Birim (2026-10-22): test | soru | sayfa (kaynaksız konulu kalemde) + sayfa aralığı.
+    unit: str = "test"
+    page_from: int | None = None
+    page_to: int | None = None
     # D2: süre (dk) · net (sonuç girildiyse) · çözüldü ama sonuç bekliyor
     duration_minutes: int | None = None
     net: float | None = None
@@ -128,6 +132,9 @@ class StudentTask(BaseModel):
     work_block_id: int | None = None
     work_block_title: str | None = None
     work_block_unit: str | None = None
+    # Etkinlik görevinin müfredat konusu (2026-10-22)
+    activity_topic_id: int | None = None
+    activity_topic_name: str | None = None
     # Haftalık havuz (dershane): bu görev havuzdan kaba alınmış. Öğrenci sayısını KENDİ düzeltir
     # (rehbere talep değil); pool_max_count = yapılan + kalemin havuzdaki kalanı.
     pool_item_id: int | None = None

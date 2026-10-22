@@ -285,6 +285,8 @@ from app.routes.api_v2.schemas.teacher import (
     TaskPickerResponse,
     TopicBoardResponse,
     TaskQuantityResponse,
+    PageLastRange,
+    PageSuggestionResponse,
     TaskSingleItemEditBody,
     TopicCloseBody,
     TeacherBadgesResponse,
@@ -4081,6 +4083,9 @@ def _build_teacher_task_item(
         exam_kind=item.exam_kind,
         exam_section=item.exam_section,
         question_count=item.question_count,
+        unit=(item.unit if item.unit in ("soru", "sayfa") else "test"),
+        page_from=item.page_from,
+        page_to=item.page_to,
         duration_minutes=item.duration_minutes,
         net=(_ds_net(item) if item.exam_kind else None),
         result_pending=_ds_pending(item),
@@ -4140,6 +4145,8 @@ def _build_teacher_task(db: Session, task: Task) -> TeacherTask:
         work_block_id=task.work_block_id,
         work_block_title=(task.work_block.title if task.work_block else None),
         work_block_unit=(task.work_block.unit if task.work_block else None),
+        activity_topic_id=task.topic_id,
+        activity_topic_name=(task.topic.name if task.topic_id and task.topic else None),
         block_detached=bool(getattr(task, "block_detached", False)),
     )
 
@@ -4207,6 +4214,7 @@ def _capacity_invalidate(teacher_id: int, sid: int) -> list[str]:
         f"{base}:topic-board",
         f"{base}:topic-insights",  # hafta ızgarası konu özeti
         f"{base}:deneme-options",  # Deneme formu: sıradaki denemeler + kalıplar (D1)
+        f"{base}:page-suggestion",  # sayfa görevi devam önerisi (2026-10-22)
     ]
 
 
@@ -4314,6 +4322,55 @@ def _ensure_count_positive(count: int) -> None:
                 "message": "Test/deneme sayısı en az 1 olmalı.",
             },
         )
+
+
+def sourceless_title(topic_name: str, it) -> str:
+    """Kaynaksız konulu görev başlığı: "Basınç (Hız Fen): s. 45–50" · "Basınç — 3 test"."""
+    from app.services.gorev_stats import item_quantity_text
+
+    note = (getattr(it, "label", None) or "").strip()
+    src = f" ({note})" if note and note != topic_name else ""
+    unit = getattr(it, "unit", None)
+    if unit in (None, "test") and not src:
+        return f"{topic_name} — {it.planned_count} test"[:255]
+    return f"{topic_name}{src}: {item_quantity_text(it)}"[:255]
+
+
+def _normalize_item_unit(it) -> None:
+    """Kaynaksız konulu kalemde birim + sayfa aralığı (2026-10-22) — yerinde normalize.
+
+    Birim yalnız kitapsız + konulu kalemde anlamlı; başka kalemde yok sayılır (test).
+    Sayfa biriminde aralık verilirse planned_count = to − from + 1; ters/eksik aralık 422.
+    """
+    unit = getattr(it, "unit", None)
+    sourceless_topic = it.book_id is None and getattr(it, "topic_id", None) and not getattr(it, "exam_kind", None)
+    if not sourceless_topic or unit in (None, "test"):
+        if hasattr(it, "unit"):
+            it.unit = None
+            it.page_from = None
+            it.page_to = None
+        return
+    pf, pt = getattr(it, "page_from", None), getattr(it, "page_to", None)
+    if unit != "sayfa":
+        it.page_from = it.page_to = None
+        return
+    if pf is None and pt is None:
+        return
+    if pf is None or pt is None or pf < 1 or pt < pf:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_page_range",
+                    "message": "Sayfa aralığını başlangıç ≤ bitiş olacak şekilde gir (örn. 45–50)."},
+        )
+    it.planned_count = pt - pf + 1
+
+
+def _unit_fields(it) -> dict:
+    unit = getattr(it, "unit", None)
+    if unit in (None, "test"):
+        return {}
+    return {"unit": unit, "page_from": getattr(it, "page_from", None),
+            "page_to": getattr(it, "page_to", None)}
 
 
 _VALID_PERIODS = {"morning", "noon", "evening"}
@@ -4483,8 +4540,17 @@ def _ensure_exam_subject_accessible(db: Session, subject_id: int | None, student
 
 
 def item_exam_kw(it) -> dict:
-    """Kayıtlı kalemin deneme alanları — kopyalama yolları (yay/devret) için."""
+    """Kayıtlı kalemin deneme alanları — kopyalama yolları (yay/devret) için.
+
+    Kaynaksız konulu kalemde konu + birim de taşınır (2026-10-22; önceden konu bağı
+    kopyada düşüyor, görev 'deneme' sanılıyordu). Sayfa aralığı kopyaya taşınmaz —
+    aynı aralık başka güne verilmez; sayfa ADEDİ korunur."""
     if not getattr(it, "exam_kind", None):
+        if getattr(it, "book_id", None) is None and getattr(it, "topic_id", None):
+            kw = {"topic_id": it.topic_id}
+            if getattr(it, "unit", None) in ("soru", "sayfa"):
+                kw["unit"] = it.unit
+            return kw
         return {}
     return {"exam_kind": it.exam_kind, "exam_section": it.exam_section,
             "subject_id": it.subject_id, "question_count": it.question_count}
@@ -4568,6 +4634,7 @@ def _create_task_with_items(
     # Kalemler geçerli mi (kitap-bölüm uyumu + atama + sayım)? Kitapsız "deneme"
     # kalemi (book_id None) kitap doğrulaması + rezerv ATLAR; yalnız sayı kontrolü.
     for it in items:
+        _normalize_item_unit(it)
         _ensure_count_positive(it.planned_count)
         if it.book_id is None:
             # Kitapsız kalem — kapasite/atama yok. topic_id verilmişse
@@ -4598,6 +4665,11 @@ def _create_task_with_items(
                 detail={"error": "not_found", "code": "work_block_not_found",
                         "message": "İş bloğu bulunamadı."},
             )
+
+    # Etkinlik görevinin müfredat konusu (2026-10-22) — enjeksiyon koruması kalemle aynı.
+    activity_topic_id = getattr(payload, "topic_id", None)
+    if activity_topic_id is not None:
+        _ensure_topic_accessible(db, activity_topic_id, student)
 
     order = _next_order_for_day(db, student.id, d)
     # Smart draft default (Jinja parite): is_draft=None → gelecek tarihler taslak,
@@ -4630,6 +4702,7 @@ def _create_task_with_items(
         notes=(payload.notes or None),
         link_url=link_url,
         work_block_id=work_block_id,
+        topic_id=activity_topic_id,
     )
     db.add(task)
     db.flush()
@@ -4655,6 +4728,7 @@ def _create_task_with_items(
                 planned_count=it.planned_count,
                 completed_count=0,
                 **_exam_fields(it),
+                **_unit_fields(it),
             ))
             continue
         # reserve_item kapasite aşımında ReservationError fırlatır — koç
@@ -4731,7 +4805,7 @@ def _create_task_with_items(
         topic = db.get(_Topic, ti.topic_id)
         name = (topic.name if topic else None) or (getattr(ti, "label", None) or "").strip()
         if name:
-            task.title = f"{name} — {ti.planned_count} test"
+            task.title = sourceless_title(name, ti)
             db.flush()
     return task
 
@@ -5257,6 +5331,37 @@ def teacher_task_quantity_v2(
     )
 
 
+@router.get(
+    "/students/{student_id}/page-suggestion",
+    response_model=PageSuggestionResponse,
+)
+def teacher_page_suggestion_v2(
+    student_id: int,
+    topic_id: int | None = Query(None),
+    note: str | None = Query(None, max_length=255),
+    exclude_task_id: int | None = Query(None),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Sayfa birimli kaynaksız görev: son verilen aralık + devam sayfası + not önerileri.
+
+    Süreklilik kitap notuna göre (aynı kitap konular arasında akar); not yoksa konuya göre.
+    """
+    from app.services import page_progress
+
+    student = _get_owned_student(db, student_id, user.id)
+    sug = page_progress.suggest(db, student.id, topic_id=topic_id, note=note,
+                                 exclude_task_id=exclude_task_id)
+    last = None
+    if sug.last is not None:
+        last = PageLastRange(
+            page_from=sug.last.page_from, page_to=sug.last.page_to,
+            date=sug.last.on.isoformat() if sug.last.on else None,
+            note=sug.last.note, source=sug.last.source,
+        )
+    return PageSuggestionResponse(last=last, next_from=sug.next_from, notes=sug.notes)
+
+
 # ---------------------- Müfredat paneli (konu kartları + kapatma kararı) ----------------------
 
 
@@ -5573,6 +5678,7 @@ def teacher_carryover_v2(
                 period=body.period,
                 notes=src.notes,
                 items=items,
+                topic_id=src.topic_id,  # etkinliğin müfredat konusu taşınır (2026-10-22)
             )
             new_task = _create_task_with_items(db, student=student, payload=payload)
             # Hata 2 için: yeni görev kaynağa bağlanır → silinirse kaynak listeye döner.
@@ -6099,6 +6205,7 @@ def teacher_spread_task_v2(
             link_url=task.link_url,
             items=items,
             work_block_id=task.work_block_id,
+            topic_id=task.topic_id,  # etkinliğin müfredat konusu taşınır (2026-10-22)
         )
         try:
             _create_task_with_items(db, student=student, payload=payload)
@@ -6558,6 +6665,24 @@ def teacher_patch_task_single_item_v2(
     except ValueError:
         new_type = task.type
 
+    # KAYNAKSIZ hedef (2026-10-22): konu + birim + kitap notu + sayfa aralığı.
+    if body.book_id is None:
+        return _patch_single_item_sourceless(db, user, task, item, body, new_date, new_sched, new_type)
+
+    if body.section_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "section_required", "message": "Ünite seçin."},
+        )
+    if item.book_id is None and item.completed_count > 0:
+        # kaynaksız → kitaplı: çözülenler hangi bölüme yazılacağı belirsiz → güvenli ret
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "source_change_with_completed",
+                    "message": f"Bu görevde {item.completed_count} çözüldü işaretlenmiş; kaynaksız görev "
+                               "kitaba çevrilemez. Yeni görev oluşturup eskisini silebilirsin."},
+        )
+
     _ensure_count_positive(body.planned_count)
     _ensure_section_belongs_to_book(db, body.book_id, body.section_id)
     _ensure_student_book_assigned(db, task.student_id, body.book_id)
@@ -6600,7 +6725,7 @@ def teacher_patch_task_single_item_v2(
         # DEĞİL → tekrar iade etme (çift-iade başka görevlerin rezervini düşürür).
         was_released = item.reservation_released_at is not None
         old_pending = item.planned_count - item.completed_count
-        if old_pending > 0 and not was_released:
+        if old_pending > 0 and not was_released and item.book_id is not None:
             release_item(
                 db,
                 student_id=task.student_id,
@@ -6668,6 +6793,13 @@ def teacher_patch_task_single_item_v2(
     item.book_id = body.book_id
     item.book_section_id = body.section_id
     item.planned_count = body.planned_count
+    # kitaplı kalemde kaynaksız alanları temizle (kaynaksız → kitaplı geçiş)
+    if item.topic_id is not None:
+        item.label = None
+    item.topic_id = None
+    item.unit = None
+    item.page_from = None
+    item.page_to = None
     if source_changed:
         if move_completed:
             item.completed_count = moved_completed
@@ -6701,6 +6833,90 @@ def teacher_patch_task_single_item_v2(
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
         warnings=single_warnings,
+    )
+
+
+def _patch_single_item_sourceless(db, user, task, item, body, new_date, new_sched, new_type):
+    """Tek kalemli görevi KAYNAKSIZ kaleme düzenle (2026-10-22).
+
+    · kaynaksız → kaynaksız: konu / birim / kitap notu / sayfa aralığı / sayı serbest (rezerv yok).
+    · kitaplı → kaynaksız: eski bölümün bekleyen rezervi iade edilir; çözülen varsa 422
+      (kitap sayacındaki çözülenin nereye gideceği belirsiz).
+    Sayı çözülenin altına inemez. Başlık yeniden üretilir.
+    """
+    if body.topic_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "topic_required",
+                    "message": "Kaynaksız görevde müfredat konusu seçin."},
+        )
+    student = db.get(User, task.student_id)
+    _ensure_topic_accessible(db, body.topic_id, student)
+    if item.book_id is not None and item.completed_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "source_change_with_completed",
+                    "message": f"Bu görevde {item.completed_count} test kitaptan çözülmüş; kaynaksıza "
+                               "çevrilemez. Yeni görev oluşturup eskisini silebilirsin."},
+        )
+    _normalize_item_unit(body)  # sayfada adet aralıktan; ters aralık 422
+    _ensure_count_positive(body.planned_count)
+    if body.planned_count < item.completed_count:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "planned_below_completed",
+                    "message": f"Yeni sayı ({body.planned_count}) çözülen miktardan "
+                               f"({item.completed_count}) küçük olamaz."},
+        )
+    if item.book_id is not None:
+        old_pending = item.planned_count - item.completed_count
+        if old_pending > 0 and item.reservation_released_at is None:
+            try:
+                release_item(db, student_id=task.student_id, book_id=item.book_id,
+                             section_id=item.book_section_id, count=old_pending)
+            except ReservationError as e:
+                db.rollback()
+                raise _reservation_to_http(e)
+    from app.models import Topic as _Topic
+
+    topic = db.get(_Topic, body.topic_id)
+    note = (body.label or "").strip()
+    item.book_id = None
+    item.book_section_id = None
+    item.topic_id = body.topic_id
+    item.label = note or (topic.name if topic else "Konu çalışması")
+    item.planned_count = body.planned_count
+    item.reservation_released_at = None
+    uf = _unit_fields(body)
+    item.unit = uf.get("unit")
+    item.page_from = uf.get("page_from")
+    item.page_to = uf.get("page_to")
+    if item.unit == "sayfa":
+        # sayfa biriminde soru sonucu anlamsız
+        item.correct_count = item.wrong_count = item.blank_count = None
+
+    task.date = new_date
+    task.type = new_type
+    task.scheduled_hour = new_sched
+    task.period = body.period if body.period in ("morning", "noon", "evening") else None
+    task.notes = (body.notes or "").strip() or None
+    if body.link_url is not None:
+        try:
+            task.link_url = normalize_link(body.link_url)
+        except ValueError:
+            raise _invalid_link_http()
+    task.title = sourceless_title(topic.name if topic else item.label, item)
+    if item.completed_count >= item.planned_count and item.planned_count > 0:
+        task.status = TaskStatus.COMPLETED
+    elif item.completed_count > 0:
+        task.status = TaskStatus.PARTIAL
+    elif task.status == TaskStatus.COMPLETED:
+        task.status = TaskStatus.PENDING
+    db.commit()
+    db.refresh(task)
+    return MutationResponse[TeacherTask](
+        data=_build_teacher_task(db, task),
+        invalidate=_invalidate_for_task(task, user.id),
     )
 
 

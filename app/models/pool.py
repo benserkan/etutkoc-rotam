@@ -228,6 +228,9 @@ class PoolItem(Base):
     label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit: Mapped[str] = mapped_column(String(16), nullable=False)
+    # Sayfa aralığı (unit=sayfa, 2026-10-22): "s. 45–50" — quantity = sayfa adedi.
+    page_from: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    page_to: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # DENEME KALEMİ (D1b, 2026-10-20): unit=deneme iken quantity = deneme adedi; kaba
     # alınınca her deneme ayrı görev kalemi olur. app.services.deneme_service.
     exam_kind: Mapped[str | None] = mapped_column(String(8), nullable=True)

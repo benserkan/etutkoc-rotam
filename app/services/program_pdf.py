@@ -174,7 +174,9 @@ class Canvas:
 def _is_deneme(t) -> bool:
     if any(it.exam_kind or (it.book_type in DENEME_BOOK_TYPES) for it in t.items):
         return True
-    return bool(t.items) and all(it.book_id is None and it.is_test_unit is False for it in t.items)
+    # soru/sayfa birimli kaynaksız konu kalemi (topic_id dolu) deneme değildir (2026-10-22)
+    return bool(t.items) and all(it.book_id is None and it.is_test_unit is False and not it.topic_id
+                                 for it in t.items)
 
 
 def _state(t) -> str:
@@ -200,6 +202,8 @@ def _unit(t) -> str:
     if any(it.exam_kind for it in t.items):
         return "deneme"
     it = next((x for x in t.items if x.book_id is not None), t.items[0] if t.items else None)
+    if it is not None and it.book_id is None and it.topic_id:
+        return getattr(it, "unit", None) or "test"  # kaynaksız konu kalemi (2026-10-22)
     if it is not None and it.book_id is None and it.is_test_unit is False:
         return "soru"  # kitapsız tam deneme: planlanan = soru sayısı (web ile aynı)
     if it is not None and it.book_type in DENEME_BOOK_TYPES:

@@ -100,7 +100,7 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
     } else {
       const target = task.items.find(
         (it) =>
-          (it.is_test_unit ?? it.book_id != null) &&
+          ((it.is_test_unit ?? it.book_id != null) || it.unit === "soru") &&
           it.planned > 0 &&
           it.correct == null && it.wrong == null && it.blank == null,
       );
@@ -152,7 +152,7 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
             >
               {task.title || "—"}
             </h3>
-            {denemeKind ? null : <TypeBadge type={task.type} />}
+            {denemeKind ? null : <TypeBadge type={task.type} unit={itemUnitOf(task)} />}
             {task.link_url && (task.videos?.length ?? 0) < 2 ? (
               <a
                 href={task.link_url}
@@ -240,7 +240,8 @@ function examTaskKind(task: StudentTask): "brans" | "genel" | null {
   if (ex) return ex.exam_kind === "genel" ? "genel" : "brans";
   const b = task.items.find((it) => it.book_type === "brans_denemesi" || it.book_type === "genel_deneme");
   if (b) return b.book_type === "genel_deneme" ? "genel" : "brans";
-  if (task.items.length > 0 && task.items.every((it) => it.book_id == null && it.is_test_unit === false)) {
+  // Soru/sayfa birimli kaynaksız konu kalemi (topic_id dolu) deneme DEĞİL (2026-10-22).
+  if (task.items.length > 0 && task.items.every((it) => it.book_id == null && it.is_test_unit === false && it.topic_id == null)) {
     return "genel";
   }
   return null;
@@ -414,6 +415,10 @@ function ItemRow({
   const isDeneme = item.is_test_unit === false || (item.is_test_unit == null && item.book_id == null);
   const hasResult =
     item.correct != null || item.wrong != null || item.blank != null;
+  // Kaynaksız konulu kalemin birimi (2026-10-22): sayfada D/Y yok, aralık gösterilir.
+  const unit = item.book_id == null && item.unit ? item.unit : "test";
+  const pageRange =
+    unit === "sayfa" && item.page_from && item.page_to ? `s. ${item.page_from}–${item.page_to}` : null;
 
   function inc() {
     if (blocked || item.completed >= max) return;
@@ -456,8 +461,11 @@ function ItemRow({
           {item.topic_name ? (
             <p className="text-xs text-muted-foreground truncate">{item.topic_name}</p>
           ) : null}
+          {pageRange ? (
+            <p className="text-xs font-semibold tabular-nums text-foreground">{pageRange}</p>
+          ) : null}
           {/* D/Y rozeti veya "+ doğru/yanlış" linki — yalnız completed > 0 ise göster */}
-          {item.completed > 0 ? (
+          {item.completed > 0 && unit !== "sayfa" ? (
             <ResultBadge
               correct={item.correct}
               wrong={item.wrong}
@@ -483,6 +491,7 @@ function ItemRow({
           </Button>
           <span className="tabular-nums text-sm font-medium min-w-[3.5rem] text-center">
             {item.completed} / {item.planned}
+            {unit !== "test" ? <span className="ml-0.5 text-[11px] text-muted-foreground">{unit}</span> : null}
           </span>
           <Button
             type="button"
@@ -535,6 +544,8 @@ function ItemRow({
         initialWrong={item.wrong}
         initialBlank={item.blank}
         isDeneme={isDeneme}
+        unit={unit}
+        pageRange={pageRange}
         saving={setItem.isPending}
       />
     </>
@@ -605,12 +616,18 @@ function ResultBadge({
 // Type rozeti + Pending rozeti + Future lock rozeti
 // =============================================================================
 
-function TypeBadge({ type }: { type: StudentTask["type"] }) {
+function TypeBadge({ type, unit }: { type: StudentTask["type"]; unit?: "soru" | "sayfa" | null }) {
   return (
     <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-      {TASK_TYPE_LABEL[type] ?? "Görev"}
+      {unit === "sayfa" ? "Sayfa" : unit === "soru" ? "Soru" : (TASK_TYPE_LABEL[type] ?? "Görev")}
     </span>
   );
+}
+
+/** Kaynaksız konulu görev soru/sayfa birimliyse rozet birimi gösterir (2026-10-22). */
+function itemUnitOf(task: StudentTask): "soru" | "sayfa" | null {
+  const it = task.items.find((x) => x.book_id == null && x.topic_id != null);
+  return it && (it.unit === "soru" || it.unit === "sayfa") ? it.unit : null;
 }
 
 const TASK_TYPE_LABEL: Record<StudentTask["type"], string> = {

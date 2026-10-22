@@ -395,6 +395,10 @@ export interface TeacherTaskItem {
   exam_section?: string | null;
   /** Deneme başına soru (koçun başlangıç değeri; öğrenci esnek değiştirir). */
   question_count?: number | null;
+  /** Birim (2026-10-22): kaynaksız konulu kalemde test | soru | sayfa + sayfa aralığı */
+  unit?: ItemUnit;
+  page_from?: number | null;
+  page_to?: number | null;
   /** D2: süre (dk) · net (sonuç girildiyse) · çözüldü ama sonuç bekliyor */
   duration_minutes?: number | null;
   net?: number | null;
@@ -413,8 +417,15 @@ export interface TaskSingleItemEditBody {
   scheduled_hour: number | null;
   type: TaskType;
   period?: TaskPeriod | null;        // zaman dilimi (Sabah/Öğle/Akşam/null)
-  book_id: number;
-  section_id: number;
+  /** Kitaplı kalemde dolu; KAYNAKSIZ kalemde null + topic_id (2026-10-22). */
+  book_id: number | null;
+  section_id: number | null;
+  topic_id?: number | null;
+  /** Kaynaksız kalemde kitap adı notu (sayaca bağlanmaz). */
+  label?: string | null;
+  unit?: ItemUnit | null;
+  page_from?: number | null;
+  page_to?: number | null;
   planned_count: number;
   notes?: string | null;
   link_url?: string | null;
@@ -451,6 +462,8 @@ export interface TeacherTask {
   work_block_id?: number | null;
   work_block_title?: string | null;
   work_block_unit?: string | null;
+  activity_topic_id?: number | null;
+  activity_topic_name?: string | null;
   // Bloğu silinmiş görev → DENEME değil 'Diğer' gösterilir.
   block_detached?: boolean;
 }
@@ -1014,8 +1027,12 @@ export interface TaskItemBody {
   section_id: number | null;
   /** Kaynaksız kalem: kitap yok ama müfredat konusu var (2026-09-07). */
   topic_id?: number | null;
-  label?: string | null;        // kitapsız deneme kaleminde deneme adı
+  label?: string | null;        // kitapsız deneme kaleminde deneme adı · kaynaksızda kitap notu
   planned_count: number;
+  /** Kaynaksız konulu kalemde birim (varsayılan test) + sayfa aralığı (2026-10-22). */
+  unit?: ItemUnit | null;
+  page_from?: number | null;
+  page_to?: number | null;
   /**
    * Kayıtlı kapasite dolsa bile atamaya izin ver (2026-09-07). Kitabın test
    * sayısı gerçeği her zaman yansıtmaz; envanter programı engellememeli.
@@ -1037,6 +1054,8 @@ export interface TaskCreateBody {
   link_url?: string | null;
   items: TaskItemBody[];
   work_block_id?: number | null;    // opsiyonel serbest iş bloğu bağı (Katman 3)
+  /** Etkinlik görevinin müfredat konusu (2026-10-22): tamamlanınca konu "çalışıldı" */
+  topic_id?: number | null;
 }
 
 export interface TaskSpreadBody {
@@ -2861,4 +2880,14 @@ export interface TopicInsight {
     exam_accuracy_pct: number | null;
     last_solved_at: string | null;
   } | null;
+}
+
+
+/** Görev kaleminin birimi (2026-10-22) — sayfa/soru test hacmine girmez. */
+export type ItemUnit = "test" | "soru" | "sayfa";
+
+export interface PageSuggestionResponse {
+  last: { page_from: number; page_to: number; date: string | null; note: string | null; source: string } | null;
+  next_from: number | null;
+  notes: string[];
 }

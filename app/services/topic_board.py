@@ -406,11 +406,16 @@ def build_topic_board(
             Task.student_id == student.id,
             TaskBookItem.book_id.is_(None),
             TaskBookItem.topic_id.isnot(None),
+            or_(TaskBookItem.unit.is_(None), TaskBookItem.unit == "test"),
         )
         .group_by(TaskBookItem.topic_id)
         .all()
     )
     sourceless = {int(t): int(n or 0) for t, n in sourceless_rows}
+    # Soru/sayfa birimli kaynaksız kalem (2026-10-22): test sayısına girmez, ama konu
+    # "çalışıldı" sayılır (durum devam).
+    from app.services.curriculum_progress import non_test_sourceless_signals
+    sl_worked, _sl_planned_nt = non_test_sourceless_signals(db, student.id)
     # HAVUZ (2026-10-13): seans işareti (kaynaksız) çalışma sayılır; açık dönemde bekleyen kalem → planlandı.
     # Gün-gün öğrencide ikisi de boş → pano değişmez.
     from app.services.pool_mode import topic_pool_signals
@@ -465,7 +470,7 @@ def build_topic_board(
                 # tek kaynak %98 · çok kaynak biri tam + ikincisi %90). Koç
                 # kararı değil, kaynağın sayacı; kapatma ayrı (P2).
                 status = "tamamlandi"
-            elif tests > 0 or sl > 0 or any(x.completed > 0 for x in secs):
+            elif tests > 0 or sl > 0 or t.id in sl_worked or any(x.completed > 0 for x in secs):
                 # Kaynak sayacında çözülmüş test (önceden çözülmüş / bağımsız
                 # çalışma) da konuyu "devam" yapar — sekmeyle aynı.
                 status = "devam"
@@ -475,7 +480,7 @@ def build_topic_board(
                 status = "baslanmadi"
             else:
                 status = "kaynak_yok"
-            if is_closed or tests > 0 or sl > 0:
+            if is_closed or tests > 0 or sl > 0 or t.id in sl_worked:
                 touched += 1
             rows.append(BoardTopic(
                 topic_id=t.id, name=t.name, order=t.order,

@@ -173,7 +173,17 @@ def item_is_test_unit(item: TaskBookItem) -> bool:
     # olabilir (koç 6 dedi, kitapta 7 soru); sistem tutarsızlık diye zorlamaz.
     if getattr(item, "exam_kind", None):
         return True
+    # Soru/sayfa birimli kaynaksız kalem (2026-10-22): completed = soru/sayfa adedi →
+    # SORU birimi (D+Y+B ≤ çözülen); sayfada D/Y/B girilmez.
+    if item.book_id is None and getattr(item, "unit", None) in ("soru", "sayfa"):
+        return False
     return item.book_id is not None or getattr(item, "topic_id", None) is not None
+
+
+def gorev_stats_item_unit(item: TaskBookItem) -> str:
+    from app.services.gorev_stats import item_unit
+
+    return item_unit(item)
 
 
 def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
@@ -214,6 +224,9 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
         exam_kind=item.exam_kind,
         exam_section=item.exam_section,
         question_count=item.question_count,
+        unit=gorev_stats_item_unit(item),
+        page_from=getattr(item, "page_from", None),
+        page_to=getattr(item, "page_to", None),
         duration_minutes=item.duration_minutes,
         net=_deneme_net(item),
         result_pending=_deneme_pending(item),
@@ -329,6 +342,8 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
         work_block_id=task.work_block_id,
         work_block_title=wb.title if wb else None,
         work_block_unit=wb.unit if wb else None,
+        activity_topic_id=task.topic_id,
+        activity_topic_name=(task.topic.name if task.topic_id and task.topic else None),
         pool_item_id=task.pool_item_id,
         pool_max_count=_pool_max(db, task),
     )

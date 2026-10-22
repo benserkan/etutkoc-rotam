@@ -41,6 +41,7 @@ function taskUnit(t: StudentTask): string {
   if (t.items.some((x) => x.exam_kind)) return "deneme";
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
   // Kitapsız: konulu kaynaksız kalem test birimidir; yalnız kitapsız tam deneme "soru"
+  if (it && it.book_id == null && it.topic_id != null) return it.unit ?? "test"; // kaynaksız konu (birimli)
   if (it && it.book_id == null) return it.is_test_unit === false ? "soru" : "test";
   if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
   return "test";
@@ -59,7 +60,7 @@ function denemeKind(t: StudentTask): "brans" | "genel" | null {
   if (ex) return ex.exam_kind === "genel" ? "genel" : "brans";
   const b = t.items.find((x) => x.book_type && DENEME_TYPES.has(x.book_type));
   if (b) return b.book_type === "genel_deneme" ? "genel" : "brans";
-  if (t.items.length > 0 && t.items.every((x) => x.book_id == null && x.is_test_unit === false)) return "genel";
+  if (t.items.length > 0 && t.items.every((x) => x.book_id == null && x.is_test_unit === false && x.topic_id == null)) return "genel";
   return null;
 }
 function subjectOf(t: StudentTask): string | null {

@@ -817,6 +817,9 @@ function ItemRow({ it, studentId, onDelete, onApprove }: {
                 {it.quantity} {UNIT_LABELS[it.unit]}
               </span>
             )}
+            {it.unit === "sayfa" && it.page_from && it.page_to ? (
+              <span className="font-semibold tabular-nums text-foreground">s. {it.page_from}–{it.page_to}</span>
+            ) : null}
             {it.exam_kind && it.question_count ? (
               <span className="tabular-nums">deneme başına {it.question_count} soru</span>
             ) : null}

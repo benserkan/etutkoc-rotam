@@ -16,6 +16,10 @@ export interface StudentTaskItem {
   topic_id?: number | null;
   /** Kitaplı ya da kaynaksız konulu kalem → test birimi (D/Y/B soru). false = kitapsız deneme. */
   is_test_unit?: boolean;
+  /** Birim (2026-10-22): kaynaksız konulu kalemde test | soru | sayfa + sayfa aralığı */
+  unit?: "test" | "soru" | "sayfa";
+  page_from?: number | null;
+  page_to?: number | null;
   planned: number;
   completed: number;
   is_full: boolean;

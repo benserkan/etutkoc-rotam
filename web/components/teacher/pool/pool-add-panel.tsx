@@ -29,6 +29,8 @@ import { DenemeForm } from "@/components/teacher/weekly-plan/deneme-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { getPageSuggestion, teacherKeys } from "@/lib/api/teacher";
+import type { PageSuggestionResponse } from "@/lib/types/teacher";
 import {
   getPoolBooks, getPoolTopics, parsePoolText, poolBooksKey, poolKeys, UNIT_LABELS, useAddPoolItem,
   useSetClassPosition,
@@ -660,16 +662,36 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
   const [dayHint, setDayHint] = React.useState("");
   const [homework, setHomework] = React.useState(false);
   const [label, setLabel] = React.useState("");
+  // Sayfa aralığı (2026-10-22): konulu kaynaksız kalemde "s. 51–55" — miktar aralıktan.
+  const [pageFrom, setPageFrom] = React.useState("");
+  const [pageTo, setPageTo] = React.useState("");
+  const pageMode = choice.kind === "topic" && unit === "sayfa";
+  const pf = Number(pageFrom);
+  const pt = Number(pageTo);
+  const rangeTyped = pageFrom !== "" || pageTo !== "";
+  const rangeValid = pageFrom !== "" && pageTo !== "" && pf >= 1 && pt >= pf;
+  const noteKey = useDebouncedValue(label.trim(), 400);
+  const pageSug = useQuery<PageSuggestionResponse>({
+    queryKey: teacherKeys.pageSuggestion(studentId, topic?.topic_id ?? null, noteKey),
+    queryFn: () => getPageSuggestion(studentId, topic?.topic_id ?? null, noteKey),
+    enabled: choice.kind === "topic",
+    staleTime: 30_000,
+  });
 
   const isActivity = unit === "etkinlik";
   const needsLabel = choice.kind === "none" && !isActivity;
-  const qtyOk = isActivity || (qty ?? 0) > 0;
+  const effQty = pageMode && rangeTyped ? (rangeValid ? pt - pf + 1 : null) : qty;
+  const qtyOk = isActivity || (effQty ?? 0) > 0;
   const labelOk = !needsLabel || !!label.trim();
   // KONU ZORUNLULUĞU: test/soru kalemi kitapsızsa bir konuya bağlı olmalı (konu performansı + harita)
   const topicNeeded = choice.kind === "none" && (unit === "test" || unit === "soru");
   const extras = (dayHint ? 1 : 0) + (homework ? 1 : 0);
   const unitLabel = UNIT_LABELS[unit];
-  const cta = isActivity ? "Havuza ekle · 1 etkinlik" : `Havuza ekle${qty ? ` · ${qty} ${unitLabel}` : ""}`;
+  const cta = isActivity
+    ? "Havuza ekle · 1 etkinlik"
+    : pageMode && rangeValid
+      ? `Havuza ekle · s. ${pf}–${pt}`
+      : `Havuza ekle${effQty ? ` · ${effQty} ${unitLabel}` : ""}`;
   const over = book && qty != null && qty > book.section.available;
   const bookSuggestion = topic?.sources.find((s) => s.recommended) ?? topic?.sources[0] ?? null;
 
@@ -682,8 +704,10 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
         }
       : {
           subject_id: subjectId, topic_id: topic?.topic_id ?? null, book_id: null, section_id: null,
-          label: label.trim() || null, quantity: isActivity ? 1 : qty, unit, day_hint: dayHint || null,
+          label: label.trim() || null, quantity: isActivity ? 1 : effQty, unit, day_hint: dayHint || null,
           teacher_homework: homework,
+          page_from: pageMode && rangeValid ? pf : null,
+          page_to: pageMode && rangeValid ? pt : null,
         };
     add.mutate(body, { onSuccess: onDone });
   }
@@ -739,7 +763,13 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
         <Field label={choice.kind === "topic" ? "Kitap adı" : isActivity ? "Ne yapılacak? (isteğe bağlı)" : "Ne çalışılacak?"}
                hint={choice.kind === "topic" ? "not, isteğe bağlı — sistemde kayıtlı değilse" : undefined}>
           <Input value={label} onChange={(e) => setLabel(e.target.value)}
+                 list={choice.kind === "topic" ? "pool-note-suggestions" : undefined}
                  placeholder={choice.kind === "topic" ? "örn. Palme · Yayın Denizi" : "örn. Palme sayfa 45'e kadar · Optik videosu"} />
+          {choice.kind === "topic" && (
+            <datalist id="pool-note-suggestions">
+              {(pageSug.data?.notes ?? []).map((n) => <option key={n} value={n} />)}
+            </datalist>
+          )}
           {choice.kind === "topic" && (
             <p className="text-[11px] text-muted-foreground">Öğrenciye bu konudan kaç test kaldığını sor, sayıyı aşağıda sen belirle.</p>
           )}
@@ -768,7 +798,37 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
         </Field>
       )}
 
-      {!isActivity && (
+      {pageMode && (
+        <Field label="Sayfa aralığı" hint="isteğe bağlı — girersen miktar aralıktan hesaplanır">
+          <div className="flex flex-wrap items-center gap-2" data-section="pool:add:page-range">
+            <Input value={pageFrom} inputMode="numeric" aria-label="Başlangıç sayfası" placeholder="başlangıç"
+                   className="h-9 w-24 text-center tabular-nums" onChange={(e) => setPageFrom(e.target.value)} />
+            <span className="text-muted-foreground" aria-hidden>–</span>
+            <Input value={pageTo} inputMode="numeric" aria-label="Bitiş sayfası" placeholder="bitiş"
+                   className="h-9 w-24 text-center tabular-nums" onChange={(e) => setPageTo(e.target.value)} />
+            {rangeValid && <span className="text-sm tabular-nums text-foreground">{pt - pf + 1} sayfa</span>}
+          </div>
+          {rangeTyped && !rangeValid && (
+            <p className="text-xs text-rose-700 dark:text-rose-300">Başlangıç ≤ bitiş olacak şekilde iki sayfayı da gir.</p>
+          )}
+          {pageSug.data?.last ? (
+            <div className="flex flex-wrap items-center gap-2 text-xs" data-section="pool:add:page-suggestion">
+              <span className="text-foreground">
+                Son verilen{pageSug.data.last.note ? ` (${pageSug.data.last.note})` : ""}:{" "}
+                <b className="tabular-nums">s. {pageSug.data.last.page_from}–{pageSug.data.last.page_to}</b>
+              </span>
+              {pageSug.data.next_from !== null && pageFrom !== String(pageSug.data.next_from) && (
+                <button type="button" onClick={() => setPageFrom(String(pageSug.data!.next_from))}
+                        className="rounded-md bg-cyan-700 px-2 py-1 text-[11px] font-semibold text-white hover:bg-cyan-800">
+                  {pageSug.data.next_from}. sayfadan devam et
+                </button>
+              )}
+            </div>
+          ) : null}
+        </Field>
+      )}
+
+      {!isActivity && !(pageMode && rangeTyped) && (
         <Field label="Miktar">
           <div className="flex flex-wrap items-center gap-1.5">
             {[1, 2, 3, 4, 5].map((n) => (
@@ -920,4 +980,14 @@ function FreeText({ studentId, data, subjectId }: { studentId: number; data: Poo
       )}
     </div>
   );
+}
+
+
+function useDebouncedValue<T>(value: T, ms: number): T {
+  const [v, setV] = React.useState(value);
+  React.useEffect(() => {
+    const t = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return v;
 }

@@ -35,6 +35,25 @@ def is_test_book(book) -> bool:
     return book is not None and book.type not in _DENEME_BOOK_TYPES
 
 
+ITEM_UNITS = ("test", "soru", "sayfa")
+ITEM_UNIT_LABELS_TR = {"test": "test", "soru": "soru", "sayfa": "sayfa"}
+
+
+def item_unit(item) -> str:
+    """Kalemin birimi — TEK MERKEZ (2026-10-22). NULL = test (eski kayıtlar)."""
+    u = getattr(item, "unit", None)
+    return u if u in ITEM_UNITS else "test"
+
+
+def item_quantity_text(item) -> str:
+    """İnsan okur miktar: sayfa aralığı varsa "s. 45–50", yoksa "N test/soru/sayfa"."""
+    u = item_unit(item)
+    pf, pt = getattr(item, "page_from", None), getattr(item, "page_to", None)
+    if u == "sayfa" and pf and pt:
+        return f"s. {pf}–{pt}"
+    return f"{int(getattr(item, 'planned_count', 0) or 0)} {ITEM_UNIT_LABELS_TR[u]}"
+
+
 def item_is_test(item) -> bool:
     """Görev kalemi 'test' mi — kitapsız tam-deneme + deneme kitabı kalemi HARİÇ.
 
@@ -45,7 +64,8 @@ def item_is_test(item) -> bool:
     sayıyordu, analitik serileri (tempo, trend, projeksiyon hızı) saymıyordu.
     """
     if getattr(item, "book_id", None) is None:
-        return getattr(item, "topic_id", None) is not None
+        # Soru/sayfa birimli kaynaksız kalem (2026-10-22) test hacmine GİRMEZ.
+        return getattr(item, "topic_id", None) is not None and item_unit(item) == "test"
     return (
         getattr(item, "book", None) is not None
         and item.book.type not in _DENEME_BOOK_TYPES
@@ -107,6 +127,10 @@ def classify_gorev(task: Task) -> str:
     # müfredattan konu verdi, kaynak belirtmedi. Bu bir DENEME değil TEST'tir;
     # tam_deneme sayılırsa deneme sayıları şişer (DENEME≠TEST kuralı).
     if any(it.book_id is None and getattr(it, "topic_id", None) for it in items):
+        # Soru/sayfa birimli kaynaksız konu (2026-10-22): görevdir ama test hacmine
+        # girmez → ETKİNLİK (deneme de değil). Test birimli → TEST.
+        if all(item_unit(it) != "test" for it in items if it.book_id is None):
+            return "etkinlik"
         return "test"
     if any(it.book_id is None for it in items):
         return "tam_deneme"

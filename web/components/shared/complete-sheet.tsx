@@ -50,6 +50,13 @@ interface Props {
   allowSkipResult?: boolean;
   // pending state
   saving?: boolean;
+  /**
+   * Kaynaksız konulu kalemin birimi (2026-10-22). "soru": completed = soru, D+Y+B ≤
+   * completed (deneme kuralı). "sayfa": completed = sayfa, D/Y/B alanı gösterilmez.
+   */
+  unit?: "test" | "soru" | "sayfa";
+  /** Sayfa aralığı ("s. 45–50") — başlıkta gösterilir. */
+  pageRange?: string | null;
 }
 
 export function CompleteSheet(props: Props) {
@@ -75,11 +82,16 @@ function CompleteSheetInner({
   initialCorrect,
   initialWrong,
   initialBlank,
-  isDeneme = false,
+  isDeneme: isDenemeProp = false,
   allowSkipResult,
   saving = false,
+  unit = "test",
+  pageRange = null,
 }: Props) {
-  const skipEnabled = allowSkipResult ?? !isDeneme;
+  // Soru birimi deneme kuralıyla aynı (aynı birim); sayfa biriminde D/Y yok.
+  const isDeneme = isDenemeProp || unit === "soru";
+  const pageMode = unit === "sayfa";
+  const skipEnabled = pageMode ? false : (allowSkipResult ?? !isDeneme);
 
   const [completed, setCompleted] = React.useState<number>(
     initialCompleted ?? planned,
@@ -120,8 +132,12 @@ function CompleteSheetInner({
   //     → c + w ≤ completed kuralı geçerli; akıllı tamamla aktif
   //   - Kitaplı görev (isDeneme=false): completed = test sayısı, D/Y = soru sayısı
   //     → c + w üst sınır YOK (bağımsız metric); akıllı tamamla mantıksız
-  const completedLabel = isDeneme ? "Çözdüğüm soru" : "Çözdüğüm test";
-  const tamButtonLabel = isDeneme ? `Tam (${planned})` : `Tam (${planned} test)`;
+  const completedLabel = pageMode ? "Yaptığım sayfa" : isDeneme ? "Çözdüğüm soru" : "Çözdüğüm test";
+  const tamButtonLabel = pageMode
+    ? `Tam (${planned} sayfa)`
+    : isDeneme
+      ? `Tam (${planned})`
+      : `Tam (${planned} test)`;
 
   const correct = correctStr === "" ? null : Number(correctStr);
   const wrong = wrongStr === "" ? null : Number(wrongStr);
@@ -182,6 +198,10 @@ function CompleteSheetInner({
 
   function handleSave() {
     if (invalidDistribution || saving) return;
+    if (pageMode) {
+      onSubmit({ completed, correct: null, wrong: null, blank: null });
+      return;
+    }
     onSubmit({ completed, correct, wrong, blank });
   }
 
@@ -232,6 +252,9 @@ function CompleteSheetInner({
               <p className="text-xs text-muted-foreground truncate mt-0.5">
                 {itemLabel}
               </p>
+            ) : null}
+            {pageRange ? (
+              <p className="text-xs font-semibold text-foreground mt-0.5 tabular-nums">{pageRange}</p>
             ) : null}
           </div>
           <button
@@ -314,8 +337,9 @@ function CompleteSheetInner({
             </div>
           </div>
 
-          {/* D/Y — opsiyonel; her zaman SORU sayısı (test sayısından bağımsız) */}
-          <div>
+          {/* D/Y — opsiyonel; her zaman SORU sayısı (test sayısından bağımsız).
+              Sayfa biriminde gösterilmez (2026-10-22). */}
+          <div className={pageMode ? "hidden" : undefined}>
             <label className="block text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1">
               Sorularda sonuç{" "}
               <span className="text-[10px] normal-case text-muted-foreground/70">

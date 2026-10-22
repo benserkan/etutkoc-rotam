@@ -23,7 +23,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 function isDeneme(t: StudentTask): boolean {
   return t.items.some((x) => x.exam_kind || (x.book_type != null && DENEME_TYPES.has(x.book_type)))
-    || (t.items.length > 0 && t.items.every((x) => x.book_id == null && x.is_test_unit === false));
+    || (t.items.length > 0 && t.items.every((x) => x.book_id == null && x.is_test_unit === false && x.topic_id == null));
 }
 
 function subjectOf(t: StudentTask): string {

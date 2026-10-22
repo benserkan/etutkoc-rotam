@@ -418,6 +418,10 @@ class TeacherTaskItem(BaseModel):
     exam_kind: str | None = None
     exam_section: str | None = None
     question_count: int | None = None
+    # Birim (2026-10-22): test | soru | sayfa + sayfa aralığı (kaynaksız konulu kalem).
+    unit: str = "test"
+    page_from: int | None = None
+    page_to: int | None = None
     # D2: süre · net · sonuç bekliyor
     duration_minutes: int | None = None
     net: float | None = None
@@ -452,6 +456,9 @@ class TeacherTask(BaseModel):
     work_block_id: int | None = None
     work_block_title: str | None = None
     work_block_unit: str | None = None
+    # Etkinlik görevinin müfredat konusu (2026-10-22)
+    activity_topic_id: int | None = None
+    activity_topic_name: str | None = None
     # Bloğu silinmiş görev → DENEME değil 'Diğer' olarak gösterilir.
     block_detached: bool = False
 
@@ -900,6 +907,12 @@ class TaskItemBody(BaseModel):
     exam_section: str | None = None
     subject_id: int | None = None        # kitapsız branş denemesinin dersi
     question_count: int | None = None    # deneme başına soru (öğrenci esnek değiştirir)
+    # BİRİM (2026-10-22) — yalnız KAYNAKSIZ KONULU kalemde (book_id None + topic_id):
+    # test (varsayılan) | soru | sayfa. Sayfada page_from/page_to verilirse planned_count
+    # aralıktan hesaplanır (to − from + 1).
+    unit: Literal["test", "soru", "sayfa"] | None = None
+    page_from: int | None = None
+    page_to: int | None = None
 
 
 class TaskCreateBody(BaseModel):
@@ -922,6 +935,9 @@ class TaskCreateBody(BaseModel):
     # Opsiyonel serbest iş bloğu bağı (Katman 3) — verilirse görev bu bloğa
     # sayılır (blok "dağıtılan" = bağlı görevlerin planlananı).
     work_block_id: int | None = None
+    # Etkinlik görevinin müfredat konusu (2026-10-22): video/özet/tekrar/diğer görevi bu
+    # konuya bağlanır; tamamlanınca konu "çalışıldı" (test sayısına girmez).
+    topic_id: int | None = None
 
 
 class BoardSourceItem(BaseModel):
@@ -1323,8 +1339,15 @@ class TaskSingleItemEditBody(BaseModel):
     scheduled_hour: int | None = None  # 0..23 veya None = saatsiz
     type: TaskTypeLiteral
     period: str | None = None          # "morning"|"noon"|"evening"|None (zaman dilimi)
-    book_id: int
-    section_id: int
+    # Kitaplı kalem: book_id + section_id. KAYNAKSIZ kalem (2026-10-22): book_id None +
+    # topic_id (+ label = kitap notu, unit test|soru|sayfa, sayfa aralığı).
+    book_id: int | None = None
+    section_id: int | None = None
+    topic_id: int | None = None
+    label: str | None = None
+    unit: Literal["test", "soru", "sayfa"] | None = None
+    page_from: int | None = None
+    page_to: int | None = None
     planned_count: int
     notes: str | None = None
     link_url: str | None = None
@@ -3289,3 +3312,18 @@ class ExamParentPreviewResponse(BaseModel):
     max_lines: int = 12
     max_line_length: int = 500
 CurriculumTopicItem.model_rebuild()
+
+
+class PageLastRange(BaseModel):
+    page_from: int
+    page_to: int
+    date: str | None = None
+    note: str | None = None
+    source: str  # gorev | havuz
+
+
+class PageSuggestionResponse(BaseModel):
+    """Sayfa birimli kaynaksız görev için "kaldığı yer" (2026-10-22)."""
+    last: PageLastRange | None = None
+    next_from: int | None = None
+    notes: list[str] = []

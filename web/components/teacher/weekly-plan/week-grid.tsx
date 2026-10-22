@@ -69,7 +69,8 @@ function taskUnit(t: TeacherTask): string {
   // Deneme kalemi (D1): 1 kalem = 1 deneme → birim "deneme" (soru DEĞİL).
   if (t.items.some((x) => x.exam_kind)) return "deneme";
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
-  if (it && it.book_id == null && it.topic_id != null) return "test"; // kaynaksız konu kalemi
+  // kaynaksız konu kalemi: birimi kalemde (test | soru | sayfa — 2026-10-22)
+  if (it && it.book_id == null && it.topic_id != null) return it.unit ?? "test";
   if (it && it.book_id == null) return "soru"; // kitapsız tam deneme
   if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
   return "test";

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   closestCenter,
   DndContext,
@@ -40,12 +40,6 @@ import { TaskVideoLinks } from "@/components/shared/task-video-links";
 import { useUnplaceVideo } from "@/lib/api/video-basket";
 
 import {
-  getStudentBookSections,
-  getStudentBooksBySubject,
-  getStudentSidebar,
-  teacherKeys,
-} from "@/lib/api/teacher";
-import {
   usePublishDay,
   useReorderTasks,
 } from "@/lib/hooks/use-weekly-plan-mutations";
@@ -53,7 +47,6 @@ import {
   confirmTaskDelete,
   useDeleteTask,
   usePatchTask,
-  usePatchTaskSingleItem,
   useSpreadTask,
 } from "@/lib/hooks/use-teacher-mutations";
 import {
@@ -63,11 +56,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type {
-  BookOptionsResponse,
-  SectionOptionsResponse,
-  SidebarResponse,
   TaskPeriod,
-  TaskType,
   TeacherActivePhase,
   TeacherStudentWeekDay,
   TeacherStudentWeekResponse,
@@ -78,6 +67,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SubjectTag } from "@/components/shared/subject-tag";
+import { canRichEdit, TaskRichEditForm } from "./task-edit-form";
 import {
   findSubjectByExactName,
   findSubjectInTitle,
@@ -1148,6 +1138,7 @@ function SortableTaskRow({
     <div
       ref={setNodeRef}
       id={`task-${task.id}`}
+      data-task-id={task.id}
       className={cn(
         "px-3 py-1.5 flex items-center gap-2.5 border-l-[6px] task-row transition-colors",
         "bg-[var(--row-light)] dark:bg-[var(--row-dark)]",
@@ -1392,7 +1383,7 @@ function TaskQuickEditDialog({
   dayDate: string;
   task: TeacherTask;
 }) {
-  const isSingleItem = task.items.length === 1;
+  const isSingleItem = canRichEdit(task);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={isSingleItem ? "max-w-2xl" : "max-w-md"}>
@@ -1400,7 +1391,7 @@ function TaskQuickEditDialog({
           <DialogTitle>Görevi düzenle</DialogTitle>
           <p className="text-xs text-muted-foreground mt-1">
             {isSingleItem
-              ? "Kaynak (kitap/ünite/adet) değiştirebilir, saat/tip/not güncelleyebilirsin. Başlık otomatik üretilir."
+              ? "Kaynağı (kitap ya da kaynaksız konu), birimi ve miktarı değiştirebilirsin. Başlık otomatik üretilir."
               : "Çok kalemli görevde yalnızca üst-bilgi (saat/taslak/not) düzenlenir. Kalem değiştirmek için görevi silip yeniden oluştur."}
           </p>
         </DialogHeader>
@@ -1423,375 +1414,6 @@ function TaskQuickEditDialog({
         ) : null}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function TaskRichEditForm({
-  studentId,
-  task,
-  onDone,
-}: {
-  studentId: number;
-  task: TeacherTask;
-  onDone: () => void;
-}) {
-  const editMut = usePatchTaskSingleItem(studentId);
-  const item = task.items[0];
-
-  const [taskDate, setTaskDate] = React.useState(task.date);
-  const [hour, setHour] = React.useState<string>(
-    task.scheduled_hour ? task.scheduled_hour.slice(0, 2) : "",
-  );
-  const [taskType, setTaskType] = React.useState<TaskType>(task.type);
-  const [period, setPeriod] = React.useState<TaskPeriod | null>(
-    (task.period as TaskPeriod | null) ?? null,
-  );
-  const [subjectId, setSubjectId] = React.useState<number | "">(
-    item.subject_id ?? "",
-  );
-  const [bookId, setBookId] = React.useState<number | "">(item.book_id);
-  const [sectionId, setSectionId] = React.useState<number | "">(item.section_id);
-  const [count, setCount] = React.useState<string>(String(item.planned_count));
-  const [notes, setNotes] = React.useState(task.notes ?? "");
-
-  // Ders listesi — tüm sidebar (subject focus filtresiz)
-  const sidebarQ = useQuery<SidebarResponse>({
-    queryKey: teacherKeys.studentSidebar(studentId, null),
-    queryFn: () => getStudentSidebar(studentId, null),
-    staleTime: 60_000,
-  });
-  const subjects = (sidebarQ.data?.subjects ?? []).map((s) => ({
-    id: s.id,
-    name: s.name,
-  }));
-
-  // Subject → books cascade
-  const booksQ = useQuery<BookOptionsResponse>({
-    queryKey: teacherKeys.studentBooksBySubject(
-      studentId,
-      subjectId === "" ? null : subjectId,
-    ),
-    queryFn: () =>
-      getStudentBooksBySubject(
-        studentId,
-        subjectId === "" ? null : subjectId,
-      ),
-    enabled: subjectId !== "",
-    staleTime: 60_000,
-  });
-
-  // Book → sections cascade
-  const sectionsQ = useQuery<SectionOptionsResponse>({
-    queryKey: teacherKeys.studentBookSections(
-      studentId,
-      bookId === "" ? 0 : bookId,
-    ),
-    queryFn: () => getStudentBookSections(studentId, bookId === "" ? 0 : bookId),
-    enabled: bookId !== "",
-    staleTime: 60_000,
-  });
-
-  // Kaynak değişti mi (Jinja parite — completed > 0 ise blokla)
-  const sourceChanged =
-    bookId !== item.book_id || sectionId !== item.section_id;
-  // Çözülmüş görevde konu değişince çözülenler de yeni konuya taşınır
-  // (2026-10-08 — öğrenci başka konuyu çözdüyse koç kaydı düzeltebilsin).
-  const [moveCompleted, setMoveCompleted] = React.useState(true);
-  const sourceChangeWithDone = sourceChanged && item.completed_count > 0;
-  const sourceBlocked = sourceChangeWithDone && !moveCompleted;
-  const countBelowCompleted =
-    count !== "" &&
-    Number(count) < item.completed_count &&
-    !(sourceChangeWithDone && moveCompleted);
-
-  function onSubjectChange(v: string) {
-    const num = v === "" ? "" : Number(v);
-    setSubjectId(num as number | "");
-    setBookId("");
-    setSectionId("");
-  }
-
-  function onBookChange(v: string) {
-    const num = v === "" ? "" : Number(v);
-    setBookId(num as number | "");
-    setSectionId("");
-  }
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (bookId === "" || sectionId === "" || count === "") return;
-    const countNum = Number(count);
-    if (!Number.isFinite(countNum) || countNum < 1) return;
-    const hourNum = hour.trim() === "" ? null : Number(hour);
-    if (hourNum !== null && (!Number.isFinite(hourNum) || hourNum < 0 || hourNum > 23)) {
-      return;
-    }
-    editMut.mutate(
-      {
-        taskId: task.id,
-        body: {
-          date: taskDate,
-          scheduled_hour: hourNum,
-          type: taskType,
-          period,
-          book_id: bookId,
-          section_id: sectionId,
-          planned_count: countNum,
-          notes: notes.trim() || null,
-          move_completed: sourceChangeWithDone && moveCompleted,
-        },
-      },
-      { onSuccess: () => onDone() },
-    );
-  }
-
-  // Seçili section'da kalan kapasite (Jinja parite UX hint)
-  const currentSection = (sectionsQ.data?.items ?? []).find(
-    (s) => s.id === sectionId,
-  );
-
-  return (
-    <form onSubmit={submit} className="space-y-4">
-      {item.completed_count > 0 ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
-          Bu görevde <b>{item.completed_count}</b> test çözülmüş. Öğrenci aslında
-          başka bir konuyu çözdüyse konuyu değiştirebilirsin — çözülen testler de
-          yeni konuya taşınır.
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <Label htmlFor={`re-date-${task.id}`}>Tarih</Label>
-          <input
-            id={`re-date-${task.id}`}
-            type="date"
-            value={taskDate}
-            onChange={(e) => setTaskDate(e.target.value)}
-            required
-            className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <div>
-          <Label htmlFor={`re-hour-${task.id}`}>Saat (0-23, boş = saatsiz)</Label>
-          <input
-            id={`re-hour-${task.id}`}
-            type="number"
-            min={0}
-            max={23}
-            value={hour}
-            onChange={(e) => setHour(e.target.value)}
-            placeholder="—"
-            className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm font-mono text-center tabular-nums focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <div>
-          <Label htmlFor={`re-type-${task.id}`}>Tip</Label>
-          <select
-            id={`re-type-${task.id}`}
-            value={taskType}
-            onChange={(e) => setTaskType(e.target.value as TaskType)}
-            className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="test">Test</option>
-            <option value="video">Video</option>
-            <option value="ozet">Özet</option>
-            <option value="tekrar">Tekrar</option>
-            <option value="other">Diğer</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <span className="text-sm font-medium">Zaman dilimi (gün içi bölüm)</span>
-        <div className="mt-1 flex flex-wrap gap-1.5">
-          {([
-            { k: null, l: "Yok" },
-            { k: "morning", l: "Sabah" },
-            { k: "noon", l: "Öğle" },
-            { k: "evening", l: "Akşam" },
-          ] as { k: TaskPeriod | null; l: string }[]).map((p) => (
-            <button
-              key={p.l}
-              type="button"
-              onClick={() => setPeriod(p.k)}
-              className={cn(
-                "rounded-md border px-2.5 py-1 text-xs transition",
-                period === p.k
-                  ? "border-amber-500 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 font-semibold text-amber-900 dark:text-amber-200"
-                  : "border-input bg-background hover:bg-muted/50",
-              )}
-            >
-              {p.l}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-12 gap-3">
-        <div className="col-span-3">
-          <Label htmlFor={`re-subject-${task.id}`}>Ders</Label>
-          <select
-            id={`re-subject-${task.id}`}
-            value={subjectId === "" ? "" : String(subjectId)}
-            onChange={(e) => onSubjectChange(e.target.value)}
-            disabled={false}
-            className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-          >
-            <option value="">— ders seç —</option>
-            {subjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-span-4">
-          <Label htmlFor={`re-book-${task.id}`}>Kitap</Label>
-          <select
-            id={`re-book-${task.id}`}
-            value={bookId === "" ? "" : String(bookId)}
-            onChange={(e) => onBookChange(e.target.value)}
-            disabled={subjectId === ""}
-            className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-          >
-            <option value="">— önce ders —</option>
-            {(booksQ.data?.items ?? []).map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-span-3">
-          <Label htmlFor={`re-section-${task.id}`}>Ünite / Deneme</Label>
-          <select
-            id={`re-section-${task.id}`}
-            value={sectionId === "" ? "" : String(sectionId)}
-            onChange={(e) =>
-              setSectionId(e.target.value === "" ? "" : Number(e.target.value))
-            }
-            disabled={bookId === ""}
-            className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-          >
-            <option value="">— önce kitap —</option>
-            {(sectionsQ.data?.items ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-                {s.topic_name ? ` (${s.topic_name})` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-span-2">
-          <Label htmlFor={`re-count-${task.id}`}>Test Sayısı</Label>
-          <input
-            id={`re-count-${task.id}`}
-            type="number"
-            min={sourceChangeWithDone && moveCompleted ? 1 : Math.max(1, item.completed_count)}
-            value={count}
-            onChange={(e) => setCount(e.target.value)}
-            required
-            className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-      </div>
-
-      {currentSection ? (
-        <div className="text-[11px] text-muted-foreground">
-          Bu ünitede kalan kapasite:{" "}
-          <span className="font-semibold text-foreground tabular-nums">
-            {currentSection.remaining}
-          </span>{" "}
-          test. Tamamlanan: <span className="tabular-nums">{item.completed_count}</span>/
-          <span className="tabular-nums">{item.planned_count}</span>.
-        </div>
-      ) : null}
-
-      {sourceChangeWithDone ? (
-        <label className="flex items-start gap-2 rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-100">
-          <input
-            type="checkbox"
-            checked={moveCompleted}
-            onChange={(e) => setMoveCompleted(e.target.checked)}
-            className="mt-0.5"
-          />
-          <span>
-            Çözülen <b>{item.completed_count}</b> testi yeni konuya taşı (eski konunun
-            “çözüldü” sayısı düşer, yeni konununki artar).
-            {count !== "" && Number(count) < item.completed_count
-              ? ` Yeni sayı ${count} olduğu için çözülen ${count} olarak kaydedilir.`
-              : ""}
-            {!moveCompleted
-              ? " İşaretlemezsen konu değiştirilemez."
-              : ""}
-          </span>
-        </label>
-      ) : null}
-
-      {countBelowCompleted ? (
-        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
-          Yeni sayı ({count}) tamamlanmış miktardan ({item.completed_count}) küçük olamaz.
-        </div>
-      ) : null}
-
-      <div className="space-y-1">
-        <Label htmlFor={`re-notes-${task.id}`}>Not (opsiyonel)</Label>
-        <textarea
-          id={`re-notes-${task.id}`}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-          maxLength={500}
-          className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-      </div>
-
-      <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-        <button
-          type="button"
-          onClick={onDone}
-          disabled={editMut.isPending}
-          className="px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted transition"
-        >
-          İptal
-        </button>
-        <button
-          type="submit"
-          disabled={
-            editMut.isPending ||
-            bookId === "" ||
-            sectionId === "" ||
-            !count ||
-            countBelowCompleted ||
-            sourceBlocked
-          }
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-foreground text-background text-sm font-medium hover:bg-foreground/90 disabled:opacity-50 transition"
-        >
-          {editMut.isPending ? (
-            <Loader2 className="size-3.5 animate-spin" aria-hidden />
-          ) : null}
-          Kaydet
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function Label({
-  htmlFor,
-  children,
-}: {
-  htmlFor: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className="block text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-1"
-    >
-      {children}
-    </label>
   );
 }
 

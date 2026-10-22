@@ -45,6 +45,10 @@ export interface StudentTaskItem {
   exam_kind?: "brans" | "genel" | null;
   exam_section?: string | null;
   question_count?: number | null;
+  /** Birim (2026-10-22): test | soru | sayfa + sayfa aralığı (kaynaksız konulu kalem) */
+  unit?: "test" | "soru" | "sayfa";
+  page_from?: number | null;
+  page_to?: number | null;
   /** D2: süre (dk) · net (sonuç girildiyse) · çözüldü ama sonuç bekliyor */
   duration_minutes?: number | null;
   net?: number | null;
@@ -77,6 +81,8 @@ export interface StudentTask {
   work_block_id?: number | null;
   work_block_title?: string | null;
   work_block_unit?: string | null;
+  activity_topic_id?: number | null;
+  activity_topic_name?: string | null;
   // Haftalık havuz (dershane): görev havuzdan kaba alındı — sayıyı öğrenci KENDİ düzeltir (talep değil)
   pool_item_id?: number | null;
   pool_max_count?: number | null;

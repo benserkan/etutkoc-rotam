@@ -24,7 +24,7 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from app.models import Book, Task, TaskBookItem
-from app.services.gorev_stats import DENEME_BOOK_TYPES
+from app.services.gorev_stats import DENEME_BOOK_TYPES, item_unit
 
 WINDOW_DAYS = 7
 
@@ -37,7 +37,7 @@ def window(end: date, days: int = WINDOW_DAYS) -> tuple[date, date]:
 def item_counts(item) -> bool:
     """Görev kalemi tamamlama hesabına girer mi (Python tarafı)."""
     if getattr(item, "book_id", None) is None:
-        return getattr(item, "topic_id", None) is not None
+        return getattr(item, "topic_id", None) is not None and item_unit(item) == "test"
     book = getattr(item, "book", None)
     return book is not None and book.type not in DENEME_BOOK_TYPES
 
@@ -46,8 +46,14 @@ def test_item_filter():
     """SQL karşılığı — sorgu `Book`'u TaskBookItem'a OUTER JOIN etmiş olmalı."""
     return or_(
         and_(TaskBookItem.book_id.isnot(None), Book.type.notin_(list(DENEME_BOOK_TYPES))),
-        and_(TaskBookItem.book_id.is_(None), TaskBookItem.topic_id.isnot(None)),
+        and_(TaskBookItem.book_id.is_(None), TaskBookItem.topic_id.isnot(None),
+             test_unit_filter()),
     )
+
+
+def test_unit_filter():
+    """Kaynaksız kalemde TEST birimi (NULL = test; soru/sayfa hariç) — SQL."""
+    return or_(TaskBookItem.unit.is_(None), TaskBookItem.unit == "test")
 
 
 @dataclass

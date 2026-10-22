@@ -23,6 +23,7 @@ from datetime import date  # noqa: F401  (tip ipucu)
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models import Book, BookSection, PoolItem, Subject, Task, TaskBookItem, Topic
@@ -136,6 +137,7 @@ def _task_rows(db: Session, student_id: int, start, end):
             TaskBookItem.wrong_count,
             TaskBookItem.blank_count,
             Task.completed_at,
+            TaskBookItem.unit,
         )
         .select_from(Task)
         .join(TaskBookItem, TaskBookItem.task_id == Task.id)
@@ -144,6 +146,8 @@ def _task_rows(db: Session, student_id: int, start, end):
         .filter(Task.student_id == student_id)
         .filter(TaskBookItem.book_id.is_(None))
         .filter(TaskBookItem.completed_count > 0)
+        # Sayfa birimli kalem soru sonucu taşımaz → konu performansına girmez (2026-10-22).
+        .filter(or_(TaskBookItem.unit.is_(None), TaskBookItem.unit != "sayfa"))
     )
     if start is not None:
         rows = rows.filter(Task.date >= start)
@@ -218,7 +222,8 @@ def compute_topic_performance(
 
     for r in _task_rows(db, student_id, start, end):
         t = _topic(r.subject_id, r.subject_name, r.subject_order, r.topic_id, r.topic_label)
-        n = int(r.completed_count or 0)
+        # Soru birimli kaynaksız kalem: D/Y/B konu performansına girer ama TEST sayılmaz.
+        n = 0 if getattr(r, "unit", None) == "soru" else int(r.completed_count or 0)
         t["tests"] += n
         t["correct"] += int(r.correct_count or 0)
         t["wrong"] += int(r.wrong_count or 0)

@@ -28,6 +28,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models import Book, Task, TaskBookItem, Topic
@@ -119,6 +120,8 @@ def _recent_counts(
             Topic.subject_id == subject_id,
             TaskBookItem.book_id.is_(None),
             TaskBookItem.planned_count > 0,
+            # sayfa/soru birimi test alışkanlığını bozmasın (2026-10-22)
+            or_(TaskBookItem.unit.is_(None), TaskBookItem.unit == "test"),
         )
     )
     if student_id is not None:

@@ -106,7 +106,7 @@ def main() -> int:
             box.click()
             box.fill("milli desten")
             page.wait_for_timeout(1800)
-            first = page.locator('form[aria-label="Görev ekleme kutusu"] ~ div button').first
+            first = page.locator('[data-testid="quick-add-results"] button').first
             txt = first.inner_text() if first.count() else ""
             check("1 'milli desten' → ilk sonuç Millî Bir Destan", "Millî Bir Destan" in txt, txt[:80])
             check("1b sonuçta ders + sınıf + tema görünür", "İnkılap" in txt and "8. sınıf" in txt, txt[:160])
@@ -117,11 +117,15 @@ def main() -> int:
             ctext = chip.inner_text() if chip.count() else ""
             check("2 seçim kutunun içinde çip (konu · ders · kaynaksız)",
                   "Millî Bir Destan" in ctext and "kaynaksız" in ctext, ctext[:160])
-            qty = page.locator('input[aria-label="Test sayısı"]')
-            check("3 adet kutusu 'test' etiketli + ön-dolu", qty.count() > 0 and qty.input_value() != "",
-                  qty.input_value() if qty.count() else "")
+            # 2026-10-22 yeni kart: miktar çipleri (öğrenilmiş değer seçili) + "başka" ile elle sayı
+            on = page.locator('[role="group"][aria-label="Miktar"] button[aria-pressed="true"]')
+            check("3 miktar ön-seçili + birim 'test' yazılı",
+                  on.count() == 1 and "test" in page.locator('[role="group"][aria-label="Miktar"]').inner_text(),
+                  on.inner_text() if on.count() else "")
             btn = page.locator('form[aria-label="Görev ekleme kutusu"] button[type="submit"]')
             check("3b düğme 'Ekle · N test'", "test" in btn.inner_text(), btn.inner_text())
+            page.locator('[role="group"][aria-label="Miktar"] button:has-text("başka")').click()
+            qty = page.locator('input[aria-label="Test sayısı"]')
             qty.fill("30")
             page.wait_for_timeout(300)
             check("4 30 yazınca 'test sayısıdır' uyarısı", page.locator("text=test sayısıdır").count() > 0)
@@ -156,7 +160,7 @@ def main() -> int:
             dbox.click()
             dbox.fill("destan")
             dark.wait_for_timeout(1800)
-            dark.locator('form[aria-label="Görev ekleme kutusu"] ~ div button').first.click()
+            dark.locator('[data-testid="quick-add-results"] button').first.click()
             dark.wait_for_timeout(600)
             ov = dark.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
             check("6 390px: yatay taşma yok", ov <= 1, str(ov))

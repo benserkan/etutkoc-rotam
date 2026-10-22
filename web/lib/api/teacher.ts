@@ -33,6 +33,7 @@ import type {
   TaskPickerResponse,
   TopicBoardResponse,
   TaskQuantityResponse,
+  PageSuggestionResponse,
   SectionStatsResponse,
   SidebarResponse,
   SubjectListResponse,
@@ -150,6 +151,11 @@ export const teacherKeys = {
     [
       "teacher", "me", "students", String(id), "topic-board",
       subjectId === "" ? "" : String(subjectId),
+    ] as const,
+  pageSuggestion: (id: number, topicId: number | null, note: string, excludeTaskId: number | null = null) =>
+    [
+      "teacher", "me", "students", String(id), "page-suggestion",
+      topicId === null ? "" : String(topicId), note, excludeTaskId === null ? "" : String(excludeTaskId),
     ] as const,
   taskQuantity: (id: number, subjectId: number | null) =>
     [
@@ -646,6 +652,23 @@ export function getTaskPicker(
   const qs = buildQuery({ q: q.trim() });
   return api<TaskPickerResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/task-picker${qs}`,
+  );
+}
+
+/** Sayfa birimli kaynaksız görev: son aralık + devam sayfası + kitap notu önerileri. */
+export function getPageSuggestion(
+  studentId: number,
+  topicId: number | null,
+  note: string,
+  excludeTaskId: number | null = null,
+): Promise<PageSuggestionResponse> {
+  const qs = buildQuery({
+    topic_id: topicId !== null ? String(topicId) : "",
+    note: note.trim(),
+    exclude_task_id: excludeTaskId !== null ? String(excludeTaskId) : "",
+  });
+  return api<PageSuggestionResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/page-suggestion${qs}`,
   );
 }
 

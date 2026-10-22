@@ -120,6 +120,8 @@ def compute_day_subject_summary(
             entry["task_ids"].add(t.id)
             if is_deneme:
                 entry["denemeler"] += it.planned_count
+            elif it.book is None and getattr(it, "unit", None) in ("soru", "sayfa"):
+                pass  # soru/sayfa birimli kaynaksız kalem: görev sayılır, test sayısına girmez (2026-10-22)
             else:
                 entry["tests"] += it.planned_count
 

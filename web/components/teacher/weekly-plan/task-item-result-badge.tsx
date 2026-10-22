@@ -120,10 +120,25 @@ function PlainResultBadge({
   }
 
   const wrapClass = inline ? "inline-flex items-center" : "flex items-center";
+  // Sayfa birimli kaynaksız kalem (2026-10-22): D/Y yok — yapılan sayfa düzeltilir.
+  const pageMode = item.book_id == null && item.unit === "sayfa";
+  const pageRange =
+    item.unit === "sayfa" && item.page_from && item.page_to
+      ? `s. ${item.page_from}–${item.page_to}`
+      : null;
 
   return (
     <>
-      {hasResult ? (
+      {pageMode ? (
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className={`${wrapClass} gap-1 ml-2 text-[11px] tabular-nums text-muted-foreground hover:text-foreground hover:underline`}
+          title="Yapılan sayfayı düzelt (öğrenci adına)"
+        >
+          {item.completed_count}/{item.planned_count} sayfa
+        </button>
+      ) : hasResult ? (
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
@@ -186,6 +201,8 @@ function PlainResultBadge({
         initialWrong={item.wrong_count}
         initialBlank={item.blank_count}
         isDeneme={isDeneme}
+        unit={item.book_id == null && item.unit ? item.unit : "test"}
+        pageRange={pageRange}
         saving={mutate.isPending}
       />
     </>

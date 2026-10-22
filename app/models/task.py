@@ -110,6 +110,13 @@ class Task(Base):
         ForeignKey("pool_items.id", ondelete="SET NULL", name="fk_tasks_pool_item"),
         nullable=True, index=True,
     )
+    # Etkinlik görevinin müfredat konusu (2026-10-22 — migration u5w8b1c2b77x): konu
+    # seçiliyken verilen video/özet/tekrar/diğer görevi konuya bağlanır; tamamlanınca konu
+    # "çalışıldı" sayılır (test sayısına GİRMEZ). Test görevinde konu kalemdedir.
+    topic_id: Mapped[int | None] = mapped_column(
+        ForeignKey("topics.id", ondelete="SET NULL", name="fk_tasks_topic_id"),
+        nullable=True, index=True,
+    )
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -125,6 +132,7 @@ class Task(Base):
     work_block: Mapped["CoachWorkBlock | None"] = relationship(
         "CoachWorkBlock", back_populates="tasks", foreign_keys=[work_block_id]
     )
+    topic: Mapped["Topic | None"] = relationship("Topic", foreign_keys=[topic_id])
     # Video Sepeti'nden bu göreve konmuş videolar (çok linkli video görevi).
     # Görev silinince ORM task_id'yi NULL'lar (+ PG FK SET NULL) → videolar
     # sepete döner. passive_deletes YOK: dev SQLite FK zorlamaz, ORM yapmalı.
@@ -162,6 +170,13 @@ class TaskBookItem(Base):
     )
     label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     planned_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    # BİRİM (2026-10-22 — migration u5w8b1c2b77x): yalnız KAYNAKSIZ KONULU kalemde anlamlı.
+    # NULL/'test' = test (eski davranış) · 'soru' = soru sayısı (D/Y/B girilir) · 'sayfa' =
+    # sayfa (page_from–page_to aralığı; planned_count = sayfa adedi). Soru/sayfa kalemi
+    # müfredat konusuna bağlıdır ama TEST hacmine GİRMEZ. Tek merkez: gorev_stats.item_unit.
+    unit: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    page_from: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    page_to: Mapped[int | None] = mapped_column(Integer, nullable=True)
     completed_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     correct_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     wrong_count: Mapped[int | None] = mapped_column(Integer, nullable=True)

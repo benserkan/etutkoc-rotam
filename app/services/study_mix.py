@@ -133,7 +133,8 @@ def compute_study_mix(db: Session, student: User, *, today: date | None = None, 
                 if sid not in names:
                     s = db.get(Subject, sid)
                     names[sid] = s.name if s else "—"
-            elif it.book_id is None and it.topic_id is not None and it.topic is not None:
+            elif (it.book_id is None and it.topic_id is not None and it.topic is not None
+                  and gorev_stats.item_unit(it) == "test"):
                 kind = "sourceless"
                 sid = it.topic.subject_id
                 if sid not in names:

@@ -73,6 +73,7 @@ def _item_out(db: Session, it: PoolItem, names: dict) -> PoolItemOut:
         section_id=it.book_section_id, section_label=sec.label if sec else None,
         label=it.label, quantity=it.quantity, unit=it.unit, completed=it.completed,
         remaining=it.remaining, day_hint=_iso(it.day_hint), source=it.source,
+        page_from=it.page_from, page_to=it.page_to,
         teacher_homework=bool(it.teacher_homework), approval=it.approval,
         carry_count=it.carry_count or 0, cup_attempts=it.cup_attempts or 0,
         counts=it.counts_toward_pool,
@@ -595,7 +596,8 @@ def add_item(student_id: int, body: PoolItemBody, user: User = Depends(_require_
                     topic=topic, book=book, section=section, label=body.label,
                     day_hint=_parse_iso_date(body.day_hint) if body.day_hint else None,
                     source=body.source, created_by=user, teacher_homework=body.teacher_homework,
-                    exam_result_id=body.exam_result_id)
+                    exam_result_id=body.exam_result_id,
+                    page_from=body.page_from, page_to=body.page_to)
     except PoolError as e:
         raise _http(e)
     return _bundle_mut(db, user, student)

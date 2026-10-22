@@ -67,7 +67,8 @@ export interface ItemUpdate {
 interface Row {
   itemId: number;
   label: string;
-  unit: string; // "test" | "soru"
+  unit: string; // "test" | "soru" | "sayfa"
+  pageRange: string | null;
   isBookItem: boolean;
   planned: number;
   completed: number;
@@ -88,7 +89,10 @@ function buildRows(task: StudentTask): Row[] {
     .map((it) => ({
       itemId: it.id,
       label: it.book_name + (it.section_label ? ` · ${it.section_label}` : ""),
-      unit: isTestUnit(it) ? "test" : "soru",
+      // kaynaksız konulu kalemin birimi kalemde (test | soru | sayfa — 2026-10-22)
+      unit: it.book_id == null && it.topic_id != null && it.unit ? it.unit : isTestUnit(it) ? "test" : "soru",
+      pageRange:
+        it.unit === "sayfa" && it.page_from && it.page_to ? `s. ${it.page_from}–${it.page_to}` : null,
       isBookItem: isTestUnit(it),
       planned: it.planned,
       completed: it.completed,
@@ -214,7 +218,7 @@ export function TaskSheetContent({
   // Kitapsız deneme: doğru + yanlış + boş ≤ çözülen (soru). Kitap kalemi: kısıt yok.
   const localError = (() => {
     for (const r of rows) {
-      if (!r.isBookItem) {
+      if (!r.isBookItem && r.unit !== "sayfa") {
         const c = parseNum(r.correct) ?? 0;
         const w = parseNum(r.wrong) ?? 0;
         const b = parseNum(r.blank) ?? 0;
@@ -231,9 +235,10 @@ export function TaskSheetContent({
       rows.map((r) => ({
         itemId: r.itemId,
         completed: r.completed,
-        correct: parseNum(r.correct),
-        wrong: parseNum(r.wrong),
-        blank: parseNum(r.blank),
+        // sayfa biriminde D/Y/B yok (2026-10-22)
+        correct: r.unit === "sayfa" ? null : parseNum(r.correct),
+        wrong: r.unit === "sayfa" ? null : parseNum(r.wrong),
+        blank: r.unit === "sayfa" ? null : parseNum(r.blank),
       })),
     );
   }
@@ -306,9 +311,12 @@ export function TaskSheetContent({
               {rows.length > 1 ? (
                 <Text className="text-sm font-semibold text-slate-800">{r.label}</Text>
               ) : null}
+              {r.pageRange ? (
+                <Text className="text-sm font-semibold text-slate-900">{r.pageRange}</Text>
+              ) : null}
               <View className="gap-1.5">
                 <Text className="text-xs font-medium text-slate-600">
-                  Çözdüğün {r.unit} sayısı
+                  {r.unit === "sayfa" ? "Yaptığın sayfa sayısı" : `Çözdüğün ${r.unit} sayısı`}
                 </Text>
                 <Stepper
                   value={r.completed}
@@ -317,11 +325,13 @@ export function TaskSheetContent({
                   onChange={(v) => setRow(r.itemId, { completed: v })}
                 />
               </View>
+              {r.unit === "sayfa" ? null : (
               <View className="flex-row gap-3">
                 <NumField label="Doğru (soru)" value={r.correct} onChangeText={(v) => setRow(r.itemId, { correct: v })} />
                 <NumField label="Yanlış (soru)" value={r.wrong} onChangeText={(v) => setRow(r.itemId, { wrong: v })} />
                 <NumField label="Boş (soru)" value={r.blank} onChangeText={(v) => setRow(r.itemId, { blank: v })} />
               </View>
+              )}
             </View>
           ))}
           <Text className="text-[11px] text-slate-400">

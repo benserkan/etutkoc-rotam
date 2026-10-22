@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Check, PlayCircle } from "lucide-react";
 
 import { COACH_GUIDE, estimateDurationMs } from "@/components/guide/coach-guide-data";
@@ -19,7 +20,11 @@ import { cn } from "@/lib/utils";
 export function GuideHint({ module, className }: { module: string; className?: string }) {
   const chapters = COACH_GUIDE.chapters.filter((c) => c.module === module);
   const q = useGuide(COACH_GUIDE.guideKey);
-  if (chapters.length === 0) return null;
+  // Hidrasyon: sunucu veri yokken hiçbir şey çizmez; tarayıcıda önbellekte veri hazırsa ilk
+  // çizimde kart basılıp "server HTML didn't match" hatası doğuyordu (2026-10-22). İlk çizim
+  // sunucuyla aynı (boş), kart bağlandıktan sonra gelir.
+  const mounted = React.useSyncExternalStore(subscribeNoop, () => true, () => false);
+  if (chapters.length === 0 || !mounted) return null;
 
   const watched = q.data?.state.steps_watched ?? {};
   const done = new Set(q.data?.state.chapters_done ?? []);
@@ -96,4 +101,9 @@ export function GuideHint({ module, className }: { module: string; className?: s
       </a>
     </div>
   );
+}
+
+
+function subscribeNoop() {
+  return () => {};
 }

@@ -36,7 +36,7 @@ from app.models.pool import (
     PERIOD_BREAK, PERIOD_CLOSED, PERIOD_CLOSED_NO_SESSION, PERIOD_OPEN, PERIOD_STATUSES,
     POOL_SOURCES, POOL_UNITS, PROGRAM_MODE_GUN_GUN, PROGRAM_MODE_HAVUZ, PROGRAM_MODES,
     SOURCE_CARRY, SOURCE_COACH, SOURCE_STUDENT, TOPIC_REQUIRED_EXEMPT_SOURCES, TOPIC_REQUIRED_UNITS,
-    UNIT_DENEME, UNIT_ETKINLIK, UNIT_TEST,
+    UNIT_DENEME, UNIT_ETKINLIK, UNIT_SAYFA, UNIT_SORU, UNIT_TEST,
     ClassGroup, PoolItem, StudyPeriod,
 )
 from app.services import task_titles
@@ -399,6 +399,7 @@ def add_item(
     exam_result_id: int | None = None, parent_item: PoolItem | None = None,
     exam_kind: str | None = None, exam_section: str | None = None,
     question_count: int | None = None,
+    page_from: int | None = None, page_to: int | None = None,
 ) -> PoolItem:
     """Havuza kalem ekler. Rezerv AÇMAZ. Doğrulamalar K16 / K25 / kaynak sahipliği.
 
@@ -412,6 +413,13 @@ def add_item(
         raise PoolError("bad_source", "Geçersiz kalem kaynağı.")
     if unit == UNIT_ETKINLIK:
         quantity = quantity or 1
+    # Sayfa aralığı (2026-10-22): "s. 45–50" → quantity = sayfa adedi.
+    if unit != UNIT_SAYFA:
+        page_from = page_to = None
+    elif page_from is not None or page_to is not None:
+        if page_from is None or page_to is None or page_from < 1 or page_to < page_from:
+            raise PoolError("invalid_page_range", "Sayfa aralığını başlangıç ≤ bitiş olacak şekilde gir (örn. 45–50).")
+        quantity = page_to - page_from + 1
     if quantity is None or quantity < 1:
         raise PoolError("quantity_required", "Bu kalemde miktar zorunlu (örn. 4 test).")
     if subject is None:
@@ -473,6 +481,7 @@ def add_item(
         exam_kind=exam_kind if unit == UNIT_DENEME else None,
         exam_section=exam_section if unit == UNIT_DENEME else None,
         question_count=question_count if unit == UNIT_DENEME else None,
+        page_from=page_from, page_to=page_to,
     )
     db.add(it)
     db.flush()
@@ -551,6 +560,8 @@ def set_item_quantity(db: Session, item: PoolItem, quantity: int, actor: User) -
             f"En az {mn} olabilir: {done} {item.unit} yapıldı"
             + (f", {mn - done} {item.unit} öğrencinin kabında bekliyor" if mn > done else "") + ".",
         )
+    if item.page_from is not None:
+        item.page_to = item.page_from + quantity - 1  # sayfa aralığı yeni miktara göre (2026-10-22)
     item.quantity = quantity
     item.completed = min(item.quantity, item.completed or 0)
     db.flush()
@@ -750,6 +761,27 @@ def put_in_cup(db: Session, *, item: PoolItem, day: date, count: int | None = No
         return task
 
     is_test_like = item.unit in (UNIT_TEST, UNIT_DENEME) or (item.unit != UNIT_ETKINLIK and book is not None)
+    # Soru/sayfa birimli KONULU kaynaksız kalem (2026-10-22): önceden konusunu kaybedip boş
+    # "Diğer" görevine dönüşüyordu → artık konuya bağlı, birimli kalem (test hacmine girmez).
+    if item.unit in (UNIT_SORU, UNIT_SAYFA) and book is None and topic is not None:
+        from app.services.gorev_stats import item_quantity_text
+
+        full = qty == item.remaining and qty == item.quantity
+        ti = TaskBookItem(book_id=None, book_section_id=None, topic_id=topic.id,
+                          label=item.label or topic.name, planned_count=qty, completed_count=0,
+                          unit=item.unit,
+                          # aralık yalnız kalemin tamamı tek güne alınınca taşınır
+                          page_from=item.page_from if full else None,
+                          page_to=item.page_to if full else None)
+        src = f" ({item.label})" if item.label and item.label != topic.name else ""
+        task = Task(student_id=item.student_id, date=day, type=TaskType.TEST,
+                    title=f"{topic.name}{src}: {item_quantity_text(ti)}"[:255],
+                    status=TaskStatus.PENDING, order=order, is_draft=False, published_at=_now(),
+                    pool_item_id=item.id, book_items=[ti])
+        db.add(task)
+        item.cup_attempts = (item.cup_attempts or 0) + 1
+        db.flush()
+        return task
     # Kalemler görevle BİRLİKTE kurulur (task.book_items=...): ilişki daha sonra tembel
     # yüklenirse dev SQLite'ta (cascade kapalı) id'si yeniden kullanılan eski görevin yetim
     # kalemleri bu göreve yapışır — prod PG'de olmaz ama servis buna dayanıklı olmalı.
@@ -832,6 +864,9 @@ def resize_cup(db: Session, *, task: Task, count: int) -> Task:
         raise PoolError("below_done", f"Bu görevde {done} işaretledin; önce işaretlediğin sayıyı düzelt.")
     if count > mx:
         raise PoolError("bad_count", f"En fazla {mx} {item.unit} olabilir (havuzdaki kalan).")
+    if count != bi.planned_count and bi.page_from is not None:
+        # sayfa aralığı yeni sayıya göre kısalır/uzar (başlangıç sabit) — 2026-10-22
+        bi.page_to = bi.page_from + count - 1
     bi.planned_count = count
     if bi.book_id is not None and bi.book_section_id is not None:
         book = db.get(Book, bi.book_id)
@@ -840,7 +875,10 @@ def resize_cup(db: Session, *, task: Task, count: int) -> Task:
     else:
         head = (task.title or "").rsplit(":", 1)[0] if ":" in (task.title or "") else None
         if head and task.type == TaskType.TEST:
-            task.title = f"{head}: {count} {item.unit}"
+            from app.services.gorev_stats import item_quantity_text
+
+            task.title = (f"{head}: {item_quantity_text(bi)}" if bi.unit in (UNIT_SORU, UNIT_SAYFA)
+                          else f"{head}: {count} {item.unit}")
         elif "·" in (task.title or ""):
             task.title = (task.title or "").rsplit("·", 1)[0].rstrip() + f" · {count} {item.unit}"
     if done >= count and task.status != TaskStatus.COMPLETED:

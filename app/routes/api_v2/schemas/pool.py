@@ -34,6 +34,8 @@ class PoolItemOut(BaseModel):
     exam_kind: str | None = None
     exam_section: str | None = None
     question_count: int | None = None
+    page_from: int | None = None
+    page_to: int | None = None
 
 
 class PoolSummaryOut(BaseModel):
@@ -293,6 +295,8 @@ class PoolItemBody(BaseModel):
     teacher_homework: bool = False
     source: str = Field(default="rehber", pattern="^(rehber|deneme|sablon)$")
     exam_result_id: int | None = None
+    page_from: int | None = Field(default=None, ge=1, le=5000)   # sayfa aralığı (unit=sayfa)
+    page_to: int | None = Field(default=None, ge=1, le=5000)
 
 
 class PoolQuantityBody(BaseModel):

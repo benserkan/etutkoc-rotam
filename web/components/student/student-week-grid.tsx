@@ -46,6 +46,8 @@ function taskUnit(t: StudentTask): string {
   // Deneme kalemi (D1): 1 kalem = 1 deneme → birim "deneme" (soru DEĞİL).
   if (t.items.some((x) => x.exam_kind)) return "deneme";
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
+  // kaynaksız konu kalemi: birim kalemde (test | soru | sayfa — 2026-10-22)
+  if (it && it.book_id == null && it.topic_id != null) return it.unit ?? "test";
   if (it && it.book_id == null && it.is_test_unit === false) return "soru"; // kitapsız tam deneme
   if (it && it.book_id == null && it.is_test_unit == null) return "soru";
   if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
@@ -55,7 +57,7 @@ function taskUnit(t: StudentTask): string {
 function isDenemeTask(t: StudentTask): boolean {
   return t.items.some(
     (x) => x.exam_kind || (x.book_type != null && DENEME_TYPES.has(x.book_type)),
-  ) || (t.items.length > 0 && t.items.every((x) => x.book_id == null && x.is_test_unit === false));
+  ) || (t.items.length > 0 && t.items.every((x) => x.book_id == null && x.is_test_unit === false && x.topic_id == null));
 }
 
 function taskLabel(t: StudentTask): string {
