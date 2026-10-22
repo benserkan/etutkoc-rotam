@@ -26,7 +26,7 @@ import { Hint } from "@/components/ui/hint";
 import { subjectColors } from "@/components/shared/subject-tag";
 import { cn } from "@/lib/utils";
 import { GuideHint } from "@/components/guide/guide-hint";
-import { AddPanel } from "./pool-add-panel";
+import { AddPanel, RelinkItemDialog } from "./pool-add-panel";
 import { ModeHistoryList, ModeSwitchDialog } from "@/components/teacher/pool/mode-switch-dialog";
 import { PoolFlagsCard } from "./pool-flags-card";
 import { PeriodHistory } from "./pool-period-history";
@@ -201,7 +201,7 @@ function WatchView({ studentId, data, onEdit }: { studentId: number; data: PoolB
   const done = items.filter((i) => i.remaining === 0 && !pending.includes(i));
   const order = new Map(aggregateSubjects(items).map((a, i) => [a.name, i]));
   const rowProps = (it: PoolItemOut) => ({
-    studentId,
+    studentId, data,
     onDelete: () => { if (window.confirm("Bu kalemi havuzdan kaldır? (iz kalır)")) del.mutate({ item_id: it.id }); },
     onApprove: (ok: boolean) => approve.mutate({ item_id: it.id, approved: ok }),
   });
@@ -756,7 +756,7 @@ function PoolList({ studentId, data, onPickSubject }: {
                   <span className="text-xs text-muted-foreground">{list.length} kalem · {gUnits} birim</span>
                 </div>
                 <ul className="space-y-1.5">
-                  {list.map((it) => <ItemRow key={it.id} it={it} studentId={studentId}
+                  {list.map((it) => <ItemRow key={it.id} it={it} studentId={studentId} data={data}
                                              onDelete={() => { if (window.confirm("Bu kalemi havuzdan kaldır? (iz kalır)")) del.mutate({ item_id: it.id }); }}
                                              onApprove={(ok) => approve.mutate({ item_id: it.id, approved: ok })} />)}
                 </ul>
@@ -770,9 +770,10 @@ function PoolList({ studentId, data, onPickSubject }: {
   );
 }
 
-function ItemRow({ it, studentId, onDelete, onApprove }: {
-  it: PoolItemOut; studentId: number; onDelete: () => void; onApprove: (ok: boolean) => void;
+function ItemRow({ it, studentId, data, onDelete, onApprove }: {
+  it: PoolItemOut; studentId: number; data?: PoolBundleResponse; onDelete: () => void; onApprove: (ok: boolean) => void;
 }) {
+  const [relinkOpen, setRelinkOpen] = React.useState(false);
   const setQty = useSetPoolItemQuantity(studentId);
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(String(it.quantity));
@@ -861,7 +862,14 @@ function ItemRow({ it, studentId, onDelete, onApprove }: {
           )}
         </div>
         {pending && (
-          <div className="flex shrink-0 gap-1">
+          <div className="flex shrink-0 flex-wrap justify-end gap-1">
+            {data && it.completed === 0 && (
+              <Hint text="Öğrencinin seçtiği konu ya da kitap yanlışsa onaylamadan önce düzelt.">
+                <Button size="sm" variant="ghost" onClick={() => setRelinkOpen(true)} data-testid="relink-open">
+                  <PencilLine className="size-4" aria-hidden /> Konuyu değiştir
+                </Button>
+              </Hint>
+            )}
             <Hint text="Öğrenci bu kalemi kendisi ekledi. Kaynağından gösterdiyse onayla — onaylanınca dönem yüzdesine girer.">
               <Button size="sm" variant="outline" onClick={() => onApprove(true)}>
                 <Check className="size-4" aria-hidden /> Onayla
@@ -881,6 +889,9 @@ function ItemRow({ it, studentId, onDelete, onApprove }: {
           </button>
         </Hint>
       </div>
+      {data && relinkOpen && (
+        <RelinkItemDialog studentId={studentId} data={data} item={it} open={relinkOpen} onOpenChange={setRelinkOpen} />
+      )}
     </li>
   );
 }

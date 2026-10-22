@@ -457,6 +457,13 @@ export function useApprovePoolItem(studentId: number) {
   );
 }
 
+/** Öğrencinin eklediği kalemin konusunu/kitabını düzelt (isteğe bağlı aynı anda onayla). */
+export function useRelinkPoolItem(studentId: number) {
+  return useBundleMutation<{
+    item_id: number; topic_id?: number; book_id?: number; section_id?: number; approve?: boolean;
+  }>(studentId, (b) => `${base(studentId)}/pool/items/${b.item_id}/relink`, "Kalemin bağı güncellendi", "Bağ değiştirilemedi");
+}
+
 export function useSetClassPosition(studentId: number) {
   return useBundleMutation<{ subject_id: number; topic_id: number | null }>(
     studentId, () => `${base(studentId)}/pool/class-group/position`, "Şube konumu yazıldı", "Konum yazılamadı",

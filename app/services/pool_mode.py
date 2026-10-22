@@ -579,6 +579,57 @@ def approve_item(db: Session, item: PoolItem, actor: User, approved: bool) -> Po
     return item
 
 
+def relink_item(
+    db: Session, *, item: PoolItem, coach: User, subject: Subject | None = None,
+    topic: Topic | None = None, book: Book | None = None, section: BookSection | None = None,
+) -> PoolItem:
+    """Kalemin müfredat/kitap bağını değiştir (2026-10-22): koç öğrencinin eklediği kalemi onaylamadan
+    önce doğru konuya/kitaba bağlar. Yalnız hiç ilerlemesi yokken (kaba alınmamış, işaretlenmemiş):
+    kap görevi kalemin bağını taşır; ilerlemeli kalemde bağ değişirse sayaçlar ayrışır.
+    Miktar korunur; birim yeni bağa uyarlanır (kitapta kitabın birimi, konuda test/soru/sayfa)."""
+    if item.removed_at is not None:
+        raise PoolError("item_removed", "Kaldırılmış kalem değiştirilemez.")
+    if item.period is not None and not item.period.is_open:
+        raise PoolError("period_closed", "Kapalı dönemdeki kalem değiştirilemez.")
+    if int(item.completed or 0) > 0 or int(item.session_marked or 0) > 0 or _cup_tasks(db, item):
+        raise PoolError("has_progress",
+                        "Kalem kaba alınmış ya da işaretlenmiş; bağı değiştirilemez. Kaldırıp doğrusunu ekle.")
+    if (topic is None) == (section is None):
+        raise PoolError("link_required", "Bir müfredat konusu ya da kitabın bir bölümü seç.")
+    subject = subject or (db.get(Subject, item.subject_id) if item.subject_id else None)
+    if subject is None:
+        raise PoolError("subject_required", "Ders seçin.")
+    student = db.get(User, item.student_id)
+    _check_subject_allowed(student, subject)
+    if topic is not None:
+        if topic.subject_id != subject.id:
+            raise PoolError("topic_subject_mismatch", "Konu seçilen derse ait değil.")
+        if not (topic.is_builtin or topic.teacher_id == coach.id):
+            raise PoolError("topic_not_found", "Konu bulunamadı.")
+        item.topic_id, item.book_id, item.book_section_id = topic.id, None, None
+        if item.unit not in (UNIT_TEST, UNIT_SORU, UNIT_SAYFA):
+            item.unit = UNIT_TEST
+        if item.unit != UNIT_SAYFA:
+            item.page_from = item.page_to = None
+    else:
+        if book is None or section.book_id != book.id:
+            raise PoolError("section_book_mismatch", "Bölüm seçilen kitaba ait değil.")
+        sb = (db.query(StudentBook).filter(StudentBook.student_id == item.student_id, StudentBook.book_id == book.id,
+                                           StudentBook.archived_at.is_(None)).first())
+        if sb is None:
+            raise PoolError("book_not_assigned", "Bu kitap öğrenciye atanmış değil.")
+        if book.subject_id and book.subject_id != subject.id:
+            raise PoolError("book_subject_mismatch", "Kitap seçilen derse ait değil.")
+        from app.models.book import BookType as _BT
+        item.book_id, item.book_section_id = book.id, section.id
+        item.topic_id = section.topic_id
+        item.unit = UNIT_DENEME if book.type in (_BT.BRANS_DENEMESI, _BT.GENEL_DENEME) else UNIT_TEST
+        item.page_from = item.page_to = None
+    item.subject_id = subject.id
+    db.flush()
+    return item
+
+
 def carry_item(
     db: Session, *, item: PoolItem, target: StudyPeriod, student: User, coach: User,
     quantity: int | None = None,

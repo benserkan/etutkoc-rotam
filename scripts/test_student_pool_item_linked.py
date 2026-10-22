@@ -171,6 +171,8 @@ def main() -> int:
             sig = pool_mode.topic_pool_signals(db, d["st"])
             check("12 onaydan önce müfredatta 'planlandı' sinyali yok", d["t1"] not in sig.planned, f"{sig.planned}")
             tid = ti.id if ti else 0
+            bid = bi.id if bi else 0
+            pid = pi.id if pi else 0
 
         c = login(d["coach"])
         r = c.post(f"/api/v2/teacher/students/{d['st']}/pool/items/{tid}/approve", json={"approved": True})
@@ -180,6 +182,35 @@ def main() -> int:
             sig = pool_mode.topic_pool_signals(db, d["st"])
             check("14 onay sonrası yüzdeye girer + müfredatta planlandı",
                   it.counts_toward_pool and d["t1"] in sig.planned, f"{it.approval} {sig.planned}")
+
+        # --- koç onaydan önce konuyu/kitabı düzeltir (relink)
+        base = f"/api/v2/teacher/students/{d['st']}/pool/items"
+        r = c.post(f"{base}/{bid}/relink", json={"topic_id": d["t1"]})
+        with SessionLocal() as db:
+            it = db.get(PoolItem, bid)
+            check("15 kitap kalemi konuya taşındı (kitap bağı temizlendi, hâlâ bekliyor)",
+                  r.status_code == 200 and it.topic_id == d["t1"] and it.book_id is None
+                  and it.book_section_id is None and it.approval == "bekliyor" and it.quantity == 2,
+                  r.text[:200])
+        r = c.post(f"{base}/{pid}/relink", json={"book_id": d["b"], "section_id": d["s1"], "approve": True})
+        with SessionLocal() as db:
+            it = db.get(PoolItem, pid)
+            check("16 sayfa kalemi kitaba bağlandı + onaylandı (birim test, aralık temiz)",
+                  r.status_code == 200 and it.book_section_id == d["s1"] and it.unit == "test"
+                  and it.page_from is None and it.approval == "onaylandi", r.text[:200])
+        r = c.post(f"{base}/{bid}/relink", json={"topic_id": d["tf"]})
+        check("17 başka koçun konusu ile relink 422", r.status_code == 422, r.text[:200])
+        r = c.post(f"{base}/{bid}/relink", json={})
+        check("18 bağ verilmezse 422 link_required",
+              r.status_code == 422 and r.json()["detail"]["code"] == "link_required", r.text[:200])
+        with SessionLocal() as db:
+            db.get(PoolItem, bid).completed = 1
+            db.commit()
+        r = c.post(f"{base}/{bid}/relink", json={"book_id": d["b"], "section_id": d["s1"]})
+        check("19 ilerlemeli kalem relink edilemez (409)", r.status_code == 409, r.text[:200])
+        o = login(ids["users"][1])
+        r = o.post(f"/api/v2/teacher/students/{d['st']}/pool/items/{bid}/relink", json={"topic_id": d["t1"]})
+        check("20 başka koç 404", r.status_code == 404, r.text[:200])
     finally:
         cleanup()
     print(f"\n{passed} passed · {len(failed)} failed")

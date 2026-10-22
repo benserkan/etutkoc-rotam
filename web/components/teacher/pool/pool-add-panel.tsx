@@ -25,6 +25,9 @@ import {
   BookMarked, BookOpen, Check, ChevronDown, ClipboardCheck, Layers, ListTree, Lock, NotebookPen, PenLine, Plus, Search, Sparkles, Wand2,
 } from "lucide-react";
 
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { DenemeForm } from "@/components/teacher/weekly-plan/deneme-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +36,9 @@ import { getPageSuggestion, teacherKeys } from "@/lib/api/teacher";
 import type { PageSuggestionResponse } from "@/lib/types/teacher";
 import {
   getPoolBooks, getPoolTopics, parsePoolText, poolBooksKey, poolKeys, UNIT_LABELS, useAddPoolItem,
-  useSetClassPosition,
+  useRelinkPoolItem, useSetClassPosition,
   type ParseOption, type ParseResponse, type PoolBookOut, type PoolBookSectionOut, type PoolBundleResponse, type PoolItemBody,
-  type PoolSubjectOut, type PoolTopicOut, type PoolTopicsResponse, type PoolUnit,
+  type PoolItemOut, type PoolSubjectOut, type PoolTopicOut, type PoolTopicsResponse, type PoolUnit,
 } from "@/lib/api/pool";
 
 type Choice =
@@ -995,4 +998,78 @@ function useDebouncedValue<T>(value: T, ms: number): T {
     return () => clearTimeout(t);
   }, [value, ms]);
   return v;
+}
+
+
+// ---------------------------------------------------------------- onaydan önce bağı düzelt
+
+/** Öğrencinin eklediği kalemin konusunu/kitabını koç onaylamadan önce düzeltir (2026-10-22).
+ *  Ekleme panelindeki "Nereden?" adımının aynısı; miktar korunur. */
+export function RelinkItemDialog({ studentId, data, item, open, onOpenChange }: {
+  studentId: number; data: PoolBundleResponse; item: PoolItemOut; open: boolean; onOpenChange: (o: boolean) => void;
+}) {
+  const relink = useRelinkPoolItem(studentId);
+  const [choice, setChoice] = React.useState<Choice | null>(null);
+  const subj = data.subjects.find((s) => s.id === item.subject_id) ?? null;
+  const booksQ = useQuery({
+    queryKey: poolBooksKey(studentId, subj?.id ?? 0),
+    queryFn: () => getPoolBooks(studentId, subj!.id),
+    enabled: open && subj != null,
+  });
+  const current = item.book_id ? `${item.book_name ?? "Kitap"} › ${item.section_label ?? ""}`
+    : item.topic_name ? `Müfredat: ${item.topic_name}` : "Konusuz";
+  const picked = !choice ? null
+    : choice.kind === "book" ? `${choice.book.name} › ${choice.section.label}`
+    : choice.kind === "topic" ? `Müfredat: ${choice.topic.name}` : null;
+  function save(approve: boolean) {
+    if (!choice || choice.kind === "none") return;
+    const body = choice.kind === "book"
+      ? { item_id: item.id, book_id: choice.book.book_id, section_id: choice.section.section_id, approve }
+      : { item_id: item.id, topic_id: choice.topic.topic_id, approve };
+    relink.mutate(body, { onSuccess: () => { onOpenChange(false); setChoice(null); } });
+  }
+  return (
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setChoice(null); }}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl" data-section="pool:relink">
+        <DialogHeader>
+          <DialogTitle>Kalemin konusunu değiştir</DialogTitle>
+          <DialogDescription>
+            Öğrenci bu kalemi {item.quantity} {UNIT_LABELS[item.unit]} olarak ekledi. Konuyu ya da kitabın bölümünü düzelt;
+            miktar aynı kalır.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          <p className="rounded-md border bg-muted/40 px-3 py-2 text-foreground">
+            <span className="text-muted-foreground">Şu an: </span>{current}
+            {item.label && <span className="text-muted-foreground"> · not: {item.label}</span>}
+          </p>
+          {subj ? (
+            <SourcePicker studentId={studentId} subject={subj} maxGrade={null}
+                          studentGrade={data.student.is_graduate ? null : data.student.grade_level}
+                          books={booksQ.data?.books ?? []} booksLoading={booksQ.isLoading} anchor={null}
+                          onPick={setChoice} />
+          ) : (
+            <p className="text-muted-foreground">Bu kalemin dersi listede yok; kaldırıp doğrusunu ekle.</p>
+          )}
+          {choice?.kind === "none" && (
+            <p className="text-amber-800 dark:text-amber-200">Konusuz bırakmak için kalemi değiştirmeye gerek yok — bir konu ya da bölüm seç.</p>
+          )}
+          {picked && (
+            <p className="rounded-md border border-cyan-600/40 bg-cyan-500/10 px-3 py-2 text-foreground" data-testid="relink-picked">
+              <span className="text-muted-foreground">Yeni: </span>{picked}
+            </p>
+          )}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button type="button" variant="outline" disabled={!picked || relink.isPending} onClick={() => save(false)}>
+            Kaydet
+          </Button>
+          <Button type="button" className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white"
+                  disabled={!picked || relink.isPending} onClick={() => save(true)} data-testid="relink-approve">
+            Kaydet ve onayla
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }

@@ -307,6 +307,15 @@ class PoolApproveBody(BaseModel):
     approved: bool = True
 
 
+class PoolRelinkBody(BaseModel):
+    """Kalemin müfredat/kitap bağını değiştir (onaydan önce). topic_id YA DA book_id+section_id."""
+    subject_id: int | None = None
+    topic_id: int | None = None
+    book_id: int | None = None
+    section_id: int | None = None
+    approve: bool = False   # bağı değiştirip aynı anda onayla
+
+
 class ClassPositionBody(BaseModel):
     subject_id: int
     topic_id: int | None = None

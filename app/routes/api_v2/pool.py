@@ -25,7 +25,7 @@ from app.models.user import TRACK_LABELS
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.pool import (
     ClassPositionBody, LessonDaysBody, ParseBody, ParseChip, ParseResponse, PeriodCloseBody,
-    PeriodOpenBody, PoolApproveBody, PoolBundleResponse, PoolQuantityBody, PoolClassGroupOut, PoolItemBody,
+    PeriodOpenBody, PoolApproveBody, PoolRelinkBody, PoolBundleResponse, PoolQuantityBody, PoolClassGroupOut, PoolItemBody,
     PoolItemOut, PoolPeriodBrief, PoolPeriodOut, PoolStudentOut, PoolSubjectOut, PoolSummaryOut,
     PoolTopicOut, PoolTopicSource, PoolTopicsResponse, PoolVolumeHint, ProgramModeBody,
 )
@@ -646,6 +646,33 @@ def set_item_quantity(student_id: int, item_id: int, body: PoolQuantityBody,
         pm.set_item_quantity(db, _item_or_404(db, student, item_id), body.quantity, user)
     except PoolError as e:
         raise _http(e)
+    return _bundle_mut(db, user, student)
+
+
+@router.post("/students/{student_id}/pool/items/{item_id}/relink",
+             response_model=MutationResponse[PoolBundleResponse])
+def relink_item(student_id: int, item_id: int, body: PoolRelinkBody,
+                user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
+    """Öğrencinin eklediği kalemin konusunu/kitabını düzelt (isteğe bağlı aynı anda onayla)."""
+    student = _get_owned_student(db, student_id, user.id)
+    item = _item_or_404(db, student, item_id)
+    subject = pool_subject_or_404(db, student, user.id, body.subject_id) if body.subject_id else None
+    topic = db.get(Topic, body.topic_id) if body.topic_id else None
+    if body.topic_id and topic is None:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "topic_not_found",
+                                                     "message": "Konu bulunamadı."})
+    book = db.get(Book, body.book_id) if body.book_id else None
+    section = db.get(BookSection, body.section_id) if body.section_id else None
+    if (body.book_id and book is None) or (body.section_id and section is None):
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "section_not_found",
+                                                     "message": "Kitap ya da bölüm bulunamadı."})
+    try:
+        pm.relink_item(db, item=item, coach=user, subject=subject, topic=topic, book=book, section=section)
+        if body.approve and item.source == "ogrenci":
+            pm.approve_item(db, item, user, True)
+    except PoolError as e:
+        db.rollback()
+        raise _http(e, 409 if e.code == "has_progress" else 422)
     return _bundle_mut(db, user, student)
 
 
