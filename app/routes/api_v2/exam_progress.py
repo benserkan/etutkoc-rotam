@@ -86,6 +86,24 @@ def teacher_exam_progress(student_id: int, section: str | None = None, period: s
     return rep
 
 
+@router.get("/teacher/students/{student_id}/development-report")
+def teacher_development_report(student_id: int, series: str | None = None, period: str | None = None,
+                               user: User = Depends(_require_teacher), db: Session = Depends(get_db)) -> dict:
+    """Gelişim Raporu (360°): bu hafta + geçmiş haftalar + deneme gelişimi + durum/güçlü/fırsat/risk
+    + aksiyon planı. SAKLANMAZ — her istekte güncel veriden kurulur. `queued` = seans gündeminde."""
+    from app.services.development_report import build_development_report
+
+    student = _get_owned_student(db, student_id, user.id)
+    rep = build_development_report(db, student, series=series, period=period)
+    queue = svc.get_queue(db, student.id)
+    qkeys = {q.get("key") for q in queue if q.get("key")}
+    for lst in ("state", "strengths", "opportunities", "risks", "actions"):
+        for it in rep[lst]:
+            it["queued"] = it["key"] in qkeys
+    rep["queue_count"] = len(queue)
+    return rep
+
+
 @router.get("/teacher/students/{student_id}/exam-targets", response_model=ExamTargetsResponse)
 def teacher_exam_targets(student_id: int, user: User = Depends(_require_teacher),
                          db: Session = Depends(get_db)):
@@ -120,7 +138,7 @@ def teacher_agenda_queue(student_id: int, user: User = Depends(_require_teacher)
 
 def _queue_inv(tid: int, sid: int) -> list[str]:
     return [_k(tid, sid, "agenda-queue"), _k(tid, sid, "exam-progress"),
-            _k(tid, sid, "sessions")]
+            _k(tid, sid, "sessions"), _k(tid, sid, "development-report")]
 
 
 @router.post("/teacher/students/{student_id}/agenda-queue", response_model=AgendaQueueResponse)

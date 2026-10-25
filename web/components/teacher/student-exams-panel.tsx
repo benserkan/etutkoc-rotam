@@ -35,6 +35,7 @@ import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog"
 import { ExamStudentShareButton } from "@/components/teacher/exams/exam-student-share";
 import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
+import { StudentDevelopmentReport } from "@/components/teacher/student-development-report";
 import { examProgressKeys, getExamShares } from "@/lib/api/exam-progress";
 import type { ExamShareInfo } from "@/lib/types/exam-progress";
 
@@ -101,14 +102,15 @@ function formatTRDate(iso: string): string {
   return `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}.${y}`;
 }
 
-type ExamTab = "overview" | "progress" | "topics" | "behavior" | "report" | "score" | "list";
+type ExamTab = "dev" | "overview" | "progress" | "topics" | "behavior" | "report" | "score" | "list";
 
 const EXAM_TABS: { key: ExamTab; label: string; hint: string }[] = [
+  { key: "dev", label: "Gelişim Raporu (360°)", hint: "Bu hafta, geçmiş haftalar, deneme gelişimi, fırsat ve riskler, aksiyon planı" },
   { key: "overview", label: "Genel Bakış", hint: "Son deneme, puan, öne çıkanlar" },
   { key: "progress", label: "Net Gelişimi", hint: "Ders ders net değişimi" },
   { key: "topics", label: "Konu Analizi", hint: "Net fırsatı, zayıf konular" },
   { key: "behavior", label: "Sınav Davranışı", hint: "Boş, yanlış, işaretleme eğilimi" },
-  { key: "report", label: "Gelişim Raporu", hint: "Hedef net, otomatik yorum, aksiyon planı" },
+  { key: "report", label: "Deneme Raporu", hint: "Hedef net, deneme yorumu, ders gidişatı, yazdır" },
   { key: "score", label: "Puan Tahmini", hint: "Son netlerden yaklaşık TYT/AYT/LGS puanı" },
   { key: "list", label: "Tüm Denemeler", hint: "Tüm denemeler ve işlemler" },
 ];
@@ -191,7 +193,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
   const [addOpen, setAddOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
   const [importFile, setImportFile] = React.useState<File | null>(null);
-  const [tab, setTab] = React.useState<ExamTab>("overview");
+  const [tab, setTab] = React.useState<ExamTab>("dev");
   const [detailId, setDetailId] = React.useState<number | null>(null);
   const data = q.data;
   const sharesQ = useQuery({
@@ -269,6 +271,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
       {q.isLoading && !data ? (
         <p className="text-sm text-muted-foreground">Yükleniyor…</p>
       ) : !data || data.rows.length === 0 ? (
+        <>
         <Card>
           <CardContent className="p-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
@@ -282,6 +285,8 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
             </Button>
           </CardContent>
         </Card>
+        <StudentDevelopmentReport studentId={studentId} series={null} period={period} />
+        </>
       ) : (
         <>
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
@@ -333,7 +338,9 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
           </div>
 
           <div role="tabpanel">
-            {tab === "overview" ? (
+            {tab === "dev" ? (
+              <StudentDevelopmentReport studentId={studentId} series={activeSeries} period={period} />
+            ) : tab === "overview" ? (
               <ExamOverviewTab
                 source={{ kind: "teacher", studentId }}
                 series={activeSeries}

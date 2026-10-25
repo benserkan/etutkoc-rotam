@@ -347,7 +347,8 @@ def _verdict(key: str, cur, lo, hi, prev, status: str, unit: str) -> str:
 
 # ---------------------------------------------------------------- ana
 
-def build_weekly_progress(db: Session, student: User, *, today: date | None = None) -> dict:
+def build_weekly_progress(db: Session, student: User, *, today: date | None = None,
+                          full_history: bool = False) -> dict:
     from app.services import grade_period_service
     from app.services.analytics import usual_first_tick
 
@@ -373,7 +374,8 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
                 if w.days >= MIN_WEEK_DAYS and not w.cut and w.program_id not in first_ids
                 and (period_start is None or w.start >= period_start)]
 
-    lo_date = min([w.start for w in history[-12:]] + [cur.start])
+    # full_history: gelişim raporu (dönemin TÜM haftaları) — varsayılan son 12 hafta
+    lo_date = min([w.start for w in (history if full_history else history[-12:])] + [cur.start])
     tasks = (db.query(Task)
              .options(selectinload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject),
                       selectinload(Task.book_items).joinedload(TaskBookItem.section),
@@ -543,6 +545,13 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
 
     # ----- gün gün
     usual_min, _n = usual_first_tick(db, student.id, today)
+    weeks_table = []
+    if full_history:
+        for w in history:
+            m = slice_metrics(w, w.days)
+            weeks_table.append(_week_row(w, m, current=False, in_baseline=w in baseline))
+        weeks_table.append(_week_row(cur, cur_m, current=True, in_baseline=False, compare_days=k))
+
     days = []
     for i in range(cur.days):
         d = cur.start + timedelta(days=i)
@@ -587,6 +596,21 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
         "has_program": True, "week": week_info, "headline": headline, "projection": projection,
         "days": days, "chart": chart, "period_summary": summary, "groups": groups,
         "cards": cards, "actions": actions, "deneme": deneme,
+        "weeks_table": weeks_table,
+    }
+
+
+def _week_row(w: Week, m: dict, *, current: bool, in_baseline: bool, compare_days: int | None = None) -> dict:
+    """Gelişim raporu hafta tablosu satırı (tek hafta, tam ya da bugüne kadar)."""
+    wr, td = m["result_coverage"]
+    return {
+        "start": w.start.isoformat(), "end": w.end.isoformat(), "label": w.label, "kind": w.kind,
+        "cut": w.cut, "days": w.days, "current": current, "in_baseline": in_baseline,
+        "compare_days": compare_days,
+        "gorev_done": m["gorev_done"], "gorev_total": m["gorev_total"], "gorev_pct": m["gorev_pct"],
+        "test_done": m["test_done"], "test_planned": m["test_planned"],
+        "ontime_pct": m["ontime_pct"], "night_pct": m["night_pct"], "empty_days": m["empty_days"],
+        "accuracy_pct": m["accuracy_pct"], "tests_with_result": wr, "tests_done_items": td,
     }
 
 
