@@ -218,9 +218,13 @@ def build_development_report(db: Session, student: User, *, series: str | None =
                 txt += f" Hedef tarihe kadar haftada {_num(tgt['per_week_needed'])} net artış gerekiyor."
             state.append(_item("state:target", "info", "Hedefe uzaklık", txt))
 
-    # haftalık ölçüler → güçlü / risk
+    # haftalık ölçüler → güçlü / risk. Sonuç (D/Y/B) girme oranı düşükse doğruluk ve boş soru
+    # birkaç testten hesaplanır → yanıltıcı; bulgu üretmez (veri girişi riski ayrıca söylenir).
+    low_cov = tests_done >= COVERAGE_MIN_TESTS and (coverage or 0) < COVERAGE_LOW * 100
     for key, c in cards.items():
         if key in ("balance", "wrong_archive", "requests"):
+            continue
+        if low_cov and key in ("accuracy_pct", "blank_pct"):
             continue
         name = c["name"]
         if c["status"] == "above" and key != "exam_net":
