@@ -372,6 +372,7 @@ function CompareCard({ c }: { c: DRCompare }) {
 
 function WeeksSection({ d }: { d: DRReport }) {
   const rows = d.weeks;
+  const ended = d.this_week?.week.ended ?? false;
   const chart = rows.map((w) => ({
     label: w.label,
     pct: w.gorev_pct,
@@ -384,7 +385,7 @@ function WeeksSection({ d }: { d: DRReport }) {
     <Section
       icon={TrendingUp}
       title="Haftadan haftaya: görev uyumu ve deneme neti"
-      desc={`Sınıf dönemindeki tüm program haftaları. Sütun = görev uyumu (yapılan ÷ verilen); nokta = o hafta girilen ${d.exam.section_label ?? "genel deneme"} neti. Koyu sütun bu hafta.`}
+      desc={`Sınıf dönemindeki tüm program haftaları. Sütun = görev uyumu (yapılan ÷ verilen); nokta = o hafta girilen ${d.exam.section_label ?? "genel deneme"} neti. Koyu sütun ${ended ? "son program haftası" : "bu hafta"}.`}
     >
       {rows.length ? (
         <div className="relative -mx-1 overflow-x-auto px-1">
@@ -435,7 +436,7 @@ function WeeksSection({ d }: { d: DRReport }) {
             </thead>
             <tbody>
               {[...rows].reverse().map((w, i, arr) => (
-                <WeekRow key={w.start} w={w} prev={arr[i + 1] ?? null} />
+                <WeekRow key={w.start} w={w} prev={arr[i + 1] ?? null} ended={ended} />
               ))}
             </tbody>
           </table>
@@ -445,13 +446,13 @@ function WeeksSection({ d }: { d: DRReport }) {
   );
 }
 
-function WeekRow({ w, prev }: { w: DRWeekRow; prev: DRWeekRow | null }) {
+function WeekRow({ w, prev, ended }: { w: DRWeekRow; prev: DRWeekRow | null; ended: boolean }) {
   const diff = w.gorev_pct != null && prev?.gorev_pct != null ? Math.round(w.gorev_pct - prev.gorev_pct) : null;
   return (
     <tr className={cn("border-b border-border/60 last:border-0", w.current && "bg-cyan-500/10 font-medium")}>
       <td className="py-1.5 pr-3">
         {w.label}
-        {w.current ? <span className="ml-1.5 rounded bg-cyan-700 px-1.5 py-0.5 text-[10px] font-semibold text-white">bu hafta</span> : null}
+        {w.current ? <span className="ml-1.5 rounded bg-cyan-700 px-1.5 py-0.5 text-[10px] font-semibold text-white">{ended ? "son hafta" : "bu hafta"}</span> : null}
         {w.cut ? <span className="ml-1.5 text-[11px] text-muted-foreground">(kısa hafta)</span> : null}
       </td>
       <td className="py-1.5 pr-3 text-right tabular-nums">{w.gorev_done}/{w.gorev_total}</td>

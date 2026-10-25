@@ -131,6 +131,13 @@ def build_development_report(db: Session, student: User, *, series: str | None =
             compare.append({k: c.get(k) for k in ("key", "name", "hint", "unit", "direction", "value",
                                                   "value_label", "prev", "prev_label", "status", "low",
                                                   "high", "trend", "trend_run", "verdict")})
+        cr = cur_row or {}
+        if cr.get("tests_done_items") and cr["tests_with_result"] < cr["tests_done_items"] * COVERAGE_LOW:
+            for c in compare:
+                if c["key"] == "accuracy_pct":
+                    c["status"] = "insufficient"
+                    c["verdict"] = (f"Çözülen {cr['tests_done_items']} testin yalnız {cr['tests_with_result']} tanesinde "
+                                    "doğru/yanlış girildi; bu oran güvenilir bir ölçüm değil.")
         this_week = {
             "week": week, "row": cur_row, "days": wp.get("days", []),
             "projection": wp.get("projection"), "compare": compare,
@@ -221,12 +228,30 @@ def build_development_report(db: Session, student: User, *, series: str | None =
     # haftalık ölçüler → güçlü / risk. Sonuç (D/Y/B) girme oranı düşükse doğruluk ve boş soru
     # birkaç testten hesaplanır → yanıltıcı; bulgu üretmez (veri girişi riski ayrıca söylenir).
     low_cov = tests_done >= COVERAGE_MIN_TESTS and (coverage or 0) < COVERAGE_LOW * 100
+    cur_row = next((w for w in weeks if w["current"]), None)
+    last_full = next((w for w in reversed(weeks) if not w["current"] and not w["cut"] and w["days"] >= 4), None)
     for key, c in cards.items():
         if key in ("balance", "wrong_archive", "requests"):
             continue
         if low_cov and key in ("accuracy_pct", "blank_pct"):
             continue
         name = c["name"]
+        if key == "test_done" and c["status"] in ("below", "critical") and cur_row and cur_row["test_planned"]:
+            # Az test çözülmesi, koçun az test vermesinden olabilir: verilene oranla da kıyasla.
+            ratios = [w["test_done"] / w["test_planned"] for w in weeks
+                      if w["in_baseline"] and w["test_planned"]]
+            cur_ratio = cur_row["test_done"] / cur_row["test_planned"]
+            if ratios and cur_ratio >= sorted(ratios)[len(ratios) // 2] - 0.05:
+                state.append(_item(
+                    "state:tests_planned", "info", "Bu hafta daha az test verildi",
+                    f"{cur_row['test_planned']} test verildi, {cur_row['test_done']} çözüldü (%{round(cur_ratio * 100)}). "
+                    f"Çözülen test genelin altında ({c['value_label']}, genelde {round(c['low'])}–{round(c['high'])}) "
+                    "ama verilene oranla tamamlama her zamanki düzeyde — düşüş yükten, öğrenciden değil."))
+                continue
+        if c.get("trend") and c["status"] not in ("below", "critical") and last_full and cur_row:
+            cv, lv = cur_row.get(key), last_full.get(key)
+            if cv is not None and lv is not None and (cv - lv) * (c["direction"] or 1) > 0:
+                continue  # bu hafta eğilim tersine döndü; artık kötüleşme yok
         if c["status"] == "above" and key != "exam_net":
             strengths.append(_item(f"good:wk:{key}", "good", f"{name}: normalinden iyi",
                                    f"Bu hafta {c['value_label']}. {c['verdict']}"))
@@ -246,11 +271,25 @@ def build_development_report(db: Session, student: User, *, series: str | None =
 
     # deneme yorumları → güçlü / risk / durum
     for i, c in enumerate(ep.get("commentary") or []):
+        t = c["text"]
+        if " denemede net " in t and "→" in t:
+            continue  # ilk→son deneme "Mevcut durum"da; ilk deneme uç değerse yanıltıcı ayrıca söylenmez
+        title = _exam_title(t)
         if c["tone"] == "good":
-            strengths.append(_item(f"good:exam:{i}", "good", "Deneme gidişatı", c["text"]))
+            strengths.append(_item(f"good:exam:{i}", "good", title, t))
         elif c["tone"] == "warn":
-            risks.append(_item(f"risk:exam:{i}", "warn", "Deneme gidişatı", c["text"], priority=2,
+            risks.append(_item(f"risk:exam:{i}", "warn", title, t, priority=2,
                                cta_label="Deneme analizi", cta_href=f"/teacher/students/{sid}#exams"))
+    if st and st["count"] >= 4:
+        nets_all = [e["net"] for e in exams]
+        if st["last_net"] <= min(nets_all[:-1]):
+            risks.append(_item(
+                "risk:exam_low", "bad", "Son deneme serinin en düşüğü",
+                f"{exams[-1]['title']} ({fmt_date(exams[-1]['exam_date'])}): {_num(st['last_net'])} net — "
+                f"{st['count']} denemenin en düşüğü; son 3 ortalama {_num(st['avg_last3'])}, önceki deneme "
+                f"{_num(nets_all[-2])}.",
+                agenda=f"Son deneme {_num(st['last_net'])} net (serinin en düşüğü): o gün ne oldu — süre, uyku, hangi derste kaybetti?",
+                priority=1, cta_label="Deneme analizi", cta_href=f"/teacher/students/{sid}#exams"))
 
     # fırsatlar: konu net fırsatı + ders hedef farkı + tempo
     for o in (ep.get("opportunities") or [])[:5]:
@@ -326,6 +365,11 @@ def build_development_report(db: Session, student: User, *, series: str | None =
     actions: list[dict] = []
     wk_prio = {"carry": 1, "avoid": 1, "load": 2, "rhythm": 2, "accuracy": 2}
     for a in wp.get("actions", []) if has_program else []:
+        if a["key"] == "carry" and week and week["ended"]:
+            n = a["title"].split()[1] if a["title"].startswith("Kalan ") else ""
+            a = {**a, "title": f"Geçen haftadan kalan {n} görevi yeni haftaya devret".replace("  ", " "),
+                 "agenda": f"Geçen hafta yapılmayan {n} görevi konuş; gerekenleri yeni haftaya devret.",
+                 "cta_label": "Haftalık programı aç (Devret)"}
         actions.append({
             "key": f"wp:{a['key']}", "title": a["title"], "detail": a["why"], "source": "weekly",
             "priority": wk_prio.get(a["key"], 2), "agenda": a.get("agenda") or a["title"],
@@ -364,13 +408,35 @@ def build_development_report(db: Session, student: User, *, series: str | None =
         "exam": {
             "series": ep.get("series"), "section_label": ep.get("section_label"),
             "section_options": ep.get("section_options") or [], "exams": exams,
-            "subjects": ep.get("subjects") or [], "stats": st, "target": tgt,
+            "subjects": [x for x in (ep.get("subjects") or []) if sum(v is not None for v in x["nets"]) >= 2],
+            "stats": st, "target": tgt,
         },
         "state": state, "strengths": strengths, "opportunities": opportunities, "risks": risks,
         "actions": actions[:14],
         "data_quality": data_quality,
         "counts": tone_counts,
     }
+
+
+_MONTHS = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"]
+
+
+def fmt_date(iso: str) -> str:
+    d = date.fromisoformat(iso)
+    return f"{d.day} {_MONTHS[d.month - 1]}"
+
+
+def _exam_title(text: str) -> str:
+    """exam_progress yorum cümlesine kısa başlık (hepsi 'Deneme gidişatı' görünmesin)."""
+    t = text.lower()
+    for needle, title in (("gelişen ders", "En çok gelişen ders"), ("gerileyen ders", "En çok gerileyen ders"),
+                          ("hedef", "Hedefe göre tempo"), ("boş kaldı", "Boş bırakılan soru"),
+                          ("yanlış", "Yanlış oranı"), ("ritmi", "Deneme ritmi"), ("ilk deneme", "İlk deneme"),
+                          ("yükseliş", "Deneme eğilimi: yükseliş"), ("düşüş", "Deneme eğilimi: düşüş"),
+                          ("yatay", "Deneme eğilimi: yatay")):
+        if needle in t:
+            return title
+    return "Deneme"
 
 
 def _headline(this_week: dict | None, journey: dict | None, risks: list[dict], strengths: list[dict]) -> dict:
