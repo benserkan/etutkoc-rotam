@@ -247,6 +247,11 @@ def build_development_report(db: Session, student: User, *, series: str | None =
                     f"{cur_row['test_planned']} test verildi, {cur_row['test_done']} çözüldü (%{round(cur_ratio * 100)}). "
                     f"Çözülen test genelin altında ({c['value_label']}, genelde {round(c['low'])}–{round(c['high'])}) "
                     "ama verilene oranla tamamlama her zamanki düzeyde — düşüş yükten, öğrenciden değil."))
+                for cc in (this_week or {}).get("compare", []):
+                    if cc["key"] == "test_done":
+                        cc["status"] = "low"
+                        cc["verdict"] = (f"{cur_row['test_planned']} test verildi, {cur_row['test_done']} çözüldü "
+                                         f"(%{round(cur_ratio * 100)}) — az test verildiği için düşük; tamamlama oranı her zamanki.")
                 continue
         if c.get("trend") and c["status"] not in ("below", "critical") and last_full and cur_row:
             cv, lv = cur_row.get(key), last_full.get(key)
