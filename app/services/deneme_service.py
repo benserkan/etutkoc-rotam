@@ -84,6 +84,61 @@ GENEL_PRESETS: dict[str, list[tuple[str, str, str, int]]] = {
 }
 _TRACK_PRESET = {"SAYISAL": "ayt_say", "EA": "ayt_ea", "SOZEL": "ayt_soz", "DIL": "ydt"}
 
+# Birleşik branş denemeleri (2026-10-25) — sınavın tek oturumunu kapsayan, birden çok
+# dersten oluşan branş denemeleri. Sistemde tek bir derse karşılık gelmez: kalem
+# subject_id taşımaz, adı `label`dan okunur (köprü + analiz "TYT Fen Bilimleri" serisi açar).
+# (anahtar, etiket, exam_section, soru, hangi alanlara gösterilir [None = herkese], kapsam)
+BRANS_GROUPS: list[tuple[str, str, str, int, tuple[str, ...] | None, str]] = [
+    ("tyt_fen", "TYT Fen Bilimleri", "tyt", 20, None, "Fizik 7 · Kimya 7 · Biyoloji 6"),
+    ("tyt_sosyal", "TYT Sosyal Bilimler", "tyt", 20, None,
+     "Tarih 5 · Coğrafya 5 · Felsefe 5 · Din Kültürü 5"),
+    ("ayt_fen", "AYT Fen Bilimleri", "ayt_say", 40, ("SAYISAL",), "Fizik 14 · Kimya 13 · Biyoloji 13"),
+    ("ayt_edebiyat_sos1", "AYT Edebiyat-Sosyal Bilimler 1", "ayt_ea", 40, ("EA", "SOZEL"),
+     "Edebiyat 24 · Tarih-1 10 · Coğrafya-1 6"),
+    ("ayt_sos2", "AYT Sosyal Bilimler 2", "ayt_soz", 40, ("SOZEL",),
+     "Tarih-2 11 · Coğrafya-2 11 · Felsefe Grubu 12 · Din Kültürü 6"),
+]
+BRANS_GROUP_LABELS = {k: lbl for k, lbl, *_ in BRANS_GROUPS}
+
+
+@dataclass
+class BransGroup:
+    key: str
+    label: str
+    exam_section: str
+    question_count: int
+    covers: str
+
+
+def brans_groups_for(student: User) -> list[BransGroup]:
+    """Öğrenciye uygun birleşik branş denemeleri: TYT grupları lise (9+) ve mezuna;
+    AYT grupları 11+/mezunda alana göre (alan bilinmiyorsa hepsi)."""
+    grade = getattr(student, "grade_level", None)
+    graduate = bool(getattr(student, "is_graduate", False))
+    if not graduate and (grade is None or grade < 9):
+        return []
+    ayt_ok = graduate or (grade is not None and grade >= 11)
+    track = getattr(student, "track", None)
+    track_v = str(getattr(track, "value", track) or "").upper() or None
+    out: list[BransGroup] = []
+    for key, label, sec, n, tracks, covers in BRANS_GROUPS:
+        if sec.startswith("ayt"):
+            if not ayt_ok:
+                continue
+            if tracks and track_v and track_v not in tracks:
+                continue
+        out.append(BransGroup(key=key, label=label, exam_section=sec, question_count=n, covers=covers))
+    return out
+
+
+def brans_group_for_label(label: str | None) -> str | None:
+    """Kalem etiketinden ("TYT Fen Bilimleri 2/3") birleşik branş anahtarı."""
+    low = _low(re.sub(r"\s*\d+\s*/\s*\d+\s*$", "", label or ""))
+    for key, lbl in BRANS_GROUP_LABELS.items():
+        if _low(lbl) == low:
+            return key
+    return None
+
 
 def exam_section_for_subject(subject: Subject | None) -> str | None:
     """Dersin sınav türü: TYT/AYT dersinde kendi alanı, LGS modelindeki derste 'lgs',
@@ -299,6 +354,7 @@ class DenemeTemplate:
     exam_section: str | None = None
     book_id: int | None = None
     uses: int = 0
+    group_key: str | None = None
 
 
 def coach_templates(
@@ -323,6 +379,7 @@ def coach_templates(
     subj_by_name = {
         _low(s.name): s for s in db.query(Subject).filter(Subject.id.in_(subject_ids or {-1})).all()
     }
+    allowed_groups = {g.key for g in brans_groups_for(student)}
     counter: Counter = Counter()
     sample: dict[tuple, DenemeTemplate] = {}
     for t in tasks:
@@ -347,6 +404,14 @@ def coach_templates(
         else:
             subj = item_subject(first)
             if subj is None:
+                gkey = brans_group_for_label(first.label)
+                if gkey is None or gkey not in allowed_groups:
+                    continue
+                key = ("brans_group", gkey, len(items), qn)
+                tpl = DenemeTemplate(kind=kind, label=BRANS_GROUP_LABELS[gkey], count=len(items),
+                                     question_count=qn, exam_section=first.exam_section, group_key=gkey)
+                counter[key] += 1
+                sample.setdefault(key, tpl)
                 continue
             local = subj if subj.id in subject_ids else subj_by_name.get(_low(subj.name))
             if local is None:

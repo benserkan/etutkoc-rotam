@@ -93,7 +93,12 @@ def _scope_and_subject(item, section, qn: int | None) -> tuple[str, str | None]:
 
     if item.exam_kind == "brans":
         subj = item_subject(item)
-        return "brans", (subj.name if subj is not None else "Branş")
+        if subj is not None:
+            return "brans", subj.name
+        from app.services.deneme_service import BRANS_GROUP_LABELS, brans_group_for_label
+
+        gkey = brans_group_for_label(item.label)
+        return "brans", (BRANS_GROUP_LABELS[gkey] if gkey else "Branş")
     std = STANDARD_QUESTIONS.get(section.value)
     if std and qn and qn < std * BRANCH_RATIO:
         low = _base_title(item).lower()

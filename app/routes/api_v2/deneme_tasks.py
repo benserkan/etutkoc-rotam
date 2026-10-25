@@ -80,10 +80,20 @@ class DenemeTemplateOut(BaseModel):
     exam_section: str | None = None
     book_id: int | None = None
     uses: int
+    group_key: str | None = None
+
+
+class DenemeBransGroupOut(BaseModel):
+    key: str
+    label: str
+    exam_section: str
+    question_count: int
+    covers: str
 
 
 class DenemeOptionsResponse(BaseModel):
     subjects: list[DenemeSubjectOut]
+    brans_groups: list[DenemeBransGroupOut] = []
     books: list[DenemeBookOut]
     genel_presets: list[DenemePresetOut]
     templates: list[DenemeTemplateOut]
@@ -101,6 +111,7 @@ class DenemeTaskBody(BaseModel):
     subject_id: int | None = None   # branş (kitapsız) — kitaplıda kitaptan
     book_id: int | None = None      # kaynaklı deneme
     genel_key: str | None = None    # genel deneme türü (GENEL_PRESETS anahtarı)
+    group_key: str | None = None    # birleşik branş (BRANS_GROUPS anahtarı: tyt_fen …)
     name: str | None = Field(None, max_length=120)  # isteğe bağlı ad ("Özdebir TG-4")
     notes: str | None = None
 
@@ -233,6 +244,7 @@ def deneme_options(
             for p in ds.genel_presets_for(student)
         ],
         templates=[DenemeTemplateOut(**t.__dict__) for t in templates],
+        brans_groups=[DenemeBransGroupOut(**g.__dict__) for g in ds.brans_groups_for(student)],
     )
 
 
@@ -286,6 +298,21 @@ def create_deneme_task(
             section_labels=[s.label for s, _ in picked], custom_name=name,
         )
         task_type = "test"
+    elif body.kind == ds.EXAM_KIND_BRANS and body.group_key:
+        grp = next((g for g in ds.brans_groups_for(student) if g.key == body.group_key), None)
+        if grp is None:
+            raise _err("group_not_found", "Bu birleşik branş denemesi bu öğrenci için uygun değil.")
+        qn = body.question_count or grp.question_count
+        title = ds.compose_title(kind=ds.EXAM_KIND_BRANS, count=n, question_count=qn,
+                                 custom_name=name or f"{grp.label} branş denemesi")
+        for i in range(n):
+            items.append(TaskItemBody(
+                book_id=None, section_id=None, planned_count=1,
+                label=(f"{grp.label} {i + 1}/{n}" if n > 1 else grp.label),
+                exam_kind=ds.EXAM_KIND_BRANS, exam_section=grp.exam_section,
+                subject_id=None, question_count=qn,
+            ))
+        task_type = "other"
     elif body.kind == ds.EXAM_KIND_BRANS:
         if body.subject_id is None:
             raise _err("subject_required", "Branş denemesi için ders seçin.")

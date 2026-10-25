@@ -40,10 +40,21 @@ export interface DenemeTemplate {
   exam_section: string | null;
   book_id: number | null;
   uses: number;
+  group_key?: string | null;
+}
+
+/** Birleşik branş denemesi (TYT Fen, TYT Sosyal, AYT Fen …) — tek derse bağlı değil. */
+export interface DenemeBransGroup {
+  key: string;
+  label: string;
+  exam_section: string;
+  question_count: number;
+  covers: string;
 }
 
 export interface DenemeOptionsResponse {
   subjects: DenemeSubjectOption[];
+  brans_groups?: DenemeBransGroup[];
   books: DenemeBookOption[];
   genel_presets: DenemeGenelPreset[];
   templates: DenemeTemplate[];
@@ -61,6 +72,7 @@ export interface DenemeTaskBody {
   subject_id?: number | null;
   book_id?: number | null;
   genel_key?: string | null;
+  group_key?: string | null;
   name?: string | null;
   notes?: string | null;
 }
@@ -101,8 +113,9 @@ export function templateToBody(
     kind: "brans",
     count: t.count,
     question_count: t.question_count,
-    subject_id: t.book_id ? null : t.subject_id,
+    subject_id: t.book_id || t.group_key ? null : t.subject_id,
     book_id: t.book_id,
+    group_key: t.group_key ?? null,
   };
 }
 

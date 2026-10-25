@@ -69,6 +69,8 @@ export function DenemeForm({
 
   const [kind, setKind] = React.useState<"brans" | "genel">("brans");
   const [subjectId, setSubjectId] = React.useState<number | null>(null);
+  // Birleşik branş (TYT Fen …) seçiliyse anahtarı; ders seçimini geçersiz kılar.
+  const [groupKey, setGroupKey] = React.useState<string | null>(null);
   // "none" = kaynaksız; null = ilk uygun kaynak (varsayılan)
   const [source, setSource] = React.useState<string | null>(null);
   const [genelKey, setGenelKey] = React.useState<string | null>(null);
@@ -80,6 +82,10 @@ export function DenemeForm({
   const subjects = data?.subjects ?? [];
   const books = data?.books ?? [];
   const presets = data?.genel_presets ?? [];
+  // Havuz kalemi derse bağlı olmak zorunda — birleşik branş yalnız programda.
+  const groups = target === "pool" ? [] : data?.brans_groups ?? [];
+  const templates = (data?.templates ?? []).filter((t) => target !== "pool" || !t.group_key);
+  const group = kind === "brans" ? groups.find((g) => g.key === groupKey) ?? null : null;
 
   // Kaynağı olan dersler önce
   const sortedSubjects = [...subjects].sort(
@@ -90,7 +96,9 @@ export function DenemeForm({
 
   const sourceBooks: DenemeBookOption[] =
     kind === "brans"
-      ? books.filter((b) => b.type === "brans_denemesi" && b.subject_id === effSubjectId)
+      ? group
+        ? []
+        : books.filter((b) => b.type === "brans_denemesi" && b.subject_id === effSubjectId)
       : books.filter((b) => b.type === "genel_deneme");
 
   const effSource =
@@ -104,7 +112,9 @@ export function DenemeForm({
 
   const defaultQ: { n: number | null; why: string } = book?.question_count
     ? { n: book.question_count, why: Q_SOURCE_LABEL[book.question_source] ?? "" }
-    : kind === "brans"
+    : group
+      ? { n: group.question_count, why: "sınav standardı" }
+      : kind === "brans"
       ? {
           n: subject?.standard_question_count ?? null,
           why: subject?.standard_question_count ? Q_SOURCE_LABEL.standard : "",
@@ -133,7 +143,8 @@ export function DenemeForm({
       question_count: qNum,
       name: name.trim() || null,
       book_id: book?.book_id ?? null,
-      subject_id: kind === "brans" && !book ? effSubjectId : null,
+      subject_id: kind === "brans" && !book && !group ? effSubjectId : null,
+      group_key: group?.key ?? null,
       genel_key: kind === "genel" ? preset?.key ?? null : null,
     };
     send(body);
@@ -163,23 +174,23 @@ export function DenemeForm({
 
   const canSubmit =
     qValid &&
-    (kind === "brans" ? effSubjectId != null : preset != null) &&
+    (kind === "brans" ? effSubjectId != null || group != null : preset != null) &&
     !create.isPending;
 
   const previewTitle =
     kind === "brans"
-      ? `${book ? book.name : `${subject?.name ?? "Ders"} branş denemesi`}${count > 1 ? ` ×${count}` : ""}`
+      ? `${book ? book.name : `${group?.label ?? subject?.name ?? "Ders"} branş denemesi`}${count > 1 ? ` ×${count}` : ""}`
       : `${name.trim() || book?.name || preset?.label || "Genel deneme"}${count > 1 ? ` ×${count}` : ""}`;
 
   return (
     <form method="post" onSubmit={submit} className="space-y-3" aria-label="Deneme ekleme">
-      {data && data.templates.length > 0 ? (
+      {templates.length > 0 ? (
         <div className="space-y-1.5">
           <p className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
             <Sparkles className="size-3" aria-hidden /> Sık verdiklerin — tek tıkla ekle
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {data.templates.map((t, i) => (
+            {templates.map((t, i) => (
               <button
                 key={`${t.kind}-${t.subject_id}-${t.book_id}-${t.count}-${t.question_count}-${i}`}
                 type="button"
@@ -227,21 +238,41 @@ export function DenemeForm({
           <Field label="Ders">
             <select
               aria-label="Ders"
-              value={effSubjectId ?? ""}
+              value={group ? `g:${group.key}` : effSubjectId ?? ""}
               onChange={(e) => {
-                setSubjectId(Number(e.target.value));
+                const v = e.target.value;
+                if (v.startsWith("g:")) {
+                  setGroupKey(v.slice(2));
+                } else {
+                  setGroupKey(null);
+                  setSubjectId(Number(v));
+                }
                 setSource(null);
                 setQOverride(null);
               }}
               className={SELECT_CLS}
             >
-              {sortedSubjects.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                  {s.deneme_book_count > 0 ? ` · ${s.deneme_book_count} kitap` : ""}
-                </option>
-              ))}
+              {groups.length > 0 ? (
+                <optgroup label="Birleşik branş denemeleri">
+                  {groups.map((g) => (
+                    <option key={g.key} value={`g:${g.key}`}>
+                      {g.label} · {g.question_count} soru
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
+              <optgroup label="Tek ders">
+                {sortedSubjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                    {s.deneme_book_count > 0 ? ` · ${s.deneme_book_count} kitap` : ""}
+                  </option>
+                ))}
+              </optgroup>
             </select>
+            {group ? (
+              <p className="mt-1 text-[11px] text-muted-foreground">{group.covers}</p>
+            ) : null}
           </Field>
         ) : (
           <Field label="Tür">
@@ -409,8 +440,8 @@ export function DenemeForm({
           <span>
             <span className="font-medium text-foreground">{previewTitle}</span>
             {qValid ? ` (${qNum} soru)` : ""}
-            {sectionLabel(kind === "brans" ? subject?.exam_section : preset?.exam_section)
-              ? ` · ${sectionLabel(kind === "brans" ? subject?.exam_section : preset?.exam_section)}`
+            {sectionLabel(kind === "brans" ? (group?.exam_section ?? subject?.exam_section) : preset?.exam_section)
+              ? ` · ${sectionLabel(kind === "brans" ? (group?.exam_section ?? subject?.exam_section) : preset?.exam_section)}`
               : ""}
             {target === "pool"
               ? count > 1
