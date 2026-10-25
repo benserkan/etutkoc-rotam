@@ -6,6 +6,18 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## BİRLEŞİK BRANŞ DENEMELERİ (2026-10-25, commit `65e570f`, migration YOK, CANLI)
+
+- Branş denemesi ders listesinde artık "Birleşik branş denemeleri" grubu: TYT Fen Bilimleri (20) · TYT Sosyal
+  Bilimler (20) · AYT Fen Bilimleri (40, SAYISAL) · AYT Edebiyat-Sosyal Bilimler 1 (40, EA+SÖZEL) · AYT Sosyal
+  Bilimler 2 (40, SÖZEL). TEK MERKEZ `deneme_service.BRANS_GROUPS` + `brans_groups_for` (TYT grupları 9+/mezun,
+  AYT grupları 11+/mezun alan filtreli; alan yoksa hepsi). Tek derse bağlı değil: kalem `subject_id` NULL, ad
+  `label`dan ("TYT Fen Bilimleri 1/2") → köprü Denemeler'de "TYT Fen Bilimleri" branş serisi açar; sık
+  verdiklerin kalıbı `group_key` taşır. `DenemeTaskBody.group_key`; uygun olmayan grup 422. Havuz formunda
+  BİLİNÇLİ yok (havuz kalemi derse bağlı olmak zorunda). AYT sözel dersleri SAYISAL öğrencide (Emir) alan
+  filtresiyle gizli — doğru davranış. Test YENİ `test_deneme_brans_groups.py` 15/15 · deneme tasks 42 ·
+  results 22 · bridge 35 · analysis 30 · pool_deneme 32.
+
 ## TAHA #84 HAVUZA GEÇİŞ + PROGRAM GEÇMİŞİ — CANLI (2026-10-22, migration YOK, commit `e6e9036` · `e948915` · `a8fff67`)
 
 - **Saha işlemi:** Taha (#84) canlıda koç hesabıyla site üzerinden 22.10 itibarıyla havuza geçirildi (17–23 Eki
