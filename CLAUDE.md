@@ -6,6 +6,37 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## TANITIM SAYFALARI YENİ TASARIM + TEK MENÜ (2026-10-26, commit `c1ff508`+2, migration YOK, CANLI)
+
+- **Tek üst menü** `components/marketing/site-header.tsx` (`SiteHeader`): ana sayfa, 4 ürün sayfası ve YKS
+  hesaplama AYNI menüyü gösterir (Ürün açılır menüsü [4 sayfa + videolar] · Nasıl çalışır? · YKS puan hesaplama
+  [Ücretsiz rozeti] · Paketler · İletişim; mobilde `<details>` menü). Eski `MarketingHeader` + landing `NAV` silindi.
+  **KURAL: yeni public sayfa bu header'ı kullanır; menüye ekleme yalnız `PRODUCT_LINKS`/`SITE_NAV`'da.**
+- **Ürün sayfası şablonu** `components/marketing/feature-page.tsx`: koyu hero + `BrowserShot` (tarayıcı çerçeveli,
+  tıkla → tam boy) + öne çıkan kartlar + bölüm bölüm yan yana (kicker/başlık/metin/madde + ekran) + SSS + ilgili +
+  CTA. İçerik tipi `FeaturePageContent` (`heroImage`, `highlights[{title,text}]`, `sections[{kicker,…,image}]`).
+- **Ekranlar 2x yeniden yakalandı** `scripts/capture_marketing_shots.py OUT [--only a,b]` (yerel dev, API ile giriş,
+  öğe/tam sayfa, DSF=2) → kırpma scratchpad `crop.py` → `web/public/urun/*.webp` (≤1800 px) + boyut tablosu
+  `lib/product-shots.ts` (`shot(ad, alt, url)`). Demo veri: Demo Öğretmen (ogretmen@lgs.local) öğrenci 459/452 +
+  YENİ dev demo kurum "Kuzey Etüt Merkezi" (`demo_universe`, seed `mkt-shots-2026`, yönetici
+  kuzey-etut-merkezi-yonetici@etutkoc.demo / RotamDemo2026!). **DERS:** yakalama betiğinde açılır pencere kapatıcı
+  `name="Kapat"` KISMİ eşleşmeyle "Konuyu kapat"a bastı (öğrenci 459'da konu kapatıldı → geri alındı) → rol adı
+  daima `exact=True`.
+- **YKS hesaplama arayüzü** (`components/tools/yks-simulator.tsx`): 3 adımlı kartlar (puan türü ikonlu · test başına
+  D/Y + canlı net + çubuk · diploma/önceki denemeler) + yapışkan koyu "Canlı özet" (TYT/AYT net halkası) + sonuç:
+  gradyanlı "Sınav bugün olsaydı" kartları, senaryo bandı (eksenli), ders ders şu an → sınav günü (aralık + eğilim).
+  Sayfa koyu hero + hesaplayıcı üstüne biner. Hesap mantığı DEĞİŞMEDİ.
+- Ana sayfa küçük düzeltme: büyük özellik kartı ızgarası `grid-cols-[minmax(0,1fr)]` (390 px'te taşıyordu).
+  Not: ana sayfa 390 px'te scrollWidth 453 (canlıda da) ama body `overflow-x:hidden` → kullanıcı kaydıramaz.
+- **Yandex Webmaster:** etutkoc.com (dosya `dist/` + `public/` yandex_c3e71b469378931d.html, sunucu kaydı) +
+  rotam.etutkoc.com (`web/public/` + Caddy `/yandex_*.html` + proxy.ts statik kuralı) DOĞRULANDI. Site haritası
+  gönderimi Yandex tarafında geçici salt okuma modunda — servis düzelince iki site haritası eklenecek.
+- **Bing:** GSC'den içe aktarma Google hesap seçme ekranında kaldı (eklenti accounts.google.com'da işlem yapamıyor)
+  → kullanıcı hesabı seçip izni verecek.
+- **Facebook:** kişisel profil kullanıcı adı `serkanaydin.etutkoc` yapıldı. İşletme sayfasına `etutkoc` HENÜZ
+  alınamıyor (Facebook serbest kalan adı bir süre tutuyor) → birkaç gün sonra Sayfa ayarları → Kullanıcı adı'ndan
+  tekrar denenecek; sonra etutkoc.com Footer/LocalSEO + Rotam page.tsx sameAs facebook.com/etutkoc'a çevrilecek.
+
 ## YKS PUAN/SIRALAMA ARACI + 4 ÜRÜN SAYFASI (2026-10-26, commit `6e3deb8`+, migration YOK, CANLI)
 
 - **Araç** `/yks-puan-hesaplama` (+ `/gomulu` iframe sürümü; Caddy yalnız etutkoc.com'a `frame-ancestors`, noindex) —
