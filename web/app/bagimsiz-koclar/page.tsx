@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FeaturePage, type FeaturePageContent } from "@/components/marketing/feature-page";
+import { shot } from "@/lib/product-shots";
 
 export const metadata: Metadata = {
   title: "Eğitim Koçu Programı — Bağımsız Koçlar için Öğrenci, Seans ve Tahsilat Takibi",
@@ -11,20 +12,22 @@ export const metadata: Metadata = {
 const content: FeaturePageContent = {
   path: "/bagimsiz-koclar",
   eyebrow: "Bağımsız koçlar",
-  h1: "Bağımsız eğitim koçları için koçluk programı",
+  h1: "Koçluk işinizin tamamı tek uygulamada",
   lead:
     "Tek başına çalışan bir koç hem öğretmen hem rehber hem de işletme sahibidir. Etütkoç Rotam öğrencinin programını ve deneme analizini yürütürken seanslarınızı, görüşme takviminizi ve tahsilatınızı da aynı yerde tutar.",
+  heroImage: shot("koc-seans", "Koçluk seansları: gündem, not ve sonraki adım", "/teacher/students/…#sessions"),
   highlights: [
-    "Öğrenci programı, kitap takibi ve deneme analizi",
-    "Seans kaydı: gündem, not ve bir sonraki adım; sesle ya da form fotoğrafıyla doldurma",
-    "Tahsilat: seans ücreti, ay sonu hesabı ve ödeme kaydı",
-    "Online görüşme takvimi; Google hesabınızla otomatik Meet bağlantısı",
-    "Yapay zekâ ile seans hazırlığı: bu öğrenciyle bugün ne konuşmalı?",
-    "Veliye haftayı sesli anlatan asistan",
+    { title: "Program ve kitap takibi", text: "Öğrencinin kitaplarından haftalık program, kalan test her an görünür." },
+    { title: "Seans kaydı", text: "Gündem, not ve sonraki adım; sesle ya da form fotoğrafıyla doldurulur." },
+    { title: "Tahsilat", text: "Seans ücreti, ay sonu hesabı ve ödeme kaydı." },
+    { title: "Online görüşme takvimi", text: "Hatırlatmalar ve Google hesabınızla otomatik Meet bağlantısı." },
+    { title: "Yapay zekâ ile seans hazırlığı", text: "Bu öğrenciyle bugün ne konuşmalı? Notlar ve veriden kısa özet." },
+    { title: "Veli asistanı", text: "Veliye haftayı sesli anlatan, sorularını cevaplayan Rota." },
   ],
   sections: [
     {
       id: "seans",
+      kicker: "1 · Seans",
       title: "Seans kaydı ve yapay zekâ ile hazırlık",
       body: [
         "Her görüşmenin gündemi, notu ve bir sonraki adımı kaydedilir. Kayıt anında öğrencinin o haftaki tamamlama oranı, geride kalan dersleri ve son deneme neti kendiliğinden eklenir; elle bir şey taşımanız gerekmez.",
@@ -33,6 +36,7 @@ const content: FeaturePageContent = {
     },
     {
       id: "tahsilat",
+      kicker: "2 · Tahsilat ve takvim",
       title: "Tahsilat ve görüşme takvimi",
       body: [
         "Her öğrenci için seans ücreti belirlenir. Ay sonunda yapılan seanslar sayılır, ödenen tutar düşülür ve kalan görünür; ertelenen ve iptal edilen seanslar ücrete sayılmaz.",
@@ -41,22 +45,26 @@ const content: FeaturePageContent = {
     },
     {
       id: "program",
+      kicker: "3 · Program",
       title: "Program ve takip",
       body: [
         "Öğrencinin kitapları bir kez tanımlanır; haftalık program bu kitaplardan hazırlanır ve atanan testler kitaptan düşülür. Öğrenci görevlerini telefondan işaretler, siz durum özetinden kimin geride kaldığını görürsünüz.",
       ],
-      image: { src: "/urun/haftalik-program.webp", alt: "Haftalık program ve hafta ızgarası", width: 1170, height: 620 },
+      image: shot("hafta-izgara", "Hafta ızgarası ve haftanın ders dengesi", "/teacher/students/…/week"),
     },
     {
       id: "deneme",
-      title: "Deneme analizi ve puan tahmini",
+      kicker: "4 · Deneme analizi",
+      title: "Deneme analizi ve branş denemeleri",
       body: [
         "Deneme karnesini yükleyin; sorular konulara bağlanır, net fırsatı ve unutulan konular çıkar. Puan tahmini son genel denemenin ders netlerinden hesaplanır.",
+        "Programda verdiğiniz branş denemelerinin sonuçları ayrıca toplanır: her ders tek satırda, öğrencinin normal aralığı, eğilimi ve istikrarıyla.",
       ],
-      image: { src: "/urun/puan-tahmini.webp", alt: "Deneme analizi ve tahmini puan", width: 1400, height: 862 },
+      image: shot("brans-karne", "Branş denemeleri: her ders tek satırda", "/teacher/students/…#program-exams"),
     },
     {
       id: "paketler",
+      kicker: "5 · Paketler",
       title: "Paketler",
       body: [
         "Keşif paketi 3 öğrenciye kadar ücretsizdir. Patika 10 öğrenciye kadar aylık 2.500 TL, Rota 25 öğrenciye kadar aylık 5.000 TL, Zirve sınırsız öğrenciyle aylık 7.500 TL'dir. Tüm paketler 14 gün ücretsiz denenir; kredi kartı istenmez.",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FeaturePage, type FeaturePageContent } from "@/components/marketing/feature-page";
+import { shot } from "@/lib/product-shots";
 
 export const metadata: Metadata = {
   title: "Deneme Karnesi Analiz Programı — LGS, TYT ve AYT Konu Analizi",
@@ -11,20 +12,22 @@ export const metadata: Metadata = {
 const content: FeaturePageContent = {
   path: "/deneme-analizi",
   eyebrow: "Deneme karnesi analizi",
-  h1: "Deneme karnesi analiz programı: PDF'i yükleyin, konu konu analiz hazır",
+  h1: "Karneyi yükleyin, konu konu analiz hazır",
   lead:
     "Yayınevlerinin ve okulların deneme sonuç belgeleri her kurumda farklı biçimde gelir. Etütkoç Rotam belgeyi soru soru okur, her soruyu müfredat konusuna bağlar ve koçun seansta konuşacağı tabloyu hazırlar. LGS, TYT, AYT ve okul denemeleri için çalışır.",
+  heroImage: shot("deneme-son", "Son deneme özeti ve kaçan netlerin ders ders dağılımı", "/teacher/students/…#exams"),
   highlights: [
-    "Sonuç PDF'i iki ayrı okumayla kontrol edilir; şüpheli satırlar işaretlenir",
-    "Her soru resmi müfredat konusuna bağlanır, yayınevi adı fark etmez",
-    "Net fırsatı: hangi konu kapanırsa deneme başına kaç net kazanılır",
-    "Unutulan ve gelişen konular, konu × deneme ısı haritası",
-    "Netten puan tahmini ve aynı sınav türünde gidişat",
-    "Veliye düzenlenebilir deneme sonucu e-postası",
+    { title: "İki ayrı okuma, çapraz kontrol", text: "Sonuç PDF'i iki kez bağımsız okunur; uyuşmayan satırlar işaretlenir." },
+    { title: "Her soru müfredat konusuna bağlanır", text: "Yayınevi konuyu farklı adlandırsa da resmi konuya eşlenir." },
+    { title: "Net fırsatı", text: "Hangi konu kapanırsa deneme başına kaç net kazanılacağı sıralanır." },
+    { title: "Unutulan ve gelişen konular", text: "Konu × deneme ısı haritası, kanıt denemeleriyle." },
+    { title: "Gidişat ve puan tahmini", text: "Aynı sınav türündeki denemeler tek seride; netten tahmini puan." },
+    { title: "Seans gündemi ve veli özeti", text: "Konuşulacak başlıklar hazır; veliye düzenlenebilir e-posta." },
   ],
   sections: [
     {
       id: "pdf",
+      kicker: "1 · Yükleme",
       title: "Sonuç belgesini yükleyin, satırları kontrol edin",
       body: [
         "Koç ya da öğrenci deneme sonuç PDF'ini yükler. Sistem belgeyi iki kez bağımsız okur ve iki okumanın sonucunu karşılaştırır; uyuşmayan satırlar sarıyla işaretlenir. Belgede ders özeti varsa doğru, yanlış ve boş sayıları ayrıca çapraz kontrol edilir.",
@@ -35,43 +38,57 @@ const content: FeaturePageContent = {
         "Net hesabı sınav türüne göre: LGS'de 3 yanlış, YKS'de 4 yanlış bir doğruyu götürür",
         "Aynı belge ikinci kez yüklenirse uyarı verir; mükerrer kayıt oluşmaz",
       ],
-      image: { src: "/urun/pdf-karne-onizleme.webp", alt: "Deneme sonucu PDF'ten aktarım önizlemesi", width: 900, height: 840 },
-    },
-    {
-      id: "net-firsati",
-      title: "Net fırsatı: önce hangi konu çalışılmalı?",
-      body: [
-        "Bir öğrencinin denemede kaybettiği netlerin çoğu birkaç konuda toplanır. Rotam son denemelerdeki yanlış ve boşları konu bazında toplar ve şu soruyu cevaplar: bu konu kapanırsa deneme başına kaç net kazanılır?",
-        "Liste büyükten küçüğe sıralanır. Koç haftalık programı hazırlarken bu sırayı kullanır; öğrenci de neden o konuya çalıştığını görür.",
-      ],
-      image: { src: "/urun/net-firsati.webp", alt: "Net fırsatı ve unutulan, gelişen konular", width: 1170, height: 450 },
-    },
-    {
-      id: "isi-haritasi",
-      title: "Konu × deneme ısı haritası ve unutulan konular",
-      body: [
-        "Isı haritası her konuyu her denemede ayrı hücrede gösterir. Soldan sağa kızaran bir satır, öğrencinin eskiden bildiği bir konuyu unutmaya başladığını gösterir. Sistem bu durumu ayrıca \"unutulan konular\" listesinde, kanıt denemeleriyle birlikte belirtir.",
-        "Tersi de görünür: önceden zayıf olup son denemelerde düzelen konular \"gelişen konular\" olarak listelenir. Seansta öğrenciye somut bir gelişme göstermek için iyi bir başlangıçtır.",
-      ],
-      image: { src: "/urun/konu-isi-haritasi.webp", alt: "Konu analizi ve konu × deneme ısı haritası", width: 1170, height: 860 },
+      image: shot("pdf-aktar", "Deneme sonucunu PDF'ten aktarma penceresi", "/teacher/students/…#exams"),
     },
     {
       id: "gidisat",
-      title: "Net gelişimi ve puan tahmini",
+      kicker: "2 · Gidişat",
+      title: "Denemeden denemeye net gelişimi",
       body: [
-        "Denemeler türüne göre ayrı serilerde izlenir: branş denemesi ile genel deneme aynı grafikte karıştırılmaz. Her deneme için net, doğru-yanlış-boş dağılımı ve bir önceki denemeye göre fark görünür.",
-        "Puan tahmini, son genel denemenin ders netlerinden hesaplanır. YKS için puan modeli, YÖK Atlas'ta yerleşen adayların gerçek netlerinden kalibre edilmiştir. Üye olmadan denemek isterseniz YKS puan ve sıralama hesaplama aracımızı kullanabilirsiniz.",
+        "Denemeler türüne göre ayrı serilerde izlenir: branş denemesi ile genel deneme aynı grafikte karıştırılmaz. Grafik öğrencinin normal aralığını da gösterir; bir deneme bu aralığın dışına düştüğünde nedeni altında yazar.",
+        "Son denemelerin eğilimine göre bir sonraki denemenin tahmini de çizilir. Koç bir bakışta yükselişin süreklilik gösterip göstermediğini görür.",
       ],
-      image: { src: "/urun/net-gelisimi.webp", alt: "Deneme sonuçları ve net gelişimi grafiği", width: 1170, height: 600 },
+      image: shot("deneme-gidisat", "Altı denemede net gelişimi ve normal aralık", "/teacher/students/…#exams"),
     },
     {
-      id: "veli",
-      title: "Veliye anlaşılır bir deneme özeti",
+      id: "ders",
+      kicker: "3 · Ders ders",
+      title: "Her ders, her denemede tek tabloda",
       body: [
-        "Koç tek düğmeyle veliye deneme sonucunu e-postayla gönderir. E-postada net, bir önceki denemeye göre değişim, en çok net kazanılabilecek konular ve kısa bir değerlendirme yer alır. Koç göndermeden önce her cümleyi görür, düzenler ya da siler.",
-        "Aynı içerik PDF olarak da indirilir; WhatsApp'tan paylaşmak isteyen koçlar bunu kullanır.",
+        "Tablo her dersin netini her denemede ayrı hücrede gösterir; renk, netin o dersteki soru sayısına oranıdır. Böylece 40 soruluk Türkçe ile 7 soruluk Kimya aynı ölçekte okunur.",
+        "Son sütun kısa bir okuma verir: boş bırakmadan mı kaybediyor, yanlıştan mı, yoksa dalgalı mı gidiyor.",
       ],
-      image: { src: "/urun/veli-deneme-maili.webp", alt: "Veliye deneme sonucu e-postası önizlemesi", width: 1141, height: 1400 },
+      image: shot("deneme-ders-isi", "Ders × deneme tablosu: netin tam puana oranı", "/teacher/students/…#exams"),
+    },
+    {
+      id: "net-firsati",
+      kicker: "4 · Öncelik",
+      title: "Net fırsatı: önce hangi konu çalışılmalı?",
+      body: [
+        "Bir öğrencinin denemede kaybettiği netlerin çoğu birkaç konuda toplanır. Rotam son denemelerdeki yanlış ve boşları konu bazında toplar ve şu soruyu cevaplar: bu konu kapanırsa deneme başına kaç net kazanılır?",
+        "Yanında iki liste daha durur: eskiden yapıp son denemelerde kaçırdığı konular ve çalıştıkça karşılığını görmeye başladığı konular.",
+      ],
+      image: shot("deneme-firsat", "Net fırsatı, unutulan ve gelişen konular", "/teacher/students/…#exams"),
+    },
+    {
+      id: "isi-haritasi",
+      kicker: "5 · Konu × deneme",
+      title: "En çok soru gelen konular, deneme deneme",
+      body: [
+        "Isı haritası her konuyu her denemede ayrı hücrede gösterir. Soldan sağa kızaran bir satır, öğrencinin eskiden bildiği bir konuyu unutmaya başladığını gösterir.",
+        "Satırları en çok soru gelen ya da en zayıf konuya göre sıralayabilirsiniz; tümünü göster ile karnedeki her konu açılır.",
+      ],
+      image: shot("deneme-konu-isi", "Konu × deneme ısı haritası", "/teacher/students/…#exams"),
+    },
+    {
+      id: "seans",
+      kicker: "6 · Seans ve veli",
+      title: "Seansta konuşulacak başlıklar hazır",
+      body: [
+        "Analizin sonunda koçun bir sonraki seansta öğrenciyle konuşacağı başlıklar çıkar; her biri tek tıkla seans gündemine eklenir.",
+        "Koç tek düğmeyle veliye deneme sonucunu e-postayla da gönderir: net, önceki denemeye göre değişim ve en çok net kazanılabilecek konular. Göndermeden önce her cümleyi görür, düzenler ya da siler; aynı içerik PDF olarak indirilip WhatsApp'tan paylaşılabilir.",
+      ],
+      image: shot("deneme-seans", "Bu denemelerden seansta konuşulacak başlıklar", "/teacher/students/…#exams"),
     },
   ],
   faq: [

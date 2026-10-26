@@ -121,6 +121,7 @@
         reverse_proxy /robots.txt next:3000
         reverse_proxy /sitemap.xml next:3000
         reverse_proxy /og-rotam.png next:3000
+        reverse_proxy /yandex_*.html next:3000
         # WhatsApp branded teklif şablonu IMAGE header'ı (Meta bu linki çeker)
         reverse_proxy /wa-offer-header.png next:3000
         # iyzico resmi güvenli-ödeme logo bandı (public/iyzico/*) — footer + /pricing

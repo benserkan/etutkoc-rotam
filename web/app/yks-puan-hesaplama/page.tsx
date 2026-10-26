@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Activity, Database, Lock, Sparkles } from "lucide-react";
 
-import { MarketingHeader } from "@/components/marketing/feature-page";
+import { SiteHeader } from "@/components/marketing/site-header";
 import { LandingFooter } from "@/components/landing/landing-client";
 import { YksSimulator } from "@/components/tools/yks-simulator";
 import { SITE_URL } from "@/lib/site";
@@ -59,70 +60,108 @@ function JsonLd() {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
 }
 
+const METHOD = [
+  { n: "1", title: "Net", text: "Her testte doğru sayısından yanlışların dörtte biri çıkarılır. Boş sorular nete etki etmez." },
+  { n: "2", title: "Ham puan", text: "Netler ÖSYM'nin dönüşümüne göre puana çevrilir. Katsayılar YÖK Atlas'ta programlara yerleşen binlerce adayın gerçek netlerinden ve puanlarından çıkarıldı; her testin puana etkisi farklıdır." },
+  { n: "3", title: "Sıralama", text: "Ham puana diploma notunun katkısı eklenir ve YÖK Atlas'taki program tabanlarından Türkiye sırası bulunur." },
+  { n: "4", title: "Sınav günü", text: "Her ders için deneme seviyen ve haftalık gidişatın hesaplanır; sınav günü oynaklığı eklenerek 4.000 senaryo çalıştırılır." },
+];
+
+const BADGES = [
+  { icon: Database, text: "YÖK Atlas verisiyle kalibre" },
+  { icon: Activity, text: "Sınav günü tahmini" },
+  { icon: Lock, text: "Üyeliksiz, kayıt tutmaz" },
+];
+
 export default function Page() {
   return (
-    <div className="force-light min-h-screen bg-[#f7f5f0] text-slate-900">
+    <div className="force-light min-h-screen text-slate-900">
       <JsonLd />
-      <MarketingHeader />
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:py-14">
-        <h1 className="font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-          YKS puan ve sıralama hesaplama
-        </h1>
-        <p className="mt-3 text-[17px] leading-relaxed text-slate-700">
-          TYT ve AYT doğru-yanlış sayılarını gir; netini, ham puanını ve Türkiye sıralamanı gör. Bununla kalmaz:
-          Etütkoç&apos;un deneme analiz sistemindeki YKS simülasyonu, sınav gününe kadar kalan süreyi ve gidişatını hesaba
-          katarak <b>sınav günü olası puan ve sıralama aralığını</b> da hesaplar.
-        </p>
+      <SiteHeader />
+      <main>
+        <section className="relative overflow-hidden bg-slate-950 text-white">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.12]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, rgb(255 255 255 / 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / 0.5) 1px, transparent 1px)",
+              backgroundSize: "44px 44px",
+              maskImage: "radial-gradient(ellipse 80% 70% at 50% 20%, black, transparent)",
+            }}
+            aria-hidden
+          />
+          <div className="pointer-events-none absolute -left-32 -top-40 size-[30rem] rounded-full bg-cyan-500/30 blur-3xl" aria-hidden />
+          <div className="pointer-events-none absolute -right-20 top-10 size-[24rem] rounded-full bg-amber-400/20 blur-3xl" aria-hidden />
+          <div className="relative mx-auto max-w-4xl px-4 pb-36 pt-14 text-center sm:px-6 lg:pb-40 lg:pt-20">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-cyan-200 ring-1 ring-white/15">
+              <Sparkles className="size-3.5 text-amber-300" aria-hidden /> Ücretsiz araç · 2027 YKS
+            </span>
+            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-6xl">
+              YKS puan ve sıralama <span className="text-amber-300">hesaplama</span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">
+              Doğru-yanlış sayılarını gir; netini, ham puanını ve Türkiye sıralamanı gör. Etütkoç&apos;un YKS simülasyonu
+              sınav gününe kadar kalan süreyi ve gidişatını da hesaba katarak <b className="text-white">sınav günü olası puan ve sıralama aralığını</b> çıkarır.
+            </p>
+            <ul className="mt-8 flex flex-wrap justify-center gap-2.5">
+              {BADGES.map((b) => (
+                <li key={b.text} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 ring-1 ring-white/15">
+                  <b.icon className="size-4 text-cyan-300" aria-hidden /> {b.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
 
-        <div className="mt-8">
+        <div className="relative z-10 mx-auto -mt-24 max-w-7xl px-4 sm:px-6 lg:px-8">
           <YksSimulator />
         </div>
 
-        <section className="mt-14 space-y-4 text-[16px] leading-relaxed text-slate-700">
-          <h2 className="font-display text-2xl font-bold text-slate-900">Hesaplama nasıl yapılıyor?</h2>
-          <p>
-            <b>1. Net:</b> Her testte doğru sayısından yanlışların dörtte biri çıkarılır. Boş sorular nete etki etmez.
-          </p>
-          <p>
-            <b>2. Ham puan:</b> Netler, ÖSYM&apos;nin o yılki dönüşümüne göre puana çevrilir. Katsayılar YÖK Atlas&apos;ta programlara
-            taban puanla yerleşen binlerce adayın gerçek netlerinden ve puanlarından çıkarıldı. Fizik, Kimya ve Biyoloji ya
-            da Edebiyat ve Sosyal Bilimler testlerinin ayrı ayrı girilmesi bu yüzden önemli: her testin puana etkisi farklıdır.
-          </p>
-          <p>
-            <b>3. Sıralama:</b> Ham puana diploma notunun katkısı eklenir ve YÖK Atlas&apos;taki program tabanlarından Türkiye
-            sırası bulunur.
-          </p>
-          <p>
-            <b>4. Sınav günü tahmini:</b> Her ders için deneme seviyen ve haftalık gidişatın hesaplanır. Az veride gidişat,
-            Etütkoç öğrencilerinin ölçülen ortalama gidişatına yaslanır. Sınav günü oynaklığı ve deneme ile gerçek sınav
-            arasındaki fark eklenerek 4.000 senaryo çalıştırılır. Ortadaki değer en olası puanın; kenarlar iyi ve kötü senaryodur.
-          </p>
-          <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Yöntem</div>
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Hesaplama nasıl yapılıyor?</h2>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {METHOD.map((m) => (
+              <div key={m.n} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="font-display text-4xl font-extrabold text-cyan-700/25">{m.n}</div>
+                <div className="mt-2 font-display text-lg font-bold text-slate-900">{m.title}</div>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{m.text}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             Bu bir tahmindir, kesin sonuç değildir. ÖSYM&apos;nin o yılki dönüşümü ve sınava giren aday sayısı değiştikçe puan ve
             sıra da değişir. Deneme netleri gerçek sınav netinden sapabilir.
           </p>
         </section>
 
-        <section className="mt-12">
-          <h2 className="font-display text-2xl font-bold text-slate-900">Sık sorulan sorular</h2>
-          <div className="mt-5 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
-            {FAQ.map((f) => (
-              <details key={f.q} className="p-5">
-                <summary className="cursor-pointer list-none font-semibold text-slate-900">{f.q}</summary>
-                <p className="mt-3 text-[15px] leading-relaxed text-slate-700">{f.a}</p>
-              </details>
-            ))}
+        <section className="border-t border-slate-200 bg-white">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-12 lg:px-8">
+            <div className="lg:col-span-4">
+              <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">SSS</div>
+              <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-slate-900">Sık sorulan sorular</h2>
+            </div>
+            <div className="space-y-3 lg:col-span-8">
+              {FAQ.map((f) => (
+                <details key={f.q} className="group rounded-2xl border border-slate-200 bg-slate-50 p-5 open:bg-white open:shadow-md">
+                  <summary className="cursor-pointer list-none font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">{f.q}</summary>
+                  <p className="mt-3 text-[15px] leading-relaxed text-slate-600">{f.a}</p>
+                </details>
+              ))}
+            </div>
           </div>
         </section>
 
-        <section className="mt-12 grid gap-4 sm:grid-cols-2">
-          <Link href="/deneme-analizi" className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-cyan-700/40">
-            <div className="font-semibold text-slate-900">Deneme karnesi analizi</div>
-            <p className="mt-1.5 text-sm text-slate-600">Karnedeki her soruyu konusuna bağlar; hangi konudan kaç net kazanılacağını gösterir.</p>
+        <section className="mx-auto grid max-w-7xl gap-4 px-4 py-16 sm:px-6 md:grid-cols-2 lg:px-8">
+          <Link href="/deneme-analizi" className="rounded-3xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="font-display text-lg font-semibold text-slate-900">Deneme karnesi analizi</div>
+            <p className="mt-2 text-sm text-slate-600">Karnedeki her soruyu konusuna bağlar; hangi konudan kaç net kazanılacağını gösterir.</p>
           </Link>
-          <a href="https://etutkoc.com" className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-cyan-700/40">
-            <div className="font-semibold text-slate-900">Etütkoç Akademi — birebir YKS koçluğu</div>
-            <p className="mt-1.5 text-sm text-slate-600">Trabzon&apos;da yüz yüze ve tüm Türkiye&apos;de online öğrenci koçluğu.</p>
+          <a href="https://etutkoc.com" className="rounded-3xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="font-display text-lg font-semibold text-slate-900">Etütkoç Akademi — birebir YKS koçluğu</div>
+            <p className="mt-2 text-sm text-slate-600">Trabzon&apos;da yüz yüze ve tüm Türkiye&apos;de online öğrenci koçluğu.</p>
           </a>
         </section>
       </main>

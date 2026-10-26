@@ -52,17 +52,10 @@ import { TourVideoSection, WelcomeVideoModal } from "@/components/landing/tour-v
 import { demosForRole, demoPlayUrl, type DemoRole } from "@/lib/demos";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { BrandLogo } from "@/components/brand-logo";
+import { SiteHeader } from "@/components/marketing/site-header";
 import { PaymentMethods } from "@/components/payment-methods";
 import { FloatingWhatsAppAuto } from "@/components/contact/floating-whatsapp-auto";
 
-const NAV = [
-  { href: "#ozellikler", label: "Özellikler" },
-  { href: "#kurumlar", label: "Kurumlar" },
-  { href: "#nasil-calisir", label: "Nasıl Çalışır?" },
-  { href: "/yks-puan-hesaplama", label: "YKS Puan Hesaplama" },
-  { href: "#paketler", label: "Paketler" },
-  { href: "/iletisim", label: "İletişim" },
-];
 
 // Kurumsal demo/teklif → /pricing kurumsal formu (zengin: koç sayısı + fayda).
 const DEMO_MAIL = "/pricing?type=kurum#kurumsal";
@@ -80,7 +73,7 @@ export function LandingClient({ heroVariant = "v2" }: { heroVariant?: "v1" | "v2
 
   return (
     <div className="force-light min-h-screen bg-background text-foreground">
-      <Header />
+      <SiteHeader />
       {heroVariant === "v2" ? <HeroV2 /> : <Hero />}
       <TourVideoSection variant={variant} />
       <Reassurance />
@@ -452,39 +445,6 @@ function StickyMobileCta() {
   );
 }
 
-/* ───────────────────────── Header ───────────────────────── */
-
-function Header() {
-  return (
-    <header className="sticky top-0 z-40 border-b border-cyan-900/15 bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <BrandLogo />
-        <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
-          {NAV.map((n) => (
-            <a key={n.href} href={n.href} className="transition hover:text-cyan-800">
-              {n.label}
-            </a>
-          ))}
-        </nav>
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <Link
-            href="/login"
-            className="inline-flex items-center rounded-full border border-cyan-700/30 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:border-cyan-700 hover:bg-cyan-50 sm:px-4 sm:py-2 sm:text-sm"
-          >
-            Giriş
-          </Link>
-          <Link
-            href="/signup/teacher"
-            className="inline-flex items-center gap-1.5 rounded-full bg-cyan-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-cyan-700/20 transition hover:-translate-y-0.5 hover:bg-cyan-800 sm:px-4 sm:py-2 sm:text-sm"
-          >
-            Ücretsiz Dene
-          </Link>
-        </div>
-      </div>
-    </header>
-  );
-}
-
 /* ───────────────────────── Hero ───────────────────────── */
 
 function Hero() {
@@ -798,7 +758,7 @@ function HeroFeature({ card, variant }: { card: LandingCard; variant: string | n
         aria-label={`${card.title} — ücretsiz dene`}
         className="lp-card group relative cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-card p-6 transition hover:border-cyan-300 lg:p-9"
       >
-        <div className="grid items-center gap-8 lg:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-8 lg:grid-cols-2">
           <div className="min-w-0">
             <div className="mb-4 flex items-center gap-3">
               <span className="flex size-12 items-center justify-center rounded-2xl" style={{ background: `${accent}16`, color: accent }}>
