@@ -6,6 +6,25 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YKS PUAN/SIRALAMA ARACI + 4 ÜRÜN SAYFASI (2026-10-26, commit `6e3deb8`+, migration YOK, CANLI)
+
+- **Araç** `/yks-puan-hesaplama` (+ `/gomulu` iframe sürümü; Caddy yalnız etutkoc.com'a `frame-ancestors`, noindex) —
+  üyeliksiz. Backend `app/services/yks_public_sim.py` = yeniDenemeAnalizSistemi YKS Simülasyonu v4'ün DB'siz portu
+  (puan katsayıları + YÖK Atlas sıra tabloları + OBP tablosu + kohort eğilimi `app/services/data/yks/*.json`;
+  tek/çoklu deneme → bugünkü puan+sıra + sınav günü Monte Carlo 4.000 senaryo). Fen/TDE-Sos1/Sos2 grup düzeyinde
+  simüle edilir (kohort ön bilgisi o düzeyde). Uçlar `api_v2/tools_public.py` GET `/tools/yks-meta` · POST
+  `/tools/yks-simulate` (IP başına 30/dk). Test `scripts/test_yks_public_sim.py` **48/48** — sıra/puan orijinal motorla
+  BİREBİR (`scripts/data_yks_reference_samples.json`). Veri yenileme: yeniDenemeAnalizSistemi venv'inde
+  `scripts/export_yks_rank_tables.py` → `yks_rank_tables.json`; katsayı/öncül/takvim JSON'ları kopyalanır.
+  BİLİNEN: kohort öncülleri 4-5 öğrenciden (zayıf) → tek denemede aralık geniş; arayüz "en olası" değeri öne alır.
+- **Sayfalar** `/ogrenci-takip-programi` · `/deneme-analizi` · `/kurumlar` · `/bagimsiz-koclar` — ortak
+  `components/marketing/feature-page.tsx` (MarketingHeader + LandingFooter, SSS + FAQPage/Breadcrumb şeması, gerçek
+  ekran kırpımları `web/public/urun/*.webp`, Caddy `/urun/*`). proxy PUBLIC + sitemap + Meta piksel izin listesi +
+  eslint force-light istisnası güncellendi. Google Play bağlantısı (`lib/site.ts PLAY_STORE_URL`) şemada + footer.
+- etutkoc.com: `/yks-puan-hesaplama` (iframe + postMessage yükseklik) + hero kartı + footer · Hakkımızda kopya detay
+  kayıtları 15→4 (yedek `D:\LGS-Program-yedekler\etutkoc-sitebout-pagecontent-before-dedupe-20261026.json`) ·
+  kurucu Person şeması · footer Instagram @etutkoc + FB işletme sayfası.
+
 ## ARAMA GÖRÜNÜRLÜĞÜ — Rotam + etutkoc.com teknik SEO (2026-10-26, Rotam commit `979bf74`, CANLI)
 
 - Rotam: kök metadata (metadataBase, "Etütkoç Rotam — Öğrenci Koçluğu Takip ve Deneme Analizi Sistemi", şablon
