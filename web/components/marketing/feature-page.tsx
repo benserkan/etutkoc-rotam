@@ -140,6 +140,12 @@ export function FeaturePage({ content }: { content: FeaturePageContent }) {
               >
                 14 gün ücretsiz dene <ArrowRight className="size-4" aria-hidden />
               </Link>
+              <a
+                href="https://play.google.com/store/apps/details?id=com.etutkoc.rotam"
+                className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:border-cyan-700"
+              >
+                Android uygulaması
+              </a>
               <Link
                 href="/demos"
                 className="inline-flex items-center rounded-full border border-cyan-700/30 bg-white px-5 py-3 text-sm font-semibold text-cyan-800 transition hover:border-cyan-700"

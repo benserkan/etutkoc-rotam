@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { PARENT_SITE_URL, SITE_URL } from "@/lib/site";
+import { PARENT_SITE_URL, PLAY_STORE_URL, SITE_URL } from "@/lib/site";
 
 import { apiServer } from "@/lib/api-server";
 import { ApiError } from "@/lib/api";
@@ -53,7 +53,7 @@ const JSONLD = {
         addressRegion: "Trabzon",
         addressCountry: "TR",
       },
-      sameAs: ["https://www.instagram.com/etutkoc/", SITE_URL],
+      sameAs: ["https://www.instagram.com/etutkoc/", "https://www.facebook.com/profile.php?id=61591843981542"],
     },
     {
       "@type": "WebSite",
@@ -70,7 +70,9 @@ const JSONLD = {
       alternateName: "Rotam",
       url: SITE_URL,
       applicationCategory: "EducationalApplication",
-      operatingSystem: "Web, Android, iOS",
+      operatingSystem: "Web, Android",
+      installUrl: PLAY_STORE_URL,
+      downloadUrl: PLAY_STORE_URL,
       inLanguage: "tr-TR",
       description:
         "Öğrenci koçları, etüt merkezleri, dershaneler ve özel okullar için öğrenci takip, haftalık program ve deneme karnesi analiz sistemi. LGS, TYT ve AYT denemelerini konu konu okur, veliyi bilgilendirir.",
