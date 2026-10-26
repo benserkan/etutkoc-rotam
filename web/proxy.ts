@@ -31,7 +31,6 @@ const PUBLIC_PATHS_EXACT = new Set<string>([
 ]);
 
 const PUBLIC_PATHS_PREFIX = [
-  "/yandex_", // Yandex Webmaster doğrulama dosyası (public/yandex_*.html)
   "/login",
   "/signup",
   // Şifre sıfırlama akışı: token ile gelir, oturum yok — public olmalı.
@@ -72,6 +71,10 @@ export function proxy(req: NextRequest) {
   // Statik public dosyalar (logo, görseller, fontlar) — auth'suz serve edilir.
   // Aksi halde anonim ziyaretçide /etutkoc-logo.svg gibi varlıklar /login'e
   // 307 redirect olur ve kırık görsel olarak görünür.
+  // Arama motoru site doğrulama dosyaları (Yandex) de statik ve herkese açık.
+  if (/^\/yandex_[0-9a-f]+\.html$/i.test(pathname)) {
+    return NextResponse.next();
+  }
   if (/\.(?:svg|png|jpe?g|gif|webp|avif|ico|txt|xml|json|webmanifest|woff2?|ttf|otf|map|mp[34]|wav|webm)$/i.test(pathname)) {
     return NextResponse.next();
   }
