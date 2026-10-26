@@ -9,7 +9,7 @@ import { YksSimulator } from "@/components/tools/yks-simulator";
 export const metadata: Metadata = {
   title: { absolute: "YKS Puan ve Sıralama Hesaplama" },
   robots: { index: false, follow: true },
-  alternates: { canonical: "/yks-puan-hesaplama" },
+  alternates: { canonical: "https://etutkoc.com/yks-puan-hesaplama" },
 };
 
 export default function Page() {

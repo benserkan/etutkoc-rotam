@@ -31,6 +31,14 @@ const nextConfig: NextConfig = {
   // (≤450 MB PDF) yüklenemiyordu. Prod: Caddy doğrudan FastAPI.
   experimental: { proxyTimeout: 300_000, proxyClientMaxBodySize: "500mb" },
 
+  // YKS puan aracının asıl (dizine giren) sayfası etutkoc.com'da. Rotam'daki eski adres
+  // oraya kalıcı yönlenir; gömülü sürüm (/yks-puan-hesaplama/gomulu) yerinde kalır.
+  async redirects() {
+    return [
+      { source: "/yks-puan-hesaplama", destination: "https://etutkoc.com/yks-puan-hesaplama", permanent: true },
+    ];
+  },
+
   async rewrites() {
     const apiTarget = process.env.INTERNAL_API_URL || "http://127.0.0.1:8081";
     return [

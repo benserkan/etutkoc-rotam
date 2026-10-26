@@ -1303,7 +1303,7 @@ export function LandingFooter() {
               </p>
             </div>
           </div>
-          <FooterCol title="Platform" links={[["/ogrenci-takip-programi", "Öğrenci takip programı"], ["/deneme-analizi", "Deneme karnesi analizi"], ["/kurumlar", "Etüt merkezi ve dershaneler"], ["/bagimsiz-koclar", "Bağımsız koçlar"], ["/yks-puan-hesaplama", "YKS puan ve sıralama hesaplama"], ["/pricing", "Paketler"], ["/demos", "Tanıtım videoları"]]} />
+          <FooterCol title="Platform" links={[["/ogrenci-takip-programi", "Öğrenci takip programı"], ["/deneme-analizi", "Deneme karnesi analizi"], ["/kurumlar", "Etüt merkezi ve dershaneler"], ["/bagimsiz-koclar", "Bağımsız koçlar"], ["https://etutkoc.com/yks-puan-hesaplama", "YKS puan ve sıralama hesaplama"], ["/pricing", "Paketler"], ["/demos", "Tanıtım videoları"]]} />
           <FooterCol title="İletişim" links={[["/iletisim", "Bize ulaşın"], ["/pricing?type=kurum#kurumsal", "Kurumsal teklif"], ["/iletisim?konu=iletisim_destek", "Teknik destek"], ["https://play.google.com/store/apps/details?id=com.etutkoc.rotam", "Android uygulaması (Google Play)"]]} />
           <FooterCol title="Yasal" links={[["/kullanim-sartlari", "Kullanım Şartları"], ["/mesafeli-satis", "Mesafeli Satış Sözleşmesi"], ["/iade-iptal", "İade ve İptal"], ["/privacy", "Gizlilik Politikası"], ["/kvkk", "KVKK Aydınlatma"]]} />
         </div>

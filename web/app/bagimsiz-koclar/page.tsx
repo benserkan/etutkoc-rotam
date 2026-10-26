@@ -81,7 +81,7 @@ const content: FeaturePageContent = {
   related: [
     { href: "/ogrenci-takip-programi", title: "Öğrenci takip programı", text: "Program, kitap takibi, erken uyarı ve veli raporu." },
     { href: "/deneme-analizi", title: "Deneme karnesi analizi", text: "PDF karneden konu analizi ve net fırsatı." },
-    { href: "/yks-puan-hesaplama", title: "YKS puan ve sıralama hesaplama", text: "Öğrencinizin netlerinden puan ve sıralama tahmini." },
+    { href: "https://etutkoc.com/yks-puan-hesaplama", title: "YKS puan ve sıralama hesaplama", text: "Öğrencinizin netlerinden puan ve sıralama tahmini." },
   ],
   ctaTitle: "Koçluk işinizi tek yerden yönetin",
   ctaText: "14 gün ücretsiz deneyin. Öğrencilerinizi ekleyin, ilk haftalık programı hazırlayın, ilk seansı kaydedin.",

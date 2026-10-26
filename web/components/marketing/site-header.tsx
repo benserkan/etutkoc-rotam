@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { YKS_TOOL_URL } from "@/lib/site";
 
 /**
  * Herkese açık sayfaların TEK üst menüsü — ana sayfa, ürün sayfaları ve YKS
@@ -49,7 +50,7 @@ export const PRODUCT_LINKS = [
 
 export const SITE_NAV = [
   { href: "/#nasil-calisir", label: "Nasıl çalışır?" },
-  { href: "/yks-puan-hesaplama", label: "YKS puan hesaplama", badge: "Ücretsiz" },
+  { href: YKS_TOOL_URL, label: "YKS puan hesaplama", badge: "Ücretsiz" },
   { href: "/pricing", label: "Paketler" },
   { href: "/iletisim", label: "İletişim" },
 ] as const;
@@ -96,7 +97,7 @@ export function SiteHeader() {
               href={n.href}
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900"
             >
-              {n.href === "/yks-puan-hesaplama" ? <Calculator className="size-4 text-cyan-700" aria-hidden /> : null}
+              {n.href === YKS_TOOL_URL ? <Calculator className="size-4 text-cyan-700" aria-hidden /> : null}
               {n.label}
               {"badge" in n ? (
                 <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900">

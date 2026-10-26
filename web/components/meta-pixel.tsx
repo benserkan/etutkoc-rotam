@@ -19,7 +19,7 @@ import { useEffect, useRef } from "react";
  * Kapalı kalması için `META_PIXEL_ID` boş bırakılır (script hiç basılmaz).
  */
 
-const MARKETING_EXACT = new Set(["/", "/pricing", "/iletisim", "/demos", "/yks-puan-hesaplama", "/deneme-analizi", "/ogrenci-takip-programi", "/kurumlar", "/bagimsiz-koclar"]);
+const MARKETING_EXACT = new Set(["/", "/pricing", "/iletisim", "/demos", "/deneme-analizi", "/ogrenci-takip-programi", "/kurumlar", "/bagimsiz-koclar"]);
 const MARKETING_PREFIX = ["/signup"];
 
 export function isMarketingPath(pathname: string): boolean {

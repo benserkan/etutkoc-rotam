@@ -99,7 +99,7 @@ const content: FeaturePageContent = {
     { q: "Veriler kimlerle paylaşılıyor?", a: "Deneme sonuçları yalnız öğrencinin koçu, öğrencinin kendisi ve bağlı velisi tarafından görülür. Koçun öğrenciye özel notları veliye gösterilmez." },
   ],
   related: [
-    { href: "/yks-puan-hesaplama", title: "YKS puan ve sıralama hesaplama", text: "Üye olmadan netlerini gir; bugünkü puanını ve sınav günü tahminini gör." },
+    { href: "https://etutkoc.com/yks-puan-hesaplama", title: "YKS puan ve sıralama hesaplama", text: "Üye olmadan netlerini gir; bugünkü puanını ve sınav günü tahminini gör." },
     { href: "/ogrenci-takip-programi", title: "Öğrenci takip programı", text: "Kitaba bağlı haftalık program, günlük takip ve erken uyarılar." },
     { href: "/kurumlar", title: "Etüt merkezi ve dershaneler", text: "Kurum geneli deneme sonuçları ve öğretmen bazında akademik çıktı." },
   ],
