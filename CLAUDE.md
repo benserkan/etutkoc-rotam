@@ -6,6 +6,19 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## ARAMA GÖRÜNÜRLÜĞÜ — Rotam + etutkoc.com teknik SEO (2026-10-26, Rotam commit `979bf74`, CANLI)
+
+- Rotam: kök metadata (metadataBase, "Etütkoç Rotam — Öğrenci Koçluğu Takip ve Deneme Analizi Sistemi", şablon
+  "%s | Etütkoç Rotam", OG görseli `public/og-rotam.png`) · `app/robots.ts` (paneller kapalı) + `app/sitemap.ts`
+  (10 public adres; yeni tanıtım sayfası = PAGES'e satır) · Caddy `/robots.txt` `/sitemap.xml` `/og-rotam.png` → next ·
+  ana sayfa/pricing/iletisim canonical · Jinja base.html canonical + meta_description bloğu (/demos, yasal) · JSON-LD:
+  Organization `@id https://etutkoc.com/#organization` (etutkoc.com ile TEK kuruluş; LocalBusiness Rotam'dan kalktı —
+  yerel kimlik etutkoc.com'da) + WebSite + SoftwareApplication · footer etutkoc.com bağlantısı · `lib/site.ts`.
+- etutkoc.com (ayrı sunucu, bkz. memory reference_etutkoc_site_server): postbuild prerender + otomatik sitemap (35 sayfa),
+  sayfa bazlı başlık/canonical, marka yazımı tekil, saat 09–22, footer gerçek bağlantılar + Rotam bağlantısı.
+- GSC: rotam sitemap gönderildi, etutkoc sitemap yenilendi; dizine ekleme istendi: rotam `/` + `/pricing` (pricing
+  dizinde YOKTU), etutkoc `/services` + `/about`. Yol haritası: Desktop/rotam-instagram-takip/etutkoc-rotam-gorunurluk-yol-haritasi.md
+
 ## BİRLEŞİK BRANŞ DENEMELERİ (2026-10-25, commit `65e570f`, migration YOK, CANLI)
 
 - Branş denemesi ders listesinde artık "Birleşik branş denemeleri" grubu: TYT Fen Bilimleri (20) · TYT Sosyal
