@@ -40,6 +40,13 @@
         -Server
     }
 
+    # Gömülü YKS hesaplama aracı: yalnız etutkoc.com çerçeveleyebilir
+    @yks_embed path /yks-puan-hesaplama/gomulu
+    header @yks_embed {
+        -X-Frame-Options
+        Content-Security-Policy "frame-ancestors https://etutkoc.com https://www.etutkoc.com"
+    }
+
     route {
         # =====================================================================
         # 1. DOKUNULMAZ — daima FastAPI (mobile/webhooks/print/legal)
@@ -103,6 +110,14 @@
         # WhatsApp üyelik teklifi OG banner'ı (statik 1200×630)
         reverse_proxy /og-membership.png next:3000
         # SEO: Next.js app/robots.ts + app/sitemap.ts + paylaşım görseli
+        reverse_proxy /urun/* next:3000
+        # Arama motoru tanıtım sayfaları + YKS hesaplama aracı (Next.js)
+        reverse_proxy /yks-puan-hesaplama next:3000
+        reverse_proxy /yks-puan-hesaplama/* next:3000
+        reverse_proxy /deneme-analizi next:3000
+        reverse_proxy /ogrenci-takip-programi next:3000
+        reverse_proxy /kurumlar next:3000
+        reverse_proxy /bagimsiz-koclar next:3000
         reverse_proxy /robots.txt next:3000
         reverse_proxy /sitemap.xml next:3000
         reverse_proxy /og-rotam.png next:3000

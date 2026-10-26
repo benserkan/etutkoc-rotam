@@ -59,7 +59,7 @@ const NAV = [
   { href: "#ozellikler", label: "Özellikler" },
   { href: "#kurumlar", label: "Kurumlar" },
   { href: "#nasil-calisir", label: "Nasıl Çalışır?" },
-  { href: "#izle", label: "İzle" },
+  { href: "/yks-puan-hesaplama", label: "YKS Puan Hesaplama" },
   { href: "#paketler", label: "Paketler" },
   { href: "/iletisim", label: "İletişim" },
 ];
@@ -93,7 +93,7 @@ export function LandingClient({ heroVariant = "v2" }: { heroVariant?: "v1" | "v2
       <Pricing />
       <Faq />
       <FinalCta />
-      <Footer />
+      <LandingFooter />
       <div className="h-20 md:hidden" aria-hidden />
       <StickyMobileCta />
       <FloatingWhatsAppAuto />
@@ -1314,7 +1314,7 @@ function FinalCta() {
   );
 }
 
-function Footer() {
+export function LandingFooter() {
   return (
     <footer id="iletisim" className="bg-cyan-950 pt-14 pb-7 text-cyan-100/70">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1343,7 +1343,7 @@ function Footer() {
               </p>
             </div>
           </div>
-          <FooterCol title="Platform" links={[["#ozellikler", "Özellikler"], ["#paketler", "Paketler"], ["#nasil-calisir", "Nasıl Çalışır?"], ["#kurumlar", "Kurumlar"], ["/demos", "Tanıtım videoları"]]} />
+          <FooterCol title="Platform" links={[["/ogrenci-takip-programi", "Öğrenci takip programı"], ["/deneme-analizi", "Deneme karnesi analizi"], ["/kurumlar", "Etüt merkezi ve dershaneler"], ["/bagimsiz-koclar", "Bağımsız koçlar"], ["/yks-puan-hesaplama", "YKS puan ve sıralama hesaplama"], ["/pricing", "Paketler"], ["/demos", "Tanıtım videoları"]]} />
           <FooterCol title="İletişim" links={[["/iletisim", "Bize ulaşın"], ["/pricing?type=kurum#kurumsal", "Kurumsal teklif"], ["/iletisim?konu=iletisim_destek", "Teknik destek"]]} />
           <FooterCol title="Yasal" links={[["/kullanim-sartlari", "Kullanım Şartları"], ["/mesafeli-satis", "Mesafeli Satış Sözleşmesi"], ["/iade-iptal", "İade ve İptal"], ["/privacy", "Gizlilik Politikası"], ["/kvkk", "KVKK Aydınlatma"]]} />
         </div>

@@ -46,6 +46,7 @@ from app.routes.api_v2 import me as v2_me
 from app.routes.api_v2 import membership_public as v2_membership_public
 from app.routes.api_v2 import messaging as v2_messaging
 from app.routes.api_v2 import offers_public as v2_offers_public
+from app.routes.api_v2 import tools_public as v2_tools_public
 from app.routes.api_v2 import brand_public as v2_brand_public
 from app.routes.api_v2 import parent as v2_parent
 from app.routes.api_v2 import payment as v2_payment
@@ -75,6 +76,7 @@ from app.routes.api_v2 import wrong_questions as v2_wrong_questions
 
 router = APIRouter(prefix="/api/v2", tags=["api-v2"])
 router.include_router(v2_auth.router)
+router.include_router(v2_tools_public.router)
 router.include_router(v2_me.router)
 router.include_router(v2_admin.router)
 router.include_router(v2_student.router)

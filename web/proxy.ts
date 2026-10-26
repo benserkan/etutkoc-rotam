@@ -23,6 +23,11 @@ const PUBLIC_PATHS_EXACT = new Set<string>([
   "/pricing",     // public üyelik/fiyat sayfası
   "/iletisim",    // public iletişim sayfası (çok kanallı + form)
   "/demos",       // demo videoları oynatma sayfası — anonim izleme (satış-öncesi)
+  // Arama motoru tanıtım sayfaları + herkese açık YKS hesaplama aracı
+  "/deneme-analizi",
+  "/ogrenci-takip-programi",
+  "/kurumlar",
+  "/bagimsiz-koclar",
 ]);
 
 const PUBLIC_PATHS_PREFIX = [
@@ -42,6 +47,7 @@ const PUBLIC_PATHS_PREFIX = [
   "/kvkk",
   "/privacy",
   "/legal",
+  "/yks-puan-hesaplama",    // + /gomulu (etutkoc.com iframe)
 ];
 
 // BFF cookie + geçiş dönemi Jinja session cookie — herhangi biri yeterli.

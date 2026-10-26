@@ -1,0 +1,8 @@
+{
+  "_note": "YKS'nin TYT oturumu tarihleri. official=false ise tahmini; ÖSYM takvimi açıklanınca güncelleyin.",
+  "exams": [
+    {"year": 2025, "date": "2025-06-21", "official": true},
+    {"year": 2026, "date": "2026-06-20", "official": true, "source": "Emir Aydın 2026 YKS sonuç belgesi: 20-21 Haziran 2026"},
+    {"year": 2027, "date": "2027-06-19", "official": false, "source": "Tahmin: geçmiş yıllara göre Haziran'ın 3. hafta sonu; ÖSYM 2027 takvimi henüz açıklanmadı (2026-10-25)"}
+  ]
+}

@@ -1,0 +1,68 @@
+{
+ "generated_at": "2026-10-25T11:59:09",
+ "seasons": [
+  [
+   "2024-06-21",
+   "2025-06-21"
+  ],
+  [
+   "2025-06-21",
+   "2026-06-20"
+  ]
+ ],
+ "vars": {
+  "fen": {
+   "slope": 0.3123,
+   "tau": 0.4019,
+   "sigma": 3.707,
+   "n_series": 4,
+   "n_students": 4
+  },
+  "mat": {
+   "slope": -0.0023,
+   "tau": 0.2744,
+   "sigma": 4.323,
+   "n_series": 5,
+   "n_students": 5
+  },
+  "tdesos1": {
+   "slope": 0.1691,
+   "tau": 0.1,
+   "sigma": 8.544,
+   "n_series": 1,
+   "n_students": 1
+  },
+  "tyt_fen": {
+   "slope": 0.0331,
+   "tau": 0.1,
+   "sigma": 3.226,
+   "n_series": 5,
+   "n_students": 5
+  },
+  "tyt_mat": {
+   "slope": -0.0774,
+   "tau": 0.276,
+   "sigma": 5.249,
+   "n_series": 5,
+   "n_students": 5
+  },
+  "tyt_sos": {
+   "slope": 0.0577,
+   "tau": 0.1,
+   "sigma": 2.359,
+   "n_series": 5,
+   "n_students": 5
+  },
+  "tyt_trk": {
+   "slope": -0.057,
+   "tau": 0.1,
+   "sigma": 3.756,
+   "n_series": 5,
+   "n_students": 5
+  }
+ },
+ "corr": {
+  "tyt": 0.113,
+  "ayt": 0.041
+ }
+}

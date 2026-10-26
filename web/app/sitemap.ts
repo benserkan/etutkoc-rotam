@@ -4,6 +4,11 @@ import { SITE_URL } from "@/lib/site";
 /** Herkese açık, dizine girmesi istenen sayfalar. Yeni tanıtım sayfası = buraya satır. */
 const PAGES: { path: string; priority: number; freq: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [
   { path: "/", priority: 1, freq: "weekly" },
+  { path: "/yks-puan-hesaplama", priority: 0.9, freq: "monthly" },
+  { path: "/ogrenci-takip-programi", priority: 0.9, freq: "monthly" },
+  { path: "/deneme-analizi", priority: 0.9, freq: "monthly" },
+  { path: "/kurumlar", priority: 0.9, freq: "monthly" },
+  { path: "/bagimsiz-koclar", priority: 0.8, freq: "monthly" },
   { path: "/pricing", priority: 0.9, freq: "monthly" },
   { path: "/demos", priority: 0.8, freq: "monthly" },
   { path: "/iletisim", priority: 0.6, freq: "yearly" },

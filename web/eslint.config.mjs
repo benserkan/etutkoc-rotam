@@ -341,8 +341,15 @@ const eslintConfig = defineConfig([
       "app/kampanya/**",
       "app/payment/**",
       "app/pricing/**",
+      "app/yks-puan-hesaplama/**",
+      "app/deneme-analizi/**",
+      "app/ogrenci-takip-programi/**",
+      "app/kurumlar/**",
+      "app/bagimsiz-koclar/**",
+      "components/marketing/**",
+      "components/tools/**",
     ],
-    rules: { "lgs/no-dark-text-without-variant": "off" },
+    rules: { "lgs/no-dark-text-without-variant": "off", "lgs/no-white-box-theme-text": "off" },
   },
 
   // İstisnalar: lib/api.ts, lib/api-server.ts, BFF route'ları fetch kullanır
