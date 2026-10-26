@@ -10,7 +10,8 @@ import { IletisimClient } from "@/components/contact/iletisim-client";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "İletişim — ETÜTKOÇ Rotam",
+  title: "İletişim",
+  alternates: { canonical: "/iletisim" },
   description:
     "ETÜTKOÇ Rotam ile iletişime geçin: kurumsal teklif, teknik destek ve genel sorular için WhatsApp, telefon, e-posta veya form.",
 };

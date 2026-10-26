@@ -8,8 +8,10 @@ import { PricingClient } from "@/components/pricing/pricing-client";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Üyelik ve Fiyatlar — ETÜTKOÇ",
-  description: "Bağımsız koç ve kurumlar için üyelik planları ve fiyatları.",
+  title: "Fiyatlar ve Paketler — Öğrenci Koçluğu Programı",
+  description:
+    "Etütkoç Rotam paketleri: 3 öğrenciye kadar ücretsiz, bağımsız koçlar için Patika, Rota ve Zirve; etüt merkezi, dershane ve özel okullara kuruma özel teklif. 14 gün ücretsiz deneme.",
+  alternates: { canonical: "/pricing" },
 };
 
 interface TurnstileConfig {

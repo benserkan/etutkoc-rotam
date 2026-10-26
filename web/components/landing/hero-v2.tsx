@@ -87,7 +87,7 @@ export function HeroV2() {
                 {[...ROTATING, ROTATING[0]].map((w, i) => (
                   <span key={i} className="block h-[1.34em]">
                     <span className="relative inline-block text-cyan-700">
-                      {w}
+                      {w}{" "}
                       <svg className="absolute left-0 top-[1.02em] w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none" aria-hidden>
                         <path d="M2 5.5C40 1.5 160 2.5 198 5" stroke="#EBA62E" strokeWidth="3.5" strokeLinecap="round" />
                       </svg>

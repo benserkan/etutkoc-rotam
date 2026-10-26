@@ -15,7 +15,7 @@ import type { ParentUnsubscribeResult } from "@/lib/types/parent";
  */
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Bildirimler — ETÜTKOÇ Rotam" };
+export const metadata = { title: "Bildirimler" };
 
 interface PageProps {
   params: Promise<{ token: string }>;

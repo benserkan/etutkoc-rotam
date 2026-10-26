@@ -12,7 +12,7 @@ import { PaymentLinkClient } from "@/components/payment/payment-link-client";
  *   - "Şimdi Öde" → POST /api/v2/payment/link/{token}/checkout → Iyzico URL.
  */
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Ödeme — ETÜTKOÇ Rotam" };
+export const metadata = { title: "Ödeme" };
 
 interface PageProps {
   params: Promise<{ token: string }>;

@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
  * İçerik statik; Next.js'te ayrı page olarak sunulur (KVKK metni
  * standalone — parent layout dışı).
  */
-export const metadata = { title: "Veli Aydınlatma Metni — ETÜTKOÇ Rotam" };
+export const metadata = { title: "Veli Aydınlatma Metni" };
 
 export default function ParentKvkkPage() {
   return (

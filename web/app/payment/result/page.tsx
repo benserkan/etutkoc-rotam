@@ -18,7 +18,7 @@ import { PaymentResultClient } from "@/components/payment/payment-result-client"
  * safeReturnUrl `/payment/*` paylaşılan olarak izinli).
  */
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Ödeme Sonucu — ETÜTKOÇ Rotam" };
+export const metadata = { title: "Ödeme Sonucu" };
 
 interface PageProps {
   searchParams: Promise<{ tx?: string; error?: string }>;

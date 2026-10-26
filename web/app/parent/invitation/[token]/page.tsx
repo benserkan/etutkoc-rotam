@@ -12,7 +12,7 @@ import { ParentInvitationInvalid } from "@/components/parent/parent-invitation-i
  */
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Veli Daveti — ETÜTKOÇ Rotam" };
+export const metadata = { title: "Veli Daveti" };
 
 interface PageProps {
   params: Promise<{ token: string }>;

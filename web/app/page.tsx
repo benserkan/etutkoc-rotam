@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+import { PARENT_SITE_URL, SITE_URL } from "@/lib/site";
 
 import { apiServer } from "@/lib/api-server";
 import { ApiError } from "@/lib/api";
@@ -15,33 +18,74 @@ import { LandingClient } from "@/components/landing/landing-client";
  */
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  title: { absolute: "Etütkoç Rotam — Öğrenci Koçluğu Takip ve Deneme Analizi Sistemi" },
+  alternates: { canonical: "/" },
+};
+
 /**
- * Google İşletme Profili / yerel arama eşleşmesi için yapılandırılmış işletme
- * verisi (schema.org JSON-LD). Değerler `app/legal_info.py` COMPANY sözlüğünün
- * aynasıdır — resmi bilgi değişirse iki yer birlikte güncellenir.
+ * Yapısal veri (schema.org JSON-LD). Rotam bir YAZILIM ÜRÜNÜDÜR: yerel işletme
+ * kimliği (LocalBusiness, Trabzon adresi) etutkoc.com'da yaşar ve Google
+ * İşletme Profili ile eşleşir. Burada aynı kuruluşa `@id` ile atıf yapılır —
+ * iki site Google'a iki ayrı işletme değil, tek kuruluşun iki yüzü olarak
+ * görünür. Şirket bilgileri `app/legal_info.py` COMPANY aynasıdır.
  */
-const ORG_JSONLD = {
+const ORG_ID = `${PARENT_SITE_URL}/#organization`;
+const JSONLD = {
   "@context": "https://schema.org",
-  "@type": ["LocalBusiness", "EducationalOrganization"],
-  "@id": "https://rotam.etutkoc.com/#organization",
-  name: "Etütkoç Akademi Kişisel Gelişim",
-  legalName:
-    "ETÜTKOÇ Akademi Kişisel Gelişim Özel Eğitim ve Öğretim Hizmetleri Limited Şirketi",
-  url: "https://rotam.etutkoc.com",
-  logo: "https://rotam.etutkoc.com/etutkoc-logo.png",
-  image: "https://rotam.etutkoc.com/etutkoc-logo.png",
-  telephone: "+905056738561",
-  email: "destek@etutkoc.com",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress:
-      "İskenderpaşa Mah. Gazipaşa Cad. Timurcıoğlu Apartmanı No: 12 / İç Kapı No: 6",
-    addressLocality: "Ortahisar",
-    addressRegion: "Trabzon",
-    addressCountry: "TR",
-  },
-  areaServed: "Trabzon",
-  knowsAbout: ["LGS koçluğu", "YKS koçluğu", "öğrenci koçluğu", "eğitim danışmanlığı"],
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": ORG_ID,
+      name: "Etütkoç Akademi",
+      alternateName: ["Etütkoç", "ETÜTKOÇ"],
+      legalName:
+        "ETÜTKOÇ Akademi Kişisel Gelişim Özel Eğitim ve Öğretim Hizmetleri Limited Şirketi",
+      url: PARENT_SITE_URL,
+      logo: `${SITE_URL}/etutkoc-logo.png`,
+      telephone: "+905056738561",
+      email: "destek@etutkoc.com",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "İskenderpaşa Mah. Gazipaşa Cd. No:12/6",
+        postalCode: "61400",
+        addressLocality: "Ortahisar",
+        addressRegion: "Trabzon",
+        addressCountry: "TR",
+      },
+      sameAs: ["https://www.instagram.com/etutkoc/", SITE_URL],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: "Etütkoç Rotam",
+      inLanguage: "tr-TR",
+      publisher: { "@id": ORG_ID },
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${SITE_URL}/#software`,
+      name: "Etütkoç Rotam",
+      alternateName: "Rotam",
+      url: SITE_URL,
+      applicationCategory: "EducationalApplication",
+      operatingSystem: "Web, Android, iOS",
+      inLanguage: "tr-TR",
+      description:
+        "Öğrenci koçları, etüt merkezleri, dershaneler ve özel okullar için öğrenci takip, haftalık program ve deneme karnesi analiz sistemi. LGS, TYT ve AYT denemelerini konu konu okur, veliyi bilgilendirir.",
+      audience: { "@type": "Audience", audienceType: "Öğrenci koçları ve eğitim kurumları" },
+      offers: {
+        "@type": "AggregateOffer",
+        priceCurrency: "TRY",
+        lowPrice: "0",
+        highPrice: "7500",
+        offerCount: "4",
+        url: `${SITE_URL}/pricing`,
+      },
+      publisher: { "@id": ORG_ID },
+    },
+  ],
 };
 
 export default async function HomePage() {
@@ -60,7 +104,7 @@ export default async function HomePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSONLD) }}
       />
       <LandingClient />
     </>

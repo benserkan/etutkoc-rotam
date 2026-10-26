@@ -1324,7 +1324,13 @@ function Footer() {
               <BrandLogo wordmarkClassName="text-white" />
             </div>
             <p className="max-w-sm text-sm leading-relaxed">
-              Koçluk süreçlerinizi dijitalleştiriyor, öğrencinin başarı rotasını birlikte çiziyoruz.
+              Etütkoç Rotam; öğrenci koçları, etüt merkezleri, dershaneler ve özel okullar için öğrenci takip, haftalık program ve deneme analizi sistemidir.
+            </p>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed">
+              Birebir öğrenci koçluğu hizmeti için:{" "}
+              <a href="https://etutkoc.com" className="font-semibold text-amber-300 transition hover:text-amber-200">
+                Etütkoç Akademi — Trabzon LGS ve YKS koçluğu
+              </a>
             </p>
             <div className="mt-4 max-w-sm space-y-0.5 text-xs leading-relaxed text-cyan-200/50">
               <p className="font-semibold text-cyan-100/70">ETÜTKOÇ Akademi Kişisel Gelişim Özel Eğitim ve Öğretim Hizmetleri Ltd. Şti.</p>
@@ -1337,7 +1343,7 @@ function Footer() {
               </p>
             </div>
           </div>
-          <FooterCol title="Platform" links={[["#ozellikler", "Özellikler"], ["#paketler", "Paketler"], ["#nasil-calisir", "Nasıl Çalışır?"], ["#kurumlar", "Kurumlar"]]} />
+          <FooterCol title="Platform" links={[["#ozellikler", "Özellikler"], ["#paketler", "Paketler"], ["#nasil-calisir", "Nasıl Çalışır?"], ["#kurumlar", "Kurumlar"], ["/demos", "Tanıtım videoları"]]} />
           <FooterCol title="İletişim" links={[["/iletisim", "Bize ulaşın"], ["/pricing?type=kurum#kurumsal", "Kurumsal teklif"], ["/iletisim?konu=iletisim_destek", "Teknik destek"]]} />
           <FooterCol title="Yasal" links={[["/kullanim-sartlari", "Kullanım Şartları"], ["/mesafeli-satis", "Mesafeli Satış Sözleşmesi"], ["/iade-iptal", "İade ve İptal"], ["/privacy", "Gizlilik Politikası"], ["/kvkk", "KVKK Aydınlatma"]]} />
         </div>

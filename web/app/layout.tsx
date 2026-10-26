@@ -5,6 +5,7 @@ import { QueryProvider } from "@/components/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { MetaPixel } from "@/components/meta-pixel";
 import { SiteAssistant } from "@/components/assistant/site-assistant";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // Türkçe karakter için latin-ext zorunlu.
@@ -21,11 +22,21 @@ const display = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  applicationName: "Etütkoç Rotam",
   title: {
-    default: "ETÜTKOÇ",
-    template: "%s · ETÜTKOÇ",
+    default: "Etütkoç Rotam — Öğrenci Koçluğu Takip ve Deneme Analizi Sistemi",
+    template: "%s | Etütkoç Rotam",
   },
-  description: "Çalışma takip ve planlama sistemi",
+  description:
+    "Öğrenci koçları ve etüt merkezleri için takip programı: deneme karnesini konu konu analiz eder, haftalık programı kitaba bağlar, veliyi otomatik bilgilendirir. 14 gün ücretsiz.",
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    siteName: "Etütkoç Rotam",
+    images: [{ url: "/og-rotam.png", width: 1200, height: 630, alt: "Etütkoç Rotam" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/og-rotam.png"] },
 };
 
 /**
