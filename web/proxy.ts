@@ -31,6 +31,7 @@ const PUBLIC_PATHS_EXACT = new Set<string>([
 ]);
 
 const PUBLIC_PATHS_PREFIX = [
+  "/yandex_", // Yandex Webmaster doğrulama dosyası (public/yandex_*.html)
   "/login",
   "/signup",
   // Şifre sıfırlama akışı: token ile gelir, oturum yok — public olmalı.
