@@ -357,8 +357,20 @@ const Results = React.forwardRef<HTMLDivElement, { result: SimResult; embedded: 
           })}
         </div>
 
-        <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[520px] text-sm">
+        <ul className="mt-5 divide-y divide-slate-100 rounded-xl border border-slate-200 sm:hidden">
+          {result.lessons.map((l) => (
+            <li key={l.key} className="px-3 py-2.5 text-sm">
+              <div className="font-medium text-slate-800">{l.label} <span className="text-xs text-slate-500">/{l.max}</span></div>
+              <div className="mt-0.5 text-slate-600">
+                Şu an <b className="tabular-nums text-slate-800">{fmt1(l.current)}</b> → sınav günü{" "}
+                <b className="tabular-nums text-slate-900">{fmt1(l.predicted)}</b>{" "}
+                <span className="tabular-nums text-xs">({fmt1(l.p10)} – {fmt1(l.p90)})</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-5 hidden sm:block">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs text-slate-600">
                 <th className="py-2 pr-2 font-semibold">Ders</th>
