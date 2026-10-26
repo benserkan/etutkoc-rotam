@@ -164,11 +164,21 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
   const resultRef = React.useRef<HTMLDivElement>(null);
 
   // Gömülü sürüm: kapsayan sayfaya (etutkoc.com) içerik yüksekliğini bildir → iframe boyu uyar.
+  // Ölçü İÇERİĞİN kendisinden alınır: documentElement.scrollHeight iframe boyundan küçük
+  // olamadığı için (iframe = yükseklik + pay) her turda büyüyen bir döngü kuruyordu.
+  const rootRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    if (!embedded || typeof window === "undefined" || window.parent === window) return;
-    const post = () => window.parent.postMessage({ type: "etutkoc-yks-height", height: document.documentElement.scrollHeight }, "*");
+    const el = rootRef.current;
+    if (!embedded || !el || typeof window === "undefined" || window.parent === window) return;
+    let last = 0;
+    const post = () => {
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      if (h === last) return;
+      last = h;
+      window.parent.postMessage({ type: "etutkoc-yks-height", height: h }, "*");
+    };
     const ro = new ResizeObserver(post);
-    ro.observe(document.body);
+    ro.observe(el);
     post();
     return () => ro.disconnect();
   }, [embedded]);
@@ -253,7 +263,7 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
   );
 
   return (
-    <div className="text-slate-900">
+    <div ref={rootRef} className="text-slate-900">
       <form onSubmit={submit} method="post" className="grid gap-6 lg:grid-cols-12 lg:items-start">
         <div className="space-y-6 lg:col-span-8">
           {/* 1 · Puan türü */}

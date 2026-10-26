@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <div className="force-light min-h-screen bg-transparent p-1 text-slate-900">
+    <div className="force-light bg-transparent p-1 text-slate-900">
       <YksSimulator embedded />
     </div>
   );
