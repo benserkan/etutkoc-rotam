@@ -6,6 +6,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YKS PUAN ARACI — ASIL SAYFA etutkoc.com (2026-10-26, Rotam `e98c73e` + etutkoc.com sunucu `2a4e2e0`/`a3a369e`, CANLI)
+
+- Kullanıcı kararı: arama motorları için asıl sayfa **https://etutkoc.com/yks-puan-hesaplama**. Rotam'daki
+  `/yks-puan-hesaplama` sayfası SİLİNDİ → next.config `redirects` ile kalıcı (308) yönlenir; menü/alt bilgi/ürün
+  sayfası bağlantıları `lib/site.ts YKS_TOOL_URL`; Rotam sitemap'ten çıktı; `/gomulu` (iframe) yerinde, canonical etutkoc.com.
+- etutkoc.com sayfası (sunucu `src/pages/YksCalculatorPage.tsx`): 627 kelimelik metin (hesaplama adımları, puan türü →
+  test tablosu, OBP formülü, sınav günü tahmini, 8 SSS) + FAQPage/WebApplication şeması + hedef anahtar kelimeler.
+  Hesaplayıcı kabı `max-w-4xl` KALMALI (genişletince araç iki sütuna geçip sağda boş sütun kalıyor).
+- Gömülü iframe yükseklik döngüsü düzeltildi (`4428aca`): ölçü `documentElement.scrollHeight` değil içerik kutusu.
+- etutkoc.com prerender (`scripts/prerender.mjs`) artık index.html statik meta etiketlerini Helmet (data-rh) kopyası
+  varsa siler — tüm sitede çift meta description vardı.
+- Sunucu derleme: `export PATH=/home/ubuntu/.nvm/versions/node/v20.20.1/bin:$PATH && npm run build` (dosyalar CRLF).
+- Bing: etutkoc.com doğrulu; iki site haritası (etutkoc + rotam) etutkoc.com mülkü altından gönderildi.
+- SIRADA (önerildi): TYT/AYT/sıralama/OBP dar konulu ek sayfalar; 2-3 hafta sonra GSC arama verisiyle başlık ayarı.
+
 ## TANITIM SAYFALARI YENİ TASARIM + TEK MENÜ (2026-10-26, commit `c1ff508`+2, migration YOK, CANLI)
 
 - **Tek üst menü** `components/marketing/site-header.tsx` (`SiteHeader`): ana sayfa, 4 ürün sayfası ve YKS
