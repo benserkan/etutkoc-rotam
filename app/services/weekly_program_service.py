@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Iterable
 
 from sqlalchemy.orm import Session
@@ -51,6 +51,10 @@ class ProgramOverlap:
     end_date: date
     overlap_days: int
     task_count_in_overlap: int  # çakışan günlerdeki kaç görev var (silme kararı için)
+    # Eski program yeni programdan ÖNCE başlıyorsa, yeni başlangıçtan bir gün önce
+    # bitirilerek çakışma kaldırılabilir (seans erkene alındı / program erken bitti).
+    trimmable: bool = False
+    trim_to: date | None = None
 
 
 # =============================================================================
@@ -156,6 +160,7 @@ def find_overlapping(
             )
             .count()
         )
+        trimmable = p.start_date < start
         out.append(ProgramOverlap(
             program_id=p.id,
             label=p.label,
@@ -163,6 +168,8 @@ def find_overlapping(
             end_date=p.end_date,
             overlap_days=ov_days,
             task_count_in_overlap=task_count,
+            trimmable=trimmable,
+            trim_to=(start - timedelta(days=1)) if trimmable else None,
         ))
     return out
 
@@ -177,8 +184,13 @@ def create_program(
     name: str | None = None,
     notes: str | None = None,
     allow_overlap: bool = False,
+    trim_previous: bool = False,
 ) -> WeeklyProgram:
     """Yeni program yarat.
+
+    `trim_previous=True`: yeni programdan ÖNCE başlayan çakışan programlar yeni
+    başlangıçtan bir gün önce bitirilir (görevler tarihe bağlı — yerinde kalır).
+    Kalan (kırpılamayan) çakışma varsa yine `allow_overlap` gerekir.
 
     `allow_overlap=False` (default): çakışan program varsa ProgramError("overlap")
     fırlatır. Endpoint bu durumu yakalayıp kullanıcıya seçenek dialog'u sunar.
@@ -190,11 +202,18 @@ def create_program(
     _validate_range(start, end)
     student = _ensure_owned_student(db, student_id, coach.id)
 
-    if not allow_overlap:
-        overlaps = find_overlapping(db, student_id=student.id, start=start, end=end)
-        if overlaps:
-            # Endpoint'in bu hatayı detail içinde döndürmesi için
-            raise ProgramError("overlap", "Bu tarih aralığında çakışan program var.")
+    overlaps = find_overlapping(db, student_id=student.id, start=start, end=end)
+    if trim_previous:
+        for o in overlaps:
+            if o.trimmable and o.trim_to is not None:
+                old = db.get(WeeklyProgram, o.program_id)
+                if old is not None:
+                    logger.info("create_program: trim prog=%s %s→%s", old.id, old.end_date, o.trim_to)
+                    old.end_date = o.trim_to
+        overlaps = [o for o in overlaps if not o.trimmable]
+    if overlaps and not allow_overlap:
+        # Endpoint'in bu hatayı detail içinde döndürmesi için
+        raise ProgramError("overlap", "Bu tarih aralığında çakışan program var.")
 
     prog = WeeklyProgram(
         student_id=student.id,
@@ -354,9 +373,18 @@ def get_active_program(
             WeeklyProgram.start_date <= today,
             WeeklyProgram.end_date >= today,
         )
-        .order_by(WeeklyProgram.created_at.desc())
+        .order_by(WeeklyProgram.start_date.desc(), WeeklyProgram.created_at.desc())
         .first()
     )
+
+
+def active_program_id(programs, today: date) -> int | None:
+    """Bugünü içeren programlardan geçerli olan: en geç BAŞLAYAN (aynıysa en son
+    oluşturulan). Çakışan iki programın ikisi de "bu hafta" sayılmaz."""
+    cands = [p for p in programs if p.start_date <= today <= p.end_date]
+    if not cands:
+        return None
+    return max(cands, key=lambda p: (p.start_date, p.created_at or datetime.min)).id
 
 
 def get_most_recent_program(

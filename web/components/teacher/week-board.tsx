@@ -1500,6 +1500,9 @@ function NewProgramDialogInner({
   const [name, setName] = React.useState("");
   const [overlaps, setOverlaps] = React.useState<WeeklyProgramOverlapItem[]>([]);
   const [allowOverlap, setAllowOverlap] = React.useState(false);
+  // Çakışan önceki programı bir gün önce bitir (seans erkene alındı) — önerilen.
+  const [trimPrevious, setTrimPrevious] = React.useState(true);
+  const allTrimmable = overlaps.length > 0 && overlaps.every((o) => o.trimmable);
   const create = useCreateProgram(studentId);
 
   // Süre hesabı (UI ipucu)
@@ -1522,7 +1525,8 @@ function NewProgramDialogInner({
         start_date: startDate,
         end_date: endDate,
         name: name.trim() || null,
-        allow_overlap: allowOverlap,
+        allow_overlap: allTrimmable ? !trimPrevious : allowOverlap,
+        trim_previous: allTrimmable && trimPrevious,
       },
       {
         onSuccess: (res) => {
@@ -1648,14 +1652,43 @@ function NewProgramDialogInner({
                   </li>
                 ))}
               </ul>
-              <label className="flex items-center gap-2 mt-3 text-xs text-amber-900 dark:text-amber-200">
-                <input
-                  type="checkbox"
-                  checked={allowOverlap}
-                  onChange={(e) => setAllowOverlap(e.target.checked)}
-                />
-                <span>Çakışmaya rağmen oluştur (eski programlar değişmez)</span>
-              </label>
+{allTrimmable ? (
+                <div className="mt-3 space-y-1.5 text-xs text-amber-900 dark:text-amber-200">
+                  <label className="flex items-start gap-2">
+                    <input
+                      type="radio"
+                      name="wp-overlap-mode"
+                      checked={trimPrevious}
+                      onChange={() => setTrimPrevious(true)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <b>Önceki programı {overlaps[0].trim_to} tarihinde bitir</b> (önerilen) —
+                      seans erkene alındıysa ya da program yarıda kesildiyse. Görevler
+                      silinmez, tarihlerinde kalır.
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2">
+                    <input
+                      type="radio"
+                      name="wp-overlap-mode"
+                      checked={!trimPrevious}
+                      onChange={() => setTrimPrevious(false)}
+                      className="mt-0.5"
+                    />
+                    <span>İki program da olduğu gibi kalsın (çakışan günler yeni programa sayılır)</span>
+                  </label>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 mt-3 text-xs text-amber-900 dark:text-amber-200">
+                  <input
+                    type="checkbox"
+                    checked={allowOverlap}
+                    onChange={(e) => setAllowOverlap(e.target.checked)}
+                  />
+                  <span>Çakışmaya rağmen oluştur (eski programlar değişmez)</span>
+                </label>
+              )}
             </div>
           ) : null}
         </div>
@@ -1674,7 +1707,7 @@ function NewProgramDialogInner({
             disabled={
               create.isPending ||
               !validDays ||
-              (overlaps.length > 0 && !allowOverlap)
+              (overlaps.length > 0 && !allTrimmable && !allowOverlap)
             }
             className="px-4 py-2 text-sm rounded-md bg-cyan-600 hover:bg-cyan-700 text-white inline-flex items-center gap-2 disabled:opacity-50"
           >

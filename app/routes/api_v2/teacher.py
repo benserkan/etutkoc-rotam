@@ -5172,7 +5172,7 @@ def teacher_student_week_v2(
             day_count=p.day_count,
             name=p.name,
             notes=p.notes,
-            is_active=p.contains(today),
+            is_active=(bugune_aktif is not None and p.id == bugune_aktif.id),
             created_at=p.created_at,
             label=p.label,
             task_count=_wp_counts.get(p.id, 0),
@@ -11128,15 +11128,23 @@ def _wp_task_counts(db: Session, student_id: int, programs) -> dict[int, int]:
     """
     if not programs:
         return {}
+    from app.services.weekly_program_service import active_program_id
+
     rows = db.query(Task.date).filter(Task.student_id == student_id).all()
-    dates = [r[0] for r in rows if r[0] is not None]
-    out: dict[int, int] = {}
-    for p in programs:
-        out[p.id] = sum(1 for d in dates if p.start_date <= d <= p.end_date)
+    out: dict[int, int] = {p.id: 0 for p in programs}
+    # Çakışan günde görev yalnız o gün geçerli programa sayılır (iki kez sayılmaz).
+    for (d,) in rows:
+        if d is None:
+            continue
+        pid = active_program_id(programs, d)
+        if pid in out:
+            out[pid] += 1
     return out
 
 
-def _wp_to_item(p, *, today: date, task_count: int = 0) -> WeeklyProgramItem:
+def _wp_to_item(p, *, today: date, task_count: int = 0,
+                active_id: int | None | bool = False) -> WeeklyProgramItem:
+    """active_id: listede hesaplanan geçerli program id'si (False = yalnız tarih)."""
     return WeeklyProgramItem(
         id=p.id,
         student_id=p.student_id,
@@ -11145,7 +11153,7 @@ def _wp_to_item(p, *, today: date, task_count: int = 0) -> WeeklyProgramItem:
         day_count=p.day_count,
         name=p.name,
         notes=p.notes,
-        is_active=p.contains(today),
+        is_active=p.contains(today) if active_id is False else (p.id == active_id),
         created_at=p.created_at,
         label=p.label,
         task_count=task_count,
@@ -11160,6 +11168,8 @@ def _wp_overlap_to_item(o) -> WeeklyProgramOverlapItem:
         end_date=o.end_date.isoformat(),
         overlap_days=o.overlap_days,
         task_count_in_overlap=o.task_count_in_overlap,
+        trimmable=bool(getattr(o, "trimmable", False)),
+        trim_to=o.trim_to.isoformat() if getattr(o, "trim_to", None) else None,
     )
 
 
@@ -11205,7 +11215,8 @@ def teacher_list_programs_v2(
     return WeeklyProgramListResponse(
         student_id=student.id,
         items=[
-            _wp_to_item(p, today=today, task_count=_wp_counts.get(p.id, 0))
+            _wp_to_item(p, today=today, task_count=_wp_counts.get(p.id, 0),
+                        active_id=active.id if active else None)
             for p in programs
         ],
         active_program_id=active.id if active else None,
@@ -11259,9 +11270,11 @@ def teacher_create_program_v2(
             name=body.name,
             notes=body.notes,
             allow_overlap=body.allow_overlap,
+            trim_previous=body.trim_previous,
         )
     except ProgramError as e:
         if e.code == "overlap":
+            db.rollback()
             overlaps = find_overlapping(
                 db, student_id=student_id, start=start, end=end,
             )
