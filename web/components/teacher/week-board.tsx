@@ -1499,13 +1499,12 @@ function NewProgramDialogInner({
   const [endDate, setEndDate] = React.useState(addDaysIso(today, 6));
   const [name, setName] = React.useState("");
   const [overlaps, setOverlaps] = React.useState<WeeklyProgramOverlapItem[]>([]);
-  const [allowOverlap, setAllowOverlap] = React.useState(false);
-  // Çakışan önceki programı bir gün önce bitir (seans erkene alındı) — önerilen.
-  const [trimPrevious, setTrimPrevious] = React.useState(true);
-  const allTrimmable = overlaps.length > 0 && overlaps.every((o) => o.trimmable);
+  // Önceki program bitmeden yeni program: gerekçe + kalan günlerin görevleri + son onay
+  const [reason, setReason] = React.useState("");
+  const [mode, setMode] = React.useState<"transfer" | "refund" | null>(null);
+  const [step, setStep] = React.useState<"form" | "confirm">("form");
   const create = useCreateProgram(studentId);
 
-  // Süre hesabı (UI ipucu)
   const dayCount = React.useMemo(() => {
     try {
       const a = new Date(startDate);
@@ -1515,29 +1514,44 @@ function NewProgramDialogInner({
       return 0;
     }
   }, [startDate, endDate]);
-
   const validDays = dayCount >= 1 && dayCount <= 14;
 
-  function handleSubmit() {
+  const cutting = overlaps.filter((o) => o.trimmable);
+  const blocking = overlaps.filter((o) => !o.trimmable);
+  const earlyEnd = cutting.length > 0 && blocking.length === 0;
+  const cutTasks = cutting.reduce(
+    (n, o) => n + (o.cut_untouched ?? 0) + (o.cut_partial ?? 0) + (o.cut_completed ?? 0),
+    0,
+  );
+  const untouched = cutting.reduce((n, o) => n + (o.cut_untouched ?? 0), 0);
+  const partial = cutting.reduce((n, o) => n + (o.cut_partial ?? 0), 0);
+  const completed = cutting.reduce((n, o) => n + (o.cut_completed ?? 0), 0);
+  const releaseTests = cutting.reduce((n, o) => n + (o.cut_release_tests ?? 0), 0);
+  const effMode = cutTasks === 0 ? "transfer" : mode;
+  const reasonOk = reason.trim().length >= 3;
+
+  function resetOverlap() {
     setOverlaps([]);
+    setStep("form");
+    setMode(null);
+  }
+
+  function submit(final: boolean) {
     create.mutate(
       {
         start_date: startDate,
         end_date: endDate,
         name: name.trim() || null,
-        allow_overlap: allTrimmable ? !trimPrevious : allowOverlap,
-        trim_previous: allTrimmable && trimPrevious,
+        ...(final && earlyEnd
+          ? { early_end_reason: reason.trim(), early_end_mode: effMode }
+          : {}),
       },
       {
         onSuccess: (res) => {
           onClose();
-          // Yeni programın HAFTASINA geç — yoksa sayfa bugünün haftasında kalır
-          // ve eklenen görevler yanlış haftaya yazılır (06-29 programına 06-22'ye
-          // görev düşmesi bug'ı). program_id ile o aralık görüntülenir.
+          // Yeni programın HAFTASINA geç — yoksa sayfa bugünün haftasında kalır.
           if (res?.data?.id) {
-            router.push(
-              `/teacher/students/${studentId}/week?program_id=${res.data.id}`,
-            );
+            router.push(`/teacher/students/${studentId}/week?program_id=${res.data.id}`);
           }
         },
         onError: (err) => {
@@ -1546,11 +1560,21 @@ function NewProgramDialogInner({
             | undefined;
           if (detail?.code === "overlap" && detail.overlaps) {
             setOverlaps(detail.overlaps);
+            setStep("form");
           }
         },
       },
     );
   }
+
+  const confirmText = earlyEnd
+    ? cutting
+        .map(
+          (o) =>
+            `${o.label} programı ${o.end_date} yerine ${o.trim_to} tarihinde bitecek (${o.cut_days} gün kesiliyor).`,
+        )
+        .join(" ")
+    : "";
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -1558,166 +1582,228 @@ function NewProgramDialogInner({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarPlus className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden />
-            Yeni Program Oluştur
+            {step === "confirm" ? "Son onay" : "Yeni Program Oluştur"}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
-          {/* Tarih seçici */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="wp-start">Başlangıç tarihi</Label>
-              <Input
-                id="wp-start"
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  setOverlaps([]);
-                  setAllowOverlap(false);
-                }}
-              />
-            </div>
-            <div>
-              <Label htmlFor="wp-end">Bitiş tarihi (dahil)</Label>
-              <Input
-                id="wp-end"
-                type="date"
-                value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  setOverlaps([]);
-                  setAllowOverlap(false);
-                }}
-              />
-            </div>
-          </div>
 
-          {/* Süre rozeti */}
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="size-4 text-muted-foreground" aria-hidden />
-            <span>
-              Süre:{" "}
-              <b
-                className={cn(
-                  "tabular-nums",
-                  validDays ? "text-cyan-700 dark:text-cyan-300" : "text-rose-700 dark:text-rose-300",
-                )}
-              >
-                {dayCount} gün
-              </b>
-              {!validDays ? (
-                <span className="text-rose-700 dark:text-rose-300 ml-2 text-xs">
-                  (1–14 gün arası olmalı)
-                </span>
-              ) : null}
-            </span>
-          </div>
-
-          {/* Etiket (opsiyonel) */}
-          <div>
-            <Label htmlFor="wp-name">
-              Etiket (opsiyonel){" "}
-              <span className="text-[10px] text-muted-foreground normal-case">
-                — Bayram Haftası, Yarıyıl Tatili vb.
-              </span>
-            </Label>
-            <Input
-              id="wp-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="örn. Bayram Sonrası Hafta"
-              maxLength={120}
-            />
-          </div>
-
-          {/* Çakışma uyarısı */}
-          {overlaps.length > 0 ? (
-            <div className="rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-sm">
-              <p className="font-semibold text-amber-900 dark:text-amber-200 mb-2">
-                Bu tarihler {overlaps.length} programla çakışıyor:
-              </p>
-              <ul className="space-y-1 text-amber-900 dark:text-amber-200">
-                {overlaps.map((o) => (
-                  <li
-                    key={o.program_id}
-                    className="text-xs flex items-center justify-between"
-                  >
-                    <span>
-                      <b>{o.label}</b> ({o.start_date} → {o.end_date})
-                    </span>
-                    <span className="text-amber-800 dark:text-amber-200">
-                      {o.overlap_days} gün, {o.task_count_in_overlap} görev
-                    </span>
+        {step === "confirm" ? (
+          <div className="space-y-3 py-2 text-sm">
+            <p>{confirmText}</p>
+            <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+              <li>
+                Yeni program: <b className="text-foreground">{startDate} → {endDate}</b> ({dayCount} gün)
+                {startDate <= today ? " — bu hafta artık bu program." : ""}
+              </li>
+              {cutTasks > 0 ? (
+                effMode === "transfer" ? (
+                  <li>Kesilen günlerdeki {cutTasks} görev yeni programda olduğu gibi kalır.</li>
+                ) : (
+                  <li>
+                    {untouched > 0 ? `${untouched} başlanmamış görev silinir` : "Silinecek görev yok"}
+                    {releaseTests > 0 ? `, ${releaseTests} test kitaba iade edilir` : ""}
+                    {partial > 0 ? `; kısmen yapılan ${partial} görev kalır, yapılmayan kısmı iade edilir` : ""}
+                    {completed > 0 ? `; tamamlanan ${completed} görev olduğu gibi kalır` : ""}.
                   </li>
-                ))}
-              </ul>
-{allTrimmable ? (
-                <div className="mt-3 space-y-1.5 text-xs text-amber-900 dark:text-amber-200">
-                  <label className="flex items-start gap-2">
-                    <input
-                      type="radio"
-                      name="wp-overlap-mode"
-                      checked={trimPrevious}
-                      onChange={() => setTrimPrevious(true)}
-                      className="mt-0.5"
-                    />
-                    <span>
-                      <b>Önceki programı {overlaps[0].trim_to} tarihinde bitir</b> (önerilen) —
-                      seans erkene alındıysa ya da program yarıda kesildiyse. Görevler
-                      silinmez, tarihlerinde kalır.
-                    </span>
-                  </label>
-                  <label className="flex items-start gap-2">
-                    <input
-                      type="radio"
-                      name="wp-overlap-mode"
-                      checked={!trimPrevious}
-                      onChange={() => setTrimPrevious(false)}
-                      className="mt-0.5"
-                    />
-                    <span>İki program da olduğu gibi kalsın (çakışan günler yeni programa sayılır)</span>
-                  </label>
-                </div>
+                )
               ) : (
-                <label className="flex items-center gap-2 mt-3 text-xs text-amber-900 dark:text-amber-200">
-                  <input
-                    type="checkbox"
-                    checked={allowOverlap}
-                    onChange={(e) => setAllowOverlap(e.target.checked)}
-                  />
-                  <span>Çakışmaya rağmen oluştur (eski programlar değişmez)</span>
-                </label>
+                <li>Kesilen günlerde görev yok.</li>
               )}
+              <li>
+                Neden: <span className="text-foreground">{reason.trim()}</span> (önceki programın notuna yazılır)
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="wp-start">Başlangıç tarihi</Label>
+                <Input
+                  id="wp-start"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    resetOverlap();
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="wp-end">Bitiş tarihi (dahil)</Label>
+                <Input
+                  id="wp-end"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    resetOverlap();
+                  }}
+                />
+              </div>
             </div>
-          ) : null}
-        </div>
+
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="size-4 text-muted-foreground" aria-hidden />
+              <span>
+                Süre:{" "}
+                <b
+                  className={cn(
+                    "tabular-nums",
+                    validDays ? "text-cyan-700 dark:text-cyan-300" : "text-rose-700 dark:text-rose-300",
+                  )}
+                >
+                  {dayCount} gün
+                </b>
+                {!validDays ? (
+                  <span className="text-rose-700 dark:text-rose-300 ml-2 text-xs">
+                    (1–14 gün arası olmalı)
+                  </span>
+                ) : null}
+              </span>
+            </div>
+
+            <div>
+              <Label htmlFor="wp-name">
+                Etiket (opsiyonel){" "}
+                <span className="text-[10px] text-muted-foreground normal-case">
+                  — Bayram Haftası, Yarıyıl Tatili vb.
+                </span>
+              </Label>
+              <Input
+                id="wp-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="örn. Bayram Sonrası Hafta"
+                maxLength={120}
+              />
+            </div>
+
+            {blocking.length > 0 ? (
+              <div className="rounded-lg border-2 border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 p-3 text-sm text-rose-900 dark:text-rose-200">
+                <p className="font-semibold mb-1">Bu tarihlerde başlayan bir program zaten var:</p>
+                <ul className="space-y-0.5 text-xs">
+                  {blocking.map((o) => (
+                    <li key={o.program_id}>
+                      <b>{o.label}</b> ({o.start_date} → {o.end_date})
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs">
+                  Başlangıç tarihini değiştir ya da o programı “Programlar” menüsünden düzenle.
+                </p>
+              </div>
+            ) : null}
+
+            {earlyEnd ? (
+              <div className="space-y-3 rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-sm text-amber-900 dark:text-amber-200">
+                <div>
+                  <p className="font-semibold">Önceki program bitmeden yeni program başlıyor</p>
+                  {cutting.map((o) => (
+                    <p key={o.program_id} className="mt-1 text-xs">
+                      <b>{o.label}</b> ({o.start_date} → {o.end_date}) {o.trim_to} tarihinde
+                      bitirilecek — {o.cut_days} gün kesiliyor
+                      {cutTasks > 0
+                        ? `: ${cutTasks} görev (${o.cut_untouched} başlanmamış · ${o.cut_partial} kısmen yapılmış · ${o.cut_completed} tamamlanmış).`
+                        : ", bu günlerde görev yok."}
+                    </p>
+                  ))}
+                </div>
+                <div>
+                  <Label htmlFor="wp-early-reason" className="text-amber-900 dark:text-amber-200">
+                    Neden erken bitiriyorsun? (zorunlu)
+                  </Label>
+                  <textarea
+                    id="wp-early-reason"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={2}
+                    maxLength={300}
+                    placeholder="örn. Seans bir gün erkene alındı"
+                    className="mt-1 w-full rounded-md border border-amber-300 bg-white px-2 py-1 text-sm text-slate-900 placeholder:text-slate-400 dark:border-amber-500/40 dark:bg-slate-900 dark:text-slate-100"
+                  />
+                </div>
+                {cutTasks > 0 ? (
+                  <fieldset className="space-y-1.5 text-xs">
+                    <legend className="mb-1 font-medium">Kesilen günlerin görevleri ne olsun?</legend>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="radio"
+                        name="wp-early-mode"
+                        checked={mode === "transfer"}
+                        onChange={() => setMode("transfer")}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <b>Yeni programa aynen aktar</b> — görevler tarihlerinde kalır, yeni haftanın parçası olur.
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="radio"
+                        name="wp-early-mode"
+                        checked={mode === "refund"}
+                        onChange={() => setMode("refund")}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <b>İade et</b> — {untouched} başlanmamış görev silinir
+                        {releaseTests > 0 ? `, ${releaseTests} test kitaba geri döner` : ""}.
+                        {partial > 0
+                          ? ` Kaynaktan ilerleme yapılmış ${partial} görev kalır; yapılmayan kısmı iade edilir.`
+                          : ""}
+                        {completed > 0 ? ` Tamamlanan ${completed} göreve dokunulmaz.` : ""}
+                      </span>
+                    </label>
+                  </fieldset>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        )}
 
         <DialogFooter>
           <button
             type="button"
-            onClick={onClose}
+            onClick={step === "confirm" ? () => setStep("form") : onClose}
             className="px-4 py-2 text-sm rounded-md border border-border hover:bg-muted"
           >
-            Vazgeç
+            {step === "confirm" ? "Geri" : "Vazgeç"}
           </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={
-              create.isPending ||
-              !validDays ||
-              (overlaps.length > 0 && !allTrimmable && !allowOverlap)
-            }
-            className="px-4 py-2 text-sm rounded-md bg-cyan-600 hover:bg-cyan-700 text-white inline-flex items-center gap-2 disabled:opacity-50"
-          >
-            {create.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-            ) : (
-              <CalendarPlus className="size-3.5" aria-hidden />
-            )}
-            Oluştur
-          </button>
+          {step === "confirm" ? (
+            <button
+              type="button"
+              onClick={() => submit(true)}
+              disabled={create.isPending}
+              className="px-4 py-2 text-sm rounded-md bg-cyan-700 hover:bg-cyan-800 text-white inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {create.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <CalendarPlus className="size-3.5" aria-hidden />
+              )}
+              Onayla ve haftayı aç
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => (earlyEnd ? setStep("confirm") : submit(false))}
+              disabled={
+                create.isPending ||
+                !validDays ||
+                blocking.length > 0 ||
+                (earlyEnd && (!reasonOk || effMode == null))
+              }
+              className="px-4 py-2 text-sm rounded-md bg-cyan-700 hover:bg-cyan-800 text-white inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {create.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <CalendarPlus className="size-3.5" aria-hidden />
+              )}
+              {earlyEnd ? "Devam" : "Oluştur"}
+            </button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -11170,6 +11170,9 @@ def _wp_overlap_to_item(o) -> WeeklyProgramOverlapItem:
         task_count_in_overlap=o.task_count_in_overlap,
         trimmable=bool(getattr(o, "trimmable", False)),
         trim_to=o.trim_to.isoformat() if getattr(o, "trim_to", None) else None,
+        cut_days=getattr(o, "cut_days", 0), cut_untouched=getattr(o, "cut_untouched", 0),
+        cut_partial=getattr(o, "cut_partial", 0), cut_completed=getattr(o, "cut_completed", 0),
+        cut_release_tests=getattr(o, "cut_release_tests", 0),
     )
 
 
@@ -11270,7 +11273,8 @@ def teacher_create_program_v2(
             name=body.name,
             notes=body.notes,
             allow_overlap=body.allow_overlap,
-            trim_previous=body.trim_previous,
+            early_end_reason=body.early_end_reason,
+            early_end_mode=body.early_end_mode,
         )
     except ProgramError as e:
         if e.code == "overlap":
@@ -11289,17 +11293,22 @@ def teacher_create_program_v2(
                     ],
                 },
             )
+        db.rollback()
         raise _wp_program_error_to_http(e)
 
     db.commit()
     db.refresh(prog)
     today = date.today()
+    inv = [
+        f"teacher:{user.id}:students:{student_id}:programs",
+        f"teacher:{user.id}:students:{student_id}:week",
+    ]
+    if body.early_end_mode:
+        # Erken bitirmede görev silinmiş / rezerv iade edilmiş olabilir → öğrencinin tüm yüzeyleri
+        inv.append(f"teacher:{user.id}:students:{student_id}")
     return MutationResponse[WeeklyProgramItem](
         data=_wp_to_item(prog, today=today),
-        invalidate=[
-            f"teacher:{user.id}:students:{student_id}:programs",
-            f"teacher:{user.id}:students:{student_id}:week",
-        ],
+        invalidate=inv,
     )
 
 

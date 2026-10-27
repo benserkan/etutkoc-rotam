@@ -24,6 +24,7 @@ from typing import Iterable
 from sqlalchemy.orm import Session
 
 from app.models import Task, User, UserRole, WeeklyProgram
+from app.models.task import TaskStatus
 
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,36 @@ class ProgramOverlap:
     # bitirilerek çakışma kaldırılabilir (seans erkene alındı / program erken bitti).
     trimmable: bool = False
     trim_to: date | None = None
+    # Erken bitirmede kesilen günler [yeni başlangıç, eski bitiş] — görev kırılımı
+    cut_days: int = 0
+    cut_untouched: int = 0      # hiç başlanmamış (iade seçilirse silinir)
+    cut_partial: int = 0        # kısmen yapılmış (kalır, yapılmamış kısmın rezervi iade)
+    cut_completed: int = 0      # tamamlanmış (dokunulmaz)
+    cut_release_tests: int = 0  # iade seçilirse kitaba dönecek test
+
+
+EARLY_END_TRANSFER = "transfer"  # kesilen günlerin görevleri yeni programa aynen geçer
+EARLY_END_REFUND = "refund"      # başlanmamışlar silinir + rezerv iade, kısmi kalanın rezervi iade
+EARLY_END_MODES = (EARLY_END_TRANSFER, EARLY_END_REFUND)
+EARLY_END_REASON_MIN = 3
+
+
+def _cut_tasks(db: Session, student_id: int, start: date, end: date) -> list[Task]:
+    from sqlalchemy.orm import joinedload
+
+    return (db.query(Task).options(joinedload(Task.book_items))
+            .filter(Task.student_id == student_id, Task.date >= start, Task.date <= end)
+            .order_by(Task.date, Task.id).all())
+
+
+def _task_progress(t: Task) -> int:
+    return sum(int(it.completed_count or 0) for it in t.book_items) + int(t.solved_count or 0)
+
+
+def _live_reserve(t: Task) -> int:
+    return sum(max(0, int(it.planned_count or 0) - int(it.completed_count or 0))
+               for it in t.book_items
+               if it.book_id is not None and it.reservation_released_at is None)
 
 
 # =============================================================================
@@ -161,6 +192,18 @@ def find_overlapping(
             .count()
         )
         trimmable = p.start_date < start
+        cut = dict(days=0, untouched=0, partial=0, completed=0, release=0)
+        if trimmable:
+            cut["days"] = (p.end_date - start).days + 1
+            for t in _cut_tasks(db, student_id, start, p.end_date):
+                if t.status == TaskStatus.COMPLETED:
+                    cut["completed"] += 1
+                    continue
+                cut["release"] += _live_reserve(t)
+                if _task_progress(t) > 0:
+                    cut["partial"] += 1
+                else:
+                    cut["untouched"] += 1
         out.append(ProgramOverlap(
             program_id=p.id,
             label=p.label,
@@ -170,6 +213,8 @@ def find_overlapping(
             task_count_in_overlap=task_count,
             trimmable=trimmable,
             trim_to=(start - timedelta(days=1)) if trimmable else None,
+            cut_days=cut["days"], cut_untouched=cut["untouched"], cut_partial=cut["partial"],
+            cut_completed=cut["completed"], cut_release_tests=cut["release"],
         ))
     return out
 
@@ -184,13 +229,20 @@ def create_program(
     name: str | None = None,
     notes: str | None = None,
     allow_overlap: bool = False,
-    trim_previous: bool = False,
+    early_end_reason: str | None = None,
+    early_end_mode: str | None = None,
 ) -> WeeklyProgram:
     """Yeni program yarat.
 
-    `trim_previous=True`: yeni programdan ÖNCE başlayan çakışan programlar yeni
-    başlangıçtan bir gün önce bitirilir (görevler tarihe bağlı — yerinde kalır).
-    Kalan (kırpılamayan) çakışma varsa yine `allow_overlap` gerekir.
+    ERKEN BİTİRME (koç eski program bitmeden yeni program başlatır): yeni
+    programdan ÖNCE başlayan çakışan program yeni başlangıçtan bir gün önce
+    bitirilir. Gerekçe ZORUNLU (eski programın notuna yazılır). Kesilen günlerin
+    görevleri için `early_end_mode`:
+      · transfer — görevler tarihlerinde kalır, yeni programın parçası olur
+      · refund   — başlanmamış görevler silinir ve testleri kitaba iade edilir;
+                   kısmen yapılanlar kalır, yapılmamış kısmın rezervi iade edilir;
+                   tamamlananlara dokunulmaz
+    Aynı gün ya da sonra başlayan çakışan program kırpılamaz → "overlap".
 
     `allow_overlap=False` (default): çakışan program varsa ProgramError("overlap")
     fırlatır. Endpoint bu durumu yakalayıp kullanıcıya seçenek dialog'u sunar.
@@ -203,13 +255,27 @@ def create_program(
     student = _ensure_owned_student(db, student_id, coach.id)
 
     overlaps = find_overlapping(db, student_id=student.id, start=start, end=end)
-    if trim_previous:
-        for o in overlaps:
-            if o.trimmable and o.trim_to is not None:
-                old = db.get(WeeklyProgram, o.program_id)
-                if old is not None:
-                    logger.info("create_program: trim prog=%s %s→%s", old.id, old.end_date, o.trim_to)
-                    old.end_date = o.trim_to
+    trimmable = [o for o in overlaps if o.trimmable]
+    if trimmable and early_end_mode is not None:
+        reason = (early_end_reason or "").strip()
+        if len(reason) < EARLY_END_REASON_MIN:
+            raise ProgramError("early_end_reason_required",
+                               "Önceki programı erken bitirmenin nedenini yazın.")
+        if early_end_mode not in EARLY_END_MODES:
+            raise ProgramError("early_end_mode_invalid", "Kalan günlerin görevleri için bir seçim yapın.")
+        for o in trimmable:
+            old = db.get(WeeklyProgram, o.program_id)
+            if old is None:
+                continue
+            if early_end_mode == EARLY_END_REFUND:
+                _refund_cut_tasks(db, student.id, start, old.end_date)
+            what = "yeni programa aktarıldı" if early_end_mode == EARLY_END_TRANSFER else "iade edildi"
+            stamp = (f"Erken bitirildi ({old.end_date.strftime('%d.%m')} yerine "
+                     f"{o.trim_to.strftime('%d.%m')}): {reason} · kalan günler: {what}")
+            old.notes = (f"{old.notes}\n{stamp}" if old.notes else stamp)[:2000]
+            logger.info("create_program: early end prog=%s %s→%s mode=%s",
+                        old.id, old.end_date, o.trim_to, early_end_mode)
+            old.end_date = o.trim_to
         overlaps = [o for o in overlaps if not o.trimmable]
     if overlaps and not allow_overlap:
         # Endpoint'in bu hatayı detail içinde döndürmesi için
@@ -246,6 +312,35 @@ def create_program(
         coach.id, student.id, prog.id, start, end,
     )
     return prog
+
+
+def _refund_cut_tasks(db: Session, student_id: int, start: date, end: date) -> None:
+    """Kesilen günlerde: başlanmamış görevi sil (rezerv iade), kısmi görevin kalan rezervini bırak."""
+    from datetime import timezone
+
+    from app.services.task_service import release_item, release_task_items
+
+    now = datetime.now(timezone.utc)
+    for t in _cut_tasks(db, student_id, start, end):
+        if t.status == TaskStatus.COMPLETED:
+            continue
+        if _task_progress(t) > 0:
+            for it in t.book_items:
+                if it.book_id is None or it.reservation_released_at is not None:
+                    continue
+                rem = max(0, int(it.planned_count or 0) - int(it.completed_count or 0))
+                if rem > 0:
+                    release_item(db, student_id=student_id, book_id=it.book_id,
+                                 section_id=it.book_section_id, count=rem)
+                it.reservation_released_at = now
+            continue
+        release_task_items(db, student_id, list(t.book_items))
+        if t.carried_from_task_id is not None:
+            src = db.get(Task, t.carried_from_task_id)
+            if src is not None and src.carried_at is not None:
+                src.carried_at = None
+        db.delete(t)
+    db.flush()
 
 
 def update_program(

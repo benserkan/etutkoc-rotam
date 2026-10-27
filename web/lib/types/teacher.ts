@@ -612,6 +612,11 @@ export interface WeeklyProgramOverlapItem {
   task_count_in_overlap: number;
   trimmable?: boolean;
   trim_to?: string | null;
+  cut_days?: number;
+  cut_untouched?: number;
+  cut_partial?: number;
+  cut_completed?: number;
+  cut_release_tests?: number;
 }
 
 export interface WeeklyProgramListResponse {
@@ -629,7 +634,8 @@ export interface WeeklyProgramCreateBody {
   name?: string | null;
   notes?: string | null;
   allow_overlap?: boolean;
-  trim_previous?: boolean;
+  early_end_reason?: string | null;
+  early_end_mode?: "transfer" | "refund" | null;
 }
 
 export interface WeeklyProgramUpdateBody {

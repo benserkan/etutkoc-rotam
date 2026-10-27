@@ -3008,6 +3008,11 @@ class WeeklyProgramOverlapItem(BaseModel):
     task_count_in_overlap: int     # silme kararı için info
     trimmable: bool = False        # eski program yeni başlangıçtan önce bitirilebilir
     trim_to: str | None = None     # kırpılırsa yeni bitiş tarihi
+    cut_days: int = 0
+    cut_untouched: int = 0
+    cut_partial: int = 0
+    cut_completed: int = 0
+    cut_release_tests: int = 0
 
 
 class WeeklyProgramItem(BaseModel):
@@ -3046,8 +3051,9 @@ class WeeklyProgramCreateBody(BaseModel):
     notes: str | None = None
     # Kullanıcı çakışma uyarısını gördü ve onayladı (advanced)
     allow_overlap: bool = False
-    # Çakışan önceki programı yeni başlangıçtan bir gün önce bitir
-    trim_previous: bool = False
+    # Önceki program bitmeden yeni program: gerekçe + kalan günler (transfer | refund)
+    early_end_reason: str | None = None
+    early_end_mode: str | None = None
 
 
 class WeeklyProgramUpdateBody(BaseModel):
