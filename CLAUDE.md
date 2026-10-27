@@ -98,7 +98,16 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   early_end_mode)` + `ProgramOverlap.trimmable/trim_to/cut_*`.
 - "Bu hafta" artık tek: `active_program_id` = bugünü içeren programlardan en geç başlayan (liste + hafta yanıtı
   + `get_active_program` sırası); program başına görev sayısı da çakışan günü yalnız o günün programına sayar.
-- Test YENİ `test_program_trim_previous.py` 19/19 · weekly_programs 17 · weekly_plan 15 · teacher_program 14 ·
+- **Devamı (aynı gün, commit `5e09f4a` + `21d0f53`):** analiz (`weekly_progress._program_weeks`) kesilen günü
+  zaten eski haftadan düşüyordu; açık kalanlar kapatıldı: `weekly_program_service.effective_end` (sonradan
+  başlayan program varsa geçerli bitiş) → eski programın hafta görünümü + yayın/duyuru aralığı kesilen günü
+  göstermez. Program DÜZENLEMEDE de başlangıç önceki programın içine çekilirse aynı akış (`_apply_early_end`,
+  create + update ortak): gerekçe + aktar/iade, engel yok; kırpılamayan çakışma (sonraki programa taşma)
+  engellenir, "çakışmaya rağmen kaydet" kutusu kalktı. YENİ `scripts/fix_overlapping_programs.py` (kuru
+  varsayılan, `--apply`, `--student`; eski çakışmaları aynı kuralla düzeltir + not). Prod kuru çalışma: 5 öğrencide
+  6 program (#5 öğr 12 · #36 öğr 84 · #145 öğr 86 Beril · #112 + #137 öğr 171 · #127 öğr 240) — **`--apply`
+  KULLANICI çalıştıracak** (otomatik onay prod yazmayı reddetti).
+- Test YENİ `test_program_trim_previous.py` 28/28 · weekly_programs 17 · weekly_plan 15 · teacher_program 14 ·
   program_delete_releases 6 · weekly_progress 26.
 
 ## BİRLEŞİK BRANŞ DENEMELERİ (2026-10-25, commit `65e570f`, migration YOK, CANLI)
