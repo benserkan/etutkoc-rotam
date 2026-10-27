@@ -1153,7 +1153,6 @@ function EditProgramDialog({
   const [endDate, setEndDate] = React.useState(program.end_date);
   const [name, setName] = React.useState(program.name ?? "");
   const [overlaps, setOverlaps] = React.useState<WeeklyProgramOverlapItem[]>([]);
-  const [allowOverlap, setAllowOverlap] = React.useState(false);
   const update = useUpdateProgram(studentId);
 
   const dayCount = React.useMemo(() => {
@@ -1177,7 +1176,6 @@ function EditProgramDialog({
           start_date: startDate,
           end_date: endDate,
           name: name.trim() || null,
-          allow_overlap: allowOverlap,
         },
       },
       {
@@ -1226,7 +1224,6 @@ function EditProgramDialog({
                 onChange={(e) => {
                   setStartDate(e.target.value);
                   setOverlaps([]);
-                  setAllowOverlap(false);
                 }}
               />
             </div>
@@ -1239,7 +1236,6 @@ function EditProgramDialog({
                 onChange={(e) => {
                   setEndDate(e.target.value);
                   setOverlaps([]);
-                  setAllowOverlap(false);
                 }}
               />
             </div>
@@ -1297,14 +1293,10 @@ function EditProgramDialog({
                   </li>
                 ))}
               </ul>
-              <label className="flex items-center gap-2 mt-3 text-xs text-amber-900 dark:text-amber-200">
-                <input
-                  type="checkbox"
-                  checked={allowOverlap}
-                  onChange={(e) => setAllowOverlap(e.target.checked)}
-                />
-                <span>Çakışmaya rağmen kaydet (eski programlar değişmez)</span>
-              </label>
+              <p className="mt-2 text-xs text-amber-900 dark:text-amber-200">
+                Programlar çakışamaz. Tarihleri çakışmayacak şekilde değiştir; yeni haftayı erken
+                başlatmak için “Yeni Program” kullan — eski programı erken bitirme adımları orada.
+              </p>
             </div>
           ) : null}
         </div>
@@ -1323,7 +1315,7 @@ function EditProgramDialog({
               update.isPending ||
               !validDays ||
               !changed ||
-              (overlaps.length > 0 && !allowOverlap)
+              overlaps.length > 0
             }
             className="px-4 py-2 text-sm rounded-md bg-cyan-600 hover:bg-cyan-700 text-white inline-flex items-center gap-2 disabled:opacity-50"
           >

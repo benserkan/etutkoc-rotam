@@ -4926,8 +4926,10 @@ def teacher_student_week_v2(
                 detail={"error": "not_found", "code": "program_not_found",
                         "message": "Program bulunamadı."},
             )
+        from app.services.weekly_program_service import effective_end
+
         start = active_program.start_date
-        end = active_program.end_date
+        end = effective_end(db, active_program)
     elif start_param:
         # Açık gezinme — kullanıcı buton bastı; eski 7-günlük davranış
         start = _parse_iso_date(start_param, fallback=today)

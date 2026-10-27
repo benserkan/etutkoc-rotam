@@ -515,6 +515,22 @@ def get_most_recent_program(
     )
 
 
+def effective_end(db: Session, prog: WeeklyProgram) -> date:
+    """Programın GEÇERLİ bitişi: içine sonradan başlayan bir program düşüyorsa o
+    programın başlangıcından bir gün önce (erken bitirme). Analiz (`weekly_progress
+    ._program_weeks`) aynı kuralla keser; hafta görünümü ve yayın aralığı da bunu kullanır
+    ki kesilen gün eski haftada "yapılmadı" diye görünmesin."""
+    nxt = (
+        db.query(WeeklyProgram.start_date)
+        .filter(WeeklyProgram.student_id == prog.student_id, WeeklyProgram.id != prog.id,
+                WeeklyProgram.start_date > prog.start_date,
+                WeeklyProgram.start_date <= prog.end_date)
+        .order_by(WeeklyProgram.start_date.asc())
+        .first()
+    )
+    return (nxt[0] - timedelta(days=1)) if nxt else prog.end_date
+
+
 def get_previous_program(
     db: Session, *, student_id: int, before_date: date,
 ) -> WeeklyProgram | None:

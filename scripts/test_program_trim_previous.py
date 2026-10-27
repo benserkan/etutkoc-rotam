@@ -167,6 +167,33 @@ def main() -> int:
         check("5a çakışıkta tek 'bu hafta'", len(act) == 1 and act[0]["start_date"] == today.isoformat(), str(act))
         wk = c.get(f"/api/v2/teacher/students/{d['sid']}/week").json()
         check("5b hafta yanıtında tek 'bu hafta'", len([p for p in wk.get("programs", []) if p["is_active"]]) == 1)
+        wk_old = c.get(f"/api/v2/teacher/students/{d['sid']}/week?program_id={d['old']}").json()
+        days = [x["date"] for x in wk_old.get("days", [])]
+        check("5c eski programın haftası kesilen günü göstermez",
+              days and days[-1] == (today - timedelta(days=1)).isoformat(), str(days[-3:]))
+        from app.routes.api_v2.weekly_plan import _resolve_window
+        with SessionLocal() as db:
+            rng = _resolve_window(db, d["sid"], d["old"], "")
+        check("5d yayın aralığı kesilen günü kapsamaz", rng[1] == today - timedelta(days=1), str(rng))
+        from app.services.weekly_progress import _weeks
+        with SessionLocal() as db:
+            ws = _weeks(db, db.get(User, d["sid"]), today)
+            old_w = next((w for w in ws if w.program_id == d["old"]), None)
+            new_w = next((w for w in ws if w.start == today), None)
+            check("5h analiz: eski hafta dün biter, bugün yeni haftada",
+                  old_w is not None and old_w.end == today - timedelta(days=1) and new_w is not None,
+                  str([(w.program_id, w.start, w.end) for w in ws]))
+        from scripts.fix_overlapping_programs import fix
+        with SessionLocal() as db:
+            fx, _ = fix(db, apply=False, student_id=d["sid"])
+            check("5e düzeltme betiği kuru çalışmada bulur", len(fx) == 1 and fx[0]["program_id"] == d["old"], str(fx))
+            fix(db, apply=True, student_id=d["sid"])
+        with SessionLocal() as db:
+            o = db.get(WeeklyProgram, d["old"])
+            check("5f betik eski programı dün bitirir + not", o.end_date == today - timedelta(days=1)
+                  and "otomatik" in (o.notes or ""), f"{o.end_date} {o.notes}")
+            fx, _ = fix(db, apply=False, student_id=d["sid"])
+            check("5g idempotent", fx == [], str(fx))
     finally:
         with SessionLocal() as db:
             tids = [t.id for t in db.query(Task).filter(Task.student_id.in_(uids)).all()]

@@ -148,7 +148,9 @@ def _resolve_window(
         prog = db.get(WeeklyProgram, program_id)
         if prog is None or prog.student_id != student_id:
             raise _validation_error("program_not_found", "Program bulunamadı.")
-        return prog.start_date, prog.end_date
+        from app.services.weekly_program_service import effective_end
+
+        return prog.start_date, effective_end(db, prog)
     start = _parse_iso(week_start_iso, "invalid_week_start")
     return start, start + timedelta(days=6)
 
