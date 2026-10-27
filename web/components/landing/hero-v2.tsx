@@ -79,8 +79,15 @@ export function HeroV2() {
             Rota çalışıyor — öğrenci koçunun yapay zekâ asistanı
           </span>
 
-          <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.06] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.4rem]">
-            <span className="relative block h-[1.34em] overflow-hidden">
+          {/* SEO + ekran okuyucu: dönen kelimeler HTML'de art arda yazıldığı için
+              görsel başlık H1 olamaz ("Karne okumayı Veli iletişimini …" okunuyordu).
+              Asıl H1 ürünün ne olduğunu söyler; görsel başlık onun altında süs. */}
+          <h1 className="sr-only">
+            Öğrenci koçluğu takip programı: deneme analizi, haftalık program ve veli raporu — Etütkoç Rotam
+          </h1>
+          <div className="mt-5 font-display text-4xl font-extrabold leading-[1.06] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.4rem]">
+            <span className="sr-only">Karne okumayı, veli iletişimini, yanlış takibini, program raporunu ve randevu telaşını </span>
+            <span className="relative block h-[1.34em] overflow-hidden" aria-hidden="true">
               {/* CSS şeridi: kelimeler dikey sütunda yumuşak kayar (hv3-words);
                   aralarda tamamen sabit — React zamanlayıcı yarışı yok */}
               <span className="hv3-words block">
@@ -98,7 +105,7 @@ export function HeroV2() {
             </span>
             Rota&apos;ya bırak.
             <span className="mt-2 block text-slate-900">Sen koçluğa odaklan.</span>
-          </h1>
+          </div>
 
           <p className="mt-6 max-w-xl text-lg font-medium leading-relaxed text-slate-700">
             Rota, öğrenci koçlarının yapay zekâ destekli dijital asistanıdır.
