@@ -26,6 +26,7 @@ from app.models import Task, TaskBookItem, User
 COVERAGE_LOW = 0.5        # sonuç girilen test payı bunun altındaysa doğruluk ölçülemez
 COVERAGE_MIN_TESTS = 6    # ölçüm için en az bu kadar çözülen test
 BRANCH_WINDOW_DAYS = 28
+MAX_SERIES = 4            # raporda en çok bu kadar genel deneme serisi
 PHASE_WEEKS = 3           # "başlangıç" ve "son dönem" kıyası: ilk/son 3 hafta
 
 
@@ -103,6 +104,17 @@ def build_development_report(db: Session, student: User, *, series: str | None =
 
     wp = build_weekly_progress(db, student, today=today, full_history=True)
     ep = build_progress_report(db, student, section=series, period=period)
+    # 2026-10-27 (koç): rapor öğrencinin bütünü — seri seçtirilmez; seri verilmediyse her GENEL
+    # deneme serisi (TYT, AYT, okul denemesi …) ayrı ayrı işlenir. Branş denemeleri karışmaz.
+    if series is None:
+        genel = [o["value"] for o in (ep.get("section_options") or []) if o.get("kind") == "genel"]
+        eps = [ep] + [build_progress_report(db, student, section=v, period=period)
+                      for v in genel if v != ep.get("series")][:MAX_SERIES - 1]
+        eps = [e for e in eps if e.get("exams")] or [ep]
+        ep = eps[0]
+    else:
+        eps = [ep]
+    multi = len(eps) > 1
 
     has_program = bool(wp.get("has_program"))
     weeks = wp.get("weeks_table") or []
@@ -111,12 +123,18 @@ def build_development_report(db: Session, student: User, *, series: str | None =
     if week:
         week_href = f"/teacher/students/{sid}/week?start={week['start']}"
 
-    # ----- deneme netlerini haftalara yerleştir (genel seri)
+    # ----- deneme netlerini haftalara yerleştir. exam_nets = ana seri (grafik çizgisi tek ölçek);
+    # exam_marks = tüm serilerin denemeleri, seri etiketiyle (tablo + ipucu).
     exams = ep.get("exams") or []
     for w in weeks:
         inw = [e for e in exams if w["start"] <= e["exam_date"] <= w["end"]]
         w["exam_nets"] = [e["net"] for e in inw]
         w["exam_titles"] = [e["title"] for e in inw]
+        w["exam_marks"] = [
+            {"series_label": x.get("section_label"), "title": e["title"], "net": e["net"],
+             "questions": e.get("questions")}
+            for x in eps for e in (x.get("exams") or []) if w["start"] <= e["exam_date"] <= w["end"]
+        ]
 
     # ----- bu hafta
     this_week = None
@@ -175,7 +193,7 @@ def build_development_report(db: Session, student: User, *, series: str | None =
     pdn = _program_deneme_stats(db, sid, today)
     data_quality = {
         "tests_done": tests_done, "tests_with_result": tests_res, "result_coverage_pct": coverage,
-        "program_deneme": pdn, "exam_count": len(exams),
+        "program_deneme": pdn, "exam_count": sum(len(x.get("exams") or []) for x in eps),
         "exam_with_subjects": sum(1 for s in (ep.get("subjects") or []) if s.get("last") is not None) > 0,
     }
 
@@ -208,23 +226,79 @@ def build_development_report(db: Session, student: User, *, series: str | None =
         elif tone == "warn":
             risks.append(_item("risk:journey", "warn", "Programa bağlılık başlangıca göre düştü", txt,
                                priority=1, cta_label="Haftalık programı aç", cta_href=week_href))
-    st = ep.get("stats")
-    if st:
-        lbl = ep.get("section_label") or "Deneme"
-        txt = (f"{st['count']} denemede net {_num(st['first_net'])} → {_num(st['last_net'])} "
-               f"({_signed(st['change'])}); son 3 ortalama {_num(st['avg_last3'])}, en iyi {_num(st['best_net'])}.")
-        state.append(_item("state:exam", "info", f"{lbl} denemeleri", txt))
-    tgt = ep.get("target")
-    if tgt and tgt.get("gap") is not None:
-        if tgt["gap"] <= 0:
-            strengths.append(_item("good:target", "good", "Hedef net tuttu",
-                                   f"Hedef {_num(tgt['target_net'])}, {tgt['basis']} {_num(tgt['basis_net'])}."))
-        else:
-            txt = f"Hedef {_num(tgt['target_net'])} nete {_num(tgt['gap'])} net var ({tgt['basis']}: {_num(tgt['basis_net'])})."
-            if tgt.get("per_week_needed"):
-                txt += f" Hedef tarihe kadar haftada {_num(tgt['per_week_needed'])} net artış gerekiyor."
-            state.append(_item("state:target", "info", "Hedefe uzaklık", txt))
+    for ep in eps:
+        st = ep.get("stats")
+        tgt = ep.get("target")
+        sx = ep.get("exams") or []
+        pre = f"{ep.get('section_label')}: " if multi else ""
+        ks = f":{ep.get('series')}" if multi else ""
+        st = ep.get("stats")
+        if st:
+            lbl = ep.get("section_label") or "Deneme"
+            txt = (f"{st['count']} denemede net {_num(st['first_net'])} → {_num(st['last_net'])} "
+                   f"({_signed(st['change'])}); son 3 ortalama {_num(st['avg_last3'])}, en iyi {_num(st['best_net'])}.")
+            state.append(_item(f"state:exam{ks}", "info", f"{lbl} denemeleri", txt))
+        tgt = ep.get("target")
+        if tgt and tgt.get("gap") is not None:
+            if tgt["gap"] <= 0:
+                strengths.append(_item(f"good:target{ks}", "good", f"{pre}Hedef net tuttu",
+                                       f"Hedef {_num(tgt['target_net'])}, {tgt['basis']} {_num(tgt['basis_net'])}."))
+            else:
+                txt = f"Hedef {_num(tgt['target_net'])} nete {_num(tgt['gap'])} net var ({tgt['basis']}: {_num(tgt['basis_net'])})."
+                if tgt.get("per_week_needed"):
+                    txt += f" Hedef tarihe kadar haftada {_num(tgt['per_week_needed'])} net artış gerekiyor."
+                state.append(_item(f"state:target{ks}", "info", f"{pre}Hedefe uzaklık", txt))
 
+        # deneme yorumları → güçlü / risk / durum
+        for i, c in enumerate(ep.get("commentary") or []):
+            t = c["text"]
+            if " denemede net " in t and "→" in t:
+                continue  # ilk→son deneme "Mevcut durum"da; ilk deneme uç değerse yanıltıcı ayrıca söylenmez
+            title = _exam_title(t)
+            if c["tone"] == "good":
+                strengths.append(_item(f"good:exam{ks}:{i}", "good", pre + title, t))
+            elif c["tone"] == "warn":
+                risks.append(_item(f"risk:exam{ks}:{i}", "warn", pre + title, t, priority=2,
+                                   cta_label="Deneme analizi", cta_href=f"/teacher/students/{sid}#exams"))
+        if st and st["count"] >= 4:
+            nets_all = [e["net"] for e in sx]
+            if st["last_net"] <= min(nets_all[:-1]):
+                risks.append(_item(
+                    f"risk:exam_low{ks}", "bad", f"{pre}Son deneme serinin en düşüğü",
+                    f"{sx[-1]['title']} ({fmt_date(sx[-1]['exam_date'])}): {_num(st['last_net'])} net — "
+                    f"{st['count']} denemenin en düşüğü; son 3 ortalama {_num(st['avg_last3'])}, önceki deneme "
+                    f"{_num(nets_all[-2])}.",
+                    agenda=f"Son deneme {_num(st['last_net'])} net (serinin en düşüğü): o gün ne oldu — süre, uyku, hangi derste kaybetti?",
+                    priority=1, cta_label="Deneme analizi", cta_href=f"/teacher/students/{sid}#exams"))
+
+        # fırsatlar: konu net fırsatı + ders hedef farkı + tempo
+        for o in (ep.get("opportunities") or [])[:5]:
+            opportunities.append(_item(
+                f"topic{ks}:{o['topic_id']}", "info", f"{pre}{o['topic_name']} ({o['subject_name']})",
+                f"Denemelerde {o['total']} soruda {o['wrong']} yanlış, {o['blank']} boş; kapanırsa deneme başına "
+                f"yaklaşık {_signed(o['net_gain_per_exam'])} net.",
+                agenda=f"{o['topic_name']} konusunu kapat — deneme başına ~{_signed(o['net_gain_per_exam'])} net.",
+            ))
+        for s in sorted([s for s in (ep.get("subjects") or []) if s.get("gap") and s["gap"] > 0],
+                        key=lambda x: -x["gap"])[:3]:
+            opportunities.append(_item(f"subjgap{ks}:{s['name'].lower()}", "info", f"{pre}{s['name']} hedefi",
+                                       f"Hedef {_num(s['target'])}, son deneme {_num(s['last'])} net — {_num(s['gap'])} net açık."))
+        ups = [s for s in (ep.get("subjects") or []) if s.get("slope") is not None and s["slope"] >= 0.5]
+        for s in ups[:2]:
+            strengths.append(_item(f"good:subj{ks}:{s['name'].lower()}", "good", f"{pre}{s['name']} yükselişte",
+                                   f"Son denemelerde deneme başına {_signed(s['slope'])} net; son net {_num(s['last'])}."))
+        if st and not tgt and ep.get("target_allowed", True) and st["count"] >= 2:
+            opportunities.append(_item(
+                f"opp:set_target{ks}", "info", f"{pre}Hedef net belirle",
+                f"{ep.get('section_label')} için hedef yok. Son 3 deneme ortalaması {_num(st['avg_last3'])}, "
+                f"en iyi {_num(st['best_net'])}; hedef girilince gereken haftalık tempo ve ders hedefleri bu rapora eklenir.",
+                agenda=f"Öğrenciyle {ep.get('section_label')} hedef netini birlikte belirle (şu an son 3 ort. {_num(st['avg_last3'])}).",
+                cta_label="Deneme raporu", cta_href=f"/teacher/students/{sid}#exams"))
+        if st and st.get("slope") is not None and st["slope"] > 0 and st["best_net"] > st["avg_last3"]:
+            opportunities.append(_item(
+                f"opp:best_net{ks}", "info", f"{pre}En iyi neti kalıcı kılma fırsatı",
+                f"En iyi denemesi {_num(st['best_net'])} net; son 3 ortalaması {_num(st['avg_last3'])}. "
+                f"Aradaki {_num(st['best_net'] - st['avg_last3'])} net, o denemedeki koşulların (süre, sıra, uyku) tekrarlanmasıyla kapanabilir."))
     # haftalık ölçüler → güçlü / risk. Sonuç (D/Y/B) girme oranı düşükse doğruluk ve boş soru
     # birkaç testten hesaplanır → yanıltıcı; bulgu üretmez (veri girişi riski ayrıca söylenir).
     low_cov = tests_done >= COVERAGE_MIN_TESTS and (coverage or 0) < COVERAGE_LOW * 100
@@ -274,56 +348,8 @@ def build_development_report(db: Session, student: User, *, series: str | None =
         risks.append(_item("risk:balance", "warn", "Kaçınılan ders", bal["verdict"], priority=1,
                            cta_label="Haftalık programı aç", cta_href=week_href))
 
-    # deneme yorumları → güçlü / risk / durum
-    for i, c in enumerate(ep.get("commentary") or []):
-        t = c["text"]
-        if " denemede net " in t and "→" in t:
-            continue  # ilk→son deneme "Mevcut durum"da; ilk deneme uç değerse yanıltıcı ayrıca söylenmez
-        title = _exam_title(t)
-        if c["tone"] == "good":
-            strengths.append(_item(f"good:exam:{i}", "good", title, t))
-        elif c["tone"] == "warn":
-            risks.append(_item(f"risk:exam:{i}", "warn", title, t, priority=2,
-                               cta_label="Deneme analizi", cta_href=f"/teacher/students/{sid}#exams"))
-    if st and st["count"] >= 4:
-        nets_all = [e["net"] for e in exams]
-        if st["last_net"] <= min(nets_all[:-1]):
-            risks.append(_item(
-                "risk:exam_low", "bad", "Son deneme serinin en düşüğü",
-                f"{exams[-1]['title']} ({fmt_date(exams[-1]['exam_date'])}): {_num(st['last_net'])} net — "
-                f"{st['count']} denemenin en düşüğü; son 3 ortalama {_num(st['avg_last3'])}, önceki deneme "
-                f"{_num(nets_all[-2])}.",
-                agenda=f"Son deneme {_num(st['last_net'])} net (serinin en düşüğü): o gün ne oldu — süre, uyku, hangi derste kaybetti?",
-                priority=1, cta_label="Deneme analizi", cta_href=f"/teacher/students/{sid}#exams"))
-
-    # fırsatlar: konu net fırsatı + ders hedef farkı + tempo
-    for o in (ep.get("opportunities") or [])[:5]:
-        opportunities.append(_item(
-            f"topic:{o['topic_id']}", "info", f"{o['topic_name']} ({o['subject_name']})",
-            f"Denemelerde {o['total']} soruda {o['wrong']} yanlış, {o['blank']} boş; kapanırsa deneme başına "
-            f"yaklaşık {_signed(o['net_gain_per_exam'])} net.",
-            agenda=f"{o['topic_name']} konusunu kapat — deneme başına ~{_signed(o['net_gain_per_exam'])} net.",
-        ))
-    for s in sorted([s for s in (ep.get("subjects") or []) if s.get("gap") and s["gap"] > 0],
-                    key=lambda x: -x["gap"])[:3]:
-        opportunities.append(_item(f"subjgap:{s['name'].lower()}", "info", f"{s['name']} hedefi",
-                                   f"Hedef {_num(s['target'])}, son deneme {_num(s['last'])} net — {_num(s['gap'])} net açık."))
-    ups = [s for s in (ep.get("subjects") or []) if s.get("slope") is not None and s["slope"] >= 0.5]
-    for s in ups[:2]:
-        strengths.append(_item(f"good:subj:{s['name'].lower()}", "good", f"{s['name']} yükselişte",
-                               f"Son denemelerde deneme başına {_signed(s['slope'])} net; son net {_num(s['last'])}."))
-    if st and not tgt and ep.get("target_allowed", True) and st["count"] >= 2:
-        opportunities.append(_item(
-            "opp:set_target", "info", "Hedef net belirle",
-            f"{ep.get('section_label')} için hedef yok. Son 3 deneme ortalaması {_num(st['avg_last3'])}, "
-            f"en iyi {_num(st['best_net'])}; hedef girilince gereken haftalık tempo ve ders hedefleri bu rapora eklenir.",
-            agenda=f"Öğrenciyle {ep.get('section_label')} hedef netini birlikte belirle (şu an son 3 ort. {_num(st['avg_last3'])}).",
-            cta_label="Deneme raporu", cta_href=f"/teacher/students/{sid}#exams"))
-    if st and st.get("slope") is not None and st["slope"] > 0 and st["best_net"] > st["avg_last3"]:
-        opportunities.append(_item(
-            "opp:best_net", "info", "En iyi neti kalıcı kılma fırsatı",
-            f"En iyi denemesi {_num(st['best_net'])} net; son 3 ortalaması {_num(st['avg_last3'])}. "
-            f"Aradaki {_num(st['best_net'] - st['avg_last3'])} net, o denemedeki koşulların (süre, sıra, uyku) tekrarlanmasıyla kapanabilir."))
+    ep = eps[0]
+    st, tgt = ep.get("stats"), ep.get("target")
     if journey and journey.get("best_week") and journey.get("median_gorev_pct") is not None             and journey["best_week"]["value"] - journey["median_gorev_pct"] >= 8:
         bw = journey["best_week"]
         opportunities.append(_item(
@@ -380,9 +406,12 @@ def build_development_report(db: Session, student: User, *, series: str | None =
             "priority": wk_prio.get(a["key"], 2), "agenda": a.get("agenda") or a["title"],
             "cta_label": a.get("cta_label"), "cta_href": a.get("cta_href"), "queued": False,
         })
-    for a in ep.get("actions") or []:
+    for x in eps:
+      for a in x.get("actions") or []:
         actions.append({
-            "key": a["key"], "title": a["title"], "detail": a["detail"], "source": "exam",
+            "key": f"{a['key']}:{x.get('series')}" if multi else a["key"],
+            "title": f"{x.get('section_label')}: {a['title']}" if multi else a["title"],
+            "detail": a["detail"], "source": "exam",
             "priority": a["priority"], "agenda": f"{a['title']} — {a['detail']}",
             "cta_label": None, "cta_href": None, "queued": False, "exam_id": a.get("exam_id"),
         })
@@ -416,6 +445,17 @@ def build_development_report(db: Session, student: User, *, series: str | None =
             "subjects": [x for x in (ep.get("subjects") or []) if sum(v is not None for v in x["nets"]) >= 2],
             "stats": st, "target": tgt,
         },
+        "exam_series": [
+            {
+                "series": x.get("series"), "label": x.get("section_label"),
+                "exams": x.get("exams") or [], "stats": x.get("stats"), "target": x.get("target"),
+                "subjects": [y for y in (x.get("subjects") or []) if sum(v is not None for v in y["nets"]) >= 2],
+                # soru sayısı denemeden denemeye değişiyorsa (okul denemesi: 40 / 80 / 20+20) net
+                # tek başına kıyaslanamaz → arayüz net yüzdesini öne alır
+                "varying_questions": len({e.get("questions") for e in (x.get("exams") or [])}) > 1,
+            }
+            for x in eps if x.get("exams")
+        ],
         "state": state, "strengths": strengths, "opportunities": opportunities, "risks": risks,
         "actions": actions[:14],
         "data_quality": data_quality,

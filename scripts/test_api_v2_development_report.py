@@ -211,6 +211,31 @@ def main() -> int:
         check("9a başka koç 404", o.get(url).status_code == 404)
         s = login(f"{PFX}_s@test.invalid")
         check("9b öğrenci 403", s.get(url).status_code == 403)
+
+        # 10 — 2026-10-27: seri seçtirilmez; her genel seri (TYT + okul denemesi) ayrı işlenir.
+        # Okul denemesi farklı soru sayısıyla (40 / 80) → varying_questions.
+        with SessionLocal() as db:
+            coach_id = db.query(User.id).filter(User.email == f"{PFX}_t@test.invalid").scalar()
+            for i, (qn, n) in enumerate([(40, 22.0), (80, 51.5)]):
+                db.add(ExamResult(student_id=sid, created_by_id=coach_id, title=f"Okul Denemesi {i + 1}",
+                                  exam_date=cur_start - timedelta(days=10 - 5 * i), section=ExamSection.OKUL,
+                                  total_correct=int(n) + 2, total_wrong=8, total_blank=qn - int(n) - 10, net=n,
+                                  subject_nets=json.dumps([
+                                      {"name": "AYT Matematik", "net": n / 2, "correct": 5, "wrong": 1, "blank": 1},
+                                      {"name": "AYT Fizik", "net": n / 2, "correct": 5, "wrong": 1, "blank": 1}])))
+            db.commit()
+        a4 = c.get(url).json()
+        ser = a4.get("exam_series") or []
+        labels = [x["label"] for x in ser]
+        check("10a iki seri ayrı blok (TYT + okul)", len(ser) == 2, str(labels))
+        okul = next((x for x in ser if (x["series"] or "").startswith("okul")), None)
+        check("10b okul: değişken soru sayısı işaretli", bool(okul and okul["varying_questions"]), str(okul and okul["exams"]))
+        check("10c TYT: soru sayısı sabit", bool(ser and not ser[0]["varying_questions"]))
+        marks = [m["series_label"] for w in a4["weeks"] for m in w.get("exam_marks", [])]
+        check("10d hafta tablosunda iki serinin denemeleri", len(set(marks)) == 2, str(set(marks)))
+        sk = keys(a4["state"])
+        check("10e durum: her seri için ayrı madde", sum(1 for k in sk if k.startswith("state:exam:")) == 2, str(sk))
+        check("10f deneme sayısı iki seriyi kapsar", a4["data_quality"]["exam_count"] == 6, str(a4["data_quality"]["exam_count"]))
     finally:
         cleanup()
     print(f"\n{passed} geçti, {len(failed)} kaldı")

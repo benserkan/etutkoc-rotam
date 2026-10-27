@@ -56,6 +56,19 @@ export interface DRWeekRow {
   tests_done_items: number;
   exam_nets: number[];
   exam_titles: string[];
+  /** Tüm genel serilerin o haftaki denemeleri (seri etiketiyle). */
+  exam_marks?: { series_label: string | null; title: string; net: number; questions: number | null }[];
+}
+
+export interface DRExamSeries {
+  series: string | null;
+  label: string | null;
+  exams: { id: number; title: string; exam_date: string; net: number; questions?: number | null }[];
+  stats: DRExamStats | null;
+  target: { target_net: number; gap: number | null; basis_net: number } | null;
+  subjects: { name: string; nets: (number | null)[]; first: number | null; last: number | null; change: number | null; slope: number | null }[];
+  /** Soru sayısı denemeden denemeye değişiyor (okul denemesi) → net yüzdesi öne alınır. */
+  varying_questions: boolean;
 }
 
 export interface DRCompare {
@@ -146,6 +159,7 @@ export interface DRReport {
     subjects: { name: string; nets: (number | null)[]; first: number | null; last: number | null; change: number | null; slope: number | null }[];
     stats: DRExamStats | null;
   };
+  exam_series?: DRExamSeries[];
   state: DRItem[];
   strengths: DRItem[];
   opportunities: DRItem[];

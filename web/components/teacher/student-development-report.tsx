@@ -47,6 +47,7 @@ import {
   getDevelopmentReport,
   type DRAction,
   type DRCompare,
+  type DRExamSeries,
   type DRItem,
   type DRReport,
   type DRWeekRow,
@@ -173,8 +174,9 @@ export function StudentDevelopmentReport({
       {d.weeks.length || d.exam.exams.length ? <WeeksSection d={d} /> : null}
 
       {d.journey ? <Journey d={d} /> : null}
+      {(d.exam_series ?? []).length ? <ExamSeriesSection series={d.exam_series ?? []} /> : null}
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <FindingBox
           icon={Compass}
           title="Mevcut durum"
@@ -389,7 +391,7 @@ function WeeksSection({ d }: { d: DRReport }) {
     pct: w.gorev_pct,
     net: w.exam_nets.length ? Math.round((w.exam_nets.reduce((a, b) => a + b, 0) / w.exam_nets.length) * 100) / 100 : null,
     current: w.current,
-    exams: w.exam_titles.join(", "),
+    exams: (w.exam_marks ?? []).map((m) => `${m.series_label ?? ""} ${fmtNet(m.net)}`.trim()).join(" · ") || w.exam_titles.join(", "),
   }));
   const hasNet = chart.some((c) => c.net != null);
   return (
@@ -483,8 +485,12 @@ function WeekRow({ w, prev, ended }: { w: DRWeekRow; prev: DRWeekRow | null; end
       <td className="py-1.5 pr-3 text-right tabular-nums">
         {w.tests_done_items ? `${w.tests_with_result}/${w.tests_done_items}` : "—"}
       </td>
-      <td className="py-1.5 text-right tabular-nums" title={w.exam_titles.join(", ")}>
-        {w.exam_nets.length ? w.exam_nets.map((n) => fmtNet(n)).join(" · ") : "—"}
+      <td className="py-1.5 text-right tabular-nums" title={(w.exam_marks ?? []).map((m) => m.title).join(", ") || w.exam_titles.join(", ")}>
+        {w.exam_marks?.length
+          ? w.exam_marks.map((m) => `${m.series_label ?? ""} ${fmtNet(m.net)}`.trim()).join(" · ")
+          : w.exam_nets.length
+            ? w.exam_nets.map((n) => fmtNet(n)).join(" · ")
+            : "—"}
       </td>
     </tr>
   );
@@ -497,7 +503,7 @@ function WeekTip({ active, payload }: { active?: boolean; payload?: { payload: {
     <div className="rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs text-popover-foreground shadow">
       <p className="font-semibold">{p.label}</p>
       <p>Görev uyumu {pct(p.pct)}</p>
-      {p.net != null ? <p>Deneme neti {fmtNet(p.net)}{p.exams ? ` (${p.exams})` : ""}</p> : null}
+      {p.exams ? <p>Denemeler: {p.exams}</p> : null}
     </div>
   );
 }
@@ -506,14 +512,13 @@ function WeekTip({ active, payload }: { active?: boolean; payload?: { payload: {
 
 function Journey({ d }: { d: DRReport }) {
   const j = d.journey!;
-  const ex = j.exam;
   return (
     <Section
       icon={Flag}
       title="Gelişim döneminde gelinen nokta"
-      desc={`İlk haftalar ile son haftalar ve ilk deneme ile son deneme karşılaştırması${j.first_week ? ` (ilk hafta ${j.first_week})` : ""}.`}
+      desc={`İlk haftalar ile son haftaların karşılaştırması${j.first_week ? ` (ilk hafta ${j.first_week})` : ""}. Denemeler aşağıda seri seri.`}
     >
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-3">
         <Stat label="Program haftası" value={`${j.weeks} hafta`}
           sub={`toplam ${j.tests_total} test çözüldü${j.median_gorev_pct != null ? ` · ortanca uyum ${pct(j.median_gorev_pct)}` : ""}`} />
         <Stat label="Görev uyumu (ilk 3 → son 3 hafta)"
@@ -523,47 +528,127 @@ function Journey({ d }: { d: DRReport }) {
         <Stat label="Haftalık test (ilk 3 → son 3 hafta)"
           value={`${j.start_tests_per_week == null ? "—" : Math.round(j.start_tests_per_week)} → ${j.recent_tests_per_week == null ? "—" : Math.round(j.recent_tests_per_week)}`}
           sub="test / hafta, deneme hariç" />
-        <Stat label={`${j.exam_label ?? "Deneme"} neti`}
-          value={ex ? `${fmtNet(ex.first_net)} → ${fmtNet(ex.last_net)}` : "—"}
-          sub={ex ? `${ex.count} deneme · en iyi ${fmtNet(ex.best_net)}${ex.slope != null ? ` · deneme başına ${fmtSigned(ex.slope)}` : ""}${j.target?.gap != null ? ` · hedefe ${j.target.gap <= 0 ? "ulaştı" : `${fmtNet(j.target.gap)} net`}` : ""}` : "Henüz genel deneme yok"}
-          tone={ex ? (ex.change >= 1 ? "good" : ex.change <= -1 ? "bad" : null) : null} />
       </div>
-      {d.exam.subjects.length ? (
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------- denemeler (seri seri)
+
+/** 2026-10-27 (koç): seri seçtirilmez — TYT, AYT, okul denemesi her biri kendi kartında, kendi
+ *  ölçeğinde. Soru sayısı değişen seride (okul denemesi: 40 / 80 / 20+20) net tek başına
+ *  kıyaslanamaz → net yüzdesi (net ÷ soru) öne alınır. */
+function ExamSeriesSection({ series }: { series: DRExamSeries[] }) {
+  return (
+    <Section
+      icon={ClipboardList}
+      title="Denemeler — seri seri"
+      desc="Her deneme türü kendi ölçeğinde: TYT, AYT ve okul denemesi birbiriyle kıyaslanmaz. Soru sayısı değişen denemelerde (okul denemesi) net yüzdesi kullanılır."
+    >
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {series.map((x) => (
+          <ExamSeriesCard key={x.series ?? x.label ?? "seri"} x={x} />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function netPct(net: number, q?: number | null): number | null {
+  return q ? Math.round((net / q) * 100) : null;
+}
+
+function ExamSeriesCard({ x }: { x: DRExamSeries }) {
+  const st = x.stats;
+  const first = x.exams[0];
+  const last = x.exams[x.exams.length - 1];
+  const pctMode = x.varying_questions;
+  const fp = first ? netPct(first.net, first.questions) : null;
+  const lp = last ? netPct(last.net, last.questions) : null;
+  const pctChange = fp != null && lp != null ? lp - fp : null;
+  const pcts = x.exams.map((e) => netPct(e.net, e.questions)).filter((v): v is number => v != null);
+  const last3 = pcts.slice(-3);
+  const avgPct = last3.length ? Math.round(last3.reduce((a, b) => a + b, 0) / last3.length) : null;
+  return (
+    <div className="min-w-0 rounded-lg border border-border p-3" data-testid="dev-report-series">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-sm font-semibold">{x.label ?? "Deneme"}</p>
+        <p className="text-xs text-muted-foreground">
+          {x.exams.length} deneme{pctMode ? " · soru sayısı değişiyor, net yüzdesiyle kıyas" : ""}
+        </p>
+      </div>
+      {st ? (
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {pctMode ? (
+            <Stat
+              label="Net yüzdesi (ilk → son)"
+              value={`%${fp ?? "—"} → %${lp ?? "—"}`}
+              sub={`son: ${fmtNet(last.net)} net / ${last.questions ?? "?"} soru`}
+              tone={pctChange == null ? null : pctChange >= 3 ? "good" : pctChange <= -3 ? "bad" : null}
+            />
+          ) : (
+            <Stat
+              label="Net (ilk → son)"
+              value={`${fmtNet(st.first_net)} → ${fmtNet(st.last_net)}`}
+              sub={st.slope != null ? `deneme başına ${fmtSigned(st.slope)}` : undefined}
+              tone={st.change >= 1 ? "good" : st.change <= -1 ? "bad" : null}
+            />
+          )}
+          {pctMode ? (
+            <Stat label="Son 3 ortalama" value={avgPct == null ? "—" : `%${avgPct}`}
+              sub={pcts.length ? `en iyi %${Math.max(...pcts)}` : undefined} />
+          ) : (
+            <Stat label="Son 3 ortalama" value={fmtNet(st.avg_last3)} sub={`en iyi ${fmtNet(st.best_net)}`} />
+          )}
+          <Stat
+            label="Hedef"
+            value={x.target ? fmtNet(x.target.target_net) : "—"}
+            sub={x.target?.gap != null ? (x.target.gap <= 0 ? "ulaştı" : `${fmtNet(x.target.gap)} net kaldı`) : "hedef girilmedi"}
+          />
+        </div>
+      ) : null}
+      {pctMode ? (
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          Ders netleri, soru sayısı denemeden denemeye değiştiği için burada kıyaslanmaz; ders ders
+          inceleme Denemeler sekmesinde.
+        </p>
+      ) : x.subjects.length ? (
         <div className="relative mt-3 overflow-x-auto">
-          <table className="w-full min-w-[480px] text-sm">
+          <table className="w-full min-w-[360px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                <th className="py-2 pr-3 font-medium">Ders</th>
-                <th className="py-2 pr-3 text-right font-medium">İlk deneme</th>
-                <th className="py-2 pr-3 text-right font-medium">Son deneme</th>
-                <th className="py-2 pr-3 text-right font-medium">Değişim</th>
-                <th className="py-2 text-right font-medium">Deneme başına eğim</th>
+                <th className="py-1.5 pr-3 font-medium">Ders</th>
+                <th className="py-1.5 pr-3 text-right font-medium">İlk</th>
+                <th className="py-1.5 pr-3 text-right font-medium">Son</th>
+                <th className="py-1.5 text-right font-medium">Değişim</th>
               </tr>
             </thead>
             <tbody>
-              {d.exam.subjects.map((s) => (
+              {x.subjects.map((s) => (
                 <tr key={s.name} className="border-b border-border/60 last:border-0">
-                  <td className="py-1.5 pr-3">{s.name}</td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums">{fmtNet(s.first)}</td>
-                  <td className="py-1.5 pr-3 text-right font-medium tabular-nums">{fmtNet(s.last)}</td>
-                  <td className={cn("py-1.5 pr-3 text-right tabular-nums",
+                  <td className="py-1 pr-3">{s.name}</td>
+                  <td className="py-1 pr-3 text-right tabular-nums">{fmtNet(s.first)}</td>
+                  <td className="py-1 pr-3 text-right font-medium tabular-nums">{fmtNet(s.last)}</td>
+                  <td className={cn("py-1 text-right tabular-nums",
                     (s.change ?? 0) >= 1 && "text-emerald-700 dark:text-emerald-400",
                     (s.change ?? 0) <= -1 && "text-rose-700 dark:text-rose-400")}>
                     {s.change == null ? "—" : fmtSigned(s.change)}
                   </td>
-                  <td className="py-1.5 text-right tabular-nums">{s.slope == null ? "—" : fmtSigned(s.slope)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : null}
-      {d.exam.exams.length ? (
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          Denemeler: {d.exam.exams.map((e) => `${fmtTRDate(e.exam_date)} ${fmtNet(e.net)}`).join(" · ")}
-        </p>
-      ) : null}
-    </Section>
+      <ul className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+        {x.exams.map((e) => (
+          <li key={e.id} className="rounded-full bg-muted px-2 py-0.5 text-foreground" title={e.title}>
+            {fmtTRDate(e.exam_date)} · {fmtNet(e.net)} net
+            {pctMode && e.questions ? ` / ${e.questions} soru (%${netPct(e.net, e.questions)})` : ""}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
