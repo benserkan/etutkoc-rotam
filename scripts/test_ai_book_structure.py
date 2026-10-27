@@ -331,6 +331,34 @@ def main() -> int:
             db.execute(sa_delete(User).where(User.id == uid))
             db.commit()
 
+    # 13-15. Çok fasiküllü set (2026-10-27, Benim Hocam 8 Matematik): sayfa her
+    # fasikülde baştan başlar, test sayısı yok, kapakta "N test sorusu" yazar.
+    from app.services.ai_book_structure import estimate_from_pages, tidy_label
+
+    secs = [
+        {"label": "Çarpan Kavramı", "test_count": None, "page": 2, "volume": 1},
+        {"label": "Asal Sayılar", "test_count": None, "page": 9, "volume": 1},
+        {"label": "EBOB-EKOK Problemleri", "test_count": None, "page": 33, "volume": 1},
+        {"label": "Tam Kare Sayılar", "test_count": None, "page": 2, "volume": 2},
+        {"label": "Karekök Alma", "test_count": None, "page": 7, "volume": 2},
+    ]
+    vols = [{"volume": 1, "test_questions": 258, "end_page": 49},
+            {"volume": 2, "test_questions": None, "end_page": 17}]
+    n = estimate_from_pages(secs, vols)
+    v1 = sum(s["test_count"] for s in secs if s["volume"] == 1)
+    check("13. fasikül 1: kapaktaki 258 test sorusu → 26 test, sayfa oranında dağıtıldı",
+          v1 == 26 and secs[2]["test_count"] > secs[0]["test_count"], str(secs))
+    check("14. fasikül 2: sayfa baştan başlasa da tahmin yapılır (aralık ÷ 2)",
+          n == 5 and secs[3]["test_count"] == 2 and secs[4]["test_count"] == 5, str(secs))
+    single = [dict(s, test_count=None, volume=None) for s in secs]
+    check("15. tek kitap sayılsaydı sayfa sırası bozuk → tahmin yok (eski davranış korunur)",
+          estimate_from_pages(single) == 0)
+    check("16. bölüm adı: önek atılır, büyük harf düzelir, kısaltma korunur",
+          tidy_label("2. ÜNİTE : DNA VE GENETİK KOD") == "DNA ve Genetik Kod"
+          and tidy_label("1. ÜNİTE: MEVSİMLER VE İKLİM") == "Mevsimler ve İklim"
+          and tidy_label("Kalıtım ve Mutasyon") == "Kalıtım ve Mutasyon",
+          tidy_label("2. ÜNİTE : DNA VE GENETİK KOD"))
+
     print(f"\n=== SONUÇ: {passed} PASS / {len(failed)} FAIL ===")
     for f in failed:
         print(f"  FAIL: {f}")

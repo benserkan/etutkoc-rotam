@@ -630,10 +630,10 @@ def main() -> int:
             and len(body["structure"]["sections"]) == 2,
             f"status={r.status_code}",
         )
-        # gerçek 15 sayfalık PDF → kapak görsele çevrilir, okumaya ilk 12 sayfa gider
+        # gerçek 25 sayfalık PDF → kapak görsele çevrilir, okumaya ilk SCAN_PDF_PAGES (20) sayfa gider
         import fitz as _fitz
         _doc = _fitz.open()
-        for i in range(15):
+        for i in range(25):
             _pg = _doc.new_page()
             _pg.insert_text((72, 72), f"Sayfa {i + 1}")
         pdf_bytes = _doc.tobytes()
@@ -667,9 +667,9 @@ def main() -> int:
             n_pages = _d.page_count
             _d.close()
         check(
-            "26e. scan PDF: kapak JPEG · okumaya ilk 12 sayfa · not + page_count 15 · yayınevi okumadan",
-            r.status_code == 200 and seen.get("cover_mt") == "image/jpeg" and n_pages == 12
-            and body.get("page_count") == 15 and any("15 sayfa" in n for n in body.get("notes", []))
+            "26e. scan PDF: kapak JPEG · okumaya ilk 20 sayfa · not + page_count 25 · yayınevi okumadan",
+            r.status_code == 200 and seen.get("cover_mt") == "image/jpeg" and n_pages == abs_svc.SCAN_PDF_PAGES == 20
+            and body.get("page_count") == 25 and any("25 sayfa" in n for n in body.get("notes", []))
             and body.get("publisher") == "Okunan Yayın" and body.get("structure") is not None,
             f"status={r.status_code} pages={n_pages} body={str(body)[:200]}",
         )

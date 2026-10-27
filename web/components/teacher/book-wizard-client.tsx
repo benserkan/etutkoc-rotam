@@ -103,7 +103,8 @@ export function BookWizardClient({ subjects, templates, students }: Props) {
   const isExam = subject ? isExamSubject(subject) : false;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    // pb-24: alttaki bildirim ve Rota balonu son adım düğmesini örtmesin (telefon genişliği).
+    <div className="max-w-3xl mx-auto space-y-6 pb-24">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight font-display">
           Yeni kitap
@@ -343,6 +344,9 @@ function StepInfo({
                 key={`scan-${scanned.book_title ?? ""}-${scanned.structure.sections.length}`}
                 initialName={scanned.book_title}
                 initialPublisher={scanned.publisher}
+                initialGrade={scanned.grade_hint}
+                initialSubjectHint={scanned.subject_hint}
+                initialExamHint={scanned.exam_hint}
                 subjects={subjects}
                 templates={templates}
                 templateMode="hide"
@@ -939,9 +943,9 @@ function StepMapping({
     return (
       <div className="space-y-4">
         <StepNarration>
-          <strong>3. Adım — Müfredat eşleştirme.</strong> Üniteler resmi
-          konulardan eklendiği için <strong>hepsi otomatik eşlendi</strong> —
-          bu adımda yapacak bir şey yok.
+          <strong>3. Adım — Müfredat eşleştirme.</strong> Ünitelerin{" "}
+          <strong>hepsi müfredat konularına otomatik eşlendi</strong> — bu adımda
+          yapacak bir şey yok.
         </StepNarration>
         <Card>
           <CardContent className="p-4 flex items-center justify-between gap-3">

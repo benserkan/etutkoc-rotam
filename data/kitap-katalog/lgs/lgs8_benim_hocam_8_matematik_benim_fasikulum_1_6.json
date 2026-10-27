@@ -1,0 +1,524 @@
+{
+  "name": "Benim Hocam 8. Sınıf Matematik Benim Fasikülüm (1-6)",
+  "publisher": "Benim Hocam Yayınları",
+  "subject": "Matematik",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [
+    "TAHMİNİ test sayısı — içindekilerde test listesi yok. Fasikül başına test = kapaktaki 'test sorusu' ÷ 10 (1. fasikül 258→26 …), bölümlere konu sayfa aralığı oranında dağıtıldı. Toplam 104 test."
+  ],
+  "notes": [
+    "Kaynak: 6 fasikülün kapak + içindekiler taraması (benim hocam 1.pdf, 13 sayfa, metin katmanı yok).",
+    "Kapak test sorusu: F1 258 · F2 213 · F3 140 · F4 150 · F5 152 · F6 132; etkinlik soruları teste sayılmadı.",
+    "'Geçmişten Günümüze Bilgilerimi Hatırlıyorum' sayfaları tekrar bölümü — teste sayılmadı."
+  ],
+  "sections": [
+    {
+      "label": "1. Fasikül · Çarpan Kavramı",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 2,
+      "page_end": 8,
+      "topic": "Çarpanlar ve Katlar"
+    },
+    {
+      "label": "1. Fasikül · Asal Sayılar ve Asal Çarpanlarına Ayırma",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 9,
+      "page_end": 14,
+      "topic": "Çarpanlar ve Katlar"
+    },
+    {
+      "label": "1. Fasikül · Aralarında Asal Sayılar",
+      "test_count": 3,
+      "source": "page_estimate",
+      "page_start": 15,
+      "page_end": 26,
+      "topic": "Çarpanlar ve Katlar"
+    },
+    {
+      "label": "1. Fasikül · EBOB-EKOK Hesaplama",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 27,
+      "page_end": 32,
+      "topic": "Çarpanlar ve Katlar"
+    },
+    {
+      "label": "1. Fasikül · EBOB-EKOK Problemleri",
+      "test_count": 4,
+      "source": "page_estimate",
+      "page_start": 33,
+      "page_end": 48,
+      "topic": "Çarpanlar ve Katlar"
+    },
+    {
+      "label": "1. Fasikül · Tam Sayıların Doğal Sayı Kuvvetleri",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 50,
+      "page_end": 51,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "1. Fasikül · Tam Sayıların Negatif Tam Sayı Kuvvetleri",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 52,
+      "page_end": 56,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "1. Fasikül · Rasyonel Sayıların Tam Sayı Kuvvetleri",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 57,
+      "page_end": 60,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "1. Fasikül · Üssün Üssü",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 61,
+      "page_end": 64,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "1. Fasikül · Üslü İfadelerle Çarpma İşlemi",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 65,
+      "page_end": 68,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "1. Fasikül · Üslü İfadelerle Bölme İşlemi",
+      "test_count": 3,
+      "source": "page_estimate",
+      "page_start": 69,
+      "page_end": 80,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "1. Fasikül · Ondalık Gösterimleri 10'un Kuvvetlerine Göre Çözümleme",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 81,
+      "page_end": 84,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "1. Fasikül · Çok Küçük ve Çok Büyük Sayılar",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 85,
+      "page_end": 86,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "1. Fasikül · Bilimsel Gösterim",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 87,
+      "page_end": 94,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Tam Kare Pozitif Tam Sayılar",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 2,
+      "page_end": 6,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Karekök Alma İşlemi",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 7,
+      "page_end": 10,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Karekök Tahmini",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 11,
+      "page_end": 14,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Tam Kare Olmayan Doğal Sayıların Karekökünü Alma",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 15,
+      "page_end": 22,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Kareköklü İfadelerle Çarpma İşlemi",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 23,
+      "page_end": 26,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Kareköklü İfadelerle Bölme İşlemi",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 27,
+      "page_end": 30,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Kareköklü İfadelerle Toplama ve Çıkarma İşlemi",
+      "test_count": 4,
+      "source": "page_estimate",
+      "page_start": 31,
+      "page_end": 44,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Ondalık Gösterimlerin Karekökü",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 45,
+      "page_end": 46,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Gerçek (Reel) Sayılar",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 47,
+      "page_end": 54,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "2. Fasikül · Sütun Grafiği",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 56,
+      "page_end": 60,
+      "topic": "Veri Analizi"
+    },
+    {
+      "label": "2. Fasikül · Çizgi Grafiği",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 61,
+      "page_end": 64,
+      "topic": "Veri Analizi"
+    },
+    {
+      "label": "2. Fasikül · Daire Grafiği",
+      "test_count": 4,
+      "source": "page_estimate",
+      "page_start": 65,
+      "page_end": 78,
+      "topic": "Veri Analizi"
+    },
+    {
+      "label": "3. Fasikül · Olası Durumlar",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 2,
+      "page_end": 6,
+      "topic": "Basit Olayların Olasılığı"
+    },
+    {
+      "label": "3. Fasikül · Olası Durumları Karşılaştırma",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 7,
+      "page_end": 10,
+      "topic": "Basit Olayların Olasılığı"
+    },
+    {
+      "label": "3. Fasikül · Bir Olayın Olma Olasılığı",
+      "test_count": 3,
+      "source": "page_estimate",
+      "page_start": 11,
+      "page_end": 24,
+      "topic": "Basit Olayların Olasılığı"
+    },
+    {
+      "label": "3. Fasikül · Cebirsel İfadelerle İşlemler",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 26,
+      "page_end": 32,
+      "topic": "Cebirsel İfadeler ve Özdeşlikler"
+    },
+    {
+      "label": "3. Fasikül · İki Kare Farkı Özdeşliği",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 33,
+      "page_end": 35,
+      "topic": "Cebirsel İfadeler ve Özdeşlikler"
+    },
+    {
+      "label": "3. Fasikül · Tam Kare Özdeşliği",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 36,
+      "page_end": 46,
+      "topic": "Cebirsel İfadeler ve Özdeşlikler"
+    },
+    {
+      "label": "3. Fasikül · Ortak Çarpan Parantezine Alarak Çarpanlara Ayırma",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 47,
+      "page_end": 50,
+      "topic": "Cebirsel İfadeler ve Özdeşlikler"
+    },
+    {
+      "label": "3. Fasikül · Özdeşlikleri Kullanarak Çarpanlara Ayırma",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 51,
+      "page_end": 62,
+      "topic": "Cebirsel İfadeler ve Özdeşlikler"
+    },
+    {
+      "label": "4. Fasikül · Birinci Dereceden Bir Bilinmeyenli Denklemler",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 2,
+      "page_end": 13,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "4. Fasikül · Dik Koordinat Sistemi",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 14,
+      "page_end": 18,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "4. Fasikül · Eksenlere Paralel Doğru Grafikleri",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 19,
+      "page_end": 21,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "4. Fasikül · Orijinden Geçen Doğru Grafikleri",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 22,
+      "page_end": 24,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "4. Fasikül · x ve y Eksenlerini Farklı Noktalarda Kesen Doğru Grafikleri",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 25,
+      "page_end": 32,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "4. Fasikül · Doğrusal İlişkiler",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 33,
+      "page_end": 47,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "4. Fasikül · Eğim",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 48,
+      "page_end": 52,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "4. Fasikül · Doğrunun Eğimi",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 53,
+      "page_end": 62,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "4. Fasikül · Eşitsizlik Kavramı",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 64,
+      "page_end": 68,
+      "topic": "Eşitsizlikler"
+    },
+    {
+      "label": "4. Fasikül · Birinci Dereceden Bir Bilinmeyenli Eşitsizliklerin Çözümü",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 69,
+      "page_end": 78,
+      "topic": "Eşitsizlikler"
+    },
+    {
+      "label": "5. Fasikül · Üçgende Yükseklik",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 2,
+      "page_end": 6,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Üçgende Kenarortay",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 7,
+      "page_end": 12,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Üçgende Açıortay",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 13,
+      "page_end": 18,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Özel Üçgenlerde Açıortay, Kenarortay ve Yükseklik",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 19,
+      "page_end": 24,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Üçgen Eşitsizliği",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 25,
+      "page_end": 28,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Üçgenin Açı ve Kenarları Arasındaki İlişkiler",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 29,
+      "page_end": 30,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Üçgen Çizimleri",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 31,
+      "page_end": 34,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Pisagor Bağıntısı",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 35,
+      "page_end": 38,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Kenarlarına Göre Özel Dik Üçgenler",
+      "test_count": 3,
+      "source": "page_estimate",
+      "page_start": 39,
+      "page_end": 56,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "5. Fasikül · Çokgenlerde Eşlik",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 58,
+      "page_end": 64,
+      "topic": "Eşlik ve Benzerlik"
+    },
+    {
+      "label": "5. Fasikül · Çokgenlerde Benzerlik",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 65,
+      "page_end": 78,
+      "topic": "Eşlik ve Benzerlik"
+    },
+    {
+      "label": "6. Fasikül · Öteleme",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 2,
+      "page_end": 7,
+      "topic": "Dönüşüm Geometrisi"
+    },
+    {
+      "label": "6. Fasikül · Yansıma",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 8,
+      "page_end": 18,
+      "topic": "Dönüşüm Geometrisi"
+    },
+    {
+      "label": "6. Fasikül · Dik Prizmalar",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 20,
+      "page_end": 29,
+      "topic": "Geometrik Cisimler"
+    },
+    {
+      "label": "6. Fasikül · Dik Dairesel Silindir",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 30,
+      "page_end": 34,
+      "topic": "Geometrik Cisimler"
+    },
+    {
+      "label": "6. Fasikül · Dik Dairesel Silindirin Yüzey Alanı",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 35,
+      "page_end": 37,
+      "topic": "Geometrik Cisimler"
+    },
+    {
+      "label": "6. Fasikül · Dik Dairesel Silindirin Hacmi",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 38,
+      "page_end": 47,
+      "topic": "Geometrik Cisimler"
+    },
+    {
+      "label": "6. Fasikül · Dik Piramitler",
+      "test_count": 2,
+      "source": "page_estimate",
+      "page_start": 48,
+      "page_end": 55,
+      "topic": "Geometrik Cisimler"
+    },
+    {
+      "label": "6. Fasikül · Dik Dairesel Koni",
+      "test_count": 1,
+      "source": "page_estimate",
+      "page_start": 56,
+      "page_end": 62,
+      "topic": "Geometrik Cisimler"
+    }
+  ]
+}

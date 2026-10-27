@@ -383,7 +383,7 @@ export function BookScanUpload({
           </span>
           <span className="max-w-md text-sm text-violet-900 dark:text-violet-200">
             Kapağın ve içindekiler sayfalarının fotoğrafları (en çok 8) ya da kitabın PDF’i.
-            Tam kitap PDF’i de olur — yalnız ilk 12 sayfası okunur.
+            Tam kitap PDF’i de olur — yalnız ilk 20 sayfası okunur (fasikül setinde her fasikülün kapağı + içindekiler).
           </span>
           <span className="inline-flex items-center gap-1 text-xs text-violet-800 dark:text-violet-300">
             <Camera className="size-3.5" aria-hidden /> Telefonda doğrudan kamera açılır · kredi harcamaz

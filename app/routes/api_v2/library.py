@@ -1569,6 +1569,10 @@ def library_structure_scan_v2(
         for k in ("book_title", "publisher", "subject_hint", "grade_hint"):
             if not info.get(k) and result.get(k):
                 info[k] = result[k]
+        # Fasikül seti: kapak yalnız ilk fasikülün adını taşır ("Benim 1. Fasikülüm") —
+        # setin adı içindekiler okumasından gelir (fasikül numarası atılmış).
+        if len(result.get("volumes") or []) > 1 and result.get("book_title"):
+            info["book_title"] = result["book_title"]
     return BookScanResult(
         book_title=info.get("book_title"),
         publisher=info.get("publisher"),

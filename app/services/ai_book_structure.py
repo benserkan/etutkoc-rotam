@@ -41,7 +41,8 @@ MAX_PDF_BYTES = 10 * 1024 * 1024
 # sayfaları okunur (kapak + içindekiler kitabın başındadır).
 MAX_SCAN_PDF_BYTES = 80 * 1024 * 1024
 MAX_SCAN_IMAGES = 8
-SCAN_PDF_PAGES = 12
+# Fasikül setleri (6 kapak + 6 içindekiler) 12 sayfaya sığmıyordu (2026-10-27).
+SCAN_PDF_PAGES = 20
 
 # Koç başına günlük okuma tavanı (kredi yok — yalnız kötüye kullanım rayı).
 AI_BOOK_READ_DAILY_LIMIT = 30
@@ -75,10 +76,26 @@ KURALLAR (çok önemli):
 - SADECE NUMARA taşıyan GRUP başlıklarını listeye ALMA: "BÖLÜM 07", "ÜNİTE 3"
   gibi altında konu listesi olan ara başlıklar bölüm DEĞİLDİR — onların
   altındaki KONULARI çıkar. (Adı da olan üniteler kalır: "1. Ünite — Sayılar".)
-- Alt başlıklar değil ÜNİTE/BÖLÜM düzeyini çıkar: testlerin bağlandığı düzey esas alınır.
+- DÜZEY: testlerin bağlandığı düzey esas alınır.
+  * Test sayısı ünite/bölüm satırında ya da ünitenin altındaki test satırlarında
+    veriliyorsa ÜNİTE/BÖLÜM düzeyini çıkar.
+  * İçindekiler HİÇ test bilgisi vermiyor ama ünite başlıklarının altında SAYFA
+    NUMARALI KONU satırları varsa KONULARI çıkar (her biri kendi sayfasıyla).
+    Ünite başlığını yine de yazarsan o satıra kind="unit" yaz; diğer tüm
+    satırlar kind="topic".
+- Tekrar/giriş satırlarını listeye ALMA: "Geçmişten Günümüze Bilgilerimi
+  Hatırlıyorum", "Hazırbulunuşluk", "Konu Özeti", "Kavram Haritası" gibi.
+- ÇOK CİLT/FASİKÜL: belge birden çok fasikülün/cildin kapağını ve içindekilerini
+  içeriyorsa (sayfa numaraları her fasikülde 1'den yeniden başlar) her bölüme
+  volume = fasikül/cilt numarası yaz. volumes listesine her fasikül için:
+  volume, kapakta "N TEST SORUSU" gibi açık yazıyorsa test_questions = N (yoksa
+  null), içindekilerdeki CEVAP ANAHTARI sayfası end_page (yoksa null).
+  Tek kitapsa volume=null ve volumes=[] bırak.
 - Verilen sayfaların bazıları kapak, önsöz, künye ya da soru sayfası olabilir — bunları yok say, yalnız İÇİNDEKİLER sayfalarından çıkar (kitap adı/yayınevi için kapağı kullanabilirsin).
 - Birden çok görsel/sayfa verdiysem hepsi AYNI kitabın devamıdır — tek liste halinde sırayla birleştir, tekrar eden başlıkları bir kez yaz.
-- Kitap adı/yayınevi belgede görünüyorsa yaz; görünmüyorsa null.
+- Kitap adı/yayınevi belgede görünüyorsa yaz; görünmüyorsa null (çok fasikülde
+  fasikül numarasını adın içine yazma: "Benim 1. Fasikülüm 8. Sınıf Matematik"
+  yerine "Benim Fasikülüm 8. Sınıf Matematik").
 - subject_hint: kitabın dersi (örn. "Matematik", "Fen Bilimleri", "Türkçe") — belgeden anlaşılıyorsa.
 - grade_hint: hedef sınıf (5-12 tam sayı) — "8. Sınıf", "TYT" (11-12 sayılmaz, null bırak) gibi ibare belgede AÇIKÇA varsa.
 - Belge bir içindekiler sayfası DEĞİLSE (kapak, rastgele sayfa, alakasız görsel) sections'ı boş liste döndür.
@@ -90,7 +107,10 @@ YALNIZ şu JSON nesnesini döndür:
   "subject_hint": "ders adı" | null,
   "grade_hint": 5-12 arası tam sayı | null,
   "sections": [
-    {"label": "bölüm/ünite adı", "test_count": int | null, "page": int | null}
+    {"label": "bölüm/ünite adı", "test_count": int | null, "page": int | null, "volume": int | null, "kind": "topic" | "unit"}
+  ],
+  "volumes": [
+    {"volume": int, "test_questions": int | null, "end_page": int | null}
   ]
 }"""
 
@@ -152,6 +172,14 @@ def _clean_grade(v: Any) -> int | None:
 
 import re as _re
 
+
+def _clean_volume(v: Any) -> int | None:
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        return None
+    return n if 1 <= n <= 30 else None
+
 # "BÖLÜM 07" / "ÜNİTE 3" / "UNIT 2" — adı olmayan salt-numara grup başlığı.
 # Deterministik süzgeç (prompt kuralının kod tarafı): model kaçırırsa da girmez.
 _GROUP_HEADER_RE = _re.compile(
@@ -174,8 +202,25 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
             "label": label,
             "test_count": _clean_count(item.get("test_count")),
             "page": _clean_page(item.get("page")),
+            "volume": _clean_volume(item.get("volume")),
+            "kind": "unit" if str(item.get("kind") or "").lower() == "unit" else "topic",
         })
+    volumes: list[dict[str, Any]] = []
+    for v in data.get("volumes") or []:
+        if not isinstance(v, dict):
+            continue
+        no = _clean_volume(v.get("volume"))
+        if no is None or any(x["volume"] == no for x in volumes):
+            continue
+        q = v.get("test_questions")
+        try:
+            q = int(q) if q is not None else None
+        except (TypeError, ValueError):
+            q = None
+        volumes.append({"volume": no, "test_questions": q if q and 1 <= q <= 5000 else None,
+                        "end_page": _clean_page(v.get("end_page"))})
     return {
+        "volumes": volumes,
         "book_title": _clean_str(data.get("book_title")),
         "publisher": _clean_str(data.get("publisher")),
         "subject_hint": _clean_str(data.get("subject_hint"), 120),
@@ -260,9 +305,10 @@ def _merge_reads(r1: dict[str, Any], r2: dict[str, Any]) -> dict[str, Any]:
                 "grade_hint": r1["grade_hint"] or r2["grade_hint"],
                 "sections": [
                     {"label": x["label"], "test_count": x["test_count"], "suspect": False,
-                     "page": x.get("page")}
+                     "page": x.get("page"), "volume": x.get("volume"), "kind": x.get("kind", "topic")}
                     for x in base_r["sections"]
                 ],
+                "volumes": base_r.get("volumes") or other_r.get("volumes") or [],
                 "warnings": warnings,
                 "read_count": 2,
             }
@@ -305,13 +351,17 @@ def _merge_reads(r1: dict[str, Any], r2: dict[str, Any]) -> dict[str, Any]:
             if count is not None and not _labels_agree(a["label"], (b or a)["label"]):
                 suspect = True
         page = a.get("page") or (b.get("page") if b else None)
-        merged.append({"label": label, "test_count": count, "suspect": suspect, "page": page})
+        volume = a.get("volume") or (b.get("volume") if b else None)
+        kind = "unit" if "unit" in (a.get("kind"), (b or {}).get("kind")) else "topic"
+        merged.append({"label": label, "test_count": count, "suspect": suspect, "page": page,
+                       "volume": volume, "kind": kind})
 
     # Yalnız ikinci okumada görünen bölümler (birincinin kaçırdıkları)
     extra = [sec for sec in s2 if id(sec) not in used2]
     for sec in extra:
         merged.append({"label": sec["label"], "test_count": sec["test_count"], "suspect": True,
-                       "page": sec.get("page")})
+                       "page": sec.get("page"), "volume": sec.get("volume"),
+                       "kind": sec.get("kind", "topic")})
 
     if len(s1) != len(s2):
         warnings.append(
@@ -330,6 +380,8 @@ def _merge_reads(r1: dict[str, Any], r2: dict[str, Any]) -> dict[str, Any]:
         "subject_hint": r1["subject_hint"] or r2["subject_hint"],
         "grade_hint": r1["grade_hint"] or r2["grade_hint"],
         "sections": merged,
+        "volumes": (r1.get("volumes") if len(r1.get("volumes") or []) >= len(r2.get("volumes") or [])
+                    else r2.get("volumes")) or [],
         "warnings": warnings,
         "read_count": 2,
     }
@@ -374,7 +426,7 @@ def read_structure(files: list[tuple[bytes, str]]) -> dict[str, Any]:
             **only,
             "sections": [
                 {"label": s["label"], "test_count": s["test_count"], "suspect": False,
-                 "page": s.get("page")}
+                 "page": s.get("page"), "volume": s.get("volume"), "kind": s.get("kind", "topic")}
                 for s in only["sections"]
             ],
             "warnings": [single_warning],
@@ -388,7 +440,27 @@ def read_structure(files: list[tuple[bytes, str]]) -> dict[str, Any]:
         )
     for sec in result["sections"]:
         sec.setdefault("estimated", False)
-    estimated = estimate_from_pages(result["sections"])
+    # Konu düzeyi okunduysa ünite başlık satırları test taşımaz → çıkar.
+    units = [x for x in result["sections"] if x.get("kind") == "unit" and x.get("test_count") is None]
+    if units and len(units) < len(result["sections"]) - len(units):
+        result["sections"] = [x for x in result["sections"] if x not in units]
+        result["warnings"].append(
+            f"{len(units)} ünite başlığı (konular ayrıca okundu) listeden çıkarıldı."
+        )
+    volumes = result.get("volumes") or []
+    vol_nos = {s.get("volume") for s in result["sections"] if s.get("volume")}
+    if len(vol_nos) > 1:
+        # Yalnız bir okumada görünen satırlar sona eklenir → fasikül içinde sayfaya göre sırala.
+        first_seen: dict[Any, int] = {}
+        for i, x in enumerate(result["sections"]):
+            first_seen.setdefault(x.get("volume"), i)
+        result["sections"] = sorted(
+            result["sections"],
+            key=lambda x: (first_seen[x.get("volume")], x.get("page") or 10_000),
+        )
+    multi = len(vol_nos) > 1
+    from_questions = sum(1 for v in volumes if v.get("test_questions")) if multi else 0
+    estimated = estimate_from_pages(result["sections"], volumes if multi else None)
     if estimated:
         # Sayfa numarası ve test sayısı olmayan satırlar bu düzende ünite
         # başlıklarıdır ("BASINÇ", "MADDE VE ENDÜSTRİ") — test bağlanmaz.
@@ -403,10 +475,27 @@ def read_structure(files: list[tuple[bytes, str]]) -> dict[str, Any]:
                 + ", ".join(h["label"] for h in headers[:6])
                 + ("…" if len(headers) > 6 else "")
             )
+        if from_questions:
+            result["warnings"].append(
+                f"{estimated} bölümde test sayısı içindekilerde yazmıyor — her fasikülün "
+                f"kapağındaki 'test sorusu' sayısından TAHMİN edildi (test ≈ "
+                f"{QUESTIONS_PER_TEST} soru), konulara sayfa aralığı oranında dağıtıldı. "
+                "'Tahmini' satırları kitapla karşılaştır."
+            )
+        else:
+            result["warnings"].append(
+                f"{estimated} bölümde test sayısı içindekilerde yazmıyor — sayfa aralığından "
+                f"TAHMİN edildi (her test ≈ {PAGES_PER_TEST} sayfa). 'Tahmini' satırları kitapla "
+                "karşılaştır; konu anlatımı sayfaları varsa sayı fazla çıkabilir."
+            )
+    for sec in result["sections"]:
+        sec["label"] = tidy_label(sec["label"])
+        if multi and sec.get("volume"):
+            sec["label"] = f"{sec['volume']}. Fasikül · {sec['label']}"
+    if multi:
         result["warnings"].append(
-            f"{estimated} bölümde test sayısı içindekilerde yazmıyor — sayfa aralığından "
-            f"TAHMİN edildi (her test ≈ {PAGES_PER_TEST} sayfa). 'Tahmini' satırları kitapla "
-            "karşılaştır; konu anlatımı sayfaları varsa sayı fazla çıkabilir."
+            f"Belgede {len(vol_nos)} fasikül var — tek kitap olarak eklenir, bölüm adlarının "
+            "başında fasikül numarası yazar."
         )
     missing = sum(1 for s in result["sections"] if s["test_count"] is None)
     if missing:
@@ -417,9 +506,112 @@ def read_structure(files: list[tuple[bytes, str]]) -> dict[str, Any]:
 
 
 PAGES_PER_TEST = 2
+# Kapakta "258 TEST SORUSU" gibi soru toplamı verilen fasiküllerde test başına soru.
+QUESTIONS_PER_TEST = 10
+
+_UNIT_PREFIX_RE = _re.compile(
+    r"^\s*\d+\s*\.?\s*(ünite|unite|bölüm|bolum|kısım|kisim)\s*[:\-–—.]?\s*", _re.IGNORECASE
+)
+_SMALL_WORDS = {"ve", "ile", "ya", "da", "de", "veya", "ki", "mi"}
+_ACRONYMS = {"DNA", "RNA", "ATP", "ÖSYM", "TYT", "AYT", "LGS", "YKS", "MEB", "EBOB", "EKOK", "OBEB", "OKEK", "KPSS", "YDT"}
 
 
-def estimate_from_pages(sections: list[dict[str, Any]]) -> int:
+def _tr_title(word: str) -> str:
+    low = word.replace("I", "ı").replace("İ", "i").lower()
+    if not low:
+        return low
+    first = {"i": "İ", "ı": "I"}.get(low[0], low[0].upper())
+    return first + low[1:]
+
+
+def tidy_label(label: str) -> str:
+    """'1. ÜNİTE : MEVSİMLER VE İKLİM' → 'Mevsimler ve İklim' (koçun gördüğü bölüm adı).
+
+    Önek yalnız ardından ad varsa atılır; büyük harf yalnız etiketin çoğu büyük
+    harfse düzeltilir (karışık yazım olduğu gibi kalır)."""
+    raw = label.strip()
+    stripped = _UNIT_PREFIX_RE.sub("", raw).strip()
+    if len(stripped) >= 3:
+        raw = stripped
+    letters = [c for c in raw if c.isalpha()]
+    if letters and sum(1 for c in letters if c.isupper()) / len(letters) > 0.8:
+        out = []
+        for i, w in enumerate(raw.split(" ")):
+            t = "-".join(x if x.strip(".,:;()") in _ACRONYMS else _tr_title(x) for x in w.split("-"))
+            if i > 0 and t.lower() in _SMALL_WORDS:
+                t = t.lower()
+            out.append(t)
+        raw = " ".join(out)
+    return raw
+
+
+def _estimate_group(sections: list[dict[str, Any]], idxs: list[int],
+                    end_page: int | None, questions: int | None) -> int:
+    """Tek sayfa dizisi (tek kitap ya da tek fasikül) için tahmin."""
+    with_page = [i for i in idxs if sections[i].get("page")]
+    pages = [sections[i]["page"] for i in with_page]
+    if (len(with_page) < max(2, (len(idxs) + 1) // 2)
+            or any(b < a for a, b in zip(pages, pages[1:]))):
+        if not questions:
+            return 0
+        # Sayfa yok/bozuk ama kapakta toplam var → konulara eşit dağıt.
+        with_page = [i for i in idxs if sections[i].get("test_count") is None]
+        if not with_page:
+            return 0
+        return _distribute(sections, with_page, {i: 1 for i in with_page}, questions)
+    spans: dict[int, int] = {}
+    for k, i in enumerate(with_page[:-1]):
+        span = sections[with_page[k + 1]]["page"] - sections[i]["page"]
+        if span > 0:
+            spans[i] = span
+    last = with_page[-1]
+    if end_page and end_page > sections[last]["page"]:
+        spans[last] = end_page - sections[last]["page"]
+    elif spans:
+        ordered = sorted(spans.values())
+        spans[last] = ordered[len(ordered) // 2]
+    if not spans:
+        return 0
+    todo = [i for i in with_page if sections[i].get("test_count") is None and spans.get(i)]
+    if not todo:
+        return 0
+    if questions:
+        # Sayfası okunamayan konular da fasikülün testinden pay alır (ortanca aralık).
+        ordered = sorted(spans.values())
+        med = ordered[len(ordered) // 2]
+        rest = [i for i in idxs if sections[i].get("test_count") is None and i not in todo]
+        for i in rest:
+            spans[i] = med
+        return _distribute(sections, todo + rest, spans, questions)
+    for i in todo:
+        sections[i]["test_count"] = max(1, round(spans[i] / PAGES_PER_TEST))
+        sections[i]["estimated"] = True
+    return len(todo)
+
+
+def _distribute(sections: list[dict[str, Any]], todo: list[int], spans: dict[int, int],
+                questions: int) -> int:
+    """Fasikül toplamı kapaktan: test ≈ soru / 10, sayfa aralığı oranında dağıt."""
+    target = max(len(todo), round(questions / QUESTIONS_PER_TEST))
+    total_span = sum(spans[i] for i in todo)
+    raw = {i: spans[i] * target / total_span for i in todo}
+    cnt = {i: max(1, int(raw[i])) for i in todo}
+    order = sorted(todo, key=lambda i: -(raw[i] - int(raw[i])))
+    k = 0
+    while sum(cnt.values()) < target:
+        cnt[order[k % len(order)]] += 1
+        k += 1
+    while sum(cnt.values()) > target:
+        j = max((i for i in todo if cnt[i] > 1), key=lambda i: cnt[i] - raw[i])
+        cnt[j] -= 1
+    for i in todo:
+        sections[i]["test_count"] = cnt[i]
+        sections[i]["estimated"] = True
+    return len(todo)
+
+
+def estimate_from_pages(sections: list[dict[str, Any]],
+                        volumes: list[dict[str, Any]] | None = None) -> int:
     """Test sayısı yazmayan bölümlere içindekilerdeki SAYFA ARALIĞINDAN tahmin.
 
     Kural: aralık = sonraki sayfa numaralı bölümün başlangıcı − bu bölümün
@@ -431,32 +623,18 @@ def estimate_from_pages(sections: list[dict[str, Any]]) -> int:
     """
     if not any(s.get("test_count") is None for s in sections):
         return 0
-    idx = [i for i, s in enumerate(sections) if s.get("page")]
-    if len(idx) < max(2, (len(sections) + 1) // 2):
-        return 0
-    pages = [sections[i]["page"] for i in idx]
-    if any(b < a for a, b in zip(pages, pages[1:])):
-        return 0
-    spans: dict[int, int] = {}
-    for k, i in enumerate(idx[:-1]):
-        span = sections[idx[k + 1]]["page"] - sections[i]["page"]
-        if span > 0:
-            spans[i] = span
-    if not spans:
-        return 0
-    ordered = sorted(spans.values())
-    median = ordered[len(ordered) // 2]
-    n = 0
-    for i, sec in enumerate(sections):
-        if sec.get("test_count") is not None or not sec.get("page"):
-            continue
-        span = spans.get(i) or (median if i == idx[-1] else None)
-        if not span:
-            continue
-        sec["test_count"] = max(1, round(span / PAGES_PER_TEST))
-        sec["estimated"] = True
-        n += 1
-    return n
+    if volumes is not None:
+        # Çok fasikül: sayfa numaraları her fasikülde baştan başlar → fasikül fasikül.
+        info = {v["volume"]: v for v in volumes}
+        groups: dict[Any, list[int]] = {}
+        for i, s in enumerate(sections):
+            groups.setdefault(s.get("volume"), []).append(i)
+        n = 0
+        for vol, idxs in groups.items():
+            v = info.get(vol) or {}
+            n += _estimate_group(sections, idxs, v.get("end_page"), v.get("test_questions"))
+        return n
+    return _estimate_group(sections, list(range(len(sections))), None, None)
 
 
 def identify_cover(image: bytes, media_type: str) -> dict[str, Any]:

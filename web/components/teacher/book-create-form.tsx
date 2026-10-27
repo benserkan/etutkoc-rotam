@@ -74,6 +74,11 @@ interface Props {
   /** Kapak/içindekiler taramasından gelen ön-dolum (sihirbaz). */
   initialName?: string | null;
   initialPublisher?: string | null;
+  /** Kapaktan okunan sınıf (5-12) — hedef sınıf bu sınıfa ayarlanır. */
+  initialGrade?: number | null;
+  /** Kapaktan okunan ders adı ("Fen Bilimleri") + sınav ibaresi ("TYT"). */
+  initialSubjectHint?: string | null;
+  initialExamHint?: string | null;
   /** Şablon seçici: "hide" gizler, "required" zorunlu + en üstte gösterir. */
   templateMode?: "optional" | "hide" | "required";
 }
@@ -86,21 +91,39 @@ export function BookCreateForm({
   hideCancel,
   initialName,
   initialPublisher,
+  initialGrade,
+  initialSubjectHint,
+  initialExamHint,
   templateMode = "optional",
 }: Props) {
   const router = useRouter();
   const createMut = useCreateBook();
 
-  const [name, setName] = React.useState(initialName ?? "");
+  const [name, setName] = React.useState(() => tidyTitle(initialName ?? ""));
   const [publisher, setPublisher] = React.useState(initialPublisher ?? "");
-  const [type, setType] = React.useState<LibraryBookType>("soru_bankasi");
+  const [type, setType] = React.useState<LibraryBookType>(() =>
+    /fasik[üu]l/i.test(initialName ?? "") ? "fasikul" : "soru_bankasi",
+  );
   const [avgQ, setAvgQ] = React.useState("");
-  const [preset, setPreset] = React.useState<GradePreset>("any");
-  const [gradeMin, setGradeMin] = React.useState("");
-  const [gradeMax, setGradeMax] = React.useState("");
+  // Kapakta "8. Sınıf" yazıyorsa hedef tam o sınıf (2026-10-27 — önce "Tüm seviyeler"
+  // geliyor, koç kapakta yazanı yeniden seçiyordu).
+  const g0 = initialGrade && initialGrade >= 5 && initialGrade <= 12 ? String(initialGrade) : "";
+  const [preset, setPreset] = React.useState<GradePreset>(g0 ? "custom" : "any");
+  const [gradeMin, setGradeMin] = React.useState(g0);
+  const [gradeMax, setGradeMax] = React.useState(g0);
   const [targetGraduate, setTargetGraduate] = React.useState(false);
-  const [showAdvanced, setShowAdvanced] = React.useState(false);
-  const [subjectId, setSubjectId] = React.useState<number | "">("");
+  const [showAdvanced, setShowAdvanced] = React.useState(!!g0);
+  const [subjectId, setSubjectId] = React.useState<number | "">(() =>
+    guessSubject(
+      computeFilteredSubjects(subjects, g0 ? "custom" : "any", {
+        gradeMin: g0,
+        gradeMax: g0,
+        targetGraduate: false,
+      }),
+      initialSubjectHint,
+      initialExamHint,
+    ),
+  );
   const [templateId, setTemplateId] = React.useState<number | "">("");
   const [error, setError] = React.useState<string | null>(null);
 
@@ -464,6 +487,42 @@ export function BookCreateForm({
 // =============================================================================
 // Helper
 // =============================================================================
+
+const trLower = (s: string) => s.toLocaleLowerCase("tr").replace(/\s+/g, " ").trim();
+
+/** Kapaktan okunan ders adını süzülmüş ders listesinde bul ("TYT" + "Matematik" önce). */
+function guessSubject(
+  list: readonly SubjectRef[],
+  hint?: string | null,
+  exam?: string | null,
+): number | "" {
+  if (!hint) return "";
+  const h = trLower(hint);
+  const e = exam ? trLower(exam) : "";
+  const tries = e ? [`${e} ${h}`, h] : [h];
+  for (const t of tries) {
+    const hit = list.find((s) => trLower(s.name) === t);
+    if (hit) return hit.id;
+  }
+  const part = list.find((s) => trLower(s.name).includes(h) || h.includes(trLower(s.name)));
+  return part ? part.id : "";
+}
+
+/** Kapakta tamamı büyük harf yazılan adı okunur yap ("ZOOM serisi FEN BİLİMLERİ"). */
+function tidyTitle(raw: string): string {
+  const letters = raw.replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, "");
+  const upper = raw.replace(/[^A-ZÇĞİÖŞÜ]/g, "");
+  if (!letters || upper.length / letters.length < 0.6) return raw;
+  return raw
+    .split(" ")
+    .map((w) => {
+      if (/^(TYT|AYT|LGS|YKS|DNA|ÖSYM)$/.test(w)) return w;
+      const low = w.toLocaleLowerCase("tr");
+      if (["ve", "ile", "ya", "da", "de"].includes(low)) return low;
+      return low.charAt(0).toLocaleUpperCase("tr") + low.slice(1);
+    })
+    .join(" ");
+}
 
 function computeFilteredSubjects(
   subjects: readonly SubjectRef[],
