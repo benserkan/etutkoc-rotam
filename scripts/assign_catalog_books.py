@@ -46,8 +46,12 @@ def _assign(db, book: Book, student_id: int) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--coach", type=int, required=True)
-    ap.add_argument("--student", type=int, required=True)
+    ap.add_argument("--student", type=int, default=None)
+    ap.add_argument("--student-name", default=None,
+                    help="Öğrenci kimliği yerine koçun öğrencileri arasında tam ad (ör. 'Deniz Mertan')")
     ap.add_argument("--names-from", required=True)
+    ap.add_argument("--only", action="append", default=[],
+                    help="Yalnız bu JSON dosyası (ad), tekrarlanabilir")
     ap.add_argument("--extra-json", action="append", default=[],
                     help="Katalog dışı kitap (bölümsüz, yalnız kimlik) JSON'u")
     ap.add_argument("--apply", action="store_true")
@@ -55,12 +59,23 @@ def main() -> int:
 
     with SessionLocal() as db:
         coach = db.get(User, a.coach)
-        stu = db.get(User, a.student)
+        if a.student_name:
+            hits = (db.query(User)
+                    .filter(User.teacher_id == coach.id, User.role == UserRole.STUDENT,
+                            User.full_name.ilike(a.student_name.strip()))
+                    .all())
+            assert len(hits) == 1, f"'{a.student_name}' adlı {len(hits)} öğrenci bulundu (tam 1 olmalı)"
+            stu = hits[0]
+            print(f"öğrenci #{stu.id} {stu.full_name}")
+        else:
+            stu = db.get(User, a.student)
         assert coach and coach.role == UserRole.TEACHER, "koç bulunamadı"
         assert stu and stu.role == UserRole.STUDENT and stu.teacher_id == coach.id, "öğrenci bu koçun değil"
 
         created = assigned = reused = 0
         for f in sorted(Path(a.names_from).glob("*.json")):
+            if a.only and f.name not in a.only:
+                continue
             d = json.loads(f.read_text(encoding="utf-8"))
             tpl = catalog_svc.find_duplicate(db, d["name"], d.get("publisher"))
             if tpl is None or tpl.catalog_status != "verified":
