@@ -3,14 +3,21 @@
 import * as React from "react";
 import Link from "next/link";
 import {
+  ArrowLeft,
   ArrowRight,
   Atom,
   BookOpenText,
   Calculator,
   CalendarClock,
+  Check,
+  ChevronRight,
+  GraduationCap,
   Info,
+  Lightbulb,
   Loader2,
+  Pencil,
   Plus,
+  RotateCcw,
   Scale,
   ScrollText,
   Trash2,
@@ -113,47 +120,69 @@ interface PastDeneme { id: number; date: string; nets: Record<string, string> }
 const inputCls =
   "h-11 w-full rounded-xl border border-slate-300 bg-white px-2 text-center text-base font-semibold text-slate-900 tabular-nums outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-600/15";
 
-function StepTitle({ n, title, hint }: { n: number; title: string; hint?: string }) {
+type Step = 1 | 2 | 3 | 4;
+
+const STEPS: { n: Step; label: string }[] = [
+  { n: 1, label: "Puan türü" },
+  { n: 2, label: "Netlerin" },
+  { n: 3, label: "Ek bilgi" },
+  { n: 4, label: "Sonuç" },
+];
+
+/** Üstteki adım çubuğu — tamamlanan adıma tıklayınca geri dönülür. */
+function Stepper({ step, maxStep, onGo }: { step: Step; maxStep: Step; onGo: (s: Step) => void }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-900 font-display text-sm font-bold text-white">{n}</span>
-      <div>
-        <h3 className="font-display text-lg font-bold text-slate-900">{title}</h3>
-        {hint ? <p className="mt-0.5 text-sm text-slate-500">{hint}</p> : null}
-      </div>
-    </div>
+    <ol className="grid grid-cols-4 gap-2" aria-label="Hesaplama adımları">
+      {STEPS.map((s) => {
+        const active = s.n === step;
+        const done = s.n < step || (s.n <= maxStep && s.n !== step);
+        const reachable = s.n <= maxStep && s.n !== step;
+        return (
+          <li key={s.n}>
+            <button
+              type="button"
+              disabled={!reachable}
+              onClick={() => onGo(s.n)}
+              aria-current={active ? "step" : undefined}
+              className="group flex w-full flex-col gap-2 text-left disabled:cursor-default"
+            >
+              <span className={cn("h-1.5 w-full rounded-full transition", active ? "bg-cyan-600" : done ? "bg-cyan-300" : "bg-slate-200")} />
+              <span className="flex items-center gap-1.5">
+                <span className={cn(
+                  "flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                  active ? "bg-cyan-700 text-white" : done ? "bg-cyan-100 text-cyan-800" : "bg-slate-100 text-slate-500",
+                )}>
+                  {done && !active ? <Check className="size-3" aria-hidden /> : s.n}
+                </span>
+                <span className={cn(
+                  "whitespace-nowrap text-xs font-semibold sm:text-sm",
+                  !active && "hidden sm:inline",
+                  active ? "text-slate-900" : done ? "text-slate-700 group-hover:text-cyan-800" : "text-slate-400",
+                )}>
+                  {s.label}
+                </span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
-/** Dairesel ilerleme — toplam net / soru sayısı. */
-function Ring({ value, max, label, tone }: { value: number; max: number; label: string; tone: "cyan" | "amber" }) {
-  const r = 34;
-  const c = 2 * Math.PI * r;
-  const pct = max > 0 ? Math.min(1, value / max) : 0;
+/** Adımın içindeki kısa açıklama kutusu (formun yanında, o adıma özel). */
+function Tip({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3">
-      <svg viewBox="0 0 80 80" className="size-20 shrink-0 -rotate-90" aria-hidden>
-        <circle cx="40" cy="40" r={r} fill="none" stroke="rgb(255 255 255 / 0.12)" strokeWidth="8" />
-        <circle
-          cx="40" cy="40" r={r} fill="none" strokeWidth="8" strokeLinecap="round"
-          stroke={tone === "cyan" ? "#22d3ee" : "#fbbf24"}
-          strokeDasharray={c} strokeDashoffset={c * (1 - pct)}
-          style={{ transition: "stroke-dashoffset 400ms ease" }}
-        />
-      </svg>
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</div>
-        <div className="font-display text-2xl font-extrabold tabular-nums text-white">
-          {fmt2(value)} <span className="text-sm font-semibold text-slate-400">/ {max}</span>
-        </div>
-      </div>
+    <div className="flex items-start gap-2.5 rounded-2xl bg-cyan-50 px-4 py-3 text-sm leading-relaxed text-cyan-950 ring-1 ring-cyan-100">
+      <Lightbulb className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden />
+      <div>{children}</div>
     </div>
   );
 }
-
-/* ───────── Bileşen ───────── */
 
 export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
+  const [step, setStep] = React.useState<Step>(1);
+  const [maxStep, setMaxStep] = React.useState<Step>(1);
   const [field, setField] = React.useState<Field>("SAY");
   const [dy, setDy] = React.useState<DY>({});
   const [diploma, setDiploma] = React.useState("");
@@ -161,7 +190,6 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
   const [result, setResult] = React.useState<SimResult | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const resultRef = React.useRef<HTMLDivElement>(null);
 
   // Gömülü sürüm: kapsayan sayfaya (etutkoc.com) içerik yüksekliğini bildir → iframe boyu uyar.
   // Ölçü İÇERİĞİN kendisinden alınır: documentElement.scrollHeight iframe boyundan küçük
@@ -183,6 +211,17 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
     return () => ro.disconnect();
   }, [embedded]);
 
+  /** Adım değişince aracın başına dön; gömülüde kaydırmayı kapsayan sayfa yapar. */
+  function goTo(s: Step) {
+    setStep(s);
+    setMaxStep((m) => (s > m ? s : m));
+    setError(null);
+    requestAnimationFrame(() => {
+      if (embedded && window.parent !== window) window.parent.postMessage({ type: "etutkoc-yks-scrolltop" }, "*");
+      else rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   const tests = testsFor(field);
   const nets: Record<string, number> = {};
   for (const t of tests) {
@@ -197,9 +236,11 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
 
   function setCell(key: string, part: "d" | "y", value: string) {
     setDy((prev) => ({ ...prev, [key]: { d: prev[key]?.d ?? "", y: prev[key]?.y ?? "", [part]: value } }));
+    setResult(null);
+    setError(null);
   }
 
-  function validate(): string | null {
+  function validateNets(): string | null {
     for (const t of tests) {
       const c = dy[t.key];
       const d = toNum(c?.d ?? "") ?? 0;
@@ -207,17 +248,22 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
       if (d < 0 || y < 0) return `${t.label}: sayılar negatif olamaz`;
       if (d + y > t.q) return `${t.label}: doğru + yanlış ${t.q} soruyu geçemez`;
     }
-    if (!TYT_TESTS.every((t) => t.key in nets)) return "Dört TYT testinin doğru ve yanlış sayılarını gir";
-    if (field !== "TYT" && !AYT_TESTS[field].every((t) => t.key in nets)) return `${FIELD_NAME[field]} testlerinin hepsini gir`;
-    const dip = toNum(diploma);
-    if (dip != null && (dip < 50 || dip > 100)) return "Diploma notu 50 ile 100 arasında olmalı";
+    const missing = tests.filter((t) => !(t.key in nets));
+    if (missing.length) return `Şu testleri doldur: ${missing.map((t) => t.label).join(", ")} (hiç çözmediysen 0 yaz)`;
     return null;
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const v = validate();
+  function nextFromNets() {
+    const v = validateNets();
     if (v) { setError(v); return; }
+    goTo(3);
+  }
+
+  async function calculate() {
+    const v = validateNets();
+    if (v) { setError(v); goTo(2); return; }
+    const dip = toNum(diploma);
+    if (dip != null && (dip < 50 || dip > 100)) { setError("Diploma notu 50 ile 100 arasında olmalı"); return; }
     setError(null);
     setBusy(true);
     const keys = new Set(tests.map((t) => t.key));
@@ -236,14 +282,10 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
       const r = await api<SimResult>("/api/v2/tools/yks-simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          denemeler,
-          score_type: field === "TYT" ? null : field,
-          diploma: toNum(diploma),
-        }),
+        body: JSON.stringify({ denemeler, score_type: field === "TYT" ? null : field, diploma: dip }),
       });
       setResult(r);
-      requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      goTo(4);
     } catch (err) {
       setError(err instanceof ApiError ? err.detail?.message ?? "Hesaplanamadı" : "Bağlantı sorunu, tekrar dene.");
     } finally {
@@ -251,181 +293,266 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
     }
   }
 
-  const submitButton = (
-    <button
-      type="submit"
-      disabled={busy}
-      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 px-5 py-4 text-base font-bold text-slate-950 shadow-lg shadow-amber-500/25 transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:translate-y-0 disabled:opacity-60"
-    >
-      {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Calculator className="size-5" aria-hidden />}
-      Puanımı ve sıralamamı hesapla
-    </button>
-  );
+  function restart() {
+    setDy({});
+    setDiploma("");
+    setPast([]);
+    setResult(null);
+    setMaxStep(1);
+    goTo(1);
+  }
+
+  const errorBox = error ? (
+    <p role="alert" className="flex items-start gap-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900 ring-1 ring-rose-200">
+      <Info className="mt-0.5 size-4 shrink-0 text-rose-700" aria-hidden />{error}
+    </p>
+  ) : null;
 
   return (
-    <div ref={rootRef} className="text-slate-900">
-      <form onSubmit={submit} method="post" className="grid gap-6 lg:grid-cols-12 lg:items-start">
-        <div className="space-y-6 lg:col-span-8">
-          {/* 1 · Puan türü */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-            <StepTitle n={1} title="Puan türünü seç" hint="Hangi puanla tercih yapacaksan onu seç." />
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+    <div ref={rootRef} className="scroll-mt-24 text-slate-900">
+      <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/5 sm:p-8">
+        <Stepper step={step} maxStep={result ? 4 : maxStep === 4 ? 3 : maxStep} onGo={goTo} />
+
+        {/* 1 · Puan türü */}
+        {step === 1 ? (
+          <section className="mt-8">
+            <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl">Hangi puanı hesaplayalım?</h2>
+            <p className="mt-1.5 text-slate-600">Tercih yapacağın puan türünü seç. Sayısal, eşit ağırlık ve sözelde TYT puanın da ayrıca hesaplanır.</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {FIELDS.map((f) => {
-                const active = field === f.key;
+                const active = field === f.key && maxStep > 1;
                 return (
                   <button
                     key={f.key}
                     type="button"
-                    aria-pressed={active}
-                    onClick={() => { setField(f.key); setResult(null); }}
+                    onClick={() => {
+                      if (f.key !== field) { setField(f.key); setResult(null); setMaxStep(2); }
+                      goTo(2);
+                    }}
                     className={cn(
-                      "flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition",
-                      active ? "border-cyan-600 bg-cyan-50 shadow-md shadow-cyan-600/10" : "border-slate-200 bg-white hover:border-slate-300",
+                      "group flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition hover:-translate-y-0.5 hover:border-cyan-600 hover:shadow-lg hover:shadow-cyan-600/10 sm:p-5",
+                      active ? "border-cyan-600 bg-cyan-50" : "border-slate-200 bg-white",
                     )}
                   >
-                    <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", active ? "bg-cyan-700 text-white" : "bg-slate-100 text-slate-600")}>
-                      <f.icon className="size-5" aria-hidden />
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white transition group-hover:bg-cyan-700">
+                      <f.icon className="size-6" aria-hidden />
                     </span>
-                    <span className="min-w-0">
-                      <span className="block font-semibold text-slate-900">{f.label}</span>
-                      <span className="block text-xs text-slate-500">{f.sub}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-display text-lg font-bold text-slate-900">{f.label}</span>
+                      <span className="block text-sm text-slate-500">{f.sub}</span>
                     </span>
+                    <ChevronRight className="size-5 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-cyan-700" aria-hidden />
                   </button>
                 );
               })}
             </div>
+            <p className="mt-5 text-center text-xs text-slate-500">Üyelik gerekmez · Netlerin kaydedilmez · 1 dakika sürer</p>
           </section>
+        ) : null}
 
-          {/* 2 · Netler */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-            <StepTitle n={2} title="Doğru ve yanlış sayılarını gir" hint="Net kendiliğinden hesaplanır: doğru − yanlış ÷ 4." />
+        {/* 2 · Netler */}
+        {step === 2 ? (
+          <section className="mt-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl">Doğru ve yanlışlarını gir</h2>
+                <p className="mt-1.5 text-slate-600">{FIELD_NAME[field]} puanı için {tests.length} test. Netin her satırda kendiliğinden hesaplanır.</p>
+              </div>
+              <button type="button" onClick={() => goTo(1)} className="text-sm font-semibold text-cyan-800 hover:underline">
+                Puan türünü değiştir
+              </button>
+            </div>
+            <div className="mt-5">
+              <Tip>
+                <b>Net = doğru − yanlış ÷ 4.</b> Dört yanlış bir doğruyu götürür; boş bıraktığın soru nete etki etmez.
+                Hiç çözmediğin testte doğru ve yanlışa 0 yaz.
+              </Tip>
+            </div>
+
             {(["TYT", "AYT"] as const).map((session) => {
               const list = tests.filter((t) => (session === "TYT") === t.key.startsWith("tyt_"));
               if (!list.length) return null;
               return (
-                <div key={session} className="mt-6">
+                <div key={session} className="mt-7">
                   <div className="mb-3 flex items-center gap-2">
                     <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", session === "TYT" ? "bg-cyan-700 text-white" : "bg-amber-400 text-slate-950")}>
                       {session}
                     </span>
-                    {session === "AYT" ? <span className="text-sm font-semibold text-slate-700">{FIELD_NAME[field]} testleri</span> : null}
+                    <span className="text-sm font-semibold text-slate-700">
+                      {session === "TYT" ? "Temel Yeterlilik Testi · 120 soru" : `${FIELD_NAME[field]} testleri · ${aytMax} soru`}
+                    </span>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {list.map((t) => {
-                      const n = netOf(dy[t.key]?.d ?? "", dy[t.key]?.y ?? "");
-                      const pct = n == null ? 0 : Math.min(100, (n / t.q) * 100);
-                      return (
-                        <div key={t.key} className={cn("rounded-2xl border p-4 transition", n == null ? "border-slate-200 bg-slate-50/60" : "border-cyan-200 bg-white shadow-sm")}>
-                          <div className="flex items-baseline justify-between gap-2">
-                            <label htmlFor={`d-${t.key}`} className="font-semibold leading-tight text-slate-900">{t.label}</label>
-                            <span className="shrink-0 text-xs text-slate-500">{t.q} soru</span>
-                          </div>
-                          <div className="mt-3 grid grid-cols-[1fr_1fr_auto] items-end gap-2">
-                            <div>
-                              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Doğru</div>
-                              <input id={`d-${t.key}`} inputMode="numeric" placeholder="0" aria-label={`${t.label} doğru`} className={inputCls}
-                                value={dy[t.key]?.d ?? ""} onChange={(e) => setCell(t.key, "d", e.target.value)} />
-                            </div>
-                            <div>
-                              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700">Yanlış</div>
-                              <input inputMode="numeric" placeholder="0" aria-label={`${t.label} yanlış`} className={inputCls}
-                                value={dy[t.key]?.y ?? ""} onChange={(e) => setCell(t.key, "y", e.target.value)} />
-                            </div>
-                            <div className="w-16 text-right">
-                              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Net</div>
-                              <div className="flex h-11 items-center justify-end font-display text-xl font-extrabold tabular-nums text-cyan-800">
-                                {n == null ? "—" : fmt2(n)}
+                  <div className="overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="hidden grid-cols-[1fr_6rem_6rem_5rem] gap-3 bg-slate-50 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 sm:grid">
+                      <span>Test</span><span className="text-center text-emerald-700">Doğru</span><span className="text-center text-rose-700">Yanlış</span><span className="text-right">Net</span>
+                    </div>
+                    <ul className="divide-y divide-slate-100">
+                      {list.map((t) => {
+                        const n = netOf(dy[t.key]?.d ?? "", dy[t.key]?.y ?? "");
+                        const pct = n == null ? 0 : Math.min(100, (n / t.q) * 100);
+                        return (
+                          <li key={t.key} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[1fr_6rem_6rem_5rem]">
+                            <div className="col-span-2 sm:col-span-1">
+                              <label htmlFor={`d-${t.key}`} className="font-semibold text-slate-900">{t.label}</label>
+                              <span className="ml-1.5 text-xs text-slate-500">{t.q} soru</span>
+                              <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-100" aria-hidden>
+                                <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all" style={{ width: `${pct}%` }} />
                               </div>
                             </div>
-                          </div>
-                          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200" aria-hidden>
-                            <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
+                            <div className="col-span-2 grid grid-cols-[1fr_1fr_4.5rem] items-center gap-2 sm:contents">
+                              <label className="block">
+                                <span className="mb-1 block text-[11px] font-bold uppercase text-emerald-700 sm:hidden">Doğru</span>
+                                <input id={`d-${t.key}`} inputMode="numeric" placeholder="0" aria-label={`${t.label} doğru`} className={inputCls}
+                                  value={dy[t.key]?.d ?? ""} onChange={(e) => setCell(t.key, "d", e.target.value)} />
+                              </label>
+                              <label className="block">
+                                <span className="mb-1 block text-[11px] font-bold uppercase text-rose-700 sm:hidden">Yanlış</span>
+                                <input inputMode="numeric" placeholder="0" aria-label={`${t.label} yanlış`} className={inputCls}
+                                  value={dy[t.key]?.y ?? ""} onChange={(e) => setCell(t.key, "y", e.target.value)} />
+                              </label>
+                              <div className="text-right">
+                                <span className="mb-1 block text-[11px] font-bold uppercase text-slate-500 sm:hidden">Net</span>
+                                <span className="font-display text-xl font-extrabold tabular-nums text-cyan-800">{n == null ? "—" : fmt2(n)}</span>
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 </div>
               );
             })}
-          </section>
 
-          {/* 3 · Diploma + önceki denemeler */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-            <StepTitle n={3} title="İsteğe bağlı: daha isabetli tahmin" hint="Boş bırakabilirsin; doldurursan sıralama ve sınav günü tahmini keskinleşir." />
-            <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_9rem] sm:items-center">
-              <label htmlFor="diploma" className="text-sm text-slate-700">
-                <span className="font-semibold text-slate-900">Diploma notu</span> — sıralama, diploma katkısı eklenmiş yerleştirme puanıyla bulunur
-              </label>
-              <input id="diploma" inputMode="decimal" placeholder="ör. 85" className={inputCls} value={diploma} onChange={(e) => setDiploma(e.target.value)} />
+            {/* Toplam + ilerle */}
+            <div className="mt-7 space-y-3">
+              {errorBox}
+              <div className="flex flex-col gap-4 rounded-2xl bg-slate-950 p-4 text-white sm:flex-row sm:items-center sm:p-5">
+                <div className="flex flex-1 flex-wrap gap-x-8 gap-y-3">
+                  <Total label="TYT neti" value={tytNet} max={120} tone="text-cyan-300" />
+                  {aytTests.length ? <Total label="AYT neti" value={aytNet} max={aytMax} tone="text-amber-300" /> : null}
+                  <div className="self-end text-sm text-slate-400">{filled}/{tests.length} test girildi</div>
+                </div>
+                <button type="button" onClick={nextFromNets}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-bold text-slate-950 transition hover:bg-amber-300">
+                  Devam et <ArrowRight className="size-4" aria-hidden />
+                </button>
+              </div>
             </div>
+          </section>
+        ) : null}
 
-            <details className="mt-5 rounded-2xl border border-dashed border-slate-300 p-4 open:border-solid open:bg-slate-50/60">
-              <summary className="cursor-pointer list-none text-sm [&::-webkit-details-marker]:hidden">
-                <span className="inline-flex items-center gap-2 font-semibold text-slate-900">
-                  <CalendarClock className="size-4 text-cyan-700" aria-hidden /> Önceki denemelerini ekle
-                </span>
-                <span className="mt-1 block text-slate-500">Kendi gidişatın ve oynaklığın hesaba katılır, tahmin aralığı daralır.</span>
-              </summary>
-              <div className="mt-4 space-y-3">
-                {past.map((p, i) => (
-                  <div key={p.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label className="text-xs font-semibold text-slate-700" htmlFor={`pd-${p.id}`}>{i + 1}. deneme tarihi</label>
-                      <input id={`pd-${p.id}`} type="date" max={today()} className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900"
-                        value={p.date} onChange={(e) => setPast((arr) => arr.map((x) => (x.id === p.id ? { ...x, date: e.target.value } : x)))} />
-                      <button type="button" className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-rose-700 hover:underline"
-                        onClick={() => setPast((arr) => arr.filter((x) => x.id !== p.id))}>
-                        <Trash2 className="size-3.5" aria-hidden /> Kaldır
-                      </button>
-                    </div>
-                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {tests.map((t) => (
-                        <label key={t.key} className="text-xs text-slate-600">
-                          {t.label} neti
-                          <input inputMode="decimal" className={cn(inputCls, "mt-1 h-9 text-sm")} value={p.nets[t.key] ?? ""}
-                            onChange={(e) => setPast((arr) => arr.map((x) => (x.id === p.id ? { ...x, nets: { ...x.nets, [t.key]: e.target.value } } : x)))} />
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {past.length < 7 ? (
-                  <button type="button" onClick={() => setPast((arr) => [...arr, { id: Date.now(), date: "", nets: {} }])}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:border-cyan-600">
-                    <Plus className="size-4" aria-hidden /> Deneme ekle
-                  </button>
+        {/* 3 · Ek bilgi */}
+        {step === 3 ? (
+          <section className="mt-8">
+            <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl">Tahmini keskinleştir</h2>
+            <p className="mt-1.5 text-slate-600">İkisi de isteğe bağlı. Boş bırakıp doğrudan hesaplayabilirsin.</p>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 p-5">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="size-5 text-cyan-700" aria-hidden />
+                  <label htmlFor="diploma" className="font-display text-lg font-bold text-slate-900">Diploma notu</label>
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                  Diploma notunun 5 ile çarpımının 0,12 katı puanına eklenir (OBP katkısı). Sıralaman bu yerleştirme puanıyla bulunur.
+                </p>
+                <input id="diploma" inputMode="decimal" placeholder="ör. 85" className={cn(inputCls, "mt-4 max-w-[10rem]")}
+                  value={diploma} onChange={(e) => { setDiploma(e.target.value); setResult(null); }} />
+                {toNum(diploma) != null && toNum(diploma)! >= 50 && toNum(diploma)! <= 100 ? (
+                  <p className="mt-2 text-sm text-cyan-800">Puanına yaklaşık <b>{fmt1(toNum(diploma)! * 5 * 0.12)}</b> puan eklenir.</p>
                 ) : null}
               </div>
-            </details>
-          </section>
-        </div>
 
-        {/* Canlı özet */}
-        <aside className="lg:sticky lg:top-24 lg:col-span-4">
-          <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-6 text-white shadow-2xl shadow-slate-900/30">
-            <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-cyan-500/25 blur-3xl" aria-hidden />
-            <div className="relative">
-              <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Canlı özet</div>
-              <div className="mt-1 font-display text-xl font-bold">{FIELD_NAME[field]}</div>
-              <div className="mt-5 space-y-4">
-                <Ring value={tytNet} max={120} label="TYT neti" tone="cyan" />
-                {aytTests.length ? <Ring value={aytNet} max={aytMax} label="AYT neti" tone="amber" /> : null}
+              <div className="rounded-2xl border border-slate-200 p-5">
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="size-5 text-cyan-700" aria-hidden />
+                  <h3 className="font-display text-lg font-bold text-slate-900">Önceki denemelerin</h3>
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                  Eklersen gidişatın ve oynaklığın hesaba katılır; sınav günü tahmin aralığı daralır.
+                </p>
+                <div className="mt-4 space-y-3">
+                  {past.map((p, i) => (
+                    <div key={p.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="text-xs font-semibold text-slate-700" htmlFor={`pd-${p.id}`}>{i + 1}. deneme tarihi</label>
+                        <input id={`pd-${p.id}`} type="date" max={today()} className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900"
+                          value={p.date} onChange={(e) => setPast((arr) => arr.map((x) => (x.id === p.id ? { ...x, date: e.target.value } : x)))} />
+                        <button type="button" className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-rose-700 hover:underline"
+                          onClick={() => setPast((arr) => arr.filter((x) => x.id !== p.id))}>
+                          <Trash2 className="size-3.5" aria-hidden /> Kaldır
+                        </button>
+                      </div>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {tests.map((t) => (
+                          <label key={t.key} className="text-xs text-slate-600">
+                            {t.label} neti
+                            <input inputMode="decimal" className={cn(inputCls, "mt-1 h-9 text-sm")} value={p.nets[t.key] ?? ""}
+                              onChange={(e) => setPast((arr) => arr.map((x) => (x.id === p.id ? { ...x, nets: { ...x.nets, [t.key]: e.target.value } } : x)))} />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {past.length < 7 ? (
+                    <button type="button" onClick={() => setPast((arr) => [...arr, { id: Date.now(), date: "", nets: {} }])}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:border-cyan-600">
+                      <Plus className="size-4" aria-hidden /> Deneme ekle
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="mt-5 text-sm text-slate-400">
-                {filled}/{tests.length} test girildi
-                {toNum(diploma) != null ? <> · diploma {diploma}</> : null}
-                {past.length ? <> · {past.length} önceki deneme</> : null}
-              </div>
-              {error ? <p role="alert" className="mt-4 rounded-xl bg-rose-500/15 px-3 py-2 text-sm font-medium text-rose-200 ring-1 ring-rose-400/30">{error}</p> : null}
-              <div className="mt-5">{submitButton}</div>
-              <p className="mt-3 text-center text-xs text-slate-400">Üyelik gerekmez · Netlerin kaydedilmez</p>
             </div>
-          </div>
-        </aside>
-      </form>
 
-      {result ? <Results result={result} embedded={embedded} ref={resultRef} /> : null}
+            <div className="mt-7 space-y-3">
+              {errorBox}
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <button type="button" onClick={() => goTo(2)} className="inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-500/10">
+                  <ArrowLeft className="size-4" aria-hidden /> Netlere dön
+                </button>
+                <button type="button" onClick={calculate} disabled={busy}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-400 px-6 py-4 text-base font-bold text-slate-950 shadow-lg shadow-amber-500/25 transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:translate-y-0 disabled:opacity-60">
+                  {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Calculator className="size-5" aria-hidden />}
+                  Puanımı ve sıralamamı hesapla
+                </button>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {/* 4 · Sonuç */}
+        {step === 4 && result ? (
+          <section className="mt-8">
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <span className="font-semibold text-slate-900">{FIELD_NAME[field]}</span>
+              <span>· TYT {fmt2(tytNet)}{aytTests.length ? <> · AYT {fmt2(aytNet)}</> : null} net</span>
+              {toNum(diploma) != null ? <span>· diploma {diploma}</span> : null}
+              {past.length ? <span>· {past.length} önceki deneme</span> : null}
+              <span className="ml-auto flex gap-2">
+                <button type="button" onClick={() => goTo(2)} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 font-semibold text-cyan-800 ring-1 ring-slate-200 hover:ring-cyan-600">
+                  <Pencil className="size-3.5" aria-hidden /> Netleri düzenle
+                </button>
+                <button type="button" onClick={restart} className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 font-semibold text-slate-700 hover:bg-white">
+                  <RotateCcw className="size-3.5" aria-hidden /> Yeni hesap
+                </button>
+              </span>
+            </div>
+            <Results result={result} embedded={embedded} />
+          </section>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Total({ label, value, max, tone }: { label: string; value: number; max: number; tone: string }) {
+  return (
+    <div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
+      <div className={cn("font-display text-3xl font-extrabold tabular-nums", tone)}>
+        {fmt2(value)} <span className="text-sm font-semibold text-slate-500">/ {max}</span>
+      </div>
     </div>
   );
 }
@@ -493,11 +620,11 @@ function LessonRow({ l }: { l: Lesson }) {
   );
 }
 
-const Results = React.forwardRef<HTMLDivElement, { result: SimResult; embedded: boolean }>(function Results({ result, embedded }, ref) {
+function Results({ result, embedded }: { result: SimResult; embedded: boolean }) {
   const types = Object.keys(result.now);
   const examDate = new Date(result.exam_date).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
   return (
-    <div ref={ref} className="mt-10 scroll-mt-24 space-y-6">
+    <div className="mt-6 space-y-6">
       {/* Bugün */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-800 via-cyan-900 to-slate-950 p-6 text-white shadow-2xl shadow-cyan-900/30 sm:p-8">
         <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full bg-amber-400/25 blur-3xl" aria-hidden />
@@ -616,4 +743,4 @@ const Results = React.forwardRef<HTMLDivElement, { result: SimResult; embedded: 
       </section>
     </div>
   );
-});
+}
