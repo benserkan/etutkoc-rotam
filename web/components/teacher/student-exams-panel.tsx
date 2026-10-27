@@ -19,7 +19,7 @@ import {
 
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamAddActions, ExamAddButtons } from "@/components/shared/exam-add-actions";
-import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
+import { ExamImportDialog, sectionChoicesFor } from "@/components/shared/exam-import-dialog";
 import {
   PeriodContextNote,
   PeriodSelect,
@@ -43,6 +43,7 @@ import {
   useCreateExam,
   useDeleteExam,
   useSetExamScope,
+  useSetExamSection,
   useUpdateExam,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
@@ -397,6 +398,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
                     row={row}
                     studentId={studentId}
                     sectionOptions={data.section_options ?? []}
+                    studentGrade={data.student_grade ?? null}
                     share={shares[String(row.id)] ?? null}
                     onOpenDetail={() => setDetailId(row.id)}
                   />
@@ -441,6 +443,48 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
   );
 }
 
+// Açılır liste seçenekleri seçicinin renkli yazısını devralıp beyaz zeminde okunmuyordu.
+const OPTION_COLORS = "[&_option]:bg-white [&_option]:text-slate-900 dark:[&_option]:bg-slate-900 dark:[&_option]:text-slate-100";
+
+/** Deneme türü — PDF yüklerken seçilen türlerle aynı liste (sınıfa göre). 2026-10-27 */
+function ExamSectionSelect({ row, grade }: { row: ExamResultRow; grade: string | null }) {
+  const mut = useSetExamSection();
+  const groups = sectionChoicesFor(grade ?? "")
+    .map((g) => ({ ...g, options: g.options.filter((o) => o.value) }))
+    .filter((g) => g.options.length > 0);
+  const listed = groups.some((g) => g.options.some((o) => o.value === row.section));
+  const locked = row.import_source === "task";
+  return (
+    <select
+      value={row.section}
+      disabled={mut.isPending || locked}
+      onChange={(e) => mut.mutate({ examId: row.id, section: e.target.value })}
+      aria-label="Deneme türü"
+      title={locked ? "Programdaki görevden geldi" : "Deneme türünü değiştir"}
+      className={cn(
+        "h-6 rounded border px-1 text-[11px] font-medium",
+        OPTION_COLORS,
+        SECTION_TONE[row.section],
+      )}
+    >
+      {!listed ? <option value={row.section}>{row.section_label}</option> : null}
+      {groups.map((g, i) =>
+        g.group ? (
+          <optgroup key={g.group} label={g.group}>
+            {g.options.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </optgroup>
+        ) : (
+          g.options.map((o) => (
+            <option key={`${i}-${o.value}`} value={o.value}>{o.label}</option>
+          ))
+        ),
+      )}
+    </select>
+  );
+}
+
 /** Genel / branş işareti — sistem tanır, koç düzeltir (2026-10-06). */
 function ExamScopeSelect({ row }: { row: ExamResultRow }) {
   const mut = useSetExamScope();
@@ -457,6 +501,7 @@ function ExamScopeSelect({ row }: { row: ExamResultRow }) {
       title="Netler yalnız aynı kapsamdaki denemelerle kıyaslanır. Sistem soru sayısından tanır; yanlışsa buradan düzelt."
       className={cn(
         "h-6 rounded border px-1 text-[11px] font-medium",
+        OPTION_COLORS,
         isBranch
           ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200"
           : "border-border bg-background text-foreground",
@@ -479,6 +524,7 @@ function ExamRow({
   row,
   studentId,
   sectionOptions,
+  studentGrade,
   share,
   onOpenDetail,
   prev,
@@ -486,6 +532,7 @@ function ExamRow({
   row: ExamResultRow;
   studentId: number;
   sectionOptions: StudentExamListResponse["section_options"];
+  studentGrade: string | null;
   share: ExamShareInfo | null;
   onOpenDetail: () => void;
   prev: ExamResultRow | null;
@@ -536,14 +583,7 @@ function ExamRow({
                 >
                   {row.title}
                 </button>
-                <span
-                  className={cn(
-                    "inline-flex items-center text-[10px] px-1.5 py-0.5 rounded border",
-                    SECTION_TONE[row.section],
-                  )}
-                >
-                  {row.section_label}
-                </span>
+                <ExamSectionSelect row={row} grade={studentGrade} />
                 <ExamScopeSelect row={row} />
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">

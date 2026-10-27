@@ -86,7 +86,7 @@ const GRADE_CHOICES: { value: string; label: string }[] = [
   { value: "mezun", label: "Mezun" },
 ];
 
-type SectionGroup = { group: string | null; options: { value: string; label: string }[] };
+export type SectionGroup = { group: string | null; options: { value: string; label: string }[] };
 
 const YKS_OPTIONS = [
   { value: "tyt", label: "TYT" },
@@ -104,7 +104,7 @@ const OKUL_OPTION = { value: "okul", label: "Okul Sınavı / Yazılı" }; // yal
  * 12 (bu yıl Klasik) / mezun → TYT, AYT + 12. Sınıf Gelişim İzleme (işlenen AYT konuları).
  * Gelişim izleme sınavlarında soru sayısı değişkendir. "Okul Sınavı" yalnız ortaokulda.
  */
-function sectionChoicesFor(grade: string): SectionGroup[] {
+export function sectionChoicesFor(grade: string): SectionGroup[] {
   const auto: SectionGroup = { group: null, options: [{ value: "", label: "Otomatik tespit" }] };
   if (!grade) return [auto];
   const g = grade === "mezun" ? 13 : Number(grade);

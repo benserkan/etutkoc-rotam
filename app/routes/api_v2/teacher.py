@@ -115,6 +115,8 @@ from app.models import (
     compute_net,
     subject_net,
 )
+from app.models.exam_result import section_penalty
+from app.services.exam_import_service import rebuild_subject_nets
 from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
 from app.routes.api_v2.schemas.student import DenemeResultsBody
 from app.routes.api_v2.schemas.common import task_video_refs, MutationResponse
@@ -146,6 +148,7 @@ from app.routes.api_v2.schemas.teacher import (
     DnaSubjectRow,
     ExamCreateBody,
     ExamScopeBody,
+    ExamSectionBody,
     ExamListSummary,
     ExamQuestionItem,
     ExamQuestionsResponse,
@@ -1904,6 +1907,8 @@ def teacher_student_exams_v2(
         section_options=_exam_section_options(),
         period=grade_period_service.build_filter_meta(db, student.id, win),
         program_rows=[_row(e) for e in program],
+        student_grade=("mezun" if student.is_graduate
+                       else (str(student.grade_level) if student.grade_level else None)),
     )
 
 
@@ -2004,6 +2009,50 @@ def teacher_set_exam_scope_v2(
     _set_exam_scope(exam, body.scope)
     db.commit()
     db.refresh(exam)
+    creator_name = None
+    if exam.created_by_id:
+        creator = db.get(User, exam.created_by_id)
+        creator_name = creator.full_name if creator else None
+    return MutationResponse[ExamResultRow](
+        data=_build_exam_row(exam, created_by_name=creator_name),
+        invalidate=[
+            f"teacher:{user.id}:students:{exam.student_id}:exams",
+            f"teacher:{user.id}:students:{exam.student_id}",
+        ],
+    )
+
+
+@router.post("/exams/{exam_id}/section", response_model=MutationResponse[ExamResultRow])
+def teacher_set_exam_section_v2(
+    exam_id: int,
+    body: ExamSectionBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Deneme türünü değiştir (2026-10-27) — kayıt, soru satırları ve konu eşleşmeleri
+    korunur; yanlış cezası değişirse (LGS 3 ↔ diğerleri 4) net yeniden hesaplanır.
+    Sahiplik 404 · program görevinden gelen deneme 409."""
+    exam = _get_owned_exam(db, exam_id, user.id)
+    if exam.import_source == "task":
+        raise HTTPException(status_code=409, detail={
+            "code": "task_linked",
+            "message": "Bu deneme programdaki görevden geldi — türü görevden belirlenir."})
+    try:
+        new_sec = ExamSection(body.section)
+    except ValueError:
+        raise HTTPException(status_code=422, detail={
+            "code": "invalid_section", "message": "Geçersiz deneme türü."})
+    if new_sec != exam.section:
+        old_pen = section_penalty(exam.section)
+        exam.section = new_sec
+        if section_penalty(new_sec) != old_pen:
+            exam.net = compute_net(exam.total_correct or 0, exam.total_wrong or 0, new_sec)
+            if exam.import_source == "pdf_import":
+                student = db.get(User, exam.student_id)
+                if student is not None:
+                    rebuild_subject_nets(db, exam, student)
+        db.commit()
+        db.refresh(exam)
     creator_name = None
     if exam.created_by_id:
         creator = db.get(User, exam.created_by_id)

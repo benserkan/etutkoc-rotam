@@ -1687,6 +1687,23 @@ export function useSetExamScope() {
   });
 }
 
+/** Deneme türünü değiştir (PDF beyan listesindeki türler). 2026-10-27 */
+export function useSetExamSection() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<ExamResultRow>, ApiError, { examId: number; section: string }>({
+    mutationFn: ({ examId, section }) =>
+      api<MutationResponse<ExamResultRow>>(`/api/v2/teacher/exams/${examId}/section`, {
+        method: "POST",
+        body: JSON.stringify({ section }),
+      }),
+    onError: (err) => showError(err, "Deneme türü değiştirilemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(`Deneme türü: ${res.data.section_label}`);
+    },
+  });
+}
+
 // =============================================================================
 // KS1 — Koçluk seansları
 // =============================================================================

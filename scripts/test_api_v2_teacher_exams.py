@@ -199,6 +199,19 @@ def main():
             "title": "X", "exam_date": "2026-05-01", "section": "lgs", "total_correct": 5})
         check("8c. başka öğr. UPDATE → 404", r.status_code == 404, f"status={r.status_code}")
 
+        # 8d. tür değiştir: LGS (ceza 3) → 9. sınıf GİS (ceza 4) → net yeniden hesaplanır
+        r = tc.get(f"/api/v2/teacher/students/{sid}/exams")
+        check("8d. liste öğrenci sınıfını taşır", "student_grade" in r.json(), f"{list(r.json())}")
+        r = tc.post(f"/api/v2/teacher/exams/{exam1_id}/section", json={"section": "maarif_9"})
+        d = r.json().get("data", {})
+        exp = round(d.get("total_correct", 0) - d.get("total_wrong", 0) / 4, 2)
+        check("8e. tür değişti + net ceza 4 ile", r.status_code == 200 and d.get("section") == "maarif_9"
+              and abs(d.get("net", -1) - exp) < 0.01, f"status={r.status_code} {d}")
+        r = tc.post(f"/api/v2/teacher/exams/{exam1_id}/section", json={"section": "uydurma"})
+        check("8f. geçersiz tür → 422", r.status_code == 422, f"status={r.status_code}")
+        r = t2c.post(f"/api/v2/teacher/exams/{exam1_id}/section", json={"section": "tyt"})
+        check("8g. başka öğr. tür değiştir → 404", r.status_code == 404, f"status={r.status_code}")
+
         # 9. DELETE happy
         r = tc.delete(f"/api/v2/teacher/exams/{exam1_id}")
         check("9. DELETE happy → 200", r.status_code == 200 and r.json()["data"]["deleted"],

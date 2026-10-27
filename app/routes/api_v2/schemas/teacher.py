@@ -2348,6 +2348,10 @@ class ExamScopeBody(BaseModel):
     scope: Literal["auto", "genel", "brans"]
 
 
+class ExamSectionBody(BaseModel):
+    section: str
+
+
 class ExamSubjectRow(BaseModel):
     name: str
     correct: int
@@ -2439,6 +2443,8 @@ class StudentExamListResponse(BaseModel):
     # Programdaki deneme görevlerinden gelen sonuçlar (konu analizi yok) — analiz
     # listesine/özetine KARIŞMAZ, ayrı bölümde gösterilir (2026-10-20).
     program_rows: list[ExamResultRow] = []
+    # Satırdaki tür seçicisi sınıfa göre seçenek gösterir (PDF beyan listesiyle aynı).
+    student_grade: str | None = None
 
 
 # =============================================================================

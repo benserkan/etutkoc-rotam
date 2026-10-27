@@ -2305,6 +2305,7 @@ export interface StudentExamListResponse {
   period?: PeriodFilterMeta | null;
   /** Programdaki deneme görevlerinden gelen sonuçlar — analize karışmaz (2026-10-20). */
   program_rows?: ExamResultRow[];
+  student_grade?: string | null;
 }
 
 // =============================================================================
