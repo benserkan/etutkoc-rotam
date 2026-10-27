@@ -81,6 +81,14 @@ GENEL_PRESETS: dict[str, list[tuple[str, str, str, int]]] = {
     "okul": [
         ("okul", "Sınıf Genel Denemesi", "okul", 40),
     ],
+    # 2026-10-27 (koç + yayınevi takvimleri): lisede "okul denemesi" yok — sınıf düzeyi
+    # Gelişim İzleme sınavları (soru sayısı değişken; varsayılan 40, koç değiştirir) ve
+    # Maarif 1. Aşama (TYT, 9-10 konuları).
+    "gis_9": [("gis_9", "9. Sınıf Gelişim İzleme", "maarif_9", 40)],
+    "gis_10": [("gis_10", "10. Sınıf Gelişim İzleme", "maarif_10", 40)],
+    "gis_11": [("gis_11", "11. Sınıf Gelişim İzleme", "maarif_11", 40)],
+    "gis_12": [("gis_12", "12. Sınıf Gelişim İzleme (AYT)", "gis_12", 40)],
+    "asama_1": [("maarif_1", "Maarif 1. Aşama (TYT)", "maarif_1", 125)],
 }
 _TRACK_PRESET = {"SAYISAL": "ayt_say", "EA": "ayt_ea", "SOZEL": "ayt_soz", "DIL": "ydt"}
 
@@ -336,9 +344,14 @@ def genel_presets_for(student: User) -> list[GenelPreset]:
         if preferred:  # alanına uygun AYT önce, diğer AYT'ler sonra
             out.sort(key=lambda p: (p[0] != "tyt", p[0] != preferred))
         if grade is not None and grade < 12 and not graduate:
-            out = out + list(GENEL_PRESETS["okul"])
-    elif grade in (9, 10):
-        out = list(GENEL_PRESETS["okul"]) + [p for p in GENEL_PRESETS["yks"] if p[0] == "tyt"]
+            # 11 (Maarif): 1. Aşama + 11. sınıf gelişim izleme (tablo, 2026-10-27)
+            out = list(GENEL_PRESETS["asama_1"]) + list(GENEL_PRESETS["gis_11"])
+        else:
+            out = out + list(GENEL_PRESETS["gis_12"])
+    elif grade == 10:
+        out = list(GENEL_PRESETS["gis_10"]) + list(GENEL_PRESETS["asama_1"])
+    elif grade == 9:
+        out = list(GENEL_PRESETS["gis_9"])
     else:
         out = list(GENEL_PRESETS["lgs"]) + list(GENEL_PRESETS["yks"])
     return [GenelPreset(key=k, label=lbl, exam_section=sec, question_count=n) for k, lbl, sec, n in out]

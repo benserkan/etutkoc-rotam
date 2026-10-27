@@ -28,6 +28,12 @@ class ExamSection(str, enum.Enum):
       (Maarif 9/10/11). Bu yıl 9-10-11 Maarif modelde; 12 ve mezunlar klasik
       YKS'de → MAARIF_2 enum'da hazır ama beyan listesinde henüz gösterilmez.
       Net cezası TYT/AYT ile aynı (4 yanlış 1 doğru — ÇAP karnesiyle doğrulandı).
+    - 2026-10-27 adlandırma (koç + yayınevi takvimleri: Özdebir "9/10. SINIF GİS",
+      Bilgi Sarmal "Maarif İlk Aşama"): "Basamak" değil "Aşama"; sınıf denemeleri
+      "N. Sınıf Gelişim İzleme" (soru sayısı değişken — o güne kadar işlenen konular).
+    - GIS_12: 12. sınıf (bu yıl Klasik) / mezun Gelişim İzleme — işlenen AYT konularına
+      kadar, değişken soru sayılı. Evren AYT taksonomisi (alan filtreli). Seneye 12
+      Maarif'e geçince Maarif 1./2. Aşama + 12. sınıf gelişim izleme ayrıca ele alınır.
     """
     LGS = "lgs"
     TYT = "tyt"
@@ -41,6 +47,7 @@ class ExamSection(str, enum.Enum):
     MAARIF_9 = "maarif_9"
     MAARIF_10 = "maarif_10"
     MAARIF_11 = "maarif_11"
+    GIS_12 = "gis_12"
 
 
 EXAM_SECTION_LABELS: dict[ExamSection, str] = {
@@ -51,12 +58,18 @@ EXAM_SECTION_LABELS: dict[ExamSection, str] = {
     ExamSection.AYT_SOZ: "AYT (Sözel)",
     ExamSection.AYT_DIL: "AYT (Dil)",
     ExamSection.OKUL: "Okul Denemesi",
-    ExamSection.MAARIF_1: "Maarif 1. Basamak",
-    ExamSection.MAARIF_2: "Maarif 2. Basamak",
-    ExamSection.MAARIF_9: "Maarif 9. Sınıf",
-    ExamSection.MAARIF_10: "Maarif 10. Sınıf",
-    ExamSection.MAARIF_11: "Maarif 11. Sınıf",
+    ExamSection.MAARIF_1: "Maarif 1. Aşama (TYT)",
+    ExamSection.MAARIF_2: "Maarif 2. Aşama (AYT)",
+    ExamSection.MAARIF_9: "9. Sınıf Gelişim İzleme",
+    ExamSection.MAARIF_10: "10. Sınıf Gelişim İzleme",
+    ExamSection.MAARIF_11: "11. Sınıf Gelişim İzleme",
+    ExamSection.GIS_12: "12. Sınıf Gelişim İzleme (AYT)",
 }
+
+# Sınıf düzeyi gelişim izleme türleri (soru sayısı değişken)
+GIS_SECTIONS: tuple[ExamSection, ...] = (
+    ExamSection.MAARIF_9, ExamSection.MAARIF_10, ExamSection.MAARIF_11, ExamSection.GIS_12,
+)
 
 # Maarif deneme türleri (evren + kapsam kararlarında tek kaynak)
 MAARIF_SECTIONS: tuple[ExamSection, ...] = (

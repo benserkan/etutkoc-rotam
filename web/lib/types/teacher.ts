@@ -2195,7 +2195,8 @@ export type ExamSectionValue =
   | "maarif_2"
   | "maarif_9"
   | "maarif_10"
-  | "maarif_11";
+  | "maarif_11"
+  | "gis_12";
 
 export interface ExamSectionOption {
   value: ExamSectionValue;

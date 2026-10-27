@@ -166,16 +166,16 @@ def main():
         # 12 tür: LGS + TYT + 4×AYT + OKUL + 5×MAARIF
         # (Maarif Modeli denemeleri — 2026-09-09, migration x9y2b5c6b00x)
         _sec_vals = {o["value"] for o in j.get("section_options", [])}
-        check("7c. section_options 12 adet (okul + 5 Maarif dahil)",
-              r.status_code == 200 and len(j["section_options"]) == 12
+        check("7c. section_options 13 adet (okul + 5 Maarif + 12. sınıf GİS dahil)",
+              r.status_code == 200 and len(j["section_options"]) == 13 and "gis_12" in _sec_vals
               and "okul" in _sec_vals
               and {"maarif_1", "maarif_2", "maarif_9", "maarif_10",
                    "maarif_11"} <= _sec_vals,
               f"{len(j.get('section_options', []))} {sorted(_sec_vals)}")
-        check("7d. Maarif etiketleri okunur (1. Basamak / 11. Sınıf)",
+        check("7d. Etiketler okunur (Maarif 1. Aşama / 11. Sınıf Gelişim İzleme)",
               r.status_code == 200
-              and any(o["label"] == "Maarif 1. Basamak" for o in j["section_options"])
-              and any(o["label"] == "Maarif 11. Sınıf" for o in j["section_options"]),
+              and any(o["label"] == "Maarif 1. Aşama (TYT)" for o in j["section_options"])
+              and any(o["label"] == "11. Sınıf Gelişim İzleme" for o in j["section_options"]),
               f"{[o['label'] for o in j.get('section_options', [])]}")
 
         # 8. başka öğretmenin öğrencisi GET

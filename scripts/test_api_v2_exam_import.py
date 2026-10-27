@@ -1101,8 +1101,11 @@ def main() -> int:
             f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
             files={"file": fresh_pdf()})
         d29c = r.json() if r.status_code == 200 else {}
-        check("29c. TDE adı + kw'siz okul belgesi AYT sanılmadı (tespit TYT)",
-              r.status_code == 200 and d29c.get("universe") == "tyt",
+        # 2026-10-27: başlıkta "GİS" geçen 10. sınıf belgesi = "10. Sınıf Gelişim İzleme"
+        # (maarif_10, Maarif evreni); asıl korunan kural yine AYT sanılmaması.
+        check("29c. TDE adı + kw'siz okul belgesi AYT sanılmadı (tespit 10. sınıf gelişim izleme)",
+              r.status_code == 200 and d29c.get("universe") != "ayt"
+              and d29c.get("section") == "maarif_10",
               f"{d29c.get('universe')}/{d29c.get('section')}")
 
         # --- 30) BEYAN ESAS (sınıf + tür kullanıcıdan; tespit bekçi olur) ---

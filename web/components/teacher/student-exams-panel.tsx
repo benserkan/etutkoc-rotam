@@ -84,6 +84,7 @@ const SECTION_TONE: Record<ExamSectionValue, string> = {
   maarif_9: "border-lime-200 bg-lime-50 text-lime-800 dark:bg-lime-500/10 dark:border-lime-500/30 dark:text-lime-200",
   maarif_10: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
   maarif_11: "border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200",
+  gis_12: "border-orange-200 bg-orange-50 text-orange-800 dark:bg-orange-500/10 dark:border-orange-500/30 dark:text-orange-200",
 };
 
 function sectionPenalty(section: ExamSectionValue): number {

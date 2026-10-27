@@ -51,6 +51,7 @@ const SECTION_TONE: Record<string, { bg: string; text: string }> = {
   maarif_9: { bg: "bg-lime-50", text: "text-lime-800" },
   maarif_10: { bg: "bg-sky-50", text: "text-sky-700" },
   maarif_11: { bg: "bg-blue-50", text: "text-blue-700" },
+  gis_12: { bg: "bg-orange-50", text: "text-orange-800" },
 };
 function tone(section: string) {
   return SECTION_TONE[section] ?? { bg: "bg-slate-100", text: "text-slate-600" };

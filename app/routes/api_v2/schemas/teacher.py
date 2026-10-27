@@ -2313,7 +2313,7 @@ class StudentResetPasswordResult(BaseModel):
 # (2026-09-09: Maarif Modeli türleri).
 ExamSectionLiteral = Literal[
     "lgs", "tyt", "ayt_say", "ayt_ea", "ayt_soz", "ayt_dil", "okul",
-    "maarif_1", "maarif_2", "maarif_9", "maarif_10", "maarif_11",
+    "maarif_1", "maarif_2", "maarif_9", "maarif_10", "maarif_11", "gis_12",
 ]
 
 

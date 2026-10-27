@@ -1465,7 +1465,7 @@ def detect_universe(read: dict, student: User) -> dict:
     # "emin olamadım" bandına takılıyordu (ÇAP karnesi, öğrenci #34).
     if re.search(r"\bmaarif\b", h):
         votes[EXAM_UNIVERSE_MAARIF] += 2
-    if re.search(r"\bbasamak\b", h):
+    if re.search(r"\bbasamak\b|\basama\b", h):
         votes[EXAM_UNIVERSE_MAARIF] += 1
     # 2) yapı + İÇERİK (AYT belirteci: Edebiyat dersi TYT'de yoktur —
     #    okul-müfredat sınavı sinyali varken bu belirteç GEÇERSİZ)
@@ -1510,8 +1510,32 @@ def detect_universe(read: dict, student: User) -> dict:
     scope = "brans" if n_subj <= 2 else "full"
 
     section = _section_for(universe, read, student)
+    gis = _gis_section_for(h, read, student)
+    if gis is not None:
+        section = gis
+        universe = universe_for_section(gis)
+        confidence = "high"
     return {"universe": universe, "section": section.value,
             "scope": scope, "confidence": confidence}
+
+
+def _gis_section_for(h: str, read: dict, student: User) -> ExamSection | None:
+    """Başlıkta "Gelişim İzleme" / "GİS" → sınıf düzeyi gelişim izleme türü (2026-10-27).
+
+    Yayınevleri (Özdebir "9. SINIF GİS-1", "12. SINIF GİS-1-TYT") sınıfa göre adlandırır:
+    9/10/11 → o sınıfın gelişim izleme türü (Maarif müfredatı), 12 / mezun → işlenen AYT
+    konularına kadar (GIS_12). Başlıkta TYT de geçiyorsa belge TYT'dir (12. sınıf GİS-TYT).
+    """
+    if not re.search(r"\bgelisim izleme\b|\bgis\b", h):
+        return None
+    if re.search(r"\btyt\b", h):
+        return ExamSection.TYT
+    m = _MAARIF_GRADE_TITLE_RE.search(h)
+    grade = int(m.group(1)) if m else (read.get("grade_hint") or student.grade_level)
+    if student.is_graduate or (grade or 0) >= 12:
+        return ExamSection.GIS_12
+    return {9: ExamSection.MAARIF_9, 10: ExamSection.MAARIF_10,
+            11: ExamSection.MAARIF_11}.get(grade or 0)
 
 
 def _ayt_section_from_answers(questions: list[dict]) -> ExamSection | None:
@@ -1560,9 +1584,9 @@ def _maarif_section_for(read: dict, student: User) -> ExamSection:
     sınavı olmaz; belirsizlikte sınıf denemesine düşülür.
     """
     h = normalize(read.get("exam_title") or "")
-    if re.search(r"\bikinci basamak\b|\b2\s*basamak\b", h):
+    if re.search(r"\bikinci (basamak|asama)\b|\b2\s*(basamak|asama)\b", h):
         return ExamSection.MAARIF_2
-    if re.search(r"\bbirinci basamak\b|\b1\s*basamak\b", h):
+    if re.search(r"\b(birinci|ilk) (basamak|asama)\b|\b1\s*(basamak|asama)\b", h):
         return ExamSection.MAARIF_1
     m = _MAARIF_GRADE_TITLE_RE.search(h)
     if m:
@@ -1621,6 +1645,8 @@ _SECTION_TO_UNIVERSE = {
     ExamSection.MAARIF_9: EXAM_UNIVERSE_MAARIF,
     ExamSection.MAARIF_10: EXAM_UNIVERSE_MAARIF,
     ExamSection.MAARIF_11: EXAM_UNIVERSE_MAARIF,
+    # 12. sınıf (Klasik) / mezun gelişim izleme: işlenen AYT konuları → AYT evreni
+    ExamSection.GIS_12: EXAM_UNIVERSE_AYT,
 }
 
 

@@ -14,7 +14,7 @@ const WARN: Record<WarningLevel, { border: string; dot: string; label: string; t
 
 const SECTION_SHORT: Record<string, string> = {
   lgs: "LGS", tyt: "TYT", ayt_say: "AYT", ayt_ea: "AYT", ayt_soz: "AYT", ayt_dil: "YDT",
-  maarif_1: "M-1", maarif_2: "M-2", maarif_9: "M-9", maarif_10: "M-10", maarif_11: "M-11",
+  maarif_1: "M-1", maarif_2: "M-2", maarif_9: "GİS-9", maarif_10: "GİS-10", maarif_11: "GİS-11", gis_12: "GİS-12",
 };
 const RELATION: Record<string, string> = {
   anne: "Anne", baba: "Baba", vasi: "Vasi", diger: "Veli",

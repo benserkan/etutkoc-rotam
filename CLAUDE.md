@@ -90,6 +90,21 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 - GSC: rotam sitemap gönderildi, etutkoc sitemap yenilendi; dizine ekleme istendi: rotam `/` + `/pricing` (pricing
   dizinde YOKTU), etutkoc `/services` + `/about`. Yol haritası: Desktop/rotam-instagram-takip/etutkoc-rotam-gorunurluk-yol-haritasi.md
 
+## DENEME TÜRLERİ: GELİŞİM İZLEME + MAARİF AŞAMA (2026-10-27, migration `v6x9c2d3c88y`, CANLI)
+
+- Koç + yayınevi takvimleri (Özdebir 2026-27 "9/10. SINIF GİS", "12. SINIF GİS-1-TYT"; Bilgi Sarmal
+  "Maarif İlk Aşama" 11'lere): lisede "okul denemesi" YOK. Tablo (kullanıcı onaylı): 9 → 9. Sınıf Gelişim
+  İzleme · 10 → 10. Sınıf GİS + Maarif 1. Aşama (TYT) · 11 (Maarif) → 1. Aşama + 11. Sınıf GİS · 12 (bu yıl
+  Klasik) / mezun → TYT, AYT + **12. Sınıf Gelişim İzleme (AYT)** · "Okul Sınavı" yalnız ortaokulda.
+  Seneye 12 Maarif'e geçince 1./2. Aşama + 12. sınıf GİS yeniden ele alınır.
+- Yeni enum `GIS_12` (evren AYT, alan filtresi otomatik); etiketler "Basamak" → "Aşama", MAARIF_9/10/11 →
+  "N. Sınıf Gelişim İzleme". PDF tespiti: başlıkta "Gelişim İzleme"/"GİS" → sınıfa göre tür (TYT de geçiyorsa
+  TYT); "İlk/Birinci/İkinci Aşama" tanınır. Beyan listesi (web+mobil) + program deneme hazır türleri tabloya göre.
+- Gelişim izleme soru sayısı değişken → Gelişim Raporu seri kartı net yüzdesiyle kıyaslar (`varying_questions`).
+- Gelişim Raporu (360°) artık öğrenci detayında kendi sekmesi (#report); seri seçici YOK, her genel seri ayrı kart.
+- Eski kayıtlar: `scripts/migrate_okul_to_gis.py` (kuru varsayılan, `--apply`; sınıf = denemenin tarihindeki
+  sınıf dönemi). Test `test_exam_gis_sections` 13 · `test_migrate_okul_to_gis` 8 · exam_import 92 · teacher_exams 19.
+
 ## PROGRAM ERKEN BİTİRME — eski program bitmeden yeni program (2026-10-27, commit `24f0b29`, migration YOK, CANLI)
 
 - Saha (Beril): seans 1 gün erkene alındı, yeni program eski programın son günü başlatıldı → çakışma onay

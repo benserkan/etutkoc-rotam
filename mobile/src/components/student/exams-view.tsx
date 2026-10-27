@@ -38,6 +38,7 @@ const SECTION_TONE: Record<string, { bg: string; text: string; bar: string }> = 
   maarif_9: { bg: "bg-lime-50", text: "text-lime-800", bar: "bg-lime-500" },
   maarif_10: { bg: "bg-sky-50", text: "text-sky-700", bar: "bg-sky-500" },
   maarif_11: { bg: "bg-blue-50", text: "text-blue-700", bar: "bg-blue-500" },
+  gis_12: { bg: "bg-orange-50", text: "text-orange-800", bar: "bg-orange-500" },
 };
 function tone(section: string) {
   return SECTION_TONE[section] ?? { bg: "bg-slate-100", text: "text-slate-600", bar: "bg-slate-400" };

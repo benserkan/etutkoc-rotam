@@ -68,33 +68,27 @@ function sectionChoicesFor(grade: string): { value: string; label: string }[] {
     return [auto, { value: "lgs", label: "LGS" },
             { value: "okul", label: "Okul/Yazılı" }];
   }
-  // Maarif Modeli (2026-09-09): 1. Basamak ≈ TYT (9-10 konuları), 2. Basamak ≈
-  // AYT (11-12). 1. Basamak 10. sınıf müfredatı tamamlanınca anlamlı → 9'da YOK.
-  // 12/mezun bu yıl klasik YKS'de → Maarif gösterilmez.
+  // 2026-10-27 (koç + yayınevi takvimleri): sınıf düzeyi "Gelişim İzleme" sınavları
+  // (soru sayısı değişken) + Maarif 1. Aşama (TYT, 9-10 konuları). 12 (bu yıl Klasik) /
+  // mezun: TYT, AYT + 12. Sınıf Gelişim İzleme (işlenen AYT konuları). Web ile aynı.
   if (g === 9) {
-    return [auto, { value: "maarif_9", label: "Maarif 9. Sınıf" },
-            { value: "tyt", label: "Sınıf İzleme/TYT" },
-            { value: "okul", label: "Okul/Yazılı" }];
+    return [auto, { value: "maarif_9", label: "9. Sınıf GİS" }];
   }
   if (g === 10) {
-    return [auto, { value: "maarif_10", label: "Maarif 10. Sınıf" },
-            { value: "maarif_1", label: "Maarif 1. Basamak" },
-            { value: "tyt", label: "Sınıf İzleme/TYT" },
-            { value: "okul", label: "Okul/Yazılı" }];
+    return [auto, { value: "maarif_10", label: "10. Sınıf GİS" },
+            { value: "maarif_1", label: "1. Aşama (TYT)" }];
   }
-  const yks = [
+  if (g === 11) {
+    return [auto, { value: "maarif_1", label: "1. Aşama (TYT)" },
+            { value: "maarif_11", label: "11. Sınıf GİS" }];
+  }
+  return [auto,
     { value: "tyt", label: "TYT" },
     { value: "ayt_say", label: "AYT Say" },
     { value: "ayt_ea", label: "AYT EA" },
     { value: "ayt_soz", label: "AYT Söz" },
     { value: "ayt_dil", label: "AYT Dil" },
-    { value: "okul", label: "Okul/Yazılı" },
-  ];
-  if (g === 11) {
-    return [auto, { value: "maarif_1", label: "Maarif 1. Basamak" },
-            { value: "maarif_11", label: "Maarif 11. Sınıf" }, ...yks];
-  }
-  return [auto, ...yks];
+    { value: "gis_12", label: "12. Sınıf GİS" }];
 }
 
 export function ExamImportFlow({
