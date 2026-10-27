@@ -20,6 +20,12 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 - Sunucu derleme: `export PATH=/home/ubuntu/.nvm/versions/node/v20.20.1/bin:$PATH && npm run build` (dosyalar CRLF).
 - Bing: etutkoc.com doğrulu; iki site haritası (etutkoc + rotam) etutkoc.com mülkü altından gönderildi.
 - SIRADA (önerildi): TYT/AYT/sıralama/OBP dar konulu ek sayfalar; 2-3 hafta sonra GSC arama verisiyle başlık ayarı.
+- **Sayfa yeniden tasarım (2026-10-27):** hesaplayıcı ADIM ADIM (puan türü → netler → ek bilgi → sonuç; sonuç formun
+  yerine gelir, "Netleri düzenle/Yeni hesap"); adıma özel kısa açıklama formun içinde. Adım değişince iframe
+  `etutkoc-yks-scrolltop` mesajı gönderir, etutkoc.com sayfası aracın başına kaydırır. etutkoc.com sayfası: kısa
+  başlık + araç hemen altta (başlığa biner, max-w-5xl) + "Hesaplama rehberi" (solda yapışkan içindekiler, sağda kart
+  bölümler: nasıl hesaplanır zaman çizelgesi, puan türleri, OBP örnekleri, sınav günü, SSS) + CTA. Gömülü sayfa
+  html/body zemini şeffaf (gri kutu kalmasın). Rotam commit'leri bu tarihte; etutkoc.com sunucu commit'i ayrı.
 
 ## TANITIM SAYFALARI YENİ TASARIM + TEK MENÜ (2026-10-26, commit `c1ff508`+2, migration YOK, CANLI)
 
