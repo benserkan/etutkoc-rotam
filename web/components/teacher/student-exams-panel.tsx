@@ -444,7 +444,9 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
 }
 
 // Açılır liste seçenekleri seçicinin renkli yazısını devralıp beyaz zeminde okunmuyordu.
-const OPTION_COLORS = "[&_option]:bg-white [&_option]:text-slate-900 dark:[&_option]:bg-slate-900 dark:[&_option]:text-slate-100";
+const OPTION_COLORS =
+  "[&_option]:bg-white [&_option]:text-slate-900 dark:[&_option]:bg-slate-900 dark:[&_option]:text-slate-100 " +
+  "[&_optgroup]:bg-slate-100 [&_optgroup]:text-slate-700 dark:[&_optgroup]:bg-slate-800 dark:[&_optgroup]:text-slate-300";
 
 /** Deneme türü — PDF yüklerken seçilen türlerle aynı liste (sınıfa göre). 2026-10-27 */
 function ExamSectionSelect({ row, grade }: { row: ExamResultRow; grade: string | null }) {
