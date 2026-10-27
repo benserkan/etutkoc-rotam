@@ -149,11 +149,11 @@ function ExamKindSwitch({
   const attention = series.some((x) => x.decline_run >= 3 || x.last_position === "below");
   const item = (active: boolean) =>
     cn(
-      "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors",
+      "inline-flex h-8 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[13px] font-medium transition-colors sm:flex-none sm:px-3 sm:text-sm",
       active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
     );
   return (
-    <div role="tablist" aria-label="Deneme türü" className="inline-flex rounded-lg bg-muted p-1">
+    <div role="tablist" aria-label="Deneme türü" className="flex w-full rounded-lg bg-muted p-1 sm:inline-flex sm:w-auto">
       <button type="button" role="tab" aria-selected={!branch} onClick={() => onChange(false)} className={item(!branch)}>
         Karne denemeleri
       </button>
@@ -224,10 +224,10 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
     ? previousExam(rows.filter((r) => rowSeries(r) === rowSeries(detailRow)), detailRow)
     : null;
 
-  const header = (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
+  const headerRow = (
+    <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+      <div className="flex min-w-0 flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1.5">
           <h3 className="text-lg font-semibold">Denemeler</h3>
           <ColumnHint
             label={<span className="sr-only">Net hesabı</span>}
@@ -235,21 +235,108 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
             side="bottom"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <GuideHint module="Denemeler" compact />
-          {!branchView ? (
-            <ExamAddButtons
-              onImport={(f) => {
-                setImportFile(f);
-                setImportOpen(true);
-              }}
-              onManual={() => setAddOpen(true)}
-            />
+        {onBranchView ? (
+          <ExamKindSwitch studentId={studentId} branch={!!branchView} onChange={onBranchView} />
+        ) : null}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <GuideHint module="Denemeler" compact />
+        {!branchView ? (
+          <ExamAddButtons
+            onImport={(f) => {
+              setImportFile(f);
+              setImportOpen(true);
+            }}
+            onManual={() => setAddOpen(true)}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+  // Tek araç kartı: başlık + tür anahtarı + eylemler / sekmeler / dönem + seri çipleri
+  // (2026-10-27 — önce dört ayrı satıra dağılmıştı).
+  const hasRows = !!data && data.rows.length > 0;
+  const showSeries = hasRows && tab !== "list" && sectionsInfo.length > 1;
+  const showFilters = hasRows && (showSeries || (periodMeta?.options?.length ?? 0) > 1);
+  const toolbar = (
+    <div data-section="exams:toolbar" className="rounded-2xl border border-border bg-card shadow-sm">
+      {headerRow}
+      {!branchView && hasRows ? (
+        <div className="border-t border-border px-4">
+          <div role="tablist" aria-label="Deneme analizi bölümleri" className="-mb-px flex gap-1 overflow-x-auto">
+            {EXAM_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.key}
+                onClick={() => setTab(t.key)}
+                title={t.hint}
+                className={cn(
+                  "shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors",
+                  tab === t.key
+                    ? "border-cyan-700 text-foreground dark:border-cyan-400"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t.label}
+                {t.key === "list" ? (
+                  <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[11px] tabular-nums">
+                    {rows.length}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {!branchView && showFilters ? (
+        <div
+          data-section="exams:filters"
+          className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-b-2xl border-t border-border bg-muted/40 px-4 py-2.5"
+        >
+          <PeriodSelect meta={periodMeta} value={period} onChange={setPeriod} />
+          {showSeries ? (
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground">Analiz edilen seri</span>
+              <ColumnHint
+                label={<span className="sr-only">Seri nedir</span>}
+                hint="Netler yalnız aynı türdeki denemeler arasında kıyaslanır (TYT ile AYT, genel deneme ile branş denemesi ayrı ölçekte). Sekmelerdeki analizler seçili seriye göredir."
+                side="bottom"
+              />
+              <div role="radiogroup" aria-label="Deneme serisi" className="flex flex-wrap gap-1.5">
+                {sectionsInfo.map((s) => {
+                  const on = s.value === activeSeries;
+                  return (
+                    <button
+                      key={s.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      onClick={() => setSelSection(s.value)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                        on
+                          ? "border-cyan-700 bg-cyan-700 text-white"
+                          : "border-border bg-background text-foreground hover:border-cyan-600",
+                      )}
+                    >
+                      {s.label}
+                      <span
+                        className={cn(
+                          "rounded-full px-1.5 text-[11px] tabular-nums",
+                          on ? "bg-white/20 text-white" : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {s.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ) : null}
         </div>
-      </div>
-      {onBranchView ? (
-        <ExamKindSwitch studentId={studentId} branch={!!branchView} onChange={onBranchView} />
       ) : null}
     </div>
   );
@@ -257,7 +344,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
   if (branchView) {
     return (
       <div className="space-y-4">
-        {header}
+        {toolbar}
         <StudentProgramExamsPanel studentId={studentId} />
       </div>
     );
@@ -265,7 +352,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
 
   return (
     <div className="space-y-4">
-      {header}
+      {toolbar}
 
       <ExamImportDialog
         open={importOpen}
@@ -301,57 +388,6 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
-            <div role="tablist" aria-label="Deneme analizi bölümleri" className="-mb-px flex flex-wrap gap-1">
-              {EXAM_TABS.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === t.key}
-                  onClick={() => setTab(t.key)}
-                  title={t.hint}
-                  className={cn(
-                    "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-                    tab === t.key
-                      ? "border-cyan-700 text-foreground dark:border-cyan-400"
-                      : "border-transparent text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {t.label}
-                  {t.key === "list" ? (
-                    <span className="ml-1.5 rounded-full bg-muted px-1.5 text-[11px] tabular-nums">
-                      {rows.length}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </div>
-            <div className="mb-2 flex flex-wrap items-center gap-3">
-            <PeriodSelect meta={periodMeta} value={period} onChange={setPeriod} />
-            {tab !== "list" && sectionsInfo.length > 1 ? (
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                Seri
-                <select
-                  value={activeSeries ?? ""}
-                  onChange={(e) => setSelSection(e.target.value)}
-                  aria-label="Deneme serisi"
-                  className={cn(
-                    "h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  )}
-                >
-                  {sectionsInfo.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label} ({s.count})
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            </div>
-          </div>
-
           <div role="tabpanel">
             {tab === "overview" ? (
               <ExamOverviewTab
