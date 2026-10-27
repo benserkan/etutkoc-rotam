@@ -644,6 +644,8 @@ export interface WeeklyProgramUpdateBody {
   name?: string | null;
   notes?: string | null;
   allow_overlap?: boolean;
+  early_end_reason?: string | null;
+  early_end_mode?: "transfer" | "refund" | null;
 }
 
 export interface TeacherStudentWeekResponse {

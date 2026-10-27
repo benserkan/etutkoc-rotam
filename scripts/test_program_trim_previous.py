@@ -194,6 +194,23 @@ def main() -> int:
                   and "otomatik" in (o.notes or ""), f"{o.end_date} {o.notes}")
             fx, _ = fix(db, apply=False, student_id=d["sid"])
             check("5g idempotent", fx == [], str(fx))
+        # --- 6: DÜZENLEME ile bilinçli kesme (başlangıcı öne çekme) ---
+        d = seed("c")
+        c = client(d["email"])
+        url = f"/api/v2/teacher/students/{d['sid']}/programs"
+        r = c.post(url, json={"start_date": (today + timedelta(days=3)).isoformat(),
+                              "end_date": (today + timedelta(days=9)).isoformat()})
+        nid = r.json()["data"]["id"]
+        eb = {"start_date": today.isoformat(), "end_date": (today + timedelta(days=9)).isoformat()}
+        r = c.post(f"{url}/{nid}", json=eb)
+        ov = (r.json().get("detail") or {}).get("overlaps") or []
+        check("6a düzenlemede çakışma → 409 + kırpılabilir", r.status_code == 409 and ov and ov[0]["trimmable"], r.text[:200])
+        r = c.post(f"{url}/{nid}", json={**eb, "early_end_reason": "Seans ertelendi", "early_end_mode": "transfer"})
+        check("6b gerekçe + aktar ile kaydedilir", r.status_code == 200, r.text[:200])
+        with SessionLocal() as db:
+            o = db.get(WeeklyProgram, d["old"])
+            check("6c eski program dün biter + gerekçe notta",
+                  o.end_date == today - timedelta(days=1) and "Seans ertelendi" in (o.notes or ""), f"{o.end_date} {o.notes}")
     finally:
         with SessionLocal() as db:
             tids = [t.id for t in db.query(Task).filter(Task.student_id.in_(uids)).all()]

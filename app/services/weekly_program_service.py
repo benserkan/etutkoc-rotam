@@ -255,28 +255,7 @@ def create_program(
     student = _ensure_owned_student(db, student_id, coach.id)
 
     overlaps = find_overlapping(db, student_id=student.id, start=start, end=end)
-    trimmable = [o for o in overlaps if o.trimmable]
-    if trimmable and early_end_mode is not None:
-        reason = (early_end_reason or "").strip()
-        if len(reason) < EARLY_END_REASON_MIN:
-            raise ProgramError("early_end_reason_required",
-                               "Önceki programı erken bitirmenin nedenini yazın.")
-        if early_end_mode not in EARLY_END_MODES:
-            raise ProgramError("early_end_mode_invalid", "Kalan günlerin görevleri için bir seçim yapın.")
-        for o in trimmable:
-            old = db.get(WeeklyProgram, o.program_id)
-            if old is None:
-                continue
-            if early_end_mode == EARLY_END_REFUND:
-                _refund_cut_tasks(db, student.id, start, old.end_date)
-            what = "yeni programa aktarıldı" if early_end_mode == EARLY_END_TRANSFER else "iade edildi"
-            stamp = (f"Erken bitirildi ({old.end_date.strftime('%d.%m')} yerine "
-                     f"{o.trim_to.strftime('%d.%m')}): {reason} · kalan günler: {what}")
-            old.notes = (f"{old.notes}\n{stamp}" if old.notes else stamp)[:2000]
-            logger.info("create_program: early end prog=%s %s→%s mode=%s",
-                        old.id, old.end_date, o.trim_to, early_end_mode)
-            old.end_date = o.trim_to
-        overlaps = [o for o in overlaps if not o.trimmable]
+    overlaps = _apply_early_end(db, student.id, start, overlaps, early_end_reason, early_end_mode)
     if overlaps and not allow_overlap:
         # Endpoint'in bu hatayı detail içinde döndürmesi için
         raise ProgramError("overlap", "Bu tarih aralığında çakışan program var.")
@@ -312,6 +291,36 @@ def create_program(
         coach.id, student.id, prog.id, start, end,
     )
     return prog
+
+
+def _apply_early_end(db: Session, student_id: int, start: date, overlaps: list[ProgramOverlap],
+                     reason: str | None, mode: str | None) -> list[ProgramOverlap]:
+    """Bilinçli kesme: `start`tan önce başlayan çakışan programları `start − 1`'de bitir.
+    Gerekçe + kalan günler seçimi zorunlu; kırpılamayan çakışmaları geri döndürür.
+    Yeni program oluşturma ve program tarihini düzenleme AYNI kuralı kullanır."""
+    trimmable = [o for o in overlaps if o.trimmable]
+    if not trimmable or mode is None:
+        return overlaps
+    reason = (reason or "").strip()
+    if len(reason) < EARLY_END_REASON_MIN:
+        raise ProgramError("early_end_reason_required",
+                           "Önceki programı erken bitirmenin nedenini yazın.")
+    if mode not in EARLY_END_MODES:
+        raise ProgramError("early_end_mode_invalid", "Kalan günlerin görevleri için bir seçim yapın.")
+    for o in trimmable:
+        old = db.get(WeeklyProgram, o.program_id)
+        if old is None:
+            continue
+        if mode == EARLY_END_REFUND:
+            _refund_cut_tasks(db, student_id, start, old.end_date)
+        what = "yeni programa aktarıldı" if mode == EARLY_END_TRANSFER else "iade edildi"
+        stamp = (f"Erken bitirildi ({old.end_date.strftime('%d.%m')} yerine "
+                 f"{o.trim_to.strftime('%d.%m')}): {reason} · kalan günler: {what}")
+        old.notes = (f"{old.notes}\n{stamp}" if old.notes else stamp)[:2000]
+        logger.info("early end prog=%s %s→%s mode=%s", old.id, old.end_date, o.trim_to, mode)
+        old.end_date = o.trim_to
+    db.flush()
+    return [o for o in overlaps if not o.trimmable]
 
 
 def _refund_cut_tasks(db: Session, student_id: int, start: date, end: date) -> None:
@@ -353,10 +362,14 @@ def update_program(
     name: str | None = None,
     notes: str | None = None,
     allow_overlap: bool = False,
+    early_end_reason: str | None = None,
+    early_end_mode: str | None = None,
 ) -> WeeklyProgram:
     """Program'ı güncelle (tarih/etiket/not). None geçilen alan değişmez.
 
     Çakışma kontrolü: tarih değişiyorsa yeni aralıkla başkalarıyla çakışıyor mu.
+    Başlangıç önceki programın içine çekiliyorsa (bilinçli kesme) create_program'daki
+    erken bitirme akışı uygulanır: gerekçe + kalan günler (aktar | iade).
     """
     prog = _owned_program(db, program_id, coach.id)
 
@@ -365,16 +378,17 @@ def update_program(
 
     if start is not None or end is not None:
         _validate_range(new_start, new_end)
-        if not allow_overlap:
-            overlaps = find_overlapping(
-                db,
-                student_id=prog.student_id,
-                start=new_start,
-                end=new_end,
-                exclude_id=prog.id,
-            )
-            if overlaps:
-                raise ProgramError("overlap", "Bu tarih aralığında çakışan program var.")
+        overlaps = find_overlapping(
+            db,
+            student_id=prog.student_id,
+            start=new_start,
+            end=new_end,
+            exclude_id=prog.id,
+        )
+        overlaps = _apply_early_end(db, prog.student_id, new_start, overlaps,
+                                    early_end_reason, early_end_mode)
+        if overlaps and not allow_overlap:
+            raise ProgramError("overlap", "Bu tarih aralığında çakışan program var.")
         prog.start_date = new_start
         prog.end_date = new_end
 

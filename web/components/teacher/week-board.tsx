@@ -1153,7 +1153,13 @@ function EditProgramDialog({
   const [endDate, setEndDate] = React.useState(program.end_date);
   const [name, setName] = React.useState(program.name ?? "");
   const [overlaps, setOverlaps] = React.useState<WeeklyProgramOverlapItem[]>([]);
+  const [reason, setReason] = React.useState("");
+  const [mode, setMode] = React.useState<"transfer" | "refund" | null>(null);
   const update = useUpdateProgram(studentId);
+  const cutting = overlaps.filter((o) => o.trimmable);
+  const blocking = overlaps.filter((o) => !o.trimmable);
+  const earlyEnd = cutting.length > 0 && blocking.length === 0;
+  const effMode = earlyEndCounts(cutting).cutTasks === 0 ? "transfer" : mode;
 
   const dayCount = React.useMemo(() => {
     const a = Date.parse(startDate);
@@ -1176,6 +1182,7 @@ function EditProgramDialog({
           start_date: startDate,
           end_date: endDate,
           name: name.trim() || null,
+          ...(earlyEnd ? { early_end_reason: reason.trim(), early_end_mode: effMode } : {}),
         },
       },
       {
@@ -1224,6 +1231,7 @@ function EditProgramDialog({
                 onChange={(e) => {
                   setStartDate(e.target.value);
                   setOverlaps([]);
+                  setMode(null);
                 }}
               />
             </div>
@@ -1236,6 +1244,7 @@ function EditProgramDialog({
                 onChange={(e) => {
                   setEndDate(e.target.value);
                   setOverlaps([]);
+                  setMode(null);
                 }}
               />
             </div>
@@ -1273,13 +1282,22 @@ function EditProgramDialog({
             />
           </div>
 
-          {overlaps.length > 0 ? (
+          {earlyEnd ? (
+            <EarlyEndPanel
+              cutting={cutting}
+              reason={reason}
+              onReason={setReason}
+              mode={mode}
+              onMode={setMode}
+            />
+          ) : null}
+          {blocking.length > 0 ? (
             <div className="rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-sm">
               <p className="font-semibold text-amber-900 dark:text-amber-200 mb-2">
-                Yeni tarihler {overlaps.length} programla çakışıyor:
+                Yeni tarihler {blocking.length} programla çakışıyor:
               </p>
               <ul className="space-y-1 text-amber-900 dark:text-amber-200">
-                {overlaps.map((o) => (
+                {blocking.map((o) => (
                   <li
                     key={o.program_id}
                     className="text-xs flex items-center justify-between"
@@ -1315,7 +1333,8 @@ function EditProgramDialog({
               update.isPending ||
               !validDays ||
               !changed ||
-              overlaps.length > 0
+              blocking.length > 0 ||
+              (earlyEnd && (reason.trim().length < 3 || effMode == null))
             }
             className="px-4 py-2 text-sm rounded-md bg-cyan-600 hover:bg-cyan-700 text-white inline-flex items-center gap-2 disabled:opacity-50"
           >
@@ -1324,7 +1343,7 @@ function EditProgramDialog({
             ) : (
               <Pencil className="size-3.5" aria-hidden />
             )}
-            Kaydet
+            {earlyEnd ? "Onayla ve kaydet" : "Kaydet"}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -1476,6 +1495,95 @@ function addDaysIso(iso: string, days: number): string {
   const nm = String(date.getUTCMonth() + 1).padStart(2, "0");
   const nd = String(date.getUTCDate()).padStart(2, "0");
   return `${ny}-${nm}-${nd}`;
+}
+
+/** Önceki program bitmeden yeni program / tarih çekme — bilinçli kesme formu (yeni + düzenle ortak). */
+function earlyEndCounts(cutting: WeeklyProgramOverlapItem[]) {
+  const untouched = cutting.reduce((n, o) => n + (o.cut_untouched ?? 0), 0);
+  const partial = cutting.reduce((n, o) => n + (o.cut_partial ?? 0), 0);
+  const completed = cutting.reduce((n, o) => n + (o.cut_completed ?? 0), 0);
+  const releaseTests = cutting.reduce((n, o) => n + (o.cut_release_tests ?? 0), 0);
+  return { untouched, partial, completed, releaseTests, cutTasks: untouched + partial + completed };
+}
+
+function EarlyEndPanel({
+  cutting,
+  reason,
+  onReason,
+  mode,
+  onMode,
+}: {
+  cutting: WeeklyProgramOverlapItem[];
+  reason: string;
+  onReason: (v: string) => void;
+  mode: "transfer" | "refund" | null;
+  onMode: (m: "transfer" | "refund") => void;
+}) {
+  const { untouched, partial, completed, releaseTests, cutTasks } = earlyEndCounts(cutting);
+  return (
+              <div className="space-y-3 rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-sm text-amber-900 dark:text-amber-200">
+                <div>
+                  <p className="font-semibold">Önceki program bitmeden yeni program başlıyor</p>
+                  {cutting.map((o) => (
+                    <p key={o.program_id} className="mt-1 text-xs">
+                      <b>{o.label}</b> ({o.start_date} → {o.end_date}) {o.trim_to} tarihinde
+                      bitirilecek — {o.cut_days} gün kesiliyor
+                      {cutTasks > 0
+                        ? `: ${cutTasks} görev (${o.cut_untouched} başlanmamış · ${o.cut_partial} kısmen yapılmış · ${o.cut_completed} tamamlanmış).`
+                        : ", bu günlerde görev yok."}
+                    </p>
+                  ))}
+                </div>
+                <div>
+                  <Label htmlFor="wp-early-reason" className="text-amber-900 dark:text-amber-200">
+                    Neden erken bitiriyorsun? (zorunlu)
+                  </Label>
+                  <textarea
+                    id="wp-early-reason"
+                    value={reason}
+                    onChange={(e) => onReason(e.target.value)}
+                    rows={2}
+                    maxLength={300}
+                    placeholder="örn. Seans bir gün erkene alındı"
+                    className="mt-1 w-full rounded-md border border-amber-300 bg-white px-2 py-1 text-sm text-slate-900 placeholder:text-slate-400 dark:border-amber-500/40 dark:bg-slate-900 dark:text-slate-100"
+                  />
+                </div>
+                {cutTasks > 0 ? (
+                  <fieldset className="space-y-1.5 text-xs">
+                    <legend className="mb-1 font-medium">Kesilen günlerin görevleri ne olsun?</legend>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="radio"
+                        name="wp-early-mode"
+                        checked={mode === "transfer"}
+                        onChange={() => onMode("transfer")}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <b>Yeni programa aynen aktar</b> — görevler tarihlerinde kalır, yeni haftanın parçası olur.
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="radio"
+                        name="wp-early-mode"
+                        checked={mode === "refund"}
+                        onChange={() => onMode("refund")}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <b>İade et</b> — {untouched} başlanmamış görev silinir
+                        {releaseTests > 0 ? `, ${releaseTests} test kitaba geri döner` : ""}.
+                        {partial > 0
+                          ? ` Kaynaktan ilerleme yapılmış ${partial} görev kalır; yapılmayan kısmı iade edilir.`
+                          : ""}
+                        {completed > 0 ? ` Tamamlanan ${completed} göreve dokunulmaz.` : ""}
+                      </span>
+                    </label>
+                  </fieldset>
+                ) : null}
+              </div>
+  );
 }
 
 function NewProgramDialogInner({
@@ -1688,68 +1796,13 @@ function NewProgramDialogInner({
             ) : null}
 
             {earlyEnd ? (
-              <div className="space-y-3 rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-sm text-amber-900 dark:text-amber-200">
-                <div>
-                  <p className="font-semibold">Önceki program bitmeden yeni program başlıyor</p>
-                  {cutting.map((o) => (
-                    <p key={o.program_id} className="mt-1 text-xs">
-                      <b>{o.label}</b> ({o.start_date} → {o.end_date}) {o.trim_to} tarihinde
-                      bitirilecek — {o.cut_days} gün kesiliyor
-                      {cutTasks > 0
-                        ? `: ${cutTasks} görev (${o.cut_untouched} başlanmamış · ${o.cut_partial} kısmen yapılmış · ${o.cut_completed} tamamlanmış).`
-                        : ", bu günlerde görev yok."}
-                    </p>
-                  ))}
-                </div>
-                <div>
-                  <Label htmlFor="wp-early-reason" className="text-amber-900 dark:text-amber-200">
-                    Neden erken bitiriyorsun? (zorunlu)
-                  </Label>
-                  <textarea
-                    id="wp-early-reason"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    rows={2}
-                    maxLength={300}
-                    placeholder="örn. Seans bir gün erkene alındı"
-                    className="mt-1 w-full rounded-md border border-amber-300 bg-white px-2 py-1 text-sm text-slate-900 placeholder:text-slate-400 dark:border-amber-500/40 dark:bg-slate-900 dark:text-slate-100"
-                  />
-                </div>
-                {cutTasks > 0 ? (
-                  <fieldset className="space-y-1.5 text-xs">
-                    <legend className="mb-1 font-medium">Kesilen günlerin görevleri ne olsun?</legend>
-                    <label className="flex items-start gap-2">
-                      <input
-                        type="radio"
-                        name="wp-early-mode"
-                        checked={mode === "transfer"}
-                        onChange={() => setMode("transfer")}
-                        className="mt-0.5"
-                      />
-                      <span>
-                        <b>Yeni programa aynen aktar</b> — görevler tarihlerinde kalır, yeni haftanın parçası olur.
-                      </span>
-                    </label>
-                    <label className="flex items-start gap-2">
-                      <input
-                        type="radio"
-                        name="wp-early-mode"
-                        checked={mode === "refund"}
-                        onChange={() => setMode("refund")}
-                        className="mt-0.5"
-                      />
-                      <span>
-                        <b>İade et</b> — {untouched} başlanmamış görev silinir
-                        {releaseTests > 0 ? `, ${releaseTests} test kitaba geri döner` : ""}.
-                        {partial > 0
-                          ? ` Kaynaktan ilerleme yapılmış ${partial} görev kalır; yapılmayan kısmı iade edilir.`
-                          : ""}
-                        {completed > 0 ? ` Tamamlanan ${completed} göreve dokunulmaz.` : ""}
-                      </span>
-                    </label>
-                  </fieldset>
-                ) : null}
-              </div>
+              <EarlyEndPanel
+                cutting={cutting}
+                reason={reason}
+                onReason={setReason}
+                mode={mode}
+                onMode={setMode}
+              />
             ) : null}
           </div>
         )}

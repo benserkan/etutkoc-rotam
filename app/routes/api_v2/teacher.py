@@ -11403,8 +11403,11 @@ def teacher_update_program_v2(
             name=body.name,
             notes=body.notes,
             allow_overlap=body.allow_overlap,
+            early_end_reason=body.early_end_reason,
+            early_end_mode=body.early_end_mode,
         )
     except ProgramError as e:
+        db.rollback()
         if e.code == "overlap":
             from app.models import WeeklyProgram
             current = db.get(WeeklyProgram, program_id)
@@ -11428,12 +11431,15 @@ def teacher_update_program_v2(
     db.commit()
     db.refresh(prog)
     today = date.today()
+    inv = [
+        f"teacher:{user.id}:students:{student_id}:programs",
+        f"teacher:{user.id}:students:{student_id}:week",
+    ]
+    if body.early_end_mode:
+        inv.append(f"teacher:{user.id}:students:{student_id}")
     return MutationResponse[WeeklyProgramItem](
         data=_wp_to_item(prog, today=today),
-        invalidate=[
-            f"teacher:{user.id}:students:{student_id}:programs",
-            f"teacher:{user.id}:students:{student_id}:week",
-        ],
+        invalidate=inv,
     )
 
 

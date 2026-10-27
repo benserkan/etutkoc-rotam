@@ -3063,6 +3063,8 @@ class WeeklyProgramUpdateBody(BaseModel):
     name: str | None = None
     notes: str | None = None
     allow_overlap: bool = False
+    early_end_reason: str | None = None
+    early_end_mode: str | None = None
 
 
 class WeeklyProgramDeleteBody(BaseModel):
