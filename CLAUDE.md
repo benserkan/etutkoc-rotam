@@ -84,6 +84,23 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 - GSC: rotam sitemap gönderildi, etutkoc sitemap yenilendi; dizine ekleme istendi: rotam `/` + `/pricing` (pricing
   dizinde YOKTU), etutkoc `/services` + `/about`. Yol haritası: Desktop/rotam-instagram-takip/etutkoc-rotam-gorunurluk-yol-haritasi.md
 
+## PROGRAM ERKEN BİTİRME — eski program bitmeden yeni program (2026-10-27, commit `24f0b29`, migration YOK, CANLI)
+
+- Saha (Beril): seans 1 gün erkene alındı, yeni program eski programın son günü başlatıldı → çakışma onay
+  kutusuyla geçildi, iki programda da "Bu hafta" rozeti + çakışan gün iki kez sayılıyordu.
+- Kural (kullanıcı): koç yeni programı eski bitmeden başlatırsa (kaç gün kesilirse kesilsin) "iki program da
+  kalsın" seçeneği YOK. Akış: 409 → pencerede kesilen günler + görev kırılımı (başlanmamış/kısmi/tamamlanmış +
+  iade edilecek test) → **gerekçe zorunlu** (eski programın notuna yazılır) → kesilen günlerin görevleri:
+  **aynen aktar** (tarihlerinde kalır, yeni haftanın parçası) ya da **iade et** (başlanmamış silinir + rezerv
+  iade; kaynaktan ilerlemesi olan kalır, yapılmayan kısmın rezervi iade; tamamlanana dokunulmaz) → **son onay**
+  → eski program yeni başlangıçtan bir gün önce biter, yeni hafta açılır. Aynı gün başlayan program kırpılamaz
+  (pencere engeller, "düzenle" yönlendirir). `weekly_program_service.create_program(early_end_reason,
+  early_end_mode)` + `ProgramOverlap.trimmable/trim_to/cut_*`.
+- "Bu hafta" artık tek: `active_program_id` = bugünü içeren programlardan en geç başlayan (liste + hafta yanıtı
+  + `get_active_program` sırası); program başına görev sayısı da çakışan günü yalnız o günün programına sayar.
+- Test YENİ `test_program_trim_previous.py` 19/19 · weekly_programs 17 · weekly_plan 15 · teacher_program 14 ·
+  program_delete_releases 6 · weekly_progress 26.
+
 ## BİRLEŞİK BRANŞ DENEMELERİ (2026-10-25, commit `65e570f`, migration YOK, CANLI)
 
 - Branş denemesi ders listesinde artık "Birleşik branş denemeleri" grubu: TYT Fen Bilimleri (20) · TYT Sosyal
