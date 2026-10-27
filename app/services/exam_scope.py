@@ -10,8 +10,11 @@ Kural (veri gerektirmez, migration YOK):
   2. Başlıkta "branş" geçiyorsa branş.
   3. Türün standart soru sayısı biliniyorsa: soru < %60 → branş.
      (LGS 90 · TYT 120 · AYT 80 · YDT 80 · Maarif 1. Basamak 125)
-  4. Standart bilinmiyorsa (okul / Maarif sınıf sınavları): tek derslik deneme
-     branş, aksi halde genel.
+  4. Standart bilinmiyorsa (okul sınavları): tek derslik deneme branş, aksi halde genel.
+  0. Gelişim İzleme sınavları (9/10/11/12. sınıf GİS, 2026-10-27) HER ZAMAN tek seri:
+     soru sayısı ve kapsadığı dersler sınavdan sınava değişir (yalnız Matematik ya da
+     yalnız Fen olabilir), bu yüzden genel/branş ayrımı anlamsızdır; kıyas net
+     yüzdesiyle yapılır (gelişim raporu). Koç işareti de yok sayılır.
 
 Seri anahtarı: genel → tür değeri ("lgs"); branş → "lgs~matematik".
 Hedef net (exam_targets) tür anahtarıyla tutulduğu için yalnız GENEL seriye uygulanır.
@@ -23,7 +26,7 @@ import json
 import re
 from dataclasses import dataclass
 
-from app.models.curriculum import EXAM_SECTION_LABELS, ExamSection
+from app.models.curriculum import EXAM_SECTION_LABELS, GIS_SECTIONS, ExamSection
 from app.models.exam_result import ExamResult
 
 SEP = "~"
@@ -135,8 +138,18 @@ def branch_subject(exam: ExamResult) -> str:
     return "Karma"
 
 
+_GIS_VALUES = frozenset(s.value for s in GIS_SECTIONS)
+
+
+def is_varying_section(section) -> bool:
+    """Gelişim izleme türü mü (soru sayısı/dersleri değişken, tek seri)."""
+    return _section_value(section) in _GIS_VALUES
+
+
 def classify(exam: ExamResult) -> str:
     """'genel' | 'brans'."""
+    if is_varying_section(exam.section):
+        return "genel"
     forced = _meta_scope(exam)
     if forced:
         return forced
@@ -156,6 +169,8 @@ def classify(exam: ExamResult) -> str:
 def exam_scope(exam: ExamResult) -> ExamScope:
     sec = _section_value(exam.section)
     label = _section_label(exam.section)
+    if is_varying_section(exam.section):
+        return ExamScope("genel", None, sec, label)
     if classify(exam) == "genel":
         return ExamScope("genel", None, sec, f"{label} (genel deneme)")
     subj = branch_subject(exam)

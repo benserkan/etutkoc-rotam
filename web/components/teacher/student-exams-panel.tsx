@@ -487,6 +487,8 @@ function ExamSectionSelect({ row, grade }: { row: ExamResultRow; grade: string |
   );
 }
 
+const GIS_VALUES = new Set<string>(["maarif_9", "maarif_10", "maarif_11", "gis_12"]);
+
 /** Genel / branş işareti — sistem tanır, koç düzeltir (2026-10-06). */
 function ExamScopeSelect({ row }: { row: ExamResultRow }) {
   const mut = useSetExamScope();
@@ -586,7 +588,8 @@ function ExamRow({
                   {row.title}
                 </button>
                 <ExamSectionSelect row={row} grade={studentGrade} />
-                <ExamScopeSelect row={row} />
+                {/* Gelişim izleme: soru sayısı/dersler değişken → genel/branş ayrımı yok, tek seri */}
+                {GIS_VALUES.has(row.section) ? null : <ExamScopeSelect row={row} />}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 <span className="md:hidden">{formatTRDate(row.exam_date)} · </span>
