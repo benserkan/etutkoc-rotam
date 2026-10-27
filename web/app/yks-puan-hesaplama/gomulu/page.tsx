@@ -15,6 +15,8 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <div className="force-light bg-transparent p-1 text-slate-900">
+      {/* Kapsayan sayfanın zemini görünsün (iframe içinde gri kutu kalmasın). */}
+      <style>{"html,body{background:transparent!important}"}</style>
       <YksSimulator embedded />
     </div>
   );
