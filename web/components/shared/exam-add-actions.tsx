@@ -11,6 +11,61 @@ import { cn } from "@/lib/utils";
  * denemelerden beslenir; bu yüzden büyük, dolgulu ve sürükle-bırak hedefi.
  * Elle giriş ikincil (yalnız netler).
  */
+/** Başlık şeridine sığan kompakt sürüm: PDF düğmesi (sürükle-bırak hedefi) + Elle gir. */
+export function ExamAddButtons({
+  onImport,
+  onManual,
+}: {
+  onImport: (file: File | null) => void;
+  onManual?: () => void;
+}) {
+  const [over, setOver] = React.useState(false);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onImport(null)}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setOver(false);
+          const f = e.dataTransfer.files?.[0];
+          if (!f) return;
+          if (f.type !== "application/pdf" && !f.name.toLowerCase().endsWith(".pdf")) {
+            toast.error("Yalnız PDF dosyası yüklenebilir");
+            return;
+          }
+          onImport(f);
+        }}
+        title="Deneme sonuç PDF'i: sorular tek tek okunur, konu analizi ve net fırsatı dolar · en çok 10 MB · okuma 3-5 dakika · dosyayı buraya sürükleyebilirsin"
+        className={cn(
+          "inline-flex h-9 items-center gap-2 rounded-md bg-violet-700 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2",
+          over && "ring-4 ring-violet-300",
+        )}
+      >
+        <FileUp className="size-4" aria-hidden />
+        {over ? "Bırak" : "PDF yükle"}
+      </button>
+      {onManual ? (
+        <button
+          type="button"
+          onClick={onManual}
+          title="PDF yoksa toplam ya da ders netlerini yaz (konu analizine girmez)"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-foreground transition hover:bg-muted"
+        >
+          <Plus className="size-4" aria-hidden />
+          Elle gir
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function ExamAddActions({
   onImport,
   onManual,

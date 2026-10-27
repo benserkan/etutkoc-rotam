@@ -3,10 +3,10 @@
 Ön koşul: `python -m scripts.seed_weekly_progress_demo` (Örnek Öğrenci, 3 branş serisi).
 Geçici bir koç açılır, demo öğrenci geçici olarak ona bağlanır, test sonunda geri alınır.
   1 Üst sekme şeridinde "Branş Denemeleri" YOK, menü tek satır
-  2 Denemeler sekmesinde 3. kart → branş analizi açılır, URL #program-exams
+  2 Denemeler başlığında "Karne | Branş denemeleri" anahtarı (2026-10-27; eskiden 3. kart) → URL #program-exams
   3 Bölümler: KPI · öne çıkanlar · ders karnesi · yan yana grafik · ısı · ritim · derin analiz
   4 Karnede satıra tıkla → derin analiz o derse geçer
-  5 "Karne denemelerine dön" → karne görünümü
+  5 Anahtarda "Karne denemeleri" → karne görünümü
   6 #program-exams doğrudan açılış · koyu tema · 390px taşma yok · konsol temiz
 """
 from __future__ import annotations
@@ -129,12 +129,17 @@ def main() -> int:
             entry = page.locator('[data-testid="branch-exams-entry"]')
             entry.wait_for(timeout=15000)
             page.wait_for_timeout(1200)
-            check("2a 3. kart görünür + özet", "deneme" in entry.inner_text(), entry.inner_text())
+            check("2a anahtar görünür", "Branş denemeleri" in entry.inner_text(), entry.inner_text())
             box_e = entry.bounding_box()
-            box_p = page.locator("button", has_text="Deneme sonuç PDF").first.bounding_box()
-            check("2b üç kart aynı satırda", box_e and box_p and abs(box_e["y"] - box_p["y"]) < 4, (box_e, box_p))
-            page.screenshot(path=os.path.join(SHOTS, "branch_entry_cards.png"), clip={
-                "x": 0, "y": max(0, (box_p or {"y": 0})["y"] - 120), "width": 1440, "height": 420})
+            box_p = page.get_by_role("button", name="PDF yükle").first.bounding_box()
+            check("2b PDF yükle başlıkta, anahtar hemen altında",
+                  box_e and box_p and 0 < box_e["y"] - box_p["y"] < 90, (box_e, box_p))
+            subtabs = page.locator('[role="tablist"][aria-label="Deneme analizi bölümleri"] [role="tab"]')
+            if subtabs.count():
+                names2 = [t.inner_text() for t in subtabs.all()]
+                check("2b2 alt sekmeler 6, 360° yok", len(names2) == 6 and not any("360" in n for n in names2), names2)
+            page.screenshot(path=os.path.join(SHOTS, "exams_header.png"), clip={
+                "x": 0, "y": max(0, (box_p or {"y": 0})["y"] - 160), "width": 1440, "height": 520})
             entry.click()
             page.wait_for_selector('[data-section="brans:report"]', timeout=15000)
             page.wait_for_timeout(1500)
@@ -158,7 +163,7 @@ def main() -> int:
             check("4 satır tıklanınca derin analiz o derse geçer", name in h, (name, h))
 
             # 5 geri
-            page.get_by_role("button", name="Karne denemelerine dön").click()
+            page.get_by_role("tab", name="Karne denemeleri").click()
             page.wait_for_timeout(1500)
             check("5 karne görünümüne dönüldü", page.locator('[data-testid="branch-exams-entry"]').count() == 1
                   and page.url.endswith("#exams"), page.url)

@@ -1,7 +1,8 @@
 "use client";
 
 /**
- * Öğrenci Gelişim Raporu (360°) — Denemeler sekmesinin ilk alt sekmesi.
+ * Öğrenci Gelişim Raporu (360°) — öğrenci detayında Genel'in yanındaki kendi sekmesi
+ * (2026-10-27'ye kadar Denemeler'in alt sekmesiydi).
  *
  * Bu hafta (aynı güne kadar kıyas) · hafta hafta tablo + deneme netleri · gelişim döneminde
  * gelinen nokta · mevcut durum / güçlü yanlar / fırsatlar / riskler · aksiyon planı.
@@ -14,6 +15,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { examSeriesOptions } from "@/lib/exam-format";
+import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
 import {
   Activity,
   ArrowRight,
@@ -99,6 +102,45 @@ function ago(iso: string | null): string {
   const h = Math.round(m / 60);
   if (h < 24) return `${h} saat önce`;
   return `${Math.round(h / 24)} gün önce`;
+}
+
+/**
+ * Sekme sarmalayıcısı: deneme bölümü bir SERİYE göre hesaplanır (genel deneme ile branş
+ * denemesi aynı ölçekte değil). Varsayılan = Denemeler sekmesiyle aynı (ilk/genel seri);
+ * öğrencinin birden çok serisi varsa seçici gösterilir.
+ */
+export function StudentDevelopmentReportTab({ studentId }: { studentId: number }) {
+  const exQ = useQuery({
+    queryKey: teacherKeys.studentExams(studentId, undefined),
+    queryFn: () => getTeacherStudentExams(studentId, undefined),
+    staleTime: 30_000,
+  });
+  const options = React.useMemo(() => examSeriesOptions(exQ.data?.rows ?? []), [exQ.data]);
+  const [sel, setSel] = React.useState<string | null>(null);
+  const series = sel && options.some((o) => o.value === sel) ? sel : options[0]?.value ?? null;
+  if (exQ.isLoading) return <p className="text-sm text-muted-foreground">Gelişim raporu hesaplanıyor…</p>;
+  return (
+    <div className="space-y-3">
+      {options.length > 1 ? (
+        <label className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+          Deneme bölümü için seri
+          <select
+            value={series ?? ""}
+            onChange={(e) => setSel(e.target.value)}
+            aria-label="Deneme serisi"
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label} ({o.count})
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      <StudentDevelopmentReport studentId={studentId} series={series} />
+    </div>
+  );
 }
 
 export function StudentDevelopmentReport({
@@ -206,7 +248,8 @@ export function StudentDevelopmentReport({
 
       <div
         className={cn(
-          "sticky bottom-3 z-20 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-cyan-700/40 bg-card px-4 py-2.5 shadow-lg",
+          // sağda Rota asistan balonuna yer bırak (balon fixed right-4/6 · bottom-5/6)
+          "sticky bottom-3 z-20 mr-16 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-cyan-700/40 bg-card px-4 py-2.5 shadow-lg sm:mr-20",
           !picked.size && "hidden",
         )}
         data-testid="dev-report-bar"

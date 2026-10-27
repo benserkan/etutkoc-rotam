@@ -7,7 +7,6 @@ import {
   Mail,
   MailCheck,
   ChevronDown,
-  ChevronRight,
   ClipboardList,
   Eye,
   FileCog,
@@ -19,12 +18,13 @@ import {
 } from "lucide-react";
 
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
-import { ExamAddActions } from "@/components/shared/exam-add-actions";
+import { ExamAddActions, ExamAddButtons } from "@/components/shared/exam-add-actions";
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
 import {
   PeriodContextNote,
-  PeriodSwitcher,
+  PeriodSelect,
 } from "@/components/shared/period-switcher";
+import { ColumnHint } from "@/components/ui/column-hint";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 import { ExamOverviewTab } from "@/components/shared/exam-ov/exam-overview-tab";
 import { ExamParentAnnounceDialog } from "@/components/teacher/exam-parent-announce-dialog";
@@ -35,7 +35,6 @@ import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog"
 import { ExamStudentShareButton } from "@/components/teacher/exams/exam-student-share";
 import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
-import { StudentDevelopmentReport } from "@/components/teacher/student-development-report";
 import { examProgressKeys, getExamShares } from "@/lib/api/exam-progress";
 import type { ExamShareInfo } from "@/lib/types/exam-progress";
 
@@ -102,16 +101,16 @@ function formatTRDate(iso: string): string {
   return `${String(d).padStart(2, "0")}.${String(m).padStart(2, "0")}.${y}`;
 }
 
-type ExamTab = "dev" | "overview" | "progress" | "topics" | "behavior" | "report" | "score" | "list";
+type ExamTab = "overview" | "progress" | "topics" | "behavior" | "report" | "list";
 
+// 2026-10-27: 8 → 6 alt sekme. Gelişim Raporu (360°) öğrenci detayında kendi sekmesine
+// taşındı; Deneme Raporu ile Puan Tahmini tek sekmede alt alta.
 const EXAM_TABS: { key: ExamTab; label: string; hint: string }[] = [
-  { key: "dev", label: "Gelişim Raporu (360°)", hint: "Bu hafta, geçmiş haftalar, deneme gelişimi, fırsat ve riskler, aksiyon planı" },
   { key: "overview", label: "Genel Bakış", hint: "Son deneme, puan, öne çıkanlar" },
   { key: "progress", label: "Net Gelişimi", hint: "Ders ders net değişimi" },
   { key: "topics", label: "Konu Analizi", hint: "Net fırsatı, zayıf konular" },
   { key: "behavior", label: "Sınav Davranışı", hint: "Boş, yanlış, işaretleme eğilimi" },
-  { key: "report", label: "Deneme Raporu", hint: "Hedef net, deneme yorumu, ders gidişatı, yazdır" },
-  { key: "score", label: "Puan Tahmini", hint: "Son netlerden yaklaşık TYT/AYT/LGS puanı" },
+  { key: "report", label: "Rapor & Puan", hint: "Hedef net, deneme yorumu, ders gidişatı, yazdır · son netlerden yaklaşık puan" },
   { key: "list", label: "Tüm Denemeler", hint: "Tüm denemeler ve işlemler" },
 ];
 
@@ -124,11 +123,19 @@ interface Props {
 }
 
 /**
- * Denemeler sekmesindeki üçüncü kart (2026-10-20): branş denemeleri eskiden ayrı bir
- * üst sekmeydi ve menüyü iki satıra itiyordu. Kart, programdaki branş denemelerinin
- * kısa özetini gösterip analiz görünümünü açar.
+ * Karne denemeleri | Branş denemeleri anahtarı (2026-10-27). Eskiden üçüncü büyük karttı;
+ * şimdi başlığın altında iki seçenekli anahtar. Branş tarafında bekleyen sonuç / dikkat
+ * işareti küçük rozet olarak kalır.
  */
-function BranchEntryCard({ studentId, onOpen }: { studentId: number; onOpen: () => void }) {
+function ExamKindSwitch({
+  studentId,
+  branch,
+  onChange,
+}: {
+  studentId: number;
+  branch: boolean;
+  onChange: (branch: boolean) => void;
+}) {
   const q = useQuery({
     queryKey: denemeKeys.analysis(studentId),
     queryFn: () => getDenemeAnalysis(studentId),
@@ -136,47 +143,39 @@ function BranchEntryCard({ studentId, onOpen }: { studentId: number; onOpen: () 
   });
   const ov = q.data?.overview;
   const pending = q.data?.summary.pending ?? 0;
-  const branch = (q.data?.series ?? []).filter((x) => x.kind === "brans");
+  const series = (q.data?.series ?? []).filter((x) => x.kind === "brans");
+  const attention = series.some((x) => x.decline_run >= 3 || x.last_position === "below");
+  const item = (active: boolean) =>
+    cn(
+      "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors",
+      active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+    );
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      data-testid="branch-exams-entry"
-      className="group flex items-start gap-3 rounded-xl border-2 border-teal-600/40 bg-card p-4 text-left transition hover:border-teal-600 hover:bg-teal-500/5 dark:border-teal-400/40 dark:hover:border-teal-400"
-    >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white">
-        <ClipboardList className="size-5" aria-hidden />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1 text-sm font-semibold text-foreground">
-          Branş denemeleri analizi
-          <ChevronRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
-        </span>
-        <span className="mt-0.5 block text-xs text-muted-foreground">
-          Programdan verilen branş denemeleri: ders ders net yüzdesi, eğilim, normal aralık, testlerle kıyas.
-        </span>
-        <span className="mt-1.5 flex flex-wrap gap-1.5 text-[11px] font-semibold">
-          {ov && ov.exams > 0 ? (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-foreground">
-              {ov.exams} deneme · {ov.subjects} ders
-            </span>
-          ) : (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-              {q.isLoading ? "yükleniyor…" : "henüz sonuç yok"}
-            </span>
-          )}
-          {ov?.avg_net_pct != null ? (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-foreground">ort. net %{Math.round(ov.avg_net_pct)}</span>
-          ) : null}
-          {pending > 0 ? (
-            <span className="rounded-full bg-amber-200 px-2 py-0.5 text-amber-950 dark:text-amber-950">{pending} sonuç bekliyor</span>
-          ) : null}
-          {branch.some((x) => x.decline_run >= 3 || x.last_position === "below") ? (
-            <span className="rounded-full bg-orange-600 px-2 py-0.5 text-white">dikkat</span>
-          ) : null}
-        </span>
-      </span>
-    </button>
+    <div role="tablist" aria-label="Deneme türü" className="inline-flex rounded-lg bg-muted p-1">
+      <button type="button" role="tab" aria-selected={!branch} onClick={() => onChange(false)} className={item(!branch)}>
+        Karne denemeleri
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={branch}
+        onClick={() => onChange(true)}
+        data-testid="branch-exams-entry"
+        className={item(branch)}
+      >
+        <ClipboardList className="size-4" aria-hidden />
+        Branş denemeleri
+        {ov && ov.exams > 0 ? (
+          <span className="rounded-full bg-background px-1.5 text-[11px] tabular-nums text-muted-foreground">{ov.exams}</span>
+        ) : null}
+        {pending > 0 ? (
+          <span className="rounded-full bg-amber-300 px-1.5 text-[11px] font-semibold text-amber-950" title="Sonucu girilmemiş program denemesi">
+            {pending} bekliyor
+          </span>
+        ) : null}
+        {attention ? <span className="size-2 rounded-full bg-orange-600" title="Dikkat gerektiren ders var" aria-hidden /> : null}
+      </button>
+    </div>
   );
 }
 
@@ -193,7 +192,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
   const [addOpen, setAddOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
   const [importFile, setImportFile] = React.useState<File | null>(null);
-  const [tab, setTab] = React.useState<ExamTab>("dev");
+  const [tab, setTab] = React.useState<ExamTab>("overview");
   const [detailId, setDetailId] = React.useState<number | null>(null);
   const data = q.data;
   const sharesQ = useQuery({
@@ -223,37 +222,48 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
     ? previousExam(rows.filter((r) => rowSeries(r) === rowSeries(detailRow)), detailRow)
     : null;
 
+  const header = (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h3 className="text-lg font-semibold">Denemeler</h3>
+          <ColumnHint
+            label={<span className="sr-only">Net hesabı</span>}
+            hint="Netler sınav türüne göre hesaplanır (LGS: doğru − yanlış/3 · YKS: doğru − yanlış/4). Farklı türler ve aynı türün genel denemesiyle branş denemesi ayrı ölçekte olduğu için analizler seçili seriye göredir."
+            side="bottom"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <GuideHint module="Denemeler" compact />
+          {!branchView ? (
+            <ExamAddButtons
+              onImport={(f) => {
+                setImportFile(f);
+                setImportOpen(true);
+              }}
+              onManual={() => setAddOpen(true)}
+            />
+          ) : null}
+        </div>
+      </div>
+      {onBranchView ? (
+        <ExamKindSwitch studentId={studentId} branch={!!branchView} onChange={onBranchView} />
+      ) : null}
+    </div>
+  );
+
   if (branchView) {
-    return <StudentProgramExamsPanel studentId={studentId} onBack={() => onBranchView?.(false)} />;
+    return (
+      <div className="space-y-4">
+        {header}
+        <StudentProgramExamsPanel studentId={studentId} />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-lg font-semibold">Deneme Analizi</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Netler sınav türüne göre hesaplanır (LGS: doğru − yanlış/3 · YKS: doğru − yanlış/4).
-            Farklı türler ve aynı türün genel denemesiyle branş denemesi (ör. 90 soruluk LGS
-            ile 20 soruluk Matematik branşı) ayrı ölçekte olduğu için analizler seçili seriye göredir.
-          </p>
-        </div>
-      </div>
-
-      <GuideHint module="Denemeler" />
-
-      <ExamAddActions
-        onImport={(f) => {
-          setImportFile(f);
-          setImportOpen(true);
-        }}
-        onManual={() => setAddOpen(true)}
-        pdfCount={(data?.rows ?? []).filter((r) => r.import_source === "pdf_import").length}
-        total={data?.rows.length ?? 0}
-        extra={
-          onBranchView ? <BranchEntryCard studentId={studentId} onOpen={() => onBranchView(true)} /> : undefined
-        }
-      />
+      {header}
 
       <ExamImportDialog
         open={importOpen}
@@ -265,28 +275,28 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
         initialFile={importFile}
       />
 
-      <PeriodSwitcher meta={periodMeta} value={period} onChange={setPeriod} />
       <PeriodContextNote meta={periodMeta} value={period} />
 
       {q.isLoading && !data ? (
         <p className="text-sm text-muted-foreground">Yükleniyor…</p>
       ) : !data || data.rows.length === 0 ? (
-        <>
-        <Card>
-          <CardContent className="p-6 text-center space-y-2">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-muted-foreground">
               {period && period !== "current"
                 ? "Bu dönemde deneme sonucu yok."
-                : "Henüz deneme sonucu girilmemiş."}
+                : "Henüz deneme sonucu girilmemiş. İlk denemeyi ekleyince analizler burada açılır."}
             </p>
-            <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-              <Plus className="size-4" aria-hidden />
-              İlk denemeyi ekle
-            </Button>
-          </CardContent>
-        </Card>
-        <StudentDevelopmentReport studentId={studentId} series={null} period={period} />
-        </>
+            <PeriodSelect meta={periodMeta} value={period} onChange={setPeriod} />
+          </div>
+          <ExamAddActions
+            onImport={(f) => {
+              setImportFile(f);
+              setImportOpen(true);
+            }}
+            onManual={() => setAddOpen(true)}
+          />
+        </div>
       ) : (
         <>
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
@@ -315,9 +325,11 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
                 </button>
               ))}
             </div>
-            {tab !== "list" && tab !== "score" && sectionsInfo.length > 1 ? (
-              <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                Deneme serisi
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+            <PeriodSelect meta={periodMeta} value={period} onChange={setPeriod} />
+            {tab !== "list" && sectionsInfo.length > 1 ? (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                Seri
                 <select
                   value={activeSeries ?? ""}
                   onChange={(e) => setSelSection(e.target.value)}
@@ -335,12 +347,11 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
                 </select>
               </label>
             ) : null}
+            </div>
           </div>
 
           <div role="tabpanel">
-            {tab === "dev" ? (
-              <StudentDevelopmentReport studentId={studentId} series={activeSeries} period={period} />
-            ) : tab === "overview" ? (
+            {tab === "overview" ? (
               <ExamOverviewTab
                 source={{ kind: "teacher", studentId }}
                 series={activeSeries}
@@ -355,15 +366,16 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
               <ExamTopicAnalysis studentId={studentId} section={activeSeries} period={period} />
             ) : tab === "behavior" ? (
               <ExamBehaviorTab source={{ kind: "teacher", studentId }} series={activeSeries} period={period} />
-            ) : tab === "score" ? (
-              <ScoreEstimatePanel source={{ kind: "teacher", studentId }} />
             ) : tab === "report" ? (
-              <ExamProgressReport
-                source={{ kind: "teacher", studentId }}
-                section={activeSeries}
-                period={period}
-                studentName={studentName}
-              />
+              <div className="space-y-8">
+                <ExamProgressReport
+                  source={{ kind: "teacher", studentId }}
+                  section={activeSeries}
+                  period={period}
+                  studentName={studentName}
+                />
+                <ScoreEstimatePanel source={{ kind: "teacher", studentId }} />
+              </div>
             ) : (
               <ul className="space-y-2">
                 <li

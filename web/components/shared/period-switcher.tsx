@@ -89,6 +89,42 @@ export function PeriodSwitcher({
   );
 }
 
+/** Aynı seçici, araç çubuğuna sığan açılır liste olarak (Denemeler sekmesi). */
+export function PeriodSelect({
+  meta,
+  value,
+  onChange,
+}: {
+  meta?: PeriodFilterMeta | null;
+  value?: string;
+  onChange: (next: string | undefined) => void;
+}) {
+  const options = meta?.options ?? [];
+  if (options.length < 2) return null;
+  const currentId = options.find((o) => o.is_current)?.id;
+  const active = value ?? "current";
+  return (
+    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <CalendarRange className="size-3.5" aria-hidden />
+      Dönem
+      <select
+        value={active}
+        onChange={(e) => onChange(e.target.value === "current" ? undefined : e.target.value)}
+        aria-label="Dönem"
+        className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {options.map((o) => (
+          <option key={o.id} value={o.id === currentId ? "current" : String(o.id)}>
+            {o.label}
+            {o.is_current ? " · bu dönem" : ""}
+          </option>
+        ))}
+        <option value="all">Tümü</option>
+      </select>
+    </label>
+  );
+}
+
 /** Seçili dönem güncel değilken gösterilen bilgi bandı. */
 export function PeriodContextNote({
   meta,

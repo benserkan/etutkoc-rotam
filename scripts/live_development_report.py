@@ -1,6 +1,6 @@
 """Gelişim Raporu (360°) — gerçek tarayıcı (dev :3000 + :8081). Geçici koç/öğrenci kurar, siler.
 
-  1. Denemeler sekmesi → varsayılan alt sekme "Gelişim Raporu (360°)"
+  1. Öğrenci detayında kendi sekmesi "Gelişim Raporu" (#report; 2026-10-27 Denemeler'den taşındı)
   2. Başlık + bu hafta gün şeridi + hafta tablosu + 4 kutu + aksiyon planı görünür
   3. Bir risk + bir aksiyon seç → alt çubuk "2 madde seçili" → Seansa ekle → "Seans gündeminde"
   4. Yatay taşma yok (1440 + 390) · koyu tema ekran görüntüsü
@@ -55,7 +55,7 @@ def main() -> int:
                 page.fill("input[type=password]", base.PWD)
                 page.click("button[type=submit]")
                 page.wait_for_url("**/teacher/**", timeout=30000)
-                page.goto(f"{BASE}/teacher/students/{sid}#exams")
+                page.goto(f"{BASE}/teacher/students/{sid}#report")
                 page.wait_for_timeout(1500)
                 for btn in ("Daha sonra", "Kapat"):
                     loc = page.get_by_role("button", name=btn)
@@ -67,8 +67,10 @@ def main() -> int:
                 rep = page.locator("[data-section=dev-report]")
                 rep.wait_for(timeout=30000)
                 if scheme == "light":
-                    tab = page.get_by_role("tab", name="Gelişim Raporu (360°)")
-                    check("1 varsayılan alt sekme 360", tab.get_attribute("aria-selected") == "true")
+                    tab = page.get_by_role("tab", name="Gelişim Raporu", exact=True)
+                    check("1 üst menüde Gelişim Raporu sekmesi seçili", tab.get_attribute("aria-selected") == "true")
+                    check("1b Koçluk sekmesi artık Alışkanlıklar",
+                          page.get_by_role("tab", name="Alışkanlıklar").count() == 1)
                     check("2a başlık", page.locator("[data-testid=dev-report-headline]").count() == 1)
                     check("2b hafta tablosu ≥8 satır",
                           page.locator("[data-testid=dev-report-weeks] tbody tr").count() >= 8)

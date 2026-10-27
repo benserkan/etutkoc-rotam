@@ -15,6 +15,7 @@ import {
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
+  Gauge,
   History,
   Library,
   ListChecks,
@@ -76,6 +77,7 @@ import { TopicPerformancePanel } from "@/components/shared/topic-performance-pan
 import { CurriculumPanel } from "@/components/teacher/curriculum-panel";
 import { ProgramHistoryPanel } from "@/components/teacher/program-history-panel";
 import { StudentDevHub } from "@/components/teacher/student-dev-hub";
+import { StudentDevelopmentReportTab } from "@/components/teacher/student-development-report";
 import { StudentWeeklyProgress } from "@/components/teacher/student-weekly-progress";
 import {
   DropdownMenu,
@@ -99,6 +101,7 @@ type TabKey =
   | "surveys"
   | "books"
   | "parents"
+  | "report"
   | "dev";
 
 /**
@@ -111,7 +114,15 @@ const TAB_GROUPS: Array<{
   label: string | null;
   tabs: Array<{ key: TabKey; label: string; icon: LucideIcon }>;
 }> = [
-  { label: null, tabs: [{ key: "summary", label: "Genel", icon: LayoutDashboard }] },
+  {
+    label: null,
+    tabs: [
+      { key: "summary", label: "Genel", icon: LayoutDashboard },
+      // 2026-10-27: 360° rapor Denemeler'in alt sekmesiydi; program + deneme + aksiyon planını
+      // birlikte anlattığı için öğrencinin bütününe ait → Genel'in yanında kendi sekmesi.
+      { key: "report", label: "Gelişim Raporu", icon: Gauge },
+    ],
+  },
   {
     label: "Program",
     tabs: [
@@ -123,7 +134,7 @@ const TAB_GROUPS: Array<{
     label: "Akademik",
     tabs: [
       { key: "analytics", label: "Analitik", icon: BarChart3 },
-      { key: "topics", label: "Konu Performansı", icon: Percent },
+      { key: "topics", label: "Konular", icon: Percent },
       { key: "exams", label: "Denemeler", icon: GraduationCap },
       { key: "wrongs", label: "Yanlışlar", icon: BookX },
     ],
@@ -133,7 +144,7 @@ const TAB_GROUPS: Array<{
     tabs: [
       { key: "sessions", label: "Seanslar", icon: Video },
       { key: "surveys", label: "Anketler", icon: ClipboardList },
-      { key: "dev", label: "Gelişim", icon: Sparkles },
+      { key: "dev", label: "Alışkanlıklar", icon: Sparkles },
     ],
   },
   { label: "Aile", tabs: [{ key: "parents", label: "Veliler", icon: HeartHandshake }] },
@@ -153,6 +164,7 @@ function isValidTab(v: string): v is TabKey {
     v === "surveys" ||
     v === "books" ||
     v === "parents" ||
+    v === "report" ||
     v === "dev"
   );
 }
@@ -264,7 +276,7 @@ export function StudentTabs({ studentId, initial }: Props) {
               // dar ekranda tek grup (Akademik: 4 sekme) 390px'i aşıyordu →
               // grup ekrandan geniş olamaz, sekmeleri alt satıra sarar
               "flex min-w-0 max-w-full shrink-0 flex-col",
-              gi > 0 && "ml-1.5 border-l border-border pl-1.5",
+              gi > 0 && "ml-1 border-l border-border pl-1",
             )}
             data-tab-group={g.label ?? "genel"}
           >
@@ -285,7 +297,7 @@ export function StudentTabs({ studentId, initial }: Props) {
                     id={`tab-${t.key}`}
                     onClick={() => selectTab(t.key)}
                     className={cn(
-                      "flex items-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-1.5 text-[13px] transition-colors",
+                      "flex items-center gap-1.5 whitespace-nowrap border-b-2 px-1.5 py-1.5 text-[13px] transition-colors",
                       isActive
                         ? "border-foreground font-medium text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground",
@@ -300,6 +312,12 @@ export function StudentTabs({ studentId, initial }: Props) {
           </div>
         ))}
       </div>
+
+      {active === "report" ? (
+        <div role="tabpanel" id="tab-panel-report" aria-labelledby="tab-report">
+          <StudentDevelopmentReportTab studentId={studentId} />
+        </div>
+      ) : null}
 
       {active === "dev" ? (
         <div role="tabpanel" id="tab-panel-dev" aria-labelledby="tab-dev">

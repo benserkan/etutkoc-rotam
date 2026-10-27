@@ -17,7 +17,16 @@ import { cn } from "@/lib/utils";
  *
  * Kullanım: <GuideHint module="Kitaplar" />
  */
-export function GuideHint({ module, className }: { module: string; className?: string }) {
+export function GuideHint({
+  module,
+  className,
+  compact = false,
+}: {
+  module: string;
+  className?: string;
+  /** true → büyük karşılama kartı yerine sayfa başlığında küçük "Eğitim" bağlantısı. */
+  compact?: boolean;
+}) {
   const chapters = COACH_GUIDE.chapters.filter((c) => c.module === module);
   const q = useGuide(COACH_GUIDE.guideKey);
   // Hidrasyon: sunucu veri yokken hiçbir şey çizmez; tarayıcıda önbellekte veri hazırsa ilk
@@ -50,6 +59,25 @@ export function GuideHint({ module, className }: { module: string; className?: s
 
   // Veri yüklenene kadar yer kaplama (kartın açılıp kapanıp zıplamasın)
   if (q.isLoading) return null;
+
+  if (compact) {
+    return (
+      <a
+        data-section="guide-hint"
+        href={allFinished ? `/teacher/guide?bolum=${encodeURIComponent(chapters[0].key)}` : href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Rota, gerçek ekranlar üzerinde sesli anlatıyor · ${chapters.length} bölüm · yaklaşık ${minutes} dakika`}
+        className={cn(
+          "inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-foreground transition hover:bg-muted",
+          className,
+        )}
+      >
+        <PlayCircle className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+        {allFinished ? "Eğitim" : started ? "Eğitime devam" : "Eğitimi izle"}
+      </a>
+    );
+  }
 
   if (allFinished) {
     return (
