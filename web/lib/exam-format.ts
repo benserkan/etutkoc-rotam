@@ -40,9 +40,11 @@ export interface ExamSeriesOption {
   label: string;
   count: number;
   isBranch: boolean;
+  isSchool?: boolean;
 }
 
-/** Seri seçenekleri — genel denemeler önce (sayıya göre), sonra branşlar. */
+/** Seri seçenekleri — genel denemeler önce (sayıya göre; okul yazılısı sınav serilerinin
+ *  arkasında), sonra branşlar. Sunucudaki exam_scope.series_options ile aynı sıra. */
 export function examSeriesOptions(rows: ExamResultRow[]): ExamSeriesOption[] {
   const map = new Map<string, ExamSeriesOption>();
   for (const r of rows) {
@@ -55,10 +57,14 @@ export function examSeriesOptions(rows: ExamResultRow[]): ExamSeriesOption[] {
         label: r.series_label || r.section_label,
         count: 1,
         isBranch: r.scope === "brans",
+        isSchool: r.section === "okul",
       });
   }
   return [...map.values()].sort(
-    (a, b) => Number(a.isBranch) - Number(b.isBranch) || b.count - a.count,
+    (a, b) =>
+      Number(a.isBranch) - Number(b.isBranch) ||
+      Number(!!a.isSchool) - Number(!!b.isSchool) ||
+      b.count - a.count,
   );
 }
 

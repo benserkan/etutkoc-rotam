@@ -176,7 +176,8 @@ def is_general_key(key: str | None) -> bool:
 
 
 def series_options(exams: list[ExamResult]) -> list[dict]:
-    """Seçici seçenekleri: genel seriler önce (deneme sayısına göre), sonra branşlar."""
+    """Seçici seçenekleri: genel seriler önce (deneme sayısına göre; okul yazılısı sınav
+    serilerinin arkasında — varsayılan seri TYT/AYT/LGS olsun), sonra branşlar."""
     counts: dict[str, int] = {}
     labels: dict[str, str] = {}
     kinds: dict[str, str] = {}
@@ -185,7 +186,8 @@ def series_options(exams: list[ExamResult]) -> list[dict]:
         counts[s.series_key] = counts.get(s.series_key, 0) + 1
         labels[s.series_key] = s.series_label
         kinds[s.series_key] = s.kind
-    ordered = sorted(counts.items(), key=lambda x: (kinds[x[0]] != "genel", -x[1]))
+    ordered = sorted(counts.items(), key=lambda x: (kinds[x[0]] != "genel",
+                                                    section_of_key(x[0]) == "okul", -x[1]))
     return [{"value": k, "label": labels[k], "count": n, "kind": kinds[k],
              "section": section_of_key(k)} for k, n in ordered]
 
