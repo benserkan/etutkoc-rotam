@@ -35,6 +35,10 @@ export default async function AdminLayout({
   if (role !== "super_admin") {
     redirect(roleHome(role));
   }
+  // İki aşamalı doğrulama zorunlu (backend de 403 döner) → kurulum sayfasına
+  if (data.user.two_factor_required && !data.user.two_factor_enabled) {
+    redirect("/me/account#iki-asamali");
+  }
 
   return <AdminShell user={data.user}>{children}</AdminShell>;
 }

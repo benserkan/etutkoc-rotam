@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # e-postası dışında da haber almak isteyen adresler (örn. kişisel Gmail —
     # kurumsal alan adı çökerse ulaşılabilir kalır).
     alarm_extra_emails: str = ""
+    # Süper admin için iki aşamalı doğrulama ZORUNLU (2026-10-28). Acil durumda
+    # (telefon + yedek kodlar kayıp) .env'de SUPER_ADMIN_REQUIRE_2FA=false ile
+    # geçici kapatılır; yerel geliştirme/test ortamı da false kullanır.
+    super_admin_require_2fa: bool = True
 
     # SMS — pluggable sağlayıcı (P1 2026-05-30, VatanSMS 2026-05-31).
     # Yalnız telefon doğrulama OTP'si için kullanılır; otomatik SMS bildirimi YOK.

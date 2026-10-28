@@ -524,8 +524,13 @@ class AdminActivatePlanBody(BaseModel):
     plan: str = Field(..., max_length=32)  # solo_pro | solo_elite | solo_free
     cycle: str = "monthly"                 # monthly | academic_year | custom
     # cycle=custom: elle gün sayısı (ör. 365 = 1 yıl hediye üyelik)
-    custom_days: int | None = Field(default=None, ge=1, le=1095)
+    custom_days: int | None = Field(default=None, ge=1, le=400)  # tek seferde en çok 400 gün
     note: str | None = Field(default=None, max_length=200)  # plan geçmişine yazılır
+    # Ücretli plan için ZORUNLU (2026-10-28): "payment" = ödeme alındı (not =
+    # referans), "gift" = hediye/tanıtım (gelire katılmaz). Ücretsiz planda yok.
+    grant_kind: str | None = Field(default=None, max_length=16)
+    # İşlem anında yeniden doğrulama: TOTP ya da yedek kod
+    totp_code: str | None = Field(default=None, max_length=32)
 
 
 class AdminExtendTrialBody(BaseModel):

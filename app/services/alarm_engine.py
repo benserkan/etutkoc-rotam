@@ -200,8 +200,19 @@ def _val_moment_silent(db: Session) -> int:
     return moments.silent_total(db)
 
 
+def _val_manual_gift_burst(db: Session) -> int:
+    """Son 30 günde 'hediye' türüyle yapılan elle paket aktivasyonu sayısı.
+
+    2026-10-28: süper admin paneli ödemesiz ücretli paket açabiliyor; hesap
+    ele geçirilirse toplu bedava paket dağıtımı bu sayıda sıçrama yapar.
+    """
+    from app.services.admin_activation_notify import gift_activation_count
+    return gift_activation_count(db)
+
+
 # Kural key → değer hesaplayıcı + severity hesaplayıcı
 EVALUATORS = {
+    "manual_gift_burst": _val_manual_gift_burst,
     "high_failed_logins": _val_high_failed_logins,
     "oldest_queued_long": _val_oldest_queued_long,
     "error_groups_open": _val_error_groups_open,
@@ -217,6 +228,19 @@ EVALUATORS = {
 # lazy karşılığı — cron saatlik evaluate_all çağırdığı için prod'da kendiliğinden
 # oluşur).
 _BUILTIN_RULES = [
+    {
+        "key": "manual_gift_burst",
+        "name": "Elle hediye paket aktivasyonu sıçradı",
+        "description": (
+            "Son 30 günde süper admin panelinden 'hediye' türüyle açılan ücretli "
+            "paket sayısı eşiği aştı. Bunları sen yapmadıysan hesap ele "
+            "geçirilmiş olabilir: şifreyi değiştir, oturumları kapat, "
+            "aktivasyonları geri al."
+        ),
+        "threshold": 3,          # 3'ü aşınca (4. hediyede) alarm
+        "cooldown_minutes": 360,
+        "channels": "push,in_app,email",
+    },
     {
         "key": "payment_problem_recent",
         "name": "Ödeme sorunu (son 24 saat)",

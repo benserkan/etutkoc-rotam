@@ -144,7 +144,11 @@ def iter_owners(
                 is_active=bool(u.is_active),
                 created_at=_aware(u.created_at) or now,
                 trial_ends_at=_aware(u.trial_ends_at),
-                monthly_price_try=_plan_price(u.plan),
+                # Hediye (elle, ödemesiz) paket gelire katılmaz (2026-10-28)
+                monthly_price_try=(
+                    0 if getattr(u, "subscription_platform", None) == "gift"
+                    else _plan_price(u.plan)
+                ),
             ))
 
     return owners

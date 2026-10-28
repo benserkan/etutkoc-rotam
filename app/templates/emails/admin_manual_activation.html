@@ -1,0 +1,29 @@
+Subject: [Güvenlik] Elle paket aktivasyonu — {{ target_name }} · {{ plan_label }}
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,-apple-system,sans-serif; max-width:560px; margin:0 auto; padding:24px; color:#1f2937;">
+  <h2 style="color:{% if grant_kind == 'gift' %}#b45309{% else %}#0e7490{% endif %}; margin-top:0;">
+    Elle paket aktivasyonu yapıldı
+  </h2>
+  <p>Süper admin panelinden ödeme sistemi dışında bir paket açıldı. Bu işlemi sen
+  yapmadıysan hesabın ele geçirilmiş olabilir: şifreni hemen değiştir ve
+  aktivasyonu geri al.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0; font-size:14px;">
+    <tr><td style="padding:6px 0; color:#6b7280; width:140px;">Koç:</td><td style="padding:6px 0;"><strong>{{ target_name }}</strong> &lt;{{ target_email }}&gt;</td></tr>
+    <tr><td style="padding:6px 0; color:#6b7280;">Paket:</td><td style="padding:6px 0;">{{ plan_label }} · bitiş {{ period_end }}</td></tr>
+    <tr><td style="padding:6px 0; color:#6b7280;">Tür:</td><td style="padding:6px 0;"><strong>{% if grant_kind == 'gift' %}Hediye (ödeme yok, gelire katılmaz){% else %}Ödeme alındı (elle){% endif %}</strong></td></tr>
+    <tr><td style="padding:6px 0; color:#6b7280;">Not:</td><td style="padding:6px 0;">{{ note }}</td></tr>
+    <tr><td style="padding:6px 0; color:#6b7280;">Yapan:</td><td style="padding:6px 0;">{{ actor_name }} &lt;{{ actor_email }}&gt;</td></tr>
+    <tr><td style="padding:6px 0; color:#6b7280;">IP · zaman:</td><td style="padding:6px 0;">{{ ip }} · {{ at_display }}</td></tr>
+    <tr><td style="padding:6px 0; color:#6b7280;">Son 30 gün hediye:</td><td style="padding:6px 0;">{{ gifts_30d }}</td></tr>
+  </table>
+  <p style="margin:24px 0;">
+    <a href="{{ app_base_url }}/admin/users/{{ target_id }}"
+       style="display:inline-block; background:#0e7490; color:#ffffff; padding:10px 20px;
+              border-radius:8px; text-decoration:none; font-weight:600;">
+      Koçun sayfasını aç
+    </a>
+  </p>
+  <p style="color:#6b7280; font-size:12px;">Bu otomatik bir güvenlik bildirimidir; her elle aktivasyonda gönderilir.</p>
+</body>
+</html>

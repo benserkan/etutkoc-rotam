@@ -562,7 +562,14 @@ export function useActivateUserPlan(userId: number) {
   return useMutation<
     MutationResponse<AdminUserMutationResult>,
     Error,
-    { plan: string; cycle?: string; custom_days?: number; note?: string }
+    {
+      plan: string;
+      cycle?: string;
+      custom_days?: number;
+      note?: string;
+      grant_kind?: "payment" | "gift";
+      totp_code?: string;
+    }
   >({
     mutationFn: (body) =>
       api<MutationResponse<AdminUserMutationResult>>(

@@ -203,7 +203,7 @@ def main() -> int:
         check("B0 başlangıç: 2 aktif / 6 toplam", _active_count(ctx["B"]) == 2 and _total_count(ctx["B"]) == 6,
               f"aktif={_active_count(ctx['B'])}")
         adm = login("admin")
-        r = adm.post(f"/api/v2/admin/users/{ctx['B']}/activate-plan", json={"plan": "solo_elite", "cycle": "monthly"})
+        r = adm.post(f"/api/v2/admin/users/{ctx['B']}/activate-plan", json={"plan": "solo_elite", "cycle": "monthly", "grant_kind": "payment", "note": "test ödeme ref"})
         check("B1 admin activate-plan → 200", r.status_code == 200, f"status={r.status_code} {r.text[:140]}")
         check("B2 TÜM öğrenciler aktifleşti (6/6)", _active_count(ctx["B"]) == 6, f"aktif={_active_count(ctx['B'])}")
 
@@ -212,7 +212,7 @@ def main() -> int:
         check("C0 başlangıç: 3 aktif / 5 toplam + paywall=True (past_due)",
               _active_count(ctx["C"]) == 3 and _total_count(ctx["C"]) == 5 and _paywall(ctx["C"]) is True,
               f"aktif={_active_count(ctx['C'])} paywall={_paywall(ctx['C'])}")
-        r = adm.post(f"/api/v2/admin/users/{ctx['C']}/activate-plan", json={"plan": "solo_pro", "cycle": "monthly"})
+        r = adm.post(f"/api/v2/admin/users/{ctx['C']}/activate-plan", json={"plan": "solo_pro", "cycle": "monthly", "grant_kind": "payment", "note": "test ödeme ref"})
         check("C1 admin activate-plan (aynı plan) → 200", r.status_code == 200, f"status={r.status_code} {r.text[:140]}")
         check("C2 TÜM öğrenciler aktifleşti (5/5) — erken-return'e rağmen", _active_count(ctx["C"]) == 5,
               f"aktif={_active_count(ctx['C'])}")

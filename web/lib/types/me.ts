@@ -36,6 +36,9 @@ export interface UserPublic {
   // P1 — cep telefonu SMS ile doğrulandı mı? Banner: false iken her panelin
   // üstünde kapatılamaz "Telefonunuzu doğrulayın" uyarısı kalır.
   phone_verified?: boolean;
+  /** 2026-10-28: süper admin iki aşamalı doğrulama zorunluluğu */
+  two_factor_enabled?: boolean;
+  two_factor_required?: boolean;
   last_login_at: string | null;
   created_at: string | null;
 }

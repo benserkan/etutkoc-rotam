@@ -87,7 +87,7 @@ def main() -> int:
 
         # 1. activate solo_pro monthly
         r = admin_cli.post(f"/api/v2/admin/users/{ids['coach']}/activate-plan",
-                           json={"plan": "solo_pro", "cycle": "monthly"})
+                           json={"plan": "solo_pro", "cycle": "monthly", "grant_kind": "payment", "note": "test ödeme ref"})
         ok1 = r.status_code == 200
         with SessionLocal() as db:
             c = db.get(User, ids["coach"])
@@ -129,7 +129,7 @@ def main() -> int:
 
         # 5. yeniden aktive → past_due kalkar
         r = admin_cli.post(f"/api/v2/admin/users/{ids['coach']}/activate-plan",
-                           json={"plan": "solo_pro", "cycle": "monthly"})
+                           json={"plan": "solo_pro", "cycle": "monthly", "grant_kind": "payment", "note": "test ödeme ref"})
         with SessionLocal() as db:
             c = db.get(User, ids["coach"])
             ok5 = c.subscription_status == "active" and c.subscription_period_end.replace(tzinfo=timezone.utc) > now

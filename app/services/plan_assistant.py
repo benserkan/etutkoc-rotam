@@ -394,7 +394,7 @@ def _app_answer(chip: str, state: dict, channel: str) -> dict | None:
     p = state["plan"]
     sug = suggested_plan(state)
     ios = channel == "ios"
-    web_managed = p.get("subscription_platform") in ("iyzico", "manual") and p.get(
+    web_managed = p.get("subscription_platform") in ("iyzico", "manual", "gift") and p.get(
         "subscription_status") in ("active", "canceled")
     app_store = p.get("subscription_platform") == "app_store"
     buy_line = ("Paketler bölümünden paketi seçip 'Satın al'a dokunman yeterli; ödeme App Store "

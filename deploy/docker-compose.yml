@@ -72,6 +72,7 @@ services:
       # Alarm e-postası için EK alıcılar (virgüllü). Kurumsal alan adı/posta
       # kutusu sorunluyken de ulaşılabilir bir adres kalsın diye.
       ALARM_EXTRA_EMAILS: ${ALARM_EXTRA_EMAILS:-}
+      SUPER_ADMIN_REQUIRE_2FA: ${SUPER_ADMIN_REQUIRE_2FA:-true}
       # ZeptoMail bounce/teslimat webhook'u doğrular (?token=). Boşsa tüm POST kabul.
       ZEPTOMAIL_WEBHOOK_SECRET: ${ZEPTOMAIL_WEBHOOK_SECRET:-}
       # ---- WhatsApp ----
@@ -181,6 +182,7 @@ services:
       SMTP_FROM: ${SMTP_FROM}
       SMTP_USE_TLS: "true"
       ALARM_EXTRA_EMAILS: ${ALARM_EXTRA_EMAILS:-}
+      SUPER_ADMIN_REQUIRE_2FA: ${SUPER_ADMIN_REQUIRE_2FA:-true}
       WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-true}
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
       WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}

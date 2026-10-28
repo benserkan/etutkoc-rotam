@@ -67,6 +67,22 @@ export default async function MeAccountPage() {
         </Link>
       </div>
 
+      {user.two_factor_required && !user.two_factor_enabled ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100"
+        >
+          <p className="font-semibold">Yönetim paneli için iki aşamalı doğrulama zorunlu</p>
+          <p className="mt-1">
+            Telefonuna bir doğrulama uygulaması (Google Authenticator, Microsoft
+            Authenticator vb.) kur, aşağıdaki{" "}
+            <a href="#iki-asamali" className="font-semibold underline">İki aşamalı doğrulama</a>{" "}
+            bölümünden QR kodu okut ve kodu gir. Yedek kodları güvenli bir yere kaydet —
+            telefonunu kaybedersen giriş için onlar gerekir.
+          </p>
+        </div>
+      ) : null}
+
       {/* Sayfa başlığı + ana eylemler */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
@@ -198,7 +214,9 @@ export default async function MeAccountPage() {
       />
 
       {/* İki faktörlü doğrulama (yalnız yönetici rolleri için görünür) */}
-      <TwoFactorCard />
+      <div id="iki-asamali" className="scroll-mt-6">
+        <TwoFactorCard />
+      </div>
 
       {/* Aktif oturumlar (kendi cihazları) */}
       <SessionsCard />

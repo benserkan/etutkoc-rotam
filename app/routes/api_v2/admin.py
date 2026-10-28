@@ -411,11 +411,25 @@ router = APIRouter(prefix="/admin", tags=["api-v2-admin"])
 
 
 def _require_super_admin(user: User = Depends(get_current_user_v2)) -> User:
-    """SUPER_ADMIN rolü zorunlu. Aksi halde 403 role_required."""
+    """SUPER_ADMIN rolü zorunlu. Aksi halde 403 role_required.
+
+    2026-10-28: süper admin hesabı ele geçirilirse ödemesiz paket dağıtımı
+    dahil her şey açık → iki aşamalı doğrulama ZORUNLU. Kurulmamışsa admin
+    API'leri 403 two_factor_setup_required döner; /me/2fa/* uçları bu
+    bağımlılığı kullanmadığından kurulum her zaman yapılabilir.
+    """
     if user.role != UserRole.SUPER_ADMIN:
         raise _auth_error(
             "Bu işlem sadece süper admin içindir.",
             "role_required",
+            http_status=status.HTTP_403_FORBIDDEN,
+        )
+    from app.config import settings as _settings
+    if _settings.super_admin_require_2fa and not user.two_factor_enabled:
+        raise _auth_error(
+            "Süper admin paneli için iki aşamalı doğrulama zorunlu. "
+            "Hesabım → İki aşamalı doğrulama bölümünden kur.",
+            "two_factor_setup_required",
             http_status=status.HTTP_403_FORBIDDEN,
         )
     return user
@@ -2319,6 +2333,7 @@ def admin_activate_user_plan_v2(
     user_id: int,
     body: AdminActivatePlanBody,
     request: Request,
+    background_tasks: BackgroundTasks,
     user: User = Depends(_require_super_admin),
     db: Session = Depends(get_db),
 ):
@@ -2361,6 +2376,38 @@ def admin_activate_user_plan_v2(
         )
     note_extra = (body.note or "").strip()
     from app.services.plans import is_paid_plan as _is_paid
+    grant_kind = (body.grant_kind or "").strip()
+    if _is_paid(plan):
+        # Güvenlik katmanları (2026-10-28): tür + gerekçe zorunlu, işlem anında
+        # yeniden doğrulama. Hesap/oturum ele geçirilse bile kod olmadan ücretli
+        # paket açılamaz; her aktivasyon ayrı kanaldan bildirilir.
+        if grant_kind not in ("payment", "gift"):
+            raise HTTPException(status_code=422, detail={
+                "error": "validation", "code": "grant_kind_required",
+                "message": "Aktivasyon türünü seç: ödeme alındı ya da hediye."})
+        if len(note_extra) < 3:
+            raise HTTPException(status_code=422, detail={
+                "error": "validation", "code": "note_required",
+                "message": ("Ödeme referansını yaz (dekont no, tarih, tutar)."
+                            if grant_kind == "payment" else
+                            "Hediyenin gerekçesini yaz.")})
+        from app.config import settings as _settings
+        if _settings.super_admin_require_2fa or user.two_factor_enabled:
+            from app.services.totp import verify_login as _totp_verify
+            code = (body.totp_code or "").strip()
+            if not code:
+                raise HTTPException(status_code=403, detail={
+                    "error": "forbidden", "code": "step_up_required",
+                    "message": "Doğrulama uygulamandaki 6 haneli kodu gir."})
+            if not user.two_factor_enabled or not _totp_verify(db, user=user, code=code):
+                log_action(
+                    db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+                    target_type="user", target_id=target.id, request=request,
+                    details={"action": "activate_plan_step_up_failed", "plan": plan},
+                )
+                raise HTTPException(status_code=403, detail={
+                    "error": "forbidden", "code": "step_up_invalid",
+                    "message": "Doğrulama kodu hatalı."})
     from app.services.plans import reactivate_solo_students as _reactivate_students
     from datetime import datetime as _dt, timedelta as _td, timezone as _tz
     # Aktivasyondan ÖNCE: koç aktif-ücretli miydi? Değilse (ücretsiz / past_due /
@@ -2374,6 +2421,7 @@ def admin_activate_user_plan_v2(
         reason=PlanChangeReason.UPGRADE, actor_user_id=user.id,
         note=(
             "Süper admin abonelik aktivasyonu"
+            + {"payment": " [Ödeme]", "gift": " [Hediye]"}.get(grant_kind, "")
             + (f" — {note_extra}" if note_extra else " (manuel ödeme)")
             + (f" · {body.custom_days} gün" if cycle == "custom" else "")
         ),
@@ -2389,6 +2437,7 @@ def admin_activate_user_plan_v2(
             actor_user_id=user.id,
             note=(
                 "Süper admin süre güncellemesi"
+                + {"payment": " [Ödeme]", "gift": " [Hediye]"}.get(grant_kind, "")
                 + (f" — {note_extra}" if note_extra else "")
                 + (f" · {body.custom_days} gün" if cycle == "custom" else f" · {cycle}")
             ),
@@ -2405,7 +2454,8 @@ def admin_activate_user_plan_v2(
             days = academic_year_days() if cycle == "academic_year" else 30
             target.subscription_cycle = cycle
         target.subscription_period_end = _dt.now(_tz.utc) + _td(days=days)
-        target.subscription_platform = "manual"  # süper admin aktivasyonu
+        # süper admin aktivasyonu; hediye ayrı işaretlenir → gelire (MRR) katılmaz
+        target.subscription_platform = "gift" if grant_kind == "gift" else "manual"
         target.trial_ends_at = None  # deneme bitti (aktif ücretli abonelik)
         if not was_paid_active:
             _reactivate_students(db, target, autocommit=False)
@@ -2418,12 +2468,24 @@ def admin_activate_user_plan_v2(
         db, action=AuditAction.USER_UPDATE, actor_id=user.id,
         target_type="user", target_id=target.id, request=request,
         details={"action": "activate_plan", "plan": plan, "cycle": cycle,
-                 "custom_days": body.custom_days, "note": note_extra or None},
+                 "custom_days": body.custom_days, "note": note_extra or None,
+                 "grant_kind": grant_kind or None},
         autocommit=False,
     )
     db.commit()
     db.refresh(target)
     info = get_plan_info(plan)
+    if _is_paid(plan):
+        from app.services.admin_activation_notify import notify_manual_activation_bg
+        background_tasks.add_task(
+            notify_manual_activation_bg,
+            actor_id=user.id, target_id=target.id,
+            plan_label=info.label if info else plan, grant_kind=grant_kind,
+            note=note_extra,
+            period_end=(target.subscription_period_end.strftime("%d.%m.%Y")
+                        if target.subscription_period_end else ""),
+            ip=(request.client.host if request.client else ""),
+        )
     return MutationResponse[AdminUserMutationResult](
         data=AdminUserMutationResult(
             user=_user_to_admin_item(target),

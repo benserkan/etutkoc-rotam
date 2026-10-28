@@ -280,6 +280,36 @@ def orphan_scan(db: Session, *, limit: int = 50) -> dict:
         logger.exception("orphan: section-unmapped fail")
 
     try:
+        # 7) ELLE AÇILMIŞ ÜCRETLİ PAKETLER (2026-10-28): süper admin panelinden
+        # ödeme sistemi dışında açılanlar 'aktif' sayıldığı için 5. tarama
+        # bunları görmez. Hediye + elle-ödeme ayrı ayrı listelenir.
+        manual = (
+            db.query(User.id, User.email, User.plan, User.subscription_platform,
+                     User.subscription_period_end)
+            .filter(
+                User.role == UserRole.TEACHER,
+                User.subscription_platform.in_(["manual", "gift"]),
+                User.subscription_status.in_(["active", "canceled"]),
+            )
+            .limit(limit)
+            .all()
+        )
+        if manual:
+            findings.append({
+                "kind": "manual_paid_plans",
+                "label": "Elle açılmış ücretli paketler (hediye / elle ödeme)",
+                "count": len(manual),
+                "samples": [
+                    {"user_id": r[0], "email": r[1], "plan": r[2],
+                     "tur": "hediye" if r[3] == "gift" else "elle ödeme",
+                     "bitis": r[4].strftime("%d.%m.%Y") if r[4] else None}
+                    for r in manual[:8]
+                ],
+            })
+    except Exception:
+        logger.exception("orphan: manual-paid fail")
+
+    try:
         # 5) ÖDEME KAYITSIZ ÜCRETLİ PLAN (2026-07-24 dersi): bağımsız koç ücretli
         # solo planda ama abonelik kaydı yok = hiçbir meşru yoldan (iyzico/IAP/
         # admin aktivasyonu) geçmemiş → bedava ücretli özellik + hayalet MRR.

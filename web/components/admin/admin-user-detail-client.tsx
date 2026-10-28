@@ -248,6 +248,8 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
   const [cycle, setCycle] = React.useState("monthly");
   const [customDays, setCustomDays] = React.useState("365");
   const [note, setNote] = React.useState("");
+  const [grantKind, setGrantKind] = React.useState<"" | "payment" | "gift">("");
+  const [totp, setTotp] = React.useState("");
   const [openedAt] = React.useState(() => Date.now()); // bitiş önizlemesi için sabit "şimdi"
   const paid = plan === "solo_pro" || plan === "solo_elite" || plan === "solo_unlimited";
   const sub = target.subscription_status;
@@ -324,7 +326,7 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
               <input
                 type="number"
                 min={1}
-                max={1095}
+                max={400}
                 value={customDays}
                 onChange={(e) => setCustomDays(e.target.value)}
                 className="w-24 rounded border border-input bg-card px-2 py-2 text-sm"
@@ -335,14 +337,27 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
           ) : null}
           <Button
             onClick={() =>
-              mut.mutate({
-                plan,
-                cycle,
-                ...(cycle === "custom" ? { custom_days: Number(customDays) || 0 } : {}),
-                ...(note.trim() ? { note: note.trim() } : {}),
-              })
+              mut.mutate(
+                {
+                  plan,
+                  cycle,
+                  ...(cycle === "custom" ? { custom_days: Number(customDays) || 0 } : {}),
+                  ...(note.trim() ? { note: note.trim() } : {}),
+                  ...(paid && grantKind ? { grant_kind: grantKind } : {}),
+                  ...(paid ? { totp_code: totp.trim() } : {}),
+                },
+                { onSettled: () => setTotp("") },
+              )
             }
-            disabled={mut.isPending || (paid && cycle === "custom" && !(Number(customDays) > 0))}
+            disabled={
+              mut.isPending ||
+              (paid &&
+                ((cycle === "custom" &&
+                  !(Number(customDays) > 0 && Number(customDays) <= 400)) ||
+                  !grantKind ||
+                  note.trim().length < 3 ||
+                  totp.trim().length < 6))
+            }
             className="bg-cyan-700 text-white hover:bg-cyan-800"
           >
             {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
@@ -350,14 +365,57 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
           </Button>
         </div>
         {paid ? (
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            maxLength={200}
-            placeholder="Not (isteğe bağlı) — ör. 1 yıl hediye üyelik"
-            className="w-full rounded border border-input bg-card px-3 py-2 text-sm"
-            aria-label="Aktivasyon notu"
-          />
+          <div className="space-y-2 rounded-lg border border-input p-3">
+            <div className="flex flex-wrap gap-4 text-sm" role="radiogroup" aria-label="Aktivasyon türü">
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="grant_kind"
+                  checked={grantKind === "payment"}
+                  onChange={() => setGrantKind("payment")}
+                />
+                Ödeme alındı (elle)
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="grant_kind"
+                  checked={grantKind === "gift"}
+                  onChange={() => setGrantKind("gift")}
+                />
+                Hediye / tanıtım (gelire katılmaz)
+              </label>
+            </div>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={200}
+              placeholder={
+                grantKind === "gift"
+                  ? "Gerekçe (zorunlu) — ör. 1 yıl hediye, saha geri bildirimi"
+                  : "Ödeme referansı (zorunlu) — dekont no, tarih, tutar"
+              }
+              className="w-full rounded border border-input bg-card px-3 py-2 text-sm"
+              aria-label="Aktivasyon notu"
+            />
+            <label className="flex flex-wrap items-center gap-2 text-sm">
+              <span>Doğrulama kodu</span>
+              <input
+                value={totp}
+                onChange={(e) => setTotp(e.target.value)}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={32}
+                placeholder="6 haneli kod"
+                className="w-36 rounded border border-input bg-card px-2 py-2 text-sm tracking-widest"
+                aria-label="Doğrulama kodu"
+              />
+              <span className="text-xs text-muted-foreground">
+                Doğrulama uygulamandaki kod ya da bir yedek kod. Her aktivasyon e-posta ve
+                bildirimle sana iletilir.
+              </span>
+            </label>
+          </div>
         ) : null}
         {paid && cycle === "custom" && Number(customDays) > 0 ? (
           <p className="text-xs text-muted-foreground">

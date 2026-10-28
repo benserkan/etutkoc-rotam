@@ -27,6 +27,15 @@ DataRequestStatusLiteral = Literal[
 ]
 
 
+def _two_factor_required(user) -> bool:
+    try:
+        from app.config import settings
+        role = getattr(user.role, "value", user.role)
+        return bool(settings.super_admin_require_2fa and role == "super_admin")
+    except Exception:
+        return False
+
+
 class UserPublic(BaseModel):
     """Kullanıcı kamuya açık alanları — password REDACTED."""
     id: int
@@ -42,6 +51,9 @@ class UserPublic(BaseModel):
     # "Telefonunuzu doğrulayın" uyarısı gösterilir. Default True = geriye uyum
     # (eski client'lar bu alanı yok sayar).
     phone_verified: bool = True
+    # 2026-10-28: süper admin 2FA zorunluluğu — panel kurulmamışsa yönlendirir
+    two_factor_enabled: bool = False
+    two_factor_required: bool = False
     last_login_at: datetime | None = None
     created_at: datetime | None = None
 
@@ -57,6 +69,8 @@ class UserPublic(BaseModel):
             must_change_password=user.must_change_password,
             email_verified=getattr(user, "email_verified_at", None) is not None,
             phone_verified=getattr(user, "phone_verified_at", None) is not None,
+            two_factor_enabled=bool(getattr(user, "two_factor_enabled", False)),
+            two_factor_required=_two_factor_required(user),
             last_login_at=user.last_login_at,
             created_at=user.created_at,
         )

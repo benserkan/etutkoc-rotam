@@ -52,6 +52,31 @@ class AlarmGuide:
 
 
 GUIDES: dict[str, AlarmGuide] = {
+    "manual_gift_burst": AlarmGuide(
+        birim="hediye aktivasyonu (30 gün)",
+        ne_oldu=(
+            "Süper admin panelinden son 30 günde olağandan fazla ücretli paket "
+            "'hediye' olarak, ödeme alınmadan açıldı."
+        ),
+        neden=(
+            "Ya bilinçli bir tanıtım kampanyası yapılıyor ya da süper admin "
+            "hesabı ele geçirilip bedava paket dağıtılıyor. Her aktivasyon "
+            "ayrıca e-posta ve telefon bildirimiyle haber verilir."
+        ),
+        ne_yapmali=[
+            "Kanıt listesindeki aktivasyonları tek tek kontrol et — hepsini "
+            "sen mi yaptın?",
+            "Yapmadıysan: şifreni değiştir, Oturumlar sayfasından tüm "
+            "oturumları kapat, ilgili koçların paketini geri al.",
+            "Bilinçli kampanyaysa alarmı 'Çözüldü' olarak notla kapat; "
+            "gerekirse eşiği Alarmlar sayfasından yükselt.",
+        ],
+        baglantilar=[
+            ("Oturumlar", "/admin/security-monitor/sessions"),
+            ("Denetim", "/admin/audit"),
+        ],
+        sorumlu="sen",
+    ),
     "high_failed_logins": AlarmGuide(
         birim="başarısız giriş",
         ne_oldu="Son 24 saatte başarısız giriş denemesi normalin üzerine çıktı.",
@@ -431,7 +456,45 @@ def _ev_moment_silent(db: Session, limit: int) -> list[EvidenceRow]:
     return out[:limit]
 
 
+def _ev_manual_gift_burst(db: Session, limit: int) -> list[EvidenceRow]:
+    import json as _json
+    from app.models import AuditAction, AuditLog
+
+    since = _now() - timedelta(days=30)
+    rows = (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.action == AuditAction.USER_UPDATE,
+            AuditLog.created_at >= since,
+            AuditLog.details_json.like('%"activate_plan"%'),
+        )
+        .order_by(AuditLog.created_at.desc())
+        .all()
+    )
+    out: list[EvidenceRow] = []
+    ids = {r.target_id for r in rows if r.target_id}
+    kisiler = _kisiler(db, ids)
+    for r in rows:
+        try:
+            d = _json.loads(r.details_json or "{}")
+        except Exception:
+            continue
+        if d.get("action") != "activate_plan" or d.get("grant_kind") != "gift":
+            continue
+        out.append(EvidenceRow(
+            baslik=f"Hediye · {d.get('plan')} · {d.get('custom_days') or d.get('cycle')}",
+            detay=(f"{_kisi_etiket(kisiler.get(r.target_id), r.target_id)} — "
+                   f"{d.get('note') or ''}")[:140],
+            href=f"/admin/users/{r.target_id}" if r.target_id else None,
+            ton="amber", zaman=r.created_at,
+        ))
+        if len(out) >= limit:
+            break
+    return out
+
+
 _KANIT = {
+    "manual_gift_burst": _ev_manual_gift_burst,
     "high_failed_logins": _ev_high_failed_logins,
     "oldest_queued_long": _ev_oldest_queued_long,
     "error_groups_open": _ev_error_groups_open,

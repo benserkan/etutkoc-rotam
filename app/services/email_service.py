@@ -90,7 +90,7 @@ def _render(name: str, ctx: dict[str, Any]) -> tuple[str, str, str]:
 # ETÜTKOÇ'un KENDİ adına müşteriyle (koç/kurum) ya da iç ekiple yazıştığı
 # e-postalar — kurum markası UYGULANMAZ (ticari/abonelik/güvenlik/satış).
 PLATFORM_TEMPLATES = frozenset({
-    "admin_weekly_summary", "contact_request_admin", "credit_warning", "dunning_reminder",
+    "admin_manual_activation", "admin_weekly_summary", "contact_request_admin", "credit_warning", "dunning_reminder",
     "institution_onboarding", "new_signup_admin", "offer_invitation", "renewal_overdue",
     "renewal_reminder", "security_alarm_triggered", "security_super_admin_login",
     "trial_expired", "trial_reminder",

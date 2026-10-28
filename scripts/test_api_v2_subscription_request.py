@@ -95,7 +95,7 @@ def main() -> int:
         kt_cli = login(f"{PFX}_kt@test.invalid")
 
         # 1. koç talep
-        r = coach_cli.post("/api/v2/teacher/subscription-request", json={"plan": "solo_pro", "cycle": "monthly"})
+        r = coach_cli.post("/api/v2/teacher/subscription-request", json={"plan": "solo_pro", "cycle": "monthly", "grant_kind": "payment", "note": "test ödeme ref"})
         j = r.json()
         check("1. koç subscription-request → 200 ok",
               r.status_code == 200 and j["data"]["ok"] and not j["data"]["already_pending"], f"{r.text[:160]}")
@@ -106,7 +106,7 @@ def main() -> int:
         check("1b. ContactRequest oluştu (subscription_request)", cnt == 1, f"cnt={cnt}")
 
         # 2. idempotent
-        r = coach_cli.post("/api/v2/teacher/subscription-request", json={"plan": "solo_pro", "cycle": "academic_year"})
+        r = coach_cli.post("/api/v2/teacher/subscription-request", json={"plan": "solo_pro", "cycle": "academic_year", "grant_kind": "payment", "note": "test ödeme ref"})
         check("2. tekrar → already_pending True",
               r.status_code == 200 and r.json()["data"]["already_pending"] is True, f"{r.text[:160]}")
         with SessionLocal() as db:
@@ -116,19 +116,19 @@ def main() -> int:
         check("2b. hâlâ tek kayıt", cnt == 1, f"cnt={cnt}")
 
         # 3. kurum öğretmeni → 403
-        r = kt_cli.post("/api/v2/teacher/subscription-request", json={"plan": "solo_pro"})
+        r = kt_cli.post("/api/v2/teacher/subscription-request", json={"plan": "solo_pro", "grant_kind": "payment", "note": "test ödeme ref"})
         check("3. kurum öğretmeni → 403 managed_by_institution",
               r.status_code == 403 and r.json()["detail"]["code"] == "managed_by_institution", f"status={r.status_code}")
 
         # 4. admin aktive et
-        r = admin_cli.post(f"/api/v2/admin/users/{ids['coach']}/activate-plan", json={"plan": "solo_pro"})
+        r = admin_cli.post(f"/api/v2/admin/users/{ids['coach']}/activate-plan", json={"plan": "solo_pro", "grant_kind": "payment", "note": "test ödeme ref"})
         check("4. admin activate-plan solo_pro → 200", r.status_code == 200, f"{r.text[:160]}")
         with SessionLocal() as db:
             coach = db.get(User, ids["coach"])
             check("4b. koç planı solo_pro oldu", coach.plan == "solo_pro", f"plan={coach.plan}")
 
         # 5. kurum öğretmenine activate → 400 not_solo_teacher
-        r = admin_cli.post(f"/api/v2/admin/users/{ids['kt']}/activate-plan", json={"plan": "solo_pro"})
+        r = admin_cli.post(f"/api/v2/admin/users/{ids['kt']}/activate-plan", json={"plan": "solo_pro", "grant_kind": "payment", "note": "test ödeme ref"})
         check("5. kurum öğretmenine → 400 not_solo_teacher",
               r.status_code == 400 and r.json()["detail"]["code"] == "not_solo_teacher", f"status={r.status_code}")
 
@@ -138,11 +138,11 @@ def main() -> int:
               r.status_code == 400 and r.json()["detail"]["code"] == "invalid_plan", f"status={r.status_code}")
 
         # 7. olmayan kullanıcı
-        r = admin_cli.post("/api/v2/admin/users/99999999/activate-plan", json={"plan": "solo_pro"})
+        r = admin_cli.post("/api/v2/admin/users/99999999/activate-plan", json={"plan": "solo_pro", "grant_kind": "payment", "note": "test ödeme ref"})
         check("7. olmayan kullanıcı → 404", r.status_code == 404, f"status={r.status_code}")
 
         # 8. öğretmen (admin değil) → 403
-        r = coach_cli.post(f"/api/v2/admin/users/{ids['coach']}/activate-plan", json={"plan": "solo_pro"})
+        r = coach_cli.post(f"/api/v2/admin/users/{ids['coach']}/activate-plan", json={"plan": "solo_pro", "grant_kind": "payment", "note": "test ödeme ref"})
         check("8. admin olmayan → 403", r.status_code == 403, f"status={r.status_code}")
 
     finally:
