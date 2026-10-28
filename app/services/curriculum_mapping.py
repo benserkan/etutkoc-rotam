@@ -273,6 +273,9 @@ _CONTRAST = {_stem(w) for w in (
     "basit", "bilesik", "dogal", "tam", "rasyonel", "irrasyonel", "organik",
     "anorganik", "dogrusal", "sozel", "sayisal", "ic", "dis", "alt", "ust",
     "1", "2", "3", "4",
+    # türdeş ama farklı konu: edebi türler, cebirsel nesneler
+    "siir", "hikaye", "roman", "tiyatro", "deneme", "masal", "destan",
+    "denklem", "esitsizlik", "fonksiyon", "polinom", "sistem",
 )}
 
 
@@ -297,10 +300,14 @@ def fuzzy_match(label_key: str, index: dict[str, Topic]) -> LabelMatch | None:
     if not lmean:
         return None
     topics = {t.id: t for t in index.values()}
-    tstems = {
-        tid: _fuzzy_stems(_topic_key(t.name)) - _FILLER_STEMS
-        for tid, t in topics.items()
-    }
+    # Adı yalnız tür/karşıtlık sözcüğünden oluşan konu ("Deneme", "Şiir")
+    # esnek katmanda aday DEĞİL — yalnız birebir eşleşir ("Genel Denemeler"
+    # Türkçe'deki "Deneme" türüne bağlanmasın).
+    tstems = {}
+    for tid, t in topics.items():
+        km = _fuzzy_stems(_topic_key(t.name)) - _FILLER_STEMS
+        if km and not km <= _CONTRAST:
+            tstems[tid] = km
     # Etikette tamamen geçen konular — iki ayrı konu birden geçiyorsa etiket
     # birleşik başlıktır ("Yüzde ve Kâr-Zarar Problemleri") → belirsiz.
     inside = {tid: km for tid, km in tstems.items() if km and km <= lt}
