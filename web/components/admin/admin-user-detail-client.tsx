@@ -246,6 +246,9 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
   const mut = useActivateUserPlan(target.id);
   const [plan, setPlan] = React.useState("solo_pro");
   const [cycle, setCycle] = React.useState("monthly");
+  const [customDays, setCustomDays] = React.useState("365");
+  const [note, setNote] = React.useState("");
+  const [openedAt] = React.useState(() => Date.now()); // bitiş önizlemesi için sabit "şimdi"
   const paid = plan === "solo_pro" || plan === "solo_elite" || plan === "solo_unlimited";
   const sub = target.subscription_status;
   const isActive = sub === "active";
@@ -312,18 +315,56 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
               className="rounded border border-input bg-card px-3 py-2 text-sm"
             >
               <option value="monthly">Aylık (30 gün)</option>
-              <option value="academic_year">Akademik yıl (365 gün)</option>
+              <option value="academic_year">Akademik yıl (10 ay · 305 gün)</option>
+              <option value="custom">Özel süre (gün gir)</option>
             </select>
           ) : null}
+          {paid && cycle === "custom" ? (
+            <label className="flex items-center gap-1.5 text-sm">
+              <input
+                type="number"
+                min={1}
+                max={1095}
+                value={customDays}
+                onChange={(e) => setCustomDays(e.target.value)}
+                className="w-24 rounded border border-input bg-card px-2 py-2 text-sm"
+                aria-label="Gün sayısı"
+              />
+              gün
+            </label>
+          ) : null}
           <Button
-            onClick={() => mut.mutate({ plan, cycle })}
-            disabled={mut.isPending}
+            onClick={() =>
+              mut.mutate({
+                plan,
+                cycle,
+                ...(cycle === "custom" ? { custom_days: Number(customDays) || 0 } : {}),
+                ...(note.trim() ? { note: note.trim() } : {}),
+              })
+            }
+            disabled={mut.isPending || (paid && cycle === "custom" && !(Number(customDays) > 0))}
             className="bg-cyan-700 text-white hover:bg-cyan-800"
           >
             {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
             {isActive ? "Güncelle / Yenile" : "Aktive et"}
           </Button>
         </div>
+        {paid ? (
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={200}
+            placeholder="Not (isteğe bağlı) — ör. 1 yıl hediye üyelik"
+            className="w-full rounded border border-input bg-card px-3 py-2 text-sm"
+            aria-label="Aktivasyon notu"
+          />
+        ) : null}
+        {paid && cycle === "custom" && Number(customDays) > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Bitiş: {fmtShortDate(new Date(openedAt + Number(customDays) * 86400000).toISOString())}
+            {" "}· ödeme kaydı oluşmaz; bitişten 3 gün önce koça yenileme hatırlatması gider.
+          </p>
+        ) : null}
         <TrialExtendSection target={target} paidActive={isActive || sub === "canceled"} />
       </CardContent>
     </Card>

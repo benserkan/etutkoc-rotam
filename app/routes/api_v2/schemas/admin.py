@@ -522,7 +522,10 @@ class AdminUserMutationResult(BaseModel):
 class AdminActivatePlanBody(BaseModel):
     """Süper admin — bağımsız koç abonelik aktivasyonu (manuel ödeme sonrası)."""
     plan: str = Field(..., max_length=32)  # solo_pro | solo_elite | solo_free
-    cycle: str = "monthly"                 # monthly | academic_year
+    cycle: str = "monthly"                 # monthly | academic_year | custom
+    # cycle=custom: elle gün sayısı (ör. 365 = 1 yıl hediye üyelik)
+    custom_days: int | None = Field(default=None, ge=1, le=1095)
+    note: str | None = Field(default=None, max_length=200)  # plan geçmişine yazılır
 
 
 class AdminExtendTrialBody(BaseModel):

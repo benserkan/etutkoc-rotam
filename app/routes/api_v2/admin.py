@@ -2351,8 +2351,15 @@ def admin_activate_user_plan_v2(
                     "message": "Geçersiz solo plan."},
         )
     cycle = (body.cycle or "monthly").strip()
-    if cycle not in ("monthly", "academic_year"):
+    if cycle not in ("monthly", "academic_year", "custom"):
         cycle = "monthly"
+    if cycle == "custom" and not body.custom_days:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "validation", "code": "custom_days_required",
+                    "message": "Özel süre için gün sayısı gir."},
+        )
+    note_extra = (body.note or "").strip()
     from app.services.plans import is_paid_plan as _is_paid
     from app.services.plans import reactivate_solo_students as _reactivate_students
     from datetime import datetime as _dt, timedelta as _td, timezone as _tz
@@ -2364,14 +2371,24 @@ def admin_activate_user_plan_v2(
     change_plan(
         db, owner_type=PlanOwnerType.USER, owner_id=target.id, new_plan=plan,
         reason=PlanChangeReason.UPGRADE, actor_user_id=user.id,
-        note="Süper admin abonelik aktivasyonu (manuel ödeme)", autocommit=False,
+        note=(
+            "Süper admin abonelik aktivasyonu"
+            + (f" — {note_extra}" if note_extra else " (manuel ödeme)")
+            + (f" · {body.custom_days} gün" if cycle == "custom" else "")
+        ),
+        autocommit=False,
     )
     # Abonelik durumu: ücretli plan → active + dönem sonu (yenileme); free → temizle.
     if _is_paid(plan):
         target.subscription_status = "active"
-        target.subscription_cycle = cycle
         from app.services.pricing import academic_year_days
-        days = academic_year_days() if cycle == "academic_year" else 30
+        if cycle == "custom":
+            days = int(body.custom_days or 30)
+            # Yenileme ekranları yalnız monthly|academic_year bilir.
+            target.subscription_cycle = "academic_year" if days >= 300 else "monthly"
+        else:
+            days = academic_year_days() if cycle == "academic_year" else 30
+            target.subscription_cycle = cycle
         target.subscription_period_end = _dt.now(_tz.utc) + _td(days=days)
         target.subscription_platform = "manual"  # süper admin aktivasyonu
         target.trial_ends_at = None  # deneme bitti (aktif ücretli abonelik)
@@ -2385,7 +2402,9 @@ def admin_activate_user_plan_v2(
     log_action(
         db, action=AuditAction.USER_UPDATE, actor_id=user.id,
         target_type="user", target_id=target.id, request=request,
-        details={"action": "activate_plan", "plan": plan}, autocommit=False,
+        details={"action": "activate_plan", "plan": plan, "cycle": cycle,
+                 "custom_days": body.custom_days, "note": note_extra or None},
+        autocommit=False,
     )
     db.commit()
     db.refresh(target)
