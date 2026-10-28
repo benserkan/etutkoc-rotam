@@ -2368,6 +2368,7 @@ def admin_activate_user_plan_v2(
     was_paid_active = (
         _is_paid(target.plan or "") and target.subscription_status == "active"
     )
+    same_plan = (target.plan or "") == plan
     change_plan(
         db, owner_type=PlanOwnerType.USER, owner_id=target.id, new_plan=plan,
         reason=PlanChangeReason.UPGRADE, actor_user_id=user.id,
@@ -2378,6 +2379,20 @@ def admin_activate_user_plan_v2(
         ),
         autocommit=False,
     )
+    # Aynı pakette süre güncellemesi: change_plan "değişiklik yok" deyip satır
+    # yazmaz → hediye/uzatma notu plan geçmişinde kaybolurdu (2026-10-28).
+    if same_plan:
+        from app.services.plans import _log_change
+        _log_change(
+            db, owner_type=PlanOwnerType.USER, owner_id=target.id,
+            from_plan=plan, to_plan=plan, reason=PlanChangeReason.ADMIN_OVERRIDE,
+            actor_user_id=user.id,
+            note=(
+                "Süper admin süre güncellemesi"
+                + (f" — {note_extra}" if note_extra else "")
+                + (f" · {body.custom_days} gün" if cycle == "custom" else f" · {cycle}")
+            ),
+        )
     # Abonelik durumu: ücretli plan → active + dönem sonu (yenileme); free → temizle.
     if _is_paid(plan):
         target.subscription_status = "active"
