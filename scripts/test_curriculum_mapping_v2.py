@@ -239,10 +239,11 @@ def main() -> int:
         r11 = c.post(f"/api/v2/teacher/library/books/{ids['book']}/sections",
                      json={"label": "Bölünebilme Kuralları Testleri", "test_count": 4})
         d11 = r11.json().get("data", {}) if r11.status_code == 200 else {}
-        # "bolunebilme" ⊂ "bolme bolunebilme"? HAYIR — konu sözcükleri etikette
-        # tamamen geçmiyor ('bolme' yok) → bağlanmaz; etiket dürüstçe boş kalır.
-        check("11. HTTP tek bölüm: eksik sözcüklü etiket BAĞLANMAZ (yanlış bağ yok)",
-              r11.status_code == 200 and d11.get("topic_id") is None, f"{r11.status_code} {d11}")
+        # 2026-10-28 esnek katman (kullanıcı kuralı: birebir ad şartı yok):
+        # "Bölünebilme" o derste tek konunun parçası → "Bölme ve Bölünebilme".
+        check("11. HTTP tek bölüm: konu adının parçası olan etiket tek adaya bağlanır (partial)",
+              r11.status_code == 200 and d11.get("topic_name") == "Bölme ve Bölünebilme",
+              f"{r11.status_code} {d11}")
         r11b = c.post(f"/api/v2/teacher/library/books/{ids['book']}/sections",
                       json={"label": "Bölme ve Bölünebilme Testleri", "test_count": 4})
         d11b = r11b.json().get("data", {}) if r11b.status_code == 200 else {}

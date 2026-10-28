@@ -205,7 +205,144 @@ def _strip_generic_tail(key: str) -> str:
 @dataclass
 class LabelMatch:
     topic: Topic
-    source: str  # exact | learned | tail | contain
+    source: str  # exact | learned | tail | contain | fuzzy | partial
+
+
+# --- Esnek eşleştirme katmanı (2026-10-28) -----------------------------------
+# KULLANICI KURALI (kalıcı): eşleştirme "birebir konu adı" kuralına bağlı
+# DEĞİLDİR. Yayınevleri konuyu farklı yazar ("Sözel Mantık ve Muhakeme",
+# "Mantık – Muhakeme Soruları") — fazladan tek bir sözcük ya da eş anlamlı
+# yazım bağı engellememeli. Belirsizlik (iki aday) yine bağlamaz.
+#   5. fuzzy   — Türkçe ek atma + eş anlam (muhakeme ≈ mantık) ile konu adının
+#                anlamlı sözcüklerinin TÜMÜ etikette geçer; etikette en çok 1
+#                fazla anlamlı sözcük kalır (konu ≥2 sözcükse) ve en özgül aday
+#                tektir. ("Asal Çarpanlara Ayırma ve Bölen Sayısı" → 3 fazla
+#                sözcük → yine BAĞLANMAZ.)
+#   6. partial — etiket konu adının bir parçası ("Mantık Soruları" ⊂ "Sözel
+#                Mantık") ve o derste tek konuya uyuyor.
+_TOKEN_SYNONYMS: dict[str, str] = {
+    "muhakeme": "mantik",
+    "mantiksal": "mantik",
+    "akilyurutme": "mantik",
+}
+_PHRASE_SYNONYMS: list[tuple[str, str]] = [
+    ("akil yurutme", "akilyurutme"),
+    # Roma rakamlı derece (I/II filler sayıldığından karşıtlık kaybolmasın)
+    ("i dereceden", "birinci dereceden"), ("ii dereceden", "ikinci dereceden"),
+    ("iii dereceden", "ucuncu dereceden"), ("1 dereceden", "birinci dereceden"),
+    ("2 dereceden", "ikinci dereceden"), ("3 dereceden", "ucuncu dereceden"),
+]
+# Esnek katmanda anlam taşımayan sözcükler (kuyruktakilere ek).
+_FUZZY_FILLER = _GENERIC_TAIL | {
+    "sorular", "sorulari", "sorusu", "genel", "karma", "tekrar", "tekrari",
+    "degerlendirme", "degerlendirmesi", "pekistirme", "kazanim", "ozet",
+    "giris", "yeni", "nesil", "beceri", "temelli",
+}
+_STEM_SUFFIXES = (
+    "larin", "lerin", "lari", "leri", "nin", "nun", "lar", "ler",
+    "nda", "nde", "dan", "den", "tan", "ten", "lu", "li",
+    "si", "su", "in", "un", "da", "de", "ta", "te", "i", "u",
+)
+
+
+def _stem(tok: str) -> str:
+    """Kaba Türkçe ek atma (normalize sonrası). Kök en az 4 harf kalır:
+    paragrafta → paragraf, cumlede → cumle, sayilari → sayi."""
+    changed = True
+    while changed:
+        changed = False
+        for suf in _STEM_SUFFIXES:
+            if tok.endswith(suf) and len(tok) - len(suf) >= 4:
+                tok = tok[: -len(suf)]
+                changed = True
+                break
+    return tok
+
+
+_FILLER_STEMS = {_stem(w) for w in _FUZZY_FILLER} | _FUZZY_FILLER
+# Tek başına konu belirtmeyen geniş sözcükler: "Problemler" → "Algoritma
+# Temelli Problemler"e bağlanmasın; ayrıca belirsizlik kontrolünde sayılmaz.
+_WEAK_ALONE = {_stem(w) for w in (
+    "problem", "problemler", "sayi", "sayilar", "kavram", "kavramlar", "islem",
+    "islemler", "anlam", "olay", "olaylar", "enerji", "madde", "kume", "kumeler",
+)}
+# Karşıtlık bildiren sözcük: fazla/eksik sözcük bunlardansa ASLA esnek bağlanmaz
+# ("İkinci Dereceden Denklemler" ≠ "Birinci Dereceden Denklemler").
+_CONTRAST = {_stem(w) for w in (
+    "birinci", "ikinci", "ucuncu", "dorduncu", "ilk", "son", "tek", "cift",
+    "basit", "bilesik", "dogal", "tam", "rasyonel", "irrasyonel", "organik",
+    "anorganik", "dogrusal", "sozel", "sayisal", "ic", "dis", "alt", "ust",
+    "1", "2", "3", "4",
+)}
+
+
+def _fuzzy_stems(key: str) -> set[str]:
+    text = f" {key} "
+    for a, b in _PHRASE_SYNONYMS:
+        text = text.replace(f" {a} ", f" {b} ")
+    out: set[str] = set()
+    for t in text.split():
+        if t in _STOPWORDS:
+            continue
+        out.add(_stem(_TOKEN_SYNONYMS.get(t, t)))
+    return out
+
+
+def fuzzy_match(label_key: str, index: dict[str, Topic]) -> LabelMatch | None:
+    """Esnek katman (fuzzy + partial). `label_key` _label_key çıktısıdır."""
+    if not label_key:
+        return None
+    lt = _fuzzy_stems(_strip_generic_tail(label_key))
+    lmean = lt - _FILLER_STEMS
+    if not lmean:
+        return None
+    topics = {t.id: t for t in index.values()}
+    tstems = {
+        tid: _fuzzy_stems(_topic_key(t.name)) - _FILLER_STEMS
+        for tid, t in topics.items()
+    }
+    # Etikette tamamen geçen konular — iki ayrı konu birden geçiyorsa etiket
+    # birleşik başlıktır ("Yüzde ve Kâr-Zarar Problemleri") → belirsiz.
+    inside = {tid: km for tid, km in tstems.items() if km and km <= lt}
+    covered: list[tuple[int, Topic]] = []
+    for tid, km in inside.items():
+        extra = lmean - km
+        if extra & _CONTRAST:
+            continue
+        # Fazla sözcük başka bir konunun adında geçiyorsa etiket o konuya da
+        # işaret ediyor ("Asal Çarpanlara Ayırma" → "asal" = Asal Sayılar).
+        if any(extra & (okm - _WEAK_ALONE) for otid, okm in tstems.items()
+               if otid != tid):
+            continue
+        if not extra or (len(extra) <= 1 and len(km) >= 2):
+            covered.append((len(km), topics[tid]))
+    if not covered and not inside:
+        # Yakın kapsama: ≥4 sözcüklü konunun yalnız BİR sözcüğü farklı yazılmış
+        # ("Görsel Tablo Grafik Yorumlama" ↔ "Görsel, Tablo ve Grafik Okuma").
+        for tid, km in tstems.items():
+            miss, extra = km - lmean, lmean - km
+            if (len(km) >= 4 and len(miss) <= 1 and len(extra) <= 1
+                    and not ((miss | extra) & _CONTRAST)):
+                covered.append((len(km & lmean), topics[tid]))
+    if covered:
+        best_n = max(n for n, _ in covered)
+        tops = {t.id: t for n, t in covered if n == best_n}
+        if len(tops) != 1:
+            return None  # aynı özgüllükte iki aday → belirsiz
+        best = next(iter(tops.values()))
+        bk = tstems[best.id]
+        for tid, km in inside.items():
+            if tid != best.id and not km <= bk and (km - bk - _WEAK_ALONE):
+                return None  # etikette başka bir konu da geçiyor
+        return LabelMatch(best, "fuzzy")
+    if sum(len(x) for x in lmean) < 4 or lmean <= _WEAK_ALONE:
+        return None
+    part = {tid: km for tid, km in tstems.items() if km and lmean <= km}
+    if len(part) == 1:
+        tid, km = next(iter(part.items()))
+        if len(lmean) * 2 >= len(km):
+            return LabelMatch(topics[tid], "partial")
+    return None
 
 
 def learned_label_map(
@@ -288,7 +425,9 @@ def resolve_label(
             cands[t.id] = t
     if len(cands) == 1:
         return LabelMatch(next(iter(cands.values())), "contain")
-    return None
+    if len(cands) > 1:
+        return None
+    return fuzzy_match(key, index)
 
 
 def candidate_topics_for_book(db: Session, book: Book) -> list[Topic]:
@@ -496,6 +635,59 @@ def suggest_for_book(
                             r["source"] = "ai"
                             r["confidence"] = conf
     return rows
+
+
+# Yapay zekâ ile otomatik bağlama (2026-10-28) --------------------------------
+# Deterministik katmanın bağlayamadığı bölümler kapalı-küme Gemini'ye sorulur;
+# YALNIZ "high" güvenli öneri otomatik uygulanır (orta/düşük → koç modalında
+# öneri olarak kalır). Kitap/konu adı kişisel veri değildir → ücretsiz anahtar,
+# kredi düşmez. Bölüm oluşturma uçlarından ARKA PLANDA çağrılır (istek beklemez).
+AI_AUTO_CONFIDENCE = {"high"}
+
+
+def ai_automap_book(db: Session, book: Book) -> list[dict]:
+    """Boş bölümleri önce deterministik, sonra yüksek güvenli AI ile bağlar
+    (commit ETMEZ). Dönen: uygulanan bağlar."""
+    applied = auto_apply_sections(db, book)
+    topics = candidate_topics_for_book(db, book)
+    if not topics:
+        return applied
+    pending = [
+        s for s in (book.sections or [])
+        if s.topic_id is None and (s.label or "").strip()
+    ]
+    if not pending:
+        return applied
+    by_id = {t.id: t for t in topics}
+    for sid, (tid, conf) in _ai_suggest(pending, topics).items():
+        if conf not in AI_AUTO_CONFIDENCE or tid not in by_id:
+            continue
+        sec = next((x for x in pending if x.id == sid), None)
+        if sec is None or sec.topic_id is not None:
+            continue
+        sec.topic_id = tid
+        applied.append({
+            "section_id": sec.id, "label": sec.label, "topic_id": tid,
+            "topic_name": by_id[tid].name, "source": "ai",
+        })
+    return applied
+
+
+def ai_automap_book_bg(book_id: int) -> None:
+    """Arka plan sarmalayıcısı — taze oturum, hata yutar (best-effort)."""
+    from app.database import SessionLocal
+
+    try:
+        with SessionLocal() as db:
+            book = db.get(Book, book_id)
+            if book is None or book.subject_id is None:
+                return
+            applied = ai_automap_book(db, book)
+            if applied:
+                db.commit()
+                logger.info("curriculum automap book=%s applied=%d", book_id, len(applied))
+    except Exception as e:  # noqa: BLE001
+        logger.warning("curriculum automap bg fail book=%s: %s", book_id, e)
 
 
 def apply_mappings(

@@ -11,12 +11,27 @@ import type {
   ExamImportConfirmBody,
   ExamImportConfirmResult,
   ExamImportDraft,
+  ExamImportQuota,
   ExamTopicAnalysisResponse,
   ExamWrongRowsResponse,
   ImportDeclaration,
   WrongBridgeItem,
   WrongBridgeResult,
 } from "@/lib/types/exam-import";
+
+/** PDF analizi hakkı (ücretsiz pakette tek seferlik sayılı hak). */
+export const examImportQuotaKey = (studentId?: number | null) =>
+  studentId != null
+    ? (["teacher", "me", "exam-import-quota"] as const)
+    : (["student", "exam-import-quota"] as const);
+
+export function getExamImportQuota(studentId?: number | null): Promise<ExamImportQuota> {
+  return api<ExamImportQuota>(
+    studentId != null
+      ? "/api/v2/teacher/exam-import-quota"
+      : "/api/v2/student/exam-import-quota",
+  );
+}
 
 /** Seçici köprü: denemenin yanlış soruları (arşiv durumu işaretli). */
 export function getExamWrongRows(

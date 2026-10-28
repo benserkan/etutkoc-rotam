@@ -109,6 +109,17 @@ class ExamImportDraft(BaseModel):
     topic_choices: list[TopicChoice]       # konu düzeltme seçicisi adayları
     section_choices: list[SectionChoice]   # tür seçici (düşük güvende öne çıkar)
     credits_charged: int
+    free_quota_left: int | None = None     # ücretsiz paket hakkı kaldıysa kalan sayı
+
+
+class ExamImportQuotaResponse(BaseModel):
+    """PDF analizi hakkı — ücretsiz pakette tek seferlik sayılı hak."""
+    available: bool        # şu an analiz yapılabilir mi (hak/paket açısından)
+    free_mode: bool        # ücretsiz paket hakkıyla mı çalışıyor
+    quota: int
+    used: int
+    left: int
+    credits_per_import: int
 
 
 class ConfirmRow(BaseModel):

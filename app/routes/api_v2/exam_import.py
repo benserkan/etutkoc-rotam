@@ -33,6 +33,7 @@ from app.routes.api_v2.schemas.exam_import import (
     ExamImportConfirmBody,
     ExamImportConfirmResult,
     ExamImportDraft,
+    ExamImportQuotaResponse,
     ExamTopicAnalysisResponse,
     ExamWrongRowsResponse,
     SectionChoice,
@@ -45,7 +46,7 @@ from app.services import wrong_question_service
 from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
 from app.services import exam_duplicate
 from app.services.credits import CreditBlocked, CreditOwner, KIND_CREDITS, consume_credits
-from app.services.plans import ai_premium_allowed
+from app.services import free_exam_quota
 
 router = APIRouter(tags=["v2-exam-import"])
 
@@ -121,10 +122,20 @@ def _paying_coach(db: Session, student: User, *, actor: User | None = None) -> U
         raise HTTPException(status_code=403, detail={
             "error": "forbidden", "code": "ai_disabled_by_institution",
             "message": "Yapay zekâ kullanımı kurum tarafından kapatılmış."})
-    if not ai_premium_allowed(db, coach):
+    quota = free_exam_quota.status_for(db, coach)
+    if quota.applies and quota.left <= 0:
+        # Ücretsiz paket: tek seferlik hak bitti → yükseltme (2026-10-28).
+        own = actor is None or actor.id == coach.id
         raise HTTPException(status_code=403, detail={
-            "error": "forbidden", "code": "plan_upgrade_required",
-            "message": "PDF analizi koçun paketinde aktif değil."})
+            "error": "forbidden", "code": "free_exam_quota_exhausted",
+            "message": (
+                f"Ücretsiz paketteki {quota.quota} deneme PDF analizi hakkının "
+                "tamamını kullandın. Analizlere devam etmek için paketini yükselt."
+                if own else
+                f"Koçunun ücretsiz paketindeki {quota.quota} PDF analizi hakkı doldu. "
+                "Deneme sonucunu elle girebilir ya da koçunla görüşebilirsin."),
+            "details": {"quota": quota.quota, "used": quota.used,
+                        "upgrade_url": "/teacher/plan"}})
     if coach.ai_capture_consent_at is None:
         raise HTTPException(status_code=403, detail={
             "error": "forbidden", "code": "consent_required",
@@ -188,20 +199,32 @@ def _run_analyze(
             prior.exam_date.isoformat(), 1.0,
         )
         raise _svc_error(svc.ExamImportError(409, "duplicate_exam", m.message(), m.as_details()))
+    quota = free_exam_quota.status_for(db, coach)
     try:
-        with consume_credits(
-            db, owner=CreditOwner.for_user(coach), kind=UsageKind.AI_EXAM_IMPORT,
-            actor_user_id=actor.id, autocommit=False,
-        ) as ctx:
+        if quota.applies:
+            # Ücretsiz paket hakkı — kredi düşmez, 0 kredilik sayım satırı yazılır.
             draft = svc.analyze(
                 db, student, pdf_bytes,
                 declared_section=declared_section, declared_grade=declared_grade)
-            ctx.set_metadata({
+            free_exam_quota.record_free_use(db, coach, actor_id=actor.id, metadata={
                 "student_id": student.id,
                 "rows": len(draft["rows"]),
                 "universe": draft["universe"],
-                "suspects": draft["suspect_count"],
             })
+        else:
+            with consume_credits(
+                db, owner=CreditOwner.for_user(coach), kind=UsageKind.AI_EXAM_IMPORT,
+                actor_user_id=actor.id, autocommit=False,
+            ) as ctx:
+                draft = svc.analyze(
+                    db, student, pdf_bytes,
+                    declared_section=declared_section, declared_grade=declared_grade)
+                ctx.set_metadata({
+                    "student_id": student.id,
+                    "rows": len(draft["rows"]),
+                    "universe": draft["universe"],
+                    "suspects": draft["suspect_count"],
+                })
     except CreditBlocked:
         db.rollback()
         raise HTTPException(status_code=402, detail={
@@ -237,7 +260,8 @@ def _run_analyze(
     return ExamImportDraft(
         **draft,
         section_choices=_section_choices(),
-        credits_charged=KIND_CREDITS[UsageKind.AI_EXAM_IMPORT],
+        credits_charged=0 if quota.applies else KIND_CREDITS[UsageKind.AI_EXAM_IMPORT],
+        free_quota_left=(quota.left - 1) if quota.applies else None,
     )
 
 
@@ -598,3 +622,38 @@ def student_exam_import_confirm(
         invalidate.append(f"teacher:{user.teacher_id}:students:{user.id}:exams")
         invalidate.append(f"teacher:{user.teacher_id}:students:{user.id}")
     return MutationResponse[ExamImportConfirmResult](data=result, invalidate=invalidate)
+
+
+# ============================================================================
+# PDF analizi hakkı durumu (ücretsiz paket tek seferlik hak — 2026-10-28)
+# ============================================================================
+
+
+def _quota_payload(db: Session, coach: User | None) -> ExamImportQuotaResponse:
+    if coach is None:
+        return ExamImportQuotaResponse(available=False, free_mode=False,
+                                       quota=free_exam_quota.FREE_EXAM_IMPORT_QUOTA,
+                                       used=0, left=0, credits_per_import=0)
+    q = free_exam_quota.status_for(db, coach)
+    return ExamImportQuotaResponse(
+        available=(not q.applies) or q.left > 0,
+        free_mode=q.applies,
+        quota=q.quota, used=q.used if q.applies else 0,
+        left=q.left if q.applies else 0,
+        credits_per_import=0 if q.applies else KIND_CREDITS[UsageKind.AI_EXAM_IMPORT],
+    )
+
+
+@router.get("/teacher/exam-import-quota", response_model=ExamImportQuotaResponse)
+def teacher_exam_import_quota(
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    return _quota_payload(db, user)
+
+
+@router.get("/student/exam-import-quota", response_model=ExamImportQuotaResponse)
+def student_exam_import_quota(
+    user: User = Depends(_require_student), db: Session = Depends(get_db),
+):
+    coach = db.get(User, user.teacher_id) if user.teacher_id else None
+    return _quota_payload(db, coach)

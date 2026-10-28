@@ -243,6 +243,43 @@ def orphan_scan(db: Session, *, limit: int = 50) -> dict:
         pass
 
     try:
+        # 6) MÜFREDATA BAĞLANMAMIŞ BÖLÜMLER (2026-10-28 dersi): bölüm konusuz
+        # kalınca çözülen testler müfredat/konu performansına hiç yansımaz ve
+        # kimse fark etmez ("Sözel Mantık ve Muhakeme" 7 katalog kitabında
+        # sessizce boş kalmıştı). Yalnız aktif öğrenciye atanmış kitaplar;
+        # en sık görülen etiketler örnek olarak gösterilir.
+        from app.models import Book, BookSection, StudentBook
+        active_books = (
+            db.query(StudentBook.book_id)
+            .join(User, User.id == StudentBook.student_id)
+            .filter(User.is_active.is_(True))
+            .distinct()
+        )
+        rows = (
+            db.query(BookSection.label, func.count(BookSection.id))
+            .join(Book, Book.id == BookSection.book_id)
+            .filter(
+                BookSection.topic_id.is_(None),
+                BookSection.test_count > 0,
+                Book.subject_id.isnot(None),
+                Book.id.in_(active_books),
+            )
+            .group_by(BookSection.label)
+            .order_by(func.count(BookSection.id).desc())
+            .all()
+        )
+        total = sum(int(c) for _, c in rows)
+        if total:
+            findings.append({
+                "kind": "section_unmapped",
+                "label": "Müfredata bağlanmamış kitap bölümleri (aktif öğrencilerde)",
+                "count": total,
+                "samples": [{"label": lab, "count": int(c)} for lab, c in rows[:8]],
+            })
+    except Exception:
+        logger.exception("orphan: section-unmapped fail")
+
+    try:
         # 5) ÖDEME KAYITSIZ ÜCRETLİ PLAN (2026-07-24 dersi): bağımsız koç ücretli
         # solo planda ama abonelik kaydı yok = hiçbir meşru yoldan (iyzico/IAP/
         # admin aktivasyonu) geçmemiş → bedava ücretli özellik + hayalet MRR.

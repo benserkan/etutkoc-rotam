@@ -1,7 +1,7 @@
 """Deneme PDF içe aktarma (Faz 1) — smoke.
 
 Kapsam:
-- Kapılar: anon 401 · koç ücretsiz 403 · rıza yok 403 · PDF değil 422 ·
+- Kapılar: anon 401 · ücretsiz koç 10 PDF hakkı (sonra 403) · rıza yok 403 · PDF değil 422 ·
   yabancı öğrenci 404 · kredi 6 (koç havuzundan).
 - Okuma/birleştirme: çift okuma uyuşmazlığı → şüpheli · DC/ÖC'den sonuç
   türetme sembol okumasını EZER (çelişki → şüpheli) · boş ÖC → "bos".
@@ -523,11 +523,44 @@ def main() -> int:
         r = anon.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
         check("1. anonim → 401", r.status_code == 401, r.text[:100])
 
-        # 2) ücretsiz koçun öğrencisi → 403 plan_upgrade_required
+        # 2) ücretsiz koç: tek seferlik 10 PDF analizi hakkı (2026-10-28).
+        from app.services import free_exam_quota as _fq
+        from app.models import UsageKind as _UK
+        r = cfs.get("/api/v2/student/exam-import-quota")
+        q0 = r.json() if r.status_code == 200 else {}
+        check("2a. ücretsiz koçun öğrencisi: hak durumu free_mode · 10/10",
+              q0.get("free_mode") is True and q0.get("left") == _fq.FREE_EXAM_IMPORT_QUOTA
+              and q0.get("available") is True, str(q0))
         r = cfs.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
-        check("2. koç ücretsiz pakette → 403 plan_upgrade_required",
+        j2 = r.json() if r.status_code == 200 else {}
+        check("2b. ücretsiz pakette analiz çalışır · kredi düşmez · kalan 9",
+              r.status_code == 200 and j2.get("credits_charged") == 0
+              and j2.get("free_quota_left") == _fq.FREE_EXAM_IMPORT_QUOTA - 1, r.text[:150])
+        with SessionLocal() as db:
+            evs = db.query(UsageEvent).filter(
+                UsageEvent.owner_id == ids["free_coach"]).all()
+            free_ev = [e for e in evs if e.kind == _UK.AI_EXAM_IMPORT_FREE]
+            check("2c. 0 kredilik ücretsiz-hak satırı yazıldı, ücretli kredi satırı yok",
+                  len(free_ev) == 1 and free_ev[0].credits == 0
+                  and not [e for e in evs if e.kind == _UK.AI_EXAM_IMPORT],
+                  str([(e.kind, e.credits) for e in evs]))
+            fc = db.get(User, ids["free_coach"])
+            for _ in range(_fq.FREE_EXAM_IMPORT_QUOTA - 1):
+                _fq.record_free_use(db, fc, actor_id=ids["free_coach"], metadata={"t": 1})
+            db.commit()
+        r = cfs.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
+        check("2d. hak bitince → 403 free_exam_quota_exhausted (öğrenci dili)",
               r.status_code == 403
-              and r.json()["detail"]["code"] == "plan_upgrade_required", r.text[:120])
+              and r.json()["detail"]["code"] == "free_exam_quota_exhausted"
+              and "Koçunun" in r.json()["detail"]["message"], r.text[:160])
+        r = cfs.get("/api/v2/student/exam-import-quota")
+        check("2e. hak durumu: kalan 0 · available False",
+              r.status_code == 200 and r.json()["left"] == 0
+              and r.json()["available"] is False, r.text[:120])
+        r = ct.get("/api/v2/teacher/exam-import-quota")
+        check("2f. ücretli koç: free_mode False · 6 kredi/analiz",
+              r.status_code == 200 and r.json()["free_mode"] is False
+              and r.json()["credits_per_import"] == 6, r.text[:120])
 
         # 3) rıza vermemiş koçun öğrencisi → 403 consent_required
         r = cns.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})

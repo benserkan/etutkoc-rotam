@@ -61,7 +61,7 @@ from app.models import (
     section_penalty,
 )
 from app.services import ai_exam_import, exam_duplicate, gemini
-from app.services.curriculum_mapping import _label_key, _topic_key, normalize
+from app.services.curriculum_mapping import _label_key, _topic_key, fuzzy_match, normalize
 
 logger = logging.getLogger(__name__)
 
@@ -581,7 +581,10 @@ def _deterministic_match(
     uni = universe_map.get(label_key)
     if uni and len(uni) == 1:
         return uni[0]
-    return None
+    # Esnek katman (2026-10-28): fazladan tek sözcük / eş anlam / ek farkı
+    # ("Sözel Mantık ve Muhakeme" → "Sözel Mantık"). Belirsizlikte None.
+    m = fuzzy_match(label_key, home_map)
+    return m.topic if m is not None else None
 
 
 def _label_parts(raw: str | None) -> tuple[str, str]:

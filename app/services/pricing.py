@@ -224,6 +224,7 @@ _FREE_FEATURES = [
     "Haftalık program + günlük takip — kitap, görev, işaretleme",
     "Veli raporu — davet + haftalık e-posta",
     "Deneme takibi — elle giriş + net grafiği",
+    "Karne PDF analizi — 10 analiz hakkı, tek seferlik",
     "Yanlış Soru Arşivi — fotoğrafla, aralıklı tekrar",
     "Mobil uygulama — öğrenci · veli · koç",
     "Sesli rehber turu — kolay kurulum",

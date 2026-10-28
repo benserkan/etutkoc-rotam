@@ -89,6 +89,18 @@ export interface ExamImportDraft {
   topic_choices: TopicChoice[];
   section_choices: SectionChoice[];
   credits_charged: number;
+  /** Ücretsiz paket hakkıyla yapıldıysa kalan hak; ücretli pakette null. */
+  free_quota_left?: number | null;
+}
+
+/** PDF analizi hakkı — ücretsiz pakette tek seferlik sayılı hak. */
+export interface ExamImportQuota {
+  available: boolean;
+  free_mode: boolean;
+  quota: number;
+  used: number;
+  left: number;
+  credits_per_import: number;
 }
 
 export interface ImportDuplicate {

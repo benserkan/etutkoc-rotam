@@ -49,7 +49,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -527,6 +527,7 @@ def library_books_list_v2(
     response_model=MutationResponse[BookDetailResponse],
 )
 def library_book_create_v2(
+    background_tasks: BackgroundTasks,
     body: BookCreateBody,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
@@ -601,6 +602,7 @@ def library_book_create_v2(
             catalog_svc.bump_usage(template)
         db.flush()
         cm.auto_apply_sections(db, book)  # farklı derse kopyalandıysa boş kalanları dene
+        background_tasks.add_task(cm.ai_automap_book_bg, book.id)  # yüksek güvenli AI bağı
     db.commit()
     db.refresh(book)
     return MutationResponse[BookDetailResponse](
@@ -805,6 +807,7 @@ def library_book_apply_mapping_v2(
     response_model=MutationResponse[BookSectionItem],
 )
 def library_section_create_v2(
+    background_tasks: BackgroundTasks,
     book_id: int,
     body: SectionCreateBody,
     user: User = Depends(_require_teacher),
@@ -838,6 +841,7 @@ def library_section_create_v2(
         # Normalizasyon katmanı: etiket resmi konuyla (exact/öğrenilmiş/kuyruk)
         # eşleşiyorsa bağ HEMEN kurulur — koç "Uygula" beklemez (2026-09-08).
         cm.auto_apply_sections(db, book, [section])
+        background_tasks.add_task(cm.ai_automap_book_bg, book.id)  # yüksek güvenli AI bağı
     for sb in book.student_books or []:
         db.add(SectionProgress(
             student_book_id=sb.id,
@@ -923,6 +927,7 @@ def library_sections_bulk_v2(
     response_model=MutationResponse[BulkCatalogResult],
 )
 def library_sections_bulk_labels_v2(
+    background_tasks: BackgroundTasks,
     book_id: int,
     body: SectionsBulkCreateBody,
     user: User = Depends(_require_teacher),
@@ -970,6 +975,7 @@ def library_sections_bulk_labels_v2(
         added += 1
     # Normalizasyon katmanı: deterministik bağ hemen kurulur; kalan modalda AI/koç.
     auto_mapped = len(cm.auto_apply_sections(db, book, new_secs)) if new_secs else 0
+    background_tasks.add_task(cm.ai_automap_book_bg, book.id)  # yüksek güvenli AI bağı
     db.commit()
     return MutationResponse[BulkCatalogResult](
         data=BulkCatalogResult(
@@ -1155,6 +1161,7 @@ def library_clear_sections_v2(
     response_model=MutationResponse[AiSuggestResult],
 )
 def library_ai_suggest_v2(
+    background_tasks: BackgroundTasks,
     book_id: int,
     body: AiSuggestBody,
     user: User = Depends(_require_teacher),
@@ -1266,6 +1273,7 @@ def library_ai_suggest_v2(
         new_sections.append(new_sec)
     if new_sections:
         cm.auto_apply_sections(db, book, new_sections)  # deterministik müfredat bağı
+        background_tasks.add_task(cm.ai_automap_book_bg, book.id)  # yüksek güvenli AI bağı
 
     # Draft template
     tpl = BookTemplate(
@@ -1888,6 +1896,7 @@ def library_save_as_template_v2(
     response_model=MutationResponse[ApplyTemplateResult],
 )
 def library_apply_template_v2(
+    background_tasks: BackgroundTasks,
     book_id: int,
     body: ApplyTemplateBody,
     user: User = Depends(_require_teacher),
@@ -1945,6 +1954,7 @@ def library_apply_template_v2(
             ))
         added += 1
     cm.auto_apply_sections(db, book)  # deterministik müfredat bağı (yalnız boş olanlar)
+    background_tasks.add_task(cm.ai_automap_book_bg, book.id)  # yüksek güvenli AI bağı
     db.commit()
     return MutationResponse[ApplyTemplateResult](
         data=ApplyTemplateResult(added_count=added, overwrote=bool(body.overwrite)),

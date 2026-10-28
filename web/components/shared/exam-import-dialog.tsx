@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { ApiError } from "@/lib/api";
 import {
+  examImportQuotaKey,
+  getExamImportQuota,
   getExamImportRows,
   studentAnalyzeExamPdf,
   studentConfirmExamImport,
@@ -237,11 +239,23 @@ function ImportFlow({
       const d = studentId != null
         ? await teacherAnalyzeExamPdf(studentId, f, decl)
         : await studentAnalyzeExamPdf(f, decl);
+      void qc.invalidateQueries({ queryKey: examImportQuotaKey(studentId) });
       applyDraft(d);
     } catch (e) {
       if (e instanceof ApiError && e.detail?.code === "duplicate_exam") {
         // Aynı PDF daha önce aktarılmış — Gemini'ye gidilmedi, kredi harcanmadı.
         setAnalyzeDup((e.detail.details as unknown as ImportDuplicate) ?? null);
+        setStep("pick");
+        return;
+      }
+      if (e instanceof ApiError && e.detail?.code === "free_exam_quota_exhausted") {
+        void qc.invalidateQueries({ queryKey: examImportQuotaKey(studentId) });
+        toast.error("Ücretsiz PDF analizi hakkı doldu", {
+          description: e.message,
+          ...(studentId != null
+            ? { action: { label: "Paketi gör", onClick: () => { window.location.href = "/teacher/plan"; } } }
+            : {}),
+        });
         setStep("pick");
         return;
       }
@@ -516,12 +530,7 @@ function ImportFlow({
               <Button onClick={onClose}>Kapat</Button>
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground">
-              <ShieldCheck className="mr-1 inline size-3.5" aria-hidden />
-              Belge yapay zekâ ile işlenir (Google Gemini) · analiz{" "}
-              <b>6 kredi</b> (koç havuzundan) · kayıttan önce her satırı kontrol
-              edip düzeltebilirsin.
-            </p>
+            <QuotaNote studentId={studentId} />
           )}
         </div>
       </DialogContent>
@@ -1070,5 +1079,55 @@ function Stat({
       <div className={cn("text-xl font-semibold tabular-nums", cls)}>{value}</div>
       <div className="text-[11px] text-muted-foreground">{label}</div>
     </div>
+  );
+}
+
+
+/** Alt bilgi: ücretsiz pakette kalan PDF analizi hakkı / ücretli pakette kredi. */
+function QuotaNote({ studentId }: { studentId?: number }) {
+  const { data } = useQuery({
+    queryKey: examImportQuotaKey(studentId),
+    queryFn: () => getExamImportQuota(studentId),
+    staleTime: 30_000,
+  });
+  if (data?.free_mode) {
+    const coach = studentId != null;
+    return (
+      <div
+        className={cn(
+          "rounded-lg border px-3 py-2 text-xs",
+          data.left > 0
+            ? "border-cyan-200 bg-cyan-50 text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100"
+            : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100",
+        )}
+      >
+        {data.left > 0 ? (
+          <>
+            <b>Ücretsiz paket:</b> {data.quota} PDF analizi hakkının{" "}
+            <b>{data.left}</b> tanesi kaldı. Kredi düşmez.
+          </>
+        ) : (
+          <>
+            {coach ? "Ücretsiz paketteki" : "Koçunun ücretsiz paketindeki"} {data.quota} PDF
+            analizi hakkı doldu.{" "}
+            {coach ? (
+              <a href="/teacher/plan" className="font-semibold underline">
+                Paketini yükselt
+              </a>
+            ) : (
+              "Deneme sonucunu elle girebilirsin."
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+  return (
+    <p className="text-[11px] text-muted-foreground">
+      <ShieldCheck className="mr-1 inline size-3.5" aria-hidden />
+      Belge yapay zekâ ile işlenir (Google Gemini) · analiz{" "}
+      <b>{data?.credits_per_import ?? 6} kredi</b> (koç havuzundan) · kayıttan önce her
+      satırı kontrol edip düzeltebilirsin.
+    </p>
   );
 }
