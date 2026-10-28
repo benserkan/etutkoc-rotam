@@ -287,7 +287,8 @@ def _fuzzy_stems(key: str) -> set[str]:
     for t in text.split():
         if t in _STOPWORDS:
             continue
-        out.add(_stem(_TOKEN_SYNONYMS.get(t, t)))
+        st = _stem(_TOKEN_SYNONYMS.get(t, t))
+        out.add(_TOKEN_SYNONYMS.get(st, st))  # ekli yazım: "muhakemesi" → mantık
     return out
 
 
