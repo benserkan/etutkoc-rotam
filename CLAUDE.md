@@ -6,6 +6,34 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## NESLİHAN AŞKIN VAKASI → ESNEK KONU EŞLEŞTİRME + ÜCRETSİZ PDF HAKKI + ELLE AKTİVASYON GÜVENLİĞİ (2026-10-28, CANLI, migration YOK)
+
+- **Esnek eşleştirme (kalıcı kullanıcı kuralı: birebir konu adı şartı YOK)** — `curriculum_mapping.fuzzy_match`:
+  Türkçe ek atma + eş anlam (`_TOKEN_SYNONYMS` muhakeme/mantıksal/akıl yürütme → mantık; ek atıldıktan sonra da) +
+  tek fazla sözcük + parça eşleşme + ≥4 sözcüklü konuda tek sözcük farkı. Korumalar: iki eşit aday · etikette iki ayrı
+  konu · fazla sözcük başka konunun adı · `_CONTRAST` (birinci/ikinci, Roma derece, şiir/hikâye, denklem/eşitsizlik/
+  sistem…) · `_WEAK_ALONE` (problem/sayı tek başına) · yalnız-tür adlı konu ("Deneme") esnek aday değil. Kitap bölümü
+  (`resolve_label`) + deneme içe aktarma (`_deterministic_match`) aynı katman. Bölüm oluşturma uçları arka planda
+  yüksek güvenli AI bağı (`ai_automap_book_bg`, yalnız "high"). Ölçüm (bağlı bölümler = doğru cevap): canlıda ~%98,5.
+  Prod backfill uygulandı: 177 kitap bölümü + 130 katalog bölümü. Veri Bütünlüğü paneline `section_unmapped` bulgusu.
+  Test `test_curriculum_fuzzy_match` 16 · mapping_v2 13 (11. senaryo yeni sözleşme) · exam_import 97.
+  **DERS:** önceki "7 katalog kitabı konusuz" iddiası repo JSON'larından çıkarılmıştı — prod'da çoğu zaten bağlıydı.
+  Veri iddiası canlı DB'den doğrulanmadan kullanıcıya söylenmez.
+- **Ücretsiz pakete tek seferlik 10 deneme PDF analizi** (`free_exam_quota.py`, `UsageKind.AI_EXAM_IMPORT_FREE`
+  0 kredi sayım; deneme süresindeki analizler sayılmaz) · hak bitince 403 `free_exam_quota_exhausted` (koç/öğrenci
+  dili ayrı) · GET `/teacher|student/exam-import-quota` · içe aktarma penceresinde kalan hak · Keşif kartına madde.
+- **Neslihan #176:** 1 yıl hediye Patika (bitiş 28.10.2027). Sinan Kuzucu kitabı #731 elle açılmış ("test 1…24",
+  her biri varsayılan 10 test) — kullanıcı kapak + içindekiler gönderecek, sonra düzeltilecek.
+- **Elle paket aktivasyonu güvenliği (5 katman):** (1) süper admin 2FA ZORUNLU (`SUPER_ADMIN_REQUIRE_2FA`, varsayılan
+  açık; yerel .env false; acil kurtarma için prod .env'de false) → `_require_super_admin` 403 `two_factor_setup_required`,
+  panel `/me/account#iki-asamali`'ya yönlendirir · (2) ücretli aktivasyonda işlem anında TOTP/yedek kod
+  (`step_up_required|invalid`, hatalı kod denetime) · (3) her aktivasyonda e-posta (`admin_manual_activation`) +
+  süper admin push (`admin_activation_notify`) · (4) tür `grant_kind` payment|gift + not zorunlu; hediye
+  `subscription_platform="gift"` → `revenue_owner` MRR'ye katmaz; plan geçmişi [Ödeme]/[Hediye]; bütünlükte
+  `manual_paid_plans` · (5) özel süre ≤400 gün; `manual_gift_burst` alarmı (30 günde >3 hediye). Aynı pakette süre
+  güncellemesi de notlu plan geçmişi satırı yazar. Test YENİ `test_admin_activation_security` 19/19.
+  **KURAL: activate-plan çağıran test/scriptler `grant_kind` + `note` gönderir.**
+
 ## YKS PUAN ARACI — ASIL SAYFA etutkoc.com (2026-10-26, Rotam `e98c73e` + etutkoc.com sunucu `2a4e2e0`/`a3a369e`, CANLI)
 
 - Kullanıcı kararı: arama motorları için asıl sayfa **https://etutkoc.com/yks-puan-hesaplama**. Rotam'daki

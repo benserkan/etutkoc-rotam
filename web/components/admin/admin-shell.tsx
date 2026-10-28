@@ -30,6 +30,7 @@ import {
   Link2,
   ListChecks,
   LogOut,
+  UserCog,
   Megaphone,
   Menu,
   MessageSquare,
@@ -399,6 +400,12 @@ function UserCard({
           {ROLE_LABELS_TR[user.role]}
         </p>
       </div>
+      <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+        <Link href="/me/account">
+          <UserCog className="size-4" aria-hidden />
+          <span>Hesabım · Şifre · 2FA</span>
+        </Link>
+      </Button>
       <Button
         variant="outline"
         size="sm"
@@ -483,7 +490,13 @@ function MobileDrawer({
             />
           ))}
         </nav>
-        <div className="p-3 border-t border-border">
+        <div className="p-3 border-t border-border space-y-2">
+          <Button variant="ghost" className="w-full justify-start" asChild>
+            <Link href="/me/account" onClick={onClose}>
+              <UserCog className="size-4" aria-hidden />
+              <span>Hesabım · Şifre · 2FA</span>
+            </Link>
+          </Button>
           <Button variant="outline" className="w-full" onClick={onLogout}>
             <LogOut className="size-4" aria-hidden />
             <span>Çıkış yap</span>
