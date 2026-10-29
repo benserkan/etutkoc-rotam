@@ -31,6 +31,13 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   kalıcı kutu — önizlenene/kapatılana dek) + Denemeler'de `ExamImportJobsBand`; mobil `AiJobsBanner` (uygulama üstü,
   öne gelince yenilenir). Test: `test_api_v2_exam_import_jobs` 36/36 · exam_import 97 · canlı web 11/11 (gerçek okuma) ·
   canlı mobil 5/5. Mobil OTA `cbeef052`.
+- **D — kitap sihirbazı taraması arka planda (migration YOK):** `kind=book_scan` aynı `ai_jobs` yürütücüsü; uçlar
+  `/teacher/library/book-structure/scan-jobs` + `/read-jobs` (tek istekli `/scan` `/read` duruyor; çekirdek ortak
+  `_scan_core`/`_read_core`/`run_book_job`). Hazırlanan dosyalar (PDF'in ilk sayfaları) satırda base64 JSON; 1 gün TTL.
+  Web `coachScanBook`/`coachReadStructure` AYNI İMZAYLA iş başlatıp `/me/ai-jobs/{id}` `result`'ı yoklar → sihirbaz
+  değişmedi. Kitap işleri karne listesine/kutusuna karışmaz (`list_for_owner(kind=exam_import)`), bildirim yok.
+  Test book_catalog 40/40 (26g-l) · canlı sihirbaz gerçek okuma yeşil. SIRADA: E (süper admin tam kitap parçalı yükleme)
+  → F (turuncu bulut).
 - **Dil kuralı (kullanıcı):** klişe yapay-zekâ ifadesi yok ("tek panelde", "yolculuk"); odak öğrenci başarısı, somut fayda.
   Güvenlik süreci bitince üyelik paketlerinden başlayıp mobil dahil tüm kullanıcı dili gözden geçirilecek.
 
