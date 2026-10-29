@@ -6,6 +6,34 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## GİRİŞ SAYFASI + TURNSTILE + CLOUDFLARE HAZIRLIĞI + KARNE ARKA PLAN OKUMA (2026-10-29, CANLI)
+
+- **Giriş sayfası yeni tasarım** (`web/app/login/*`): marka paneli + form, ikonlu alanlar, şifre göster/gizle, Caps Lock
+  uyarısı. **Paylaşılan `components/turnstile-widget.tsx`** 5 formda (giriş/kayıt/şifre sıfırlama/2 iletişim): istemci
+  gezinmesinde de çizilir, süre dolunca kendini yeniler, 20 sn'de "Yeniden dene", doğrulama bitmeden basılan giriş token
+  gelince kendiliğinden gönderilir; `resetKey` prop'u (ref yok — React Compiler kuralı). Backend `turnstile.verify_token`
+  +`action` (login/signup/forgot/contact eşleşmesi) + idempotency_key + tek yeniden deneme + ops. `TURNSTILE_ALLOWED_HOSTNAMES`
+  / `TURNSTILE_FAIL_CLOSED` (ikisi de prod'da AÇILMADI). `test_turnstile_verify` 12/12.
+- **Cloudflare proxy HAZIR ama KAPALI (gri bulut):** Caddyfile başında global `trusted_proxies` (CF aralıkları) +
+  `client_ip_headers CF-Connecting-IP` + site düzeyinde `request_header X-Forwarded-For {client_ip}` (uygulama XFF'nin ilk
+  değerini okur; CF eklemeli XFF sahtecilik açığını kapatır). Rehber `deploy/CLOUDFLARE_PROXY_SETUP.md`.
+  **Açmadan önce:** CF Free 100 sn / 100 MB sınırı → canlı ölçüm (30 gün): karne içe aktarma ortanca 130 sn (38 istek),
+  kitap sihirbazı "kapak+içindekiler" ortanca 68 sn / en çok 122 sn. Kullanıcı onaylı sıra: A-C karne arka plan ✅ →
+  D kitap sihirbazı taramasını aynı iş sistemine al → E süper admin tam kitap için parçalı yükleme → F turuncu bulut +
+  Hetzner firewall yalnız CF + webhook istisnaları.
+- **Karne okuma arka plan işi (A+B+C, migration `w7y0d3e4d99z` ai_jobs):** `app/services/exam_import_jobs.py` — yükle
+  (hızlı kapılar: koç/rıza/kredi/aynı PDF) → iş satırı (PDF ≤10 MB satırda) → web sürecinde iş parçacığı (süreç başına
+  3 paralel; koç art arda çok yükleyebilir) → taslak → `import-confirm` + `job_id` (PDF yeniden yüklenmez). Kredi yalnız
+  başarıda; nabız 20 sn, 90 sn kesikse başka süreç devralır (en çok 2 deneme, sonra `server_restarted` ücretsiz yeniden
+  dene); taslak 7 gün. Eski tek-istekli uç aynı `analyze_core`'u kullanır (eski uygulama sürümleri bozulmaz). Uçlar:
+  `import-jobs` (koç/öğrenci) · `/me/ai-jobs` (+`/{id}` `/ack` `/dismiss` `/retry`). Bildirim: yükleyene; öğrenci
+  yüklediyse koça da. **"Havada kalmasın" (kullanıcı şartı):** web `AiJobsTracker` (koç+öğrenci her sayfa, sağ üst,
+  kalıcı kutu — önizlenene/kapatılana dek) + Denemeler'de `ExamImportJobsBand`; mobil `AiJobsBanner` (uygulama üstü,
+  öne gelince yenilenir). Test: `test_api_v2_exam_import_jobs` 36/36 · exam_import 97 · canlı web 11/11 (gerçek okuma) ·
+  canlı mobil 5/5. Mobil OTA `cbeef052`.
+- **Dil kuralı (kullanıcı):** klişe yapay-zekâ ifadesi yok ("tek panelde", "yolculuk"); odak öğrenci başarısı, somut fayda.
+  Güvenlik süreci bitince üyelik paketlerinden başlayıp mobil dahil tüm kullanıcı dili gözden geçirilecek.
+
 ## NESLİHAN AŞKIN VAKASI → ESNEK KONU EŞLEŞTİRME + ÜCRETSİZ PDF HAKKI + ELLE AKTİVASYON GÜVENLİĞİ (2026-10-28, CANLI, migration YOK)
 
 - **Esnek eşleştirme (kalıcı kullanıcı kuralı: birebir konu adı şartı YOK)** — `curriculum_mapping.fuzzy_match`:
