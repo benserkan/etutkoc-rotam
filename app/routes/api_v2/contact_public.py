@@ -67,6 +67,7 @@ def submit_contact(
         if not turnstile.verify_token(
             payload.turnstile_token,
             ip=(ip_raw if ip_raw and ip_raw != "unknown" else None),
+            action="contact",
         ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Script from "next/script";
 import { useMutation } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -23,17 +22,7 @@ import { trackMetaEvent } from "@/components/meta-pixel";
 import type { PricingCatalog } from "@/lib/types/pricing";
 import { BrandLogo } from "@/components/brand-logo";
 import { FloatingWhatsApp } from "@/components/contact/floating-whatsapp";
-
-interface TurnstileApi {
-  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
-  reset: (id?: string) => void;
-  getResponse: (id?: string) => string | undefined;
-}
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-  }
-}
+import { TurnstileWidget } from "@/components/turnstile-widget";
 
 const TOPICS = [
   { value: "iletisim_genel", label: "Genel soru" },
@@ -54,8 +43,8 @@ export function IletisimClient({
   turnstileSiteKey?: string | null;
 }) {
   const contact = catalog.contact;
-  const widgetRef = React.useRef<HTMLDivElement | null>(null);
-  const hasRenderedRef = React.useRef(false);
+  const [captchaReset, setCaptchaReset] = React.useState(0);
+  const [captchaToken, setCaptchaToken] = React.useState<string | null>(null);
   const showCaptcha = turnstileEnabled && !!turnstileSiteKey;
   const [done, setDone] = React.useState(false);
   const [captchaError, setCaptchaError] = React.useState<string | null>(null);
@@ -68,17 +57,6 @@ export function IletisimClient({
     message: "",
   });
 
-  const renderWidget = React.useCallback(() => {
-    if (!showCaptcha || !widgetRef.current || !window.turnstile) return;
-    if (hasRenderedRef.current) return;
-    window.turnstile.render(widgetRef.current, { sitekey: turnstileSiteKey, theme: "light" });
-    hasRenderedRef.current = true;
-  }, [showCaptcha, turnstileSiteKey]);
-
-  React.useEffect(() => {
-    if (showCaptcha && window.turnstile) renderWidget();
-  }, [showCaptcha, renderWidget]);
-
   // eslint-disable-next-line lgs/missing-invalidate -- public form; istemcide tazelenecek query yok (kayıt süper admin panelinde görünür)
   const mut = useMutation({
     mutationFn: () =>
@@ -88,7 +66,7 @@ export function IletisimClient({
         phone: form.phone.trim() || undefined,
         message: form.message.trim() || undefined,
         source: form.topic,
-        turnstile_token: showCaptcha ? (window.turnstile?.getResponse() ?? "") : "",
+        turnstile_token: showCaptcha ? (captchaToken ?? "") : "",
       }),
     onSuccess: () => {
       setDone(true);
@@ -96,7 +74,8 @@ export function IletisimClient({
       trackMetaEvent("Lead", { content_name: form.topic });
     },
     onError: () => {
-      if (showCaptcha && window.turnstile) window.turnstile.reset();
+      setCaptchaToken(null);
+      setCaptchaReset((n) => n + 1);
     },
   });
 
@@ -192,20 +171,13 @@ export function IletisimClient({
                 <>
                   <h2 className="font-display text-xl font-bold">Mesaj gönderin</h2>
                   <p className="mt-1 text-sm text-slate-500">Birkaç bilgi yeterli — gerisini biz halledelim.</p>
-                  {showCaptcha ? (
-                    <Script
-                      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-                      strategy="afterInteractive"
-                      onLoad={renderWidget}
-                    />
-                  ) : null}
                   <form
                     method="post"
                     className="mt-5 space-y-3"
                     onSubmit={(e) => {
                       e.preventDefault();
                       if (mut.isPending) return;
-                      if (showCaptcha && !window.turnstile?.getResponse()) {
+                      if (showCaptcha && !captchaToken) {
                         setCaptchaError("Lütfen güvenlik doğrulamasını tamamlayın.");
                         return;
                       }
@@ -235,7 +207,9 @@ export function IletisimClient({
                       <textarea className={`${inputCls} min-h-28 resize-y`} value={form.message} onChange={setF("message")} required placeholder="Nasıl yardımcı olabiliriz?" />
                     </Field>
 
-                    {showCaptcha ? <div ref={widgetRef} className="min-h-[65px]" /> : null}
+                    {showCaptcha && turnstileSiteKey ? (
+          <TurnstileWidget resetKey={captchaReset} siteKey={turnstileSiteKey} action="contact" onToken={setCaptchaToken} />
+        ) : null}
                     {captchaError ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{captchaError}</p> : null}
                     {mut.isError ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{errMsg}</p> : null}
 

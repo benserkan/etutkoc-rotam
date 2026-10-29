@@ -379,7 +379,7 @@ def v2_login(
     # rate limit korumaya devam eder (native app için kabul edilebilir; ileride
     # Play Integrity / App Attest eklenebilir).
     if turnstile.is_enabled() and not payload.mobile:
-        if not turnstile.verify_token(payload.turnstile_token, ip=ip):
+        if not turnstile.verify_token(payload.turnstile_token, ip=ip, action="login"):
             log_action(
                 db,
                 action=AuditAction.LOGIN_FAILED,
@@ -901,7 +901,7 @@ def v2_signup_teacher(
     ip = _request_ip(request)
     # Mobilde Turnstile yok (RN widget'ı zor) — IP hız kapısı (aşağıda) korur.
     if turnstile.is_enabled() and not payload.mobile:
-        if not turnstile.verify_token(payload.turnstile_token, ip=ip):
+        if not turnstile.verify_token(payload.turnstile_token, ip=ip, action="signup"):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail={"error": "unauthenticated", "code": "captcha_failed",
@@ -1281,7 +1281,7 @@ def v2_forgot_password(
     doğrulanır (e-posta bombardımanı koruması)."""
     ip = _request_ip(request)
     if turnstile.is_enabled():
-        if not turnstile.verify_token(payload.turnstile_token, ip=ip):
+        if not turnstile.verify_token(payload.turnstile_token, ip=ip, action="forgot"):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail={

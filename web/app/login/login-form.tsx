@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
-import Script from "next/script";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, TriangleAlert } from "lucide-react";
 
 
 import { api, ApiError } from "@/lib/api";
@@ -16,17 +16,7 @@ import { roleHome, safeReturnUrl } from "@/lib/role-home";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface TurnstileApi {
-  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
-  reset: (id?: string) => void;
-  getResponse: (id?: string) => string | undefined;
-}
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-  }
-}
+import { TurnstileWidget, type TurnstileStatus } from "@/components/turnstile-widget";
 
 const LoginSchema = z.object({
   email: z.string().min(1, "E-posta gerekli").email("Geçerli bir e-posta girin"),
@@ -54,21 +44,19 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
 
   const [isSubmitting, setSubmitting] = React.useState(false);
   const [challenge, setChallenge] = React.useState<string | null>(null);
-  const widgetRef = React.useRef<HTMLDivElement | null>(null);
-  const hasRenderedRef = React.useRef(false);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [capsLock, setCapsLock] = React.useState(false);
   const showCaptcha = turnstileEnabled && !!turnstileSiteKey;
-  // Turnstile yüklenme durumu — yavaş/başarısız yüklemede kullanıcı "hata mı?"
-  // sanmasın diye butonu kilitle + net uyarı göster.
-  const [captchaStatus, setCaptchaStatus] = React.useState<
-    "loading" | "ready" | "error"
-  >("loading");
+  const [captchaReset, setCaptchaReset] = React.useState(0);
+  const [captchaToken, setCaptchaToken] = React.useState<string | null>(null);
+  const [captchaStatus, setCaptchaStatus] = React.useState<TurnstileStatus>("loading");
+  // Kullanıcı doğrulama bitmeden "Giriş yap"a basarsa isteği beklet, token
+  // gelince kendiliğinden gönder (butonu kilitleyip "neden basamıyorum?" dedirtme).
+  const [pendingValues, setPendingValues] = React.useState<LoginValues | null>(null);
 
   const handleSuccess = React.useCallback((res: LoginResponse) => {
     // TAM SAYFA geçiş — router.refresh()+router.push ikilisi App Router'da
-    // yarışıp navigasyonu iptal edebiliyor ve kullanıcı login'de takılı
-    // kalıyordu (2026-08-12 saha bug'ı: "Hoş geldin" toast'ı var, panel yok).
-    // Tam yükleme taze çerezle SSR'ı garanti eder + istemci durumunu sıfırlar
-    // (qc.clear gerekmez — JS bağlamı zaten atılır).
+    // yarışıp navigasyonu iptal edebiliyor (2026-08-12 saha bug'ı).
     if (res.must_change_password) {
       toast.warning("Şifrenizi değiştirmeniz gerekiyor.", {
         description: "Devam etmeden önce hesap güvenliği için şifrenizi yenileyin.",
@@ -77,67 +65,40 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
       return;
     }
     const role = res.user?.role ?? "student";
-    // returnUrl yalnız kullanıcının kendi panel alanına aitse onurlandırılır;
-    // aksi halde rolün kendi paneline (rol-uyuşmazlığı + open-redirect koruması)
+    // returnUrl yalnız kullanıcının kendi panel alanına aitse onurlandırılır
     const target = safeReturnUrl(returnUrlParam, role) ?? roleHome(role);
     if (res.user) toast.success(`Hoş geldin, ${res.user.full_name}`);
     window.location.assign(target);
   }, [returnUrlParam]);
 
-  const renderWidget = React.useCallback(() => {
-    if (!showCaptcha || !widgetRef.current || !window.turnstile) return;
-    if (hasRenderedRef.current) return;
-    try {
-      window.turnstile.render(widgetRef.current, {
-        sitekey: turnstileSiteKey,
-        theme: "auto",
-        "error-callback": () => setCaptchaStatus("error"),
-      });
-      hasRenderedRef.current = true;
-      setCaptchaStatus("ready");
-    } catch {
-      setCaptchaStatus("error");
-    }
-  }, [showCaptcha, turnstileSiteKey]);
-
-  const onSubmit = React.useCallback(async (values: LoginValues) => {
+  const submitWithToken = React.useCallback(async (values: LoginValues, token: string) => {
+    setPendingValues(null);
     setSubmitting(true);
     let redirecting = false;
     try {
-      let turnstileToken = "";
-      if (showCaptcha) {
-        turnstileToken = window.turnstile?.getResponse() ?? "";
-        if (!turnstileToken) {
-          form.setError("password", { message: "Lütfen güvenlik doğrulamasını tamamlayın." });
-          setSubmitting(false);
-          return;
-        }
-      }
-
       const res = await api<LoginResponse>("/api/v2/auth/login", {
         method: "POST",
-        body: JSON.stringify({ ...values, turnstile_token: turnstileToken }),
+        body: JSON.stringify({ ...values, turnstile_token: token }),
       });
-
       if (res.two_factor_required && res.challenge) {
         setChallenge(res.challenge);
         return;
       }
-
       redirecting = true; // handleSuccess daima tam-sayfa geçiş başlatır
       handleSuccess(res);
     } catch (e) {
       redirecting = false;
-      // Her hatadan sonra CAPTCHA token tek-kullanımlık → sıfırla
-      if (showCaptcha && window.turnstile) {
-        window.turnstile.reset();
+      // Her denemeden sonra token tek kullanımlık → yeni token iste
+      if (showCaptcha) {
+        setCaptchaToken(null);
+        setCaptchaReset((n) => n + 1);
       }
       if (e instanceof ApiError) {
         const code = e.detail?.code;
         if (e.status === 423 && code === "locked") {
           const seconds = (e.detail.details as LockedDetails | undefined)?.retry_after_seconds;
           form.setError("password", {
-            message: `Hesap geçici olarak kilitli${seconds ? ` (${seconds} saniye)` : ""}.`,
+            message: `Hesap geçici olarak kilitli${seconds ? ` (${Math.ceil(seconds / 60)} dakika)` : ""}.`,
           });
           toast.error("Hesap kilitli", { description: e.detail?.message ?? undefined });
         } else if (e.status === 429 && code === "ip_blocked") {
@@ -145,122 +106,160 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
           toast.error("Erişim engellendi", { description: e.detail?.message });
         } else if (e.status === 429) {
           form.setError("email", { message: "Çok fazla deneme. Lütfen 1 dakika bekleyin." });
-          toast.error("Hız sınırı aşıldı", {
-            description: "Birden çok hatalı giriş — sunucu kısa süreliğine engelliyor.",
-          });
         } else if (e.status === 401 && code === "captcha_failed") {
-          form.setError("password", { message: "Güvenlik doğrulaması başarısız, tekrar deneyin." });
-          toast.error("Doğrulama başarısız", { description: e.detail?.message });
+          form.setError("root", { message: "Güvenlik kontrolü geçilemedi, yenilendi. Tekrar dene." });
         } else if (e.status === 401 && code === "invalid_credentials") {
           form.setError("password", { message: "E-posta veya şifre hatalı." });
         } else {
           toast.error("Giriş başarısız", { description: e.detail?.message });
         }
       } else {
-        toast.error("Beklenmedik hata", {
-          description: e instanceof Error ? e.message : "Sunucuya ulaşılamadı.",
+        toast.error("Sunucuya ulaşılamadı", {
+          description: "İnternet bağlantını kontrol edip tekrar dene.",
         });
       }
     } finally {
-      // Yönlendirme başladıysa butonu "Giriş yapılıyor…" durumunda bırak —
-      // sayfa yüklenirken tekrar tıklanabilir olmasın.
       if (!redirecting) setSubmitting(false);
     }
   }, [showCaptcha, form, handleSuccess]);
+
+  const onSubmit = React.useCallback((values: LoginValues) => {
+    if (!showCaptcha) {
+      void submitWithToken(values, "");
+      return;
+    }
+    if (captchaToken) {
+      void submitWithToken(values, captchaToken);
+      return;
+    }
+    if (captchaStatus === "error") {
+      form.setError("root", { message: "Güvenlik kontrolü yüklenemedi — aşağıdan yeniden dene." });
+      return;
+    }
+    setPendingValues(values); // token gelince gönderilir
+    setSubmitting(true);
+  }, [showCaptcha, captchaToken, captchaStatus, submitWithToken, form]);
+
+  const onCaptchaToken = React.useCallback((token: string | null) => {
+    setCaptchaToken(token);
+    if (token && pendingValues) void submitWithToken(pendingValues, token);
+  }, [submitWithToken, pendingValues]);
+
+  const onCaptchaStatus = React.useCallback((s: TurnstileStatus) => {
+    setCaptchaStatus(s);
+    if (s === "error" && pendingValues) {
+      setPendingValues(null);
+      setSubmitting(false);
+    }
+  }, [pendingValues]);
+
+  const onKeyState = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    setCapsLock(e.getModifierState?.("CapsLock") ?? false);
+  };
 
   if (challenge) {
     return <TwoFactorStep challenge={challenge} onSuccess={handleSuccess} onCancel={() => setChallenge(null)} />;
   }
 
+  const errors = form.formState.errors;
+  const inputCls =
+    "h-12 rounded-xl border-slate-300 bg-slate-50 pl-11 text-base text-slate-900 placeholder:text-slate-400 " +
+    "transition focus-visible:border-cyan-600 focus-visible:bg-white focus-visible:ring-cyan-600/30 focus-visible:ring-offset-0 " +
+    "aria-[invalid=true]:border-rose-400";
+
   return (
-    <>
-      {showCaptcha ? (
-        <Script
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-          strategy="afterInteractive"
-          onLoad={renderWidget}
-          onError={() => setCaptchaStatus("error")}
-        />
-      ) : null}
-      <form
-        method="post"
-        action="/login"
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
-        noValidate
-      >
-        <div className="space-y-2">
-          <Label htmlFor="email">E-posta</Label>
+    <form
+      method="post"
+      action="/login"
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="space-y-5"
+      noValidate
+    >
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-medium text-slate-700">E-posta</Label>
+        <div className="relative">
+          <Mail className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-slate-400" aria-hidden />
           <Input
             id="email"
             type="email"
+            inputMode="email"
             autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             autoFocus
+            placeholder="ornek@eposta.com"
             disabled={isSubmitting}
+            className={inputCls}
             {...form.register("email")}
-            aria-invalid={!!form.formState.errors.email}
+            aria-invalid={!!errors.email}
           />
-          {form.formState.errors.email ? (
-            <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-          ) : null}
         </div>
+        {errors.email ? <p className="text-sm text-rose-600">{errors.email.message}</p> : null}
+      </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Şifre</Label>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password" className="text-sm font-medium text-slate-700">Şifre</Label>
+          <Link href="/password/forgot" className="text-sm font-medium text-cyan-800 hover:underline">
+            Şifremi unuttum
+          </Link>
+        </div>
+        <div className="relative">
+          <Lock className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-slate-400" aria-hidden />
           <Input
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="current-password"
+            placeholder="••••••••"
             disabled={isSubmitting}
+            className={`${inputCls} pr-12`}
+            onKeyDown={onKeyState}
+            onKeyUp={onKeyState}
             {...form.register("password")}
-            aria-invalid={!!form.formState.errors.password}
+            aria-invalid={!!errors.password}
           />
-          {form.formState.errors.password ? (
-            <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
-          ) : null}
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-2 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-800 dark:hover:bg-slate-500/25"
+            aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+            aria-pressed={showPassword}
+          >
+            {showPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
+          </button>
         </div>
-
-        {showCaptcha ? (
-          <div className="space-y-2">
-            <div ref={widgetRef} className="min-h-[65px]" />
-            {captchaStatus === "loading" ? (
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                Güvenlik doğrulaması yükleniyor… Lütfen tamamlanmasını bekleyin.
-              </p>
-            ) : null}
-            {captchaStatus === "error" ? (
-              <p className="text-sm text-destructive">
-                Güvenlik doğrulaması yüklenemedi. Bağlantınızı kontrol edip{" "}
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="font-medium underline"
-                >
-                  sayfayı yenileyin
-                </button>
-                .
-              </p>
-            ) : null}
-          </div>
+        {capsLock ? (
+          <p className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
+            <TriangleAlert className="size-3.5" aria-hidden />
+            Büyük harf kilidi (Caps Lock) açık.
+          </p>
         ) : null}
+        {errors.password ? <p className="text-sm text-rose-600">{errors.password.message}</p> : null}
+      </div>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting || (showCaptcha && captchaStatus !== "ready")}
-          className="w-full"
-        >
-          {isSubmitting ? <Loader2 className="animate-spin" /> : null}
-          {isSubmitting
-            ? "Giriş yapılıyor…"
-            : showCaptcha && captchaStatus === "loading"
-              ? "Güvenlik doğrulaması yükleniyor…"
-              : showCaptcha && captchaStatus === "error"
-                ? "Doğrulama yüklenemedi"
-                : "Giriş yap"}
-        </Button>
-      </form>
-    </>
+      {showCaptcha && turnstileSiteKey ? (
+        <TurnstileWidget
+          resetKey={captchaReset}
+          siteKey={turnstileSiteKey}
+          action="login"
+          onToken={onCaptchaToken}
+          onStatus={onCaptchaStatus}
+        />
+      ) : null}
+
+      {errors.root ? (
+        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{errors.root.message}</p>
+      ) : null}
+
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="h-12 w-full rounded-xl bg-cyan-700 text-base font-semibold text-white shadow-sm hover:bg-cyan-800"
+      >
+        {isSubmitting ? <Loader2 className="animate-spin" /> : null}
+        {pendingValues ? "Güvenlik kontrolü bekleniyor…" : isSubmitting ? "Giriş yapılıyor…" : "Giriş yap"}
+      </Button>
+    </form>
   );
 }
 

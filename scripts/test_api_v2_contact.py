@@ -186,7 +186,7 @@ def main() -> int:
         _orig_enabled, _orig_verify = ts.is_enabled, ts.verify_token
         try:
             ts.is_enabled = lambda: True
-            ts.verify_token = lambda token, ip=None: token == "good-token"
+            ts.verify_token = lambda token, ip=None, action=None: token == "good-token"
             # 12. token boş → 401 captcha_failed (kayıt OLUŞMAZ — turnstile ilk adım)
             r = anon.post("/api/v2/contact", json={
                 "name": "Bot Deneme", "email": f"{PFX}_bot@example.com",

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Script from "next/script";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,17 +14,7 @@ import { trackMetaEvent } from "@/components/meta-pixel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface TurnstileApi {
-  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
-  reset: (id?: string) => void;
-  getResponse: (id?: string) => string | undefined;
-}
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-  }
-}
+import { TurnstileWidget } from "@/components/turnstile-widget";
 
 const Schema = z
   .object({
@@ -62,8 +51,8 @@ interface Props {
 export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intendedPlan }: Props) {
   const qc = useQueryClient();
   const [isSubmitting, setSubmitting] = React.useState(false);
-  const widgetRef = React.useRef<HTMLDivElement | null>(null);
-  const hasRenderedRef = React.useRef(false);
+  const [captchaReset, setCaptchaReset] = React.useState(0);
+  const [captchaToken, setCaptchaToken] = React.useState<string | null>(null);
   const showCaptcha = turnstileEnabled && !!turnstileSiteKey;
 
   const form = useForm<Values>({
@@ -135,13 +124,6 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
     }
   }, [form, otpCode]);
 
-  const renderWidget = React.useCallback(() => {
-    if (!showCaptcha || !widgetRef.current || !window.turnstile) return;
-    if (hasRenderedRef.current) return;
-    window.turnstile.render(widgetRef.current, { sitekey: turnstileSiteKey, theme: "auto" });
-    hasRenderedRef.current = true;
-  }, [showCaptcha, turnstileSiteKey]);
-
   const onSubmit = React.useCallback(async (values: Values) => {
     if (phoneRequired && !phoneVerified) {
       form.setError("phone", { message: "Devam etmek için cep telefonunuzu SMS ile doğrulayın." });
@@ -151,7 +133,7 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
     try {
       let turnstileToken = "";
       if (showCaptcha) {
-        turnstileToken = window.turnstile?.getResponse() ?? "";
+        turnstileToken = captchaToken ?? "";
         if (!turnstileToken) {
           form.setError("email", { message: "Lütfen güvenlik doğrulamasını tamamlayın." });
           setSubmitting(false);
@@ -181,7 +163,8 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
       // Tam sayfa geçiş — refresh+push yarışı (login saha bug'ı 2026-08-12)
       window.location.assign("/teacher/dashboard");
     } catch (e) {
-      if (showCaptcha && window.turnstile) window.turnstile.reset();
+      setCaptchaToken(null);
+      setCaptchaReset((n) => n + 1);
       if (e instanceof ApiError) {
         const code = e.detail?.code;
         if (e.status === 409 && code === "email_taken") {
@@ -215,17 +198,10 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
     } finally {
       setSubmitting(false);
     }
-  }, [showCaptcha, form, qc, intendedPlan, phoneRequired, phoneVerified, phoneToken]);
+  }, [showCaptcha, captchaToken, form, qc, intendedPlan, phoneRequired, phoneVerified, phoneToken]);
 
   return (
     <>
-      {showCaptcha ? (
-        <Script
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-          strategy="afterInteractive"
-          onLoad={renderWidget}
-        />
-      ) : null}
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="full_name">Ad Soyad</Label>
@@ -321,7 +297,9 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
           <p className="text-sm text-destructive">{form.formState.errors.accept_terms.message}</p>
         ) : null}
 
-        {showCaptcha ? <div ref={widgetRef} className="min-h-[65px]" /> : null}
+        {showCaptcha && turnstileSiteKey ? (
+          <TurnstileWidget resetKey={captchaReset} siteKey={turnstileSiteKey} action="signup" onToken={setCaptchaToken} />
+        ) : null}
 
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? <Loader2 className="animate-spin" /> : null}

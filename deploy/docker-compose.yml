@@ -112,6 +112,8 @@ services:
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       TURNSTILE_ENABLED: ${TURNSTILE_ENABLED:-1}
+      TURNSTILE_ALLOWED_HOSTNAMES: ${TURNSTILE_ALLOWED_HOSTNAMES:-}
+      TURNSTILE_FAIL_CLOSED: ${TURNSTILE_FAIL_CLOSED:-0}
       # ---- SMS (telefon doğrulama OTP) ----
       # SMS_ENABLED=false iken kod konsol log'una düşer + UI'da dev_test_code
       # olarak gösterilir. true ise gerçek SMS gönderir.
