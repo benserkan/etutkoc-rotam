@@ -7,6 +7,7 @@ import { ChevronDown, Eye, MessageSquareQuote } from "lucide-react";
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamAddActions } from "@/components/shared/exam-add-actions";
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
+import { ExamImportJobsBand } from "@/components/shared/ai-jobs-tracker";
 import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
@@ -153,6 +154,7 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
         }}
         initialFile={importFile}
       />
+      <ExamImportJobsBand audience="student" />
 
       {rows.length === 0 ? (
         <Card>

@@ -40,6 +40,7 @@ import { TrialBanner } from "@/components/teacher/trial-banner";
 import { GuideWelcomeDialog } from "@/components/guide/guide-welcome-dialog";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
+import { AiJobsTracker } from "@/components/shared/ai-jobs-tracker";
 import type { TeacherBadgesResponse } from "@/lib/types/teacher";
 import type { UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
@@ -156,6 +157,7 @@ export function TeacherShell({ user, brand, children }: Props) {
 
       <main className="flex-1 min-w-0">
         <ImpersonationBanner />
+        <AiJobsTracker audience="teacher" />
         <PhoneVerifyBanner phoneVerified={user.phone_verified ?? true} />
         <TrialBanner enabled={user.role === "teacher"} />
         <GuideWelcomeDialog

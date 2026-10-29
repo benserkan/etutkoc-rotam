@@ -30,6 +30,9 @@ from app.models import (
 from app.routes.api_v2.dependencies import get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.exam_import import (
+    AiJobBrief,
+    AiJobDetail,
+    AiJobListResponse,
     ExamImportConfirmBody,
     ExamImportConfirmResult,
     ExamImportDraft,
@@ -43,10 +46,9 @@ from app.routes.api_v2.schemas.exam_import import (
 from app.services import exam_import_service as svc
 from app.services import exam_topic_analysis
 from app.services import wrong_question_service
-from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
-from app.services import exam_duplicate
-from app.services.credits import CreditBlocked, CreditOwner, KIND_CREDITS, consume_credits
 from app.services import free_exam_quota
+from app.services import exam_import_jobs as jobs
+from app.services.credits import KIND_CREDITS
 
 router = APIRouter(tags=["v2-exam-import"])
 
@@ -183,86 +185,30 @@ def _section_choices() -> list[SectionChoice]:
             for s in ExamSection]
 
 
+def _job_http(e: jobs.JobError) -> HTTPException:
+    kind = {402: "payment_required", 404: "not_found", 409: "conflict",
+            422: "validation", 502: "upstream_unavailable"}.get(e.status, "error")
+    detail: dict = {"error": kind, "code": e.code, "message": e.message}
+    if e.details:
+        detail["details"] = e.details
+    return HTTPException(status_code=e.status, detail=detail)
+
+
 def _run_analyze(
     db: Session, *, student: User, coach: User, actor: User, pdf_bytes: bytes,
     declared_section: str | None = None, declared_grade: int | None = None,
     filename: str | None = None,
 ) -> ExamImportDraft:
-    """Çift okuma + normalizasyon; kredi koçun havuzundan (tek seferde 6)."""
-    # Mükerrer katman 1 — belge parmak izi: aynı PDF daha önce bu öğrenciye
-    # aktarıldıysa Gemini'ye GİTMEDEN dur (kredi harcanmaz, 3-5 dk beklenmez).
-    # Zorlama yok; yol: listedeki kaydı düzelt ya da önce onu sil.
-    prior = exam_duplicate.find_by_pdf(db, student.id, exam_duplicate.pdf_sha256(pdf_bytes))
-    if prior is not None:
-        m = exam_duplicate.DuplicateMatch(
-            exam_duplicate.LEVEL_EXACT, "same_file", prior.id, prior.title,
-            prior.exam_date.isoformat(), 1.0,
-        )
-        raise _svc_error(svc.ExamImportError(409, "duplicate_exam", m.message(), m.as_details()))
-    quota = free_exam_quota.status_for(db, coach)
+    """Tek istekte okuma (eski istemciler). Çekirdek arka plan işiyle ortak."""
     try:
-        if quota.applies:
-            # Ücretsiz paket hakkı — kredi düşmez, 0 kredilik sayım satırı yazılır.
-            draft = svc.analyze(
-                db, student, pdf_bytes,
-                declared_section=declared_section, declared_grade=declared_grade)
-            free_exam_quota.record_free_use(db, coach, actor_id=actor.id, metadata={
-                "student_id": student.id,
-                "rows": len(draft["rows"]),
-                "universe": draft["universe"],
-            })
-        else:
-            with consume_credits(
-                db, owner=CreditOwner.for_user(coach), kind=UsageKind.AI_EXAM_IMPORT,
-                actor_user_id=actor.id, autocommit=False,
-            ) as ctx:
-                draft = svc.analyze(
-                    db, student, pdf_bytes,
-                    declared_section=declared_section, declared_grade=declared_grade)
-                ctx.set_metadata({
-                    "student_id": student.id,
-                    "rows": len(draft["rows"]),
-                    "universe": draft["universe"],
-                    "suspects": draft["suspect_count"],
-                })
-    except CreditBlocked:
-        db.rollback()
-        raise HTTPException(status_code=402, detail={
-            "error": "payment_required", "code": "ai_credit_exhausted",
-            "message": "Koçun yapay zekâ kredisi bu ay için doldu."})
-    except svc.ExamImportError as e:
-        db.rollback()
-        raise _svc_error(e)
-    except AIInvalidResponse as e:
-        db.rollback()
-        raise HTTPException(status_code=422, detail={
-            "error": "validation", "code": "pdf_unreadable",
-            "message": str(e) or "Belge okunamadı — konu analizi içeren bir "
-                                 "deneme sonuç PDF'i yükleyin."})
-    except AIServiceUnavailable as e:
-        db.rollback()
-        raise HTTPException(status_code=502, detail={
-            "error": "upstream_unavailable", "code": "ai_unavailable",
-            "message": f"Yapay zekâ servisi şu an kullanılamıyor: {e}"})
-    db.commit()  # kullanım kaydı + sözlük hit sayaçları
-    # Karnede tarih yoksa (LGS karnelerinin çoğu yazmıyor) dosya adındaki tarih
-    # önerilir; koç önizlemede görür, değiştirebilir (2026-10-06).
-    if not draft.get("exam_date"):
-        fd = svc.date_from_filename(filename)
-        if fd:
-            draft["exam_date"] = fd.isoformat()
-            draft["checks"] = list(draft.get("checks") or []) + [{
-                "code": "date_from_filename", "label": "Tarih dosya adından",
-                "ok": True,
-                "detail": f"Karnede tarih yazmıyor; dosya adından {fd.strftime('%d.%m.%Y')} "
-                          "alındı — doğru değilse değiştir.",
-            }]
-    return ExamImportDraft(
-        **draft,
-        section_choices=_section_choices(),
-        credits_charged=0 if quota.applies else KIND_CREDITS[UsageKind.AI_EXAM_IMPORT],
-        free_quota_left=(quota.left - 1) if quota.applies else None,
-    )
+        jobs.check_pdf_duplicate(db, student, pdf_bytes)
+        draft = jobs.analyze_core(
+            db, student=student, coach=coach, actor=actor, pdf_bytes=pdf_bytes,
+            declared_section=declared_section, declared_grade=declared_grade,
+            filename=filename)
+    except jobs.JobError as e:
+        raise _job_http(e)
+    return ExamImportDraft(**draft)
 
 
 def _parse_confirm_payload(payload: str) -> ExamImportConfirmBody:
@@ -299,7 +245,17 @@ def _confirm_result(exam: ExamResult) -> ExamImportConfirmResult:
 def _run_confirm(
     db: Session, *, student: User, actor: User,
     body: ExamImportConfirmBody, pdf_bytes: bytes | None, content_type: str | None,
+    job_id: int | None = None,
 ) -> ExamImportConfirmResult:
+    job = None
+    if job_id is not None:
+        try:
+            job = jobs.take_for_confirm(db, actor, job_id, student)
+        except jobs.JobError as e:
+            raise _job_http(e)
+        if pdf_bytes is None:
+            pdf_bytes = job.input_data
+            content_type = job.input_content_type or "application/pdf"
     try:
         exam = svc.confirm(
             db, student, body.model_dump(),
@@ -308,6 +264,8 @@ def _run_confirm(
     except svc.ExamImportError as e:
         db.rollback()
         raise _svc_error(e)
+    if job is not None:
+        jobs.mark_consumed(db, job, exam.id)
     return _confirm_result(exam)
 
 
@@ -354,6 +312,7 @@ def teacher_exam_import_confirm(
     background_tasks: BackgroundTasks,
     payload: str = Form(...),
     file: UploadFile | None = File(default=None),
+    job_id: int | None = Form(default=None),
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
@@ -364,6 +323,7 @@ def teacher_exam_import_confirm(
     result = _run_confirm(
         db, student=student, actor=user, body=body,
         pdf_bytes=pdf, content_type=(file.content_type if pdf and file else None),
+        job_id=job_id,
     )
     # P4: yeni deneme → veliye "Rota yorumlamaya hazır" push'u (yanıt sonrası,
     # taze session; throttle + mute + Rota-kapısı fonksiyonun içinde).
@@ -602,6 +562,7 @@ def student_exam_import_confirm(
     background_tasks: BackgroundTasks,
     payload: str = Form(...),
     file: UploadFile | None = File(default=None),
+    job_id: int | None = Form(default=None),
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
@@ -610,6 +571,7 @@ def student_exam_import_confirm(
     result = _run_confirm(
         db, student=user, actor=user, body=body,
         pdf_bytes=pdf, content_type=(file.content_type if pdf and file else None),
+        job_id=job_id,
     )
     # P4: yeni deneme → veliye "Rota yorumlamaya hazır" push'u (yanıt sonrası).
     from app.services.push_notifications import notify_parents_rota_exam_ready_bg
@@ -657,3 +619,143 @@ def student_exam_import_quota(
 ):
     coach = db.get(User, user.teacher_id) if user.teacher_id else None
     return _quota_payload(db, coach)
+
+
+# ============================================================================
+# Arka plan okuma işleri (2026-10-29) — yükle → arkada oku → önizle/kaydet
+# ============================================================================
+
+
+def _list_payload(db: Session, user: User, student_id: int | None = None) -> AiJobListResponse:
+    items = jobs.list_for_owner(db, user, student_id=student_id)
+    return AiJobListResponse(
+        items=[AiJobBrief(**jobs.brief(db, j)) for j in items],
+        active_count=sum(1 for j in items if j.status in ("queued", "running")),
+        ready_count=sum(1 for j in items if j.status == "done"),
+    )
+
+
+def _create_job_response(db: Session, **kw) -> AiJobBrief:
+    try:
+        job = jobs.create_exam_job(db, **kw)
+    except jobs.JobError as e:
+        raise _job_http(e)
+    db.refresh(job)
+    return AiJobBrief(**jobs.brief(db, job))
+
+
+@router.post(
+    "/teacher/students/{student_id}/exams/import-jobs",
+    response_model=AiJobBrief, status_code=202,
+)
+def teacher_exam_import_job(
+    student_id: int,
+    file: UploadFile = File(...),
+    declared_section: str | None = Form(default=None),
+    declared_grade: int | None = Form(default=None),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Karneyi yükle, arka planda oku (1-2 sn'de döner). Kredi okuma bitince düşer."""
+    student = _get_owned_student(db, user, student_id)
+    coach = _paying_coach(db, student)
+    pdf = _read_pdf_upload(file)
+    return _create_job_response(
+        db, owner=user, student=student, coach=coach, pdf_bytes=pdf,
+        filename=file.filename, content_type=file.content_type,
+        declared_section=declared_section, declared_grade=declared_grade)
+
+
+@router.post("/student/exams/import-jobs", response_model=AiJobBrief, status_code=202)
+def student_exam_import_job(
+    file: UploadFile = File(...),
+    declared_section: str | None = Form(default=None),
+    declared_grade: int | None = Form(default=None),
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    coach = _paying_coach(db, user, actor=user)
+    pdf = _read_pdf_upload(file)
+    return _create_job_response(
+        db, owner=user, student=user, coach=coach, pdf_bytes=pdf,
+        filename=file.filename, content_type=file.content_type,
+        declared_section=declared_section, declared_grade=declared_grade)
+
+
+@router.get("/me/ai-jobs", response_model=AiJobListResponse)
+def my_ai_jobs(
+    student_id: int | None = None,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Yükleyenin açık işleri — her sayfadaki "okundu" bilgilendirmesini besler."""
+    jobs.housekeeping(db)
+    return _list_payload(db, user, student_id)
+
+
+def _owned_or_404(db: Session, user: User, job_id: int):
+    try:
+        return jobs.get_owned(db, user, job_id)
+    except jobs.JobError as e:
+        raise _job_http(e)
+
+
+@router.get("/me/ai-jobs/{job_id}", response_model=AiJobDetail)
+def my_ai_job(
+    job_id: int,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    jobs.housekeeping(db)
+    job = _owned_or_404(db, user, job_id)
+    draft = jobs.draft_of(job)
+    return AiJobDetail(
+        job=AiJobBrief(**jobs.brief(db, job)),
+        draft=ExamImportDraft(**draft) if draft else None,
+    )
+
+
+@router.post("/me/ai-jobs/{job_id}/ack", response_model=MutationResponse[AiJobBrief])
+def my_ai_job_ack(
+    job_id: int,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Ekran bilgilendirmesini kapat (iş önizleme bekliyorsa listede kalır)."""
+    job = _owned_or_404(db, user, job_id)
+    jobs.acknowledge(db, job)
+    return MutationResponse[AiJobBrief](data=AiJobBrief(**jobs.brief(db, job)),
+                                        invalidate=["me:ai-jobs"])
+
+
+@router.post("/me/ai-jobs/{job_id}/dismiss", response_model=MutationResponse[AiJobBrief])
+def my_ai_job_dismiss(
+    job_id: int,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Taslaktan vazgeç (PDF silinir; düşen ücret iade edilmez — okuma yapılmıştı)."""
+    job = _owned_or_404(db, user, job_id)
+    try:
+        jobs.dismiss(db, job)
+    except jobs.JobError as e:
+        raise _job_http(e)
+    return MutationResponse[AiJobBrief](data=AiJobBrief(**jobs.brief(db, job)),
+                                        invalidate=["me:ai-jobs"])
+
+
+@router.post("/me/ai-jobs/{job_id}/retry", response_model=MutationResponse[AiJobBrief])
+def my_ai_job_retry(
+    job_id: int,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Servis hatası / yeniden başlatma yüzünden kalan işi tekrar dene (ücretsiz)."""
+    job = _owned_or_404(db, user, job_id)
+    try:
+        jobs.retry(db, job)
+    except jobs.JobError as e:
+        raise _job_http(e)
+    db.refresh(job)
+    return MutationResponse[AiJobBrief](data=AiJobBrief(**jobs.brief(db, job)),
+                                        invalidate=["me:ai-jobs"])

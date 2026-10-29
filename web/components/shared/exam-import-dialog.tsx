@@ -23,12 +23,14 @@ import {
 } from "@/components/ui/dialog";
 import { ApiError } from "@/lib/api";
 import {
+  aiJobAction,
+  aiJobsKey,
+  createExamImportJob,
   examImportQuotaKey,
+  getAiJob,
   getExamImportQuota,
   getExamImportRows,
-  studentAnalyzeExamPdf,
   studentConfirmExamImport,
-  teacherAnalyzeExamPdf,
   teacherConfirmExamImport,
   updateExamImportRows,
 } from "@/lib/api/exam-import";
@@ -44,8 +46,11 @@ import type {
 import { cn } from "@/lib/utils";
 
 /**
- * Deneme PDF içe aktarma akışı — yükle → Gemini çift okuma → önizleme/düzelt →
- * kaydet. Koç (studentId verilir) + öğrenci (verilmez) aynı bileşeni kullanır.
+ * Deneme PDF içe aktarma akışı — yükle → (arka planda) çift okuma →
+ * önizleme/düzelt → kaydet. Koç (studentId verilir) + öğrenci (verilmez) aynı
+ * bileşeni kullanır. Okuma 2-5 dk sürdüğü için arka plan işi olarak koşar
+ * (2026-10-29): pencere kapatılabilir; bitince her sayfadaki bilgilendirme
+ * kutusundan (AiJobsTracker) ya da Denemeler'deki banttan önizlemeye dönülür.
  *
  * Uydurma önleme UI'ı: şüpheli hücreler sarı; başarısız iç tutarlılık
  * kontrolleri banner; koç her satırın konu/DC/ÖC/sonucunu düzeltebilir
@@ -143,9 +148,12 @@ export function ExamImportDialog({
   studentId,
   editExamId,
   initialFile,
+  jobId,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** Verilirse arka planda okunmuş (ya da okunan) işin taslağı açılır. */
+  jobId?: number;
   /** Panelde sürükle-bırak ile gelen dosya: seçim adımında hazır bekler. */
   initialFile?: File | null;
   /** Verilirse koç yüzeyi (o öğrenci adına); verilmezse öğrenci kendi adına. */
@@ -162,6 +170,7 @@ export function ExamImportDialog({
       studentId={studentId}
       editExamId={editExamId}
       initialFile={initialFile ?? null}
+      initialJobId={jobId ?? null}
     />
   );
 }
@@ -171,15 +180,29 @@ function ImportFlow({
   studentId,
   editExamId,
   initialFile,
+  initialJobId,
 }: {
   onClose: () => void;
   studentId?: number;
   editExamId?: number;
   initialFile: File | null;
+  initialJobId: number | null;
 }) {
   const qc = useQueryClient();
   const editMode = editExamId != null;
-  const [step, setStep] = React.useState<Step>(editMode ? "analyzing" : "pick");
+  const [step, setStep] = React.useState<Step>(
+    editMode || initialJobId != null ? "analyzing" : "pick",
+  );
+  // Arka plan okuma işi: kimliği + sunucunun bildirdiği aşama metni
+  const [jobId, setJobId] = React.useState<number | null>(initialJobId);
+  const [jobStage, setJobStage] = React.useState<string | null>(null);
+  const aliveRef = React.useRef(true);
+  React.useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
   // Beyan (kullanıcı seçimi — boş = otomatik tespit)
   const [declGrade, setDeclGrade] = React.useState("");
   const [declSection, setDeclSection] = React.useState("");
@@ -226,44 +249,115 @@ function ImportFlow({
     setStep("preview");
   }
 
+  function failToPick(e: unknown) {
+    if (e instanceof ApiError && e.detail?.code === "duplicate_exam") {
+      // Aynı PDF daha önce aktarılmış — okumaya gidilmedi, kredi harcanmadı.
+      setAnalyzeDup((e.detail.details as unknown as ImportDuplicate) ?? null);
+      setStep("pick");
+      return;
+    }
+    if (e instanceof ApiError && e.detail?.code === "free_exam_quota_exhausted") {
+      void qc.invalidateQueries({ queryKey: examImportQuotaKey(studentId) });
+      toast.error("Ücretsiz PDF analizi hakkı doldu", {
+        description: e.message,
+        ...(studentId != null
+          ? { action: { label: "Paketi gör", onClick: () => { window.location.href = "/teacher/plan"; } } }
+          : {}),
+      });
+      setStep("pick");
+      return;
+    }
+    const msg = e instanceof ApiError ? e.message : "Belge analiz edilemedi.";
+    toast.error("Analiz başarısız", { description: msg });
+    setStep("pick");
+  }
+
+  /** İş bitene kadar 2,5 sn'de bir yokla; pencere kapanırsa yoklama durur
+   *  (okuma sunucuda sürer, bitince her sayfadaki kutu haber verir). */
+  async function pollJob(id: number) {
+    for (;;) {
+      if (!aliveRef.current) return;
+      let d;
+      try {
+        d = await getAiJob(id);
+      } catch (e) {
+        if (!aliveRef.current) return;
+        if (e instanceof ApiError && e.status === 404) {
+          toast.error("Bu karne artık bulunamadı.");
+          onClose();
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 4000)); // geçici ağ hatası
+        continue;
+      }
+      if (!aliveRef.current) return;
+      setJobStage(d.job.stage);
+      if (d.job.status === "done" && d.draft) {
+        void qc.invalidateQueries({ queryKey: examImportQuotaKey(studentId) });
+        void qc.invalidateQueries({ queryKey: aiJobsKey() });
+        void aiJobAction(id, "ack").catch(() => undefined); // ekranda gördü
+        applyDraft(d.draft);
+        return;
+      }
+      if (d.job.status === "failed") {
+        void qc.invalidateQueries({ queryKey: aiJobsKey() });
+        void aiJobAction(id, "ack").catch(() => undefined);
+        failToPick(new ApiError(422, {
+          error: "validation",
+          code: d.job.error_code ?? "failed",
+          message: d.job.error_message ?? "Karne okunamadı.",
+          details: d.job.error_details ?? undefined,
+        }));
+        setJobId(null);
+        return;
+      }
+      if (d.job.status !== "queued" && d.job.status !== "running") {
+        toast.message("Bu karne zaten kaydedilmiş ya da vazgeçilmiş.");
+        onClose();
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 2500));
+    }
+  }
+
   async function analyze(f: File) {
     setFile(f);
     setAnalyzeDup(null);
     setStep("analyzing");
+    setJobStage("Karne yükleniyor");
     const decl = {
       declaredSection: declSection || null,
       declaredGrade:
         declGrade && declGrade !== "mezun" ? Number(declGrade) : null,
     };
     try {
-      const d = studentId != null
-        ? await teacherAnalyzeExamPdf(studentId, f, decl)
-        : await studentAnalyzeExamPdf(f, decl);
-      void qc.invalidateQueries({ queryKey: examImportQuotaKey(studentId) });
-      applyDraft(d);
+      const job = await createExamImportJob(studentId, f, decl);
+      setJobId(job.id);
+      setJobStage(job.stage);
+      void qc.invalidateQueries({ queryKey: aiJobsKey() });
+      await pollJob(job.id);
     } catch (e) {
-      if (e instanceof ApiError && e.detail?.code === "duplicate_exam") {
-        // Aynı PDF daha önce aktarılmış — Gemini'ye gidilmedi, kredi harcanmadı.
-        setAnalyzeDup((e.detail.details as unknown as ImportDuplicate) ?? null);
-        setStep("pick");
-        return;
+      if (e instanceof ApiError && e.detail?.code === "job_exists") {
+        // Aynı karne zaten okunuyor/okundu — o işe bağlan (yeniden ücret yok)
+        const existing = Number((e.detail.details as { job_id?: number } | undefined)?.job_id);
+        if (existing) {
+          setJobId(existing);
+          await pollJob(existing);
+          return;
+        }
       }
-      if (e instanceof ApiError && e.detail?.code === "free_exam_quota_exhausted") {
-        void qc.invalidateQueries({ queryKey: examImportQuotaKey(studentId) });
-        toast.error("Ücretsiz PDF analizi hakkı doldu", {
-          description: e.message,
-          ...(studentId != null
-            ? { action: { label: "Paketi gör", onClick: () => { window.location.href = "/teacher/plan"; } } }
-            : {}),
-        });
-        setStep("pick");
-        return;
-      }
-      const msg = e instanceof ApiError ? e.message : "Belge analiz edilemedi.";
-      toast.error("Analiz başarısız", { description: msg });
-      setStep("pick");
+      failToPick(e);
     }
   }
+
+  // Arka plan işinden açıldıysa: taslağı (ya da süren okumayı) yükle
+  React.useEffect(() => {
+    if (initialJobId == null) return;
+    // Zamanlayıcı: StrictMode'daki çift mount'ta tek yoklama başlasın
+    const t = window.setTimeout(() => void pollJob(initialJobId), 0);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız mount'ta (dialog açıkken remount edilir)
+  }, []);
 
   // Düzenleme modu: mount'ta kayıtlı denemeyi taslak olarak yükle (PDF okunmaz)
   React.useEffect(() => {
@@ -344,9 +438,10 @@ function ImportFlow({
       const res = editExamId != null
         ? await updateExamImportRows(editExamId, body)
         : studentId != null
-          ? await teacherConfirmExamImport(studentId, body, file)
-          : await studentConfirmExamImport(body, file);
+          ? await teacherConfirmExamImport(studentId, body, file, jobId)
+          : await studentConfirmExamImport(body, file, jobId);
       applyInvalidate(qc, res.invalidate);
+      void qc.invalidateQueries({ queryKey: aiJobsKey() });
       setResult(res.data);
       setReplaced(mode === "replace");
       setStep("done");
@@ -376,7 +471,7 @@ function ImportFlow({
   }, [activeRows, section]);
 
   return (
-    <Dialog open onOpenChange={(v) => { if (!v && step !== "analyzing" && step !== "saving") onClose(); }}>
+    <Dialog open onOpenChange={(v) => { if (!v && step !== "saving" && (step !== "analyzing" || !editMode)) onClose(); }}>
       <DialogContent
         className="flex max-h-[92vh] max-w-4xl flex-col overflow-hidden p-0"
         // Pencere dışına tıklamak kapatmaz — analiz sonucu kaybolup yeniden
@@ -384,7 +479,7 @@ function ImportFlow({
         onInteractOutside={(e) => e.preventDefault()}
         // Önizlemede Esc de kapatmaz (yanlışlıkla basılınca aynı kayıp)
         onEscapeKeyDown={(e) => {
-          if (step !== "pick" && step !== "done") e.preventDefault();
+          if (step !== "pick" && step !== "done" && step !== "analyzing") e.preventDefault();
         }}
       >
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
@@ -421,8 +516,11 @@ function ImportFlow({
             <div className="flex flex-col items-center gap-3 py-14 text-center">
               <Loader2 className="size-8 animate-spin text-violet-600 dark:text-violet-300" aria-hidden />
               <div className="text-sm font-medium text-foreground">
-                {editMode ? "Kayıtlı deneme açılıyor…" : "Yapay zekâ belgeyi okuyor…"}
+                {editMode ? "Kayıtlı deneme açılıyor…" : "Karne okunuyor…"}
               </div>
+              {!editMode && jobStage ? (
+                <div className="text-xs font-medium text-violet-700 dark:text-violet-300">{jobStage}</div>
+              ) : null}
               <p className="max-w-sm text-xs text-muted-foreground">
                 {editMode ? (
                   <>
@@ -432,11 +530,18 @@ function ImportFlow({
                 ) : (
                   <>
                     Uydurmayı önlemek için belge <b>iki kez bağımsız</b> okunur ve
-                    sonuçlar karşılaştırılır — 100+ soruluk karnelerde{" "}
-                    <b>3-5 dakika</b> sürebilir (ölçüldü), sayfayı kapatma.
+                    sonuçlar karşılaştırılır; 100+ soruluk karnelerde <b>2-5 dakika</b>{" "}
+                    sürer. Beklemek zorunda değilsin: pencereyi kapatıp çalışmaya devam
+                    edebilir, başka bir karne yükleyebilirsin. Okuma bitince ekranının
+                    köşesinde haber vereceğiz.
                   </>
                 )}
               </p>
+              {!editMode && jobId != null ? (
+                <Button variant="outline" className="mt-2" onClick={onClose}>
+                  Kapat, arkada okunmaya devam etsin
+                </Button>
+              ) : null}
             </div>
           ) : null}
 

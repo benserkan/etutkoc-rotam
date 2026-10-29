@@ -8,6 +8,9 @@
  */
 import { api, ApiError, type MutationResponse } from "@/lib/api";
 import type {
+  AiJobBrief,
+  AiJobDetail,
+  AiJobListResponse,
   ExamImportConfirmBody,
   ExamImportConfirmResult,
   ExamImportDraft,
@@ -122,10 +125,13 @@ export function teacherConfirmExamImport(
   studentId: number,
   body: ExamImportConfirmBody,
   file: File | null,
+  jobId?: number | null,
 ): Promise<MutationResponse<ExamImportConfirmResult>> {
   const fd = new FormData();
   fd.append("payload", JSON.stringify(body));
-  if (file) fd.append("file", file);
+  // Arka plan işinden geliyorsa PDF sunucuda bekliyor — yeniden yüklenmez
+  if (jobId != null) fd.append("job_id", String(jobId));
+  else if (file) fd.append("file", file);
   return multipart<MutationResponse<ExamImportConfirmResult>>(
     `/api/v2/teacher/students/${studentId}/exams/import-confirm`, fd,
   );
@@ -163,11 +169,58 @@ export function studentAnalyzeExamPdf(
 export function studentConfirmExamImport(
   body: ExamImportConfirmBody,
   file: File | null,
+  jobId?: number | null,
 ): Promise<MutationResponse<ExamImportConfirmResult>> {
   const fd = new FormData();
   fd.append("payload", JSON.stringify(body));
-  if (file) fd.append("file", file);
+  // Arka plan işinden geliyorsa PDF sunucuda bekliyor — yeniden yüklenmez
+  if (jobId != null) fd.append("job_id", String(jobId));
+  else if (file) fd.append("file", file);
   return multipart<MutationResponse<ExamImportConfirmResult>>(
     "/api/v2/student/exams/import-confirm", fd,
   );
+}
+
+// ---------------------------------------------------------------------------
+// Arka plan okuma işi (2026-10-29): yükle → arkada oku → önizle/kaydet
+// ---------------------------------------------------------------------------
+
+export const aiJobsKey = (studentId?: number | null) =>
+  studentId != null ? (["me", "ai-jobs", studentId] as const) : (["me", "ai-jobs"] as const);
+export const aiJobKey = (jobId: number) => ["me", "ai-jobs", "job", jobId] as const;
+
+/** Karneyi yükle; okuma arkada sürer (1-2 sn'de döner). Koç: studentId verilir. */
+export function createExamImportJob(
+  studentId: number | null | undefined,
+  file: File,
+  decl?: ImportDeclaration,
+): Promise<AiJobBrief> {
+  const fd = new FormData();
+  fd.append("file", file);
+  appendDeclaration(fd, decl);
+  return multipart<AiJobBrief>(
+    studentId != null
+      ? `/api/v2/teacher/students/${studentId}/exams/import-jobs`
+      : "/api/v2/student/exams/import-jobs",
+    fd,
+  );
+}
+
+export function getAiJobs(studentId?: number | null): Promise<AiJobListResponse> {
+  return api<AiJobListResponse>(
+    studentId != null ? `/api/v2/me/ai-jobs?student_id=${studentId}` : "/api/v2/me/ai-jobs",
+  );
+}
+
+export function getAiJob(jobId: number): Promise<AiJobDetail> {
+  return api<AiJobDetail>(`/api/v2/me/ai-jobs/${jobId}`);
+}
+
+export function aiJobAction(
+  jobId: number,
+  action: "ack" | "dismiss" | "retry",
+): Promise<MutationResponse<AiJobBrief>> {
+  return api<MutationResponse<AiJobBrief>>(`/api/v2/me/ai-jobs/${jobId}/${action}`, {
+    method: "POST",
+  });
 }

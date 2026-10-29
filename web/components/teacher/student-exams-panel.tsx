@@ -20,6 +20,7 @@ import {
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamAddActions, ExamAddButtons } from "@/components/shared/exam-add-actions";
 import { ExamImportDialog, sectionChoicesFor } from "@/components/shared/exam-import-dialog";
+import { ExamImportJobsBand } from "@/components/shared/ai-jobs-tracker";
 import {
   PeriodContextNote,
   PeriodSelect,
@@ -363,6 +364,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
         studentId={studentId}
         initialFile={importFile}
       />
+      <ExamImportJobsBand studentId={studentId} audience="teacher" />
 
       <PeriodContextNote meta={periodMeta} value={period} />
 

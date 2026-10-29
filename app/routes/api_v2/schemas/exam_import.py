@@ -317,3 +317,39 @@ class ExamImportConfirmResult(BaseModel):
     question_count: int
     matched_topic_count: int               # konuya bağlanan soru (birikime girer)
     wrong_topic_ids: list[int]             # Faz 3 YSA köprüsü için hazır veri
+
+
+# ---------------------------------------------------------------------------
+# Arka plan okuma işi (2026-10-29)
+# ---------------------------------------------------------------------------
+
+
+class AiJobBrief(BaseModel):
+    id: int
+    kind: str
+    status: str                 # queued|running|done|failed|consumed|dismissed
+    status_label: str
+    stage: str | None = None
+    student_id: int | None = None
+    student_name: str | None = None
+    own_upload: bool = False    # öğrenci kendi karnesini yükledi
+    filename: str | None = None
+    created_at: str | None = None
+    finished_at: str | None = None
+    error_code: str | None = None
+    error_message: str | None = None
+    error_details: dict | None = None
+    retryable: bool = False
+    credits_charged: int | None = None
+    acknowledged: bool = False
+
+
+class AiJobDetail(BaseModel):
+    job: AiJobBrief
+    draft: ExamImportDraft | None = None
+
+
+class AiJobListResponse(BaseModel):
+    items: list[AiJobBrief]
+    active_count: int
+    ready_count: int

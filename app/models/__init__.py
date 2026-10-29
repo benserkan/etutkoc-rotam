@@ -441,6 +441,7 @@ from app.models.focus import (
 )
 from app.models.progress import SectionProgress, StudentBook
 from app.models.book_scan_job import BookScanJob
+from app.models.ai_job import AiJob
 from app.models.self_study import (
     SS_SOURCE_COACH,
     SS_SOURCE_LABELS_TR,
@@ -821,6 +822,7 @@ __all__ = [
     "SS_STATUS_REJECTED",
     "SelfStudyEntry",
     "BookScanJob",
+    "AiJob",
     "GOAL_KIND_EMOJIS",
     "GOAL_KIND_LABELS_TR",
     "GOAL_STATUS_LABELS_TR",

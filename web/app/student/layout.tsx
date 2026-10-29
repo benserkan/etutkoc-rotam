@@ -7,6 +7,7 @@ import { roleHome } from "@/lib/role-home";
 import { SiteHeader } from "@/components/site-header";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
+import { AiJobsTracker } from "@/components/shared/ai-jobs-tracker";
 import { GuideWelcomeDialog } from "@/components/guide/guide-welcome-dialog";
 
 /**
@@ -48,6 +49,7 @@ export default async function StudentLayout({
     <div className="min-h-screen bg-background">
       <SiteHeader user={data.user} brand={data.brand ?? null} />
       <ImpersonationBanner />
+      <AiJobsTracker audience="student" />
       <PhoneVerifyBanner phoneVerified={data.user.phone_verified ?? true} />
       <GuideWelcomeDialog
         enabled

@@ -308,3 +308,40 @@ export interface WrongBridgeResult {
   skipped_no_topic: number;
   total_wrong: number;
 }
+
+// ---------------------------------------------------------------------------
+// Arka plan okuma işi (2026-10-29)
+// ---------------------------------------------------------------------------
+
+export type AiJobStatus = "queued" | "running" | "done" | "failed" | "consumed" | "dismissed";
+
+export interface AiJobBrief {
+  id: number;
+  kind: string;
+  status: AiJobStatus;
+  status_label: string;
+  stage: string | null;
+  student_id: number | null;
+  student_name: string | null;
+  own_upload: boolean;
+  filename: string | null;
+  created_at: string | null;
+  finished_at: string | null;
+  error_code: string | null;
+  error_message: string | null;
+  error_details: Record<string, unknown> | null;
+  retryable: boolean;
+  credits_charged: number | null;
+  acknowledged: boolean;
+}
+
+export interface AiJobDetail {
+  job: AiJobBrief;
+  draft: ExamImportDraft | null;
+}
+
+export interface AiJobListResponse {
+  items: AiJobBrief[];
+  active_count: number;
+  ready_count: number;
+}
