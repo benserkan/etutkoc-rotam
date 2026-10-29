@@ -21,6 +21,11 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   kitap sihirbazı "kapak+içindekiler" ortanca 68 sn / en çok 122 sn. Kullanıcı onaylı sıra: A-C karne arka plan ✅ →
   D kitap sihirbazı taramasını aynı iş sistemine al → E süper admin tam kitap için parçalı yükleme → F turuncu bulut +
   Hetzner firewall yalnız CF + webhook istisnaları.
+  **F CANLI (2026-10-29):** `rotam` + `analytics` kayıtları Proxied (aynı hesap, etutkoc.com bölgesinin içinde alt
+  alan adı — ayrı site değil). Bölge SSL modu **Flexible kalır** (etutkoc.com OVH'ye bağlı); rotam+analytics için
+  Configuration Rule "Rotam - Full strict SSL" → Strict. Bot Fight Mode kapalı (bilinçli). Doğrulandı: Server cloudflare,
+  Caddy client_ip gerçek IP, webhook'lar uygulamaya ulaşıyor. **AÇIK: origin kilidi** (80/443 yalnız CF) — sunucu
+  komutu izin kapısında reddedildi; `deploy/cf-origin-lock.sh` + rehberdeki Hetzner Firewall yolu kullanıcı onayı bekliyor.
 - **Karne okuma arka plan işi (A+B+C, migration `w7y0d3e4d99z` ai_jobs):** `app/services/exam_import_jobs.py` — yükle
   (hızlı kapılar: koç/rıza/kredi/aynı PDF) → iş satırı (PDF ≤10 MB satırda) → web sürecinde iş parçacığı (süreç başına
   3 paralel; koç art arda çok yükleyebilir) → taslak → `import-confirm` + `job_id` (PDF yeniden yüklenmez). Kredi yalnız
