@@ -36,8 +36,12 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   `_scan_core`/`_read_core`/`run_book_job`). Hazırlanan dosyalar (PDF'in ilk sayfaları) satırda base64 JSON; 1 gün TTL.
   Web `coachScanBook`/`coachReadStructure` AYNI İMZAYLA iş başlatıp `/me/ai-jobs/{id}` `result`'ı yoklar → sihirbaz
   değişmedi. Kitap işleri karne listesine/kutusuna karışmaz (`list_for_owner(kind=exam_import)`), bildirim yok.
-  Test book_catalog 40/40 (26g-l) · canlı sihirbaz gerçek okuma yeşil. SIRADA: E (süper admin tam kitap parçalı yükleme)
-  → F (turuncu bulut).
+  Test book_catalog 40/40 (26g-l) · canlı sihirbaz gerçek okuma yeşil.
+- **E — süper admin tam kitap parçalı yükleme (migration YOK):** `book_scan_jobs.start_upload/append_chunk/finish_upload`
+  + `/admin/book-catalog/scan-uploads` (aç) · `/{id}/chunk` (offset'li; aynı konum yeniden gönderilebilir, sırayı atlayan
+  409) · `/{id}/finish` (olağan `create_job_from_path`). 32 MB parça, dosya `BOOK_SCAN_DIR`'de (gunicorn işçileri
+  paylaşır), yarım yükleme 6 saatte silinir. Web `adminCreateScanJob` aynı imza + `onProgress` ("Yükleniyor %N"), kopan
+  parçayı 2 kez dener. Eski tek istekli `/scan-jobs` duruyor. Test admin_book_scan_jobs 21/21 (7b-7i). SIRADA: F.
 - **Dil kuralı (kullanıcı):** klişe yapay-zekâ ifadesi yok ("tek panelde", "yolculuk"); odak öğrenci başarısı, somut fayda.
   Güvenlik süreci bitince üyelik paketlerinden başlayıp mobil dahil tüm kullanıcı dili gözden geçirilecek.
 
