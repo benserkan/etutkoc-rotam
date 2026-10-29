@@ -47,7 +47,7 @@ _RETRY_503 = (1.0, 2.5, 5.0)
 
 
 def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_mode: bool,
-          max_output_tokens: int = 8192) -> str:
+          max_output_tokens: int = 8192, thinking_budget: int | None = None) -> str:
     url = f"{GEMINI_BASE}/{model}:generateContent"
     # 2.5 modelleri "düşünme" tokenı tüketir; düşük bütçe çıktıyı yarıda keser
     # (yarım JSON → parse hatası). Büyük yapılandırılmış çıktılarda (örn. vitrin
@@ -55,6 +55,11 @@ def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_m
     gen_cfg: dict[str, Any] = {"temperature": 0.4, "maxOutputTokens": max_output_tokens}
     if json_mode:
         gen_cfg["responseMimeType"] = "application/json"
+    if thinking_budget is not None:
+        # Düşünme payına tavan: uzun yapılandırılmış çıktıda (ör. test satırlı
+        # içindekiler) model bütçenin ~%95'ini düşünmeye harcayıp yanıtı
+        # MAX_TOKENS ile kesiyordu (2026-10-29, Bilgi Sarmal 10 Mat: 15.7K/16K).
+        gen_cfg["thinkingConfig"] = {"thinkingBudget": int(thinking_budget)}
     body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": gen_cfg}
 
     resp = None
@@ -111,6 +116,7 @@ def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_m
 def generate(
     parts: list[dict], *, personal_data: bool, timeout: float = 45.0, json_mode: bool = True,
     max_output_tokens: int = 8192, prefer_paid: bool = True, prefer_fast: bool = False,
+    thinking_budget: int | None = None,
 ) -> str:
     """Gemini'den metin yanıt al — TÜM AI işlerinde önce **pro** (en zeki model).
 
@@ -147,7 +153,8 @@ def generate(
         for m in paid_models:
             try:
                 return _call(m, paid, parts, timeout=timeout, json_mode=json_mode,
-                             max_output_tokens=max_output_tokens)
+                             max_output_tokens=max_output_tokens,
+                             thinking_budget=thinking_budget)
             except _QuotaExceeded:
                 logger.info("Gemini ücretli anahtar + %s kotasız (paid tier mi?) → sıradaki model", m)
             except AIServiceUnavailable:
@@ -169,7 +176,8 @@ def generate(
     for k in free_keys:
         try:
             return _call(flash, k, parts, timeout=timeout, json_mode=json_mode,
-                         max_output_tokens=max_output_tokens)
+                         max_output_tokens=max_output_tokens,
+                         thinking_budget=thinking_budget)
         except _QuotaExceeded:
             logger.info("Gemini ücretsiz anahtar + flash kotasız → sıradaki anahtar")
             continue

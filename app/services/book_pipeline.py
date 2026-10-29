@@ -101,12 +101,13 @@ def norm_cat(t: str | None) -> str:
     return "test"
 
 
-def _gen(parts, timeout=90, max_output_tokens=16384):
-    # 16K çıktı bütçesi: 2.5 ailesinde düşünme tokenları bütçeden düşer —
-    # uzun içindekiler JSON'u 8K'da kesilip AIInvalidResponse veriyordu.
+def _gen(parts, timeout=90, max_output_tokens=32768):
+    # 2.5 ailesinde düşünme tokenları çıktı bütçesinden düşer. Tavan olmadan
+    # test satırlı uzun içindekilerde model 16K bütçenin 15.7K'sını düşünmeye
+    # harcayıp JSON'u kesiyordu → düşünme 4K ile sınırlı, çıktı bütçesi 32K.
     raw = gemini.generate(parts, personal_data=False, json_mode=True,
                           timeout=timeout, prefer_fast=True,
-                          max_output_tokens=max_output_tokens)
+                          max_output_tokens=max_output_tokens, thinking_budget=4096)
     return gemini.extract_json(raw)
 
 

@@ -49,7 +49,7 @@ AI_BOOK_READ_DAILY_LIMIT = 30
 
 # İçindekiler tipik 1-3 sayfa; 2.5'in düşünme tokenı payıyla geniş bütçe
 # (yarım JSON = parse hatası dersi).
-_MAX_OUTPUT_TOKENS = 16384
+_MAX_OUTPUT_TOKENS = 32768
 _TIMEOUT = 90.0
 
 
@@ -246,6 +246,7 @@ def _read_once(parts: list[dict[str, Any]]) -> dict[str, Any]:
         json_mode=True,
         timeout=_TIMEOUT,
         max_output_tokens=_MAX_OUTPUT_TOKENS,
+        thinking_budget=4096,  # uzun içindekilerde düşünme bütçeyi yiyip yanıtı kesmesin
     )
     return _normalize_read(gemini.extract_json(raw))
 
