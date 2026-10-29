@@ -340,10 +340,13 @@ export function confirmExamImport(
   payload: ConfirmPayload,
   pdf: PickedPdf | null,
   studentId?: number | null,
+  jobId?: number | null,
 ): Promise<{ data: ExamImportConfirmResult; invalidate?: string[] }> {
   const fd = new FormData();
   fd.append("payload", JSON.stringify(payload));
-  if (pdf) pdfFormPart(fd, pdf);
+  // Arka plan işinden geliyorsa PDF sunucuda bekliyor — yeniden yüklenmez
+  if (jobId != null) fd.append("job_id", String(jobId));
+  else if (pdf) pdfFormPart(fd, pdf);
   return uploadMultipart(
     studentId != null
       ? `/api/v2/teacher/students/${studentId}/exams/import-confirm`
@@ -389,4 +392,69 @@ export function archiveExamWrongs(
       : `/api/v2/student/exams/${examId}/wrong-to-archive`,
     { method: "POST", body: items ? { items } : {} },
   );
+}
+
+
+// ---------------------------------------------------------------------------
+// Arka plan okuma işi (2026-10-29): yükle → arkada oku → önizle/kaydet.
+// Okuma 2-5 dk sürer; kullanıcı beklemek zorunda değil, bitince bildirim +
+// uygulamanın üstünde kalıcı kutu.
+// ---------------------------------------------------------------------------
+
+export type AiJobStatus = "queued" | "running" | "done" | "failed" | "consumed" | "dismissed";
+
+export interface AiJobBrief {
+  id: number;
+  kind: string;
+  status: AiJobStatus;
+  status_label: string;
+  stage: string | null;
+  student_id: number | null;
+  student_name: string | null;
+  own_upload: boolean;
+  filename: string | null;
+  error_code: string | null;
+  error_message: string | null;
+  error_details: Record<string, unknown> | null;
+  retryable: boolean;
+  acknowledged: boolean;
+}
+
+export interface AiJobListResponse {
+  items: AiJobBrief[];
+  active_count: number;
+  ready_count: number;
+}
+
+export const aiJobsKey = ["me", "ai-jobs"] as const;
+
+export function createExamImportJob(
+  pdf: PickedPdf,
+  studentId?: number | null,
+  decl?: ImportDeclaration,
+): Promise<AiJobBrief> {
+  const fd = new FormData();
+  pdfFormPart(fd, pdf);
+  if (decl?.declaredSection) fd.append("declared_section", decl.declaredSection);
+  if (decl?.declaredGrade != null) {
+    fd.append("declared_grade", String(decl.declaredGrade));
+  }
+  return uploadMultipart<AiJobBrief>(
+    studentId != null
+      ? `/api/v2/teacher/students/${studentId}/exams/import-jobs`
+      : "/api/v2/student/exams/import-jobs",
+    fd,
+  );
+}
+
+export function getAiJobs(): Promise<AiJobListResponse> {
+  return apiRequest<AiJobListResponse>("/api/v2/me/ai-jobs");
+}
+
+export function getAiJob(jobId: number): Promise<{ job: AiJobBrief; draft: ExamImportDraft | null }> {
+  return apiRequest(`/api/v2/me/ai-jobs/${jobId}`);
+}
+
+export function aiJobAction(jobId: number, action: "ack" | "dismiss" | "retry"): Promise<unknown> {
+  return apiRequest(`/api/v2/me/ai-jobs/${jobId}/${action}`, { method: "POST", body: {} });
 }

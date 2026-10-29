@@ -16,8 +16,11 @@ import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ApiError } from "@/lib/api";
 import { handleCoachAiGateError } from "@/lib/upsell";
 import {
-  analyzeExamPdf,
+  aiJobAction,
+  aiJobsKey,
   confirmExamImport,
+  createExamImportJob,
+  getAiJob,
   pickExamPdf,
   type ExamImportConfirmResult,
   type ExamImportDraft,
@@ -95,15 +98,24 @@ export function ExamImportFlow({
   visible,
   onClose,
   studentId = null,
+  jobId: initialJobId = null,
 }: {
   visible: boolean;
   onClose: () => void;
   /** Koç yüzeyi: öğrenci id; öğrenci yüzeyi: null. */
   studentId?: number | null;
+  /** Arka planda okunmuş karnenin işi — taslak doğrudan açılır. */
+  jobId?: number | null;
 }) {
   const qc = useQueryClient();
   const insets = useSafeAreaInsets();
-  const [step, setStep] = React.useState<Step>("pick");
+  const [step, setStep] = React.useState<Step>(initialJobId != null ? "analyzing" : "pick");
+  const [jobId, setJobId] = React.useState<number | null>(initialJobId);
+  const [jobStage, setJobStage] = React.useState<string | null>(null);
+  const aliveRef = React.useRef(true);
+  React.useEffect(() => {
+    aliveRef.current = visible;
+  }, [visible]);
   const [pdf, setPdf] = React.useState<PickedPdf | null>(null);
   const [draft, setDraft] = React.useState<ExamImportDraft | null>(null);
   const [selectedPart, setSelectedPart] = React.useState<string | null>(null);
@@ -135,12 +147,91 @@ export function ExamImportFlow({
     setResult(null);
     setError(null);
     setPickerMissing(false);
+    setJobId(null);
+    setJobStage(null);
   }
   function close() {
-    if (step === "analyzing" || step === "saving") return;
+    if (step === "saving") return;
+    // Okuma sürerken kapatılabilir: sunucuda devam eder, bitince bildirim gelir
+    aliveRef.current = false;
     reset();
     onClose();
   }
+
+  function applyDraft(d: ExamImportDraft) {
+    const firstPart = d.parts[0]?.part ?? null;
+    setDraft(d);
+    setSelectedPart(firstPart);
+    setTitle(autoTitle(d.title, d, firstPart));
+    setExamDate(d.exam_date ?? "");
+    setSection(d.parts[0]?.section ?? d.section);
+    setDup(d.duplicate ?? null);
+    setAnalyzeDup(null);
+    setStep("preview");
+  }
+
+  function failToPick(e: unknown) {
+    // Koç yüzeyinde paket/kredi kapısı → Paketim (IAP) yönlendirmesi.
+    // Öğrenci yüzeyinde (studentId null) kapı koça aittir — yalnız mesaj.
+    const code = e instanceof ApiError ? e.code : null;
+    if (code === "duplicate_exam") {
+      // Aynı PDF daha önce aktarılmış — belge okunmadı, kredi harcanmadı.
+      setAnalyzeDup(duplicateFromError(e));
+      setStep("pick");
+      return;
+    }
+    if (studentId != null && handleCoachAiGateError(code)) {
+      setStep("pick");
+      return;
+    }
+    setError(e instanceof ApiError ? e.message : "Belge analiz edilemedi.");
+    setStep("pick");
+  }
+
+  async function pollJob(id: number) {
+    for (;;) {
+      if (!aliveRef.current) return;
+      let d;
+      try {
+        d = await getAiJob(id);
+      } catch {
+        await new Promise((r) => setTimeout(r, 4000));
+        continue;
+      }
+      if (!aliveRef.current) return;
+      setJobStage(d.job.stage);
+      if (d.job.status === "done" && d.draft) {
+        void aiJobAction(id, "ack").catch(() => undefined);
+        qc.invalidateQueries({ queryKey: aiJobsKey });
+        applyDraft(d.draft);
+        return;
+      }
+      if (d.job.status === "failed") {
+        void aiJobAction(id, "ack").catch(() => undefined);
+        qc.invalidateQueries({ queryKey: aiJobsKey });
+        setJobId(null);
+        failToPick(new ApiError(422, d.job.error_code ?? "failed",
+          d.job.error_message ?? "Karne okunamadı.",
+          { details: d.job.error_details }));
+        return;
+      }
+      if (d.job.status !== "queued" && d.job.status !== "running") {
+        setError("Bu karne zaten kaydedilmiş ya da vazgeçilmiş.");
+        setStep("pick");
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+
+  // Bildirimden / üst kutudan açıldıysa: taslağı (ya da süren okumayı) yükle
+  React.useEffect(() => {
+    if (!visible || initialJobId == null) return;
+    aliveRef.current = true;
+    const t = setTimeout(() => void pollJob(initialJobId), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- iş kimliği değişince
+  }, [visible, initialJobId]);
 
   const multi = (draft?.parts.length ?? 0) > 1;
   const activeRows = React.useMemo(() => {
@@ -181,37 +272,28 @@ export function ExamImportFlow({
     if (picked == null) return;
     setPdf(picked);
     setStep("analyzing");
+    setJobStage("Karne yükleniyor");
+    aliveRef.current = true;
     try {
-      const d = await analyzeExamPdf(picked, studentId, {
+      const job = await createExamImportJob(picked, studentId, {
         declaredSection: declSection || null,
         declaredGrade:
           declGrade && declGrade !== "mezun" ? Number(declGrade) : null,
       });
-      const firstPart = d.parts[0]?.part ?? null;
-      setDraft(d);
-      setSelectedPart(firstPart);
-      setTitle(autoTitle(d.title, d, firstPart));
-      setExamDate(d.exam_date ?? "");
-      setSection(d.parts[0]?.section ?? d.section);
-      setDup(d.duplicate ?? null);
-      setAnalyzeDup(null);
-      setStep("preview");
+      setJobId(job.id);
+      setJobStage(job.stage);
+      qc.invalidateQueries({ queryKey: aiJobsKey });
+      await pollJob(job.id);
     } catch (e) {
-      // Koç yüzeyinde paket/kredi kapısı → Paketim (IAP) yönlendirmesi.
-      // Öğrenci yüzeyinde (studentId null) kapı koça aittir — yalnız mesaj.
-      const code = e instanceof ApiError ? e.code : null;
-      if (code === "duplicate_exam") {
-        // Aynı PDF daha önce aktarılmış — belge okunmadı, kredi harcanmadı.
-        setAnalyzeDup(duplicateFromError(e));
-        setStep("pick");
-        return;
+      if (e instanceof ApiError && e.code === "job_exists") {
+        const det = (e.data as { detail?: { details?: { job_id?: number } } } | null)?.detail?.details;
+        if (det?.job_id) {
+          setJobId(det.job_id);
+          await pollJob(det.job_id);
+          return;
+        }
       }
-      if (studentId != null && handleCoachAiGateError(code)) {
-        setStep("pick");
-        return;
-      }
-      setError(e instanceof ApiError ? e.message : "Belge analiz edilemedi.");
-      setStep("pick");
+      failToPick(e);
     }
   }
 
@@ -257,7 +339,9 @@ export function ExamImportFlow({
         },
         pdf,
         studentId,
+        jobId,
       );
+      qc.invalidateQueries({ queryKey: aiJobsKey });
       setResult(res.data);
       setReplaced(mode === "replace");
       setStep("done");
@@ -421,13 +505,23 @@ export function ExamImportFlow({
           {step === "analyzing" ? (
             <View className="items-center gap-3 py-16">
               <ActivityIndicator size="large" color="#7c3aed" />
-              <Text className="font-semibold text-slate-800">
-                Yapay zekâ belgeyi okuyor…
-              </Text>
+              <Text className="font-semibold text-slate-800">Karne okunuyor…</Text>
+              {jobStage ? (
+                <Text className="text-xs font-medium text-violet-700">{jobStage}</Text>
+              ) : null}
               <Text className="px-8 text-center text-xs text-slate-500">
-                Uydurmayı önlemek için belge iki kez bağımsız okunur — uzun
-                belgelerde 1-2 dakika sürebilir, ekranı kapatma.
+                Uydurmayı önlemek için belge iki kez bağımsız okunur; uzun karnelerde
+                2-5 dakika sürer. Beklemek zorunda değilsin: kapatıp devam edebilirsin,
+                okuma bitince bildirim gelir ve uygulamanın üstünde haber veririz.
               </Text>
+              {jobId != null ? (
+                <Pressable
+                  onPress={close}
+                  className="mt-2 rounded-xl border border-slate-300 bg-white px-4 py-3 active:bg-slate-100"
+                >
+                  <Text className="font-semibold text-slate-700">Kapat, arkada okunsun</Text>
+                </Pressable>
+              ) : null}
             </View>
           ) : null}
 
