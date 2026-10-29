@@ -19,6 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 KIND_EXAM_IMPORT = "exam_import"
+KIND_BOOK_SCAN = "book_scan"   # kitap sihirbazı: kapak + içindekiler okuması
 
 JOB_QUEUED = "queued"        # sırada (süreç içi semafor bekliyor)
 JOB_RUNNING = "running"      # okunuyor

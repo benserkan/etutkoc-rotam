@@ -712,6 +712,7 @@ def my_ai_job(
     return AiJobDetail(
         job=AiJobBrief(**jobs.brief(db, job)),
         draft=ExamImportDraft(**draft) if draft else None,
+        result=jobs.result_of(job),
     )
 
 

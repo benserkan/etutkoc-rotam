@@ -64,8 +64,8 @@ function filesToFormData(files: File[]): FormData {
 
 /** İçindekiler foto/PDF → yapı taslağı (çift okuma; kredi düşmez). */
 export function coachReadStructure(files: File[]): Promise<StructureReadResult> {
-  return multipart<StructureReadResult>(
-    "/api/v2/teacher/library/book-structure/read",
+  return runBookJob<StructureReadResult>(
+    "/api/v2/teacher/library/book-structure/read-jobs",
     filesToFormData(files),
   );
 }
@@ -74,7 +74,48 @@ export function coachReadStructure(files: File[]): Promise<StructureReadResult> 
 export function coachScanBook(files: File[], forceRead = false): Promise<BookScanResult> {
   const fd = filesToFormData(files);
   if (forceRead) fd.append("force_read", "true");
-  return multipart<BookScanResult>("/api/v2/teacher/library/book-structure/scan", fd);
+  return runBookJob<BookScanResult>("/api/v2/teacher/library/book-structure/scan-jobs", fd);
+}
+
+interface BookJobPoll {
+  job: { status: string; error_code: string | null; error_message: string | null };
+  result: unknown;
+}
+
+/**
+ * Okuma arka plan işi olarak başlar, sonuç yoklanır (2026-10-29). Okuma 2 dk'yı
+ * aşabildiği için tek istekte beklemek Cloudflare'in 100 sn sınırına takılırdı.
+ * Çağıranlar için imza aynı: sonuç gelince çözülür, hata ApiError olarak düşer.
+ */
+async function runBookJob<T>(url: string, fd: FormData): Promise<T> {
+  const job = await multipart<{ id: number }>(url, fd);
+  const deadline = Date.now() + 8 * 60_000;
+  let misses = 0;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 2000));
+    let d: BookJobPoll;
+    try {
+      d = await api<BookJobPoll>(`/api/v2/me/ai-jobs/${job.id}`);
+      misses = 0;
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) throw e;
+      if (++misses > 5) throw e; // ağ sürekli düşüyor
+      continue;
+    }
+    if (d.job.status === "done" && d.result) return d.result as T;
+    if (d.job.status === "failed") {
+      throw new ApiError(422, {
+        error: "validation",
+        code: d.job.error_code ?? "failed",
+        message: d.job.error_message ?? "Okuma tamamlanamadı.",
+      });
+    }
+  }
+  throw new ApiError(504, {
+    error: "timeout",
+    code: "scan_timeout",
+    message: "Okuma beklenenden uzun sürdü. Biraz sonra tekrar dene.",
+  });
 }
 
 /** Katalog tarayıcısı — yayındaki tüm kayıtlar. */

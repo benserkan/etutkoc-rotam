@@ -19,6 +19,7 @@ Sağlamlık:
 """
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import threading
@@ -37,6 +38,7 @@ from app.models.ai_job import (
     JOB_FAILED,
     JOB_QUEUED,
     JOB_RUNNING,
+    KIND_BOOK_SCAN,
     KIND_EXAM_IMPORT,
     OPEN_STATUSES,
     AiJob,
@@ -59,6 +61,7 @@ MAX_ATTEMPTS = 2
 HEARTBEAT_EVERY = 20       # sn
 STALE_AFTER = timedelta(seconds=90)
 DRAFT_TTL = timedelta(days=7)
+BOOK_TTL = timedelta(days=1)   # sihirbaz sonucu hemen alır; kalıntı bir gün sonra silinir
 # Kullanıcının kendi tekrar deneyebileceği hata kodları (belge sorunu değil)
 RETRYABLE_CODES = {"ai_unavailable", "server_restarted", "internal_error", "ai_credit_exhausted"}
 
@@ -245,6 +248,93 @@ def create_exam_job(
 
 
 
+def _pack(payload: dict) -> bytes:
+    """Hazırlanmış dosyaları (bytes, mime) JSON'a sığdır."""
+    def enc(part):
+        return None if part is None else [part[1], base64.b64encode(part[0]).decode("ascii")]
+
+    return json.dumps({
+        "cover": enc(payload.get("cover")),
+        "toc": [enc(x) for x in payload.get("toc") or []],
+        "notes": list(payload.get("notes") or []),
+        "page_count": payload.get("page_count"),
+    }).encode("utf-8")
+
+
+def _unpack(raw: bytes) -> dict:
+    d = json.loads(raw.decode("utf-8"))
+
+    def dec(part):
+        return None if part is None else (base64.b64decode(part[1]), part[0])
+
+    return {"cover": dec(d.get("cover")), "toc": [dec(x) for x in d.get("toc") or []],
+            "notes": d.get("notes") or [], "page_count": d.get("page_count")}
+
+
+def create_book_job(
+    db: Session,
+    *,
+    owner: User,
+    mode: str,
+    payload: dict,
+    force_read: bool = False,
+    filename: str | None = None,
+) -> AiJob:
+    """Kitap sihirbazı taraması (mode=scan: kapak+içindekiler, mode=read: yalnız içindekiler)."""
+    now = _now()
+    job = AiJob(
+        kind=KIND_BOOK_SCAN,
+        owner_id=owner.id,
+        status=JOB_QUEUED,
+        stage="Sırada",
+        params_json=json.dumps({"mode": mode, "force_read": bool(force_read)}),
+        input_data=_pack(payload),
+        input_filename=(filename or "")[:255] or None,
+        heartbeat_at=now,
+        expires_at=now + BOOK_TTL,
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+    start(job.id)
+    return job
+
+
+def _execute_book(db: Session, job: AiJob) -> None:
+    from fastapi import HTTPException
+
+    from app.routes.api_v2.library import run_book_job
+
+    owner = db.get(User, job.owner_id)
+    params = json.loads(job.params_json or "{}")
+    prep = _unpack(job.input_data or b"{}")
+    job_id = job.id
+    stage = ("Kapak tanınıyor, içindekiler okunuyor" if params.get("mode") == "scan"
+             else "İçindekiler iki kez okunup karşılaştırılıyor")
+    _set(db, job, stage=stage)
+    try:
+        result = run_book_job(db, owner, params.get("mode") or "scan", prep,
+                              bool(params.get("force_read")))
+    except HTTPException as e:
+        db.rollback()
+        detail = e.detail if isinstance(e.detail, dict) else {"message": str(e.detail)}
+        job = db.get(AiJob, job_id)
+        if job is not None:
+            code = detail.get("code") or "failed"
+            if e.status_code == 502:
+                code = "ai_unavailable"  # sağlayıcı hatası → kullanıcı tekrar deneyebilir
+            _finish_failed(db, job, JobError(e.status_code, code,
+                                             detail.get("message") or "Okuma tamamlanamadı."),
+                           notify=False)
+        return
+    job = db.get(AiJob, job_id)
+    if job is None:
+        return
+    job.result_json = json.dumps(result, ensure_ascii=False, default=str)
+    _set(db, job, status=JOB_DONE, stage="Okundu", finished_at=_now(),
+         error_status=None, error_code=None, error_message=None, error_details_json=None)
+
+
 # ---------------------------------------------------------------------------
 # Yürütücü
 # ---------------------------------------------------------------------------
@@ -318,7 +408,10 @@ def _run(job_id: int) -> None:
                 _set(db, job, status=JOB_RUNNING, stage="Karne iki kez okunup karşılaştırılıyor",
                      started_at=_now(), attempts=(job.attempts or 0) + 1)
                 try:
-                    _execute(db, job)
+                    if job.kind == KIND_BOOK_SCAN:
+                        _execute_book(db, job)
+                    else:
+                        _execute(db, job)
                 except Exception as e:  # noqa: BLE001 — iş asla askıda kalmasın
                     logger.exception("ai_job %s beklenmeyen hata", job_id)
                     db.rollback()
@@ -367,11 +460,13 @@ def _execute(db: Session, job: AiJob) -> None:
     _notify(db, job, student_id=student_id, ok=True)
 
 
-def _finish_failed(db: Session, job: AiJob, e: JobError) -> None:
+def _finish_failed(db: Session, job: AiJob, e: JobError, *, notify: bool = True) -> None:
     _set(db, job, status=JOB_FAILED, stage="Okunamadı", finished_at=_now(),
          error_status=e.status, error_code=e.code, error_message=e.message,
          error_details_json=json.dumps(e.details, ensure_ascii=False, default=str) if e.details else None)
-    _notify(db, job, student_id=job.student_id, ok=False)
+    # Kitap taraması sihirbazda beklenir → mobil bildirim gerekmez
+    if notify and job.kind == KIND_EXAM_IMPORT:
+        _notify(db, job, student_id=job.student_id, ok=False)
 
 
 def _notify(db: Session, job: AiJob, *, student_id: int | None, ok: bool) -> None:
@@ -474,15 +569,27 @@ def get_owned(db: Session, user: User, job_id: int) -> AiJob:
     return job
 
 
-def list_for_owner(db: Session, user: User, *, student_id: int | None = None) -> list[AiJob]:
-    q = db.query(AiJob).filter(AiJob.owner_id == user.id, AiJob.status.in_(OPEN_STATUSES))
+def list_for_owner(db: Session, user: User, *, student_id: int | None = None,
+                   kind: str = KIND_EXAM_IMPORT) -> list[AiJob]:
+    q = db.query(AiJob).filter(AiJob.owner_id == user.id, AiJob.kind == kind,
+                               AiJob.status.in_(OPEN_STATUSES))
     if student_id is not None:
         q = q.filter(AiJob.student_id == student_id)
     return q.order_by(AiJob.created_at.desc(), AiJob.id.desc()).limit(50).all()
 
 
+def result_of(job: AiJob) -> dict | None:
+    """Kitap taraması sonucu (BookScanResult / StructureReadResult sözlüğü)."""
+    if job.kind != KIND_BOOK_SCAN or job.status != JOB_DONE or not job.result_json:
+        return None
+    try:
+        return json.loads(job.result_json)
+    except (ValueError, TypeError):
+        return None
+
+
 def draft_of(job: AiJob) -> dict | None:
-    if job.status != JOB_DONE or not job.result_json:
+    if job.kind != KIND_EXAM_IMPORT or job.status != JOB_DONE or not job.result_json:
         return None
     try:
         return json.loads(job.result_json)

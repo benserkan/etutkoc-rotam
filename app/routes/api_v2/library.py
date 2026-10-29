@@ -74,6 +74,7 @@ from app.models import (
 )
 from app.routes.api_v2.dependencies import _auth_error, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
+from app.routes.api_v2.schemas.exam_import import AiJobBrief
 from app.routes.api_v2.schemas.library import (
     AddBooksToSetBody,
     AddBooksToSetResult,
@@ -1472,10 +1473,16 @@ def library_structure_read_v2(
     TASLAK — kayıt sihirbazda koç onayıyla olur. SENKRON def (uzun Gemini
     çağrısı event loop'u kilitlemesin — exam_import dersi).
     """
-    from app.services import ai_book_structure as abs_svc
-
     files_data = _collect_structure_files(files)
     reads_left = _check_read_cap(db, user)
+    return _read_core(db, user, files_data, reads_left)
+
+
+def _read_core(db: Session, user: User, files_data: list[tuple[bytes, str]],
+               reads_left: int) -> StructureReadResult:
+    """İçindekiler okuması çekirdeği — tek istekli uç + arka plan işi ortak."""
+    from app.services import ai_book_structure as abs_svc
+
     try:
         result = abs_svc.read_structure(files_data)
     except abs_svc.NotATocError as e:
@@ -1515,8 +1522,14 @@ def library_structure_scan_v2(
        `force_read=true` ya da eşleşme yoksa içindekiler ÇİFT okunur.
     PDF'in yalnız ilk sayfaları okunur. Kredi düşmez; günlük tavana sayılır.
     """
+    prep = _prepare_scan_upload(files)
+    reads_left = _check_read_cap(db, user)
+    return _scan_core(db, user, prep, force_read, reads_left)
+
+
+def _prepare_scan_upload(files: list[UploadFile]) -> dict:
+    """Yükleme doğrulaması + PDF'in ilk sayfalarına indirgeme (hızlı, yapay zekâsız)."""
     from app.services import ai_book_structure as abs_svc
-    from app.services import book_catalog as catalog_svc
 
     raw_files: list[tuple[bytes, str]] = []
     for f in [f for f in (files or []) if f is not None]:
@@ -1528,11 +1541,17 @@ def library_structure_scan_v2(
             raise _validation_error("file_too_large", "PDF en fazla 80 MB olabilir.")
         raw_files.append((raw, ct))
     try:
-        prep = abs_svc.prepare_scan_files(raw_files)
+        return abs_svc.prepare_scan_files(raw_files)
     except abs_svc.ScanFileError as e:
         raise _validation_error(e.code, e.message)
 
-    reads_left = _check_read_cap(db, user)
+
+def _scan_core(db: Session, user: User, prep: dict, force_read: bool,
+               reads_left: int) -> BookScanResult:
+    """Kapak tanıma + katalog eşleşmesi + (gerekirse) içindekiler okuması."""
+    from app.services import ai_book_structure as abs_svc
+    from app.services import book_catalog as catalog_svc
+
     notes: list[str] = list(prep["notes"])
     info: dict = {"book_title": None, "publisher": None, "subject_hint": None,
                   "grade_hint": None, "exam_hint": None}
@@ -1593,6 +1612,61 @@ def library_structure_scan_v2(
         page_count=prep["page_count"],
         reads_left_today=reads_left,
     )
+
+
+
+
+# ---- Arka plan işi sürümleri (2026-10-29): okuma 2 dakikayı aşabiliyor
+# (canlı ölçüm: en çok 122 sn) → Cloudflare'in 100 sn sınırına takılmasın.
+
+
+@router.post("/book-structure/scan-jobs", response_model=AiJobBrief, status_code=202)
+def library_structure_scan_job_v2(
+    files: list[UploadFile] = File(default=[]),
+    force_read: bool = Form(False),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kapak + içindekiler taramasını arka planda başlat; sonuç /me/ai-jobs/{id}."""
+    from app.services import exam_import_jobs as jobs
+
+    prep = _prepare_scan_upload(files)
+    _check_read_cap(db, user)
+    job = jobs.create_book_job(db, owner=user, mode="scan", payload=prep, force_read=force_read,
+                               filename=next((f.filename for f in files or [] if f), None))
+    return AiJobBrief(**jobs.brief(db, job))
+
+
+@router.post("/book-structure/read-jobs", response_model=AiJobBrief, status_code=202)
+def library_structure_read_job_v2(
+    files: list[UploadFile] = File(default=[]),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """İçindekiler okumasını arka planda başlat; sonuç /me/ai-jobs/{id}."""
+    from app.services import exam_import_jobs as jobs
+
+    files_data = _collect_structure_files(files)
+    _check_read_cap(db, user)
+    job = jobs.create_book_job(db, owner=user, mode="read",
+                               payload={"cover": None, "toc": files_data, "notes": [], "page_count": None},
+                               filename=next((f.filename for f in files or [] if f), None))
+    return AiJobBrief(**jobs.brief(db, job))
+
+
+def run_book_job(db: Session, user: User, mode: str, prep: dict, force_read: bool) -> dict:
+    """Arka plan yürütücüsünün çağırdığı çekirdek (HTTPException → iş hatası)."""
+    left = _reads_left_now(db, user)
+    if mode == "read":
+        return _read_core(db, user, prep["toc"], left).model_dump(mode="json")
+    return _scan_core(db, user, prep, force_read, left).model_dump(mode="json")
+
+
+def _reads_left_now(db: Session, user: User) -> int:
+    try:
+        return _check_read_cap(db, user)
+    except HTTPException:
+        return 0  # tavan iş açılırken kontrol edildi; okuma yine yapılır
 
 
 @router.post("/book-structure/identify-cover", response_model=CoverIdentifyResult)

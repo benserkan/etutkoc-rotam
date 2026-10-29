@@ -133,6 +133,8 @@ def _seed() -> dict:
 def _cleanup(seed: dict) -> None:
     with SessionLocal() as db:
         user_ids = [seed["coach_id"], seed["coach_b_id"], seed["admin_id"]]
+        from app.models.ai_job import AiJob as _AiJob
+        db.execute(sa_delete(_AiJob).where(_AiJob.owner_id.in_(user_ids)))
         db.execute(sa_delete(UsageEvent).where(UsageEvent.actor_user_id.in_(user_ids)))
         db.execute(sa_delete(CreditAccount).where(CreditAccount.owner_id.in_(user_ids)))
         db.execute(sa_delete(AuditLog).where(AuditLog.actor_id.in_(user_ids)))
@@ -683,6 +685,84 @@ def main() -> int:
             r.status_code == 422 and r.json()["detail"]["code"] == "mixed_files",
             f"status={r.status_code}",
         )
+
+        # ===== 26g-k. ARKA PLAN İŞİ (2026-10-29): Cloudflare 100 sn sınırı =====
+        from app.services import exam_import_jobs as _jobs
+        _jobs.RUN_INLINE = True
+        try:
+            r = coach_b.post(
+                "/api/v2/teacher/library/book-structure/scan-jobs",
+                files=[("files", ("kitap.pdf", pdf_bytes, "application/pdf"))],
+            )
+            jid = r.json().get("id") if r.status_code == 202 else None
+            d = coach_b.get(f"/api/v2/me/ai-jobs/{jid}").json() if jid else {}
+            res = d.get("result") or {}
+            check(
+                "26g. scan-jobs 202 → iş okundu + sonuç tek istekli uçla aynı (2 bölüm, 25 sayfa)",
+                r.status_code == 202 and d.get("job", {}).get("status") == "done"
+                and len((res.get("structure") or {}).get("sections") or []) == 2
+                and res.get("page_count") == 25 and res.get("publisher") == "Okunan Yayın",
+                f"status={r.status_code} d={str(d)[:250]}",
+            )
+            r = coach_b.post(
+                "/api/v2/teacher/library/book-structure/read-jobs",
+                files=[("files", ("ic.jpg", b"fake", "image/jpeg"))],
+            )
+            jr = r.json().get("id") if r.status_code == 202 else None
+            d = coach_b.get(f"/api/v2/me/ai-jobs/{jr}").json() if jr else {}
+            check(
+                "26h. read-jobs → içindekiler sonucu (2 bölüm)",
+                r.status_code == 202 and len((d.get("result") or {}).get("sections") or []) == 2,
+                f"status={r.status_code} d={str(d)[:200]}",
+            )
+            lst = coach_b.get("/api/v2/me/ai-jobs").json()
+            check(
+                "26i. kitap işleri karne bildirim listesine KARIŞMAZ",
+                all(i["id"] not in (jid, jr) for i in lst.get("items", [])),
+                str(lst)[:200],
+            )
+            other = TestClient(app)
+            _login(other, COACH_EMAIL)
+            check("26j. başka koç işi göremez (404)",
+                  other.get(f"/api/v2/me/ai-jobs/{jid}").status_code == 404)
+
+            def _not_toc(files):
+                raise abs_svc.NotATocError("Bu bir içindekiler sayfası değil.")
+
+            abs_svc.read_structure = _not_toc  # type: ignore[assignment]
+            r = coach_b.post(
+                "/api/v2/teacher/library/book-structure/read-jobs",
+                files=[("files", ("ic.jpg", b"fake", "image/jpeg"))],
+            )
+            d = coach_b.get(f"/api/v2/me/ai-jobs/{r.json()['id']}").json()
+            check(
+                "26k. içindekiler değil → başarısız not_a_toc, yeniden denenemez",
+                d["job"]["status"] == "failed" and d["job"]["error_code"] == "not_a_toc"
+                and d["job"]["retryable"] is False, d["job"],
+            )
+
+            def _down(files):
+                raise abs_svc.AIServiceUnavailable("kesinti")
+
+            abs_svc.read_structure = _down  # type: ignore[assignment]
+            r = coach_b.post(
+                "/api/v2/teacher/library/book-structure/read-jobs",
+                files=[("files", ("ic.jpg", b"fake", "image/jpeg"))],
+            )
+            jd = r.json()["id"]
+            d = coach_b.get(f"/api/v2/me/ai-jobs/{jd}").json()
+            abs_svc.read_structure = _read_capture  # type: ignore[assignment]
+            r2 = coach_b.post(f"/api/v2/me/ai-jobs/{jd}/retry")
+            d2 = coach_b.get(f"/api/v2/me/ai-jobs/{jd}").json()
+            check(
+                "26l. servis hatası → yeniden denenebilir; retry → okundu",
+                d["job"]["error_code"] == "ai_unavailable" and d["job"]["retryable"] is True
+                and r2.status_code == 200 and d2["job"]["status"] == "done"
+                and len((d2.get("result") or {}).get("sections") or []) == 2,
+                f"{d['job']} retry={r2.status_code} {d2.get('job')}",
+            )
+        finally:
+            _jobs.RUN_INLINE = False
 
         # ===== 26b. etiket-bazlı toplu bölüm (fotoğraf akışının 'Uygula'sı) =====
         r = coach_b.post("/api/v2/teacher/library/books", json={

@@ -347,6 +347,8 @@ class AiJobBrief(BaseModel):
 class AiJobDetail(BaseModel):
     job: AiJobBrief
     draft: ExamImportDraft | None = None
+    # Kitap sihirbazı taraması bittiğinde: BookScanResult / StructureReadResult
+    result: dict | None = None
 
 
 class AiJobListResponse(BaseModel):
