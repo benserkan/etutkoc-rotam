@@ -414,7 +414,7 @@ function SubjectChip({
         hasTasks
           // Koyu temada açık pastel zemin + tema metni (beyaz) okunmuyordu
           // (2026-10-08) → zemin/kenar/ad rengi temaya göre ayrı.
-          ? "bg-[var(--chip-bg-l)] border-[var(--chip-bd-l)])])]"
+          ? "bg-[var(--chip-bg-l)] border-[var(--chip-bd-l)]"
           : "border-dashed bg-muted/40 text-muted-foreground",
       )}
       style={
@@ -440,7 +440,7 @@ function SubjectChip({
       <span
         className={cn(
           "font-semibold whitespace-nowrap",
-          hasTasks && "text-[var(--chip-tx-l)])]",
+          hasTasks && "text-[var(--chip-tx-l)]",
         )}
       >
         {ent.subject_name}
@@ -1141,7 +1141,7 @@ function SortableTaskRow({
       data-task-id={task.id}
       className={cn(
         "px-3 py-1.5 flex items-center gap-2.5 border-l-[6px] task-row transition-colors",
-        "bg-[var(--row-light)])]",
+        "bg-[var(--row-light)]",
         "hover:brightness-[0.97]",
       )}
       style={style}

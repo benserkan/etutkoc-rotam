@@ -104,7 +104,7 @@ export function Ruler({ card }: { card: WPCard }) {
       </div>
       <div className="absolute inset-x-0 top-[33px] h-1.5 rounded-full bg-slate-200" />
       <div
-        className="absolute top-[29px] h-3.5 rounded bg-cyan-600/20"
+        className="absolute top-[29px] h-3.5 rounded bg-cyan-600/30"
         style={{ left: `${p(card.low)}%`, width: `${Math.max(1.5, p(card.high) - p(card.low))}%` }}
       />
       {card.baseline.map((v, i) => (
@@ -423,7 +423,7 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
           <div className="relative h-44 min-w-0 flex-1 border-b border-l border-border">
             {lo != null && hi != null ? (
               <div
-                className="absolute inset-x-0 bg-cyan-600/15"
+                className="absolute inset-x-0 border-y border-cyan-600/50 bg-cyan-600/25"
                 style={{ bottom: `${pos(lo)}%`, height: `${Math.max(1, pos(hi) - pos(lo))}%` }}
               />
             ) : null}
@@ -474,7 +474,7 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
         </div>
         {lo != null && hi != null ? (
           <div className="flex items-center gap-2 pl-11 text-xs text-muted-foreground">
-            <span className="h-3 w-6 rounded bg-cyan-600/20" />
+            <span className="h-3 w-6 rounded bg-cyan-600/30" />
             gölgeli alan: öğrencinin haftalarının yarısı {fmtPct(lo)}–{fmtPct(hi).slice(1)} arasında
           </div>
         ) : null}
@@ -608,7 +608,7 @@ function Metrics({ data }: { data: WeeklyProgressResponse }) {
           her nokta geçmiş bir hafta
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-6 rounded bg-cyan-600/20" />
+          <span className="h-3 w-6 rounded bg-cyan-600/30" />
           &quot;genelde&quot;: haftaların yarısı bu aralıkta
         </span>
         <span className="inline-flex items-center gap-1.5">
@@ -696,7 +696,7 @@ export function SeriesCard({ s }: { s: DenemeAnalysisSeries }) {
       <div className="relative h-[70px] border-b border-border">
         {s.normal_low != null && s.normal_high != null ? (
           <div
-            className="absolute inset-x-0 bg-cyan-600/15"
+            className="absolute inset-x-0 border-y border-cyan-600/50 bg-cyan-600/25"
             style={{ bottom: `${s.normal_low}%`, height: `${Math.max(1, s.normal_high - s.normal_low)}%` }}
           />
         ) : null}

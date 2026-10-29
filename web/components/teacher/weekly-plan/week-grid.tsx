@@ -284,7 +284,7 @@ function SubjGroupBlock({
         "rounded-md border-l-4 px-1.5 py-1",
         isOther
           ? "border-l-slate-400 bg-muted/40"
-          : "bg-[var(--subj-tint-l)])]",
+          : "bg-[var(--subj-tint-l)]",
       )}
       style={isOther ? undefined : subjectTintVars(g.name)}
     >

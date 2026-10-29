@@ -999,8 +999,8 @@ function SubjectDeepDive({
                       y1={s.normal_low}
                       y2={s.normal_high}
                       fill="#0d9488"
-                      fillOpacity={0.14}
-                      stroke="none"
+                      fillOpacity={0.24}
+                      stroke="#0d9488" strokeOpacity={0.5}
                       ifOverflow="extendDomain"
                     />
                   ) : null}

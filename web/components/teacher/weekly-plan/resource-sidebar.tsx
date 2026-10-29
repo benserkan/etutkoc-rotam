@@ -532,7 +532,7 @@ function SectionRow({
     <li
       className={cn(
         "px-3 py-1.5 text-[11px]",
-        level > 0 && "bg-[var(--heat-l)])]",
+        level > 0 && "bg-[var(--heat-l)]",
         isLast && "border-l-[3px] border-l-slate-900 pl-2.5",
       )}
       style={heatVars(hue, level)}

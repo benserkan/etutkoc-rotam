@@ -348,7 +348,7 @@ function WeeksTrend({ data }: { data: WeeklyProgressResponse }) {
       <div className="relative h-44">
         {ps?.band_low != null && ps.band_high != null ? (
           <div
-            className="absolute inset-x-0 rounded bg-cyan-600/10"
+            className="absolute inset-x-0 rounded border-y border-cyan-600/50 bg-cyan-600/25"
             style={{ bottom: `${ps.band_low}%`, height: `${Math.max(2, ps.band_high - ps.band_low)}%` }}
             aria-hidden
           />

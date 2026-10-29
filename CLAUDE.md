@@ -12,6 +12,9 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   daima light; `theme-provider` sabit "light"). Kodda ~5.100 `dark:` sınıfı temizlendi (287 dosya); `@custom-variant
   dark` globals.css'te DURUR (silinirse Tailwind'in yerleşik medya-tabanlı `dark:`'ı geri gelir). Koyu tema eslint
   kuralları (no-dark-text-without-variant / no-light-hover-without-dark / no-white-box-theme-text) KAPALI.
+  **DERS (aynı gün düzeltildi):** temizleme kodmodu parantezli sınıfı yarım sildi (`dark:bg-[var(--x)]` → `)]` artığı
+  önceki sınıfa yapıştı, ör. `bg-[var(--subj-tint-l)])]` geçersiz) → ders renkli satır/ızgara zemini kayboldu; 7 yer
+  onarıldı. Grafiklerdeki "normal aralık" bandı açık temada silikti → %25 dolgu + üst/alt çizgi.
   **KURAL: yeni kodda `dark:` yazılmaz.**
 - **"J" dili** (Khan Academy + Coursera ölçümünden): beyaz zemin + beyaz kart + görünür 1px çerçeve #CBCBCD, 12px
   köşe, kart gölgesi YOK (yalnız yüzen öğeler), tek vurgu petrol #0B6178, yazı Plus Jakarta Sans 450 (tanıtım/giriş

@@ -29,7 +29,7 @@ export function subjectColors(name: string) {
   };
 }
 
-/** Blok/satır için CSS değişkenleri: `bg-[var(--subj-tint-l)])]`. */
+/** Blok/satır için CSS değişkenleri: `bg-[var(--subj-tint-l)]`. */
 export function subjectTintVars(name: string): React.CSSProperties {
   const c = subjectColors(name);
   return {
