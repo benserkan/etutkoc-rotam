@@ -122,7 +122,7 @@ export function RequestsView({
       <DemoHint contextKey="requests" role="student" />
       {data.items.length === 0 ? (
         <View className="mt-10 items-center gap-3 px-6">
-          <Ionicons name="chatbubbles-outline" size={44} color="#94a3b8" />
+          <Ionicons name="chatbubbles-outline" size={44} color="#737782" />
           <Text className="text-center text-base font-semibold text-slate-700">Henüz talebin yok</Text>
           <Text className="text-center text-sm text-slate-500">
             Bir göreve dokunup &quot;Koça ilet&quot; ile soru sorabilir, sayı değişikliği isteyebilirsin.

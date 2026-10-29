@@ -8,7 +8,7 @@ export default function InstitutionTabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#0e7490",
-        tabBarInactiveTintColor: "#94a3b8",
+        tabBarInactiveTintColor: "#737782",
         tabBarStyle: { borderTopColor: "#CBCBCD" },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
       }}

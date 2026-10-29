@@ -99,7 +99,7 @@ function SuggestionCard({ date, s, h }: { date: string; s: TeacherSuggestionInli
           <Text className="text-[12px] font-semibold text-white">Ekle</Text>
         </Pressable>
         <Pressable onPress={() => h.onReject(date, s)} disabled={h.busy} hitSlop={6} className="p-1">
-          <Ionicons name="close" size={16} color="#94a3b8" />
+          <Ionicons name="close" size={16} color="#737782" />
         </Pressable>
       </View>
       {s.reasons.length > 0 ? (
@@ -127,7 +127,7 @@ function SuggestionsPanel({ day, h }: { day: TeacherWeekDay; h: SuggestionHandle
         {has ? <View className="rounded-full bg-emerald-100 px-1.5 py-0.5"><Text className="text-[10px] font-semibold text-emerald-700">{sugs.length} hazır</Text></View> : null}
         {day.maturity_label ? <Text className="text-[10px] text-slate-400">{day.maturity_label}</Text> : null}
         <View className="flex-1" />
-        {has ? <Ionicons name={open ? "chevron-up" : "chevron-down"} size={16} color="#94a3b8" /> : null}
+        {has ? <Ionicons name={open ? "chevron-up" : "chevron-down"} size={16} color="#737782" /> : null}
       </Pressable>
 
       {open ? (

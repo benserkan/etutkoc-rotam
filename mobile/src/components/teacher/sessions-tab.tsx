@@ -276,7 +276,7 @@ export function SessionsTabView({
 
       {data.rows.length === 0 ? (
         <View className="mt-6 items-center gap-2 px-6">
-          <Ionicons name="chatbubbles-outline" size={40} color="#94a3b8" />
+          <Ionicons name="chatbubbles-outline" size={40} color="#737782" />
           <Text className="text-center text-sm text-slate-500">
             Henüz seans kaydı yok. Görüşmelerini kaydet, geçmişi burada birikir.
           </Text>

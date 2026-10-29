@@ -244,7 +244,7 @@ export function PoolWatchView({ studentId }: { studentId: number }) {
   if (!b.period || !detail.data) {
     return (
       <View className="flex-1 items-center justify-center gap-2 px-8">
-        <Ionicons name="file-tray-outline" size={34} color="#94a3b8" />
+        <Ionicons name="file-tray-outline" size={34} color="#737782" />
         <Text className="text-center text-sm text-slate-600">Açık havuz dönemi yok. Seans günü dönemi web panelinden aç ve havuzu yaz.</Text>
       </View>
     );

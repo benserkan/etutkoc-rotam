@@ -200,7 +200,7 @@ export function BillingView({
       {/* Öğrenci satırları */}
       {data.rows.length === 0 ? (
         <View className="mt-6 items-center gap-2 px-6">
-          <Ionicons name="wallet-outline" size={40} color="#94a3b8" />
+          <Ionicons name="wallet-outline" size={40} color="#737782" />
           <Text className="text-center text-sm text-slate-500">Bu ay için kayıt yok.</Text>
         </View>
       ) : (

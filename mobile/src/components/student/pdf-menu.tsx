@@ -62,7 +62,7 @@ export function PdfMenuButton({ dayDate, weekStart, compact = false }: { dayDate
                 <Text className="text-[15px] font-semibold text-slate-900">{it.title}</Text>
                 <Text className="text-xs text-slate-500">{it.desc}</Text>
               </View>
-              {busy === it.kind ? <ActivityIndicator color="#0e7490" /> : <Ionicons name="open-outline" size={18} color="#94a3b8" />}
+              {busy === it.kind ? <ActivityIndicator color="#0e7490" /> : <Ionicons name="open-outline" size={18} color="#737782" />}
             </Pressable>
           ))}
         </View>

@@ -41,7 +41,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
             </Text>
           ) : null}
           {info ? (
-            <Text selectable style={{ fontSize: 11, color: "#94a3b8", marginTop: 12, fontFamily: "monospace" }}>
+            <Text selectable style={{ fontSize: 11, color: "#737782", marginTop: 12, fontFamily: "monospace" }}>
               {info}
             </Text>
           ) : null}

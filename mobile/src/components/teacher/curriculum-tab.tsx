@@ -186,7 +186,7 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
           <Text className="text-sm font-semibold text-slate-700">%{s.coverage_pct}</Text>
           <Bar pct={s.coverage_pct} track="bg-slate-100" fill="bg-indigo-500" />
         </View>
-        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={18} color="#94a3b8" />
+        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={18} color="#737782" />
       </Pressable>
 
       {open ? (

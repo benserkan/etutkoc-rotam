@@ -110,7 +110,7 @@ export function ParentDashboardView({
         <QuickAccessStrip padded={false} />
         {children.length === 0 ? (
           <View className="mt-10 items-center gap-3 px-6">
-            <Ionicons name="people-outline" size={44} color="#94a3b8" />
+            <Ionicons name="people-outline" size={44} color="#737782" />
             <Text className="text-center text-base font-semibold text-slate-700">Bağlı öğrenci yok</Text>
             <Text className="text-center text-sm text-slate-500">
               Koç davet gönderdiğinde çocuğun burada görünür.

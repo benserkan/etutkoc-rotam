@@ -165,7 +165,7 @@ export function GoalsView({
 
       {sorted.length === 0 ? (
         <View className="mt-6 items-center gap-2 px-6">
-          <Ionicons name="flag-outline" size={40} color="#94a3b8" />
+          <Ionicons name="flag-outline" size={40} color="#737782" />
           <Text className="text-center text-sm text-slate-500">Henüz hedefin yok. Küçük, ölçülebilir bir hedefle başla.</Text>
         </View>
       ) : (

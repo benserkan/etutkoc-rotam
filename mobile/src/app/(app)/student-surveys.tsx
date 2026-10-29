@@ -104,7 +104,7 @@ function SurveyRow({ row, done }: { row: SurveyAssignmentRow; done?: boolean }) 
           </View>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+      <Ionicons name="chevron-forward" size={18} color="#737782" />
     </Pressable>
   );
 }

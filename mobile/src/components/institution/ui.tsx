@@ -189,7 +189,7 @@ export function Banner({ kind = "info", children }: { kind?: "info" | "warn" | "
 export function Empty({ text }: { text: string }) {
   return (
     <View className="items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-10">
-      <Ionicons name="checkmark-circle-outline" size={32} color="#94a3b8" />
+      <Ionicons name="checkmark-circle-outline" size={32} color="#737782" />
       <Text className="mt-2 text-center text-sm text-slate-500">{text}</Text>
     </View>
   );

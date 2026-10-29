@@ -176,7 +176,7 @@ export function TeacherRequestsView({
     >
       {data.items.length === 0 ? (
         <View className="mt-10 items-center gap-3 px-6">
-          <Ionicons name="checkmark-done-outline" size={44} color="#94a3b8" />
+          <Ionicons name="checkmark-done-outline" size={44} color="#737782" />
           <Text className="text-center text-base font-semibold text-slate-700">Bekleyen talep yok</Text>
           <Text className="text-center text-sm text-slate-500">
             Öğrencilerin program değişikliği veya soru ilettiğinde burada görünür.

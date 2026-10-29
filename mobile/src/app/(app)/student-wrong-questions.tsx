@@ -642,7 +642,7 @@ function DetailSheet({
             </Pressable>
           ) : (
             <View className="flex-row items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <Ionicons name="sparkles" size={15} color="#94a3b8" />
+              <Ionicons name="sparkles" size={15} color="#737782" />
               <Text className="flex-1 text-xs text-slate-600">{AI_GATE_NOTE[ai.reason] ?? "Yapay zekâ şu an kullanılamıyor."}</Text>
             </View>
           )

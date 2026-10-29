@@ -101,7 +101,7 @@ function SubjectCard({ s }: { s: SubjectPerfRow }) {
     <View className="overflow-hidden rounded-2xl border border-slate-200 bg-white" style={{ borderLeftWidth: 4, borderLeftColor: c.rail }}>
       <Pressable onPress={() => setOpen((v) => !v)} className="gap-2 px-4 py-3 active:bg-slate-50" accessibilityRole="button">
         <View className="flex-row items-start gap-2">
-          <Ionicons name={open ? "chevron-down" : "chevron-forward"} size={16} color="#94a3b8" style={{ marginTop: 2 }} />
+          <Ionicons name={open ? "chevron-down" : "chevron-forward"} size={16} color="#737782" style={{ marginTop: 2 }} />
           <View className="min-w-0 flex-1">
             <Text className="text-sm font-semibold text-slate-900">{s.subject_name}</Text>
             <Text className="text-[11.5px] text-slate-500">
@@ -189,7 +189,7 @@ export default function TopicPerformanceRoute() {
         </View>
       ) : q.data.subjects.length === 0 && (q.data.focus ?? []).length === 0 ? (
         <View className="items-center gap-2 px-8 py-16">
-          <Ionicons name="locate-outline" size={36} color="#94a3b8" />
+          <Ionicons name="locate-outline" size={36} color="#737782" />
           <Text className="text-center text-sm font-medium text-slate-700">Henüz konu performansı yok</Text>
           <Text className="text-center text-xs text-slate-500">
             {source === "student"

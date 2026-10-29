@@ -40,7 +40,7 @@ export function TaskVideoList({ videos }: { videos: TaskVideoRef[] | null | unde
               ) : null}
             </View>
           </View>
-          <Ionicons name="open-outline" size={16} color="#94a3b8" />
+          <Ionicons name="open-outline" size={16} color="#737782" />
         </Pressable>
       ))}
     </View>

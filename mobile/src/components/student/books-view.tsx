@@ -57,7 +57,7 @@ function SubjectCard({ g }: { g: ResourceSubjectGroup }) {
           <Text className="text-xs text-slate-400">{g.books.length} kitap · {g.completed_tests}/{g.total_tests} test</Text>
         </View>
         <Text className="mr-2 text-base font-extrabold text-slate-700">%{p}</Text>
-        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={18} color="#94a3b8" />
+        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={18} color="#737782" />
       </Pressable>
       <View className="mt-2"><Bar value={p} /></View>
       {open ? (
@@ -106,7 +106,7 @@ export function BooksView({
 
       {data.subjects.length === 0 ? (
         <View className="mt-6 items-center gap-2 px-6">
-          <Ionicons name="library-outline" size={40} color="#94a3b8" />
+          <Ionicons name="library-outline" size={40} color="#737782" />
           <Text className="text-center text-sm text-slate-500">Henüz kitabın yok. Koçun kitap eklediğinde burada görünür.</Text>
         </View>
       ) : (

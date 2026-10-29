@@ -52,7 +52,7 @@ export function ProgramExamsCard({
             için deneme analizine katılmaz. {hint}
           </Text>
         </View>
-        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={16} color="#94a3b8" />
+        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={16} color="#737782" />
       </Pressable>
       {open ? (
         <View className="gap-3 border-t border-slate-100 p-4">

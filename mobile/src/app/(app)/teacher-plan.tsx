@@ -446,7 +446,7 @@ export default function TeacherPlanScreen() {
                   Paket asistanı hangi paketin uygun olduğunu ve krediyi anında anlatır.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+              <Ionicons name="chevron-forward" size={18} color="#737782" />
             </Pressable>
 
             <View className="flex-row items-center justify-center gap-4">

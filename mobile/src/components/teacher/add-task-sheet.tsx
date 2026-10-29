@@ -263,7 +263,7 @@ export function AddTaskSheet({
           <View className="gap-3">
             <Text className="text-xs font-medium text-slate-600">Ne çalışsın?</Text>
             <View className="flex-row items-center gap-2 rounded-xl border border-slate-300 bg-white px-3">
-              <Ionicons name="search" size={16} color="#94a3b8" />
+              <Ionicons name="search" size={16} color="#737782" />
               <TextInput
                 value={query}
                 onChangeText={setQuery}
@@ -275,7 +275,7 @@ export function AddTaskSheet({
               />
               {query ? (
                 <Pressable onPress={() => setQuery("")} hitSlop={8}>
-                  <Ionicons name="close-circle" size={18} color="#94a3b8" />
+                  <Ionicons name="close-circle" size={18} color="#737782" />
                 </Pressable>
               ) : null}
             </View>

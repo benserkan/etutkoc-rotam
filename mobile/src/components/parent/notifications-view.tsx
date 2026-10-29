@@ -76,7 +76,7 @@ export function NotificationsView({
       <Text className="px-1 text-xl font-bold text-slate-900">Bildirimler</Text>
       {data.items.length === 0 ? (
         <View className="mt-10 items-center gap-3 px-6">
-          <Ionicons name="notifications-outline" size={44} color="#94a3b8" />
+          <Ionicons name="notifications-outline" size={44} color="#737782" />
           <Text className="text-center text-base font-semibold text-slate-700">Bildirim yok</Text>
           <Text className="text-center text-sm text-slate-500">
             Haftalık rapor, uyarı ve duyurular burada görünür.

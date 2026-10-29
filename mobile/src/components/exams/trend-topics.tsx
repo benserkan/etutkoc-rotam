@@ -131,7 +131,7 @@ function Card({
           acc={t.first_accuracy}
           tone={isF ? "text-emerald-700" : "text-slate-900"}
         />
-        <Ionicons name="arrow-forward" size={16} color="#94a3b8" />
+        <Ionicons name="arrow-forward" size={16} color="#737782" />
         <Side
           label={`Son ${t.last_exam_count ?? ""} deneme`}
           c={t.last_correct ?? 0}

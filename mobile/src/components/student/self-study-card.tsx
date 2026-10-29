@@ -241,7 +241,7 @@ function DeclareSheet({ visible, onClose }: { visible: boolean; onClose: () => v
                     {b.subject_name} · {b.book_type_label}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
+                <Ionicons name="chevron-forward" size={16} color="#737782" />
               </Pressable>
             ))
           )}

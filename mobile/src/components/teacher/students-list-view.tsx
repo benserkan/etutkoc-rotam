@@ -100,7 +100,7 @@ export function StudentsListView({
           ) : null}
         </View>
         <View className="flex-row items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5">
-          <Ionicons name="search" size={18} color="#94a3b8" />
+          <Ionicons name="search" size={18} color="#737782" />
           <TextInput
             value={q}
             onChangeText={setQ}
@@ -126,7 +126,7 @@ export function StudentsListView({
         <QuickAccessStrip padded={false} />
         {filtered.length === 0 ? (
           <View className="mt-10 items-center gap-3 px-6">
-            <Ionicons name="people-outline" size={44} color="#94a3b8" />
+            <Ionicons name="people-outline" size={44} color="#737782" />
             <Text className="text-center text-sm text-slate-500">
               {items.length === 0 ? "Henüz öğrencin yok." : "Aramanla eşleşen öğrenci yok."}
             </Text>

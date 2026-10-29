@@ -186,7 +186,7 @@ export default function SignupScreen() {
                 className="flex-1 px-3 py-3 text-sm text-slate-900"
               />
               <Pressable onPress={() => setShow((s) => !s)} className="px-3 py-3" hitSlop={8}>
-                <Ionicons name={show ? "eye-off-outline" : "eye-outline"} size={20} color="#94a3b8" />
+                <Ionicons name={show ? "eye-off-outline" : "eye-outline"} size={20} color="#737782" />
               </Pressable>
             </View>
           </View>
