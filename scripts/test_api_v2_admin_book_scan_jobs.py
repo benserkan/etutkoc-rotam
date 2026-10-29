@@ -154,6 +154,60 @@ def main() -> int:
               and mine["book_title"] == "Sahte Kitap" and mine["created_by_name"] == "Tarama Admin",
               str(mine))
 
+        # ===== 7b-7h. PARÇALI YÜKLEME (Cloudflare 100 MB/istek sınırı) =====
+        from app.services import book_scan_jobs as _bsj
+        orig_chunk = _bsj.UPLOAD_CHUNK
+        _bsj.UPLOAD_CHUNK = 4 * 1024 * 1024  # testte küçük parça; mantık aynı
+        try:
+            big = _pdf(30) + b"%" + os.urandom(9 * 1024 * 1024)  # ~9 MB, 3 parça
+            r = ac.post("/api/v2/admin/book-catalog/scan-uploads",
+                        data={"filename": "Büyük Kitap.pdf", "total_size": str(len(big))})
+            up = r.json() if r.status_code == 200 else {}
+            uid, cs = up.get("upload_id"), up.get("chunk_size")
+            check("7b. parçalı yükleme açıldı", r.status_code == 200 and uid and cs == 4 * 1024 * 1024,
+                  r.text[:200])
+            r = ac.post(f"/api/v2/admin/book-catalog/scan-uploads/{uid}/finish")
+            check("7c. eksikken bitir → 409 upload_incomplete",
+                  r.status_code == 409 and r.json()["detail"]["code"] == "upload_incomplete", r.text[:200])
+            r = ac.post(f"/api/v2/admin/book-catalog/scan-uploads/{uid}/chunk",
+                        data={"offset": str(cs)}, files={"file": ("p", big[cs:2 * cs], "application/octet-stream")})
+            check("7d. sırayı atlayan parça → 409 offset_mismatch",
+                  r.status_code == 409 and r.json()["detail"]["code"] == "offset_mismatch", r.text[:200])
+            ok_all = True
+            for off in range(0, len(big), cs):
+                r = ac.post(f"/api/v2/admin/book-catalog/scan-uploads/{uid}/chunk",
+                            data={"offset": str(off)},
+                            files={"file": ("p", big[off:off + cs], "application/octet-stream")})
+                ok_all = ok_all and r.status_code == 200
+            # aynı parçayı yeniden gönder (kopma sonrası) → bozmaz
+            r = ac.post(f"/api/v2/admin/book-catalog/scan-uploads/{uid}/chunk",
+                        data={"offset": "0"}, files={"file": ("p", big[:cs], "application/octet-stream")})
+            check("7e. tüm parçalar + yeniden gönderilen parça kabul",
+                  ok_all and r.status_code == 200 and r.json()["received"] == len(big), r.text[:200])
+            other = TestClient(app)
+            other.post("/api/v2/auth/login", json={"email": f"{PFX}_k@test.invalid", "password": PASSWORD})
+            r = other.post(f"/api/v2/admin/book-catalog/scan-uploads/{uid}/finish")
+            check("7f. süper admin olmayan bitiremez (403)", r.status_code == 403, r.status_code)
+            r = ac.post(f"/api/v2/admin/book-catalog/scan-uploads/{uid}/finish", data={"toc_pages": "10"})
+            j2 = r.json()["data"] if r.status_code == 200 else {}
+            b2 = _wait(ac, j2.get("id", 0))
+            with SessionLocal() as db:
+                jj = db.get(BookScanJob, j2.get("id", 0))
+                size_ok = jj is not None and jj.file_size == len(big)
+            check("7g. bitir → olağan tarama işi (boyut birebir, 30 sayfa, okundu)",
+                  r.status_code == 200 and j2.get("page_count") == 30 and size_ok
+                  and b2.get("status") == "done" and j2.get("filename") == "Büyük Kitap.pdf",
+                  r.text[:250])
+            r = ac.post(f"/api/v2/admin/book-catalog/scan-uploads/{uid}/chunk",
+                        data={"offset": "0"}, files={"file": ("p", b"x", "application/octet-stream")})
+            check("7h. bitmiş yüklemeye parça → 404", r.status_code == 404, r.status_code)
+            r = ac.post("/api/v2/admin/book-catalog/scan-uploads",
+                        data={"filename": "a.pdf", "total_size": str(500 * 1024 * 1024)})
+            check("7i. 450 MB üstü → 422 file_too_large",
+                  r.status_code == 422 and r.json()["detail"]["code"] == "file_too_large", r.text[:150])
+        finally:
+            _bsj.UPLOAD_CHUNK = orig_chunk
+
         def boom(path, **kw):
             raise book_pipeline.PipelineError("no_toc", "İlk 12 sayfada içindekiler bulunamadı")
 

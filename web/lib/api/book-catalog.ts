@@ -229,19 +229,46 @@ export function getAdminScanJob(id: number): Promise<BookScanJobDetail> {
   return api<BookScanJobDetail>(`/api/v2/admin/book-catalog/scan-jobs/${id}`);
 }
 
-export function adminCreateScanJob(
+/**
+ * Tam kitap yükleme — PARÇALI (2026-10-29). Cloudflare tek istekte en çok
+ * 100 MB kabul eder; kitaplar 450 MB'a kadar çıkabildiği için dosya sunucunun
+ * bildirdiği boyutta (32 MB) parçalarla gönderilir. Kopan parça bir kez daha
+ * aynı konumdan denenir. Son parçadan sonra olağan tarama işi başlar.
+ */
+export async function adminCreateScanJob(
   file: File,
   tocPages: number,
   pageOffset: number | null,
+  onProgress?: (pct: number) => void,
 ): Promise<MutationResponse<BookScanJobItem>> {
-  const fd = new FormData();
-  fd.append("file", file);
-  fd.append("toc_pages", String(tocPages));
-  if (pageOffset != null) fd.append("page_offset", String(pageOffset));
-  return multipart<MutationResponse<BookScanJobItem>>(
-    "/api/v2/admin/book-catalog/scan-jobs",
-    fd,
+  const start = new FormData();
+  start.append("filename", file.name || "kitap.pdf");
+  start.append("total_size", String(file.size));
+  const up = await multipart<{ upload_id: string; chunk_size: number }>(
+    "/api/v2/admin/book-catalog/scan-uploads",
+    start,
   );
+  const base = `/api/v2/admin/book-catalog/scan-uploads/${up.upload_id}`;
+  for (let off = 0; off < file.size; off += up.chunk_size) {
+    const part = file.slice(off, Math.min(file.size, off + up.chunk_size));
+    for (let attempt = 0; ; attempt++) {
+      const fd = new FormData();
+      fd.append("offset", String(off));
+      fd.append("file", part, "part");
+      try {
+        await multipart<{ received: number }>(`${base}/chunk`, fd);
+        break;
+      } catch (e) {
+        if (attempt >= 2 || (e instanceof ApiError && e.status < 500 && e.status !== 0)) throw e;
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      }
+    }
+    onProgress?.(Math.round((Math.min(file.size, off + up.chunk_size) / file.size) * 100));
+  }
+  const fin = new FormData();
+  fin.append("toc_pages", String(tocPages));
+  if (pageOffset != null) fin.append("page_offset", String(pageOffset));
+  return multipart<MutationResponse<BookScanJobItem>>(`${base}/finish`, fin);
 }
 
 export function adminDeleteScanJob(id: number): Promise<MutationResponse<unknown>> {

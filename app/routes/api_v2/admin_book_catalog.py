@@ -321,6 +321,62 @@ def admin_scan_job_create_v2(
     )
 
 
+# --- Parçalı yükleme (Cloudflare 100 MB/istek sınırı) ---
+
+
+@router.post("/scan-uploads")
+def admin_scan_upload_start_v2(
+    filename: str = Form(...),
+    total_size: int = Form(...),
+    user: User = Depends(_require_super_admin),
+):
+    """Parçalı yüklemeyi aç → upload_id + parça boyutu."""
+    from app.services import book_scan_jobs as jobs_svc
+
+    try:
+        return jobs_svc.start_upload(user.id, filename=filename, total_size=total_size)
+    except jobs_svc.ScanJobError as e:
+        raise _scan_error(e)
+
+
+@router.post("/scan-uploads/{upload_id}/chunk")
+def admin_scan_upload_chunk_v2(
+    upload_id: str,
+    offset: int = Form(...),
+    file: UploadFile = File(...),
+    user: User = Depends(_require_super_admin),
+):
+    """Bir parçayı ekle (aynı konumdan yeniden gönderilebilir)."""
+    from app.services import book_scan_jobs as jobs_svc
+
+    try:
+        return jobs_svc.append_chunk(user.id, upload_id, offset=offset, fileobj=file.file)
+    except jobs_svc.ScanJobError as e:
+        raise _scan_error(e)
+
+
+@router.post("/scan-uploads/{upload_id}/finish",
+             response_model=MutationResponse[BookScanJobItem])
+def admin_scan_upload_finish_v2(
+    upload_id: str,
+    toc_pages: int = Form(12),
+    page_offset: int | None = Form(None),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Tüm parçalar geldi → olağan tarama işini başlat."""
+    from app.services import book_scan_jobs as jobs_svc
+
+    try:
+        job = jobs_svc.finish_upload(db, user.id, upload_id, toc_pages=toc_pages,
+                                     page_offset=page_offset)
+    except jobs_svc.ScanJobError as e:
+        raise _scan_error(e)
+    return MutationResponse(
+        data=_scan_job_item(db, job), invalidate=["admin:book-catalog:scan-jobs"],
+    )
+
+
 @router.get("/scan-jobs", response_model=BookScanJobListResponse)
 def admin_scan_job_list_v2(
     user: User = Depends(_require_super_admin),

@@ -77,6 +77,7 @@ export function ScanJobsPanel({ onImport }: { onImport: (r: BookScanResult) => v
   const [tocPages, setTocPages] = React.useState("12");
   const [offset, setOffset] = React.useState("");
   const [openId, setOpenId] = React.useState<number | null>(null);
+  const [uploadPct, setUploadPct] = React.useState<number | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   const listQ = useQuery({
@@ -96,8 +97,14 @@ export function ScanJobsPanel({ onImport }: { onImport: (r: BookScanResult) => v
     const tp = Math.max(2, Math.min(40, Number(tocPages) || 12));
     const off = offset.trim() === "" ? null : Number(offset);
     create.mutate(
-      { file, tocPages: tp, pageOffset: Number.isFinite(off as number) ? off : null },
       {
+        file,
+        tocPages: tp,
+        pageOffset: Number.isFinite(off as number) ? off : null,
+        onProgress: setUploadPct,
+      },
+      {
+        onSettled: () => setUploadPct(null),
         onSuccess: () => {
           setFile(null);
           if (fileRef.current) fileRef.current.value = "";
@@ -176,7 +183,9 @@ export function ScanJobsPanel({ onImport }: { onImport: (r: BookScanResult) => v
           ) : (
             <Upload className="size-4" aria-hidden />
           )}
-          {create.isPending ? "Yükleniyor…" : "Taramayı başlat"}
+          {create.isPending
+            ? `Yükleniyor${uploadPct != null ? ` %${uploadPct}` : "…"}`
+            : "Taramayı başlat"}
         </Button>
       </div>
 

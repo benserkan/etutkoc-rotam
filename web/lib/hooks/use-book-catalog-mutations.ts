@@ -203,6 +203,9 @@ const SCAN_JOB_ERRORS: Record<string, string> = {
   empty_file: "Dosya boş",
   pdf_unreadable: "PDF açılamadı",
   pdf_too_short: "PDF çok kısa",
+  offset_mismatch: "Yükleme yarıda kaldı — tekrar dene",
+  upload_not_found: "Yükleme süresi doldu — tekrar dene",
+  upload_incomplete: "Dosyanın tamamı yüklenemedi",
   job_running: "Taranan iş silinemez",
 };
 
@@ -211,9 +214,10 @@ export function useCreateScanJob() {
   return useMutation<
     MutationResponse<BookScanJobItem>,
     ApiError,
-    { file: File; tocPages: number; pageOffset: number | null }
+    { file: File; tocPages: number; pageOffset: number | null; onProgress?: (pct: number) => void }
   >({
-    mutationFn: ({ file, tocPages, pageOffset }) => adminCreateScanJob(file, tocPages, pageOffset),
+    mutationFn: ({ file, tocPages, pageOffset, onProgress }) =>
+      adminCreateScanJob(file, tocPages, pageOffset, onProgress),
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       toast.success("Tarama başladı", {

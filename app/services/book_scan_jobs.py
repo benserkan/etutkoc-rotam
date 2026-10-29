@@ -110,6 +110,21 @@ def create_job(
     start: bool = True,
 ) -> BookScanJob:
     path, size = save_upload(fileobj, filename)
+    return create_job_from_path(db, admin_id, path=path, size=size, filename=filename,
+                                toc_pages=toc_pages, page_offset=page_offset, start=start)
+
+
+def create_job_from_path(
+    db: Session,
+    admin_id: int,
+    *,
+    path: str,
+    size: int,
+    filename: str,
+    toc_pages: int = 12,
+    page_offset: int | None = None,
+    start: bool = True,
+) -> BookScanJob:
     try:
         from app.services.book_pipeline import fitz
 
@@ -278,3 +293,116 @@ def job_result(job: BookScanJob) -> dict | None:
         return json.loads(job.result_json)
     except ValueError:
         return None
+
+
+# ---------------------------------------------------------------------------
+# Parçalı yükleme (2026-10-29): Cloudflare tek istekte en çok 100 MB kabul eder;
+# 450 MB'a kadar tam kitap 32 MB'lık parçalarla gelir. Parçalar aynı süreç
+# klasöründe (tüm gunicorn işçileri paylaşır) bir dosyaya sırayla eklenir;
+# kopan parça aynı konumdan yeniden gönderilebilir. Son parçadan sonra
+# finish_upload olağan tarama işini başlatır.
+# ---------------------------------------------------------------------------
+
+UPLOAD_CHUNK = 32 * 1024 * 1024
+UPLOAD_STALE = timedelta(hours=6)
+
+
+def _upload_paths(upload_id: str) -> tuple[str, str]:
+    if not upload_id or not all(c in "0123456789abcdef" for c in upload_id) or len(upload_id) != 32:
+        raise ScanJobError("upload_not_found", "Yükleme bulunamadı.", http=404)
+    d = scan_dir()
+    return os.path.join(d, f"upl_{upload_id}.part"), os.path.join(d, f"upl_{upload_id}.json")
+
+
+def _read_meta(upload_id: str, admin_id: int) -> tuple[str, str, dict]:
+    part, meta_path = _upload_paths(upload_id)
+    try:
+        with open(meta_path, encoding="utf-8") as f:
+            meta = json.load(f)
+    except (OSError, ValueError):
+        raise ScanJobError("upload_not_found", "Yükleme bulunamadı ya da süresi doldu.", http=404)
+    if meta.get("admin_id") != admin_id:
+        raise ScanJobError("upload_not_found", "Yükleme bulunamadı.", http=404)
+    return part, meta_path, meta
+
+
+def _write_meta(meta_path: str, meta: dict) -> None:
+    tmp = meta_path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(meta, f)
+    os.replace(tmp, meta_path)
+
+
+def _sweep_stale_uploads() -> None:
+    cutoff = _now().timestamp() - UPLOAD_STALE.total_seconds()
+    d = scan_dir()
+    for name in os.listdir(d):
+        if name.startswith("upl_") and (name.endswith(".part") or name.endswith(".json")):
+            full = os.path.join(d, name)
+            try:
+                if os.path.getmtime(full) < cutoff:
+                    os.remove(full)
+            except OSError:
+                pass
+
+
+def start_upload(admin_id: int, *, filename: str, total_size: int) -> dict:
+    if total_size <= 0:
+        raise ScanJobError("empty_file", "Dosya boş.")
+    if total_size > MAX_SCAN_BYTES:
+        raise ScanJobError("file_too_large", "PDF en fazla 450 MB olabilir.")
+    _sweep_stale_uploads()
+    import secrets
+
+    upload_id = secrets.token_hex(16)
+    part, meta_path = _upload_paths(upload_id)
+    open(part, "wb").close()
+    _write_meta(meta_path, {"admin_id": admin_id, "filename": (filename or "kitap.pdf")[:255],
+                            "total": int(total_size), "received": 0})
+    return {"upload_id": upload_id, "chunk_size": UPLOAD_CHUNK, "received": 0}
+
+
+def append_chunk(admin_id: int, upload_id: str, *, offset: int, fileobj: Any) -> dict:
+    part, meta_path, meta = _read_meta(upload_id, admin_id)
+    received = int(meta.get("received") or 0)
+    total = int(meta["total"])
+    if offset < 0 or offset > received:
+        raise ScanJobError("offset_mismatch", "Parça sırası bozuk — yükleme kaldığı yerden sürmeli.",
+                           http=409)
+    written = 0
+    with open(part, "r+b") as out:
+        out.seek(offset)
+        while True:
+            chunk = fileobj.read(_CHUNK)
+            if not chunk:
+                break
+            written += len(chunk)
+            if written > UPLOAD_CHUNK + _CHUNK or offset + written > total:
+                raise ScanJobError("chunk_too_large", "Parça beklenenden büyük.")
+            out.write(chunk)
+    if written == 0:
+        raise ScanJobError("empty_chunk", "Boş parça.")
+    meta["received"] = max(received, offset + written)
+    _write_meta(meta_path, meta)
+    return {"upload_id": upload_id, "received": meta["received"], "total": total}
+
+
+def finish_upload(
+    db: Session, admin_id: int, upload_id: str, *, toc_pages: int = 12,
+    page_offset: int | None = None,
+) -> BookScanJob:
+    part, meta_path, meta = _read_meta(upload_id, admin_id)
+    if int(meta.get("received") or 0) != int(meta["total"]):
+        raise ScanJobError("upload_incomplete", "Dosyanın tamamı henüz yüklenmedi.", http=409)
+    with open(part, "rb") as f:
+        if f.read(5) != b"%PDF-":
+            _remove_file(part)
+            _remove_file(meta_path)
+            raise ScanJobError("not_pdf", "Yalnız PDF yüklenebilir.")
+    fd, final = tempfile.mkstemp(suffix=".pdf", dir=scan_dir())
+    os.close(fd)
+    os.replace(part, final)
+    _remove_file(meta_path)
+    return create_job_from_path(db, admin_id, path=final, size=int(meta["total"]),
+                                filename=meta.get("filename") or "kitap.pdf",
+                                toc_pages=toc_pages, page_offset=page_offset)
