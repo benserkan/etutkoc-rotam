@@ -24,8 +24,10 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   **F CANLI (2026-10-29):** `rotam` + `analytics` kayıtları Proxied (aynı hesap, etutkoc.com bölgesinin içinde alt
   alan adı — ayrı site değil). Bölge SSL modu **Flexible kalır** (etutkoc.com OVH'ye bağlı); rotam+analytics için
   Configuration Rule "Rotam - Full strict SSL" → Strict. Bot Fight Mode kapalı (bilinçli). Doğrulandı: Server cloudflare,
-  Caddy client_ip gerçek IP, webhook'lar uygulamaya ulaşıyor. **AÇIK: origin kilidi** (80/443 yalnız CF) — sunucu
-  komutu izin kapısında reddedildi; `deploy/cf-origin-lock.sh` + rehberdeki Hetzner Firewall yolu kullanıcı onayı bekliyor.
+  Caddy client_ip gerçek IP, webhook'lar uygulamaya ulaşıyor. **Origin kilidi CANLI (2026-10-29):** Hetzner
+  Cloud Firewall `firewall-1` (sunucuya uygulu) — 22 herkese açık; 80 + 443 YALNIZ Cloudflare v4+v6 aralıkları (22 adet,
+  cloudflare.com/ips). Doğrulandı: CF üzerinden site/analytics/webhook 200, doğrudan IP 80/443 zaman aşımı, SSH çalışıyor.
+  CF aralıkları değişirse firewall-1 + Caddyfile `trusted_proxies` birlikte güncellenir. `deploy/cf-origin-lock.sh` KULLANILMADI.
 - **Karne okuma arka plan işi (A+B+C, migration `w7y0d3e4d99z` ai_jobs):** `app/services/exam_import_jobs.py` — yükle
   (hızlı kapılar: koç/rıza/kredi/aynı PDF) → iş satırı (PDF ≤10 MB satırda) → web sürecinde iş parçacığı (süreç başına
   3 paralel; koç art arda çok yükleyebilir) → taslak → `import-confirm` + `job_id` (PDF yeniden yüklenmez). Kredi yalnız

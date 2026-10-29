@@ -78,7 +78,7 @@ def main() -> int:
             chk("2. iş satırı açıldı", "Sırada" in row.inner_text() or "Taranıyor" in row.inner_text()
                 or "Bitti" in row.inner_text(), row.inner_text()[:120])
             pg.screenshot(path=os.path.join(SHOT_DIR, "admin_scan_running.png"))
-            deadline = time.time() + 40 * 60
+            deadline = time.time() + 75 * 60  # Gemini yavaş günlerde tam kitap ~40 dk+
             last = ""
             while time.time() < deadline:
                 txt = row.inner_text()
@@ -114,6 +114,10 @@ def main() -> int:
             b.close()
     finally:
         with SessionLocal() as db:
+            # Sonuç temizlikten önce saklanır (test yarıda kalsa da tarama izi kaybolmasın)
+            for j in db.query(BookScanJob).filter(BookScanJob.created_by_id == uid).all():
+                with open(os.path.join(SHOT_DIR, f"admin_scan_job_{j.id}.json"), "w", encoding="utf-8") as fh:
+                    fh.write(j.result_json or '{"status": "%s", "stage": "%s"}' % (j.status, j.stage))
             db.execute(sa_delete(BookScanJob).where(BookScanJob.created_by_id == uid))
             db.execute(sa_delete(User).where(User.id == uid))
             db.commit()

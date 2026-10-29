@@ -31,7 +31,7 @@ Bu yüzden turuncu bulut, bu uçlar **arka plan işine** (yükle → iş numaras
 4. Doğrula: `curl -sI https://rotam.etutkoc.com/healthz` → `server: cloudflare` +
    `cf-ray` başlığı. Bir girişten sonra Süper Admin → Güvenlik Kamarası → Oturumlar'da
    **kendi gerçek IP'n** görünmeli (Cloudflare IP'si değil).
-5. **Origin kilidi** (asıl güvenlik kazancı — HENÜZ UYGULANMADI). Bunu yapmazsan
+5. **Origin kilidi** (asıl güvenlik kazancı — UYGULANDI 2026-10-29: Hetzner Firewall `firewall-1`, 22 açık, 80/443 yalnız CF aralıkları). Bunu yapmazsan
    saldırgan Cloudflare'i atlayıp doğrudan 178.105.221.223'e gider. İki yol:
    - **Hetzner Cloud → Firewalls** (en kolay): gelen 80/443 yalnız
      https://www.cloudflare.com/ips/ aralıkları, 22 açık; sunucuya uygula.
