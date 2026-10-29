@@ -387,7 +387,7 @@ function Cell({
   if (cell.state === "FREE") {
     return (
       <div
-        className="aspect-square rounded-sm bg-muted border border-border/60 hover:scale-110 transition-transform"
+        className="aspect-square rounded-sm bg-muted border border-border hover:scale-110 transition-transform"
         title={`${unitWord.charAt(0).toUpperCase()}${unitWord.slice(1)} ${cell.number}: henüz boş`}
       />
     );
@@ -546,7 +546,7 @@ function Legend({
   const cls = {
     emerald: "bg-emerald-500",
     amber: "bg-amber-400",
-    slate: "bg-muted border border-border/60",
+    slate: "bg-muted border border-border",
   }[tone];
   return (
     <span className="inline-flex items-center gap-1">

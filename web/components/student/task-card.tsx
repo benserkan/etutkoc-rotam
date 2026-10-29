@@ -193,7 +193,7 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
         />
       </header>
 
-      <div className="border-t border-border/70 px-4 py-3 space-y-2">
+      <div className="border-t border-border px-4 py-3 space-y-2">
         {isExamTask ? (
           <DenemeTaskRows
             task={task}

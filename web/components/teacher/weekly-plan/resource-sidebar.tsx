@@ -469,7 +469,7 @@ function BookRow({
             onClick={onOpenGrid}
             title="Test detayını sinema-koltuğu görünümüyle aç"
             aria-label="Sinema-koltuğu görünümü"
-            className="flex items-center justify-center px-2 border-l border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            className="flex items-center justify-center px-2 border-l border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
           >
             <Grid3x3 className="size-3.5" aria-hidden />
           </button>

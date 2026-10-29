@@ -273,7 +273,7 @@ function RotaScene() {
 
       {/* Faz B — TASARLANMIŞ analiz vinyeti (gerçek verilerle, büyük punto) */}
       <div className="hv3-card1 absolute bottom-10 left-0 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Deneme analizi hazır</span>
           <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800">40 saniye</span>
         </div>
@@ -298,7 +298,7 @@ function RotaScene() {
 
       {/* Faz C — TASARLANMIŞ veli vinyeti (sesli anlatım oynatıcısı) */}
       <div className="hv3-card2 absolute bottom-10 left-4 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Veli uygulaması</span>
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">az önce</span>
         </div>
@@ -337,7 +337,7 @@ function RotaScene() {
 
       {/* Faz D — hata defteri vinyeti (YSA: dijital yanlış takibi) */}
       <div className="hv3-card3 absolute bottom-10 left-0 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Dijital hata defteri</span>
           <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700">takipte</span>
         </div>
@@ -367,12 +367,12 @@ function RotaScene() {
 
       {/* Faz E — haftalık program + yapay zekâ görev önerisi vinyeti */}
       <div className="hv3-card4 absolute bottom-10 left-4 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Haftalık program · Perşembe</span>
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Rota önerisi</span>
         </div>
         <div className="p-4">
-          <div className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2">
+          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
             <div>
               <p className="text-[13px] font-semibold text-slate-800">Fen · Basınç — 1 test</p>
               <p className="text-[10px] text-slate-500">dünkü görev</p>

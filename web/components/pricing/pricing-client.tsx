@@ -136,7 +136,7 @@ export function PricingClient({
                 </p>
                 <table className="mt-4 w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 text-left text-xs text-muted-foreground">
+                    <tr className="border-b border-slate-200 text-left text-xs text-muted-foreground">
                       <th className="pb-2 font-medium">Kademe</th>
                       <th className="pb-2 font-medium">Koç</th>
                       <th className="pb-2 text-right font-medium">Aylık (toplam)</th>

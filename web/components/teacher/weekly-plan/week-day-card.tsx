@@ -420,8 +420,8 @@ function SubjectChip({
       style={
         hasTasks
           ? ({
-              "--chip-bg-l": `hsl(${hue}, 45%, 97%)`,
-              "--chip-bd-l": `hsl(${hue}, 35%, 82%)`,
+              "--chip-bg-l": `hsl(${hue}, 60%, 90%)`,
+              "--chip-bd-l": `hsl(${hue}, 45%, 62%)`,
               "--chip-bg-d": `hsl(${hue}, 40%, 18%)`,
               "--chip-bd-d": `hsl(${hue}, 45%, 35%)`,
               "--chip-tx-l": `hsl(${hue}, 45%, 28%)`,
@@ -1069,12 +1069,12 @@ function SortableTaskRow({
   // ders tonu (%14). Bölge rengi çerçeve + şerit + satırlar arası boşlukta
   // kalır; satırlar kendi zemininde ayrışır (iki ton üst üste = çamur).
   const rowTint = primarySubjectName
-    ? `hsl(${hue}, 65%, 91%)`
+    ? `hsl(${hue}, 72%, 84%)`
     : isBlock
-      ? "hsl(258, 60%, 95%)"
+      ? "hsl(258, 65%, 89%)"
       : isDeneme
-        ? "hsl(239, 60%, 95%)"
-        : "hsl(0, 0%, 99%)";
+        ? "hsl(239, 65%, 89%)"
+        : "hsl(0, 0%, 97%)";
   // Koyu temada açık pastel zemin beyaza yakın parlar → aynı hue'nun koyu tonu.
   // 2026-10-08: eskisi %16 saydam basıyordu → koyu zeminde tüm dersler aynı
   // lacivert-griye dönüyordu (koç ayırt edemedi). Artık opak, doygun koyu ton.

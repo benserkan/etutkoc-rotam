@@ -89,20 +89,20 @@ export function WeekNotesCard({ studentId, weekStart, notes }: Props) {
       {!open ? null : (
         <>
           {notes.length > 0 ? (
-            <ul className="divide-y divide-border/60 border-t border-border/60">
+            <ul className="divide-y divide-border border-t border-border">
               {notes.map((n) => (
                 <NoteRow key={n.id} studentId={studentId} note={n} />
               ))}
             </ul>
           ) : (
-            <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border/60">
+            <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border">
               Hızlı bir not bırak — Salı dersine deneme getir, hedef kart sayısı, vb.
             </p>
           )}
 
           <form
             onSubmit={onSubmit}
-            className="flex gap-2 px-5 py-3 border-t border-border/60 bg-muted/30"
+            className="flex gap-2 px-5 py-3 border-t border-border bg-muted/30"
           >
         <div className="flex-1 flex items-center gap-2 px-2.5 rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:border-ring transition">
           <NotebookPen

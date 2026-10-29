@@ -111,7 +111,7 @@ export function DistractorPanel({
                 </thead>
                 <tbody>
                   {d.questions.slice(0, 15).map((r) => (
-                    <tr key={`${r.subject}-${r.question_no}`} className="border-b border-border/60 last:border-0">
+                    <tr key={`${r.subject}-${r.question_no}`} className="border-b border-border last:border-0">
                       <td className="py-1.5 pr-2 whitespace-nowrap">
                         {r.subject} {r.question_no}
                       </td>
@@ -248,7 +248,7 @@ export function ScoreEstimatePanel({ source }: { source: ProgressSource }) {
               </thead>
               <tbody>
                 {d.calibration.map((c) => (
-                  <tr key={c.exam_id} className="border-b border-border/60 last:border-0">
+                  <tr key={c.exam_id} className="border-b border-border last:border-0">
                     <td className="py-1.5 pr-2">
                       {c.title} <span className="text-xs text-muted-foreground">· {fmtTRDate(c.exam_date)}</span>
                     </td>

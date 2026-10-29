@@ -260,7 +260,7 @@ function FocusList({ focus, audience, coverage }: { focus: TopicPerfRow[]; audie
             : "Şu an zayıf görünen konu yok."}
         </p>
       ) : (
-        <ol className="divide-y divide-border/70">
+        <ol className="divide-y divide-border">
           {focus.map((t, i) => (
             <li
               key={`${t.topic_id ?? "l"}-${t.topic_name}-${i}`}
@@ -353,7 +353,7 @@ function SubjectCard({ s }: { s: SubjectPerfRow }) {
         </div>
       </button>
       {open ? (
-        <ul className="divide-y divide-border/60 border-t border-border/60">
+        <ul className="divide-y divide-border border-t border-border">
           {topics.map((tp) => {
             const sess = tp.session_tests ?? 0;
             return (

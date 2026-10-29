@@ -106,7 +106,7 @@ export function ProgressSummaryCard() {
       </div>
 
       {days.length > 0 ? (
-        <div className="grid grid-cols-7 gap-1 border-t border-border/60 px-4 py-2.5">
+        <div className="grid grid-cols-7 gap-1 border-t border-border px-4 py-2.5">
           {days.map((d) => (
             <div
               key={d.date}

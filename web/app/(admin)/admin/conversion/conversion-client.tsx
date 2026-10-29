@@ -164,7 +164,7 @@ export function ConversionClient({ initial }: { initial: ConversionResponse }) {
                 {[...data.variants]
                   .sort((a, b) => b.conversion_pct - a.conversion_pct)
                   .map((v, idx) => (
-                    <tr key={v.slug} className="border-b border-border/60">
+                    <tr key={v.slug} className="border-b border-border">
                       <td className="py-2 pr-3 font-medium">
                         {v.slug}
                         {idx === 0 && v.signups > 0 ? (

@@ -15,6 +15,11 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   **DERS (aynı gün düzeltildi):** temizleme kodmodu parantezli sınıfı yarım sildi (`dark:bg-[var(--x)]` → `)]` artığı
   önceki sınıfa yapıştı, ör. `bg-[var(--subj-tint-l)])]` geçersiz) → ders renkli satır/ızgara zemini kayboldu; 7 yer
   onarıldı. Grafiklerdeki "normal aralık" bandı açık temada silikti → %25 dolgu + üst/alt çizgi.
+  **Görünürlük turu 2 (aynı gün, kullanıcı):** çizgi --border 80%→71% (#B3B3B8; slate-200 de), dolgu --muted 96%→92%
+  (slate-100), soluk `border-border/50-70` varyantları tam renge, recharts ızgara opaklığı 0.08→0.22; ders satır zemini
+  hsl(h,72%,84%) (91%'de dersler ayrışmıyordu). Seans kartı gündem/notu "•" maddelere bölünüp başlık kalın gösterilir.
+  **Koç menüsü gruplu:** etiketsiz günlük (Pano/Öğrenciler/Görüşmeler) · İletişim · Program ve kaynak · İşletme ·
+  katlanır Yönetim; "Gelen Talepler" → "Kurumdan gelenler" yalnız kurumlu koçta; risk rozeti kırmızı, diğerleri petrol.
   **KURAL: yeni kodda `dark:` yazılmaz.**
 - **"J" dili** (Khan Academy + Coursera ölçümünden): beyaz zemin + beyaz kart + görünür 1px çerçeve #CBCBCD, 12px
   köşe, kart gölgesi YOK (yalnız yüzen öğeler), tek vurgu petrol #0B6178, yazı Plus Jakarta Sans 450 (tanıtım/giriş

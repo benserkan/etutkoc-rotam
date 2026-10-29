@@ -405,15 +405,15 @@ function WeeksSection({ d }: { d: DRReport }) {
           <div className="h-[240px]" style={{ minWidth: Math.max(420, rows.length * 46) }}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chart} margin={{ top: 8, right: 8, bottom: 4, left: -8 }}>
-                <CartesianGrid stroke="currentColor" strokeOpacity={0.08} vertical={false} />
+                <CartesianGrid stroke="currentColor" strokeOpacity={0.22} vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "currentColor", opacity: 0.6 }}
-                  stroke="currentColor" strokeOpacity={0.15} interval={0} />
+                  stroke="currentColor" strokeOpacity={0.3} interval={0} />
                 <YAxis yAxisId="p" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]}
                   tickFormatter={(v: number) => `%${v}`} width={42}
-                  tick={{ fontSize: 10, fill: "currentColor", opacity: 0.6 }} stroke="currentColor" strokeOpacity={0.15} />
+                  tick={{ fontSize: 10, fill: "currentColor", opacity: 0.6 }} stroke="currentColor" strokeOpacity={0.3} />
                 {hasNet ? (
                   <YAxis yAxisId="n" orientation="right" width={36} domain={["auto", "auto"]}
-                    tick={{ fontSize: 10, fill: "currentColor", opacity: 0.6 }} stroke="currentColor" strokeOpacity={0.15} />
+                    tick={{ fontSize: 10, fill: "currentColor", opacity: 0.6 }} stroke="currentColor" strokeOpacity={0.3} />
                 ) : null}
                 <Tooltip content={<WeekTip />} cursor={{ fill: "currentColor", fillOpacity: 0.05 }} />
                 <Bar yAxisId="p" dataKey="pct" radius={[4, 4, 0, 0]} isAnimationActive={false}>
@@ -462,7 +462,7 @@ function WeeksSection({ d }: { d: DRReport }) {
 function WeekRow({ w, prev, ended }: { w: DRWeekRow; prev: DRWeekRow | null; ended: boolean }) {
   const diff = w.gorev_pct != null && prev?.gorev_pct != null ? Math.round(w.gorev_pct - prev.gorev_pct) : null;
   return (
-    <tr className={cn("border-b border-border/60 last:border-0", w.current && "bg-cyan-500/10 font-medium")}>
+    <tr className={cn("border-b border-border last:border-0", w.current && "bg-cyan-500/10 font-medium")}>
       <td className="py-1.5 pr-3">
         {w.label}
         {w.current ? <span className="ml-1.5 rounded bg-cyan-700 px-1.5 py-0.5 text-[10px] font-semibold text-white">{ended ? "son hafta" : "bu hafta"}</span> : null}
@@ -625,7 +625,7 @@ function ExamSeriesCard({ x }: { x: DRExamSeries }) {
             </thead>
             <tbody>
               {x.subjects.map((s) => (
-                <tr key={s.name} className="border-b border-border/60 last:border-0">
+                <tr key={s.name} className="border-b border-border last:border-0">
                   <td className="py-1 pr-3">{s.name}</td>
                   <td className="py-1 pr-3 text-right tabular-nums">{fmtNet(s.first)}</td>
                   <td className="py-1 pr-3 text-right font-medium tabular-nums">{fmtNet(s.last)}</td>

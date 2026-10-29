@@ -87,7 +87,7 @@ const SEV_HEAD: Record<string, string> = {
   rose: "bg-rose-50/50 border-rose-100",
   amber: "bg-amber-50/50 border-amber-100",
   emerald: "bg-emerald-50/50 border-emerald-100",
-  slate: "bg-slate-50/50 border-slate-100",
+  slate: "bg-slate-50/50 border-slate-200",
 };
 const SEV_SCORE: Record<string, string> = {
   rose: "bg-rose-100 text-rose-800",

@@ -274,7 +274,7 @@ function EvidenceGroup({ title, rows }: { title: string; rows: AnalysisEvidenceE
               </span>
             </div>
             {e.asked ? (
-              <ul className="mt-1 divide-y divide-border/60">
+              <ul className="mt-1 divide-y divide-border">
                 {e.questions.map((q) => (
                   <QuestionLine key={q.question_id} q={q} />
                 ))}

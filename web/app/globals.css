@@ -28,13 +28,13 @@
     --primary-foreground: 0 0% 100%;
     --secondary: 240 9% 96%;             /* #F4F4F6 — ikincil düğme zemini */
     --secondary-foreground: 240 22% 11%;
-    --muted: 240 9% 96%;                 /* #F4F4F6 — sakin dolgu */
+    --muted: 240 8% 92%;                 /* #E9E9ED — dolgu/iz zemini (96→92: çubuk izleri görünür) */
     --muted-foreground: 228 6% 30%;      /* #48494F (38%→30%: soluk metin netleşti) */
     --accent: 192 41% 94%;               /* #EAF4F6 — seçili/üzerine gelme zemini */
     --accent-foreground: 193 83% 22%;
     --destructive: 4 72% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 2% 80%;                /* #CBCBCD — kart ve ayraç çizgisi */
+    --border: 240 3% 71%;                /* #B3B3B8 — kart ve ayraç çizgisi (80→71: tablo satır çizgileri net) */
     --input: 228 3% 55%;                 /* #8A8B90 — giriş kutusu çerçevesi */
     --ring: 193 83% 30%;
     --radius: 0.75rem;                   /* 12px kart köşesi */
@@ -137,7 +137,8 @@
   --font-sans: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
 
   /* J dili: ayraç çizgileri görünür olsun — hazır gri tonlar çerçeve rengine çekildi */
-  --color-slate-200: #CBCBCD;
+  --color-slate-100: #E9E9ED;
+  --color-slate-200: #B3B3B8;
   --color-slate-500: #565A64; /* sabit soluk metinler de bir tık koyu */
   --color-slate-600: #3F434C;
   --color-gray-200: #CBCBCD;

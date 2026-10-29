@@ -173,7 +173,7 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
 
       {/* Drill-down */}
       <div className="rounded-xl border border-slate-200 bg-card">
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 p-3">
           <span className="text-sm font-semibold text-foreground">
             Gönderim kayıtları
             {channel && (
@@ -216,7 +216,7 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
+              <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
                 <th className="px-3 py-2 font-medium">Zaman</th>
                 <th className="px-3 py-2 font-medium">Kanal</th>
                 <th className="px-3 py-2 font-medium">Tür</th>
@@ -281,7 +281,7 @@ export function CommunicationHealthClient({ initial }: { initial: CommHealthOver
 
         {/* Sayfalama */}
         {list && list.pages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-100 p-3 text-sm">
+          <div className="flex items-center justify-between border-t border-slate-200 p-3 text-sm">
             <span className="text-slate-500">
               {list.total} kayıt · sayfa {list.page}/{list.pages}
             </span>

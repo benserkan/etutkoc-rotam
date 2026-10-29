@@ -576,7 +576,7 @@ export function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null
                   <span className="ml-auto font-normal opacity-90">{n} konu</span>
                 </div>
               )}
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-border">
                 {[...units.entries()].map(([u, list]) => (
                   <div key={u || "-"} className="py-1">
                     {u && <div className="px-3 pb-0.5 pt-1 text-[11px] font-semibold text-muted-foreground">{u}</div>}

@@ -458,7 +458,7 @@ function SubjectWorkCard({ rows }: { rows: AnalyticsSubjectWork[] }) {
           </span>
         ))}
       </div>
-      <ul className="divide-y divide-border/70">
+      <ul className="divide-y divide-border">
         {rows.map((r) => {
           const c = subjectColors(r.name);
           const idle = r.planned > 0 && r.total === 0;

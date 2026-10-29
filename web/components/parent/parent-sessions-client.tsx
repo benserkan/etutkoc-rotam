@@ -267,7 +267,7 @@ function MonthsTable({ months }: { months: ParentBillingMonth[] }) {
                   ? "text-sky-700"
                   : "text-emerald-700";
             return (
-              <tr key={m.period_month} className="border-b border-border/50 last:border-0">
+              <tr key={m.period_month} className="border-b border-border last:border-0">
                 <td className="px-3 py-2 font-medium">{m.period_label}</td>
                 <td className="px-3 py-2 text-right tabular-nums">
                   {m.sessions_done}

@@ -84,7 +84,7 @@ export function SiteHeader() {
                 ))}
                 <Link
                   href="/demos"
-                  className="col-span-2 flex items-center gap-2 rounded-xl border-t border-slate-100 px-3 py-2.5 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-50"
+                  className="col-span-2 flex items-center gap-2 rounded-xl border-t border-slate-200 px-3 py-2.5 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-50"
                 >
                   <PlayCircle className="size-4" aria-hidden /> Tanıtım videolarını izle
                 </Link>
@@ -135,7 +135,7 @@ export function SiteHeader() {
                   <p.icon className="size-4 text-cyan-700" aria-hidden /> {p.label}
                 </Link>
               ))}
-              <div className="my-1 border-t border-slate-100" />
+              <div className="my-1 border-t border-slate-200" />
               {SITE_NAV.map((n) => (
                 <Link key={n.href} href={n.href} className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 hover:bg-cyan-50">
                   {n.label}

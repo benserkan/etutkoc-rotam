@@ -614,7 +614,7 @@ function SnoozedSection({ rows, count }: { rows: DashboardWarningRow[]; count: n
         Gizlediğin uyarılar ({count})
       </button>
       {open ? (
-        <ul className="mt-2 divide-y divide-border/60">
+        <ul className="mt-2 divide-y divide-border">
           {rows.map((w) => (
             <li key={`sn-${w.student_id}-${w.code}`} className="flex flex-wrap items-center gap-2 py-1.5">
               <div className="min-w-0 flex-1 text-xs">

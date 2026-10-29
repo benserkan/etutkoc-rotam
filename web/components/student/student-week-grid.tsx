@@ -232,7 +232,7 @@ export function StudentWeekGrid({ days }: { days: StudentWeekDay[] }) {
 
   return (
     <section className="rounded-xl border border-border bg-card">
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/60">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border">
         <LayoutGrid className="size-4 text-muted-foreground flex-shrink-0" aria-hidden />
         <span className="text-sm font-semibold text-foreground">Hafta Izgarası</span>
         <span className="text-[11px] text-muted-foreground">
@@ -259,7 +259,7 @@ export function StudentWeekGrid({ days }: { days: StudentWeekDay[] }) {
             >
               <div
                 className={cn(
-                  "flex items-baseline justify-between px-2 py-1 border-b border-border/60",
+                  "flex items-baseline justify-between px-2 py-1 border-b border-border",
                   day.is_today ? "bg-foreground text-background" : "bg-muted/40",
                 )}
               >
@@ -281,7 +281,7 @@ export function StudentWeekGrid({ days }: { days: StudentWeekDay[] }) {
                   sections.map((sec) => (
                     <div key={sec.pkey ?? "_"} className="space-y-1">
                       {sec.pkey ? (
-                        <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-0.5">
+                        <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-0.5">
                           {PERIOD_LABELS[sec.pkey] ?? PERIOD_LABELS.none}
                         </div>
                       ) : null}
@@ -294,7 +294,7 @@ export function StudentWeekGrid({ days }: { days: StudentWeekDay[] }) {
               </div>
 
               {day.tasks.length > 0 ? (
-                <div className="border-t border-border/50 px-2 py-1 space-y-1">
+                <div className="border-t border-border px-2 py-1 space-y-1">
                   <div className="h-1 rounded-full bg-muted overflow-hidden">
                     <div
                       className={cn(

@@ -812,7 +812,7 @@ function SelfStudyCard({ studentId, books }: { studentId: number; books: Student
           <p className="text-xs font-medium text-amber-800">
             Öğrenci beyanı — onayını bekliyor ({pending.length})
           </p>
-          <ul className="divide-y divide-border/60">
+          <ul className="divide-y divide-border">
             {pending.map((it) => (
               <SelfStudyEntryRow
                 key={it.id}

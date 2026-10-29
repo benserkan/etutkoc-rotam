@@ -371,7 +371,7 @@ function StudentExamRow({
                 </thead>
                 <tbody>
                   {row.subjects.map((s) => (
-                    <tr key={s.name} className="border-b border-border/60 last:border-0">
+                    <tr key={s.name} className="border-b border-border last:border-0">
                       <td className="px-2 py-1">{s.name}</td>
                       <td className="px-2 py-1 text-right tabular-nums text-emerald-700">
                         {s.correct}

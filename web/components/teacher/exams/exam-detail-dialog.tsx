@@ -248,7 +248,7 @@ export function ExamDetailDialog({
                       </thead>
                       <tbody>
                         {shown.map((i, idx) => (
-                          <tr key={`${i.subject}-${i.question_no}-${idx}`} className="border-b border-border/60 align-top last:border-0">
+                          <tr key={`${i.subject}-${i.question_no}-${idx}`} className="border-b border-border align-top last:border-0">
                             <td className="py-1.5 pr-2 text-xs text-muted-foreground">{i.subject}</td>
                             <td className="px-2 py-1.5 tabular-nums">{i.question_no ?? "—"}</td>
                             <td className="px-2 py-1.5">{i.topic_label ?? "—"}</td>

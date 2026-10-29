@@ -419,7 +419,7 @@ export function SubjectTable({ row, prev }: { row: ExamResultRow; prev: ExamResu
           {row.subjects.map((s) => {
             const p = subjectNetIn(prev, s.name);
             return (
-              <tr key={s.name} className="border-b border-border/60 last:border-0">
+              <tr key={s.name} className="border-b border-border last:border-0">
                 <td className="py-2 pr-2 text-foreground">{s.name}</td>
                 <td className="px-2 py-2 text-right tabular-nums text-emerald-700">
                   {s.correct}
@@ -547,7 +547,7 @@ export function ProgressTab({ rows }: { rows: ExamResultRow[] }) {
                   const known = vals.filter((v): v is number => v != null);
                   const change = known.length >= 2 ? known[known.length - 1] - known[0] : null;
                   return (
-                    <tr key={name} className="border-b border-border/60 last:border-0">
+                    <tr key={name} className="border-b border-border last:border-0">
                       <td className="py-2 pr-2 text-foreground">{name}</td>
                       {vals.map((v, i) => (
                         <td key={i} className="px-2 py-2 text-right tabular-nums">
@@ -707,7 +707,7 @@ export function BehaviorTab({ rows }: { rows: ExamResultRow[] }) {
                 .map((s) => {
                   const t = tendency(s.y, s.b);
                   return (
-                    <tr key={s.name} className="border-b border-border/60 last:border-0">
+                    <tr key={s.name} className="border-b border-border last:border-0">
                       <td className="py-2 pr-2 text-foreground">{s.name}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{s.total}</td>
                       <td className="px-2 py-2 text-right tabular-nums text-rose-700">{s.y}</td>
@@ -751,7 +751,7 @@ export function BehaviorTab({ rows }: { rows: ExamResultRow[] }) {
               {rows.map((r, i) => {
                 const prevR = rows[i + 1];
                 return (
-                  <tr key={r.id} className="border-b border-border/60 last:border-0">
+                  <tr key={r.id} className="border-b border-border last:border-0">
                     <td className="py-2 pr-2">
                       <span className="block text-foreground">{r.title}</span>
                       <span className="text-xs text-muted-foreground">{fmtTRDate(r.exam_date)}</span>

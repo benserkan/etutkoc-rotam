@@ -158,7 +158,7 @@ export function InlineSuggestions({
 
       {/* Alan-eksik uyarısı her zaman görünür (nadir + önemli) */}
       {trackRequired && trackMissing ? (
-        <div className="px-5 py-2.5 border-b border-border/60 flex items-start gap-2.5 text-xs">
+        <div className="px-5 py-2.5 border-b border-border flex items-start gap-2.5 text-xs">
           <AlertTriangle
             className="size-4 text-amber-600 flex-shrink-0 mt-0.5"
             aria-hidden
@@ -176,15 +176,15 @@ export function InlineSuggestions({
 
       {/* Liste yalnız açıkken. Boş durum mesajları da açıkken (gürültü olmasın). */}
       {!expanded ? null : weeksObserved === 0 && daysObserved === 0 ? (
-        <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border/60">
+        <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border">
           Henüz geçmiş plan verisi yok — sistem siz plan yaptıkça öğrenecek.
         </p>
       ) : suggestions.length === 0 ? (
-        <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border/60">
+        <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border">
           Bu güne ek öneri yok. Mevcut plan tipik düzende veya tüm bölümler ekli.
         </p>
       ) : (
-        <div className="px-5 py-3 space-y-2 border-t border-border/60">
+        <div className="px-5 py-3 space-y-2 border-t border-border">
           {suggestions.map((s) => (
             <SuggestionCard
               key={`${s.book_id}-${s.section_id}`}
@@ -225,7 +225,7 @@ function SuggestionCard({
     <div
       className={cn(
         "rounded-lg border bg-card transition hover:shadow-sm",
-        isStrong ? "border-border" : "border-dashed border-border/70",
+        isStrong ? "border-border" : "border-dashed border-border",
       )}
       style={{ opacity }}
     >

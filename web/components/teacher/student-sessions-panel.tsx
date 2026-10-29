@@ -552,7 +552,7 @@ function SessionCard({ row, onEdit }: { row: CoachingSessionRow; onEdit: () => v
   return (
     <li>
       <Card>
-        <CardContent className="p-3">
+        <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -567,7 +567,7 @@ function SessionCard({ row, onEdit }: { row: CoachingSessionRow; onEdit: () => v
                   <span className="text-[11px] text-muted-foreground">ruh hali {row.mood}/5</span>
                 ) : null}
               </div>
-              <p className="mt-1 text-sm">{row.agenda}</p>
+              <SessionText text={row.agenda} className="mt-2" />
               {row.tags.length > 0 ? (
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {row.tags.map((t) => (
@@ -592,10 +592,16 @@ function SessionCard({ row, onEdit }: { row: CoachingSessionRow; onEdit: () => v
           {open && hasDetail ? (
             <div className="mt-3 space-y-2 border-t border-border pt-2 text-sm">
               {row.coach_note ? (
-                <p><span className="font-medium">Görüşme notu: </span><span className="text-muted-foreground">{row.coach_note}</span></p>
+                <div>
+                  <p className="font-semibold">Görüşme notu</p>
+                  <SessionText text={row.coach_note} className="mt-1" muted />
+                </div>
               ) : null}
               {row.next_change ? (
-                <p><span className="font-medium">Değiştirilecek: </span><span className="text-muted-foreground">{row.next_change}</span></p>
+                <div>
+                  <p className="font-semibold">Değiştirilecek</p>
+                  <SessionText text={row.next_change} className="mt-1" muted />
+                </div>
               ) : null}
               {row.auto_snapshot ? <AutoSnapshot snap={row.auto_snapshot} /> : null}
             </div>
@@ -603,6 +609,64 @@ function SessionCard({ row, onEdit }: { row: CoachingSessionRow; onEdit: () => v
         </CardContent>
       </Card>
     </li>
+  );
+}
+
+/**
+ * Seans metni (gündem/not) — madde madde. AI gündemi ve haftalık rapor gündemi
+ * maddeleri "•" ile tek satıra yazılıyordu → tek paragraf, okunmuyordu. Metin
+ * satır sonu ya da "•" ile maddelere bölünür; "Başlık: açıklama" biçimindeki
+ * maddede başlık kalın gösterilir. Uzun gündemde ilk 4 madde, devamı açılır.
+ */
+function splitSessionText(text: string): string[] {
+  return text
+    .split(/\n|\s*•\s*/)
+    .map((t) => t.replace(/^[-–]\s+/, "").trim())
+    .filter(Boolean);
+}
+
+function SessionText({ text, className, muted }: { text: string; className?: string; muted?: boolean }) {
+  const [all, setAll] = React.useState(false);
+  const items = splitSessionText(text);
+  if (items.length <= 1) {
+    return (
+      <p className={cn("whitespace-pre-line text-sm leading-relaxed", muted && "text-muted-foreground", className)}>
+        {text.trim()}
+      </p>
+    );
+  }
+  const shown = all ? items : items.slice(0, 4);
+  return (
+    <div className={className}>
+      <ul className="space-y-2">
+        {shown.map((it, i) => {
+          const m = /^([^:]{3,70}?):\s+([\s\S]+)$/.exec(it);
+          return (
+            <li key={i} className="flex gap-2 text-sm leading-relaxed">
+              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+              <span className={cn("min-w-0", muted && "text-muted-foreground")}>
+                {m ? (
+                  <>
+                    <span className="font-semibold text-foreground">{m[1]}:</span> {m[2]}
+                  </>
+                ) : (
+                  it
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {items.length > 4 ? (
+        <button
+          type="button"
+          onClick={() => setAll((v) => !v)}
+          className="mt-2 text-xs font-medium text-primary hover:underline"
+        >
+          {all ? "Daha az göster" : `${items.length - 4} madde daha`}
+        </button>
+      ) : null}
+    </div>
   );
 }
 

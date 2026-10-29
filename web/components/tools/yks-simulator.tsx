@@ -386,7 +386,7 @@ export function YksSimulator({ embedded = false }: { embedded?: boolean }) {
                     <div className="hidden grid-cols-[1fr_6rem_6rem_5rem] gap-3 bg-slate-50 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 sm:grid">
                       <span>Test</span><span className="text-center text-emerald-700">Doğru</span><span className="text-center text-rose-700">Yanlış</span><span className="text-right">Net</span>
                     </div>
-                    <ul className="divide-y divide-slate-100">
+                    <ul className="divide-y divide-border">
                       {list.map((t) => {
                         const n = netOf(dy[t.key]?.d ?? "", dy[t.key]?.y ?? "");
                         const pct = n == null ? 0 : Math.min(100, (n / t.q) * 100);
@@ -702,7 +702,7 @@ function Results({ result, embedded }: { result: SimResult; embedded: boolean })
               <span className="inline-flex items-center gap-1.5"><span className="h-2 w-5 rounded-full bg-cyan-200" />Olası aralık</span>
             </div>
           </div>
-          <ul className="mt-2 divide-y divide-slate-100">
+          <ul className="mt-2 divide-y divide-border">
             {result.lessons.map((l) => <LessonRow key={l.key} l={l} />)}
           </ul>
         </div>

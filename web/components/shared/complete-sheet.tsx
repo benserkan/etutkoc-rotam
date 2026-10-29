@@ -243,7 +243,7 @@ function CompleteSheetInner({
         )}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-border/60 bg-card flex items-start justify-between gap-3 shrink-0">
+        <div className="px-5 py-4 border-b border-border bg-card flex items-start justify-between gap-3 shrink-0">
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold text-foreground truncate">
               {taskTitle}
@@ -409,7 +409,7 @@ function CompleteSheetInner({
 
         {/* Footer — sabit; iOS home-indicator safe-area dahil */}
         <div
-          className="px-5 py-4 border-t border-border/60 bg-card shrink-0 flex flex-col gap-2"
+          className="px-5 py-4 border-t border-border bg-card shrink-0 flex flex-col gap-2"
           style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
         >
           <button

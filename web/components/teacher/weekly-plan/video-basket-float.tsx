@@ -432,7 +432,7 @@ function SavedSources({
         />
       </button>
       {open ? (
-        <ul className="space-y-1.5 border-t border-border/60 p-2">
+        <ul className="space-y-1.5 border-t border-border p-2">
           {sources.map((s) => (
             <SourceRow
               key={s.id}
@@ -814,7 +814,7 @@ function GroupCard({
         />
       ) : null}
       {collapsed ? null : (
-        <ul className="divide-y divide-border/60">
+        <ul className="divide-y divide-border">
           {items.map((v) => (
             <VideoRow key={v.id} studentId={studentId} v={v} state={videoState(v, today)} />
           ))}
@@ -948,7 +948,7 @@ function CopyToStudent({
   const copy = useCopyVideos(studentId);
   const others = (q.data?.items ?? []).filter((s) => s.id !== studentId);
   return (
-    <div className="flex gap-1.5 border-b border-border/60 bg-muted/20 px-2 py-1.5">
+    <div className="flex gap-1.5 border-b border-border bg-muted/20 px-2 py-1.5">
       <select
         value={target}
         onChange={(e) => setTarget(e.target.value)}

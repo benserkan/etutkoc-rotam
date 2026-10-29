@@ -588,7 +588,7 @@ function SubjectDetail({ s, focus, studentId, poolOpen, havuz }: {
                   </span>
                 </button>
                 {isOpen ? (
-                  <ol className="divide-y divide-border/70">
+                  <ol className="divide-y divide-border">
                     {sec.topics.map((t, i) => {
                       const prev = i > 0 ? sec.topics[i - 1] : null;
                       const showUnit = !!t.unit_name && (!prev || prev.unit_name !== t.unit_name);

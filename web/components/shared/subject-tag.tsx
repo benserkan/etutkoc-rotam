@@ -16,7 +16,7 @@ export function subjectColors(name: string) {
   return {
     hue,
     /** Satır/blok zemini — açık tema */
-    tintLight: `hsl(${hue}, 65%, 91%)`,
+    tintLight: `hsl(${hue}, 72%, 84%)`,
     /** Satır/blok zemini — koyu tema (opak) */
     tintDark: `hsl(${hue}, 40%, 18%)`,
     /** Sol şerit */

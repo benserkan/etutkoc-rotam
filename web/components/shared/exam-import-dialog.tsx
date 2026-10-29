@@ -980,7 +980,7 @@ function PreviewStep({
                   <tr
                     key={idx}
                     className={cn(
-                      "border-b border-border/60 last:border-0",
+                      "border-b border-border last:border-0",
                       row.is_suspect && "bg-amber-50",
                     )}
                   >

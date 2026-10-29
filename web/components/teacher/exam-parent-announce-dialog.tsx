@@ -495,7 +495,7 @@ export function ExamParentAnnounceDialog({
                       </thead>
                       <tbody>
                         {data.subjects.map((s, i) => (
-                          <tr key={i} className="border-t border-border/60">
+                          <tr key={i} className="border-t border-border">
                             <td className="py-1 pr-1 text-foreground">
                               <span className="whitespace-normal break-words">
                                 {s.name}
@@ -572,7 +572,7 @@ export function ExamParentAnnounceDialog({
                           </thead>
                           <tbody>
                             {data.history.rows.map((r, i) => (
-                              <tr key={i} className="border-t border-border/60">
+                              <tr key={i} className="border-t border-border">
                                 <td className="py-1 pr-1 text-foreground">
                                   <span className="whitespace-normal break-words">
                                     {r.subject}
@@ -647,7 +647,7 @@ export function ExamParentAnnounceDialog({
                         {data.opportunities.map((o, i) => (
                           <li
                             key={i}
-                            className="flex items-baseline justify-between gap-2 border-t border-border/60 py-1 text-[11.5px]"
+                            className="flex items-baseline justify-between gap-2 border-t border-border py-1 text-[11.5px]"
                           >
                             <span className="min-w-0 whitespace-normal break-words text-foreground">
                               {o.topic}

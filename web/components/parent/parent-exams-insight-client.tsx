@@ -258,7 +258,7 @@ function ParentExamRow({ row, onOpenDetail }: { row: ExamResultRow; onOpenDetail
         </div>
       </div>
       {open ? (
-        <div className="mt-2 flex flex-wrap gap-1.5 border-t border-border/60 pt-2">
+        <div className="mt-2 flex flex-wrap gap-1.5 border-t border-border pt-2">
           {row.subjects.map((s) => (
             <span key={s.name} className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
               {s.name}: <span className="font-semibold text-foreground">{fmtNet(s.net)}</span>

@@ -710,7 +710,7 @@ function CompareChart({ series }: { series: DenemeAnalysisSeries[] }) {
         <div className="h-[280px] min-w-[560px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
-              <CartesianGrid stroke="currentColor" strokeOpacity={0.08} vertical={false} />
+              <CartesianGrid stroke="currentColor" strokeOpacity={0.22} vertical={false} />
               <XAxis
                 dataKey="x"
                 type="number"
@@ -719,7 +719,7 @@ function CompareChart({ series }: { series: DenemeAnalysisSeries[] }) {
                 tickFormatter={(v: number) => shortDate(new Date(v).toISOString().slice(0, 10))}
                 tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }}
                 stroke="currentColor"
-                strokeOpacity={0.15}
+                strokeOpacity={0.3}
                 allowDuplicatedCategory={false}
               />
               <YAxis
@@ -728,7 +728,7 @@ function CompareChart({ series }: { series: DenemeAnalysisSeries[] }) {
                 tickFormatter={(v: number) => `%${v}`}
                 tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }}
                 stroke="currentColor"
-                strokeOpacity={0.15}
+                strokeOpacity={0.3}
                 width={44}
               />
               <Tooltip content={<ChartTip />} cursor={{ stroke: "currentColor", strokeOpacity: 0.2 }} />
@@ -993,7 +993,7 @@ function SubjectDeepDive({
             <div className="h-[260px] min-w-[420px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
-                  <CartesianGrid stroke="currentColor" strokeOpacity={0.08} vertical={false} />
+                  <CartesianGrid stroke="currentColor" strokeOpacity={0.22} vertical={false} />
                   {s.normal_low != null && s.normal_high != null ? (
                     <ReferenceArea
                       y1={s.normal_low}
@@ -1012,7 +1012,7 @@ function SubjectDeepDive({
                     tickFormatter={(v: number) => (v > lastI ? `+${v - lastI}` : `${v}.`)}
                     tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }}
                     stroke="currentColor"
-                    strokeOpacity={0.15}
+                    strokeOpacity={0.3}
                   />
                   <YAxis
                     domain={[0, 100]}
@@ -1020,7 +1020,7 @@ function SubjectDeepDive({
                     tickFormatter={(v: number) => `%${v}`}
                     tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }}
                     stroke="currentColor"
-                    strokeOpacity={0.15}
+                    strokeOpacity={0.3}
                     width={44}
                   />
                   <Tooltip content={<DeepTip />} cursor={{ stroke: "currentColor", strokeOpacity: 0.2 }} />

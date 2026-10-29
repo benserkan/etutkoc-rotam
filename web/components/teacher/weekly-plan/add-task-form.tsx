@@ -165,7 +165,7 @@ export function AddTaskForm({
 
   if (!detailed) {
     return (
-      <div className="@container px-4 py-4 border-t border-border/60 bg-card space-y-2.5">
+      <div className="@container px-4 py-4 border-t border-border bg-card space-y-2.5">
         <TaskQuickAdd
           studentId={studentId}
           dayDate={dayDate}
@@ -239,7 +239,7 @@ export function AddTaskForm({
   }
 
   return (
-    <div className="@container px-4 py-4 border-t border-border/60 bg-card">
+    <div className="@container px-4 py-4 border-t border-border bg-card">
       <div className="mb-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">

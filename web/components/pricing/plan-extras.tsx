@@ -180,7 +180,7 @@ export function PlanMatrix({
                   </td>
                 </tr>
                 {g.rows.map((r) => (
-                  <tr key={r.label} className="border-t border-border/60">
+                  <tr key={r.label} className="border-t border-border">
                     <td className="py-2 pr-3 text-foreground/85">{r.label}</td>
                     {r.cells.map((c, i) => (
                       <td key={i} className="py-2 text-center">

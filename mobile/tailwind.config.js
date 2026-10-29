@@ -11,8 +11,8 @@ module.exports = {
         slate: {
           ...require("tailwindcss/colors").slate,
           50: "#FAFAFB",
-          100: "#F4F4F6",
-          200: "#CBCBCD",
+          100: "#E9E9ED",
+          200: "#B3B3B8",
           400: "#737782", // ikincil gri metin (tarih, alt satır) bir tık koyu
           500: "#565A64", // soluk metin bir tık koyu (web ile aynı)
           600: "#3F434C",

@@ -262,7 +262,7 @@ export function FeaturePage({ content }: { content: FeaturePageContent }) {
         <Hero content={content} />
         <Highlights items={content.highlights} />
 
-        <div className="divide-y divide-slate-200/70">
+        <div className="divide-y divide-border">
           {content.sections.map((s, i) => (
             <Section key={s.id} s={s} flip={i % 2 === 1} />
           ))}

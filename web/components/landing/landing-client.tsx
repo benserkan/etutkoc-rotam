@@ -121,7 +121,7 @@ function TestimonialCard({ t }: { t: TestimonialPublicItem }) {
       <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed text-slate-700 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:6] overflow-hidden">
         “{t.content}”
       </blockquote>
-      <div className="mt-4 border-t border-slate-100 pt-4">
+      <div className="mt-4 border-t border-slate-200 pt-4">
         <TestiStars n={t.rating} />
         <figcaption className="mt-1.5">
           <span className="block text-sm font-semibold text-slate-900">{t.author_name}</span>

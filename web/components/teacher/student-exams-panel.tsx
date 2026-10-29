@@ -804,7 +804,7 @@ function ExamRow({
                 </thead>
                 <tbody>
                   {row.subjects.map((s, i) => (
-                    <tr key={i} className="border-t border-border/50">
+                    <tr key={i} className="border-t border-border">
                       <td className="py-1">
                         {s.name}
                         {s.unmatched ? (

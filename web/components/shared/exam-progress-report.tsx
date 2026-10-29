@@ -623,7 +623,7 @@ function SubjectTrend({ subjects, hasTarget }: { subjects: ProgressSubject[]; ha
           </thead>
           <tbody>
             {subjects.map((s) => (
-              <tr key={s.name} className="border-b border-border/60 last:border-0">
+              <tr key={s.name} className="border-b border-border last:border-0">
                 <td className="py-2 pr-3">{s.name}</td>
                 <td className="py-2 pr-3 text-right tabular-nums">{fmtNet(s.first)}</td>
                 <td className="py-2 pr-3 text-right font-medium tabular-nums">{fmtNet(s.last)}</td>

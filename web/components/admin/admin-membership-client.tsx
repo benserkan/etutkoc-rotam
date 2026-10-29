@@ -441,7 +441,7 @@ function TargetPicker({
                   onSelect(u);
                   setQ("");
                 }}
-                className="flex w-full items-center justify-between gap-2 border-b border-border/60 px-3 py-2 text-left text-sm last:border-0 hover:bg-muted/50"
+                className="flex w-full items-center justify-between gap-2 border-b border-border px-3 py-2 text-left text-sm last:border-0 hover:bg-muted/50"
               >
                 <span className="text-foreground">{u.full_name}</span>
                 <span className="text-xs text-muted-foreground">{u.email}</span>
@@ -571,7 +571,7 @@ function BulkComposer({ planOptions }: { planOptions: MembershipPlanOption[] }) 
           <p className="mt-3 text-xs text-muted-foreground">Bu grupta koç yok.</p>
         ) : (
           <div className="mt-3 rounded-md border border-border">
-            <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs">
+            <div className="flex items-center justify-between border-b border-border bg-muted/30 px-3 py-1.5 text-xs">
               <span className="text-muted-foreground">
                 {selected.size}/{members.length} seçili
               </span>
@@ -791,7 +791,7 @@ function OfferRow({
   const canCloudSend = whatsappEnabled && !!o.target_phone;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-border/70 px-3 py-2 text-sm">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-border px-3 py-2 text-sm">
       <span className="font-medium text-foreground">
         {o.target_name ?? "Genel link"}
       </span>
