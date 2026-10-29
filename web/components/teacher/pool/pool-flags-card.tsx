@@ -19,7 +19,7 @@ export function PoolFlagsCard({ flags, compact = false }: { flags: PoolFlagsOut;
   if (!primary && extra.length === 0 && good.length === 0) {
     return (
       <div
-        className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100"
+        className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
         data-section="pool:flags"
         data-level="green"
       >
@@ -32,7 +32,7 @@ export function PoolFlagsCard({ flags, compact = false }: { flags: PoolFlagsOut;
       {primary ? (
         <FlagRow flag={primary} primary compact={compact} />
       ) : (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100">
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
           <CheckCircle2 className="size-4 shrink-0" aria-hidden /> {flags.headline || "Havuz yolunda"}
         </div>
       )}
@@ -66,17 +66,17 @@ export function PoolFlagsCard({ flags, compact = false }: { flags: PoolFlagsOut;
 
 const TONE: Record<string, { box: string; badge: string; label: string }> = {
   red: {
-    box: "border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100",
+    box: "border-rose-200 bg-rose-50 text-rose-950",
     badge: "bg-rose-600 text-white",
     label: "Acil",
   },
   amber: {
-    box: "border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100",
+    box: "border-amber-200 bg-amber-50 text-amber-950",
     badge: "bg-amber-500 text-amber-950",
     label: "Dikkat",
   },
   green: {
-    box: "border-slate-200 bg-card text-foreground dark:border-slate-700",
+    box: "border-slate-200 bg-card text-foreground",
     badge: "bg-slate-600 text-white",
     label: "Bilgi",
   },
@@ -94,7 +94,7 @@ function FlagRow({ flag, primary = false, compact = false }: { flag: PoolFlagOut
   return (
     <div
       className={cn("rounded-lg border px-4 py-3", isGood
-        ? "border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-950"
         : tone.box)}
       data-flag={flag.code}
       data-flag-level={flag.level}

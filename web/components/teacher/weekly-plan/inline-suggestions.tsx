@@ -160,7 +160,7 @@ export function InlineSuggestions({
       {trackRequired && trackMissing ? (
         <div className="px-5 py-2.5 border-b border-border/60 flex items-start gap-2.5 text-xs">
           <AlertTriangle
-            className="size-4 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-0.5"
+            className="size-4 text-amber-600 flex-shrink-0 mt-0.5"
             aria-hidden
           />
           <div className="flex-1">
@@ -331,12 +331,12 @@ type Tone = "neutral" | "info" | "success" | "violet" | "amber" | "rose" | "sky"
 
 const TONE_CLASS: Record<Tone, string> = {
   neutral: "border-border bg-muted text-muted-foreground",
-  info: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  violet: "border-violet-200 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
-  amber: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-  rose: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-  sky: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+  info: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  violet: "border-violet-200 bg-violet-50 text-violet-700",
+  amber: "border-amber-200 bg-amber-50 text-amber-800",
+  rose: "border-rose-200 bg-rose-50 text-rose-700",
+  sky: "border-sky-200 bg-sky-50 text-sky-700",
 };
 
 function Pill({

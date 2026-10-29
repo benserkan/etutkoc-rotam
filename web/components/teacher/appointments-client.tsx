@@ -214,7 +214,7 @@ export function AppointmentsClient({ initial, students }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Video className="size-6 text-cyan-700 dark:text-cyan-400" aria-hidden />
+            <Video className="size-6 text-cyan-700" aria-hidden />
             Görüşmeler
           </h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
@@ -250,7 +250,7 @@ export function AppointmentsClient({ initial, students }: Props) {
       <NextCard next={next} onRecord={setRecording} />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_340px]">
-        <section className="rounded-xl border border-border bg-card shadow-sm" data-section="appointments:calendar">
+        <section className="rounded-xl border border-border bg-card" data-section="appointments:calendar">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
             <div>
               <p className="text-sm font-semibold">
@@ -305,7 +305,7 @@ function StatCard({ icon: Icon, chip, label, value, unit }: {
   icon: LucideIcon; chip: string; label: string; value: number; unit: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
       <span className={cn("grid size-10 shrink-0 place-items-center rounded-lg", chip)}>
         <Icon className="size-5" aria-hidden />
       </span>
@@ -329,7 +329,7 @@ function NextCard({ next, onRecord }: { next: AppointmentItem | null; onRecord: 
   }
   return (
     <div
-      className="flex flex-wrap items-center gap-4 rounded-xl bg-gradient-to-r from-cyan-800 to-cyan-600 px-5 py-4 text-white shadow-sm"
+      className="flex flex-wrap items-center gap-4 rounded-xl bg-gradient-to-r from-cyan-800 to-cyan-600 px-5 py-4 text-white"
       data-testid="appt-next"
     >
       <div className="grid size-14 shrink-0 place-items-center rounded-xl bg-white/15 text-center">
@@ -395,17 +395,17 @@ function DayColumn({ date, items, isToday, ...actions }: {
     <div
       className={cn(
         "flex flex-col gap-2 px-4 py-3 sm:flex-row sm:gap-4",
-        isToday && "bg-cyan-50/70 dark:bg-cyan-500/10",
+        isToday && "bg-cyan-50/70",
         past && !isToday && "bg-muted/30",
       )}
       data-testid="appt-day"
     >
       <div className="shrink-0 sm:w-32">
         <p className={cn("text-xs font-semibold uppercase tracking-wide",
-          isToday ? "text-cyan-800 dark:text-cyan-300" : "text-muted-foreground")}>
+          isToday ? "text-cyan-800" : "text-muted-foreground")}>
           {WEEKDAYS[weekdayIdx(date)]}{isToday ? " · Bugün" : ""}
         </p>
-        <p className={cn("text-sm font-semibold", isToday && "text-cyan-800 dark:text-cyan-300")}>
+        <p className={cn("text-sm font-semibold", isToday && "text-cyan-800")}>
           {fmtLong(date)}
         </p>
       </div>
@@ -425,7 +425,7 @@ function AppointmentCard({ appt, onEdit, onRecord, onAsk }: { appt: AppointmentI
   const active = appt.status === "scheduled" || appt.status === "pending";
   const needsRecord = !appt.session_id && ((appt.status === "scheduled" && appt.is_past) || appt.status === "done" || appt.status === "no_show");
   return (
-    <div className={cn("rounded-lg border border-border border-l-4 bg-card p-2.5 shadow-sm", STATUS_RAIL[appt.status])}
+    <div className={cn("rounded-lg border border-border border-l-4 bg-card p-2.5", STATUS_RAIL[appt.status])}
       data-testid="appt-card">
       <div className="flex flex-wrap items-center justify-between gap-1">
         <span className="text-base font-bold tabular-nums">{appt.start_time}</span>
@@ -476,7 +476,7 @@ function AppointmentCard({ appt, onEdit, onRecord, onAsk }: { appt: AppointmentI
                 withReason: true,
                 onConfirm: (reason) => setStatus.mutate({ apptId: appt.id, status: "cancelled", reason: reason || undefined }),
               })}
-              className="rounded-md border border-border px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10">
+              className="rounded-md border border-border px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50">
               İptal
             </button>
           </>
@@ -494,10 +494,10 @@ function Panel({ icon: Icon, title, children, action }: {
   icon: LucideIcon; title: string; children: React.ReactNode; action?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+    <section className="rounded-xl border border-border bg-card p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-          <Icon className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+          <Icon className="size-4 text-cyan-700" aria-hidden />
           {title}
         </h2>
         {action}
@@ -519,7 +519,7 @@ function PendingPanel({ pending, onAsk }: { pending: AppointmentItem[]; onAsk: (
       ) : (
         <ul className="space-y-2" data-testid="appt-pending">
           {pending.map((p) => (
-            <li key={p.id} className="rounded-lg border border-amber-300 border-l-4 border-l-amber-500 p-2.5 dark:border-amber-500/40">
+            <li key={p.id} className="rounded-lg border border-amber-300 border-l-4 border-l-amber-500 p-2.5">
               <p className="break-words text-sm font-semibold">{p.student_name}</p>
               <p className="text-xs text-muted-foreground">
                 {relDay(p.date)} · {p.start_time} · {p.duration_min} dk
@@ -586,7 +586,7 @@ function SeriesPanel({ series, onTime, onAsk }: {
                     withReason: false,
                     onConfirm: () => update.mutate({ seriesId: s.id, active: false }),
                   })}
-                  className="rounded-md border border-border px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10">
+                  className="rounded-md border border-border px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50">
                   Kapat
                 </button>
               </div>
@@ -602,7 +602,7 @@ function AvailabilitySummary({ windows, onEdit }: { windows: AvailabilityWindowI
   const sorted = [...windows].sort((a, b) => a.weekday - b.weekday || a.start_time.localeCompare(b.start_time));
   return (
     <Panel icon={Clock} title="Uygunluk saatlerin"
-      action={<button type="button" onClick={onEdit} className="text-xs font-medium text-cyan-700 hover:underline dark:text-cyan-400">Düzenle</button>}>
+      action={<button type="button" onClick={onEdit} className="text-xs font-medium text-cyan-700 hover:underline">Düzenle</button>}>
       {sorted.length === 0 ? (
         <p className="text-xs text-muted-foreground">
           Tanımlı değil — öğrenciler görüşme isteyemez, görüşmeleri yalnız sen planlarsın.
@@ -647,7 +647,7 @@ function GoogleCard({ google, onAsk }: {
             {google.email ?? "Bağlı"} — yeni randevulara Meet linki otomatik eklenir.
           </p>
           {google.last_error ? (
-            <p className="mt-1 break-words text-xs text-rose-700 dark:text-rose-400">Son hata: {google.last_error}</p>
+            <p className="mt-1 break-words text-xs text-rose-700">Son hata: {google.last_error}</p>
           ) : null}
           <Button variant="outline" size="sm" className="mt-2" disabled={disconnect.isPending}
             onClick={() => onAsk({
@@ -1223,7 +1223,7 @@ function AvailabilityDialog({
                 </select>
                 <Button
                   type="button" variant="ghost" size="sm"
-                  className="h-8 px-2 text-rose-700 dark:text-rose-400 ml-auto"
+                  className="h-8 px-2 text-rose-700 ml-auto"
                   onClick={() => setRows((rs) => rs.filter((_, idx) => idx !== i))}
                   aria-label="Aralığı sil"
                 >

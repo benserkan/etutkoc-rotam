@@ -130,9 +130,9 @@ export function ExamOverviewTab({
                 className={cn(
                   "rounded-xl border p-3 text-sm leading-relaxed",
                   r.tone === "warn"
-                    ? "border-orange-300 bg-orange-50 text-orange-950 dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-100"
+                    ? "border-orange-300 bg-orange-50 text-orange-950"
                     : r.tone === "good"
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-100"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-950"
                       : "border-border bg-muted/40",
                 )}
               >
@@ -176,14 +176,14 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "cy
     <div
       className={cn(
         "rounded-xl px-3.5 py-2",
-        tone === "cyan" ? "bg-cyan-50 dark:bg-cyan-500/10" : tone === "violet" ? "bg-violet-50 dark:bg-violet-500/10" : "bg-muted/60",
+        tone === "cyan" ? "bg-cyan-50" : tone === "violet" ? "bg-violet-50" : "bg-muted/60",
       )}
     >
       <div className="text-xs text-muted-foreground">{label}</div>
       <div
         className={cn(
           "text-lg font-extrabold tabular-nums",
-          tone === "cyan" ? "text-cyan-800 dark:text-cyan-300" : tone === "violet" ? "text-violet-800 dark:text-violet-300" : "",
+          tone === "cyan" ? "text-cyan-800" : tone === "violet" ? "text-violet-800" : "",
         )}
       >
         {value}
@@ -222,7 +222,7 @@ function LastExamHero({
           <div className="text-xs font-bold tracking-wider text-cyan-300">SON DENEME · {fmtDate(L.date).toLocaleUpperCase("tr-TR")}</div>
           <div className="mt-1 text-[15px] font-semibold leading-snug">{L.title}</div>
         </div>
-        {L.is_record ? <span className="rounded-full bg-emerald-400 px-2.5 py-1 text-xs font-extrabold text-emerald-950 dark:text-emerald-950">Kişisel rekor</span> : null}
+        {L.is_record ? <span className="rounded-full bg-emerald-400 px-2.5 py-1 text-xs font-extrabold text-emerald-950">Kişisel rekor</span> : null}
       </div>
       <div className="flex flex-wrap items-baseline gap-3">
         <span className="text-6xl font-extrabold leading-none tracking-tight tabular-nums">{fmtNum(L.net)}</span>
@@ -312,7 +312,7 @@ function LossCard({ d }: { d: ExamOverviewResponse }) {
             ]}
           />
           <div className="flex flex-wrap gap-4 text-[13px]">
-            <span><b className="text-rose-700 dark:text-rose-300">{fmtNum(loss.from_wrong)}</b> yanlıştan ({d.last!.wrong} soru)</span>
+            <span><b className="text-rose-700">{fmtNum(loss.from_wrong)}</b> yanlıştan ({d.last!.wrong} soru)</span>
             <span><b>{fmtNum(loss.from_blank)}</b> boştan ({d.last!.blank} soru)</span>
           </div>
           <ul className="flex flex-col gap-2">
@@ -338,7 +338,7 @@ function LossCard({ d }: { d: ExamOverviewResponse }) {
             ) : null}
           </ul>
           {loss.note ? (
-            <p className="rounded-xl bg-rose-50 px-3 py-2.5 text-[13px] text-rose-950 dark:bg-rose-500/10 dark:text-rose-100">{loss.note}</p>
+            <p className="rounded-xl bg-rose-50 px-3 py-2.5 text-[13px] text-rose-950">{loss.note}</p>
           ) : null}
         </>
       ) : (
@@ -381,7 +381,7 @@ function TopicsBlock({ d }: { d: ExamOverviewResponse }) {
                   <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                     <div className="h-full bg-emerald-500" style={{ width: `${(100 * o.net_gain_per_exam) / max}%` }} />
                   </div>
-                  <div className="text-right font-extrabold tabular-nums text-emerald-700 dark:text-emerald-300">
+                  <div className="text-right font-extrabold tabular-nums text-emerald-700">
                     {fmtNum(o.net_gain_per_exam, { plus: true })}
                   </div>
                 </li>
@@ -443,7 +443,7 @@ function TrendTopicCard({
       eyebrow={eyebrow}
       tone={tone}
       title={title}
-      className={tone === "orange" ? "border-orange-300 dark:border-orange-500/40" : "border-emerald-300 dark:border-emerald-500/40"}
+      className={tone === "orange" ? "border-orange-300" : "border-emerald-300"}
     >
       {items.length ? (
         <ul className="flex flex-col gap-2 text-sm">
@@ -455,7 +455,7 @@ function TrendTopicCard({
               <span
                 className={cn(
                   "font-bold tabular-nums",
-                  tone === "orange" ? "text-orange-700 dark:text-orange-300" : "text-emerald-700 dark:text-emerald-300",
+                  tone === "orange" ? "text-orange-700" : "text-emerald-700",
                 )}
               >
                 {pct(it.first_accuracy)} → {pct(it.last_accuracy)}
@@ -472,8 +472,8 @@ function TrendTopicCard({
 }
 
 const TENDENCY: Record<string, { label: string; cls: string }> = {
-  riskli: { label: "hep işaretliyor", cls: "text-rose-700 dark:text-rose-300" },
-  cekingen: { label: "çekingen", cls: "text-slate-600 dark:text-slate-300" },
+  riskli: { label: "hep işaretliyor", cls: "text-rose-700" },
+  cekingen: { label: "çekingen", cls: "text-slate-600" },
   dengeli: { label: "dengeli", cls: "text-foreground" },
 };
 
@@ -579,7 +579,7 @@ function ScoreCard({ d }: { d: ExamOverviewResponse }) {
         </table>
       ) : null}
       {sc.warnings.length ? (
-        <ul className="flex flex-col gap-1 text-xs text-amber-900 dark:text-amber-200">
+        <ul className="flex flex-col gap-1 text-xs text-amber-900">
           {sc.warnings.map((w) => (
             <li key={w}>{w}</li>
           ))}
@@ -594,12 +594,12 @@ function AgendaBlock({ d, studentId }: { d: ExamOverviewResponse; studentId: num
   return (
     <section
       data-section="exam-overview:agenda"
-      className="flex flex-col gap-4 rounded-2xl border border-cyan-300 bg-cyan-50 p-5 dark:border-cyan-500/30 dark:bg-cyan-500/10 sm:p-6"
+      className="flex flex-col gap-4 rounded-2xl border border-cyan-300 bg-cyan-50 p-5 sm:p-6"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-xs font-bold tracking-wider text-cyan-800 dark:text-cyan-300">SEANS İÇİN</div>
-          <h3 className="mt-1 text-lg font-extrabold text-cyan-950 dark:text-cyan-50 sm:text-xl">
+          <div className="text-xs font-bold tracking-wider text-cyan-800">SEANS İÇİN</div>
+          <h3 className="mt-1 text-lg font-extrabold text-cyan-950 sm:text-xl">
             Bu denemelerden konuşulacak {d.agenda.length} şey
           </h3>
         </div>

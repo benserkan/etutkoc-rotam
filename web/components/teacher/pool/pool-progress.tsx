@@ -77,9 +77,9 @@ export function pctOf(n: number, total: number): number {
 }
 
 function pctTone(p: number): string {
-  if (p >= 70) return "text-emerald-700 dark:text-emerald-300";
-  if (p >= 40) return "text-amber-700 dark:text-amber-300";
-  return "text-rose-700 dark:text-rose-300";
+  if (p >= 70) return "text-emerald-700";
+  if (p >= 40) return "text-amber-700";
+  return "text-rose-700";
 }
 
 /** Öğrenci kaydı (dolu) + seansta işaret (açık ton) + kalan (boş) üç parçalı çubuk. */
@@ -198,7 +198,7 @@ export function DayStrip({ studentId, periodId, items, today, expectedNextOn }: 
                   ))}
                 </div>
                 <span className="text-[11px] text-muted-foreground">{empty ? "kap boş" : `${d.done_units} birim`}</span>
-                {open > 0 && <span className="text-[11px] text-amber-700 dark:text-amber-300">{open} açık</span>}
+                {open > 0 && <span className="text-[11px] text-amber-700">{open} açık</span>}
               </button>
             );
           })}

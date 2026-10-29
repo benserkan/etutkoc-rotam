@@ -135,7 +135,7 @@ function ShareDialog({
           </DialogDescription>
         </DialogHeader>
         {error ? (
-          <p className="rounded-md bg-rose-500/10 px-3 py-2 text-sm text-rose-800 dark:text-rose-200">{error}</p>
+          <p className="rounded-md bg-rose-500/10 px-3 py-2 text-sm text-rose-800">{error}</p>
         ) : !file ? (
           <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-3 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" aria-hidden />

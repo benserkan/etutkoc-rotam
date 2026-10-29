@@ -28,7 +28,7 @@ export function PoolDailyCard() {
     <section className="rounded-xl border bg-card p-4" data-section="pool:daily">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="inline-flex items-center gap-2 text-base font-semibold text-foreground">
-          <CalendarCheck2 className="size-5 text-cyan-700 dark:text-cyan-400" aria-hidden /> Bugünkü görüşme listesi · havuz öğrencileri
+          <CalendarCheck2 className="size-5 text-cyan-700" aria-hidden /> Bugünkü görüşme listesi · havuz öğrencileri
         </h2>
         <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold">
           <span className="rounded-full bg-cyan-700 px-2 py-0.5 text-white">bugün seans {c.sessions_today}</span>
@@ -55,7 +55,7 @@ function Row({ r }: { r: PoolDailyRow }) {
   const refresh = () => qc.invalidateQueries({ queryKey: poolDailyKey });
   const prim = r.primary;
   return (
-    <li className={cn("py-2", r.session_today && "rounded-md bg-cyan-50 px-2 dark:bg-cyan-500/10")} data-student={r.student_id} data-session-today={r.session_today ? "1" : "0"}>
+    <li className={cn("py-2", r.session_today && "rounded-md bg-cyan-50 px-2")} data-student={r.student_id} data-session-today={r.session_today ? "1" : "0"}>
       <div className="flex flex-wrap items-center gap-2">
         {r.session_today ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-cyan-700 px-2 py-0.5 text-[11px] font-semibold text-white">

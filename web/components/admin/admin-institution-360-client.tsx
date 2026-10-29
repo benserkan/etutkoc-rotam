@@ -62,7 +62,7 @@ export function AdminInstitution360Client({ initial, institutionId }: Props) {
           </Link>
           <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-2xl font-semibold tracking-tight">
             <span className="inline-flex items-center gap-2">
-              <Building2 className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
+              <Building2 className="size-6 text-indigo-700" aria-hidden />
               {ident.name}
             </span>
             <StatusBadge label={ident.is_active ? "Aktif" : "Pasif"} tone={ident.is_active ? "emerald" : "slate"} />
@@ -77,7 +77,7 @@ export function AdminInstitution360Client({ initial, institutionId }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href={`/admin/institutions/${ident.id}/account-history`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:hover:bg-indigo-500/25"
+            className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
           >
             <ScrollText className="size-4" aria-hidden />
             Hesap Hareketleri
@@ -126,7 +126,7 @@ export function AdminInstitution360Client({ initial, institutionId }: Props) {
               <h2 className="text-sm font-semibold">Açık Riskler ({d.risks.length})</h2>
             </div>
             {d.risks.length === 0 ? (
-              <div className="px-4 py-10 text-center text-sm text-emerald-700 dark:text-emerald-300">Açık risk yok — temiz.</div>
+              <div className="px-4 py-10 text-center text-sm text-emerald-700">Açık risk yok — temiz.</div>
             ) : (
               <ul className="divide-y divide-border">
                 {d.risks.map((r, i) => {
@@ -201,13 +201,13 @@ export function AdminInstitution360Client({ initial, institutionId }: Props) {
 
 function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: string }) {
   const cls: Record<string, string> = {
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-    rose: "bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-    amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-    sky: "bg-sky-50 border-sky-200 text-sky-900 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-    slate: "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
-    yellow: "bg-yellow-50 border-yellow-200 text-yellow-900 dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-200",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
+    rose: "bg-rose-50 border-rose-200 text-rose-900",
+    amber: "bg-amber-50 border-amber-200 text-amber-900",
+    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900",
+    sky: "bg-sky-50 border-sky-200 text-sky-900",
+    slate: "bg-slate-50 border-slate-200 text-slate-900",
+    yellow: "bg-yellow-50 border-yellow-200 text-yellow-900",
   };
   return (
     <div className={cn("rounded-lg border p-4", cls[tone] ?? cls.slate)}>

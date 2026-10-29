@@ -236,7 +236,7 @@ function Body({
                 <p
                   className={cn(
                     "mt-1.5 text-xs",
-                    over ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground",
+                    over ? "text-rose-700" : "text-muted-foreground",
                   )}
                 >
                   {over
@@ -303,9 +303,9 @@ function NumField({
         className={cn(
           "mb-0.5 block text-[11px] font-medium",
           tone === "emerald"
-            ? "text-emerald-700 dark:text-emerald-300"
+            ? "text-emerald-700"
             : tone === "rose"
-              ? "text-rose-700 dark:text-rose-300"
+              ? "text-rose-700"
               : "text-muted-foreground",
         )}
       >

@@ -56,7 +56,7 @@ export function PromoteForm({ studentId }: Props) {
   }
   if (q.error || !q.data) {
     return (
-      <div className="text-sm text-rose-600 dark:text-rose-300">Form yüklenemedi.</div>
+      <div className="text-sm text-rose-600">Form yüklenemedi.</div>
     );
   }
 
@@ -194,7 +194,7 @@ function FormBody({
           </Link>
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <ArrowUpRight className="size-6 text-violet-600 dark:text-violet-300" aria-hidden />
+          <ArrowUpRight className="size-6 text-violet-600" aria-hidden />
           {initial.is_graduate ? "Yeni Öğretim Yılı" : "Sınıf Yükselt"}
         </h1>
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
@@ -261,7 +261,7 @@ function FormBody({
                     Listede yıl yok — önce{" "}
                     <Link
                       href="/teacher/years"
-                      className="text-indigo-600 dark:text-indigo-300 hover:underline"
+                      className="text-indigo-600 hover:underline"
                     >
                       akademik yıllar
                     </Link>{" "}
@@ -525,13 +525,13 @@ function TransitionPreviewPanel({
   onBack: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-cyan-300 bg-cyan-50/60 p-4 space-y-3 dark:border-cyan-500/40 dark:bg-cyan-500/10">
+    <div className="rounded-lg border border-cyan-300 bg-cyan-50/60 p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+          <h3 className="text-sm font-semibold text-cyan-900">
             Uygulanınca ne olacak?
           </h3>
-          <p className="text-xs text-cyan-900/80 dark:text-cyan-200/80">
+          <p className="text-xs text-cyan-900/80">
             {preview.current_grade_label} ({preview.current_curriculum_label})
             {" → "}
             {preview.target_grade_label} ({preview.target_curriculum_label})
@@ -540,13 +540,13 @@ function TransitionPreviewPanel({
         <button
           type="button"
           onClick={onBack}
-          className="text-xs text-cyan-900/70 underline underline-offset-2 dark:text-cyan-200/70"
+          className="text-xs text-cyan-900/70 underline underline-offset-2"
         >
           Geri dön
         </button>
       </div>
 
-      <ul className="space-y-1 text-xs text-cyan-950 dark:text-cyan-100">
+      <ul className="space-y-1 text-xs text-cyan-950">
         {preview.notes.map((n, i) => (
           <li key={i} className="flex gap-1.5">
             <span aria-hidden>•</span>
@@ -555,7 +555,7 @@ function TransitionPreviewPanel({
         ))}
       </ul>
 
-      <div className="rounded-md bg-white/70 px-3 py-2 text-xs text-slate-800 dark:bg-slate-900/40 dark:text-slate-200">
+      <div className="rounded-md bg-white/70 px-3 py-2 text-xs text-slate-800">
         Yeni dönem <strong>{preview.period_boundary}</strong> tarihinde başlar.
         Önceki döneme <strong>{preview.previous_task_count} görev</strong> ve{" "}
         <strong>{preview.previous_exam_count} deneme</strong> yazılır — bunlar
@@ -564,7 +564,7 @@ function TransitionPreviewPanel({
 
       {preview.archive_candidates.length > 0 ? (
         <div className="space-y-1.5">
-          <p className="text-xs font-medium text-cyan-900 dark:text-cyan-100">
+          <p className="text-xs font-medium text-cyan-900">
             Geçen dönemin kitapları ({picks.length}/
             {preview.archive_candidates.length} seçili)
           </p>
@@ -572,7 +572,7 @@ function TransitionPreviewPanel({
             {preview.archive_candidates.map((cd) => (
               <label
                 key={cd.book_id}
-                className="flex cursor-pointer items-start gap-2 rounded-md border border-cyan-200 bg-white/80 p-2 text-xs text-slate-800 dark:border-cyan-500/30 dark:bg-slate-900/40 dark:text-slate-200"
+                className="flex cursor-pointer items-start gap-2 rounded-md border border-cyan-200 bg-white/80 p-2 text-xs text-slate-800"
               >
                 <input
                   type="checkbox"
@@ -584,7 +584,7 @@ function TransitionPreviewPanel({
                   <span className="block truncate font-medium">
                     {cd.book_name}
                   </span>
-                  <span className="block text-slate-600 dark:text-slate-400">
+                  <span className="block text-slate-600">
                     {cd.subject_name ?? "—"} · {cd.completed_tests}/
                     {cd.total_tests} test çözülmüş
                     {cd.reserved_tests > 0
@@ -595,7 +595,7 @@ function TransitionPreviewPanel({
               </label>
             ))}
           </div>
-          <p className="text-[11px] text-cyan-900/70 dark:text-cyan-200/70">
+          <p className="text-[11px] text-cyan-900/70">
             Yaz tekrarı için tutmak istediğin kitabın işaretini kaldır.
             Arşivlenen kitap silinmez; istediğinde geri alırsın.
           </p>

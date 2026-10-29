@@ -255,32 +255,32 @@ const TYPE_META: Record<
   change: {
     label: "Sayı değiştir",
     Icon: RotateCcw,
-    bg: "bg-blue-100 dark:bg-blue-900/40",
-    fg: "text-blue-700 dark:text-blue-300",
+    bg: "bg-blue-100",
+    fg: "text-blue-700",
   },
   replace: {
     label: "Kaynağı değiştir",
     Icon: Replace,
-    bg: "bg-purple-100 dark:bg-purple-900/40",
-    fg: "text-purple-700 dark:text-purple-300",
+    bg: "bg-purple-100",
+    fg: "text-purple-700",
   },
   remove: {
     label: "Görev çıkar",
     Icon: Trash2,
-    bg: "bg-rose-100 dark:bg-rose-900/40",
-    fg: "text-rose-700 dark:text-rose-300",
+    bg: "bg-rose-100",
+    fg: "text-rose-700",
   },
   question: {
     label: "Soru",
     Icon: MessageCircle,
-    bg: "bg-amber-100 dark:bg-amber-900/40",
-    fg: "text-amber-700 dark:text-amber-300",
+    bg: "bg-amber-100",
+    fg: "text-amber-700",
   },
   add: {
     label: "Yeni görev iste",
     Icon: CalendarDays,
-    bg: "bg-emerald-100 dark:bg-emerald-900/40",
-    fg: "text-emerald-700 dark:text-emerald-300",
+    bg: "bg-emerald-100",
+    fg: "text-emerald-700",
   },
 };
 
@@ -288,26 +288,26 @@ const STATUS_META = {
   pending: {
     label: "Bekliyor",
     Icon: Clock,
-    bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+    bg: "bg-amber-100 text-amber-800",
   },
   approved: {
     label: "Onaylandı",
     Icon: CheckCircle2,
-    bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+    bg: "bg-emerald-100 text-emerald-800",
   },
   rejected: {
     label: "Reddedildi",
     Icon: XCircle,
-    bg: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200",
+    bg: "bg-rose-100 text-rose-800",
   },
   withdrawn: {
     label: "Geri çekildi",
     Icon: RotateCcw,
-    bg: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    bg: "bg-slate-200 text-slate-700",
   },
   resolved: {
     label: "Yanıtlandı",
     Icon: MessageCircle,
-    bg: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200",
+    bg: "bg-blue-100 text-blue-800",
   },
 } as const;

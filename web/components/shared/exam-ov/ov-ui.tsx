@@ -42,11 +42,11 @@ export function OvSection({
   dataSection?: string;
 }) {
   const eyebrowTone = {
-    cyan: "text-cyan-800 dark:text-cyan-300",
-    rose: "text-rose-700 dark:text-rose-300",
-    emerald: "text-emerald-800 dark:text-emerald-300",
-    orange: "text-orange-800 dark:text-orange-300",
-    violet: "text-violet-800 dark:text-violet-300",
+    cyan: "text-cyan-800",
+    rose: "text-rose-700",
+    emerald: "text-emerald-800",
+    orange: "text-orange-800",
+    violet: "text-violet-800",
   }[tone];
   return (
     <section
@@ -70,10 +70,10 @@ export function OvSection({
 export function ratioClass(r: number | null | undefined): string {
   if (r == null) return "bg-muted text-muted-foreground";
   if (r >= 0.85) return "bg-teal-700 text-white";
-  if (r >= 0.7) return "bg-teal-200 text-teal-950 dark:text-teal-950";
-  if (r >= 0.5) return "bg-amber-200 text-amber-950 dark:text-amber-950";
-  if (r >= 0.3) return "bg-orange-300 text-orange-950 dark:text-orange-950";
-  return "bg-rose-300 text-rose-950 dark:text-rose-950";
+  if (r >= 0.7) return "bg-teal-200 text-teal-950";
+  if (r >= 0.5) return "bg-amber-200 text-amber-950";
+  if (r >= 0.3) return "bg-orange-300 text-orange-950";
+  return "bg-rose-300 text-rose-950";
 }
 
 export function RatioLegend({ className }: { className?: string }) {
@@ -143,7 +143,7 @@ export function TrendChart({ trend, height = 240, className }: { trend: OvTrend;
             height={Math.max(2, y(trend.band_low) - y(trend.band_high))}
             className="fill-teal-500/15"
           />
-          <text x={padL + 8} y={y(trend.band_high) + 15} className="fill-teal-800 text-[11px] font-semibold dark:fill-teal-300">
+          <text x={padL + 8} y={y(trend.band_high) + 15} className="fill-teal-800 text-[11px] font-semibold">
             normal aralık {fmtNum(trend.band_low)}–{fmtNum(trend.band_high)}
           </text>
         </>
@@ -159,12 +159,12 @@ export function TrendChart({ trend, height = 240, className }: { trend: OvTrend;
       {trend.target != null ? (
         <>
           <line x1={padL} x2={W - padR} y1={y(trend.target)} y2={y(trend.target)} className="stroke-violet-600" strokeDasharray="8 6" strokeWidth={2} />
-          <text x={padL + 4} y={y(trend.target) - 6} className="fill-violet-700 text-[11px] font-semibold dark:fill-violet-300">
+          <text x={padL + 4} y={y(trend.target) - 6} className="fill-violet-700 text-[11px] font-semibold">
             hedef {fmtNum(trend.target)}
           </text>
         </>
       ) : null}
-      <polyline points={line} fill="none" className="stroke-cyan-700 dark:stroke-cyan-400" strokeWidth={3} strokeLinejoin="round" />
+      <polyline points={line} fill="none" className="stroke-cyan-700" strokeWidth={3} strokeLinejoin="round" />
       {trend.projection != null && pts.length ? (
         <>
           <line
@@ -172,12 +172,12 @@ export function TrendChart({ trend, height = 240, className }: { trend: OvTrend;
             y1={y(pts[lastI].net)}
             x2={x(lastI + 1)}
             y2={y(trend.projection)}
-            className="stroke-cyan-700 dark:stroke-cyan-400"
+            className="stroke-cyan-700"
             strokeWidth={2}
             strokeDasharray="6 6"
           />
-          <circle cx={x(lastI + 1)} cy={y(trend.projection)} r={6} className="fill-card stroke-cyan-700 dark:stroke-cyan-400" strokeWidth={2} strokeDasharray="3 3" />
-          <text x={x(lastI + 1)} y={y(trend.projection) - 12} textAnchor="middle" className="fill-cyan-800 text-[11px] font-semibold dark:fill-cyan-300">
+          <circle cx={x(lastI + 1)} cy={y(trend.projection)} r={6} className="fill-card stroke-cyan-700" strokeWidth={2} strokeDasharray="3 3" />
+          <text x={x(lastI + 1)} y={y(trend.projection) - 12} textAnchor="middle" className="fill-cyan-800 text-[11px] font-semibold">
             ~{fmtNum(trend.projection, { digits: 0 })}
           </text>
           <text x={x(lastI + 1)} y={H - 10} textAnchor="middle" className="fill-muted-foreground text-[11px]">
@@ -196,8 +196,8 @@ export function TrendChart({ trend, height = 240, className }: { trend: OvTrend;
               cy={y(p.net)}
               r={isLast ? 8 : 6}
               className={cn(
-                isLast ? "fill-cyan-700 dark:fill-cyan-400" : "fill-card",
-                below ? "stroke-orange-600" : "stroke-cyan-700 dark:stroke-cyan-400",
+                isLast ? "fill-cyan-700" : "fill-card",
+                below ? "stroke-orange-600" : "stroke-cyan-700",
               )}
               strokeWidth={3}
             />
@@ -207,7 +207,7 @@ export function TrendChart({ trend, height = 240, className }: { trend: OvTrend;
               textAnchor="middle"
               className={cn(
                 "text-[12px] font-bold",
-                below ? "fill-orange-700 dark:fill-orange-300" : isLast ? "fill-cyan-800 dark:fill-cyan-300" : "fill-foreground",
+                below ? "fill-orange-700" : isLast ? "fill-cyan-800" : "fill-foreground",
               )}
             >
               {fmtNum(p.net)}
@@ -277,9 +277,9 @@ export function SubjectMatrix({
                   r.change == null
                     ? "text-muted-foreground"
                     : r.change > 0
-                      ? "text-emerald-700 dark:text-emerald-300"
+                      ? "text-emerald-700"
                       : r.change < 0
-                        ? "text-rose-700 dark:text-rose-300"
+                        ? "text-rose-700"
                         : "text-muted-foreground",
                 )}
               >

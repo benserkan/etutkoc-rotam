@@ -54,23 +54,23 @@ export function CampaignLeadForm({
 
   if (done) {
     return (
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-500/15 dark:border-emerald-500/30 p-5 text-center shadow-sm">
+      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-600 text-white">
           <Check className="size-6" aria-hidden />
         </div>
-        <h3 className="mt-3 text-lg font-bold text-emerald-900 dark:text-emerald-200">Talebin alındı</h3>
-        <p className="mt-1.5 text-sm text-emerald-800 dark:text-emerald-200">
+        <h3 className="mt-3 text-lg font-bold text-emerald-900">Talebin alındı</h3>
+        <p className="mt-1.5 text-sm text-emerald-800">
           En kısa sürede seninle iletişime geçilecek. Teşekkürler!
         </p>
         <a
           href="/static/lead-magnet-bagimsiz-koc-rehberi.pdf"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-800"
+          className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-cyan-800"
         >
           Ücretsiz rehberi indir (PDF)
         </a>
-        <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">
+        <p className="mt-2 text-xs text-emerald-700">
           “Bağımsız Koç için 7 Adımda Sürdürülebilir Öğrenci Takip Sistemi”
         </p>
       </section>
@@ -78,8 +78,8 @@ export function CampaignLeadForm({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-card p-5 shadow-sm">
-      <h3 className="text-base font-bold text-slate-900 dark:text-slate-200">
+    <section className="rounded-2xl border border-slate-200 bg-card p-5">
+      <h3 className="text-base font-bold text-slate-900">
         {isInst ? "Kurumunuz için bilgi alın" : "Hemen başlamak için bilgilerini bırak"}
       </h3>
       <p className="mt-1 text-sm text-slate-500">
@@ -87,26 +87,26 @@ export function CampaignLeadForm({
       </p>
       <form onSubmit={submit} method="post" className="mt-4 space-y-3">
         <div>
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Ad Soyad</label>
+          <label className="text-xs font-medium text-slate-600">Ad Soyad</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={isInst ? "Yetkili adı soyadı" : "Adın soyadın"}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Telefon</label>
+          <label className="text-xs font-medium text-slate-600">Telefon</label>
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             inputMode="tel"
             placeholder="05XX XXX XX XX"
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+          <label className="text-xs font-medium text-slate-600">
             E-posta <span className="text-slate-400">(opsiyonel)</span>
           </label>
           <input
@@ -114,26 +114,26 @@ export function CampaignLeadForm({
             onChange={(e) => setEmail(e.target.value)}
             inputMode="email"
             placeholder="ornek@eposta.com"
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
           />
         </div>
         {isInst ? (
           <div>
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            <label className="text-xs font-medium text-slate-600">
               Kurum adı / not <span className="text-slate-400">(opsiyonel)</span>
             </label>
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Kurum adı, koç sayısı vb."
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
             />
           </div>
         ) : null}
         <button
           type="submit"
           disabled={!valid || pending}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-800 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-cyan-800 disabled:opacity-50"
         >
           {pending ? (
             <Loader2 className="size-5 animate-spin" aria-hidden />

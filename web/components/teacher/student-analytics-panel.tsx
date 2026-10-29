@@ -64,9 +64,9 @@ function fmt(n: number, d = 1): string {
 
 function accText(pct: number | null | undefined): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700 dark:text-emerald-300";
-  if (pct >= 50) return "text-amber-700 dark:text-amber-300";
-  return "text-rose-700 dark:text-rose-300";
+  if (pct >= 70) return "text-emerald-700";
+  if (pct >= 50) return "text-amber-700";
+  return "text-rose-700";
 }
 
 export function StudentAnalyticsPanel({ studentId }: { studentId: number }) {
@@ -84,7 +84,7 @@ export function StudentAnalyticsPanel({ studentId }: { studentId: number }) {
     );
   }
   if (q.error || !q.data) {
-    return <div className="text-sm text-rose-700 dark:text-rose-300">Analitik verileri yüklenemedi.</div>;
+    return <div className="text-sm text-rose-700">Analitik verileri yüklenemedi.</div>;
   }
 
   const d = q.data;
@@ -174,7 +174,7 @@ function Panel({
       <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Icon className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden /> {title}
+            <Icon className="size-4 text-cyan-700" aria-hidden /> {title}
           </h3>
           <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">{desc}</p>
         </div>
@@ -327,7 +327,7 @@ function PaceStrip({ s }: { s: AnalyticsSummary }) {
     { label: "Hız · 7 gün", value: fmt(s.rate_7d), unit: "test/gün", note: "son 7 günde günlük ortalama çözülen test" },
     { label: "Hız · 30 gün", value: fmt(s.rate_30d), unit: "test/gün", note: "son 30 günün günlük ortalaması" },
     { label: "Tutturma · 7 gün", value: `%${s.hit_rate_7d_pct}`, note: "planlanan testin ne kadarı çözüldü",
-      tone: s.hit_rate_7d_pct >= 80 ? "text-emerald-700 dark:text-emerald-300" : s.hit_rate_7d_pct >= 50 ? "text-amber-700 dark:text-amber-300" : "text-rose-700 dark:text-rose-300" },
+      tone: s.hit_rate_7d_pct >= 80 ? "text-emerald-700" : s.hit_rate_7d_pct >= 50 ? "text-amber-700" : "text-rose-700" },
     { label: "İstikrar · 7 gün", value: `%${s.consistency_7d_pct}`, note: "programlı günlerin kaçında en az bir işaret var" },
     { label: "Aktif gün · 30 gün", value: `${s.active_days_30}`, unit: "gün", note: `en uzun kesintisiz seri ${s.longest_streak_30} gün` },
   ];
@@ -370,7 +370,7 @@ function DailyTrendCard({ trend, windowDays }: { trend: AnalyticsTrendPoint[]; w
               const full = p.planned > 0 && p.completed >= p.planned;
               return (
                 <div key={p.date} className="group relative flex h-full flex-1 items-end" title={`${p.label}: ${p.completed} / ${p.planned} test`}>
-                  <div className="absolute bottom-0 w-full rounded-t bg-slate-300 dark:bg-slate-600" style={{ height: `${ph}%` }} />
+                  <div className="absolute bottom-0 w-full rounded-t bg-slate-300" style={{ height: `${ph}%` }} />
                   <div
                     className={cn("relative w-full rounded-t", full ? "bg-emerald-600" : "bg-cyan-600")}
                     style={{ height: `${Math.max(p.completed > 0 ? 3 : 0, ch)}%` }}
@@ -384,7 +384,7 @@ function DailyTrendCard({ trend, windowDays }: { trend: AnalyticsTrendPoint[]; w
             <span>{trend[trend.length - 1]?.label}</span>
           </div>
           <div className="mt-2 flex flex-wrap gap-3 text-[11.5px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-sm bg-slate-300 dark:bg-slate-600" /> planlanan</span>
+            <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-sm bg-slate-300" /> planlanan</span>
             <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-sm bg-cyan-600" /> çözülen (eksik)</span>
             <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-sm bg-emerald-600" /> planın tamamı</span>
           </div>
@@ -409,7 +409,7 @@ function WeeklyTrendCard({ weeks }: { weeks: AnalyticsWeekPoint[] }) {
       section="analytics:weekly"
       right={
         delta != null ? (
-          <span className={cn("inline-flex items-center gap-1 text-[12px] font-semibold", delta > 0 ? "text-emerald-700 dark:text-emerald-300" : delta < 0 ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground")}>
+          <span className={cn("inline-flex items-center gap-1 text-[12px] font-semibold", delta > 0 ? "text-emerald-700" : delta < 0 ? "text-rose-700" : "text-muted-foreground")}>
             {delta > 0 ? <TrendingUp className="size-3.5" /> : delta < 0 ? <TrendingDown className="size-3.5" /> : <Minus className="size-3.5" />}
             {delta > 0 ? "+" : ""}{delta} puan · geçen hafta
           </span>
@@ -472,7 +472,7 @@ function SubjectWorkCard({ rows }: { rows: AnalyticsSubjectWork[] }) {
                 <span className="mt-1 h-4 w-1 shrink-0 rounded-full" style={{ backgroundColor: c.rail }} aria-hidden />
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold text-foreground">{r.name}</p>
-                  <p className={cn("text-[11.5px]", idle ? "font-semibold text-rose-700 dark:text-rose-300" : "text-muted-foreground")}>
+                  <p className={cn("text-[11.5px]", idle ? "font-semibold text-rose-700" : "text-muted-foreground")}>
                     {idle ? `${r.planned} test verildi, çözülmedi` : `${r.total} test · plan ${r.planned}`}
                   </p>
                 </div>
@@ -688,7 +688,7 @@ function ExamTrendCard({ exams, delta, section }: { exams: AnalyticsExamPoint[];
       ) : (
         <>
           {delta != null && section ? (
-            <p className={cn("mb-2 inline-flex items-center gap-1.5 text-sm font-semibold", delta > 0 ? "text-emerald-700 dark:text-emerald-300" : delta < 0 ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground")}>
+            <p className={cn("mb-2 inline-flex items-center gap-1.5 text-sm font-semibold", delta > 0 ? "text-emerald-700" : delta < 0 ? "text-rose-700" : "text-muted-foreground")}>
               {delta > 0 ? <TrendingUp className="size-4" /> : delta < 0 ? <TrendingDown className="size-4" /> : <Minus className="size-4" />}
               {delta > 0 ? "+" : ""}{fmt(delta, 2)} net <span className="text-xs font-normal text-muted-foreground">son {section} denemesi</span>
             </p>
@@ -703,7 +703,7 @@ function ExamTrendCard({ exams, delta, section }: { exams: AnalyticsExamPoint[];
                     {e.exam_date ? ` · ${e.exam_date.slice(5).replace("-", ".")}` : ""}
                   </span>
                 </span>
-                <span className="shrink-0 font-bold tabular-nums text-cyan-700 dark:text-cyan-300">{fmt(e.net, 2)} net</span>
+                <span className="shrink-0 font-bold tabular-nums text-cyan-700">{fmt(e.net, 2)} net</span>
               </li>
             ))}
           </ul>
@@ -721,7 +721,7 @@ function WarningsCard({ warnings }: { warnings: AnalyticsWarningItem[] }) {
           const red = w.level === "red";
           return (
             <li key={i} className={cn("rounded-lg border-l-4 px-3 py-2", red ? "border-l-rose-600 bg-rose-500/10" : "border-l-amber-500 bg-amber-500/10")}>
-              <p className={cn("inline-flex items-center gap-1.5 text-sm font-semibold", red ? "text-rose-800 dark:text-rose-200" : "text-amber-900 dark:text-amber-200")}>
+              <p className={cn("inline-flex items-center gap-1.5 text-sm font-semibold", red ? "text-rose-800" : "text-amber-900")}>
                 {red ? <Flame className="size-3.5" /> : <AlertTriangle className="size-3.5" />} {w.title}
               </p>
               {w.detail ? <p className="mt-0.5 text-xs text-foreground/80">{w.detail}</p> : null}
@@ -746,7 +746,7 @@ function BookInventory({ subjects }: { subjects: AnalyticsSubjectRow[] }) {
         aria-expanded={open}
         className="flex w-full items-start gap-2 px-4 py-3 text-left"
       >
-        <BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+        <BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-foreground">Kitap envanteri</span>
           <span className="block text-[12px] text-muted-foreground">

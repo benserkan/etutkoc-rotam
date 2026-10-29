@@ -32,10 +32,10 @@ import type {
 } from "@/lib/types/admin";
 
 const SOURCE_LABELS: Record<string, { label: string; tone: string }> = {
-  db: { label: "Panelden", tone: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200" },
-  env: { label: ".env'den", tone: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200" },
-  default: { label: "Varsayılan", tone: "border-slate-200 bg-slate-50 text-slate-600 dark:text-slate-300 dark:bg-slate-500/10 dark:border-slate-500/30" },
-  none: { label: "Ayarlı değil", tone: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200" },
+  db: { label: "Panelden", tone: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+  env: { label: ".env'den", tone: "border-sky-200 bg-sky-50 text-sky-700" },
+  default: { label: "Varsayılan", tone: "border-slate-200 bg-slate-50 text-slate-600" },
+  none: { label: "Ayarlı değil", tone: "border-amber-200 bg-amber-50 text-amber-800" },
 };
 
 export function AdminAiSettingsClient({ initial }: { initial: AiSettingsResponse }) {
@@ -52,7 +52,7 @@ export function AdminAiSettingsClient({ initial }: { initial: AiSettingsResponse
     <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-xl font-semibold">
-          <Sparkles className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden /> AI Ayarları (Gemini)
+          <Sparkles className="size-5 text-cyan-700" aria-hidden /> AI Ayarları (Gemini)
         </h1>
         <p className="text-sm text-muted-foreground">
           Tek sağlayıcı Gemini. Buraya girilen anahtarları <strong>tüm sistem</strong>{" "}
@@ -60,7 +60,7 @@ export function AdminAiSettingsClient({ initial }: { initial: AiSettingsResponse
         </p>
       </header>
 
-      <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+      <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
         <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
         <span>
           <strong>KVKK:</strong> Öğrenci verili işler (fotoğraf/ses/içgörü) yalnız{" "}
@@ -126,10 +126,10 @@ function HealthCard() {
 
   const overallTone =
     h?.overall === "ok"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
       : h?.overall === "degraded"
-        ? "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
-        : "border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200";
+        ? "border-amber-200 bg-amber-50 text-amber-900"
+        : "border-rose-200 bg-rose-50 text-rose-900";
 
   return (
     <Card>
@@ -177,13 +177,13 @@ function HealthCard() {
 }
 
 const PROBE_TONE: Record<string, string> = {
-  ok: "border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10",
-  quota: "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10",
-  denied: "border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10",
-  invalid_key: "border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10",
-  not_set: "border-slate-200 bg-slate-50 dark:border-slate-500/30 dark:bg-slate-500/10",
-  network: "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10",
-  unknown: "border-slate-200 bg-slate-50 dark:border-slate-500/30 dark:bg-slate-500/10",
+  ok: "border-emerald-200 bg-emerald-50",
+  quota: "border-amber-200 bg-amber-50",
+  denied: "border-rose-200 bg-rose-50",
+  invalid_key: "border-rose-200 bg-rose-50",
+  not_set: "border-slate-200 bg-slate-50",
+  network: "border-amber-200 bg-amber-50",
+  unknown: "border-slate-200 bg-slate-50",
 };
 
 const PROBE_LABEL: Record<string, string> = {
@@ -202,33 +202,33 @@ function ProbeRow({ probe }: { probe: AiHealthProbe }) {
     <li className={cn("rounded-md border px-3 py-2", PROBE_TONE[probe.status])}>
       <div className="flex flex-wrap items-center gap-2">
         {ok ? (
-          <Check className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden />
+          <Check className="size-4 text-emerald-700" aria-hidden />
         ) : (
-          <AlertTriangle className="size-4 text-rose-700 dark:text-rose-300" aria-hidden />
+          <AlertTriangle className="size-4 text-rose-700" aria-hidden />
         )}
-        <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+        <span className="text-sm font-medium text-slate-900">
           {probe.label}
         </span>
-        <span className="rounded bg-slate-900/5 px-1.5 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-white/10 dark:text-slate-300">
+        <span className="rounded bg-slate-900/5 px-1.5 py-0.5 font-mono text-[10px] text-slate-700">
           {probe.model}
         </span>
-        <span className="ml-auto text-xs font-semibold text-slate-800 dark:text-slate-200">
+        <span className="ml-auto text-xs font-semibold text-slate-800">
           {PROBE_LABEL[probe.status]}
           {probe.http_status ? ` · HTTP ${probe.http_status}` : ""}
         </span>
       </div>
-      <p className="mt-1 text-xs text-slate-800 dark:text-slate-200">{probe.summary}</p>
+      <p className="mt-1 text-xs text-slate-800">{probe.summary}</p>
       {probe.action ? (
-        <p className="mt-0.5 text-xs font-medium text-slate-900 dark:text-slate-100">
+        <p className="mt-0.5 text-xs font-medium text-slate-900">
           → {probe.action}
         </p>
       ) : null}
       {probe.raw_message ? (
         <details className="mt-1">
-          <summary className="cursor-pointer text-[11px] text-slate-600 dark:text-slate-400">
+          <summary className="cursor-pointer text-[11px] text-slate-600">
             Google&apos;ın ham mesajı
           </summary>
-          <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded bg-slate-900/5 p-2 text-[10px] text-slate-700 dark:bg-black/30 dark:text-slate-300">
+          <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded bg-slate-900/5 p-2 text-[10px] text-slate-700">
             {probe.raw_message}
           </pre>
         </details>
@@ -276,14 +276,14 @@ function SecretCard({ item, placeholder }: { item: AiSettingItem; placeholder: s
         {item.source === "db" ? (
           confirm ? (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-rose-700 dark:text-rose-300">Silinsin mi?</span>
+              <span className="text-rose-700">Silinsin mi?</span>
               <Button size="sm" variant="ghost" onClick={() => setConfirm(false)} disabled={delIt.isPending}>Vazgeç</Button>
               <Button size="sm" variant="destructive" onClick={() => delIt.mutate({ name: item.name }, { onSuccess: () => setConfirm(false) })} disabled={delIt.isPending}>
                 {delIt.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Trash2 className="size-4" aria-hidden />} Sil
               </Button>
             </div>
           ) : (
-            <button type="button" onClick={() => setConfirm(true)} className="text-xs text-rose-600 dark:text-rose-300 hover:underline">
+            <button type="button" onClick={() => setConfirm(true)} className="text-xs text-rose-600 hover:underline">
               Anahtarı sil
             </button>
           )

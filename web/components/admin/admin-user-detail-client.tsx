@@ -62,11 +62,11 @@ const ROLE_OPTIONS: { value: AdminRole; label: string }[] = [
 ];
 
 const ROLE_COLOR: Record<AdminRole, string> = {
-  super_admin: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-  institution_admin: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
-  teacher: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-  student: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  parent: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+  super_admin: "bg-rose-50 text-rose-700 border-rose-200",
+  institution_admin: "bg-violet-50 text-violet-700 border-violet-200",
+  teacher: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  student: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  parent: "bg-sky-50 text-sky-700 border-sky-200",
 };
 
 /**
@@ -119,13 +119,13 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
               </span>
             )}
             {t.locked_now && (
-              <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-300 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 inline-flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-300 inline-flex items-center gap-1">
                 <Lock className="size-3" aria-hidden />
                 kilitli
               </span>
             )}
             {!t.is_active && (
-              <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200">
+              <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                 pasif
               </span>
             )}
@@ -145,7 +145,7 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
             </Button>
           )}
           {["teacher", "institution_admin", "super_admin"].includes(t.role) && (
-            <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:hover:bg-indigo-500/25">
+            <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
               <Link href={`/admin/users/${t.id}/account-history`}>
                 <FileText className="size-4" aria-hidden />
                 Hesap Hareketleri
@@ -200,8 +200,8 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
             </>
           )}
           {data.is_self && (
-            <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30">
-              <CardContent className="p-5 text-xs text-amber-900 dark:text-amber-200">
+            <Card className="border-amber-200 bg-amber-50/40">
+              <CardContent className="p-5 text-xs text-amber-900">
                 ℹ Bu sayfa <strong>kendi profilin</strong>. Rol değişimi,
                 impersonate ve hesap silme buradan yapılamaz (kilitlenme riski).
                 Şifre sıfırlama için <Link href="/me/account" className="underline">/me/account</Link>{" "}
@@ -258,31 +258,31 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
   let stateBadge: React.ReactNode;
   if (isActive) {
     stateBadge = (
-      <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
+      <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
         Aktif{target.subscription_period_end ? ` · yenileme ${fmtShortDate(target.subscription_period_end)}` : ""}
       </span>
     );
   } else if (sub === "canceled") {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
         İptal edildi{target.subscription_period_end ? ` · ${fmtShortDate(target.subscription_period_end)}'de biter` : ""}
       </span>
     );
   } else if (sub === "past_due") {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
+      <span className="inline-flex items-center rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
         Yenileme gerekli (süresi doldu)
       </span>
     );
   } else if (target.trial_active) {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
         Deneme aktif
       </span>
     );
   } else {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300 dark:bg-slate-500/10 dark:border-slate-500/30">
+      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
         {SOLO_PLAN_LABELS[target.plan ?? "solo_free"] ?? target.plan}
       </span>
     );
@@ -448,11 +448,11 @@ function TrialExtendSection({
   const n = Number(days);
   const valid = Number.isFinite(n) && n >= 1 && n <= 60;
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2 dark:bg-amber-500/10 dark:border-amber-500/30">
-      <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+      <p className="text-xs font-medium text-amber-900">
         Denemeyi uzat (ödemesiz ek süre)
       </p>
-      <p className="text-[11px] text-amber-800/90 dark:text-amber-200/80">
+      <p className="text-[11px] text-amber-800/90">
         Koç yeniden deneme moduna geçer: sınırsız öğrenci + yapay zekâ açık.
         Süre bitince otomatik ücretsiz kata düşer — ücretli plana geçirmez.
       </p>
@@ -466,7 +466,7 @@ function TrialExtendSection({
           className="w-20 bg-card"
           aria-label="Gün"
         />
-        <span className="text-xs text-amber-900 dark:text-amber-200">gün</span>
+        <span className="text-xs text-amber-900">gün</span>
         <select
           value={intended}
           onChange={(e) => setIntended(e.target.value)}
@@ -485,7 +485,7 @@ function TrialExtendSection({
             if (!window.confirm(`Deneme ${n} gün uzatılsın mı?`)) return;
             mut.mutate({ days: n, intended_plan: intended || null });
           }}
-          className="border-amber-400 text-amber-900 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-200 dark:hover:bg-amber-500/20 dark:hover:text-amber-200"
+          className="border-amber-400 text-amber-900 hover:bg-amber-100 hover:text-amber-900"
         >
           {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
           Denemeyi uzat
@@ -534,7 +534,7 @@ function EditUserForm({
     <Card>
       <CardContent className="p-5">
         <h2 className="font-medium mb-3 inline-flex items-center gap-1.5">
-          <UserCog className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
+          <UserCog className="size-4 text-indigo-700" aria-hidden />
           Bilgiler
         </h2>
         <form onSubmit={onSubmit} className="space-y-3">
@@ -655,7 +655,7 @@ function SecurityCard({
     <Card>
       <CardContent className="p-5">
         <h2 className="font-medium mb-3 inline-flex items-center gap-1.5">
-          <ShieldCheck className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden />
+          <ShieldCheck className="size-4 text-indigo-700" aria-hidden />
           Güvenlik
         </h2>
         <dl className="text-xs text-muted-foreground space-y-1.5 mb-3">
@@ -677,7 +677,7 @@ function SecurityCard({
           </DRow>
           <DRow label="Kilit durumu">
             {target.locked_now ? (
-              <span className="text-rose-700 dark:text-rose-300 font-medium">
+              <span className="text-rose-700 font-medium">
                 Kilitli — {formatDateTime(target.locked_until!)} tarihinde açılır
               </span>
             ) : target.locked_until ? (
@@ -805,7 +805,7 @@ function ChangeRoleCard({
     <Card>
       <CardContent className="p-5">
         <h2 className="font-medium mb-3 inline-flex items-center gap-1.5">
-          <UserCog className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />
+          <UserCog className="size-4 text-violet-700" aria-hidden />
           Rol Değişimi
         </h2>
         <form onSubmit={onSubmit} className="space-y-2">
@@ -914,26 +914,26 @@ function ImpersonateCard({
   }
 
   return (
-    <Card className="border-violet-200 bg-violet-50/40 dark:bg-violet-500/10">
+    <Card className="border-violet-200 bg-violet-50/40">
       <CardContent className="p-5">
-        <h2 className="font-medium text-violet-900 dark:text-violet-200 mb-2 inline-flex items-center gap-1.5">
+        <h2 className="font-medium text-violet-900 mb-2 inline-flex items-center gap-1.5">
           <Drama className="size-4" aria-hidden />
           Sahte Oturum
         </h2>
-        <p className="text-xs text-violet-800 dark:text-violet-200 mb-3 leading-relaxed">
+        <p className="text-xs text-violet-800 mb-3 leading-relaxed">
           <strong>{targetName}</strong> olarak sisteme giriş yapmış gibi
           görüntüle. Tüm aksiyonların target adı altında çalışır; üst banner
           ile gerçek admin&apos;e dönebilirsin. <strong>Audit log&apos;a
           kaydedilir.</strong>
         </p>
-        <p className="text-[11px] text-violet-700 dark:text-violet-300 mb-2">
+        <p className="text-[11px] text-violet-700 mb-2">
           ⏱ 30 dakika sonra otomatik kapanır. Gerekçe zorunlu (10-200
           karakter).
         </p>
         <form onSubmit={onStart} className="space-y-2">
           <Label
             htmlFor="imp-reason"
-            className="text-[11px] text-violet-800 dark:text-violet-200 font-medium"
+            className="text-[11px] text-violet-800 font-medium"
           >
             Gerekçe (zorunlu)
           </Label>
@@ -945,8 +945,8 @@ function ImpersonateCard({
             required
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="örn.  dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200'Ödevler görünmüyor şikayetini yerinde inceleme'"
-            className="block w-full px-2 py-1.5 text-xs border border-violet-300 rounded bg-card text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-300"
+            placeholder="örn.'Ödevler görünmüyor şikayetini yerinde inceleme'"
+            className="block w-full px-2 py-1.5 text-xs border border-violet-300 rounded bg-card text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-300"
           />
           <Button
             type="submit"
@@ -969,7 +969,7 @@ function ImpersonateCard({
               işlem audit log&apos;a kaydedilir ve 30 dk sonra otomatik
               kapanır.
             </p>
-            <div className="rounded-md border border-violet-200 bg-violet-50 dark:bg-violet-500/15 dark:border-violet-500/30 p-2 text-xs text-violet-900 dark:text-violet-200">
+            <div className="rounded-md border border-violet-200 bg-violet-50 p-2 text-xs text-violet-900">
               <strong>Gerekçe:</strong> {reason}
             </div>
             <DialogFooter className="gap-2 pt-2">
@@ -1025,20 +1025,20 @@ function DangerZone({
   }
 
   return (
-    <Card className="border-rose-200 bg-rose-50/40 dark:bg-rose-500/10">
+    <Card className="border-rose-200 bg-rose-50/40">
       <CardContent className="p-5">
-        <h2 className="font-medium text-rose-900 dark:text-rose-200 mb-2 inline-flex items-center gap-1.5">
+        <h2 className="font-medium text-rose-900 mb-2 inline-flex items-center gap-1.5">
           <Trash2 className="size-4" aria-hidden />
           Tehlikeli
         </h2>
-        <p className="text-xs text-rose-800 dark:text-rose-200 mb-3 leading-relaxed">
+        <p className="text-xs text-rose-800 mb-3 leading-relaxed">
           Kullanıcıyı tamamen siler. CASCADE ile bağlı veriler de silinir
           (öğrenci silinirse görevleri/ilerlemesi gider).
         </p>
         <Button
           size="sm"
           variant="outline"
-          className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/25"
+          className="border-rose-300 text-rose-700 hover:bg-rose-100"
           onClick={() => setConfirmOpen(true)}
         >
           <Trash2 className="size-3.5" aria-hidden />
@@ -1095,7 +1095,7 @@ function RecentActivityCard({
     <Card>
       <div className="px-4 py-3 border-b border-border">
         <h2 className="font-medium inline-flex items-center gap-1.5">
-          <FileText className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />
+          <FileText className="size-4 text-violet-700" aria-hidden />
           Son Aktivitesi
         </h2>
       </div>

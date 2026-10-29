@@ -37,9 +37,9 @@ export function ActivityHeatmapPrintSheet({ data, weeks }: Props) {
     <>
       <PrintStyles />
 
-      <div className="no-print sticky top-0 z-50 bg-white dark:bg-white border-b border-slate-200 shadow-sm">
+      <div className="no-print sticky top-0 z-50 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
-          <div className="text-sm text-slate-600 dark:text-slate-300">
+          <div className="text-sm text-slate-600">
             <b>Öğretmen Aktivite Raporu</b> — yazdırılabilir / PDF · son {weeks} hafta
           </div>
           <div className="flex gap-2">
@@ -106,12 +106,12 @@ export function ActivityHeatmapPrintSheet({ data, weeks }: Props) {
                     <div className="font-semibold">{t.full_name}</div>
                     <div className="text-[9px] text-slate-500">
                       {t.is_inactive ? (
-                        <span className="text-rose-700 dark:text-rose-300 font-medium">
+                        <span className="text-rose-700 font-medium">
                           PASİF
                         </span>
                       ) : null}
                       {t.is_new ? (
-                        <span className="text-sky-700 dark:text-sky-300 font-medium">YENİ</span>
+                        <span className="text-sky-700 font-medium">YENİ</span>
                       ) : null}
                       {t.is_inactive && t.last_active_day ? " · " : null}
                       {t.last_active_day

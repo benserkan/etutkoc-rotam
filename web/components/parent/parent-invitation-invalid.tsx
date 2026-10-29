@@ -34,13 +34,13 @@ const TONES: Record<
     Icon: Clock,
     title: "Davetin süresi dolmuş",
     body: "Veli davetleri 7 gün geçerlidir. Lütfen sizi davet eden eğitim koçunuzla iletişime geçerek yeni bir davet talep edin.",
-    iconClass: "text-amber-600 dark:text-amber-300",
+    iconClass: "text-amber-600",
   },
   consumed: {
     Icon: CheckCircle2,
     title: "Bu davet zaten kullanılmış",
     body: "Bu link daha önce kabul edilerek bir hesap oluşturuldu. Aşağıdaki butondan giriş yapabilirsiniz.",
-    iconClass: "text-emerald-600 dark:text-emerald-300",
+    iconClass: "text-emerald-600",
     showLogin: true,
   },
 };
@@ -66,7 +66,7 @@ export function ParentInvitationInvalid({ reason }: Props) {
           </p>
         </div>
 
-        <Card className="border-border shadow-sm">
+        <Card className="border-border">
           <CardContent className="p-8 text-center space-y-3">
             <div className="flex justify-center">
               <div

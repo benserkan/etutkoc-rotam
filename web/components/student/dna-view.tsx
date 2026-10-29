@@ -41,15 +41,15 @@ const CHRONOTYPE_META: Record<
 const RISK_META: Record<BurnoutRiskLevel, { label: string; bg: string }> = {
   healthy: {
     label: "Sağlıklı",
-    bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+    bg: "bg-emerald-100 text-emerald-800",
   },
   watch: {
     label: "Gözlemde",
-    bg: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200",
+    bg: "bg-blue-100 text-blue-800",
   },
   warn: {
     label: "Dikkat",
-    bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+    bg: "bg-amber-100 text-amber-800",
   },
   critical: {
     label: "Kritik",
@@ -80,7 +80,7 @@ export function DnaView({ data }: Props) {
       </header>
 
       {!data.has_enough_data ? (
-        <div className="rounded-lg border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-sm">
+        <div className="rounded-lg border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm">
           <p className="font-medium">Henüz yeterli veri yok</p>
           <p className="text-muted-foreground mt-0.5">
             Profil hesabı için en az 5 tamamlanmış göreve ihtiyacın var. Bu
@@ -302,7 +302,7 @@ function TrendCard({ trend }: { trend: DnaTrend }) {
     dir === "up" ? TrendingUp : dir === "down" ? TrendingDown : TrendingDown;
   const tone =
     dir === "up"
-      ? "text-emerald-600 dark:text-emerald-300"
+      ? "text-emerald-600"
       : dir === "down"
         ? "text-destructive"
         : "text-muted-foreground";
@@ -357,8 +357,8 @@ function BurnoutRow({ sig }: { sig: BurnoutSignal }) {
     sig.severity === "high"
       ? "border-destructive/40 bg-destructive/5"
       : sig.severity === "medium"
-        ? "border-amber-400/40 bg-amber-50 dark:bg-amber-950/10"
-        : "border-blue-400/40 bg-blue-50 dark:bg-blue-950/10";
+        ? "border-amber-400/40 bg-amber-50"
+        : "border-blue-400/40 bg-blue-50";
   return (
     <li className={cn("rounded-md border px-3 py-2 text-sm", tone)}>
       <p className="font-medium">

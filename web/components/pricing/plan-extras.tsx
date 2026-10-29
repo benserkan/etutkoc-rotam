@@ -160,7 +160,7 @@ export function PlanMatrix({
                   key={p}
                   className={cn(
                     "py-2 text-center font-semibold",
-                    i === 2 && "text-cyan-700 dark:text-cyan-300", // Rota (en popüler)
+                    i === 2 && "text-cyan-700", // Rota (en popüler)
                   )}
                 >
                   {p}

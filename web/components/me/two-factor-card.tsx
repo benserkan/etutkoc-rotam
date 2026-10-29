@@ -108,13 +108,13 @@ export function TwoFactorCard() {
     <Card className="p-5">
       <div className="mb-1 flex items-center gap-2">
         {status.enabled ? (
-          <ShieldCheck className="size-5 text-emerald-600 dark:text-emerald-300" aria-hidden />
+          <ShieldCheck className="size-5 text-emerald-600" aria-hidden />
         ) : (
           <ShieldOff className="size-5 text-muted-foreground" aria-hidden />
         )}
         <h2 className="font-display text-lg font-semibold">İki faktörlü doğrulama</h2>
         {status.enabled ? (
-          <span className="ml-auto rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
+          <span className="ml-auto rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
             Aktif
           </span>
         ) : (
@@ -149,7 +149,7 @@ export function TwoFactorCard() {
         /* KURULUM — QR + backup + kod doğrulama */
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
-            <div className="inline-block rounded-md bg-white dark:bg-white p-3">
+            <div className="inline-block rounded-md bg-white p-3">
               <QRCodeSVG value={setup.provisioning_uri} size={160} />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -158,11 +158,11 @@ export function TwoFactorCard() {
             <code className="mt-1 block break-all text-xs font-mono">{setup.secret}</code>
           </div>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:bg-amber-500/10 dark:border-amber-500/30">
-            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+            <p className="text-xs font-medium text-amber-900">
               Yedek kodlarınızı güvenli bir yere kaydedin (bir kez gösterilir):
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-1 font-mono text-xs text-amber-900 dark:text-amber-200">
+            <div className="mt-2 grid grid-cols-2 gap-1 font-mono text-xs text-amber-900">
               {setup.backup_codes.map((c) => (
                 <span key={c}>{c}</span>
               ))}

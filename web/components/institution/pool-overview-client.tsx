@@ -29,12 +29,12 @@ function pct(v: number | null | undefined): string {
 }
 function tone(v: number | null | undefined): string {
   if (v == null) return "text-muted-foreground";
-  if (v >= 70) return "text-emerald-700 dark:text-emerald-300";
-  if (v >= 40) return "text-amber-700 dark:text-amber-300";
-  return "text-rose-700 dark:text-rose-300";
+  if (v >= 70) return "text-emerald-700";
+  if (v >= 40) return "text-amber-700";
+  return "text-rose-700";
 }
 function barTone(v: number | null | undefined): string {
-  if (v == null) return "bg-slate-300 dark:bg-slate-600";
+  if (v == null) return "bg-slate-300";
   if (v >= 70) return "bg-emerald-600";
   if (v >= 40) return "bg-amber-500";
   return "bg-rose-600";
@@ -53,7 +53,7 @@ export function PoolOverviewClient({ initial }: { initial: InstitutionPoolOvervi
   const d = q.data ?? initial;
   return (
     <div className="space-y-6" data-section="institution:pool">
-      <header className="rounded-2xl border bg-gradient-to-br from-cyan-700 to-cyan-900 p-5 text-white shadow-sm">
+      <header className="rounded-2xl border bg-gradient-to-br from-cyan-700 to-cyan-900 p-5 text-white">
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
           <Layers className="size-6" aria-hidden /> Haftalık Havuz
         </h1>
@@ -104,9 +104,9 @@ function Kpis({ d }: { d: InstitutionPoolOverviewResponse }) {
           <ColumnHint label="Açık dönem ilerlemesi" hint="Şu an açık dönemi olan öğrencilerde: biten birim ÷ havuzdaki birim (öğrenci kaydı + rehber seans işareti); ortalama. Birim = test sayısı, etkinlik/deneme 1. Çizgi = dönemin geçen gün oranı (yüzde bu civarda olmalı)." />
         </Label>
         <div className={cn("mt-1 text-3xl font-bold tabular-nums", tone(d.avg_open_pct))}>{pct(d.avg_open_pct)}</div>
-        <div className="relative mt-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700" aria-hidden>
+        <div className="relative mt-2 h-2 rounded-full bg-slate-200" aria-hidden>
           <div className={cn("h-2 rounded-full", barTone(d.avg_open_pct))} style={{ width: `${Math.min(100, d.avg_open_pct ?? 0)}%` }} />
-          {exp != null && <div className="absolute -top-1 h-4 w-0.5 bg-slate-900 dark:bg-white" style={{ left: `${Math.min(100, exp)}%` }} />}
+          {exp != null && <div className="absolute -top-1 h-4 w-0.5 bg-slate-900" style={{ left: `${Math.min(100, exp)}%` }} />}
         </div>
         <div className="mt-1 text-xs text-muted-foreground">{exp != null ? `dönemin %${exp}'i geçti` : "beklenen seans günü girilmemiş"}</div>
       </Card>
@@ -121,7 +121,7 @@ function Kpis({ d }: { d: InstitutionPoolOverviewResponse }) {
         <Label icon={CalendarClock}>
           <ColumnHint label="Seansı geciken" hint="Açık dönemi olup beklenen seans günü 3+ gün geçmiş ya da 14 gündür seans yapılmamış öğrenci sayısı (K54)." />
         </Label>
-        <div className={cn("mt-1 text-3xl font-bold tabular-nums", d.late_sessions ? "text-amber-700 dark:text-amber-300" : "text-foreground")}>{d.late_sessions}</div>
+        <div className={cn("mt-1 text-3xl font-bold tabular-nums", d.late_sessions ? "text-amber-700" : "text-foreground")}>{d.late_sessions}</div>
         <div className="mt-1 text-xs text-muted-foreground">öğrenci</div>
       </Card>
       <Card className="p-4">
@@ -129,9 +129,9 @@ function Kpis({ d }: { d: InstitutionPoolOverviewResponse }) {
           <ColumnHint label="Dikkat isteyen öğrenci" hint="Havuz erken uyarı motorunda ana kartı kırmızı (acil) / sarı (dikkat) olan öğrenci sayısı. Öğrenciye kırmızı gösterilmez; rehberin görüşme listesindedir." />
         </Label>
         <div className="mt-1 flex items-baseline gap-3">
-          <span className={cn("text-3xl font-bold tabular-nums", d.red_students ? "text-rose-700 dark:text-rose-300" : "text-foreground")}>{d.red_students}</span>
+          <span className={cn("text-3xl font-bold tabular-nums", d.red_students ? "text-rose-700" : "text-foreground")}>{d.red_students}</span>
           <span className="text-sm text-muted-foreground">kırmızı</span>
-          <span className={cn("text-xl font-semibold tabular-nums", d.amber_students ? "text-amber-700 dark:text-amber-300" : "text-foreground")}>{d.amber_students}</span>
+          <span className={cn("text-xl font-semibold tabular-nums", d.amber_students ? "text-amber-700" : "text-foreground")}>{d.amber_students}</span>
           <span className="text-sm text-muted-foreground">sarı</span>
         </div>
         <div className="mt-1 text-xs text-muted-foreground">{d.students - d.red_students - d.amber_students} öğrenci yolunda</div>
@@ -148,7 +148,7 @@ function SectionTitle({ icon: Icon, children, sub }: { icon: React.ComponentType
   return (
     <div className="mb-3">
       <h2 className="inline-flex items-center gap-2 font-semibold text-foreground">
-        <Icon className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden /> {children}
+        <Icon className="size-4 text-cyan-700" aria-hidden /> {children}
       </h2>
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
     </div>
@@ -163,7 +163,7 @@ function MeterRow({ label, value, total, color, right }: { label: React.ReactNod
         <span className="text-foreground">{label}</span>
         <span className="font-semibold tabular-nums text-foreground">{right ?? `${value} / ${total}`}</span>
       </div>
-      <div className="mt-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700" aria-hidden>
+      <div className="mt-1 h-2 rounded-full bg-slate-200" aria-hidden>
         <div className={cn("h-2 rounded-full", color)} style={{ width: `${w}%` }} />
       </div>
     </div>
@@ -201,7 +201,7 @@ function StudentSide({ d }: { d: InstitutionPoolOverviewResponse }) {
             <ColumnHint label="Tempo" hint="Açık dönemi olan öğrencide, öğrencinin Havuzum ekranında gördüğü tempo cümlesinin aynısı: kalan birim ÷ kalan gün ≤ 2 → yolunda; havuz bitti → önde; daha fazlası → geride; havuz boş → belirsiz." />
             <span className="text-xs text-muted-foreground">{paceTotal} açık dönem</span>
           </div>
-          <div className="mt-1 flex h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700" aria-hidden>
+          <div className="mt-1 flex h-3 overflow-hidden rounded-full bg-slate-200" aria-hidden>
             {seg.map((s) => s.v > 0 && <div key={s.k} className={s.c} style={{ width: `${share(s.v, paceTotal)}%` }} />)}
           </div>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground">
@@ -217,9 +217,9 @@ function StudentSide({ d }: { d: InstitutionPoolOverviewResponse }) {
 
 function MiniStat({ label, value, tone: t }: { label: React.ReactNode; value: number; tone: "amber" | "slate" }) {
   return (
-    <div className={cn("rounded-lg border p-2.5", t === "amber" && value ? "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10" : "")}>
+    <div className={cn("rounded-lg border p-2.5", t === "amber" && value ? "border-amber-300 bg-amber-50" : "")}>
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={cn("text-xl font-bold tabular-nums", t === "amber" && value ? "text-amber-800 dark:text-amber-200" : "text-foreground")}>{value}</div>
+      <div className={cn("text-xl font-bold tabular-nums", t === "amber" && value ? "text-amber-800" : "text-foreground")}>{value}</div>
     </div>
   );
 }
@@ -239,14 +239,14 @@ function CoachSide({ d }: { d: InstitutionPoolOverviewResponse }) {
             <ColumnHint label="Kim işaretledi?" hint="Açık dönemlerde biten birimin kaynağı: öğrencinin kendi kaydı (kap görevini işaretlemesi) ve rehberin seansta işaretlediği kısım. Rehber payı yüksekse öğrenci uygulamayı kullanmıyordur." />
             <span className="font-semibold tabular-nums text-foreground">{s.done_units} / {s.total_units} birim</span>
           </div>
-          <div className="mt-1 flex h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700" aria-hidden>
+          <div className="mt-1 flex h-3 overflow-hidden rounded-full bg-slate-200" aria-hidden>
             {s.student_units > 0 && <div className="bg-emerald-600" style={{ width: `${share(s.student_units, s.total_units)}%` }} />}
             {s.coach_units > 0 && <div className="bg-violet-600" style={{ width: `${share(s.coach_units, s.total_units)}%` }} />}
           </div>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground">
             <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-emerald-600" aria-hidden />öğrenci kaydı <b className="tabular-nums">{s.student_units}</b>{s.done_units ? ` (%${stu})` : ""}</li>
             <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-violet-600" aria-hidden />rehber seans işareti <b className="tabular-nums">{s.coach_units}</b></li>
-            <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-slate-300 dark:bg-slate-600" aria-hidden />kalan <b className="tabular-nums">{Math.max(0, s.total_units - s.done_units)}</b></li>
+            <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-slate-300" aria-hidden />kalan <b className="tabular-nums">{Math.max(0, s.total_units - s.done_units)}</b></li>
           </ul>
         </div>
         <div>
@@ -269,8 +269,8 @@ function CoachSide({ d }: { d: InstitutionPoolOverviewResponse }) {
 
 function Pill({ label, value, warn }: { label: React.ReactNode; value: number; warn?: boolean }) {
   return (
-    <div className={cn("rounded-lg border px-2.5 py-2", warn && value ? "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10" : "")}>
-      <div className={cn("text-lg font-bold tabular-nums", warn && value ? "text-amber-800 dark:text-amber-200" : "text-foreground")}>{value}</div>
+    <div className={cn("rounded-lg border px-2.5 py-2", warn && value ? "border-amber-300 bg-amber-50" : "")}>
+      <div className={cn("text-lg font-bold tabular-nums", warn && value ? "text-amber-800" : "text-foreground")}>{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
@@ -285,13 +285,13 @@ function Signals({ d }: { d: InstitutionPoolOverviewResponse }) {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {d.signals.map((s) => (
           <div key={s.key} className={cn("rounded-lg border p-3",
-            s.red ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10"
-              : s.amber ? "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10" : "")}
+            s.red ? "border-rose-300 bg-rose-50"
+              : s.amber ? "border-amber-300 bg-amber-50" : "")}
             data-signal={s.key}>
             <div className="text-sm font-medium text-foreground"><ColumnHint label={s.label} hint={s.hint} className="text-left" /></div>
             <div className="mt-1 flex items-baseline gap-2">
               <span className={cn("text-2xl font-bold tabular-nums",
-                s.red ? "text-rose-800 dark:text-rose-200" : s.amber ? "text-amber-800 dark:text-amber-200" : "text-foreground")}>{s.students}</span>
+                s.red ? "text-rose-800" : s.amber ? "text-amber-800" : "text-foreground")}>{s.students}</span>
               <span className="text-xs text-muted-foreground">öğrenci</span>
             </div>
             {(s.red > 0 || s.amber > 0 || s.info > 0) && (
@@ -335,19 +335,19 @@ function Groups({ d }: { d: InstitutionPoolOverviewResponse }) {
                 <td className="py-2 pr-3">
                   <div className="flex items-center gap-2">
                     <span className={cn("w-10 font-semibold tabular-nums", tone(g.last_pct))}>{pct(g.last_pct)}</span>
-                    <span className="hidden h-1.5 w-16 rounded-full bg-slate-200 sm:block dark:bg-slate-700" aria-hidden>
+                    <span className="hidden h-1.5 w-16 rounded-full bg-slate-200 sm:block" aria-hidden>
                       <span className={cn("block h-1.5 rounded-full", barTone(g.last_pct))} style={{ width: `${g.last_pct ?? 0}%` }} />
                     </span>
                   </div>
                 </td>
                 <td className={cn("py-2 pr-3 tabular-nums", tone(g.open_pct))}>{pct(g.open_pct)}</td>
-                <td className={cn("py-2 pr-3 tabular-nums", g.late_sessions ? "font-semibold text-amber-700 dark:text-amber-300" : "")}>{g.late_sessions}</td>
+                <td className={cn("py-2 pr-3 tabular-nums", g.late_sessions ? "font-semibold text-amber-700" : "")}>{g.late_sessions}</td>
                 <td className="py-2 pr-3 tabular-nums">
-                  <span className={g.red ? "font-semibold text-rose-700 dark:text-rose-300" : ""}>{g.red}</span>
+                  <span className={g.red ? "font-semibold text-rose-700" : ""}>{g.red}</span>
                   {" / "}
-                  <span className={g.amber ? "font-semibold text-amber-700 dark:text-amber-300" : ""}>{g.amber}</span>
+                  <span className={g.amber ? "font-semibold text-amber-700" : ""}>{g.amber}</span>
                 </td>
-                <td className="py-2 text-xs">{g.lessons_set ? <span className="text-emerald-700 dark:text-emerald-300">girildi</span> : <span className="text-muted-foreground">yok</span>}</td>
+                <td className="py-2 text-xs">{g.lessons_set ? <span className="text-emerald-700">girildi</span> : <span className="text-muted-foreground">yok</span>}</td>
               </tr>
             ))}
           </tbody>
@@ -367,7 +367,7 @@ function Trend({ d }: { d: InstitutionPoolOverviewResponse }) {
         {d.trend.map((t) => (
           <div key={t.week_start} className="flex flex-1 flex-col items-center gap-1">
             <span className={cn("text-xs font-semibold tabular-nums", tone(t.avg_pct))}>{pct(t.avg_pct)}</span>
-            <div className="flex h-24 w-full items-end rounded-md bg-slate-100 dark:bg-slate-800">
+            <div className="flex h-24 w-full items-end rounded-md bg-slate-100">
               <div className={cn("w-full rounded-md", barTone(t.avg_pct))} style={{ height: `${t.avg_pct ?? 0}%` }} />
             </div>
             <span className="text-xs text-foreground">{fmt(t.week_start)}</span>
@@ -401,7 +401,7 @@ function Subjects({ d }: { d: InstitutionPoolOverviewResponse }) {
                 </span>
                 <span className="tabular-nums text-foreground"><b>{s.done}</b> / {s.total} birim · <span className={tone(s.pct)}>%{s.pct}</span></span>
               </div>
-              <div className="mt-1 h-2.5 rounded-full bg-slate-100 dark:bg-slate-800" style={{ width: `${Math.max(8, (100 * s.total) / max)}%` }} aria-hidden>
+              <div className="mt-1 h-2.5 rounded-full bg-slate-100" style={{ width: `${Math.max(8, (100 * s.total) / max)}%` }} aria-hidden>
                 <div className="h-2.5 rounded-full" style={{ width: `${s.pct}%`, backgroundColor: c.rail }} />
               </div>
             </li>
@@ -429,7 +429,7 @@ function Late({ d }: { d: InstitutionPoolOverviewResponse }) {
               r.level === "red" ? "border-l-rose-600" : "border-l-amber-500")}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium text-foreground">{r.student_name}</span>
-                {r.class_group && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">{r.class_group}</span>}
+                {r.class_group && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700">{r.class_group}</span>}
                 <span className={cn("ml-auto rounded px-1.5 py-0.5 text-xs font-medium",
                   r.level === "red" ? "bg-rose-700 text-white" : "bg-amber-400 text-amber-950")}>
                   {r.level === "red" ? `${r.days_open} gün seanssız` : `${r.late_days} gün gecikti`}
@@ -475,16 +475,16 @@ function Coaches({ d }: { d: InstitutionPoolOverviewResponse }) {
                 <td className="py-2 pr-3 tabular-nums">{c.students}</td>
                 <td className={cn("py-2 pr-3 tabular-nums", tone(c.avg_open_pct))}>{pct(c.avg_open_pct)}</td>
                 <td className="py-2 pr-3 tabular-nums">{c.today_sessions}</td>
-                <td className={cn("py-2 pr-3 tabular-nums", c.late_sessions ? "font-semibold text-amber-700 dark:text-amber-300" : "")}>{c.late_sessions}</td>
+                <td className={cn("py-2 pr-3 tabular-nums", c.late_sessions ? "font-semibold text-amber-700" : "")}>{c.late_sessions}</td>
                 <td className="py-2 pr-3 tabular-nums">
-                  <span className={c.red ? "font-semibold text-rose-700 dark:text-rose-300" : ""}>{c.red}</span>{" / "}
-                  <span className={c.amber ? "font-semibold text-amber-700 dark:text-amber-300" : ""}>{c.amber}</span>
+                  <span className={c.red ? "font-semibold text-rose-700" : ""}>{c.red}</span>{" / "}
+                  <span className={c.amber ? "font-semibold text-amber-700" : ""}>{c.amber}</span>
                 </td>
-                <td className={cn("py-2 pr-3 tabular-nums", c.pending_approval ? "font-semibold text-amber-700 dark:text-amber-300" : "")}>{c.pending_approval}</td>
+                <td className={cn("py-2 pr-3 tabular-nums", c.pending_approval ? "font-semibold text-amber-700" : "")}>{c.pending_approval}</td>
                 <td className="py-2 pr-3 tabular-nums">{c.bulk} / {c.paper}</td>
                 <td className="py-2">
                   <span className={cn("inline-flex min-w-8 justify-center rounded-md px-2 py-0.5 font-semibold tabular-nums",
-                    c.load >= 4 ? "bg-rose-700 text-white" : c.load >= 2 ? "bg-amber-400 text-amber-950" : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100")}>{c.load}</span>
+                    c.load >= 4 ? "bg-rose-700 text-white" : c.load >= 2 ? "bg-amber-400 text-amber-950" : "bg-slate-100 text-slate-800")}>{c.load}</span>
                 </td>
               </tr>
             ))}

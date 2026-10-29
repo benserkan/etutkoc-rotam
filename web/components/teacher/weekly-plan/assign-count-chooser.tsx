@@ -69,11 +69,11 @@ export function AssignCountChooser({
       aria-label={`Kaç ${unit}`}
       data-testid="assign-count-chooser"
       className={cn(
-        "mt-1 flex flex-wrap items-center gap-1 rounded-md border border-cyan-300 bg-cyan-50/70 px-2 py-1.5 text-[11px] dark:border-cyan-500/40 dark:bg-cyan-500/10",
+        "mt-1 flex flex-wrap items-center gap-1 rounded-md border border-cyan-300 bg-cyan-50/70 px-2 py-1.5 text-[11px]",
         className,
       )}
     >
-      <span className="mr-0.5 text-cyan-900 dark:text-cyan-100">Kaç {unit}?</span>
+      <span className="mr-0.5 text-cyan-900">Kaç {unit}?</span>
       {chips.map((n) => {
         const isDefault = n === defaultCount;
         return (
@@ -94,7 +94,7 @@ export function AssignCountChooser({
               isDefault
                 ? "border-cyan-600 bg-cyan-600 text-white hover:bg-cyan-700"
                 : over(n)
-                  ? "border-amber-300 bg-background text-amber-700 hover:bg-amber-50 dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                  ? "border-amber-300 bg-background text-amber-700 hover:bg-amber-50"
                   : "border-border bg-background text-foreground hover:bg-muted",
             )}
           >
@@ -130,7 +130,7 @@ export function AssignCountChooser({
         </button>
       </span>
       {hint ? (
-        <span className="ml-auto truncate text-[10px] text-cyan-900/80 dark:text-cyan-100/80" title={hint}>
+        <span className="ml-auto truncate text-[10px] text-cyan-900/80" title={hint}>
           {hint}
         </span>
       ) : null}

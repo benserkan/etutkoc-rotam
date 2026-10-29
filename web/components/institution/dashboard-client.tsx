@@ -89,7 +89,7 @@ export function DashboardClient({ initial }: Props) {
 
 function PrivacyNote() {
   return (
-    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2">
       <Info className="size-4 shrink-0 mt-0.5" aria-hidden />
       <div>
         <strong>Gizlilik:</strong> Bu panelde öğretmenlerin programı, veli
@@ -111,19 +111,19 @@ function RiskCallout({
   return (
     <Link
       href="/institution/at-risk"
-      className="group block rounded-lg border border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 px-4 py-3 hover:border-rose-400 hover:bg-rose-100/60 transition dark:hover:bg-rose-500/25"
+      className="group block rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 hover:border-rose-400 hover:bg-rose-100/60 transition"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <AlertTriangle
-            className="size-7 shrink-0 text-rose-600 dark:text-rose-300"
+            className="size-7 shrink-0 text-rose-600"
             aria-hidden
           />
           <div className="min-w-0">
-            <div className="font-semibold text-rose-900 dark:text-rose-200">
+            <div className="font-semibold text-rose-900">
               {count} öğrenci risk altında
             </div>
-            <div className="text-xs text-rose-700 dark:text-rose-300 mt-0.5">
+            <div className="text-xs text-rose-700 mt-0.5">
               {critical > 0 && (
                 <>
                   <span className="mr-1 inline-block size-2 rounded-full bg-rose-600 align-middle" aria-hidden />
@@ -135,7 +135,7 @@ function RiskCallout({
           </div>
         </div>
         <ArrowRight
-          className="size-5 shrink-0 text-rose-700 dark:text-rose-300 transition-transform group-hover:translate-x-0.5"
+          className="size-5 shrink-0 text-rose-700 transition-transform group-hover:translate-x-0.5"
           aria-hidden
         />
       </div>
@@ -154,23 +154,23 @@ function InactiveCallout({
   return (
     <Link
       href="/institution/activity-heatmap"
-      className="group block rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 px-4 py-3 hover:border-amber-400 hover:bg-amber-100/60 transition dark:hover:bg-amber-500/25"
+      className="group block rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 hover:border-amber-400 hover:bg-amber-100/60 transition"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Moon className="size-7 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
+          <Moon className="size-7 shrink-0 text-amber-600" aria-hidden />
           <div className="min-w-0">
-            <div className="font-semibold text-amber-900 dark:text-amber-200">
+            <div className="font-semibold text-amber-900">
               {count} öğretmen 7+ gündür sistemde hareketsiz
             </div>
-            <div className="text-xs text-amber-700 dark:text-amber-300 mt-0.5 break-words">
+            <div className="text-xs text-amber-700 mt-0.5 break-words">
               Giriş, görev ya da veli notu yok: {names.join(" · ")}
               {remaining > 0 ? ` +${remaining} daha` : ""}
             </div>
           </div>
         </div>
         <ArrowRight
-          className="size-5 shrink-0 text-amber-700 dark:text-amber-300 transition-transform group-hover:translate-x-0.5"
+          className="size-5 shrink-0 text-amber-700 transition-transform group-hover:translate-x-0.5"
           aria-hidden
         />
       </div>
@@ -261,9 +261,9 @@ function KpiCard({
 
 function rateColorClass(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
-  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
-  return "text-rose-700 dark:text-rose-400";
+  if (pct >= 70) return "text-emerald-700";
+  if (pct >= 40) return "text-amber-700";
+  return "text-rose-700";
 }
 
 // Satır zemini — orana göre (koyu temada da okunur: saydam ton + sol şerit).
@@ -299,7 +299,7 @@ function TeachersTable({
         </div>
         <Link
           href="/institution/teachers"
-          className="text-xs text-accent hover:underline"
+          className="text-xs text-primary hover:underline"
         >
           Yönet →
         </Link>
@@ -309,7 +309,7 @@ function TeachersTable({
           Henüz kuruma bağlı öğretmen yok.{" "}
           <Link
             href="/institution/teachers"
-            className="text-accent hover:underline"
+            className="text-primary hover:underline"
           >
             Öğretmen ekle →
           </Link>
@@ -353,7 +353,7 @@ function TeachersTable({
                   <td className="px-4 py-2">
                     <Link
                       href={`/institution/teachers/${s.id}`}
-                      className="font-medium hover:text-accent hover:underline"
+                      className="font-medium hover:text-primary hover:underline"
                     >
                       {s.full_name}
                     </Link>

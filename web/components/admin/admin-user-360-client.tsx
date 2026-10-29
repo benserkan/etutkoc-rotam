@@ -69,7 +69,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
           </Link>
           <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-2xl font-semibold tracking-tight">
             <span className="inline-flex items-center gap-2">
-              <UserRound className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
+              <UserRound className="size-6 text-indigo-700" aria-hidden />
               {owner.name}
             </span>
             <StatusBadge label={owner.is_active ? "Aktif" : "Pasif"} tone={owner.is_active ? "emerald" : "slate"} />
@@ -82,7 +82,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href={`/admin/users/${owner.owner_id}/account-history`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:hover:bg-indigo-500/25"
+            className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
           >
             <ScrollText className="size-4" aria-hidden />
             Hesap Hareketleri
@@ -165,7 +165,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
                         </td>
                         <td className="px-4 py-2 text-xs">{s.label}</td>
                         <td className="px-4 py-2 text-xs">
-                          {s.is_active ? <span className="text-emerald-700 dark:text-emerald-300">aktif</span> : <span className="text-muted-foreground">pasif</span>}
+                          {s.is_active ? <span className="text-emerald-700">aktif</span> : <span className="text-muted-foreground">pasif</span>}
                         </td>
                       </tr>
                     );
@@ -215,7 +215,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
               ) : null}
             </dl>
             {owner.trial_denied_reason ? (
-              <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+              <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 Bu hesaba ücretsiz deneme verilmedi: aynı kişiye ait önceki bir hesap bulundu (
                 {owner.trial_denied_reason === "device"
                   ? "aynı cihaz"
@@ -240,11 +240,11 @@ export function AdminUser360Client({ initial, userId }: Props) {
                       {a.full_name} <span className="text-xs text-muted-foreground">{a.email}</span>
                     </Link>
                     <span className="flex flex-wrap items-center gap-1.5 text-xs">
-                      <span className="rounded bg-slate-100 dark:bg-slate-500/15 px-1.5 py-0.5 text-slate-700 dark:text-slate-300">{a.plan_label}</span>
-                      <span className="rounded bg-slate-100 dark:bg-slate-500/15 px-1.5 py-0.5 text-slate-700 dark:text-slate-300">
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">{a.plan_label}</span>
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">
                         {a.active_students} aktif öğrenci
                       </span>
-                      <span className="rounded bg-amber-100 dark:bg-amber-500/15 px-1.5 py-0.5 font-medium text-amber-800 dark:text-amber-200">
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800">
                         {a.reason_label}
                       </span>
                     </span>
@@ -271,14 +271,14 @@ export function AdminUser360Client({ initial, userId }: Props) {
 
 function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: string }) {
   const cls: Record<string, string> = {
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-    rose: "bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-    amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-    sky: "bg-sky-50 border-sky-200 text-sky-900 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-    lime: "bg-lime-50 border-lime-200 text-lime-900 dark:bg-lime-500/10 dark:border-lime-500/30 dark:text-lime-200",
-    orange: "bg-orange-50 border-orange-200 text-orange-900 dark:bg-orange-500/10 dark:border-orange-500/30 dark:text-orange-200",
-    slate: "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
+    rose: "bg-rose-50 border-rose-200 text-rose-900",
+    amber: "bg-amber-50 border-amber-200 text-amber-900",
+    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900",
+    sky: "bg-sky-50 border-sky-200 text-sky-900",
+    lime: "bg-lime-50 border-lime-200 text-lime-900",
+    orange: "bg-orange-50 border-orange-200 text-orange-900",
+    slate: "bg-slate-50 border-slate-200 text-slate-900",
   };
   return (
     <div className={cn("rounded-lg border p-4", cls[tone] ?? cls.slate)}>
@@ -291,10 +291,10 @@ function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: s
 
 function BandStat({ label, value, tone }: { label: string; value: number; tone: string }) {
   const text: Record<string, string> = {
-    emerald: "text-emerald-700 dark:text-emerald-300",
-    yellow: "text-yellow-700 dark:text-yellow-300",
-    amber: "text-amber-700 dark:text-amber-300",
-    rose: "text-rose-700 dark:text-rose-300",
+    emerald: "text-emerald-700",
+    yellow: "text-yellow-700",
+    amber: "text-amber-700",
+    rose: "text-rose-700",
   };
   return (
     <div className="px-3 py-2.5">

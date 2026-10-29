@@ -62,15 +62,15 @@ import { cn } from "@/lib/utils";
 
 const TONE: Record<ProgressTone, { box: string; icon: React.ComponentType<{ className?: string }> }> = {
   good: {
-    box: "border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100",
+    box: "border-emerald-200 bg-emerald-50 text-emerald-950",
     icon: TrendingUp,
   },
   warn: {
-    box: "border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100",
+    box: "border-amber-200 bg-amber-50 text-amber-950",
     icon: TriangleAlert,
   },
   info: {
-    box: "border-sky-200 bg-sky-50 text-sky-950 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-100",
+    box: "border-sky-200 bg-sky-50 text-sky-950",
     icon: Lightbulb,
   },
 };
@@ -102,7 +102,7 @@ export function ExamProgressReport({
 
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Gelişim raporu hazırlanıyor…</p>;
   if (q.isError || !q.data) {
-    return <p className="text-sm text-rose-700 dark:text-rose-400">Gelişim raporu yüklenemedi.</p>;
+    return <p className="text-sm text-rose-700">Gelişim raporu yüklenemedi.</p>;
   }
   const d = q.data;
   if (!d.stats) {
@@ -120,7 +120,7 @@ export function ExamProgressReport({
       </div>
 
       {d.target_allowed === false ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Bu bir branş denemesi serisi: netler yalnız aynı dersin branş denemeleriyle
           kıyaslanır. Hedef net ve puan tahmini genel denemelere göre tutulur.
         </p>
@@ -205,8 +205,8 @@ function Stat({
       <p
         className={cn(
           "mt-1 text-xl font-semibold tabular-nums",
-          tone === "good" && "text-emerald-700 dark:text-emerald-400",
-          tone === "bad" && "text-rose-700 dark:text-rose-400",
+          tone === "good" && "text-emerald-700",
+          tone === "bad" && "text-rose-700",
         )}
       >
         {value}
@@ -274,7 +274,7 @@ function TargetSection({
               <p
                 className={cn(
                   "text-xl font-semibold tabular-nums",
-                  (t.gap ?? 0) <= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400",
+                  (t.gap ?? 0) <= 0 ? "text-emerald-700" : "text-amber-700",
                 )}
               >
                 {(t.gap ?? 0) <= 0 ? "Hedef tuttu" : `${fmtNet(t.gap)} net`}
@@ -630,8 +630,8 @@ function SubjectTrend({ subjects, hasTarget }: { subjects: ProgressSubject[]; ha
                 <td
                   className={cn(
                     "py-2 pr-3 text-right tabular-nums",
-                    (s.change ?? 0) >= 1 && "text-emerald-700 dark:text-emerald-400",
-                    (s.change ?? 0) <= -1 && "text-rose-700 dark:text-rose-400",
+                    (s.change ?? 0) >= 1 && "text-emerald-700",
+                    (s.change ?? 0) <= -1 && "text-rose-700",
                   )}
                 >
                   {s.change == null ? "—" : fmtSigned(s.change)}
@@ -643,8 +643,8 @@ function SubjectTrend({ subjects, hasTarget }: { subjects: ProgressSubject[]; ha
                     <td
                       className={cn(
                         "py-2 text-right tabular-nums",
-                        s.gap != null && s.gap <= 0 && "text-emerald-700 dark:text-emerald-400",
-                        s.gap != null && s.gap > 0 && "text-amber-700 dark:text-amber-400",
+                        s.gap != null && s.gap <= 0 && "text-emerald-700",
+                        s.gap != null && s.gap > 0 && "text-amber-700",
                       )}
                     >
                       {s.gap == null ? "—" : s.gap <= 0 ? "tuttu" : fmtNet(s.gap)}
@@ -724,7 +724,7 @@ function ReportShare({
           <DropdownMenuItem
             onSelect={() => window.open(`https://wa.me/?text=${encodeURIComponent(text())}`, "_blank", "noopener")}
           >
-            <MessageCircle className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
+            <MessageCircle className="size-4 text-emerald-600" aria-hidden />
             WhatsApp ile gönder
           </DropdownMenuItem>
           <DropdownMenuItem

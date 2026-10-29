@@ -154,7 +154,7 @@ export function IletisimClient({
 
           {/* Sağ: form */}
           <div className="lg:col-span-3">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8">
               {done ? (
                 <div className="flex flex-col items-center py-10 text-center">
                   <CheckCircle2 className="size-14 text-emerald-500" aria-hidden />

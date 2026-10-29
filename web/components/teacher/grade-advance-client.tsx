@@ -279,7 +279,7 @@ function StudentRow({
               {student.blocker_notes.map((n, i) => (
                 <li
                   key={i}
-                  className="text-[11px] text-amber-700 dark:text-amber-300"
+                  className="text-[11px] text-amber-700"
                 >
                   ⚠ {n}
                 </li>

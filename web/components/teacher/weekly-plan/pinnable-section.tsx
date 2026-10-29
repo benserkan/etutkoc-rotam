@@ -33,20 +33,20 @@ const TONE: Record<
   },
   cyan: {
     head: "hover:bg-cyan-500/10",
-    title: "text-cyan-900 dark:text-cyan-100",
-    icon: "text-cyan-700 dark:text-cyan-300",
+    title: "text-cyan-900",
+    icon: "text-cyan-700",
     peekBar: "bg-cyan-500",
   },
   violet: {
     head: "hover:bg-violet-500/10",
-    title: "text-violet-900 dark:text-violet-100",
-    icon: "text-violet-700 dark:text-violet-300",
+    title: "text-violet-900",
+    icon: "text-violet-700",
     peekBar: "bg-violet-500",
   },
   amber: {
     head: "hover:bg-amber-500/10",
-    title: "text-amber-900 dark:text-amber-100",
-    icon: "text-amber-700 dark:text-amber-300",
+    title: "text-amber-900",
+    icon: "text-amber-700",
     peekBar: "bg-amber-500",
   },
 };
@@ -137,7 +137,7 @@ export function PinnableSection({
           className={cn(
             "flex shrink-0 items-center gap-1 rounded px-1.5 py-1 text-[11px] transition",
             pinned
-              ? "text-amber-600 hover:bg-amber-500/15 dark:text-amber-400"
+              ? "text-amber-600 hover:bg-amber-500/15"
               : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
           title={

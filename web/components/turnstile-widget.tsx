@@ -168,10 +168,10 @@ export function TurnstileWidget({
   const showRetry = status === "error" || slow;
   const dark = theme === "dark";
   const tone = {
-    muted: dark ? "text-slate-300" : "text-slate-500 dark:text-slate-300",
-    ok: dark ? "text-emerald-300" : "text-emerald-700 dark:text-emerald-300",
-    warn: dark ? "text-amber-300" : "text-amber-700 dark:text-amber-300",
-    bad: dark ? "text-rose-300" : "text-rose-700 dark:text-rose-300",
+    muted: dark ? "text-slate-300" : "text-slate-500",
+    ok: dark ? "text-emerald-300" : "text-emerald-700",
+    warn: dark ? "text-amber-300" : "text-amber-700",
+    bad: dark ? "text-rose-300" : "text-rose-700",
   };
 
   return (

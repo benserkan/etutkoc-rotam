@@ -25,10 +25,10 @@ import { cn } from "@/lib/utils";
 
 const STATUS_TONE: Record<string, string> = {
   pending:
-    "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-200",
+    "bg-amber-500/10 border-amber-500/30 text-amber-800",
   approved:
-    "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-200",
-  rejected: "bg-rose-500/10 border-rose-500/30 text-rose-800 dark:text-rose-200",
+    "bg-emerald-500/10 border-emerald-500/30 text-emerald-800",
+  rejected: "bg-rose-500/10 border-rose-500/30 text-rose-800",
 };
 
 function fmtDate(iso: string | null): string {
@@ -75,7 +75,7 @@ export function SelfStudyEntryDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <TentTree className="size-5 text-cyan-600 dark:text-cyan-400" aria-hidden />
+            <TentTree className="size-5 text-cyan-600" aria-hidden />
             Bağımsız çalışma {mode === "coach" ? "girişi" : "bildir"}
           </DialogTitle>
         </DialogHeader>
@@ -352,7 +352,7 @@ export function SelfStudyEntryRow({
           <p className="text-xs text-muted-foreground italic mt-0.5">“{item.note}”</p>
         ) : null}
         {item.status === "rejected" && item.review_note ? (
-          <p className="text-xs text-rose-700 dark:text-rose-300 mt-0.5">
+          <p className="text-xs text-rose-700 mt-0.5">
             Koç notu: {item.review_note}
           </p>
         ) : null}
@@ -373,7 +373,7 @@ export function SelfStudyEntryRow({
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 text-rose-600 hover:text-rose-700 dark:text-rose-400"
+            className="h-7 text-rose-600 hover:text-rose-700"
             onClick={onReject}
             disabled={isBusy}
           >

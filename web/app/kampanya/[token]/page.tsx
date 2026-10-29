@@ -116,7 +116,7 @@ export default async function CampaignPage({
 
       <div className="mx-auto max-w-lg px-5 py-6 space-y-5">
         {!c || !isActive ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
             <p className="text-slate-700">{DEAD_MESSAGE[status] ?? DEAD_MESSAGE.not_found}</p>
             <a
               href="https://rotam.etutkoc.com/pricing"
@@ -128,7 +128,7 @@ export default async function CampaignPage({
         ) : (
           <>
             {/* Hero */}
-            <section className="rounded-2xl bg-gradient-to-br from-cyan-600 to-cyan-800 px-5 py-6 text-white shadow-sm">
+            <section className="rounded-2xl bg-gradient-to-br from-cyan-600 to-cyan-800 px-5 py-6 text-white">
               <p className="text-xs font-semibold uppercase tracking-wider text-cyan-100">
                 {isInst ? "Kurumsal Üyelik" : "Koçluk Üyeliği"}
               </p>
@@ -152,7 +152,7 @@ export default async function CampaignPage({
             ) : null}
 
             {/* Plan kartı */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
               <div className="flex items-baseline justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">{c.plan_label}</h2>
@@ -207,7 +207,7 @@ export default async function CampaignPage({
               href="https://rotam.etutkoc.com/pricing"
               target="_blank"
               rel="noopener noreferrer"
-              className="block rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-center text-sm font-medium text-cyan-700 shadow-sm hover:bg-cyan-50"
+              className="block rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-center text-sm font-medium text-cyan-700 hover:bg-cyan-50"
             >
               Tüm paketleri ve özellikleri incele →
             </a>

@@ -63,7 +63,7 @@ export function ExamReadinessCard({ studentId }: { studentId: number }) {
   });
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm" data-testid="exam-readiness">
+    <section className="rounded-xl border border-border bg-card p-5" data-testid="exam-readiness">
       <h3 className="inline-flex items-center gap-2 text-base font-semibold">
         <GraduationCap className="size-4 text-indigo-500" aria-hidden />
         Sınava hazırlık — ders bazlı

@@ -38,9 +38,9 @@ export function CohortsPrintSheet({ institution, wow, sections }: Props) {
     <>
       <PrintStyles />
 
-      <div className="no-print sticky top-0 z-50 bg-white dark:bg-white border-b border-slate-200 shadow-sm">
+      <div className="no-print sticky top-0 z-50 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
-          <div className="text-sm text-slate-600 dark:text-slate-300">
+          <div className="text-sm text-slate-600">
             <b>Kohort Karşılaştırma Raporu</b> — yazdırılabilir / PDF
           </div>
           <div className="flex gap-2">
@@ -138,11 +138,11 @@ export function CohortsPrintSheet({ institution, wow, sections }: Props) {
                         </td>
                         <td className="text-right">
                           {c.at_risk_pct != null && c.at_risk_pct > 0 ? (
-                            <span className="text-rose-700 dark:text-rose-300 font-medium">
+                            <span className="text-rose-700 font-medium">
                               %{c.at_risk_pct}
                             </span>
                           ) : (
-                            <span className="text-emerald-700 dark:text-emerald-300">0</span>
+                            <span className="text-emerald-700">0</span>
                           )}
                         </td>
                       </tr>

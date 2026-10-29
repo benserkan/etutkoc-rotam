@@ -53,7 +53,7 @@ export function AdminQuotaClient({ initial }: Props) {
           ← Panel
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
-          <Gauge className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
+          <Gauge className="size-6 text-indigo-700" aria-hidden />
           Kurum Limitleri
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -132,7 +132,7 @@ function QuotaRow({
         </div>
       </td>
       <td className="px-4 py-2">
-        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
           {row.plan}
         </span>
       </td>
@@ -161,7 +161,7 @@ function QuotaCellView({ cell }: { cell: QuotaCell }) {
           {cell.current} / <strong>∞</strong>
         </span>
       ) : cell.limit === 0 ? (
-        <span className="font-mono text-rose-700 dark:text-rose-300">
+        <span className="font-mono text-rose-700">
           {cell.current} / <strong>KAPALI</strong>
         </span>
       ) : (
@@ -170,9 +170,9 @@ function QuotaCellView({ cell }: { cell: QuotaCell }) {
             className={cn(
               "font-mono",
               cell.is_at_limit
-                ? "text-rose-700 dark:text-rose-300 font-bold"
+                ? "text-rose-700 font-bold"
                 : cell.pct >= 80
-                  ? "text-amber-700 dark:text-amber-300 font-semibold"
+                  ? "text-amber-700 font-semibold"
                   : "text-foreground/80",
             )}
           >
@@ -195,7 +195,7 @@ function QuotaCellView({ cell }: { cell: QuotaCell }) {
       )}
       {cell.has_override && (
         <span
-          className="text-[9px] px-1 rounded bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200"
+          className="text-[9px] px-1 rounded bg-violet-50 text-violet-700 border border-violet-200"
           title={cell.note ?? "Bu kuruma özel limit verilmiş"}
         >
           özel
@@ -244,7 +244,7 @@ function SetOverrideButton({
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="text-xs border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/25"
+        className="text-xs border-violet-200 text-violet-700 hover:bg-violet-50"
       >
         <Sparkles className="size-3" aria-hidden />
         Özel Limit

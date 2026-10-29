@@ -169,8 +169,8 @@ export function DashboardClient({ initial }: Props) {
 
 const ACCENT: Record<string, { chip: string; value: string; bar: string }> = {
   indigo: { chip: "bg-indigo-600 text-white", value: "text-foreground", bar: "bg-indigo-500" },
-  amber: { chip: "bg-amber-500 text-slate-950", value: "text-amber-600 dark:text-amber-400", bar: "bg-amber-500" },
-  emerald: { chip: "bg-emerald-600 text-white", value: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500" },
+  amber: { chip: "bg-amber-500 text-slate-950", value: "text-amber-600", bar: "bg-amber-500" },
+  emerald: { chip: "bg-emerald-600 text-white", value: "text-emerald-600", bar: "bg-emerald-500" },
   slate: { chip: "bg-slate-600 text-white", value: "text-foreground", bar: "bg-slate-400" },
 };
 
@@ -191,8 +191,7 @@ function KpiCard({
 }) {
   const a = ACCENT[accent] ?? ACCENT.slate;
   const body = (
-    <div className="relative flex h-full items-start gap-3 overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition group-hover:shadow-md">
-      <span className={cn("absolute inset-x-0 top-0 h-1", a.bar)} aria-hidden />
+    <div className="relative flex h-full items-start gap-3 overflow-hidden rounded-xl border border-border bg-card p-4 transition group-hover:shadow-md">
       <span className={cn("grid size-10 shrink-0 place-items-center rounded-lg", a.chip)}>
         <Icon className="size-5" aria-hidden />
       </span>
@@ -226,12 +225,12 @@ function FleetCard({ data, todayPct }: { data: TeacherDashboardResponse; todayPc
   const total = data.fleet_green + data.fleet_amber + data.fleet_red;
   const seg = (n: number) => (total > 0 ? `${(n / total) * 100}%` : "0%");
   const rows: { href: string; icon: LucideIcon; label: string; value: number; dot: string; text: string }[] = [
-    { href: "/teacher/students?risk=ok", icon: CheckCircle2, label: "Yolunda", value: data.fleet_green, dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
-    { href: "/teacher/students?risk=medium", icon: AlertCircle, label: "Uyarı", value: data.fleet_amber, dot: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
-    { href: "/teacher/students?risk=critical", icon: AlertOctagon, label: "Kritik", value: data.fleet_red, dot: "bg-rose-500", text: "text-rose-600 dark:text-rose-400" },
+    { href: "/teacher/students?risk=ok", icon: CheckCircle2, label: "Yolunda", value: data.fleet_green, dot: "bg-emerald-500", text: "text-emerald-600" },
+    { href: "/teacher/students?risk=medium", icon: AlertCircle, label: "Uyarı", value: data.fleet_amber, dot: "bg-amber-500", text: "text-amber-600" },
+    { href: "/teacher/students?risk=critical", icon: AlertOctagon, label: "Kritik", value: data.fleet_red, dot: "bg-rose-500", text: "text-rose-600" },
   ];
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="rounded-xl border border-border bg-card p-5">
       <h2 className="inline-flex items-center gap-2 text-base font-semibold">
         <HeartPulse className="size-4 text-indigo-500" aria-hidden />
         Öğrencilerin durumu
@@ -285,7 +284,7 @@ const RISK_BADGE: Record<string, string> = {
 
 function TopRiskCard({ data }: { data: TeacherDashboardResponse }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm lg:col-span-2">
+    <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="inline-flex items-center gap-2 text-base font-semibold">
           <AlertTriangle className="size-4 text-amber-500" aria-hidden />
@@ -294,7 +293,7 @@ function TopRiskCard({ data }: { data: TeacherDashboardResponse }) {
         {data.top_5_at_risk.length > 0 ? (
           <Link
             href="/teacher/students?risk=at_risk"
-            className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+            className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline"
           >
             Tümünü gör <ArrowRight className="size-3" aria-hidden />
           </Link>
@@ -353,9 +352,9 @@ function TopRiskCard({ data }: { data: TeacherDashboardResponse }) {
 // ---------------------------------------------------------------- Uyarı akışı
 
 const LEVEL_META: Record<WarningLevel, { icon: LucideIcon; tone: string; badge: string; label: string; rail: string }> = {
-  red: { icon: AlertOctagon, tone: "text-rose-600 dark:text-rose-400", badge: "bg-rose-600 text-white", label: "Acil", rail: "border-l-rose-500" },
-  amber: { icon: AlertCircle, tone: "text-amber-600 dark:text-amber-400", badge: "bg-amber-500 text-slate-950", label: "Dikkat", rail: "border-l-amber-500" },
-  green: { icon: CheckCircle2, tone: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-600 text-white", label: "Bilgi", rail: "border-l-emerald-500" },
+  red: { icon: AlertOctagon, tone: "text-rose-600", badge: "bg-rose-600 text-white", label: "Acil", rail: "border-l-rose-500" },
+  amber: { icon: AlertCircle, tone: "text-amber-600", badge: "bg-amber-500 text-slate-950", label: "Dikkat", rail: "border-l-amber-500" },
+  green: { icon: CheckCircle2, tone: "text-emerald-600", badge: "bg-emerald-600 text-white", label: "Bilgi", rail: "border-l-emerald-500" },
 };
 const LEVEL_RANK: Record<WarningLevel, number> = { red: 0, amber: 1, green: 2 };
 const GROUPS_INITIAL = 6;
@@ -406,11 +405,11 @@ function WarningsFeedSection() {
   const visible = showAll ? groups : groups.slice(0, GROUPS_INITIAL);
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm" data-section="dashboard:warnings">
+    <section data-section="dashboard:warnings">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="inline-flex items-center gap-2 text-base font-semibold">
-            <AlertCircle className="size-4 text-amber-500" aria-hidden />
+          <h2 className="inline-flex items-center gap-2 text-lg font-bold">
+            <AlertCircle className="size-5 text-amber-500" aria-hidden />
             Uyarı Akışı
           </h2>
           {q.data ? (
@@ -437,9 +436,9 @@ function WarningsFeedSection() {
         {q.isLoading ? (
           <p className="text-sm text-muted-foreground">Yükleniyor…</p>
         ) : q.error || !q.data ? (
-          <p className="text-sm text-rose-600 dark:text-rose-300">Uyarı akışı yüklenemedi.</p>
+          <p className="text-sm text-rose-600">Uyarı akışı yüklenemedi.</p>
         ) : groups.length === 0 ? (
-          <p className="inline-flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+          <p className="inline-flex items-center gap-2 text-sm text-emerald-600">
             <CheckCircle2 className="size-4" aria-hidden />
             Aktif uyarı yok — herkes yolunda.
           </p>
@@ -477,7 +476,7 @@ function StudentWarningGroup({ group }: { group: StudentGroup }) {
   return (
     <li
       className={cn(
-        "rounded-lg border border-border border-l-4 bg-background/40",
+        "rounded-xl border border-border border-l-4 bg-card",
         meta.rail,
         group.is_paused && "opacity-70",
       )}
@@ -507,7 +506,7 @@ function StudentWarningGroup({ group }: { group: StudentGroup }) {
         <button
           type="button"
           onClick={() => setMore((v) => !v)}
-          className="w-full border-t border-border px-3 py-2 text-left text-xs font-medium text-indigo-600 hover:bg-muted/60 dark:text-indigo-400"
+          className="w-full border-t border-border px-3 py-2 text-left text-xs font-medium text-indigo-600 hover:bg-muted/60"
         >
           {more ? "Daha az göster" : `${group.rows.length - 3} uyarı daha`}
         </button>
@@ -545,7 +544,7 @@ function WarningItemRow({ row }: { row: DashboardWarningRow }) {
                 type="button"
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
-                className="inline-flex items-center gap-0.5 font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                className="inline-flex items-center gap-0.5 font-medium text-indigo-600 hover:underline"
                 data-testid="warning-why"
               >
                 <ChevronDown className={cn("size-3 transition", open && "rotate-180")} aria-hidden />
@@ -555,7 +554,7 @@ function WarningItemRow({ row }: { row: DashboardWarningRow }) {
             {row.link ? (
               <Link
                 href={row.link}
-                className="inline-flex items-center gap-0.5 font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                className="inline-flex items-center gap-0.5 font-medium text-indigo-600 hover:underline"
               >
                 {row.link_label ?? "İncele"} <ArrowRight className="size-3" aria-hidden />
               </Link>
@@ -646,7 +645,7 @@ function SnoozedSection({ rows, count }: { rows: DashboardWarningRow[]; count: n
 
 function RecentRequestsCard({ data }: { data: TeacherDashboardResponse }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <section className="rounded-xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="inline-flex items-center gap-2 text-base font-semibold">
           <Bell className="size-4 text-sky-500" aria-hidden />
@@ -655,7 +654,7 @@ function RecentRequestsCard({ data }: { data: TeacherDashboardResponse }) {
         {data.recent_requests.length > 0 ? (
           <Link
             href="/teacher/requests"
-            className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+            className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline"
           >
             Tümünü gör <ArrowRight className="size-3" aria-hidden />
           </Link>

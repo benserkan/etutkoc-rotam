@@ -254,7 +254,7 @@ export function TaskRichEditForm({
   return (
     <form onSubmit={submit} className="@container space-y-3" aria-label="Görev düzenleme">
       {done > 0 ? (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
           Bu görevde <b>{done}</b> {unitWord === "sayfa" ? "sayfa yapılmış" : `${unitWord} çözülmüş`}.
           Sayı bunun altına inemez.
         </p>
@@ -485,13 +485,13 @@ export function TaskRichEditForm({
         )}
 
         {crossBlocked ? (
-          <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+          <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800">
             Çözülen kısım olduğu için kitaplı ↔ kaynaksız geçiş yapılamaz. Yeni görev oluşturup
             bunu silebilirsin.
           </p>
         ) : null}
         {canMove ? (
-          <label className="flex items-start gap-2 rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-[12px] text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+          <label className="flex items-start gap-2 rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-[12px] text-cyan-900">
             <input
               type="checkbox"
               checked={moveCompleted}
@@ -505,7 +505,7 @@ export function TaskRichEditForm({
           </label>
         ) : null}
         {countBelow ? (
-          <p className="text-[12px] text-rose-700 dark:text-rose-300">
+          <p className="text-[12px] text-rose-700">
             Yeni miktar ({qty}) yapılan miktardan ({done}) küçük olamaz.
           </p>
         ) : null}

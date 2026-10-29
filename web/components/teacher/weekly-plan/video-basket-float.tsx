@@ -219,7 +219,7 @@ export function VideoBasketFloat({
             data-testid="video-basket-handle"
             className="flex select-none items-center gap-2 border-b border-border px-3 py-2"
           >
-            <PlaySquare className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <PlaySquare className="size-4 text-cyan-700" aria-hidden />
             <span className="text-sm font-semibold text-foreground">Video Sepeti</span>
             <span className="text-[11px] text-muted-foreground">
               {waiting} video bekliyor
@@ -256,7 +256,7 @@ export function VideoBasketFloat({
                   "mx-3 mb-2 rounded-md px-2 py-1.5 text-[11px]",
                   poolOpen
                     ? "bg-violet-500/10 text-foreground"
-                    : "bg-amber-200 font-medium text-amber-950 dark:text-amber-950",
+                    : "bg-amber-200 font-medium text-amber-950",
                 )}
               >
                 {poolOpen
@@ -348,7 +348,7 @@ function ImportForm({
       }}
     >
       {!configured ? (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900">
           Video Sepeti şu an kullanılamıyor: YouTube bağlantısı henüz kurulmamış. Platform
           yöneticisi bağlantıyı tamamlayınca liste getirebilirsin.
         </p>
@@ -421,7 +421,7 @@ function SavedSources({
         className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left text-xs font-semibold text-foreground"
         aria-expanded={open}
       >
-        <History className="size-3.5 text-cyan-700 dark:text-cyan-300" aria-hidden />
+        <History className="size-3.5 text-cyan-700" aria-hidden />
         Kayıtlı listelerim ({sources.length})
         <ChevronDown
           className={cn(
@@ -542,7 +542,7 @@ function SourceRow({
               <button
                 type="button"
                 onClick={() => onShow(src.id)}
-                className="rounded px-1.5 py-0.5 text-[11px] font-medium text-cyan-800 hover:bg-muted dark:text-cyan-200"
+                className="rounded px-1.5 py-0.5 text-[11px] font-medium text-cyan-800 hover:bg-muted"
               >
                 Göster
               </button>
@@ -588,7 +588,7 @@ function SourceRow({
         </div>
       )}
       {confirming && !editing ? (
-        <div className="mt-1.5 space-y-1.5 rounded border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+        <div className="mt-1.5 space-y-1.5 rounded border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-900">
           <p>Liste kayıtlardan silinsin mi? Programa konmuş videolar ve görevler kalır.</p>
           {src.waiting > 0 ? (
             <label className="flex items-start gap-1.5">
@@ -605,7 +605,7 @@ function SourceRow({
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="rounded px-2 py-0.5 hover:bg-rose-100 dark:hover:bg-rose-500/20"
+              className="rounded px-2 py-0.5 hover:bg-rose-100"
             >
               Vazgeç
             </button>

@@ -69,7 +69,7 @@ export function ShellBrand({
           className={cn(
             "block w-auto object-contain",
             sidebar ? "h-16 max-w-[210px]" : "h-10 max-w-[180px]",
-            onDark && "rounded-md bg-white dark:bg-white px-1.5 py-0.5",
+            onDark && "rounded-md bg-white px-1.5 py-0.5",
           )}
         />
       ) : (
@@ -147,7 +147,7 @@ function SidebarBrandCard({
         data-testid="shell-brand"
         className={cn("block w-full min-w-0 space-y-1.5", className)}
       >
-        <span className="flex h-16 w-full items-center justify-center rounded-xl bg-card px-3 shadow-sm ring-1 ring-black/5">
+        <span className="flex h-16 w-full items-center justify-center rounded-xl bg-card px-3 ring-1 ring-black/5">
           {/* eslint-disable-next-line @next/next/no-img-element -- kurum logosu (dinamik, herkese açık uç) */}
           <img src={logo} alt={brand.name} className="block max-h-12 max-w-full object-contain" />
         </span>
@@ -168,7 +168,7 @@ function SidebarBrandCard({
       )}
     >
       {logo ? (
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-card p-1 shadow-sm ring-1 ring-black/5">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-card p-1 ring-1 ring-black/5">
           {/* eslint-disable-next-line @next/next/no-img-element -- kurum logosu (dinamik, herkese açık uç) */}
           <img
             src={logo}
@@ -184,7 +184,7 @@ function SidebarBrandCard({
       ) : (
         <span
           aria-hidden
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-cyan-700 font-display text-lg font-bold text-white shadow-sm"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-cyan-700 font-display text-lg font-bold text-white"
         >
           {initials(brand.name)}
         </span>

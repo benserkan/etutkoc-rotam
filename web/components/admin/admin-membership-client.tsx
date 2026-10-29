@@ -335,23 +335,23 @@ function CreatedCard({
     url: created.public_url,
   });
   return (
-    <div className="mt-4 rounded-lg border border-cyan-300 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
+    <div className="mt-4 rounded-lg border border-cyan-300 bg-cyan-50 p-4">
       <div className="flex items-center gap-2">
-        <Check className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
-        <span className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+        <Check className="size-4 text-cyan-700" aria-hidden />
+        <span className="text-sm font-semibold text-cyan-900">
           Teklif oluşturuldu
         </span>
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto text-cyan-700/70 hover:text-cyan-900 dark:text-cyan-300/70"
+          className="ml-auto text-cyan-700/70 hover:text-cyan-900"
           aria-label="Kapat"
         >
           <X className="size-4" aria-hidden />
         </button>
       </div>
-      <div className="mt-2 flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 dark:bg-slate-900">
-        <span className="min-w-0 flex-1 truncate font-mono text-xs text-slate-700 dark:text-slate-300">
+      <div className="mt-2 flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5">
+        <span className="min-w-0 flex-1 truncate font-mono text-xs text-slate-700">
           {created.public_url}
         </span>
         <CopyButton value={created.public_url} label="Linki Kopyala" />
@@ -374,7 +374,7 @@ function CreatedCard({
           <ExternalLink className="size-4" aria-hidden /> Sayfayı Önizle
         </a>
       </div>
-      <p className="mt-2 text-[11px] text-cyan-800/80 dark:text-cyan-200/70">
+      <p className="mt-2 text-[11px] text-cyan-800/80">
         {"WhatsApp'ta Aç → mesaj + link hazır gelir; alıcıyı seçip gönder."}
       </p>
     </div>
@@ -555,7 +555,7 @@ function BulkComposer({ planOptions }: { planOptions: MembershipPlanOption[] }) 
               className={cn(
                 "rounded-full border px-3 py-1.5 text-xs font-medium transition",
                 groupKey === g.key
-                  ? "border-cyan-600 bg-cyan-50 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200"
+                  ? "border-cyan-600 bg-cyan-50 text-cyan-800"
                   : "border-border text-foreground hover:bg-muted/50",
               )}
             >
@@ -579,7 +579,7 @@ function BulkComposer({ planOptions }: { planOptions: MembershipPlanOption[] }) 
                 <button
                   type="button"
                   onClick={() => setSelected(new Set(members.map((m) => m.id)))}
-                  className="text-cyan-700 hover:underline dark:text-cyan-300"
+                  className="text-cyan-700 hover:underline"
                 >
                   Tümünü seç
                 </button>
@@ -607,7 +607,7 @@ function BulkComposer({ planOptions }: { planOptions: MembershipPlanOption[] }) 
                   <span className="text-foreground">{m.full_name}</span>
                   <span className="text-xs text-muted-foreground">{m.email}</span>
                   {!m.phone ? (
-                    <span className="ml-auto text-[10px] text-amber-600 dark:text-amber-300">telefon yok</span>
+                    <span className="ml-auto text-[10px] text-amber-600">telefon yok</span>
                   ) : null}
                 </label>
               ))}
@@ -703,10 +703,10 @@ function BulkResults({
     .map((it) => `${it.full_name ?? "Koç"}: ${it.public_url}`)
     .join("\n");
   return (
-    <div className="mt-4 rounded-lg border border-cyan-300 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
+    <div className="mt-4 rounded-lg border border-cyan-300 bg-cyan-50 p-4">
       <div className="flex items-center gap-2">
-        <Check className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
-        <span className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+        <Check className="size-4 text-cyan-700" aria-hidden />
+        <span className="text-sm font-semibold text-cyan-900">
           {results.created} teklif oluşturuldu
           {results.skipped > 0 ? ` · ${results.skipped} atlandı` : ""}
         </span>
@@ -716,10 +716,10 @@ function BulkResults({
       </div>
       <div className="mt-2 max-h-60 space-y-1.5 overflow-y-auto">
         {results.items.map((it) => (
-          <div key={it.token} className="flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-sm dark:bg-slate-900">
-            <span className="min-w-0 flex-1 truncate text-slate-800 dark:text-slate-200">
+          <div key={it.token} className="flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-sm">
+            <span className="min-w-0 flex-1 truncate text-slate-800">
               {it.full_name ?? "Koç"}
-              {!it.phone ? <span className="ml-1 text-[10px] text-amber-600 dark:text-amber-300">telefon yok</span> : null}
+              {!it.phone ? <span className="ml-1 text-[10px] text-amber-600">telefon yok</span> : null}
             </span>
             <CopyButton value={it.public_url} label="Link" />
             <a
@@ -733,7 +733,7 @@ function BulkResults({
           </div>
         ))}
       </div>
-      <p className="mt-2 text-[11px] text-cyan-800/80 dark:text-cyan-200/70">
+      <p className="mt-2 text-[11px] text-cyan-800/80">
         {"Sıralı gönderim: her satırdaki WhatsApp ile koça aç → gönder. Broadcast için \"Tüm linkleri kopyala\"."}
       </p>
     </div>
@@ -803,16 +803,16 @@ function OfferRow({
         className={cn(
           "rounded-full px-2 py-0.5 text-[11px] font-medium",
           o.completion
-            ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
+            ? "bg-amber-100 text-amber-800"
             : o.viewed
-              ? "bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200"
+              ? "bg-sky-100 text-sky-800"
               : "bg-muted text-muted-foreground",
         )}
       >
         {o.completion ? o.completion_label : o.viewed ? "Görüntülendi" : "Bekliyor"}
       </span>
       {o.wa_sent ? (
-        <span className="inline-flex items-center gap-1 rounded-full bg-cyan-100 px-2 py-0.5 text-[11px] font-medium text-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-200">
+        <span className="inline-flex items-center gap-1 rounded-full bg-cyan-100 px-2 py-0.5 text-[11px] font-medium text-cyan-800">
           <Check className="size-3" aria-hidden /> WhatsApp gönderildi
         </span>
       ) : null}

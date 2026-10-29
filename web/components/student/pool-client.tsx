@@ -127,7 +127,7 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
           <div className="text-2xl font-bold">%{s.pct}</div>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/25">
-          <div className="h-full rounded-full bg-white dark:bg-white" style={{ width: `${Math.min(100, s.pct)}%` }} />
+          <div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, s.pct)}%` }} />
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-medium">
           <span className="rounded-full bg-white/15 px-2.5 py-1">{s.items_done}/{s.items_total} kalem bitti</span>
@@ -144,7 +144,7 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
       {data.hints.length > 0 && (
         <ul className="space-y-2" data-section="student:pool:hints">
           {data.hints.map((h) => (
-            <li key={h.code} className="flex gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-950 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+            <li key={h.code} className="flex gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-950">
               <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden />
               <span><span className="font-semibold">{h.title}.</span> <span className="opacity-90">{h.note}</span></span>
             </li>
@@ -164,9 +164,9 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
           <CupCard cup={data.cup} />
 
           {suggested.length > 0 && (
-            <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-500/30 dark:bg-cyan-500/10" data-section="student:pool:suggest">
-              <h2 className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">Bugün için öneri</h2>
-              <p className="text-xs text-cyan-800 dark:text-cyan-200">Günü belli olan ya da bugün dershanede işlenen dersin kalemleri önce.</p>
+            <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-4" data-section="student:pool:suggest">
+              <h2 className="text-sm font-semibold text-cyan-900">Bugün için öneri</h2>
+              <p className="text-xs text-cyan-800">Günü belli olan ya da bugün dershanede işlenen dersin kalemleri önce.</p>
               <ul className="mt-2 space-y-1.5">
                 {suggested.map((it) => <ItemRow key={it.id} it={it} onPick={onPick} busy={cupAdd.isPending} showSubject />)}
               </ul>
@@ -178,7 +178,7 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
 
         <div className="space-y-4">
           <SubjectProgress data={data} />
-          <section className="space-y-4 rounded-xl border bg-card p-4 shadow-sm" data-section="student:pool:list">
+          <section className="space-y-4 rounded-xl border bg-card p-4" data-section="student:pool:list">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-semibold text-foreground">Havuzdaki kalemler</h2>
               <span className="text-xs text-muted-foreground">Kaba al → Bugün sayfasında görev olur</span>
@@ -228,7 +228,7 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
 function CupCard({ cup }: { cup: StudentCupTask[] }) {
   const done = cup.filter((c) => c.status === "completed").length;
   return (
-    <section className="rounded-xl border bg-card shadow-sm" data-section="student:pool:cup">
+    <section className="rounded-xl border bg-card" data-section="student:pool:cup">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
         <h2 className="font-semibold text-foreground">Bugünün kabı</h2>
         {cup.length > 0 && (
@@ -263,7 +263,7 @@ function CupRow({ c }: { c: StudentCupTask }) {
   return (
     <li className="rounded-lg border border-l-4 bg-background px-3 py-2 text-sm" style={color ? { borderLeftColor: color } : undefined}>
       <div className="flex items-start gap-2">
-        <span className={cn("mt-0.5", done ? "text-emerald-700 dark:text-emerald-300" : "text-muted-foreground")}>
+        <span className={cn("mt-0.5", done ? "text-emerald-700" : "text-muted-foreground")}>
           {done ? <Check className="size-4" aria-hidden /> : <span className="inline-block size-4 rounded-full border-2" />}
         </span>
         <div className="min-w-0 flex-1 space-y-1">
@@ -338,7 +338,7 @@ function SubjectProgress({ data }: { data: StudentPoolResponse }) {
   }
   if (rows.size === 0) return null;
   return (
-    <section className="rounded-xl border bg-card p-4 shadow-sm" data-section="student:pool:subjects">
+    <section className="rounded-xl border bg-card p-4" data-section="student:pool:subjects">
       <h2 className="mb-2 font-semibold text-foreground">Derslere göre</h2>
       <ul className="space-y-2">
         {[...rows.entries()].sort((a, b) => b[1].total - a[1].total).map(([name, r]) => {
@@ -371,7 +371,7 @@ function Distribution({ data }: { data: StudentPoolResponse }) {
     return new Date(y, m - 1, d).toLocaleDateString("tr-TR", { weekday: "long" });
   };
   return (
-    <section className="rounded-xl border bg-card text-sm shadow-sm" data-section="student:pool:projection">
+    <section className="rounded-xl border bg-card text-sm" data-section="student:pool:projection">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open}
               className="flex w-full items-center gap-3 px-4 py-3 text-left">
         <CalendarRange className="size-4 text-muted-foreground" aria-hidden />
@@ -491,7 +491,7 @@ function CountDialog({ item, onClose, onPick, busy, cupUnits, perDay }: {
               döner; “yaptım” dediklerini rehberin seansta kitabından birlikte kontrol eder.
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" className="border-amber-950/40 bg-white text-amber-950 hover:bg-amber-50 dark:bg-white dark:text-amber-950 dark:hover:bg-amber-100"
+              <Button size="sm" variant="outline" className="border-amber-950/40 bg-white text-amber-950 hover:bg-amber-50"
                       onClick={() => setConfirmN(null)}>Daha az seç</Button>
               <Button size="sm" className="bg-amber-950 text-white hover:bg-amber-900 hover:text-white" disabled={busy}
                       onClick={() => onPick(confirmN)}>Evet, {confirmN} al</Button>

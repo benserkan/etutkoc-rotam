@@ -110,7 +110,7 @@ export function AdminAuditFeedClient({ initial, initialQuery }: { initial: Audit
       <header>
         <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">← Panel</Link>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <ClipboardList className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
+          <ClipboardList className="size-6 text-indigo-700" aria-hidden />
           Denetim — kim, ne zaman, ne yaptı
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -176,7 +176,7 @@ export function AdminAuditFeedClient({ initial, initialQuery }: { initial: Audit
               <button key={c.key} type="button" role="radio" aria-checked={active} title={c.hint}
                       onClick={() => update({ category: c.key })}
                       className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium",
-                        active ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900"
+                        active ? "border-slate-900 bg-slate-900 text-white"
                                : "bg-card hover:bg-muted")}>
                 {c.label}<span className="tabular-nums opacity-70">{n}</span>
               </button>
@@ -187,7 +187,7 @@ export function AdminAuditFeedClient({ initial, initialQuery }: { initial: Audit
 
       {/* Kritik olaylar — her zaman en üstte */}
       {data.recent_critical.length > 0 && query.severity !== "critical" && (
-        <section className="overflow-hidden rounded-xl border border-rose-300 bg-card dark:border-rose-500/40" data-section="audit:critical">
+        <section className="overflow-hidden rounded-xl border border-rose-300 bg-card" data-section="audit:critical">
           <div className="flex items-center justify-between gap-2 bg-rose-700 px-4 py-2 text-sm font-semibold text-white">
             <span className="inline-flex items-center gap-2"><ShieldAlert className="size-4" aria-hidden /> Son kritik olaylar</span>
             <button type="button" onClick={() => update({ severity: "critical" })} className="text-xs font-medium underline-offset-2 hover:underline">
@@ -293,10 +293,10 @@ function Kpi({ tone, label, value, hint, onClick }: {
   tone: "rose" | "amber" | "slate" | "indigo"; label: string; value: number; hint: string; onClick?: () => void;
 }) {
   const t = {
-    rose: "text-rose-700 dark:text-rose-300",
-    amber: "text-amber-700 dark:text-amber-300",
+    rose: "text-rose-700",
+    amber: "text-amber-700",
     slate: "text-foreground",
-    indigo: "text-indigo-700 dark:text-indigo-300",
+    indigo: "text-indigo-700",
   }[tone];
   const Comp = onClick ? "button" : "div";
   return (
@@ -335,7 +335,7 @@ function FeedRow({ it, onActor }: { it: AuditFeedItem; onActor: (id: number) => 
               <>
                 <span className="text-muted-foreground"> → </span>
                 {it.target_url ? (
-                  <Link href={it.target_url} className="text-indigo-700 hover:underline dark:text-indigo-300">{it.target_name}</Link>
+                  <Link href={it.target_url} className="text-indigo-700 hover:underline">{it.target_name}</Link>
                 ) : <span>{it.target_name}</span>}
                 {it.target_role_label && <span className="text-xs text-muted-foreground"> ({it.target_role_label})</span>}
                 {it.target_extra && <span className="text-muted-foreground"> {it.target_extra}</span>}

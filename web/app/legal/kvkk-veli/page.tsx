@@ -16,7 +16,7 @@ export default function ParentKvkkPage() {
   return (
     <div className="min-h-screen bg-muted/20 py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        <Card className="border-border shadow-sm">
+        <Card className="border-border">
           <CardContent className="p-8">
             <h1 className="text-2xl font-bold tracking-tight font-display mb-1">
               Veli Aydınlatma Metni
@@ -162,7 +162,7 @@ export default function ParentKvkkPage() {
             <div className="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-2 text-sm">
               <Link
                 href="/parent"
-                className="inline-flex items-center gap-1 text-[#117A86] dark:text-teal-300 hover:underline"
+                className="inline-flex items-center gap-1 text-[#117A86] hover:underline"
               >
                 <ArrowLeft className="size-4" aria-hidden />
                 Geri dön

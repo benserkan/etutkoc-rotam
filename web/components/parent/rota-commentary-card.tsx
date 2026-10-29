@@ -160,18 +160,18 @@ export function RotaCommentaryCard({ studentId }: { studentId: number }) {
   }, [tab, kind, commentary?.generated_at]);
 
   return (
-    <section className="rounded-2xl border border-cyan-200 bg-cyan-50/40 p-5 dark:border-cyan-500/30 dark:bg-cyan-500/10">
+    <section className="rounded-2xl border border-cyan-200 bg-cyan-50/40 p-5">
       <div className="flex flex-wrap items-center gap-3">
         <GuideAvatar size={56} speaking={playing} />
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold text-cyan-950 dark:text-cyan-100">
+          <h2 className="text-base font-semibold text-cyan-950">
             Rota&apos;nın Yorumu
           </h2>
-          <p className="text-xs text-cyan-900/70 dark:text-cyan-200/70">
+          <p className="text-xs text-cyan-900/70">
             Çocuğunun durumunu sizin dilinizde anlatır — okuyun ya da dinleyin.
           </p>
         </div>
-        <div className="flex rounded-lg border border-cyan-200 bg-white p-0.5 dark:border-cyan-500/30 dark:bg-slate-900">
+        <div className="flex rounded-lg border border-cyan-200 bg-white p-0.5">
           {KIND_TABS.map((t) => (
             <button
               key={t.tab}
@@ -181,7 +181,7 @@ export function RotaCommentaryCard({ studentId }: { studentId: number }) {
                 "rounded-md px-3 py-1.5 text-xs font-semibold transition",
                 tab === t.tab
                   ? "bg-cyan-600 text-white"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-300",
+                  : "text-slate-600 hover:text-slate-900",
               )}
             >
               {t.label}
@@ -196,13 +196,13 @@ export function RotaCommentaryCard({ studentId }: { studentId: number }) {
         ) : q.isLoading ? (
           <p className="text-sm text-muted-foreground">Yükleniyor…</p>
         ) : data && !data.ai_available ? (
-          <p className="text-sm text-slate-700 dark:text-slate-300">
+          <p className="text-sm text-slate-700">
             {data.unavailable_reason ?? "Rota yorumu şu an kullanılamıyor."}
           </p>
         ) : commentary ? (
           <div className="space-y-4">
             {data?.is_stale ? (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                 <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                 Bu yorumdan sonra yeni gelişmeler oldu — güncel anlatım için
                 yenileyin.
@@ -237,7 +237,7 @@ export function RotaCommentaryCard({ studentId }: { studentId: number }) {
                 type="button"
                 onClick={() => genMut.mutate()}
                 disabled={genMut.isPending}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-300 px-3 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-100/60 disabled:opacity-60 dark:border-cyan-500/40 dark:text-cyan-200 dark:hover:bg-cyan-500/25"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-300 px-3 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-100/60 disabled:opacity-60"
               >
                 <RefreshCw
                   className={cn("size-3.5", genMut.isPending && "animate-spin")}
@@ -250,10 +250,10 @@ export function RotaCommentaryCard({ studentId }: { studentId: number }) {
             <div className="space-y-3">
               {commentary.sections.map((s, i) => (
                 <div key={i}>
-                  <h3 className="text-sm font-semibold text-cyan-950 dark:text-cyan-100">
+                  <h3 className="text-sm font-semibold text-cyan-950">
                     {s.title}
                   </h3>
-                  <p className="mt-0.5 text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+                  <p className="mt-0.5 text-sm leading-relaxed text-slate-800">
                     {s.body}
                   </p>
                 </div>
@@ -266,7 +266,7 @@ export function RotaCommentaryCard({ studentId }: { studentId: number }) {
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-slate-700 dark:text-slate-300">
+            <p className="text-sm text-slate-700">
               {kind === "program"
                 ? "Rota, çocuğunuzun haftalık program ilerlemesini — neyin yapıldığını, neyin aksadığını, evde nasıl destek olabileceğinizi — sizin dilinizde anlatır."
                 : "Rota, deneme sonuçlarını ve konu analizini grafiklere boğulmadan anlamanız için derleyip anlatır."}
@@ -284,7 +284,7 @@ export function RotaCommentaryCard({ studentId }: { studentId: number }) {
         )}
 
         {err ? (
-          <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
+          <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
             {err}
           </p>
         ) : null}

@@ -263,7 +263,7 @@ function ExamForm({
                 className="w-11 rounded-lg border border-slate-300 bg-white px-1 py-2 text-center text-sm font-semibold text-slate-900"
               />
               <Pressable onPress={() => removeSubjectRow(i)} disabled={subjects.length <= 1} hitSlop={6} className="w-6 items-center">
-                <Ionicons name="close-circle" size={18} color={subjects.length <= 1 ? "#e2e8f0" : "#fb7185"} />
+                <Ionicons name="close-circle" size={18} color={subjects.length <= 1 ? "#CBCBCD" : "#fb7185"} />
               </Pressable>
             </View>
           ))}

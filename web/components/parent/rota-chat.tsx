@@ -276,7 +276,7 @@ export function RotaChat({
   }
   if (data && !data.ai_available) {
     return (
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-slate-700">
         {data.unavailable_reason ?? "Rota sohbeti şu an kullanılamıyor."}
       </p>
     );
@@ -289,7 +289,7 @@ export function RotaChat({
         {data?.greeting ? (
           <div className="flex items-start gap-2">
             <GuideAvatar size={28} speaking={false} />
-            <div className="rounded-2xl rounded-tl-sm border border-cyan-200 bg-white px-3 py-2 text-sm text-slate-800 dark:border-cyan-500/30 dark:bg-slate-900 dark:text-slate-200">
+            <div className="rounded-2xl rounded-tl-sm border border-cyan-200 bg-white px-3 py-2 text-sm text-slate-800">
               {data.greeting.text}
             </div>
           </div>
@@ -310,7 +310,7 @@ export function RotaChat({
                 "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm",
                 m.role === "veli"
                   ? "rounded-tr-sm bg-cyan-600 text-white"
-                  : "rounded-tl-sm border border-cyan-200 bg-white text-slate-800 dark:border-cyan-500/30 dark:bg-slate-900 dark:text-slate-200",
+                  : "rounded-tl-sm border border-cyan-200 bg-white text-slate-800",
               )}
             >
               {m.body}
@@ -319,7 +319,7 @@ export function RotaChat({
                   type="button"
                   onClick={() => void toggleListen(m)}
                   disabled={voicePendingId !== null && voicePendingId !== m.id}
-                  className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-cyan-700 hover:text-cyan-900 disabled:opacity-50 dark:text-cyan-300 dark:hover:text-cyan-200"
+                  className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-cyan-700 hover:text-cyan-900 disabled:opacity-50"
                 >
                   {voicePendingId === m.id ? (
                     <>
@@ -345,7 +345,7 @@ export function RotaChat({
         {askMut.isPending ? (
           <div className="flex items-start gap-2">
             <GuideAvatar size={28} speaking />
-            <div className="rounded-2xl rounded-tl-sm border border-cyan-200 bg-white px-3 py-2 text-sm text-slate-500 dark:border-cyan-500/30 dark:bg-slate-900">
+            <div className="rounded-2xl rounded-tl-sm border border-cyan-200 bg-white px-3 py-2 text-sm text-slate-500">
               <RefreshCw className="mr-1.5 inline size-3.5 animate-spin" aria-hidden />
               Rota düşünüyor…
             </div>
@@ -363,7 +363,7 @@ export function RotaChat({
               type="button"
               disabled={askMut.isPending}
               onClick={() => onChip(c.action, c.payload)}
-              className="rounded-full border border-cyan-300 bg-white px-3 py-1 text-xs font-medium text-cyan-800 hover:bg-cyan-50 disabled:opacity-50 dark:border-cyan-500/40 dark:bg-slate-900 dark:text-cyan-200 dark:hover:bg-cyan-500/25"
+              className="rounded-full border border-cyan-300 bg-white px-3 py-1 text-xs font-medium text-cyan-800 hover:bg-cyan-50 disabled:opacity-50"
             >
               {c.label}
             </button>
@@ -389,10 +389,10 @@ export function RotaChat({
           }
           maxLength={500}
           disabled={askMut.isPending || (data?.daily_left ?? 0) <= 0}
-          className="h-10 flex-1 rounded-xl border border-cyan-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-cyan-500/30 dark:bg-slate-900 dark:text-slate-100"
+          className="h-10 flex-1 rounded-xl border border-cyan-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
         />
         {transcribeMut.isPending ? (
-            <span className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-cyan-200 bg-white px-3 text-xs font-medium text-cyan-700 dark:border-cyan-500/30 dark:bg-slate-900 dark:text-cyan-300">
+            <span className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-cyan-200 bg-white px-3 text-xs font-medium text-cyan-700">
               <RefreshCw className="size-4 animate-spin" aria-hidden />
               Çevriliyor…
             </span>
@@ -413,7 +413,7 @@ export function RotaChat({
             onClick={() => void startRecording()}
             disabled={askMut.isPending || (data?.daily_left ?? 0) <= 0}
             title="Sesli sor — konuşman yazıya çevrilip kutuya dolar"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 disabled:opacity-50 dark:border-cyan-500/40 dark:bg-slate-900 dark:text-cyan-300 dark:hover:bg-cyan-500/25"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 disabled:opacity-50"
           >
             <Mic className="size-4" aria-hidden />
             <span className="sr-only">Sesli sor</span>
@@ -440,7 +440,7 @@ export function RotaChat({
       </div>
 
       {err ? (
-        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
+        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {err}
         </p>
       ) : null}

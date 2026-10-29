@@ -49,7 +49,7 @@ export function WeekNotesCard({ studentId, weekStart, notes }: Props) {
   const doneCount = notes.filter((n) => n.is_done).length;
 
   return (
-    <section className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+    <section className="rounded-xl border border-border bg-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

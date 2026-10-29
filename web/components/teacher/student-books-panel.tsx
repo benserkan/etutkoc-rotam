@@ -134,7 +134,7 @@ function SourceBadge({ kind }: { kind?: string | null }) {
 function TypeBadge({ label }: { label?: string | null }) {
   if (!label) return null;
   return (
-    <span className="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-800 dark:bg-slate-700 dark:text-slate-100">
+    <span className="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-800">
       {label}
     </span>
   );
@@ -145,7 +145,7 @@ function Ring({ pct, size = 92 }: { pct: number; size?: number }) {
   const c = 2 * Math.PI * r;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden className="shrink-0">
-      <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={9} className="fill-none stroke-slate-200 dark:stroke-slate-700" />
+      <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={9} className="fill-none stroke-slate-200" />
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -480,21 +480,21 @@ function SubjectButton({
       className={cn(
         "w-full rounded-xl border p-3 text-left transition",
         active
-          ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600 dark:bg-cyan-500/10"
+          ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600"
           : "border-border bg-card hover:border-cyan-400 hover:bg-muted/40",
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className={cn("inline-flex items-start gap-1.5 text-sm font-semibold", active ? "text-cyan-950 dark:text-cyan-100" : "text-foreground")}>
+        <span className={cn("inline-flex items-start gap-1.5 text-sm font-semibold", active ? "text-cyan-950" : "text-foreground")}>
           {dot ? <span className={cn("mt-1.5 inline-block size-2 shrink-0 rounded-full", dot)} aria-hidden /> : null}
           <span>{name}</span>
         </span>
-        <span className={cn("shrink-0 text-sm font-bold tabular-nums", active ? "text-cyan-900 dark:text-cyan-100" : "text-foreground")}>
+        <span className={cn("shrink-0 text-sm font-bold tabular-nums", active ? "text-cyan-900" : "text-foreground")}>
           %{pct}
         </span>
       </div>
       <ProgressBar done={done} reserved={reserved} total={total} className="mt-2 h-1.5" />
-      <p className={cn("mt-1.5 text-[12px]", active ? "text-cyan-900 dark:text-cyan-200" : "text-muted-foreground")}>
+      <p className={cn("mt-1.5 text-[12px]", active ? "text-cyan-900" : "text-muted-foreground")}>
         {count} kitap · <span className="tabular-nums">{Math.max(0, total - done - reserved)}</span> test atanabilir
       </p>
     </button>
@@ -529,7 +529,7 @@ function BookCard({ book, studentId }: { book: StudentBookListItem; studentId: n
       data-testid="book-card"
       className={cn(
         "rounded-xl border border-border bg-card p-4",
-        isArchived && "bg-slate-50 dark:bg-slate-500/5",
+        isArchived && "bg-slate-50",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -559,13 +559,13 @@ function BookCard({ book, studentId }: { book: StudentBookListItem; studentId: n
       </div>
 
       {total === 0 ? (
-        <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-[12px] text-amber-900 dark:bg-amber-500/15 dark:text-amber-100">
+        <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-[12px] text-amber-900">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           Bu kitapta bölüm/test yok — programa görev verilemez. Kütüphanede bölümlerini ekle.
         </p>
       ) : next && !isArchived ? (
         <p className="mt-2 flex items-start gap-1.5 text-[12.5px] text-muted-foreground">
-          <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+          <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-cyan-700" aria-hidden />
           <span>
             Sıradaki: <strong className="text-foreground">{next.label}</strong> ·{" "}
             {next.test_count - next.completed_count - next.reserved_count} {unit} atanabilir
@@ -579,7 +579,7 @@ function BookCard({ book, studentId }: { book: StudentBookListItem; studentId: n
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
-            className="inline-flex items-center gap-1 text-[12.5px] font-medium text-cyan-800 hover:underline dark:text-cyan-300"
+            className="inline-flex items-center gap-1 text-[12.5px] font-medium text-cyan-800 hover:underline"
           >
             <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} aria-hidden />
             {isDeneme ? "Denemeler" : "Üniteler"} ({book.sections.length})
@@ -698,7 +698,7 @@ function SectionRow({
               setVal(s.completed_count);
               setEditing(true);
             }}
-            className="ml-auto text-cyan-800 hover:underline dark:text-cyan-300"
+            className="ml-auto text-cyan-800 hover:underline"
           >
             {s.completed_count > 0 ? "Çözülen sayısını düzenle" : "Öğrenci bunu zaten çözmüştü"}
           </button>
@@ -742,7 +742,7 @@ function SectionRow({
             İptal
           </button>
           {val < s.completed_count - s.manual_count ? (
-            <p className="basis-full text-[11px] text-amber-800 dark:text-amber-200">
+            <p className="basis-full text-[11px] text-amber-800">
               Öğrenci çözmediği testi işaretlediyse gerçek sayıyı yaz: fark en yeni görevden geri alınır, o
               testler öğrencinin programında yeniden &quot;bekliyor&quot; olur (görevi silmen gerekmez).
             </p>
@@ -809,7 +809,7 @@ function SelfStudyCard({ studentId, books }: { studentId: number; books: Student
 
       {pending.length > 0 ? (
         <div className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-          <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+          <p className="text-xs font-medium text-amber-800">
             Öğrenci beyanı — onayını bekliyor ({pending.length})
           </p>
           <ul className="divide-y divide-border/60">
@@ -1072,7 +1072,7 @@ function ManualAssignForm({
         ) : candidates.length === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground">
             Atayabileceğin başka kitap yok.{" "}
-            <Link href="/teacher/library/new" className="font-medium text-cyan-800 underline dark:text-cyan-300">
+            <Link href="/teacher/library/new" className="font-medium text-cyan-800 underline">
               Kütüphaneye kitap ekle →
             </Link>
           </div>
@@ -1148,13 +1148,13 @@ function AssignRow({ book: b, checked, onToggle }: { book: TeacherBookListItem; 
       <label
         className={cn(
           "flex cursor-pointer items-start gap-3 px-3 py-2.5 transition-colors",
-          checked ? "bg-cyan-50 dark:bg-cyan-500/10" : "hover:bg-muted/50",
+          checked ? "bg-cyan-50" : "hover:bg-muted/50",
         )}
       >
         <input type="checkbox" checked={checked} onChange={onToggle} aria-label={b.name} className="mt-1 size-4 shrink-0" />
         <span className="min-w-0 flex-1 space-y-1">
           <span className="flex flex-wrap items-center gap-1.5">
-            <span className={cn("break-words text-sm font-semibold", checked ? "text-cyan-950 dark:text-cyan-50" : "text-foreground")}>
+            <span className={cn("break-words text-sm font-semibold", checked ? "text-cyan-950" : "text-foreground")}>
               {b.name}
             </span>
             <SourceBadge kind={b.source_kind} />
@@ -1165,7 +1165,7 @@ function AssignRow({ book: b, checked, onToggle }: { book: TeacherBookListItem; 
               </span>
             ) : null}
           </span>
-          <span className={cn("block text-[12px]", checked ? "text-cyan-900 dark:text-cyan-100" : "text-muted-foreground")}>
+          <span className={cn("block text-[12px]", checked ? "text-cyan-900" : "text-muted-foreground")}>
             {[
               b.publisher,
               `${b.section_count} bölüm`,
@@ -1177,7 +1177,7 @@ function AssignRow({ book: b, checked, onToggle }: { book: TeacherBookListItem; 
               .join(" · ")}
           </span>
           {empty ? (
-            <span className="flex items-start gap-1 text-[12px] text-amber-800 dark:text-amber-200">
+            <span className="flex items-start gap-1 text-[12px] text-amber-800">
               <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               Bölümü yok — atanırsa programa görev verilemez.
             </span>
@@ -1323,9 +1323,9 @@ function SetApplyForm({
 
       {isMismatch && selectedSet ? (
         <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden />
           <div>
-            <p className="font-medium text-amber-800 dark:text-amber-200">Bu set öğrencinin sınıfı için önerilen değil.</p>
+            <p className="font-medium text-amber-800">Bu set öğrencinin sınıfı için önerilen değil.</p>
             <p className="mt-0.5 text-muted-foreground">
               Set hedefi: <strong>{selectedSet.target_grade_label_tr}</strong> · Öğrenci:{" "}
               <strong>{studentLevelLabel}</strong>. Yine de atayabilirsin — sadece bir hatırlatma.
@@ -1423,11 +1423,11 @@ function ArchiveSuggestionBand({ studentId }: { studentId: number }) {
 
   return (
     <>
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-amber-900 dark:text-amber-200">Geçen dönemden {candidates.length} kitap duruyor</p>
-            <p className="text-xs text-amber-800 dark:text-amber-300">
+            <p className="font-medium text-amber-900">Geçen dönemden {candidates.length} kitap duruyor</p>
+            <p className="text-xs text-amber-800">
               {q.data?.period_label ? `${q.data.period_label} ` : ""}dönemi başlamadan atanmıştı. Arşivlemek listeyi
               sadeleştirir; kayıt ve görev geçmişi silinmez, istediğinde geri alırsın.
             </p>
@@ -1435,7 +1435,7 @@ function ArchiveSuggestionBand({ studentId }: { studentId: number }) {
           <Button
             size="sm"
             variant="outline"
-            className="shrink-0 border-amber-300 bg-white text-amber-900 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-500/40 dark:bg-transparent dark:text-amber-200 dark:hover:bg-amber-500/25 dark:hover:text-amber-100"
+            className="shrink-0 border-amber-300 bg-white text-amber-900 hover:bg-amber-100 hover:text-amber-900"
             onClick={() => {
               setPicked(candidates.map((cd) => cd.book_id));
               setOpen(true);

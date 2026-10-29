@@ -165,7 +165,7 @@ function AddFlow({ data, studentId, studentGrade, onDone, onCancel }: {
                   <div className="rounded-lg border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">
                     Bu derste sistemde kayıtlı kitabın yok.
                     <button type="button" onClick={() => setTab("topics")}
-                            className="ml-1 font-medium text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300">
+                            className="ml-1 font-medium text-cyan-700 underline-offset-2 hover:underline">
                       Müfredat konusundan seç
                     </button>.
                   </div>
@@ -191,7 +191,7 @@ function AddFlow({ data, studentId, studentGrade, onDone, onCancel }: {
                   {units.map((u) => (
                     <button key={u} type="button" role="radio" aria-checked={unit === u} onClick={() => setUnit(u)}
                             className={cn("flex-1 rounded-md px-2.5 py-1.5 transition",
-                              unit === u ? "bg-cyan-700 text-white shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                              unit === u ? "bg-cyan-700 text-white" : "text-muted-foreground hover:text-foreground")}>
                       {UNIT_LABELS[u]}
                     </button>
                   ))}
@@ -217,7 +217,7 @@ function AddFlow({ data, studentId, studentGrade, onDone, onCancel }: {
                     <span className="text-xs text-muted-foreground">{UNIT_LABELS[unit]}</span>
                   </div>
                   {available != null && (
-                    <p className={cn("text-xs", over ? "font-medium text-amber-700 dark:text-amber-300" : "text-muted-foreground")}>
+                    <p className={cn("text-xs", over ? "font-medium text-amber-700" : "text-muted-foreground")}>
                       Bu bölümde {available} {UNIT_LABELS[unit]} kaldı{over ? " — daha fazlasını yazdın; koçun seansta kontrol eder." : "."}
                     </p>
                   )}
@@ -229,7 +229,7 @@ function AddFlow({ data, studentId, studentGrade, onDone, onCancel }: {
                       <span>–</span>
                       <Input value={pageTo} onChange={(e) => setPageTo(e.target.value.replace(/\D/g, ""))} inputMode="numeric"
                              placeholder="50" aria-label="Bitiş sayfası" className="h-8 w-20" />
-                      {!rangeOk && <span className="font-medium text-rose-700 dark:text-rose-300">Başlangıç bitişten büyük olamaz.</span>}
+                      {!rangeOk && <span className="font-medium text-rose-700">Başlangıç bitişten büyük olamaz.</span>}
                     </div>
                   )}
                 </>
@@ -300,7 +300,7 @@ function Step({ n, title, done, disabled, summary, onEdit, children }: {
         <span className="font-semibold text-foreground">{title}</span>
         {collapsed && <span className="min-w-0 flex-1 break-words text-muted-foreground">{summary}</span>}
         {collapsed && onEdit && (
-          <button type="button" onClick={onEdit} className="ml-auto shrink-0 text-xs font-medium text-cyan-700 hover:underline dark:text-cyan-300">
+          <button type="button" onClick={onEdit} className="ml-auto shrink-0 text-xs font-medium text-cyan-700 hover:underline">
             Değiştir
           </button>
         )}

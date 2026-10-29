@@ -33,12 +33,12 @@ import { ExamKindSwitch, ProgramExamsSection } from "@/components/shared/program
 import { examSeriesOptions, rowSeries } from "@/lib/exam-format";
 
 const SECTION_TONE: Record<string, string> = {
-  lgs: "bg-cyan-50 text-cyan-800 dark:bg-cyan-500/15 dark:text-cyan-200",
-  tyt: "bg-violet-50 text-violet-800 dark:bg-violet-500/15 dark:text-violet-200",
-  ayt_say: "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200",
-  ayt_ea: "bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200",
-  ayt_soz: "bg-rose-50 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200",
-  ayt_dil: "bg-sky-50 text-sky-800 dark:bg-sky-500/15 dark:text-sky-200",
+  lgs: "bg-cyan-50 text-cyan-800",
+  tyt: "bg-violet-50 text-violet-800",
+  ayt_say: "bg-emerald-50 text-emerald-800",
+  ayt_ea: "bg-amber-50 text-amber-800",
+  ayt_soz: "bg-rose-50 text-rose-800",
+  ayt_dil: "bg-sky-50 text-sky-800",
 };
 
 type Tab = "overview" | "progress" | "topics" | "behavior" | "report" | "score" | "list";
@@ -101,17 +101,17 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
       <div className="flex flex-wrap gap-2">
         <Link
           href={`/parent/students/${studentId}`}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/40 p-3 hover:bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:hover:bg-cyan-500/25"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/40 p-3 hover:bg-cyan-50"
         >
-          <Sparkles className="size-5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
-          <span className="text-sm text-cyan-950 dark:text-cyan-100">
+          <Sparkles className="size-5 shrink-0 text-cyan-700" aria-hidden />
+          <span className="text-sm text-cyan-950">
             <span className="font-semibold">Rota&apos;nın Yorumu</span> — deneme sonuçlarının yapay zekâ
             anlatımı çocuğunuzun sayfasında; okuyabilir ya da sesli dinleyebilirsiniz.
           </span>
         </Link>
         <Link
           href={`/parent/support?child=${studentId}&category=exam_comment`}
-          className="inline-flex items-center gap-1.5 self-center rounded-lg border border-[#117A86]/40 px-3 py-2 text-xs font-semibold text-[#117A86] dark:text-teal-300 hover:bg-[#117A86]/5 dark:text-cyan-300"
+          className="inline-flex items-center gap-1.5 self-center rounded-lg border border-[#117A86]/40 px-3 py-2 text-xs font-semibold text-[#117A86] hover:bg-[#117A86]/5"
         >
           <MessageSquarePlus className="size-3.5" aria-hidden /> Koça deneme hakkında sor
         </Link>
@@ -137,7 +137,7 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
                   className={cn(
                     "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
                     tab === t.key
-                      ? "border-cyan-700 text-foreground dark:border-cyan-400"
+                      ? "border-cyan-700 text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -234,15 +234,15 @@ function ParentExamRow({ row, onOpenDetail }: { row: ExamResultRow; onOpenDetail
             </span>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {fmtTRDate(row.exam_date)} · <span className="text-emerald-700 dark:text-emerald-400">{row.total_correct}D</span>{" "}
-            <span className="text-rose-700 dark:text-rose-400">{row.total_wrong}Y</span> {row.total_blank}B ·{" "}
+            {fmtTRDate(row.exam_date)} · <span className="text-emerald-700">{row.total_correct}D</span>{" "}
+            <span className="text-rose-700">{row.total_wrong}Y</span> {row.total_blank}B ·{" "}
             {row.total_questions} soru
             {row.averages?.total != null ? ` · ${row.averages.label.toLocaleLowerCase("tr-TR")} ${fmtNet(row.averages.total)}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" onClick={onOpenDetail} aria-label="Deneme detayı">
-            <Eye className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+            <Eye className="size-4 text-cyan-700" aria-hidden />
           </Button>
           {row.subjects.length ? (
             <Button

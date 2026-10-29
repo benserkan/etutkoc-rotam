@@ -174,7 +174,7 @@ function ViewToggle({ view, onChange }: { view: PoolEditorView; onChange: (v: Po
         aria-pressed={view === v}
         className={cn(
           "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition",
-          view === v ? "bg-cyan-700 text-white shadow-sm" : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          view === v ? "bg-cyan-700 text-white" : "text-muted-foreground hover:bg-accent hover:text-foreground",
         )}
       >
         {icon} {label}
@@ -217,7 +217,7 @@ function WatchView({ studentId, data, onEdit }: { studentId: number; data: PoolB
       <SubjectProgress items={items} />
 
       {pending.length > 0 && (
-        <section className="rounded-xl border border-amber-300 bg-card p-4 dark:border-amber-500/40" data-section="pool:watch:pending">
+        <section className="rounded-xl border border-amber-300 bg-card p-4" data-section="pool:watch:pending">
           <h2 className="font-semibold text-foreground">Onayını bekleyen öğrenci kalemleri ({pending.length})</h2>
           <p className="text-xs text-muted-foreground">Öğrenci kendisi ekledi; kaynağından gösterince onayla, yüzdeye girer.</p>
           <ul className="mt-2 space-y-1.5">{pending.map((it) => <ItemRow key={it.id} it={it} {...rowProps(it)} />)}</ul>
@@ -253,7 +253,7 @@ function WatchView({ studentId, data, onEdit }: { studentId: number; data: PoolB
         {done.length > 0 && (
           <div className="mt-4 border-t pt-3">
             <button type="button" onClick={() => setShowDone((v) => !v)}
-                    className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-300"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:underline"
                     aria-expanded={showDone}>
               <ChevronRight className={cn("size-4 transition", showDone && "rotate-90")} aria-hidden />
               <Check className="size-4" aria-hidden /> {done.length} kalem bitti {showDone ? "— gizle" : "— göster"}
@@ -282,7 +282,7 @@ function ModeBadge({ mode }: { mode: "gun_gun" | "havuz" }) {
 function ModeCard({ studentId, today }: { studentId: number; today: string }) {
   const [switchOpen, setSwitchOpen] = React.useState(false);
   return (
-    <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4 text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+    <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4 text-cyan-900">
       <h2 className="font-semibold">Bu öğrenci gün gün programda</h2>
       <p className="mt-1 text-sm">
         Haftalık havuz modu dershane öğrencisi içindir: seansta haftanın görevlerini topluca
@@ -297,7 +297,7 @@ function ModeCard({ studentId, today }: { studentId: number; today: string }) {
         </Button>
         <Link
           href={`/teacher/students/${studentId}/week`}
-          className="inline-flex items-center rounded-md border border-cyan-300 px-3 py-2 text-sm hover:bg-cyan-100 dark:border-cyan-500/40 dark:hover:bg-cyan-500/20"
+          className="inline-flex items-center rounded-md border border-cyan-300 px-3 py-2 text-sm hover:bg-cyan-100"
         >
           Gün gün programa dön
         </Link>
@@ -329,7 +329,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
     return (
       <div className="rounded-lg border bg-card p-4" data-section="pool:open">
         {data.on_break && (
-          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-100" data-section="pool:break">
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900" data-section="pool:break">
             <span className="font-semibold">Ara (tatil)</span>
             <span>{fmtDate(data.on_break.since)} tarihinden beri — uyarılar ve hatırlatmalar susuyor, havuz boş.</span>
             <span className="ml-auto text-xs opacity-80">Aradan dönmek için aşağıdan dönem aç; kalan kalemleri devredebilirsin.</span>
@@ -416,7 +416,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
   const timeline: string[] = [];
   if (span && span <= 21) for (let i = 0; i <= span; i++) timeline.push(addDays(period.opened_on, i));
   return (
-    <section className="overflow-hidden rounded-2xl border bg-card shadow-sm" data-section="pool:period">
+    <section className="overflow-hidden rounded-2xl border bg-card" data-section="pool:period">
       <div className="flex flex-wrap items-start gap-4 bg-gradient-to-r from-cyan-700/10 via-transparent to-transparent p-4">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -449,7 +449,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
               <button type="button" title="Beklenen seans gününü değiştir — öğrenci başka güne yazıldıysa ya da gelmediyse. Tempo yeni güne göre hesaplanır."
                       onClick={() => { setNextDraft(period.expected_next_on ?? ""); setEditNext(true); }}
                       className={cn("inline-flex items-center gap-1 rounded-md border border-dashed px-2 py-0.5 font-semibold hover:border-cyan-600",
-                        late ? "text-rose-700 dark:text-rose-300" : "text-foreground")}>
+                        late ? "text-rose-700" : "text-foreground")}>
                 {fmtDate(period.expected_next_on)}
                 <PencilLine className="size-3.5 text-muted-foreground" aria-hidden />
               </button>
@@ -486,7 +486,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
                     className={cn(
                       "flex flex-col items-center rounded-lg border px-1 py-1.5 text-center",
                       past && "border-cyan-700/30 bg-cyan-700/10",
-                      isToday && "border-cyan-700 bg-cyan-700 text-white shadow-sm",
+                      isToday && "border-cyan-700 bg-cyan-700 text-white",
                       isSession && !isToday && "border-dashed border-cyan-700",
                       !past && !isToday && !isSession && "border-dashed",
                     )}
@@ -494,7 +494,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
                   >
                     <span className={cn("text-[10px] font-medium", isToday ? "text-white" : "text-muted-foreground")}>{DAY_SHORT[wd]}</span>
                     <span className={cn("text-sm font-semibold", isToday ? "text-white" : "text-foreground")}>{dd}</span>
-                    <span className={cn("text-[10px]", isToday ? "font-semibold text-white" : isSession ? "font-semibold text-cyan-700 dark:text-cyan-300" : "text-muted-foreground")}>
+                    <span className={cn("text-[10px]", isToday ? "font-semibold text-white" : isSession ? "font-semibold text-cyan-700" : "text-muted-foreground")}>
                       {isToday ? "bugün" : isSession ? "seans" : past ? "geçti" : "kaldı"}
                     </span>
                   </div>
@@ -510,7 +510,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
           icon={<Target className="size-4" aria-hidden />}
           label="Tamamlanan"
           value={`%${s.pct}`}
-          valueClass={expectedPct == null ? "text-foreground" : ahead ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}
+          valueClass={expectedPct == null ? "text-foreground" : ahead ? "text-emerald-700" : "text-amber-700"}
           hint="Yapılan birim ÷ havuzdaki toplam birim. Birim: her test 1; video, deneme ve etkinlik kalemi 1. Öğrencinin kaydı ve senin seansta işaretlediğin birlikte sayılır; onay bekleyen öğrenci kalemi girmez."
           explain={s.total_units === 0
             ? <>Havuzda henüz kalem yok; yüzde kalem eklenince hesaplanır.</>
@@ -532,7 +532,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
           icon={<CalendarClock className="size-4" aria-hidden />}
           label="Seansa kalan"
           value={`${s.days_left} gün`}
-          valueClass={late ? "text-rose-700 dark:text-rose-300" : "text-foreground"}
+          valueClass={late ? "text-rose-700" : "text-foreground"}
           hint="Bugün dahil, beklenen seans gününe kadar çalışılacak gün sayısı (seans günü sayılmaz). Beklenen gün geçtiyse 1 kabul edilir; dönem öğrenci gelene kadar uzar."
           explain={s.expected_next_on
             ? late
@@ -556,7 +556,7 @@ function PeriodBar({ studentId, data }: { studentId: number; data: PoolBundleRes
       {(s.pending_student_items > 0 || heavy) && (
         <div className="space-y-1 border-t bg-muted/40 px-4 py-2 text-xs">
           {s.pending_student_items > 0 && (
-            <p className="text-amber-800 dark:text-amber-200">{s.pending_student_items} kalemi öğrenci ekledi, onay bekliyor — yüzdeye girmiyor.</p>
+            <p className="text-amber-800">{s.pending_student_items} kalemi öğrenci ekledi, onay bekliyor — yüzdeye girmiyor.</p>
           )}
           {heavy && <p className="text-muted-foreground">Bilgi: son 3 dönemde ortalama {avg} birim bitirdi, bu havuz {data.volume.current_total} birim.</p>}
         </div>
@@ -644,7 +644,7 @@ function Stat({ icon, label, value, valueClass, explain, hint, children }: {
   return (
     <div className="bg-card px-4 py-3">
       <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        <span className="grid size-6 place-items-center rounded-md bg-cyan-700/10 text-cyan-700 dark:text-cyan-300">{icon}</span>
+        <span className="grid size-6 place-items-center rounded-md bg-cyan-700/10 text-cyan-700">{icon}</span>
         {label}
         <Hint text={hint}>
           <button type="button" aria-label={`${label} nasıl hesaplanır?`} className="ml-auto rounded-full text-muted-foreground hover:text-foreground">
@@ -702,7 +702,7 @@ function PoolList({ studentId, data, onPickSubject }: {
     .filter((x) => x.units > 0)
     .sort((a, b) => b.units - a.units);
   return (
-    <section className="rounded-xl border bg-card shadow-sm" data-section="pool:list">
+    <section className="rounded-xl border bg-card" data-section="pool:list">
       <header className="space-y-3 border-b px-4 py-3">
         <div className="flex flex-wrap items-center gap-3">
           <span className="grid size-9 place-items-center rounded-lg bg-muted text-foreground" aria-hidden>
@@ -790,7 +790,7 @@ function ItemRow({ it, studentId, data, onDelete, onApprove }: {
   const pct = it.quantity > 0 ? Math.round((100 * (it.quantity - it.remaining)) / it.quantity) : 0;
   return (
     <li className={cn("group rounded-lg border border-l-4 bg-background px-3 py-2 text-sm transition hover:shadow-sm",
-      done && "opacity-75", pending && "border-amber-300 dark:border-amber-500/40")}
+      done && "opacity-75", pending && "border-amber-300")}
         style={{ borderLeftColor: subjectColors(it.subject_name).rail }}>
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
@@ -884,7 +884,7 @@ function ItemRow({ it, studentId, data, onDelete, onApprove }: {
         )}
         <Hint text="Kalemi havuzdan kaldır. Silinmez, iz kalır; öğrenci artık kabına alamaz.">
           <button type="button" onClick={onDelete} title="Kaldır" aria-label="Kaldır"
-                  className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-300">
+                  className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-700">
             <Trash2 className="size-4" aria-hidden />
           </button>
         </Hint>
@@ -979,7 +979,7 @@ function PreviewCard({ data, onOpenLessons }: { data: PoolBundleResponse; onOpen
   const { days, hasLessons } = buildPreview(data);
   const subjName = new Map(data.subjects.map((x) => [x.id, x.name] as const));
   return (
-    <div className="rounded-xl border bg-card text-sm shadow-sm" data-section="pool:preview">
+    <div className="rounded-xl border bg-card text-sm" data-section="pool:preview">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center gap-3 px-4 py-3 text-left">
         <CalendarRange className="size-4 text-muted-foreground" aria-hidden />
         <span className="flex-1 font-medium text-foreground">Gün gün nasıl görünür? (önizleme)</span>
@@ -1093,7 +1093,7 @@ function ClassGroupPanel({ studentId, data, open, onOpenChange }: {
   if (ayt.length) groups.push(["AYT", ayt]);
   const perDay = DAY_SHORT.map((_, d) => (lessons[String(d)] ?? []).length);
   return (
-    <section className="rounded-xl border bg-card text-sm shadow-sm" data-section="pool:class-group">
+    <section className="rounded-xl border bg-card text-sm" data-section="pool:class-group">
       <button type="button" onClick={() => onOpenChange(!open)} aria-expanded={open}
               className="flex w-full items-center gap-3 px-4 py-3 text-left">
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-violet-700 text-white" aria-hidden>
@@ -1161,7 +1161,7 @@ function ClassGroupPanel({ studentId, data, open, onOpenChange }: {
                                 <button type="button" onClick={() => toggle(day, s.id)} aria-pressed={on}
                                         aria-label={`${DAY_NAMES[day]} — ${s.name}`}
                                         className={cn("mx-auto grid size-7 place-items-center rounded-md border transition",
-                                          on ? "border-transparent text-white shadow-sm" : "border-dashed text-transparent hover:border-solid hover:bg-muted")}
+                                          on ? "border-transparent text-white" : "border-dashed text-transparent hover:border-solid hover:bg-muted")}
                                         style={on ? { backgroundColor: c.chipStrong } : undefined}>
                                   <Check className="size-3.5" aria-hidden />
                                 </button>

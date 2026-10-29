@@ -143,10 +143,10 @@ function Body({ studentId, data, onClose }: { studentId: number; data: PoolParen
           <ul className="mt-1 space-y-1">
             {recipients.map((r) => (
               <li key={r.parent_id} className="flex flex-wrap items-center gap-2">
-                {r.will_send ? <Mail className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden /> : <MailX className="size-4 text-amber-600 dark:text-amber-400" aria-hidden />}
+                {r.will_send ? <Mail className="size-4 text-emerald-600" aria-hidden /> : <MailX className="size-4 text-amber-600" aria-hidden />}
                 <span className="text-foreground">{r.name}</span>
                 <span className="text-xs text-muted-foreground">{r.email}</span>
-                {!r.will_send && r.reason && <span className="text-xs text-amber-800 dark:text-amber-200">— {r.reason}</span>}
+                {!r.will_send && r.reason && <span className="text-xs text-amber-800">— {r.reason}</span>}
               </li>
             ))}
           </ul>
@@ -182,7 +182,7 @@ function Body({ studentId, data, onClose }: { studentId: number; data: PoolParen
 function Kpi({ label, value, tone }: { label: string; value: string; tone?: "cyan" }) {
   return (
     <div className={cn("rounded-md border px-2 py-2", tone === "cyan"
-      ? "border-cyan-200 bg-cyan-50 text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100"
+      ? "border-cyan-200 bg-cyan-50 text-cyan-900"
       : "bg-card text-foreground")}>
       <div className="text-lg font-bold">{value}</div>
       <div className="text-[11px] opacity-80">{label}</div>

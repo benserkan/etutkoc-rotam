@@ -64,9 +64,9 @@ const RESULT_LABELS: Record<ImportResultValue, string> = {
 };
 
 const RESULT_TONE: Record<ImportResultValue, string> = {
-  dogru: "text-emerald-700 dark:text-emerald-300",
-  yanlis: "text-rose-700 dark:text-rose-300",
-  bos: "text-slate-500 dark:text-slate-400",
+  dogru: "text-emerald-700",
+  yanlis: "text-rose-700",
+  bos: "text-slate-500",
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -484,7 +484,7 @@ function ImportFlow({
       >
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <FileUp className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
+            <FileUp className="size-4 text-violet-600" aria-hidden />
             {editMode ? "İçe aktarılan denemeyi düzenle" : "Deneme sonucunu PDF'ten aktar"}
             {draft ? (
               <span className="text-xs font-normal text-muted-foreground">
@@ -514,12 +514,12 @@ function ImportFlow({
 
           {step === "analyzing" ? (
             <div className="flex flex-col items-center gap-3 py-14 text-center">
-              <Loader2 className="size-8 animate-spin text-violet-600 dark:text-violet-300" aria-hidden />
+              <Loader2 className="size-8 animate-spin text-violet-600" aria-hidden />
               <div className="text-sm font-medium text-foreground">
                 {editMode ? "Kayıtlı deneme açılıyor…" : "Karne okunuyor…"}
               </div>
               {!editMode && jobStage ? (
-                <div className="text-xs font-medium text-violet-700 dark:text-violet-300">{jobStage}</div>
+                <div className="text-xs font-medium text-violet-700">{jobStage}</div>
               ) : null}
               <p className="max-w-sm text-xs text-muted-foreground">
                 {editMode ? (
@@ -574,11 +574,11 @@ function ImportFlow({
             <div className="flex flex-wrap items-center gap-3">
               <div className="text-xs text-muted-foreground">
                 <b className="text-foreground tabular-nums">{tally.net}</b> net ·{" "}
-                <span className="text-emerald-700 dark:text-emerald-300">{tally.dogru}D</span>{" "}
-                <span className="text-rose-700 dark:text-rose-300">{tally.yanlis}Y</span>{" "}
+                <span className="text-emerald-700">{tally.dogru}D</span>{" "}
+                <span className="text-rose-700">{tally.yanlis}Y</span>{" "}
                 <span>{tally.bos}B</span>
                 {tally.eksik > 0 ? (
-                  <span className="ml-1 text-amber-700 dark:text-amber-300">
+                  <span className="ml-1 text-amber-700">
                     · {tally.eksik} sonuç eksik
                   </span>
                 ) : null}
@@ -666,7 +666,7 @@ function PickStep({
   return (
     <div className="space-y-4">
       {analyzeDup ? (
-        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
           <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
           <b>Bu PDF zaten aktarılmış:</b> <i>{analyzeDup.title}</i> (
           {new Date(analyzeDup.exam_date).toLocaleDateString("tr-TR")}). Belge yeniden
@@ -830,8 +830,8 @@ function PreviewStep({
     <div className="space-y-4">
       {/* Birleşik belge (TG kitapçığı) — oturum seçici */}
       {multi ? (
-        <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2.5 dark:border-cyan-500/30 dark:bg-cyan-500/10">
-          <div className="text-xs font-medium text-cyan-900 dark:text-cyan-200">
+        <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2.5">
+          <div className="text-xs font-medium text-cyan-900">
             Bu belgede <b>{draft.parts.length} sınav oturumu</b> var — hangisini
             kaydedeceğini seç (diğerini sonra aynı belgeyi seçip tekrar
             kaydedebilirsin; analiz tek yapıldı, tekrar kredi düşmez):
@@ -846,7 +846,7 @@ function PreviewStep({
                   "rounded-full border px-3 py-1 text-xs font-semibold transition",
                   selectedPart === p.part
                     ? "border-cyan-600 bg-cyan-600 text-white"
-                    : "border-cyan-300 bg-card text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300",
+                    : "border-cyan-300 bg-card text-cyan-800 hover:bg-cyan-500/10",
                 )}
               >
                 {p.section_label} · {p.question_count} soru
@@ -887,7 +887,7 @@ function PreviewStep({
         </select>
       </div>
       {draft.confidence !== "high" ? (
-        <p className="text-xs text-amber-800 dark:text-amber-300">
+        <p className="text-xs text-amber-800">
           <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
           Sınav türünden tam emin olamadım — üstteki seçiciden kontrol et.
         </p>
@@ -896,7 +896,7 @@ function PreviewStep({
       {/* Mükerrer / kontrol uyarıları */}
       {dup ? (
         dup.level === "exact" ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900">
             <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
             <b>Bu deneme zaten kayıtlı:</b> {dup.reason_label} —{" "}
             <i>{dup.title}</i> ({new Date(dup.exam_date).toLocaleDateString("tr-TR")}).
@@ -904,7 +904,7 @@ function PreviewStep({
             kaydın <b>yerine yazabilirsin</b> ya da listeden o kaydı düzeltebilirsin.
           </div>
         ) : (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
             <b>Bu deneme kayıtlı olabilir:</b> {dup.reason_label} —{" "}
             <i>{dup.title}</i> ({new Date(dup.exam_date).toLocaleDateString("tr-TR")}
@@ -914,8 +914,8 @@ function PreviewStep({
         )
       ) : null}
       {failing.length > 0 ? (
-        <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
-          <p className="text-xs font-semibold text-amber-950 dark:text-amber-100">
+        <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-xs font-semibold text-amber-950">
             <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
             Kaydetmeden önce {failing.length === 1 ? "şuna" : `şu ${failing.length} noktaya`} bak:
           </p>
@@ -923,7 +923,7 @@ function PreviewStep({
             {failing.map((c) => (
               <li
                 key={c.code}
-                className="rounded-md bg-white/70 px-2.5 py-1.5 text-xs leading-relaxed text-amber-950 dark:bg-black/20 dark:text-amber-100"
+                className="rounded-md bg-white/70 px-2.5 py-1.5 text-xs leading-relaxed text-amber-950"
               >
                 <b>{c.label}.</b> {c.detail}
               </li>
@@ -932,7 +932,7 @@ function PreviewStep({
         </div>
       ) : null}
       {!draft.exam_date ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950">
           <b>Tarih:</b> karnede sınav tarihi yazmıyor — kaydetmeden önce yukarıdaki tarih
           alanına sınavın tarihini gir.
         </div>
@@ -940,7 +940,7 @@ function PreviewStep({
       {fixedInfo.map((c) => (
         <div
           key={c.code}
-          className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100"
+          className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-950"
         >
           <CheckCircle2 className="mr-1 inline size-3.5" aria-hidden />
           <b>{c.label}:</b> {c.detail}
@@ -949,7 +949,7 @@ function PreviewStep({
 
       {/* Eşleşme istatistiği */}
       <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-        <Sparkles className="size-3.5 text-violet-600 dark:text-violet-300" aria-hidden />
+        <Sparkles className="size-3.5 text-violet-600" aria-hidden />
         <Chip tone="emerald">{stats.alias + stats.auto} otomatik eşleşti</Chip>
         {stats.ai > 0 ? <Chip tone="violet">{stats.ai} AI eşledi</Chip> : null}
         {stats.none > 0 ? <Chip tone="amber">{stats.none} eşleşmedi — elle seç</Chip> : null}
@@ -981,7 +981,7 @@ function PreviewStep({
                     key={idx}
                     className={cn(
                       "border-b border-border/60 last:border-0",
-                      row.is_suspect && "bg-amber-50 dark:bg-amber-500/10",
+                      row.is_suspect && "bg-amber-50",
                     )}
                   >
                     <td className="px-2 py-1 tabular-nums text-muted-foreground">
@@ -1047,7 +1047,7 @@ function PreviewStep({
                         }
                         className={cn(
                           "h-7 w-full rounded border bg-card px-1 text-xs font-medium",
-                          row.result ? RESULT_TONE[row.result] : "border-amber-400 text-amber-700 dark:text-amber-300",
+                          row.result ? RESULT_TONE[row.result] : "border-amber-400 text-amber-700",
                           "border-border",
                         )}
                         aria-label="Sonuç"
@@ -1155,9 +1155,9 @@ function Chip({
   children: React.ReactNode;
 }) {
   const cls = {
-    emerald: "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300",
-    violet: "bg-violet-50 text-violet-800 dark:bg-violet-500/10 dark:text-violet-300",
-    amber: "bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300",
+    emerald: "bg-emerald-50 text-emerald-800",
+    violet: "bg-violet-50 text-violet-800",
+    amber: "bg-amber-50 text-amber-800",
   }[tone];
   return (
     <span className={cn("rounded-full px-2 py-0.5 font-medium", cls)}>{children}</span>
@@ -1174,9 +1174,9 @@ function Stat({
   tone: "cyan" | "emerald" | "rose" | "slate";
 }) {
   const cls = {
-    cyan: "text-cyan-700 dark:text-cyan-300",
-    emerald: "text-emerald-700 dark:text-emerald-300",
-    rose: "text-rose-700 dark:text-rose-300",
+    cyan: "text-cyan-700",
+    emerald: "text-emerald-700",
+    rose: "text-rose-700",
     slate: "text-foreground",
   }[tone];
   return (
@@ -1202,8 +1202,8 @@ function QuotaNote({ studentId }: { studentId?: number }) {
         className={cn(
           "rounded-lg border px-3 py-2 text-xs",
           data.left > 0
-            ? "border-cyan-200 bg-cyan-50 text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100"
-            : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100",
+            ? "border-cyan-200 bg-cyan-50 text-cyan-900"
+            : "border-amber-200 bg-amber-50 text-amber-900",
         )}
       >
         {data.left > 0 ? (

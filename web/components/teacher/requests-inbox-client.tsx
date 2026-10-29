@@ -100,7 +100,7 @@ export function RequestsInbox({ items, status }: Props) {
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-10 text-center">
-        <CheckCheck className="mx-auto size-8 text-emerald-600 dark:text-emerald-300" aria-hidden />
+        <CheckCheck className="mx-auto size-8 text-emerald-600" aria-hidden />
         <p className="mt-2 text-sm font-medium">Bu filtrede talep yok.</p>
         {status === "pending" ? (
           <p className="text-xs text-muted-foreground">Bekleyen işin kalmadı.</p>
@@ -186,7 +186,7 @@ function CardShell({ r, accent, children }: { r: TeacherRequestListItem; accent:
   const day = fmtDay(r.task_date);
   return (
     <li
-      className={cn("rounded-xl border border-border bg-card p-4 shadow-sm border-l-4", accent)}
+      className={cn("rounded-xl border border-border bg-card p-4 border-l-4", accent)}
       data-request-id={r.id}
     >
       <div className="flex items-start gap-3">
@@ -247,7 +247,7 @@ function ApprovalCard({ r }: { r: TeacherRequestListItem }) {
     <CardShell r={r} accent="border-l-amber-500">
       {proposal ? (
         <p className="mt-2 flex items-center gap-1.5 text-sm font-medium">
-          <ArrowRight className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
+          <ArrowRight className="size-4 text-amber-600" aria-hidden />
           {proposal}
         </p>
       ) : null}
@@ -388,7 +388,7 @@ function QuestionCard({ r }: { r: TeacherRequestListItem }) {
 
 function HistoryCard({ r }: { r: TeacherRequestListItem }) {
   return (
-    <CardShell r={r} accent="border-l-slate-300 dark:border-l-slate-600">
+    <CardShell r={r} accent="border-l-slate-300">
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <span className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-semibold", STATUS_TONE[r.status])}>
           {REQUEST_STATUS_LABELS_TR[r.status]}
@@ -416,7 +416,7 @@ function HistoryCard({ r }: { r: TeacherRequestListItem }) {
 /** Bekleyen "sayı değiştir" talebinde önerilen sayı mevcutla aynı (2026-10-08). */
 export function NoEffectNote() {
   return (
-    <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+    <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
       <b>Bu talep programda hiçbir şeyi değiştirmez:</b> önerilen sayı mevcut sayıyla
       aynı. Öğrenci konu değişikliği istiyorsa onaylamak yetmez — görevi haftalık
       programdan düzenleyip konuyu sen değiştir (çözülen testler de yeni konuya

@@ -253,7 +253,7 @@ export function ExamDetailDialog({
                             <td className="px-2 py-1.5 tabular-nums">{i.question_no ?? "—"}</td>
                             <td className="px-2 py-1.5">{i.topic_label ?? "—"}</td>
                             <td className="px-2 py-1.5 text-xs">
-                              {i.topic_name ?? <span className="text-amber-700 dark:text-amber-400">bağlanmadı</span>}
+                              {i.topic_name ?? <span className="text-amber-700">bağlanmadı</span>}
                             </td>
                             <td className="px-2 py-1.5 text-center font-medium">{i.correct_answer ?? "—"}</td>
                             <td className="px-2 py-1.5 text-center font-medium">{i.student_answer ?? "—"}</td>

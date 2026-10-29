@@ -57,8 +57,8 @@ function gorevState(t: TeacherTask): GState {
 }
 
 const MARK: Record<GState, { ch: string; cls: string }> = {
-  done: { ch: "✓", cls: "text-emerald-600 dark:text-emerald-400" },
-  partial: { ch: "◐", cls: "text-amber-600 dark:text-amber-400" },
+  done: { ch: "✓", cls: "text-emerald-600" },
+  partial: { ch: "◐", cls: "text-amber-600" },
   todo: { ch: "☐", cls: "text-muted-foreground/60" },
 };
 
@@ -284,7 +284,7 @@ function SubjGroupBlock({
         "rounded-md border-l-4 px-1.5 py-1",
         isOther
           ? "border-l-slate-400 bg-muted/40"
-          : "bg-[var(--subj-tint-l)] dark:bg-[var(--subj-tint-d)]",
+          : "bg-[var(--subj-tint-l)])]",
       )}
       style={isOther ? undefined : subjectTintVars(g.name)}
     >
@@ -821,7 +821,7 @@ export function WeekGrid({
                               "ml-auto rounded px-1 font-semibold",
                               vmin > VIDEO_WARN_MIN
                                 ? "bg-amber-500 text-amber-950"
-                                : "text-cyan-800 dark:text-cyan-300",
+                                : "text-cyan-800",
                             )}
                             title={
                               vmin > VIDEO_WARN_MIN
@@ -840,7 +840,7 @@ export function WeekGrid({
             })}
           </div>
           {pending ? (
-            <div className="mx-4 mb-2 flex items-center gap-2 rounded-md border-2 border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/40 dark:text-amber-200">
+            <div className="mx-4 mb-2 flex items-center gap-2 rounded-md border-2 border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
               <MousePointerClick className="size-4 shrink-0" aria-hidden />
               <span className="min-w-0 flex-1">
                 <b>{pending.label}</b> —{" "}
@@ -850,7 +850,7 @@ export function WeekGrid({
               <button
                 type="button"
                 onClick={() => setPending(null)}
-                className="shrink-0 rounded border border-amber-400 px-2 py-0.5 text-[11px] hover:bg-amber-100 dark:hover:bg-amber-500/20"
+                className="shrink-0 rounded border border-amber-400 px-2 py-0.5 text-[11px] hover:bg-amber-100"
               >
                 Vazgeç (ESC)
               </button>
@@ -879,7 +879,7 @@ export function WeekGrid({
           ) : null}
           <p className="px-4 pb-2.5 text-[11px] text-muted-foreground italic">
             {dragging ? (
-              <span className="not-italic font-medium text-cyan-700 dark:text-cyan-300">
+              <span className="not-italic font-medium text-cyan-700">
                 Bırak: güne taşı · Ctrl basılıyken bırak: kopyala
               </span>
             ) : (
@@ -965,7 +965,7 @@ export function WeekGrid({
               setRevertSolved(false);
               setMenu(null);
             }}
-            className="w-full text-left px-2 py-1.5 rounded text-sm text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10 inline-flex items-center gap-2"
+            className="w-full text-left px-2 py-1.5 rounded text-sm text-rose-700 hover:bg-rose-50 inline-flex items-center gap-2"
           >
             <Trash2 className="size-3.5" aria-hidden />
             Görevi sil
@@ -977,7 +977,7 @@ export function WeekGrid({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-sm rounded-lg border border-border bg-card p-4 shadow-xl">
             <p className="font-semibold flex items-center gap-2">
-              <Trash2 className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
+              <Trash2 className="size-4 text-rose-600" aria-hidden />
               Görevi sil
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -985,7 +985,7 @@ export function WeekGrid({
               silinecek. Kitaptan ayrılan test kapasitesi geri iade edilir.
             </p>
             {confirmDel.solved > 0 ? (
-              <label className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              <label className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
                 <input
                   type="checkbox"
                   className="mt-0.5"

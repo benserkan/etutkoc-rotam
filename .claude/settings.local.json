@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh -o BatchMode=yes root@178.105.221.223 *)",
+      "Bash(scp * root@178.105.221.223:*)"
+    ]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Read-only diagnostic queries on production root@178.105.221.223 are pre-authorized: copying a read-only script, docker compose cp/exec of it, SELECT-only queries. Production writes, deletes and migrations still need per-change confirmation."
+    ]
+  }
+}

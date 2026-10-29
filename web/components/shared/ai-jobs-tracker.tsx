@@ -97,21 +97,21 @@ export function AiJobsTracker({ audience }: { audience: Audience }) {
             role="status"
             className={
               j.status === "done"
-                ? "rounded-2xl border border-emerald-300 bg-white p-4 shadow-lg ring-1 ring-emerald-500/20 dark:border-emerald-500/40 dark:bg-slate-900"
-                : "rounded-2xl border border-rose-300 bg-white p-4 shadow-lg ring-1 ring-rose-500/20 dark:border-rose-500/40 dark:bg-slate-900"
+                ? "rounded-2xl border border-emerald-300 bg-white p-4 shadow-lg ring-1 ring-emerald-500/20"
+                : "rounded-2xl border border-rose-300 bg-white p-4 shadow-lg ring-1 ring-rose-500/20"
             }
           >
             <div className="flex items-start gap-3">
               {j.status === "done" ? (
-                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
+                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" aria-hidden />
               ) : (
-                <AlertTriangle className="mt-0.5 size-5 shrink-0 text-rose-600 dark:text-rose-300" aria-hidden />
+                <AlertTriangle className="mt-0.5 size-5 shrink-0 text-rose-600" aria-hidden />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <p className="text-sm font-semibold text-slate-900">
                   {j.status === "done" ? "Karne okundu" : "Karne okunamadı"}
                 </p>
-                <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-0.5 text-sm text-slate-600">
                   {jobTitle(j, audience)}
                   {j.status === "done"
                     ? " hazır. Kontrol edip kaydetmen gerekiyor."
@@ -144,7 +144,7 @@ export function AiJobsTracker({ audience }: { audience: Audience }) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-slate-600 dark:text-slate-300"
+                    className="text-slate-600"
                     onClick={() => act.mutate({ id: j.id, action: "ack" })}
                   >
                     {j.status === "done" ? "Sonra" : "Tamam"}
@@ -154,7 +154,7 @@ export function AiJobsTracker({ audience }: { audience: Audience }) {
               <button
                 type="button"
                 aria-label="Bildirimi kapat"
-                className="rounded-md p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                className="rounded-md p-1 text-slate-400 hover:text-slate-700"
                 onClick={() => act.mutate({ id: j.id, action: "ack" })}
               >
                 <X className="size-4" />
@@ -163,13 +163,13 @@ export function AiJobsTracker({ audience }: { audience: Audience }) {
           </div>
         ))}
         {notices.length > 3 ? (
-          <p className="rounded-xl bg-white px-3 py-2 text-xs text-slate-600 shadow ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
+          <p className="rounded-xl bg-white px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-200">
             +{notices.length - 3} karne daha hazır — öğrencinin Denemeler sekmesinden açabilirsin.
           </p>
         ) : null}
         {active.length ? (
-          <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs text-slate-700 shadow ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">
-            <Loader2 className="size-3.5 animate-spin text-violet-600 dark:text-violet-300" aria-hidden />
+          <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs text-slate-700 ring-1 ring-slate-200">
+            <Loader2 className="size-3.5 animate-spin text-violet-600" aria-hidden />
             {active.length === 1
               ? `${jobTitle(active[0], audience)} okunuyor…`
               : `${active.length} karne okunuyor…`}
@@ -204,20 +204,20 @@ export function ExamImportJobsBand({
       {items.map((j) => (
         <div
           key={j.id}
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 dark:border-violet-500/30 dark:bg-violet-500/10"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3"
         >
           {j.status === "queued" || j.status === "running" ? (
-            <Loader2 className="size-4 shrink-0 animate-spin text-violet-700 dark:text-violet-300" aria-hidden />
+            <Loader2 className="size-4 shrink-0 animate-spin text-violet-700" aria-hidden />
           ) : j.status === "failed" ? (
-            <AlertTriangle className="size-4 shrink-0 text-rose-700 dark:text-rose-300" aria-hidden />
+            <AlertTriangle className="size-4 shrink-0 text-rose-700" aria-hidden />
           ) : (
-            <FileText className="size-4 shrink-0 text-emerald-700 dark:text-emerald-300" aria-hidden />
+            <FileText className="size-4 shrink-0 text-emerald-700" aria-hidden />
           )}
           <div className="min-w-0 flex-1 text-sm">
-            <span className="font-medium text-slate-900 dark:text-slate-100">
+            <span className="font-medium text-slate-900">
               {j.filename ?? "Deneme karnesi"}
             </span>
-            <span className="text-slate-600 dark:text-slate-300">
+            <span className="text-slate-600">
               {" · "}
               {j.status === "failed" ? (j.error_message ?? j.status_label) : (j.stage ?? j.status_label)}
             </span>
@@ -249,7 +249,7 @@ export function ExamImportJobsBand({
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-slate-600 dark:text-slate-300"
+                className="text-slate-600"
                 disabled={act.isPending}
                 onClick={() => {
                   if (j.status === "done" && !window.confirm("Bu karneyi kaydetmeden silmek istiyor musun?")) return;

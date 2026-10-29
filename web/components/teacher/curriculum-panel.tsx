@@ -42,8 +42,8 @@ const STATUS: Record<Status, { label: string; badge: string; bar: string; Icon: 
   tamamlandi: { label: "Tamamlandı", badge: "bg-emerald-700 text-white", bar: "bg-emerald-500", Icon: CheckCircle2 },
   devam: { label: "Devam ediyor", badge: "bg-amber-500 text-amber-950", bar: "bg-amber-400", Icon: Clock },
   planlandi: { label: "Planlandı", badge: "bg-sky-700 text-white", bar: "bg-sky-500", Icon: CircleDashed },
-  baslanmadi: { label: "Başlanmadı", badge: "bg-slate-600 text-white", bar: "bg-slate-300 dark:bg-slate-600", Icon: CircleDashed },
-  kaynak_yok: { label: "Başlanmadı", badge: "bg-slate-600 text-white", bar: "bg-slate-300 dark:bg-slate-600", Icon: CircleDashed },
+  baslanmadi: { label: "Başlanmadı", badge: "bg-slate-600 text-white", bar: "bg-slate-300", Icon: CircleDashed },
+  kaynak_yok: { label: "Başlanmadı", badge: "bg-slate-600 text-white", bar: "bg-slate-300", Icon: CircleDashed },
 };
 const BAR_ORDER: Status[] = ["tamamlandi", "devam", "planlandi", "baslanmadi"];
 const LEGEND: { st: Status; label: string }[] = [
@@ -139,41 +139,41 @@ export function CurriculumPanel({ studentId }: { studentId: number }) {
       </div>
 
       {(data.pool_unlinked?.length ?? 0) > 0 ? (
-        <details className="rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-500/30 dark:bg-amber-500/10" data-section="curriculum:pool-unlinked">
-          <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-amber-900 dark:text-amber-200">
+        <details className="rounded-xl border border-amber-200 bg-amber-50/50" data-section="curriculum:pool-unlinked">
+          <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-amber-900">
             Havuzda konusu belirsiz kalemler ({data.pool_unlinked!.length}){" "}
-            <span className="font-normal text-amber-800 dark:text-amber-300">— hangi konu olduğu bilinmediği için haritaya işlenmez</span>
+            <span className="font-normal text-amber-800">— hangi konu olduğu bilinmediği için haritaya işlenmez</span>
           </summary>
           <ul className="space-y-1 px-4 pb-2 text-xs">
             {data.pool_unlinked!.map((u) => (
-              <li key={u.item_id} className="text-amber-900 dark:text-amber-200">
+              <li key={u.item_id} className="text-amber-900">
                 {u.subject_name} · <span className="font-medium">{u.title}</span> · {u.done}/{u.quantity}
               </li>
             ))}
           </ul>
-          <p className="px-4 pb-3 text-[11px] text-amber-800 dark:text-amber-300">
+          <p className="px-4 pb-3 text-[11px] text-amber-800">
             Havuz editöründe bu kalemleri kaldırıp konusu seçilerek yeniden ekle; çalışılan testler o konuya yazılır.
           </p>
         </details>
       ) : null}
 
       {data.extras.length > 0 ? (
-        <details className="rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-500/30 dark:bg-amber-500/10">
-          <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-amber-900 dark:text-amber-200">
+        <details className="rounded-xl border border-amber-200 bg-amber-50/50">
+          <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-amber-900">
             Müfredata eşleşmemiş kitap üniteleri ({data.extras.length}){" "}
-            <span className="font-normal text-amber-800 dark:text-amber-300">
+            <span className="font-normal text-amber-800">
               — resmi konuya bağlanmamış; haritada sayılmaz
             </span>
           </summary>
           <ul className="space-y-1 px-4 pb-3 text-xs">
             {data.extras.map((e) => (
-              <li key={e.section_id} className="text-amber-900 dark:text-amber-200">
+              <li key={e.section_id} className="text-amber-900">
                 {e.book_name} · <span className="font-medium">{e.label}</span>
                 {e.completed > 0 ? ` · ${e.completed} test çözülmüş` : ""}
               </li>
             ))}
           </ul>
-          <p className="px-4 pb-3 text-[11px] text-amber-800 dark:text-amber-300">
+          <p className="px-4 pb-3 text-[11px] text-amber-800">
             Kütüphanede “Müfredata eşleştir” ile bağlarsan haritaya girerler.
           </p>
         </details>
@@ -189,7 +189,7 @@ function Ring({ pct, size = 92 }: { pct: number; size?: number }) {
   const c = 2 * Math.PI * r;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden className="shrink-0">
-      <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={9} className="fill-none stroke-slate-200 dark:stroke-slate-700" />
+      <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={9} className="fill-none stroke-slate-200" />
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -334,7 +334,7 @@ function ProjectionCard({ p }: { p: CurriculumProjectionItem }) {
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
-          <Target className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+          <Target className="size-4 text-cyan-700" aria-hidden />
           {p.target_kind === "okul_yili_sonu" ? "Eğitim yılı sonuna yetişme" : "Sınava yetişme"}
           <span className="text-[11px] font-normal text-muted-foreground">
             {p.target_kind === "okul_yili_sonu" ? "(bu yılın konuları)" : "(tüm konular)"}
@@ -396,24 +396,24 @@ function SubjectCard({ s, focus, active, onClick }: {
       data-testid="curriculum-subject"
       className={cn(
         "w-full rounded-xl border border-l-4 p-3 text-left transition",
-        active ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600 dark:bg-cyan-500/10" : "bg-card hover:bg-muted/40",
+        active ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600" : "bg-card hover:bg-muted/40",
       )}
       style={{ borderLeftColor: c.rail }}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className={cn("text-sm font-semibold", active ? "text-cyan-950 dark:text-cyan-100" : "text-foreground")}>{s.name}</span>
-        <span className={cn("shrink-0 text-sm font-bold tabular-nums", active ? "text-cyan-900 dark:text-cyan-100" : "text-foreground")}>
+        <span className={cn("text-sm font-semibold", active ? "text-cyan-950" : "text-foreground")}>{s.name}</span>
+        <span className={cn("shrink-0 text-sm font-bold tabular-nums", active ? "text-cyan-900" : "text-foreground")}>
           {noFocusTopics ? "—" : `%${s.coverage_pct}`}
         </span>
       </div>
       {noFocusTopics ? (
-        <p className={cn("mt-1.5 text-[12px]", active ? "text-cyan-900 dark:text-cyan-200" : "text-muted-foreground")}>
+        <p className={cn("mt-1.5 text-[12px]", active ? "text-cyan-900" : "text-muted-foreground")}>
           {focus}. sınıfta bu dersin konusu yok
         </p>
       ) : (
         <>
           <StackedBar counts={counts} total={s.total_topics} className="mt-2" />
-          <p className={cn("mt-1.5 text-[12px]", active ? "text-cyan-900 dark:text-cyan-200" : "text-muted-foreground")}>
+          <p className={cn("mt-1.5 text-[12px]", active ? "text-cyan-900" : "text-muted-foreground")}>
             {focus ? `${focus}. sınıf: ` : ""}
             <strong className="tabular-nums">{counts.tamamlandi}</strong> tamam ·{" "}
             <strong className="tabular-nums">{counts.devam + counts.planlandi}</strong> süren ·{" "}
@@ -422,12 +422,12 @@ function SubjectCard({ s, focus, active, onClick }: {
         </>
       )}
       {priorTotal > 0 ? (
-        <p className={cn("mt-0.5 text-[12px]", active ? "text-cyan-900 dark:text-cyan-200" : "text-muted-foreground")}>
+        <p className={cn("mt-0.5 text-[12px]", active ? "text-cyan-900" : "text-muted-foreground")}>
           önceki sınıflar: <strong className="tabular-nums">{s.prior_started_topics ?? 0}/{priorTotal}</strong> konuya girildi
         </p>
       ) : null}
       {s.next_topic_name ? (
-        <p className={cn("mt-1 flex items-start gap-1 text-[12px]", active ? "text-cyan-900 dark:text-cyan-200" : "text-muted-foreground")}>
+        <p className={cn("mt-1 flex items-start gap-1 text-[12px]", active ? "text-cyan-900" : "text-muted-foreground")}>
           <ArrowRight className="mt-0.5 size-3 shrink-0" aria-hidden />
           <span>sıradaki: {s.next_topic_name}</span>
         </p>
@@ -639,7 +639,7 @@ function TopicRow({ t, isNext, indent, studentId, subjectId, poolOpen }: {
   const qtyOk = Number.isInteger(n) && n >= 1 && n <= 500;
   return (
     <li
-      className={cn("group py-2.5 pr-4", indent ? "pl-7" : "pl-4", isNext && "bg-cyan-50/70 dark:bg-cyan-500/10")}
+      className={cn("group py-2.5 pr-4", indent ? "pl-7" : "pl-4", isNext && "bg-cyan-50/70")}
       data-testid="curriculum-topic"
       data-topic-id={t.topic_id}
     >
@@ -691,7 +691,7 @@ function TopicRow({ t, isNext, indent, studentId, subjectId, poolOpen }: {
               </span>
             ) : null}
             {sl > 0 ? (
-              <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-medium text-amber-900 dark:text-amber-200" data-testid="topic-sourceless">
+              <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-medium text-amber-900" data-testid="topic-sourceless">
                 kaynaksız {sl} test çözüldü{poolMarked > 0 ? ` (${poolMarked}’i seansta)` : ""}
               </span>
             ) : null}

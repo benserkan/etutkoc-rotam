@@ -69,8 +69,8 @@ export function ShareExperiencePrompt() {
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-900/50 dark:bg-cyan-950/30">
-        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-cyan-200 bg-cyan-50/70 p-4">
+        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700">
           <MessageSquareHeart className="size-5" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -215,7 +215,7 @@ function ShareDialog({
             </span>
           </label>
 
-          {error ? <p className="text-sm text-rose-600 dark:text-rose-300">{error}</p> : null}
+          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
         </div>
 
         <DialogFooter>

@@ -52,14 +52,14 @@ export function StudentSelfStudyPanel() {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex items-start gap-2.5 min-w-0">
           <TentTree
-            className="size-5 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5"
+            className="size-5 text-cyan-600 shrink-0 mt-0.5"
             aria-hidden
           />
           <div className="space-y-0.5 min-w-0">
             <p className="font-medium">
               Kendi başına mı çalıştın?
               {pendingCount > 0 ? (
-                <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-200">
+                <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-800">
                   {pendingCount} bildirim onay bekliyor
                 </span>
               ) : null}

@@ -73,7 +73,7 @@ export function GuideHint({
           className,
         )}
       >
-        <PlayCircle className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+        <PlayCircle className="size-4 text-cyan-700" aria-hidden />
         {allFinished ? "Eğitim" : started ? "Eğitime devam" : "Eğitimi izle"}
       </a>
     );
@@ -87,7 +87,7 @@ export function GuideHint({
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/15 dark:text-cyan-200 dark:hover:bg-cyan-500/25",
+          "inline-flex items-center gap-1.5 rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100",
           className,
         )}
       >
@@ -101,18 +101,18 @@ export function GuideHint({
     <div
       data-section="guide-hint"
       className={cn(
-        "flex flex-col gap-3 rounded-xl border border-cyan-300 bg-gradient-to-r from-cyan-50 to-white p-3 shadow-sm sm:flex-row sm:items-center sm:p-4 dark:border-cyan-500/30 dark:from-cyan-500/15 dark:to-transparent",
+        "flex flex-col gap-3 rounded-xl border border-cyan-300 bg-gradient-to-r from-cyan-50 to-white p-3 sm:flex-row sm:items-center sm:p-4",
         className,
       )}
     >
       <GuideAvatar size={56} className="shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-cyan-950 dark:text-cyan-100">
+        <p className="text-sm font-semibold text-cyan-950">
           {started
             ? `${module} eğitimine kaldığın yerden devam et`
             : `Bu sayfayı ilk kez mi kullanıyorsun? ${module} eğitimini izle`}
         </p>
-        <p className="mt-0.5 text-xs text-slate-700 dark:text-slate-300">
+        <p className="mt-0.5 text-xs text-slate-700">
           Rota, gerçek ekranlar üzerinde sesli anlatıyor · {chapters.length} bölüm · yaklaşık{" "}
           {minutes} dakika
           {finishedCount > 0 ? ` · ${finishedCount}/${chapters.length} bölüm izlendi` : ""}
@@ -122,7 +122,7 @@ export function GuideHint({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-cyan-700"
+        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
       >
         <PlayCircle className="size-4" aria-hidden />
         {started ? "Devam et" : "Eğitimi izle"}

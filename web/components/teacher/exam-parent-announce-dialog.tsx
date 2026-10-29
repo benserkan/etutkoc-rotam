@@ -55,9 +55,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const DELTA_TONE: Record<string, string> = {
-  up: "text-emerald-700 dark:text-emerald-300",
-  down: "text-amber-700 dark:text-amber-300",
-  flat: "text-slate-600 dark:text-slate-300",
+  up: "text-emerald-700",
+  down: "text-amber-700",
+  flat: "text-slate-600",
 };
 
 function deltaText(d: ExamParentPreviewResponse): string | null {
@@ -221,7 +221,7 @@ export function ExamParentAnnounceDialog({
       <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="inline-flex items-center gap-2">
-            <Mail className="size-5 text-teal-600 dark:text-teal-300" aria-hidden />
+            <Mail className="size-5 text-teal-600" aria-hidden />
             {sentMode
               ? "Veliye gönderilen mail"
               : "Veliye duyur — önizle ve düzenle"}
@@ -245,7 +245,7 @@ export function ExamParentAnnounceDialog({
         ) : (
           <div className="space-y-4 text-sm">
             {data.already_notified ? (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
                 <span>
                   Bu deneme{data.notified_at
@@ -275,20 +275,20 @@ export function ExamParentAnnounceDialog({
                 </p>
 
                 {/* Net şeridi — ÖLÇÜM, düzenlenmez */}
-                <div className="mt-2.5 rounded-lg border border-teal-200 bg-teal-50/70 px-3 py-2.5 dark:border-teal-500/30 dark:bg-teal-500/10">
-                  <p className="text-2xl font-bold leading-none tabular-nums text-teal-800 dark:text-teal-200">
+                <div className="mt-2.5 rounded-lg border border-teal-200 bg-teal-50/70 px-3 py-2.5">
+                  <p className="text-2xl font-bold leading-none tabular-nums text-teal-800">
                     {data.net_text}
                   </p>
-                  <p className="text-[10px] uppercase tracking-wide text-teal-700 dark:text-teal-300">
+                  <p className="text-[10px] uppercase tracking-wide text-teal-700">
                     net
                   </p>
-                  <p className="mt-1.5 text-xs text-slate-700 dark:text-slate-200">
+                  <p className="mt-1.5 text-xs text-slate-700">
                     {data.total_questions} soruda{" "}
-                    <b className="text-emerald-700 dark:text-emerald-300">
+                    <b className="text-emerald-700">
                       {data.correct} doğru
                     </b>{" "}
                     ·{" "}
-                    <b className="text-rose-700 dark:text-rose-300">
+                    <b className="text-rose-700">
                       {data.wrong} yanlış
                     </b>{" "}
                     · <span className="text-muted-foreground">{data.blank} boş</span>
@@ -328,14 +328,14 @@ export function ExamParentAnnounceDialog({
                     {includeGoal ? (
                       <div className="mt-1.5 grid gap-2 sm:grid-cols-3">
                         {data.goal.target_net_text ? (
-                          <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-2 dark:border-indigo-500/30 dark:bg-indigo-500/10">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+                          <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
                               Hedef net
                             </p>
-                            <p className="text-lg font-extrabold tabular-nums text-indigo-950 dark:text-indigo-100">
+                            <p className="text-lg font-extrabold tabular-nums text-indigo-950">
                               {data.goal.target_net_text}
                             </p>
-                            <p className="text-[11px] text-indigo-800 dark:text-indigo-200">
+                            <p className="text-[11px] text-indigo-800">
                               {data.goal.target_reached
                                 ? "Hedefe ulaştı"
                                 : `Hedefe ${data.goal.target_gap_text} net kaldı`}
@@ -344,21 +344,21 @@ export function ExamParentAnnounceDialog({
                           </div>
                         ) : null}
                         {data.goal.avg_total_text ? (
-                          <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-500/30 dark:bg-slate-500/10">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                          <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                               {data.goal.avg_label ?? "Genel ortalama"}
                             </p>
-                            <p className="text-lg font-extrabold tabular-nums text-slate-900 dark:text-slate-100">
+                            <p className="text-lg font-extrabold tabular-nums text-slate-900">
                               {data.goal.avg_total_text}
                             </p>
                             <p
                               className={cn(
                                 "text-[11px]",
                                 data.goal.avg_direction === "above"
-                                  ? "text-emerald-700 dark:text-emerald-300"
+                                  ? "text-emerald-700"
                                   : data.goal.avg_direction === "below"
-                                    ? "text-amber-700 dark:text-amber-300"
-                                    : "text-slate-600 dark:text-slate-300",
+                                    ? "text-amber-700"
+                                    : "text-slate-600",
                               )}
                             >
                               {data.goal.avg_direction === "above"
@@ -370,14 +370,14 @@ export function ExamParentAnnounceDialog({
                           </div>
                         ) : null}
                         {data.goal.score_text || data.goal.karne_score_text ? (
-                          <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 dark:border-amber-500/30 dark:bg-amber-500/10">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">
                               {data.goal.score_text ? "Tahmini puan" : "Karne puanı"}
                             </p>
-                            <p className="text-lg font-extrabold tabular-nums text-amber-950 dark:text-amber-100">
+                            <p className="text-lg font-extrabold tabular-nums text-amber-950">
                               {data.goal.score_text ? `~${data.goal.score_text}` : data.goal.karne_score_text}
                             </p>
-                            <p className="text-[11px] text-amber-800 dark:text-amber-200">
+                            <p className="text-[11px] text-amber-800">
                               {data.goal.score_text
                                 ? `${data.goal.score_label ?? ""}${data.goal.karne_score_text ? ` · karnede ${data.goal.karne_score_text}` : ""}`
                                 : "deneme karnesinde yazan"}
@@ -509,10 +509,10 @@ export function ExamParentAnnounceDialog({
                                 </span>
                               ) : null}
                             </td>
-                            <td className="py-1 text-right tabular-nums text-emerald-700 dark:text-emerald-300">
+                            <td className="py-1 text-right tabular-nums text-emerald-700">
                               {s.correct}
                             </td>
-                            <td className="py-1 text-right tabular-nums text-rose-700 dark:text-rose-300">
+                            <td className="py-1 text-right tabular-nums text-rose-700">
                               {s.wrong}
                             </td>
                             <td className="py-1 text-right tabular-nums text-muted-foreground">
@@ -560,7 +560,7 @@ export function ExamParentAnnounceDialog({
                                   className={cn(
                                     "whitespace-nowrap py-0.5 text-right font-medium",
                                     e.is_current &&
-                                      "text-teal-700 dark:text-teal-300",
+                                      "text-teal-700",
                                   )}
                                   title={e.title}
                                 >
@@ -578,11 +578,11 @@ export function ExamParentAnnounceDialog({
                                     {r.subject}
                                   </span>
                                   {r.direction === "up" ? (
-                                    <span className="ml-1 text-[10px] text-emerald-700 dark:text-emerald-300">
+                                    <span className="ml-1 text-[10px] text-emerald-700">
                                       &#9650;
                                     </span>
                                   ) : r.direction === "down" ? (
-                                    <span className="ml-1 text-[10px] text-amber-700 dark:text-amber-300">
+                                    <span className="ml-1 text-[10px] text-amber-700">
                                       &#9660;
                                     </span>
                                   ) : null}
@@ -612,7 +612,7 @@ export function ExamParentAnnounceDialog({
                                   className={cn(
                                     "py-1 text-right font-semibold tabular-nums",
                                     j === (data.history?.totals.length ?? 0) - 1
-                                      ? "text-teal-700 dark:text-teal-300"
+                                      ? "text-teal-700"
                                       : "text-muted-foreground",
                                   )}
                                 >
@@ -656,7 +656,7 @@ export function ExamParentAnnounceDialog({
                                 {o.subject}
                               </span>
                             </span>
-                            <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                            <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-emerald-700">
                               +{o.gain_text}
                               <span className="font-normal text-muted-foreground">
                                 {" "}
@@ -670,7 +670,7 @@ export function ExamParentAnnounceDialog({
                             <span className="font-semibold text-foreground">
                               Hepsi kapanırsa
                             </span>
-                            <span className="shrink-0 whitespace-nowrap font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+                            <span className="shrink-0 whitespace-nowrap font-bold tabular-nums text-emerald-700">
                               +{data.opportunity_total_text}
                               <span className="font-normal text-muted-foreground">
                                 {" "}
@@ -711,7 +711,7 @@ export function ExamParentAnnounceDialog({
                       key={r.parent_id}
                       className="flex items-center gap-2 text-xs"
                     >
-                      <Mail className="size-3 text-teal-600 dark:text-teal-300" aria-hidden />
+                      <Mail className="size-3 text-teal-600" aria-hidden />
                       <span className="font-medium text-foreground">{r.name}</span>
                       <span className="text-muted-foreground">· gidecek</span>
                     </li>
@@ -725,7 +725,7 @@ export function ExamParentAnnounceDialog({
                       <span className="text-muted-foreground line-through">
                         {r.name}
                       </span>
-                      <span className="text-amber-700 dark:text-amber-300">
+                      <span className="text-amber-700">
                         · {r.blocked_label}
                       </span>
                     </li>

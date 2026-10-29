@@ -113,9 +113,9 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
       data-deneme={denemeKind ?? undefined}
       className={cn(
         "rounded-lg border bg-card transition-opacity",
-        isCompleted ? "border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/10" : "border-border",
+        isCompleted ? "border-emerald-200 bg-emerald-50/40" : "border-border",
         denemeKind && !isCompleted
-          ? "border-indigo-300 border-l-4 border-l-indigo-600 bg-indigo-500/[0.06] shadow-sm dark:border-indigo-500/40 dark:border-l-indigo-400"
+          ? "border-indigo-300 border-l-4 border-l-indigo-600 bg-indigo-500/[0.06]"
           : "",
         blocked ? "opacity-70" : "",
       )}
@@ -268,7 +268,7 @@ function ToggleButton({
     status === "completed" ? CheckCircle2 : status === "partial" ? Hourglass : CircleDashed;
   const color =
     status === "completed"
-      ? "text-emerald-600 dark:text-emerald-300"
+      ? "text-emerald-600"
       : status === "partial"
         ? "text-amber-500"
         : "text-muted-foreground";
@@ -357,14 +357,14 @@ function ItemlessSolvedRow({
       {current > 0 ? (
         <>
           <span className="text-muted-foreground">Çözülen soru:</span>
-          <span className="font-medium tabular-nums text-emerald-700 dark:text-emerald-400">
+          <span className="font-medium tabular-nums text-emerald-700">
             {current}
           </span>
           {!blocked ? (
             <button
               type="button"
               onClick={() => { setVal(current); setEditing(true); }}
-              className="text-xs text-cyan-700 hover:underline dark:text-cyan-400"
+              className="text-xs text-cyan-700 hover:underline"
             >
               düzenle
             </button>
@@ -375,7 +375,7 @@ function ItemlessSolvedRow({
           type="button"
           onClick={() => { setVal(0); setEditing(true); }}
           disabled={blocked}
-          className="text-xs text-cyan-700 hover:underline disabled:opacity-50 disabled:no-underline dark:text-cyan-400"
+          className="text-xs text-cyan-700 hover:underline disabled:opacity-50 disabled:no-underline"
         >
           + Çözdüğüm soru sayısını gir
         </button>
@@ -518,7 +518,7 @@ function ItemRow({
             <SlidersHorizontal
               className={cn(
                 "size-3.5",
-                hasResult ? "text-emerald-600 dark:text-emerald-300" : "text-muted-foreground",
+                hasResult ? "text-emerald-600" : "text-muted-foreground",
               )}
               aria-hidden="true"
             />
@@ -599,9 +599,9 @@ function ResultBadge({
       className="inline-flex items-center gap-1.5 mt-0.5 text-[11px] tabular-nums hover:underline disabled:opacity-40"
       title="Sonucu düzelt"
     >
-      <span className="text-emerald-700 dark:text-emerald-300 font-medium">{c} doğru</span>
+      <span className="text-emerald-700 font-medium">{c} doğru</span>
       <span className="text-muted-foreground/60">·</span>
-      <span className="text-rose-700 dark:text-rose-300 font-medium">{w} yanlış</span>
+      <span className="text-rose-700 font-medium">{w} yanlış</span>
       {b > 0 ? (
         <>
           <span className="text-muted-foreground/60">·</span>
@@ -640,7 +640,7 @@ const TASK_TYPE_LABEL: Record<StudentTask["type"], string> = {
 
 function PendingBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5 text-[10px] font-medium">
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 px-2 py-0.5 text-[10px] font-medium">
       <Clock className="size-3" aria-hidden="true" />
       Bekliyor
     </span>
@@ -649,7 +649,7 @@ function PendingBadge() {
 
 function FutureLockedBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2 py-0.5 text-[10px] font-medium">
+    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-medium">
       <Lock className="size-3" aria-hidden="true" />
       Gelecek
     </span>

@@ -97,9 +97,9 @@ const TASK_TYPE_LABELS: Record<string, string> = {
 
 const TASK_TYPE_TONE: Record<string, string> = {
   test: "bg-foreground/5 text-foreground border-border",
-  video: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-  ozet: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  tekrar: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
+  video: "bg-sky-50 text-sky-700 border-sky-200",
+  ozet: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  tekrar: "bg-violet-50 text-violet-700 border-violet-200",
   other: "bg-muted text-muted-foreground border-border",
 };
 
@@ -171,7 +171,7 @@ export function WeekDayCard({
         "scroll-mt-4",
         "day-card rounded-xl border bg-card group transition-shadow",
         day.is_today
-          ? "border-foreground/30 shadow-sm ring-1 ring-foreground/5"
+          ? "border-foreground/30 ring-1 ring-foreground/5"
           : "border-border open:shadow-sm",
       )}
       data-day={day.date}
@@ -220,7 +220,7 @@ export function WeekDayCard({
                 <span
                   className={cn(
                     "inline-flex items-center gap-1.5 tabular-nums font-medium",
-                    day.pct >= 0.7 ? "text-emerald-600 dark:text-emerald-300" : day.pct >= 0.4 ? "text-amber-600 dark:text-amber-300" : "text-rose-600 dark:text-rose-300",
+                    day.pct >= 0.7 ? "text-emerald-600" : day.pct >= 0.4 ? "text-amber-600" : "text-rose-600",
                   )}
                   title={`Görev tamamlama %${Math.round(day.pct * 100)}`}
                 >
@@ -237,7 +237,7 @@ export function WeekDayCard({
                 </span>
               ) : null}
               {draftCount > 0 ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800">
                   <Pencil className="size-3" aria-hidden />
                   {draftCount} taslak
                 </span>
@@ -258,7 +258,7 @@ export function WeekDayCard({
       ) : null}
 
       {subjectSummary.length > 0 ? (
-        <div className="px-5 py-2 border-t border-border border-l-[3px] border-l-slate-300 dark:border-l-slate-600 bg-muted/50 flex flex-wrap items-center gap-1.5">
+        <div className="px-5 py-2 border-t border-border border-l-[3px] border-l-slate-300 bg-muted/50 flex flex-wrap items-center gap-1.5">
           <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/80 mr-1">
             <Layers className="size-3" aria-hidden /> Ders dağılımı
           </span>
@@ -302,7 +302,7 @@ export function WeekDayCard({
           className={cn(
             "rounded-lg border border-dashed transition",
             addOpen
-              ? "border-foreground/40 bg-card shadow-sm"
+              ? "border-foreground/40 bg-card"
               : "border-border bg-card hover:border-foreground/30",
           )}
         >
@@ -374,9 +374,9 @@ function DayPublishBanner({
     publishDay.mutate({ body: { task_date: dayDate } });
   }
   return (
-    <div className="px-5 py-2.5 border-t border-border bg-amber-50/60 dark:bg-amber-500/10 flex items-center justify-between gap-3">
-      <p className="inline-flex items-center gap-2 text-xs text-amber-900 dark:text-amber-200">
-        <FileEdit className="size-3.5 text-amber-700 dark:text-amber-300" aria-hidden />
+    <div className="px-5 py-2.5 border-t border-border bg-amber-50/60 flex items-center justify-between gap-3">
+      <p className="inline-flex items-center gap-2 text-xs text-amber-900">
+        <FileEdit className="size-3.5 text-amber-700" aria-hidden />
         <span>
           <span className="font-semibold">{draftCount} taslak görev</span> —
           öğrenci henüz göremiyor.
@@ -386,7 +386,7 @@ function DayPublishBanner({
         type="button"
         onClick={onClick}
         disabled={publishDay.isPending}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-sm transition disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition disabled:opacity-50"
       >
         {publishDay.isPending ? (
           <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -414,7 +414,7 @@ function SubjectChip({
         hasTasks
           // Koyu temada açık pastel zemin + tema metni (beyaz) okunmuyordu
           // (2026-10-08) → zemin/kenar/ad rengi temaya göre ayrı.
-          ? "bg-[var(--chip-bg-l)] border-[var(--chip-bd-l)] dark:bg-[var(--chip-bg-d)] dark:border-[var(--chip-bd-d)]"
+          ? "bg-[var(--chip-bg-l)] border-[var(--chip-bd-l)])])]"
           : "border-dashed bg-muted/40 text-muted-foreground",
       )}
       style={
@@ -440,7 +440,7 @@ function SubjectChip({
       <span
         className={cn(
           "font-semibold whitespace-nowrap",
-          hasTasks && "text-[var(--chip-tx-l)] dark:text-[var(--chip-tx-d)]",
+          hasTasks && "text-[var(--chip-tx-l)])]",
         )}
       >
         {ent.subject_name}
@@ -453,7 +453,7 @@ function SubjectChip({
           {ent.tests > 0 ? (
             <>
               <span className="text-muted-foreground/40">·</span>
-              <span className="text-emerald-700 dark:text-emerald-300 whitespace-nowrap tabular-nums">
+              <span className="text-emerald-700 whitespace-nowrap tabular-nums">
                 {ent.tests} test
               </span>
             </>
@@ -461,7 +461,7 @@ function SubjectChip({
           {ent.denemeler > 0 ? (
             <>
               <span className="text-muted-foreground/40">·</span>
-              <span className="text-indigo-700 dark:text-indigo-300 whitespace-nowrap tabular-nums">
+              <span className="text-indigo-700 whitespace-nowrap tabular-nums">
                 {ent.denemeler} deneme
               </span>
             </>
@@ -477,7 +477,7 @@ function SubjectChip({
 // ============================================================================
 // Ders gruplama (Katman 1) — görevler ders bazlı gruplanır; aynı dersin
 // görevleri yan yana durur (araya başka ders girmez). Etkinlik (kalemsiz)
-// görevlerinde ders backend dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200'den gelmez → başlık "{Ders} · {içerik}" parse edilir.
+// görevlerinde ders backend'den gelmez → başlık "{Ders} · {içerik}" parse edilir.
 // ============================================================================
 
 interface TaskSubject {
@@ -548,29 +548,29 @@ const PERIOD_ZONE: Record<
 > = {
   morning: {
     Icon: Sunrise,
-    zone: "bg-orange-100 border-orange-300 dark:bg-orange-500/[0.10] dark:border-orange-500/30",
-    head: "bg-orange-900 dark:bg-orange-950",
+    zone: "bg-orange-100 border-orange-300",
+    head: "bg-orange-900",
     headText: "text-orange-50",
     hint: "Sabaha ekle",
   },
   noon: {
     Icon: Sun,
-    zone: "bg-yellow-100 border-yellow-300 dark:bg-yellow-500/[0.10] dark:border-yellow-500/30",
-    head: "bg-yellow-700 dark:bg-yellow-900",
+    zone: "bg-yellow-100 border-yellow-300",
+    head: "bg-yellow-700",
     headText: "text-yellow-50",
     hint: "Öğleye ekle",
   },
   evening: {
     Icon: Moon,
-    zone: "bg-indigo-100 border-indigo-300 dark:bg-indigo-500/[0.12] dark:border-indigo-500/30",
-    head: "bg-indigo-950 dark:bg-indigo-950",
+    zone: "bg-indigo-100 border-indigo-300",
+    head: "bg-indigo-950",
     headText: "text-indigo-50",
     hint: "Akşama ekle",
   },
   none: {
     Icon: Clock,
     zone: "bg-muted/40 border-border",
-    head: "bg-slate-700 dark:bg-slate-800",
+    head: "bg-slate-700",
     headText: "text-slate-50",
     hint: "Zamansız ekle",
   },
@@ -892,7 +892,7 @@ function TaskList({
           <div
             key={run[0]}
             data-testid="subject-run"
-            className="overflow-hidden rounded-md ring-1 ring-black/[0.08] dark:ring-white/[0.10] divide-y divide-black/[0.06] dark:divide-white/[0.08]"
+            className="overflow-hidden rounded-md ring-1 ring-black/[0.08] divide-y divide-black/[0.06]"
           >
             {run.map((id) => {
               const task = tasksById.get(id);
@@ -956,7 +956,7 @@ function TaskList({
                   />
                   <div className="px-1">{renderSubjectRuns(ids)}</div>
                   {openAddPk === pk ? (
-                    <div className="border-t border-black/[0.06] dark:border-white/[0.06] bg-card">
+                    <div className="border-t border-black/[0.06] bg-card">
                       <AddTaskForm
                         studentId={studentId}
                         dayDate={day.date}
@@ -969,7 +969,7 @@ function TaskList({
                     <button
                       type="button"
                       onClick={() => setOpenAddPk(pk)}
-                      className="flex w-full items-center gap-1.5 px-3 py-1.5 text-[11.5px] text-slate-600 hover:text-slate-900 hover:bg-slate-500/10 dark:text-slate-300 dark:hover:text-slate-100 transition"
+                      className="flex w-full items-center gap-1.5 px-3 py-1.5 text-[11.5px] text-slate-600 hover:text-slate-900 hover:bg-slate-500/10 transition"
                     >
                       <Plus className="size-3" aria-hidden />
                       {PZ.hint}
@@ -1141,8 +1141,8 @@ function SortableTaskRow({
       data-task-id={task.id}
       className={cn(
         "px-3 py-1.5 flex items-center gap-2.5 border-l-[6px] task-row transition-colors",
-        "bg-[var(--row-light)] dark:bg-[var(--row-dark)]",
-        "hover:brightness-[0.97] dark:hover:brightness-110",
+        "bg-[var(--row-light)])]",
+        "hover:brightness-[0.97]",
       )}
       style={style}
     >
@@ -1180,9 +1180,9 @@ function SortableTaskRow({
               className={cn(
                 "text-[10px] uppercase tracking-wider font-semibold px-1.5 py-px rounded border self-center",
                 isBlock
-                  ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-950/40 dark:text-violet-200 dark:border-violet-800"
+                  ? "bg-violet-100 text-violet-700 border-violet-300"
                   : isDeneme
-                    ? "bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-200 dark:border-indigo-800"
+                    ? "bg-indigo-100 text-indigo-700 border-indigo-300"
                     : typeTone,
               )}
             >
@@ -1190,22 +1190,22 @@ function SortableTaskRow({
             </span>
           ) : null}
           {isBlock && task.planned_count > 0 ? (
-            <span className="text-[11px] text-violet-700 dark:text-violet-300 font-medium tabular-nums">
+            <span className="text-[11px] text-violet-700 font-medium tabular-nums">
               {task.planned_count} {task.work_block_unit ?? "test"}
             </span>
           ) : examItems.length > 0 ? (
-            <span className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium tabular-nums">
+            <span className="text-[11px] text-indigo-700 font-medium tabular-nums">
               {examItems.length} deneme
               {examItems[0].question_count ? ` · ${examItems[0].question_count} soru` : ""}
             </span>
           ) : isDeneme && task.planned_count > 0 ? (
-            <span className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium tabular-nums">
+            <span className="text-[11px] text-indigo-700 font-medium tabular-nums">
               {task.planned_count} soru
             </span>
           ) : null}
           {task.is_draft ? (
             <span
-              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200"
+              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800"
               title="Henüz yayınlanmadı — öğrenci paneline inmez"
             >
               <Pencil className="size-2.5" aria-hidden />
@@ -1216,11 +1216,11 @@ function SortableTaskRow({
             {primaryText}
           </span>
           {task.completed_count > 0 ? (
-            <span className="text-xs text-emerald-700 dark:text-emerald-300 tabular-nums">
+            <span className="text-xs text-emerald-700 tabular-nums">
               · {task.completed_count}/{task.planned_count}
             </span>
           ) : null}
-          {/* Tek kalemli görevde D/Y rozeti — task badge dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200'lerinin yanına inline */}
+          {/* Tek kalemli görevde D/Y rozeti — task badge'lerinin yanına inline */}
           {task.items.length === 1 ? (
             <TaskItemResultBadge
               studentId={studentId}
@@ -1230,12 +1230,12 @@ function SortableTaskRow({
             />
           ) : null}
           {task.status === "completed" ? (
-            <span className="inline-flex items-center gap-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+            <span className="inline-flex items-center gap-0.5 text-xs text-emerald-700">
               <Check className="size-3" aria-hidden />
               tamam
             </span>
           ) : task.status === "partial" ? (
-            <span className="text-xs text-amber-700 dark:text-amber-300">kısmen</span>
+            <span className="text-xs text-amber-700">kısmen</span>
           ) : null}
         </div>
         {task.items.length > 1 ? (
@@ -1252,7 +1252,7 @@ function SortableTaskRow({
                   ) : null}
                   : <span className="font-medium tabular-nums">{it.planned_count}</span>
                   {it.completed_count > 0 ? (
-                    <span className="text-emerald-700 dark:text-emerald-300 tabular-nums">
+                    <span className="text-emerald-700 tabular-nums">
                       {" "}({it.completed_count} çöz.)
                     </span>
                   ) : null}
@@ -1535,7 +1535,7 @@ function TaskQuickEditForm({
               className={cn(
                 "rounded-md border px-2.5 py-1 text-xs transition",
                 period === p.k
-                  ? "border-amber-500 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 font-semibold text-amber-900 dark:text-amber-200"
+                  ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
                   : "border-input bg-background hover:bg-muted/50",
               )}
             >
@@ -1762,7 +1762,7 @@ function SpreadTaskDialog({
                     disabled
                       ? "border-border text-muted-foreground/50 cursor-not-allowed"
                       : on
-                        ? "border-cyan-500 bg-cyan-50 text-cyan-900 dark:bg-cyan-500/15 dark:text-cyan-200"
+                        ? "border-cyan-500 bg-cyan-50 text-cyan-900"
                         : "border-border text-muted-foreground hover:border-foreground/40",
                   )}
                   title={

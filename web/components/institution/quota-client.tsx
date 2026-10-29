@@ -57,11 +57,11 @@ export function QuotaClient({ initial }: Props) {
         >
           ← Panel
         </Link>
-        <p className="text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mt-1 font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-700 mt-1 font-semibold">
           Üyelik
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-0.5 flex items-center gap-2">
-          <Gauge className="size-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
+          <Gauge className="size-6 text-emerald-700" aria-hidden />
           Kurum Limitleri
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -118,7 +118,7 @@ function QuotaCard({ item }: { item: QuotaInfoItem }) {
           </h3>
           {item.has_override && (
             <span
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 border border-violet-200"
               title={
                 item.override_note ??
                 "ETÜTKOÇ ekibi tarafından kuruma özel limit verilmiş"
@@ -148,13 +148,13 @@ function QuotaCard({ item }: { item: QuotaInfoItem }) {
             <div className="text-[11px] text-muted-foreground mt-1 flex flex-wrap items-center gap-1">
               <span className="tabular-nums">%{item.pct} dolu</span>
               {item.is_at_limit && (
-                <span className="text-rose-700 dark:text-rose-300 font-medium inline-flex items-center gap-1">
+                <span className="text-rose-700 font-medium inline-flex items-center gap-1">
                   <AlertTriangle className="size-3" aria-hidden />
                   Limit doldu, yeni ekleyemezsin
                 </span>
               )}
               {item.is_warn && !item.is_at_limit && (
-                <span className="text-amber-700 dark:text-amber-300 font-medium inline-flex items-center gap-1">
+                <span className="text-amber-700 font-medium inline-flex items-center gap-1">
                   <AlertTriangle className="size-3" aria-hidden />
                   limite yaklaşıyor
                 </span>
@@ -164,7 +164,7 @@ function QuotaCard({ item }: { item: QuotaInfoItem }) {
         )}
 
         {item.is_unlimited && (
-          <div className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-3 inline-flex items-center gap-1">
+          <div className="text-[11px] text-emerald-700 mt-3 inline-flex items-center gap-1">
             <CheckCircle2 className="size-3" aria-hidden />
             Sınırsız — bu kuotada yer sıkıntısı yok
           </div>
@@ -225,13 +225,13 @@ function PlanComparison({
                 <tr
                   key={p.plan}
                   className={cn(
-                    isCurrent ? "bg-emerald-50/50 dark:bg-emerald-500/10 font-medium" : undefined,
+                    isCurrent ? "bg-emerald-50/50 font-medium" : undefined,
                   )}
                 >
                   <td className="px-4 py-2">
                     {institutionPlanLabel(p.plan)}
                     {isCurrent && (
-                      <span className="ml-2 text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200">
+                      <span className="ml-2 text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">
                         <CheckCircle2 className="size-2.5" aria-hidden />
                         sizin planınız
                       </span>
@@ -261,7 +261,7 @@ function PlanComparison({
 
 function HelpBlock() {
   return (
-    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-4 py-3 text-xs space-y-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-4 py-3 text-xs space-y-2">
       <p className="flex items-start gap-2">
         <Info className="size-4 shrink-0 mt-0.5" aria-hidden />
         <span>

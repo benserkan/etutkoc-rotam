@@ -321,9 +321,9 @@ const eslintConfig = defineConfig([
       "lgs/missing-invalidate": "warn",
       "lgs/no-bare-jargon": "warn",
       "lgs/no-unsafe-contrast": "warn",
-      "lgs/no-dark-text-without-variant": "warn",
-      "lgs/no-light-hover-without-dark": "warn",
-      "lgs/no-white-box-theme-text": "warn",
+      "lgs/no-dark-text-without-variant": "off", // tek tema (2026-10-29): koyu mod yok, kural anlamsız
+      "lgs/no-light-hover-without-dark": "off", // tek tema (2026-10-29): koyu mod yok, kural anlamsız
+      "lgs/no-white-box-theme-text": "off", // tek tema (2026-10-29): koyu mod yok, kural anlamsız
     },
   },
 

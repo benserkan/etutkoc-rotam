@@ -59,7 +59,7 @@ export default async function TeacherStudentWeekPage({
   if (detail?.student?.program_mode === "havuz") {
     return (
       <div className="mx-auto max-w-2xl p-6">
-        <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-5 text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-5 text-cyan-900">
           <h1 className="text-lg font-semibold">Bu öğrenci haftalık havuz modunda</h1>
           <p className="mt-1 text-sm">
             {detail.student.full_name ?? "Öğrenci"} için program gün gün değil, haftalık görev havuzuyla
@@ -75,7 +75,7 @@ export default async function TeacherStudentWeekPage({
             </Link>
             <Link
               href={`/teacher/students/${numericId}#history`}
-              className="inline-flex items-center rounded-md border border-cyan-700 bg-white px-3 py-2 text-sm font-medium text-cyan-900 hover:bg-cyan-50 dark:bg-transparent dark:text-cyan-100 dark:hover:bg-cyan-500/20"
+              className="inline-flex items-center rounded-md border border-cyan-700 bg-white px-3 py-2 text-sm font-medium text-cyan-900 hover:bg-cyan-50"
             >
               Program geçmişi (önceki haftalar)
             </Link>

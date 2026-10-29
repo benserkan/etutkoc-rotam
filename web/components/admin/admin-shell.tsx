@@ -221,9 +221,9 @@ export function AdminShell({ user, children }: Props) {
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* Sidebar (lg+) */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 lg:sticky lg:top-0 lg:h-screen border-r border-border bg-card/40">
-        <div className="px-4 h-14 flex items-center border-b border-border bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-          <BrandLogo href="/admin" size={28} wordmarkClassName="text-white" />
-          <span className="ml-2 text-[10px] uppercase tracking-wider font-semibold bg-amber-400/20 text-amber-100 px-1.5 py-0.5 rounded">
+        <div className="px-4 h-14 flex items-center border-b border-border bg-background">
+          <BrandLogo href="/admin" size={28} />
+          <span className="ml-2 text-[10px] uppercase tracking-wider font-semibold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded">
             Süper
           </span>
         </div>
@@ -248,10 +248,10 @@ export function AdminShell({ user, children }: Props) {
       </aside>
 
       {/* Topbar (lg-) */}
-      <header className="lg:hidden sticky top-0 z-30 border-b border-border bg-slate-900 text-white">
+      <header className="lg:hidden sticky top-0 z-30 border-b border-border bg-background">
         <div className="flex h-14 items-center gap-3 px-4">
-          <BrandLogo href="/admin" size={28} className="shrink-0" wordmarkClassName="text-white" />
-          <span className="text-[10px] uppercase tracking-wider font-semibold bg-amber-400/20 text-amber-100 px-1.5 py-0.5 rounded">
+          <BrandLogo href="/admin" size={28} className="shrink-0" />
+          <span className="text-[10px] uppercase tracking-wider font-semibold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded">
             Süper
           </span>
           <div className="flex-1" />
@@ -259,7 +259,7 @@ export function AdminShell({ user, children }: Props) {
             variant="ghost"
             size="icon"
             onClick={() => setNavOpen(true)}
-            className="text-white hover:bg-white/10"
+            className=""
             aria-label="Menüyü aç"
           >
             <Menu className="size-5" aria-hidden />
@@ -458,10 +458,10 @@ function MobileDrawer({
         aria-hidden
       />
       <div className="absolute right-0 top-0 h-full w-72 max-w-[85vw] bg-card shadow-xl border-l border-border flex flex-col">
-        <div className="flex items-center justify-between px-4 h-14 border-b border-border bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+        <div className="flex items-center justify-between px-4 h-14 border-b border-border bg-background">
           <div className="leading-tight">
             <p className="text-sm font-medium truncate">{user.full_name}</p>
-            <p className="text-xs text-white/70 inline-flex items-center gap-1">
+            <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
               <Shield className="size-3 text-amber-400" aria-hidden />
               {ROLE_LABELS_TR[user.role]}
             </p>
@@ -470,7 +470,7 @@ function MobileDrawer({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-white hover:bg-white/10"
+            className=""
             aria-label="Kapat"
           >
             <X className="size-5" aria-hidden />

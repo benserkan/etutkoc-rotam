@@ -80,7 +80,7 @@ export function AdminCampaignDetailClient({ initial, campaignId }: Props) {
             <StatusBadge label={c.status_label} tone={c.status_color} />
             <span className="text-muted-foreground">{c.segment_label}</span>
             {c.has_variant_b ? (
-              <span className="rounded bg-indigo-100 dark:bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">A/B</span>
+              <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">A/B</span>
             ) : null}
           </div>
           {c.description ? <div className="mt-2 text-sm text-muted-foreground">{c.description}</div> : null}
@@ -176,7 +176,7 @@ export function AdminCampaignDetailClient({ initial, campaignId }: Props) {
                       <td className="px-4 py-2 text-center">
                         <span className={cn(
                           "rounded px-1.5 py-0.5 text-[10px] font-semibold",
-                          r.variant === "B" ? "bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300" : "bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+                          r.variant === "B" ? "bg-purple-100 text-purple-700" : "bg-indigo-100 text-indigo-700",
                         )}>
                           {r.variant}
                         </span>
@@ -191,11 +191,11 @@ export function AdminCampaignDetailClient({ initial, campaignId }: Props) {
                       <td className="px-4 py-2 text-xs">
                         {r.offer_id && r.offer_token ? (
                           <a href={`/offers/${r.offer_token}`} target="_blank" rel="noreferrer"
-                             className="inline-flex items-center gap-0.5 text-indigo-600 dark:text-indigo-300 hover:text-indigo-800">
+                             className="inline-flex items-center gap-0.5 text-indigo-600 hover:text-indigo-800">
                             #{r.offer_id} <ExternalLink className="size-3" aria-hidden />
                           </a>
                         ) : r.error_note ? (
-                          <span className="text-rose-600 dark:text-rose-300">{r.error_note}</span>
+                          <span className="text-rose-600">{r.error_note}</span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
@@ -214,7 +214,7 @@ export function AdminCampaignDetailClient({ initial, campaignId }: Props) {
         {c.started_at ? <div>Başlatıldı: {fmt(c.started_at)}</div> : null}
         {c.completed_at ? <div>Tamamlandı: {fmt(c.completed_at)}</div> : null}
         {c.admin_note ? (
-          <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+          <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700">
             <strong>İç not:</strong> {c.admin_note}
           </div>
         ) : null}
@@ -258,7 +258,7 @@ function LifecycleButtons({
       {status === "running" ? (
         <>
           <Button variant="outline" disabled={busy} onClick={() => pauseMut.mutate()}
-                  className="border-amber-300 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-500/25">
+                  className="border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200">
             <Pause className="size-4" aria-hidden /> Duraklat
           </Button>
           <Button disabled={busy} onClick={() => { if (confirm("Kampanyayı tamamlandı işaretle?")) completeMut.mutate(); }}
@@ -293,12 +293,12 @@ function FunnelKpi({
   sub?: string;
 }) {
   const cls: Record<string, string> = {
-    slate: "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
-    blue: "bg-blue-50 border-blue-200 text-blue-900 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200",
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-    rose: "bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-    amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
+    slate: "bg-slate-50 border-slate-200 text-slate-900",
+    blue: "bg-blue-50 border-blue-200 text-blue-900",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
+    rose: "bg-rose-50 border-rose-200 text-rose-900",
+    amber: "bg-amber-50 border-amber-200 text-amber-900",
+    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900",
   };
   return (
     <div className={cn("rounded-lg border p-3", cls[tone] ?? cls.slate)}>
@@ -323,7 +323,7 @@ function VariantCard({
   tone: string;
 }) {
   const border = tone === "purple" ? "border-purple-200" : "border-indigo-200";
-  const text = tone === "purple" ? "text-purple-700 dark:text-purple-300" : "text-indigo-700 dark:text-indigo-300";
+  const text = tone === "purple" ? "text-purple-700" : "text-indigo-700";
   return (
     <Card className={cn("border-2 p-4", border)}>
       <div className={cn("text-xs font-semibold uppercase", text)}>{title}</div>
@@ -331,7 +331,7 @@ function VariantCard({
       <div className="mt-1 text-xs text-muted-foreground">{kindLabel}</div>
       <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
         <div><div className="font-semibold">{funnel.total}</div><div className="text-muted-foreground">Hedef</div></div>
-        <div><div className="font-semibold text-emerald-700 dark:text-emerald-300">{funnel.accepted}</div><div className="text-muted-foreground">Kabul</div></div>
+        <div><div className="font-semibold text-emerald-700">{funnel.accepted}</div><div className="text-muted-foreground">Kabul</div></div>
         <div>
           <div className={cn("font-semibold", text)}>{funnel.accepted_pct != null ? `%${funnel.accepted_pct}` : "—"}</div>
           <div className="text-muted-foreground">Dönüşüm</div>

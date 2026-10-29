@@ -35,9 +35,9 @@ const STATUS_LABEL: Record<string, string> = {
   rejected: "Reddedildi",
 };
 const STATUS_TONE: Record<string, string> = {
-  pending: "bg-amber-500/10 text-amber-800 dark:text-amber-200",
-  approved: "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
-  rejected: "bg-rose-500/10 text-rose-800 dark:text-rose-200",
+  pending: "bg-amber-500/10 text-amber-800",
+  approved: "bg-emerald-500/10 text-emerald-800",
+  rejected: "bg-rose-500/10 text-rose-800",
 };
 
 function fmtDateTime(iso: string): string {
@@ -70,7 +70,7 @@ export function InstitutionSelfStudyClient({
     <div className="space-y-6">
       <header className="space-y-2">
         <h1 className="font-display text-2xl font-bold tracking-tight flex items-center gap-2">
-          <TentTree className="size-6 text-cyan-600 dark:text-cyan-400" aria-hidden />
+          <TentTree className="size-6 text-cyan-600" aria-hidden />
           Bağımsız Çalışma Girişleri
         </h1>
         <p className="text-sm text-muted-foreground max-w-3xl">
@@ -81,8 +81,8 @@ export function InstitutionSelfStudyClient({
       </header>
 
       <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm flex items-start gap-2.5">
-        <Info className="size-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" aria-hidden />
-        <div className="space-y-1 text-sky-900 dark:text-sky-200">
+        <Info className="size-4 text-sky-600 shrink-0 mt-0.5" aria-hidden />
+        <div className="space-y-1 text-sky-900">
           <p>
             <strong>Bu girişler kurumun uyum ve karne metriklerini DEĞİŞTİRMEZ</strong>{" "}
             — o metrikler yalnız programdaki görevlerden hesaplanır. Elle girişler
@@ -152,7 +152,7 @@ export function InstitutionSelfStudyClient({
       {data.mismatches.length > 0 ? (
         <section className="space-y-2">
           <h2 className="font-display text-lg font-semibold tracking-tight flex items-center gap-2">
-            <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" aria-hidden />
+            <AlertTriangle className="size-4 text-amber-600" aria-hidden />
             Deneme çaprazı — elle işlendi, denemeler doğrulamıyor
           </h2>
           <p className="text-xs text-muted-foreground max-w-3xl">
@@ -164,7 +164,7 @@ export function InstitutionSelfStudyClient({
           <div className="overflow-x-auto rounded-lg border border-amber-500/30">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-amber-500/10 text-left text-xs text-amber-900 dark:text-amber-200">
+                <tr className="border-b border-border bg-amber-500/10 text-left text-xs text-amber-900">
                   <th className="px-3 py-2 font-medium">Öğrenci</th>
                   <th className="px-3 py-2 font-medium">Koç</th>
                   <th className="px-3 py-2 font-medium">Konu</th>
@@ -282,11 +282,11 @@ function Kpi({
 }) {
   const toneCls =
     tone === "emerald"
-      ? "text-emerald-700 dark:text-emerald-300"
+      ? "text-emerald-700"
       : tone === "amber"
-        ? "text-amber-700 dark:text-amber-300"
+        ? "text-amber-700"
         : tone === "rose"
-          ? "text-rose-700 dark:text-rose-300"
+          ? "text-rose-700"
           : "text-foreground";
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -311,7 +311,7 @@ function CoachRow({ row: c }: { row: SelfStudyReportCoachRow }) {
         <span className="font-medium">{c.coach_name}</span>
         {c.attention ? (
           <span
-            className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-200"
+            className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-800"
             title="Dönemde öğrenci beyanı olmadan yüklü giriş — koçla konuşulmalı (tatil dönüşü meşru olabilir)."
           >
             <AlertTriangle className="size-3" aria-hidden />
@@ -322,10 +322,10 @@ function CoachRow({ row: c }: { row: SelfStudyReportCoachRow }) {
       <td className="px-3 py-2 text-right tabular-nums font-medium">
         {c.applied_tests}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-300">
+      <td className="px-3 py-2 text-right tabular-nums text-emerald-700">
         {c.student_declared_tests}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums text-amber-700 dark:text-amber-300">
+      <td className="px-3 py-2 text-right tabular-nums text-amber-700">
         {c.coach_direct_tests}
       </td>
       <td className="px-3 py-2 text-right tabular-nums">
@@ -352,11 +352,11 @@ function MismatchRow({ row: m }: { row: SelfStudyMismatchRow }) {
       </td>
       <td className="px-3 py-2 text-right tabular-nums">
         {m.completed} test
-        <span className="text-amber-700 dark:text-amber-300">
+        <span className="text-amber-700">
           {" "}(%{m.manual_share_pct} elle)
         </span>
       </td>
-      <td className="px-3 py-2 text-right tabular-nums font-medium text-rose-700 dark:text-rose-300">
+      <td className="px-3 py-2 text-right tabular-nums font-medium text-rose-700">
         %{m.accuracy_pct}
         <span className="font-normal text-muted-foreground"> · {m.answered} soru</span>
       </td>
@@ -389,8 +389,8 @@ function EntryRow({ row: r }: { row: SelfStudyReportEntryRow }) {
         <span
           className={cn(
             r.source === "coach"
-              ? "text-amber-700 dark:text-amber-300"
-              : "text-emerald-700 dark:text-emerald-300",
+              ? "text-amber-700"
+              : "text-emerald-700",
           )}
         >
           {SOURCE_LABEL[r.source] ?? r.source}

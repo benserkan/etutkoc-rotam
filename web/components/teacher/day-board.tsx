@@ -185,7 +185,7 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
                   <span
                     className={cn(
                       "text-xs font-medium tabular-nums",
-                      allDone ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+                      allDone ? "text-emerald-600" : "text-muted-foreground",
                     )}
                   >
                     {doneCount}/{total} tamam{allDone ? " ✓" : ""}
@@ -212,7 +212,7 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
       {data.day_note && data.day_note.trim() ? (
         <Card className="border-l-4 border-l-cyan-500">
           <CardContent className="p-4">
-            <p className="mb-1 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-400">
+            <p className="mb-1 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-700">
               <NotebookPen className="size-3.5" aria-hidden />
               Öğrencinin günün notu
             </p>
@@ -323,28 +323,28 @@ function gorevState(task: TeacherTask): GorevState {
 // Tamamlanmamış (todo) + kısmi (partial) DİKKAT ÇEKİCİ (renkli sol şerit + tonlu
 // zemin); tamamlanan SAKİN (de-emphasize). Purge-safe explicit renkler.
 const STATE_CARD: Record<GorevState, string> = {
-  todo: "border-l-4 border-l-rose-500 bg-rose-50/60 dark:bg-rose-950/25",
-  partial: "border-l-4 border-l-amber-500 bg-amber-50/60 dark:bg-amber-950/25",
+  todo: "border-l-4 border-l-rose-500 bg-rose-50/60",
+  partial: "border-l-4 border-l-amber-500 bg-amber-50/60",
   done: "border-l-4 border-l-emerald-500/40 opacity-75",
   cancelled: "border-l-4 border-l-slate-300 opacity-55",
 };
 const STATE_BADGE: Record<GorevState, { text: string; cls: string }> = {
-  todo: { text: "Yapılmadı", cls: "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200" },
-  partial: { text: "Kısmen", cls: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200" },
-  done: { text: "Tamamlandı", cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200" },
-  cancelled: { text: "İptal", cls: "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300" },
+  todo: { text: "Yapılmadı", cls: "bg-rose-100 text-rose-800" },
+  partial: { text: "Kısmen", cls: "bg-amber-100 text-amber-800" },
+  done: { text: "Tamamlandı", cls: "bg-emerald-100 text-emerald-800" },
+  cancelled: { text: "İptal", cls: "bg-slate-200 text-slate-600" },
 };
 
 // Ders bazlı renk — subject_id stable hash → ton (her ders aynı rengi alır).
 const SUBJECT_TONES = [
-  { bar: "border-l-indigo-500",  head: "bg-indigo-50 dark:bg-indigo-950/30",   text: "text-indigo-700 dark:text-indigo-300",   dot: "bg-indigo-500" },
-  { bar: "border-l-emerald-500", head: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-  { bar: "border-l-amber-500",   head: "bg-amber-50 dark:bg-amber-950/30",     text: "text-amber-700 dark:text-amber-300",     dot: "bg-amber-500" },
-  { bar: "border-l-rose-500",    head: "bg-rose-50 dark:bg-rose-950/30",       text: "text-rose-700 dark:text-rose-300",       dot: "bg-rose-500" },
-  { bar: "border-l-violet-500",  head: "bg-violet-50 dark:bg-violet-950/30",   text: "text-violet-700 dark:text-violet-300",   dot: "bg-violet-500" },
-  { bar: "border-l-cyan-500",    head: "bg-cyan-50 dark:bg-cyan-950/30",       text: "text-cyan-700 dark:text-cyan-300",       dot: "bg-cyan-500" },
-  { bar: "border-l-fuchsia-500", head: "bg-fuchsia-50 dark:bg-fuchsia-950/30", text: "text-fuchsia-700 dark:text-fuchsia-300", dot: "bg-fuchsia-500" },
-  { bar: "border-l-sky-500",     head: "bg-sky-50 dark:bg-sky-950/30",         text: "text-sky-700 dark:text-sky-300",         dot: "bg-sky-500" },
+  { bar: "border-l-indigo-500",  head: "bg-indigo-50",   text: "text-indigo-700",   dot: "bg-indigo-500" },
+  { bar: "border-l-emerald-500", head: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+  { bar: "border-l-amber-500",   head: "bg-amber-50",     text: "text-amber-700",     dot: "bg-amber-500" },
+  { bar: "border-l-rose-500",    head: "bg-rose-50",       text: "text-rose-700",       dot: "bg-rose-500" },
+  { bar: "border-l-violet-500",  head: "bg-violet-50",   text: "text-violet-700",   dot: "bg-violet-500" },
+  { bar: "border-l-cyan-500",    head: "bg-cyan-50",       text: "text-cyan-700",       dot: "bg-cyan-500" },
+  { bar: "border-l-fuchsia-500", head: "bg-fuchsia-50", text: "text-fuchsia-700", dot: "bg-fuchsia-500" },
+  { bar: "border-l-sky-500",     head: "bg-sky-50",         text: "text-sky-700",         dot: "bg-sky-500" },
 ];
 const OTHER_TONE = { bar: "border-l-slate-400", head: "bg-muted/40", text: "text-muted-foreground", dot: "bg-slate-400" };
 
@@ -466,7 +466,7 @@ function TaskCardEditable({
                 : "etkinlik"}
               {task.scheduled_hour ? ` · ${task.scheduled_hour}` : ""}
               {(task.solved_count ?? 0) > 0 ? (
-                <span className="text-emerald-600 dark:text-emerald-400">
+                <span className="text-emerald-600">
                   {" "}· {task.solved_count} soru çözdü
                 </span>
               ) : null}

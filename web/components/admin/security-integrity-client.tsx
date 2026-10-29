@@ -28,9 +28,9 @@ interface Props {
 }
 
 function migrationTone(status: string): string {
-  if (status === "ok") return "border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30";
-  if (status === "pending") return "border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30";
-  return "border-rose-200 bg-rose-50/40 dark:bg-rose-500/10 dark:border-rose-500/30";
+  if (status === "ok") return "border-emerald-200 bg-emerald-50/40";
+  if (status === "pending") return "border-amber-200 bg-amber-50/40";
+  return "border-rose-200 bg-rose-50/40";
 }
 
 export function SecurityIntegrityClient({ initial }: Props) {
@@ -49,7 +49,7 @@ export function SecurityIntegrityClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <DatabaseZap className="size-6 text-slate-700 dark:text-slate-300" aria-hidden />
+          <DatabaseZap className="size-6 text-slate-700" aria-hidden />
           Veri Bütünlüğü
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -85,12 +85,12 @@ export function SecurityIntegrityClient({ initial }: Props) {
               <dd className="font-mono text-[11px]">{mig.current ?? "—"}</dd>
             </div>
             {mig.pending ? (
-              <p className="rounded-md bg-amber-50 dark:bg-amber-500/15 px-2 py-1 text-xs text-amber-800 dark:text-amber-200">
+              <p className="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800">
                 Bekleyen migration var — kod ile veritabanı sürümü uyuşmuyor.
               </p>
             ) : null}
             {mig.error ? (
-              <p className="rounded-md bg-rose-50 dark:bg-rose-500/15 px-2 py-1 font-mono text-[11px] text-rose-800 dark:text-rose-200">{mig.error}</p>
+              <p className="rounded-md bg-rose-50 px-2 py-1 font-mono text-[11px] text-rose-800">{mig.error}</p>
             ) : null}
           </dl>
         </Card>
@@ -144,21 +144,21 @@ export function SecurityIntegrityClient({ initial }: Props) {
             yönetici, çocuğu olmayan veli vb.).
           </p>
           {d.orphans.findings.length === 0 ? (
-            <p className="mt-3 rounded-md bg-emerald-50 dark:bg-emerald-500/15 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
+            <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
               Tutarsızlık bulunamadı.
             </p>
           ) : (
             <div className="mt-3 space-y-2">
               {d.orphans.findings.map((f) => (
-                <div key={f.kind} className="rounded-md border border-amber-200 bg-amber-50/50 p-3 dark:bg-amber-500/10 dark:border-amber-500/30">
+                <div key={f.kind} className="rounded-md border border-amber-200 bg-amber-50/50 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-amber-900 dark:text-amber-200">{f.label}</span>
-                    <span className="rounded-full bg-amber-200 dark:bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-900 dark:text-amber-200">
+                    <span className="text-sm font-medium text-amber-900">{f.label}</span>
+                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-900">
                       {f.count}
                     </span>
                   </div>
                   {f.samples.length > 0 ? (
-                    <ul className="mt-1.5 space-y-0.5 font-mono text-[11px] text-amber-800 dark:text-amber-200">
+                    <ul className="mt-1.5 space-y-0.5 font-mono text-[11px] text-amber-800">
                       {f.samples.slice(0, 5).map((s, i) => (
                         <li key={i}>{JSON.stringify(s)}</li>
                       ))}
@@ -192,7 +192,7 @@ export function SecurityIntegrityClient({ initial }: Props) {
             Veri talepleri {d.kvkk_sla.sla_days} gün içinde sonuçlandırılmalı. Açık toplam: {d.kvkk_sla.open_total}.
           </p>
           {d.kvkk_sla.overdue_samples.length === 0 ? (
-            <p className="mt-3 rounded-md bg-emerald-50 dark:bg-emerald-500/15 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
+            <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
               Süresi geçmiş talep yok.
             </p>
           ) : (
@@ -212,7 +212,7 @@ export function SecurityIntegrityClient({ initial }: Props) {
                       <td className="px-2 py-1 font-mono text-[11px]">{r.id}</td>
                       <td className="px-2 py-1 text-muted-foreground">{r.kind}</td>
                       <td className="px-2 py-1 text-muted-foreground">{r.status}</td>
-                      <td className="px-2 py-1 text-right tabular-nums text-rose-600 dark:text-rose-300">{r.age_days} gün</td>
+                      <td className="px-2 py-1 text-right tabular-nums text-rose-600">{r.age_days} gün</td>
                     </tr>
                   ))}
                 </tbody>

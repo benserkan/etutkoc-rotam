@@ -67,11 +67,11 @@ import type { BookScanResult } from "@/lib/types/book-catalog";
 
 const STATUS_TONE: Record<string, string> = {
   verified:
-    "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:border-emerald-500/30",
+    "bg-emerald-50 text-emerald-800 border-emerald-200",
   pending:
-    "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-500/30",
+    "bg-amber-50 text-amber-800 border-amber-200",
   hidden:
-    "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-300 dark:border-slate-500/30",
+    "bg-slate-100 text-slate-600 border-slate-200",
 };
 
 const STATUS_FILTERS: { key: string; label: string }[] = [
@@ -285,9 +285,9 @@ function EntryDialog({
         ) : (
           <div className="space-y-4">
             {/* Kaynaktan oku (seed aracı) */}
-            <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm text-cyan-900 dark:text-cyan-100">
+                <div className="text-sm text-cyan-900">
                   <FileUp className="mr-1 inline size-4" aria-hidden />
                   <strong>İçindekiler fotoğrafı veya örnek PDF yükle</strong> — yapı
                   iki kez okunur, aşağıya dolar.
@@ -318,7 +318,7 @@ function EntryDialog({
                 />
               </div>
               {readWarnings.length > 0 && (
-                <ul className="mt-2 space-y-0.5 text-xs text-amber-800 dark:text-amber-200">
+                <ul className="mt-2 space-y-0.5 text-xs text-amber-800">
                   {readWarnings.map((w, i) => (
                     <li key={i}>• {w}</li>
                   ))}
@@ -573,7 +573,7 @@ export function AdminBookCatalogClient({
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
               <BookOpen className="size-5" aria-hidden />
             </span>
             <div>
@@ -596,7 +596,7 @@ export function AdminBookCatalogClient({
             onClick={() => setStatusFilter("verified")}
             className="rounded-lg border border-border bg-background p-3 text-left hover:bg-muted"
           >
-            <div className="text-xl font-semibold text-emerald-700 dark:text-emerald-300">
+            <div className="text-xl font-semibold text-emerald-700">
               {data.verified_count}
             </div>
             <div className="text-xs text-muted-foreground">Yayında</div>
@@ -605,7 +605,7 @@ export function AdminBookCatalogClient({
             onClick={() => setStatusFilter("pending")}
             className="rounded-lg border border-border bg-background p-3 text-left hover:bg-muted"
           >
-            <div className="text-xl font-semibold text-amber-700 dark:text-amber-300">
+            <div className="text-xl font-semibold text-amber-700">
               {data.pending_count}
             </div>
             <div className="text-xs text-muted-foreground">Onay bekleyen</div>
@@ -614,7 +614,7 @@ export function AdminBookCatalogClient({
             onClick={() => setStatusFilter("hidden")}
             className="rounded-lg border border-border bg-background p-3 text-left hover:bg-muted"
           >
-            <div className="text-xl font-semibold text-slate-600 dark:text-slate-300">
+            <div className="text-xl font-semibold text-slate-600">
               {data.hidden_count}
             </div>
             <div className="text-xs text-muted-foreground">Gizli</div>
@@ -773,7 +773,7 @@ export function AdminBookCatalogClient({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 text-rose-600 dark:text-rose-300 hover:text-rose-700"
+                      className="h-8 text-rose-600 hover:text-rose-700"
                       disabled={action.isPending || e.usage_count > 0}
                       title={
                         e.usage_count > 0

@@ -45,17 +45,17 @@ export function StatusChip({ card }: { card: WPCard }) {
   // Kıyas yapılmayan bilgi kartı: "Her zamanki" gibi yanıltıcı bir rozet basma.
   if (card.status === "info" && card.key !== "balance") return null;
   let label = STATUS_LABEL[card.status] ?? card.status;
-  let cls = "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-200";
+  let cls = "bg-slate-100 text-slate-700";
   if (card.key === "balance" && card.status === "below") label = "Kaçınılan ders";
   if (card.key === "balance" && card.status === "info") label = "Dengeli";
   if (card.key === "exam_net" && card.status === "above") label = "Yükseliyor";
   if (card.key === "exam_net" && card.status === "below") label = "Düştü";
   if (card.status === "critical") cls = "bg-rose-700 text-white";
-  else if (card.status === "below") cls = "bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-200";
-  else if (card.status === "above") cls = "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-200";
+  else if (card.status === "below") cls = "bg-orange-100 text-orange-800";
+  else if (card.status === "above") cls = "bg-blue-100 text-blue-800";
   if (card.trend && (card.status === "normal" || card.status === "above" || card.status === "insufficient")) {
     label = `${card.trend_run} hafta üst üste kötüleşme`;
-    cls = "border border-orange-400 bg-card text-orange-800 dark:text-orange-200";
+    cls = "border border-orange-400 bg-card text-orange-800";
   }
   return (
     <span className={cn("inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold", cls)}>
@@ -96,34 +96,34 @@ export function Ruler({ card }: { card: WPCard }) {
       <div
         className={cn(
           "absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs font-extrabold",
-          warn ? "text-orange-700 dark:text-orange-300" : "text-foreground",
+          warn ? "text-orange-700" : "text-foreground",
         )}
         style={{ left: `${lbl(card.value)}%` }}
       >
         bu hafta {fmtUnit(card.value, card.unit)}
       </div>
-      <div className="absolute inset-x-0 top-[33px] h-1.5 rounded-full bg-slate-200 dark:bg-slate-700" />
+      <div className="absolute inset-x-0 top-[33px] h-1.5 rounded-full bg-slate-200" />
       <div
-        className="absolute top-[29px] h-3.5 rounded bg-cyan-600/20 dark:bg-cyan-400/25"
+        className="absolute top-[29px] h-3.5 rounded bg-cyan-600/20"
         style={{ left: `${p(card.low)}%`, width: `${Math.max(1.5, p(card.high) - p(card.low))}%` }}
       />
       {card.baseline.map((v, i) => (
         <div
           key={i}
-          className="absolute top-[31px] size-2.5 -ml-[5px] rounded-full bg-slate-400 opacity-80 dark:bg-slate-400"
+          className="absolute top-[31px] size-2.5 -ml-[5px] rounded-full bg-slate-400 opacity-80"
           style={{ left: `${p(v)}%` }}
         />
       ))}
       {card.prev != null ? (
         <div
-          className="absolute top-[30px] size-3 -ml-1.5 rounded-full border-2 border-slate-700 bg-card dark:border-slate-200"
+          className="absolute top-[30px] size-3 -ml-1.5 rounded-full border-2 border-slate-700 bg-card"
           style={{ left: `${p(card.prev)}%` }}
         />
       ) : null}
       <div
         className={cn(
           "absolute top-[22px] h-7 w-1 -ml-0.5 rounded",
-          warn ? "bg-orange-700 dark:bg-orange-400" : "bg-foreground",
+          warn ? "bg-orange-700" : "bg-foreground",
         )}
         style={{ left: `${p(card.value)}%` }}
       />
@@ -165,22 +165,17 @@ function Zone({
   children: React.ReactNode;
   className?: string;
 }) {
-  const box = {
-    cyan: "bg-cyan-50 border-cyan-300 dark:bg-cyan-500/10 dark:border-cyan-500/30",
-    indigo: "bg-indigo-50 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30",
-    amber: "bg-amber-50 border-amber-300 dark:bg-amber-500/10 dark:border-amber-500/30",
-    slate: "bg-card border-slate-300 dark:border-slate-600",
-    violet: "bg-violet-50 border-violet-300 dark:bg-violet-500/10 dark:border-violet-500/30",
-  }[tone];
   const eye = {
-    cyan: "text-cyan-800 dark:text-cyan-300",
-    indigo: "text-indigo-700 dark:text-indigo-300",
-    amber: "text-amber-800 dark:text-amber-300",
-    slate: "text-slate-700 dark:text-slate-300",
-    violet: "text-violet-700 dark:text-violet-300",
+    cyan: "text-cyan-800",
+    indigo: "text-indigo-700",
+    amber: "text-amber-800",
+    slate: "text-slate-700",
+    violet: "text-violet-700",
   }[tone];
   return (
-    <section className={cn("flex flex-col gap-5 rounded-2xl border p-5 shadow-sm sm:p-7", box, className)}>
+    // J dili (tek tema): bölüm başlığı kartın DIŞINDA, zemin beyaz; içerik
+    // kendi çerçeveli kartlarında durur (renkli "tepsi" kutusu yok).
+    <section className={cn("flex flex-col gap-4", className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <div className={cn("text-xs font-extrabold tracking-[.08em]", eye)}>
@@ -206,18 +201,18 @@ function HeadlineCard({ card, title, sub }: { card: WPCard | undefined; title: s
       className={cn(
         "flex flex-col gap-3 rounded-xl border p-4",
         warn
-          ? "border-orange-300 bg-orange-50 dark:border-orange-500/40 dark:bg-orange-500/10"
+          ? "border-orange-300 bg-orange-50"
           : "border-border bg-card",
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <div className={cn("text-[13px] font-bold tracking-wide", warn ? "text-orange-900 dark:text-orange-200" : "text-foreground")}>
+        <div className={cn("text-[13px] font-bold tracking-wide", warn ? "text-orange-900" : "text-foreground")}>
           {title}
         </div>
         <StatusChip card={card} />
       </div>
       <div className="flex items-baseline gap-3">
-        <div className={cn("text-4xl font-extrabold leading-none", warn ? "text-orange-900 dark:text-orange-100" : "text-foreground")}>
+        <div className={cn("text-4xl font-extrabold leading-none", warn ? "text-orange-900" : "text-foreground")}>
           {card.value_label}
         </div>
         <div className="text-sm text-muted-foreground">{sub}</div>
@@ -231,12 +226,12 @@ function HeadlineCard({ card, title, sub }: { card: WPCard | undefined; title: s
 function DayCard({ d, usualStart, isPeriod }: { d: WPDay; usualStart: string; isPeriod: boolean }) {
   const [open, setOpen] = React.useState(false);
   const tone = {
-    done: "border-sky-200 bg-sky-50 dark:border-sky-500/30 dark:bg-sky-500/10",
-    partial: "border-orange-300 bg-orange-50 dark:border-orange-500/40 dark:bg-orange-500/10",
-    missed: "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10",
-    today: "border-2 border-cyan-700 bg-card dark:border-cyan-400",
-    future: "border-dashed border-slate-300 bg-card dark:border-slate-600",
-    none: "border-dashed border-slate-300 bg-card dark:border-slate-600",
+    done: "border-sky-200 bg-sky-50",
+    partial: "border-orange-300 bg-orange-50",
+    missed: "border-rose-300 bg-rose-50",
+    today: "border-2 border-cyan-700 bg-card",
+    future: "border-dashed border-slate-300 bg-card",
+    none: "border-dashed border-slate-300 bg-card",
   }[d.state];
   const pct = d.total ? Math.round((100 * d.done) / d.total) : 0;
   const bar = d.state === "partial" ? "bg-orange-600" : d.state === "missed" ? "bg-rose-600" : "bg-cyan-700";
@@ -274,13 +269,13 @@ function DayCard({ d, usualStart, isPeriod }: { d: WPDay; usualStart: string; is
         <div className="text-xl font-extrabold leading-tight">
           {d.state === "future" ? d.total : `${d.done} / ${d.total}`}
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
           <div className={cn("h-full rounded-full", bar)} style={{ width: `${d.state === "future" ? 0 : pct}%` }} />
         </div>
         <div className="text-xs leading-snug">{note}</div>
       </button>
       {open && hasPop ? (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-64 rounded-lg bg-slate-900 p-3 text-white shadow-xl dark:bg-slate-800">
+        <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-64 rounded-lg bg-slate-900 p-3 text-white shadow-xl">
           <div className="mb-1.5 text-xs font-bold">{popTitle}</div>
           <ul className="space-y-1">
             {d.missing.slice(0, 8).map((m, i) => (
@@ -353,8 +348,8 @@ function ThisWeek({ data, studentId }: { data: WeeklyProgressResponse; studentId
               tam haftası genelde {fmtPct(pr.band_low)}–{fmtPct(pr.band_high).slice(1)} —{" "}
               <b
                 className={cn(
-                  pr.position === "below" && "text-orange-700 dark:text-orange-300",
-                  pr.position === "above" && "text-blue-700 dark:text-blue-300",
+                  pr.position === "below" && "text-orange-700",
+                  pr.position === "above" && "text-blue-700",
                 )}
               >
                 {pr.position === "below" ? "altında kalır" : pr.position === "above" ? "üstüne çıkar" : "her zamanki aralıkta kalır"}
@@ -371,8 +366,8 @@ function ThisWeek({ data, studentId }: { data: WeeklyProgressResponse; studentId
               Son {pr.last4.length} haftanın eğilimi:{" "}
               <b
                 className={cn(
-                  pr.slope_per_week >= 1 && "text-blue-700 dark:text-blue-300",
-                  pr.slope_per_week <= -1 && "text-orange-700 dark:text-orange-300",
+                  pr.slope_per_week >= 1 && "text-blue-700",
+                  pr.slope_per_week <= -1 && "text-orange-700",
                 )}
               >
                 {pr.slope_per_week >= 1 ? "yükseliyor" : pr.slope_per_week <= -1 ? "düşüyor" : "yatay"}
@@ -418,7 +413,7 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
       desc="Son 8 program haftasında görev uyumu (tam haftalar; bu hafta bugüne kadar)."
       className="min-w-0 flex-[999_1_560px]"
     >
-      <div className="flex flex-col gap-2 rounded-xl border border-indigo-200 bg-card px-4 pb-3 pt-5 dark:border-indigo-500/30">
+      <div className="flex flex-col gap-2 rounded-xl border border-indigo-200 bg-card px-4 pb-3 pt-5">
         <div className="mt-6 flex gap-2.5">
           <div className="flex h-44 w-9 flex-col justify-between text-right text-[11px] text-muted-foreground">
             <span>%100</span>
@@ -428,7 +423,7 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
           <div className="relative h-44 min-w-0 flex-1 border-b border-l border-border">
             {lo != null && hi != null ? (
               <div
-                className="absolute inset-x-0 bg-cyan-600/15 dark:bg-cyan-400/20"
+                className="absolute inset-x-0 bg-cyan-600/15"
                 style={{ bottom: `${pos(lo)}%`, height: `${Math.max(1, pos(hi) - pos(lo))}%` }}
               />
             ) : null}
@@ -439,20 +434,20 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
                 const below = lo != null && c.value < lo;
                 const above = hi != null && c.value > hi;
                 const color = c.current
-                  ? "border-orange-700 dark:border-orange-400"
+                  ? "border-orange-700"
                   : below
                     ? "border-orange-600 bg-orange-600"
                     : above
-                      ? "border-blue-700 bg-blue-700 dark:border-blue-400 dark:bg-blue-400"
-                      : "border-cyan-700 bg-cyan-700 dark:border-cyan-400 dark:bg-cyan-400";
+                      ? "border-blue-700 bg-blue-700"
+                      : "border-cyan-700 bg-cyan-700";
                 const text = c.current || below
-                  ? "text-orange-700 dark:text-orange-300"
+                  ? "text-orange-700"
                   : above
-                    ? "text-blue-700 dark:text-blue-300"
-                    : "text-cyan-800 dark:text-cyan-300";
+                    ? "text-blue-700"
+                    : "text-cyan-800";
                 return (
                   <div key={i} className="relative flex-1" title={`${c.range}: ${fmtPct(c.value)}`}>
-                    <div className="absolute bottom-0 left-1/2 w-0.5 -ml-px bg-slate-200 dark:bg-slate-700" style={{ height: `${p}%` }} />
+                    <div className="absolute bottom-0 left-1/2 w-0.5 -ml-px bg-slate-200" style={{ height: `${p}%` }} />
                     <div
                       className={cn("absolute left-1/2 size-3.5 -mb-[7px] -ml-[7px] rounded-full border-[3px]", color, c.current && "bg-card")}
                       style={{ bottom: `${p}%` }}
@@ -479,7 +474,7 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
         </div>
         {lo != null && hi != null ? (
           <div className="flex items-center gap-2 pl-11 text-xs text-muted-foreground">
-            <span className="h-3 w-6 rounded bg-cyan-600/20 dark:bg-cyan-400/25" />
+            <span className="h-3 w-6 rounded bg-cyan-600/20" />
             gölgeli alan: öğrencinin haftalarının yarısı {fmtPct(lo)}–{fmtPct(hi).slice(1)} arasında
           </div>
         ) : null}
@@ -492,7 +487,7 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
             ["EN İYİ", ps.best ? `${fmtPct(ps.best.value)} · ${ps.best.label}` : "—"],
             ["EN DÜŞÜK", ps.worst ? `${fmtPct(ps.worst.value)} · ${ps.worst.label}` : "—"],
           ].map(([k, v]) => (
-            <div key={k} className="rounded-xl border border-indigo-200 bg-card px-3.5 py-3 dark:border-indigo-500/30">
+            <div key={k} className="rounded-xl border border-indigo-200 bg-card px-3.5 py-3">
               <div className="text-[11px] font-semibold text-muted-foreground">{k}</div>
               <div className="text-[15px] font-bold">{v}</div>
             </div>
@@ -500,8 +495,8 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
         </div>
       ) : null}
       {ps && ps.decline_run >= 3 ? (
-        <div className="rounded-xl border border-orange-300 bg-card px-3.5 py-3 text-[13px] leading-relaxed dark:border-orange-500/40">
-          <b className="text-orange-800 dark:text-orange-300">Eğilim bilgisi:</b> görev uyumu son {ps.decline_run} haftadır
+        <div className="rounded-xl border border-orange-300 bg-card px-3.5 py-3 text-[13px] leading-relaxed">
+          <b className="text-orange-800">Eğilim bilgisi:</b> görev uyumu son {ps.decline_run} haftadır
           her hafta düşüyor. Aralık içinde kalan düşüşler alarm değil, buradan izlenir.
         </div>
       ) : null}
@@ -527,12 +522,12 @@ function Actions({ data, studentId }: { data: WeeklyProgressResponse; studentId:
       className="min-w-0 flex-[1_1_340px]"
     >
       {data.actions.length === 0 ? (
-        <p className="rounded-xl border border-amber-200 bg-card p-4 text-sm text-muted-foreground dark:border-amber-500/30">
+        <p className="rounded-xl border border-amber-200 bg-card p-4 text-sm text-muted-foreground">
           Bu hafta öne çıkan bir sorun yok.
         </p>
       ) : (
         data.actions.map((a) => (
-          <div key={a.key} className="flex flex-col gap-2.5 rounded-xl border border-amber-200 bg-card p-3.5 dark:border-amber-500/30">
+          <div key={a.key} className="flex flex-col gap-2.5 rounded-xl border border-amber-200 bg-card p-3.5">
             <div className="text-sm font-bold leading-snug">{a.title}</div>
             <div className="text-xs leading-relaxed text-muted-foreground">
               <b className="text-foreground">Neden:</b> {a.why}
@@ -567,7 +562,7 @@ function MetricCard({ card }: { card: WPCard }) {
     <div
       className={cn(
         "flex min-w-0 flex-col gap-2.5 rounded-xl border bg-card p-4",
-        warn ? "border-orange-300 dark:border-orange-500/40" : "border-border",
+        warn ? "border-orange-300" : "border-border",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -582,21 +577,18 @@ function MetricCard({ card }: { card: WPCard }) {
   );
 }
 
-const GROUP_TONE: Record<string, { box: string; head: string; line: string }> = {
+const GROUP_TONE: Record<string, { head: string; line: string }> = {
   gelisim: {
-    box: "bg-teal-50 dark:bg-teal-500/10",
-    head: "text-teal-800 dark:text-teal-300",
-    line: "border-teal-600 dark:border-teal-400",
+    head: "text-teal-800",
+    line: "border-teal-600",
   },
   ilerleme: {
-    box: "bg-blue-50 dark:bg-blue-500/10",
-    head: "text-blue-800 dark:text-blue-300",
-    line: "border-blue-600 dark:border-blue-400",
+    head: "text-blue-800",
+    line: "border-blue-600",
   },
   risk: {
-    box: "bg-orange-50 dark:bg-orange-500/10",
-    head: "text-orange-800 dark:text-orange-300",
-    line: "border-orange-600 dark:border-orange-400",
+    head: "text-orange-800",
+    line: "border-orange-600",
   },
 };
 
@@ -609,14 +601,14 @@ function Metrics({ data }: { data: WeeklyProgressResponse }) {
       title="Bu hafta, öğrencinin kendi normaline göre"
       desc="Her kart, öğrencinin geçmiş program haftalarının aynı noktasıyla kıyaslanır."
     >
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-slate-50 px-3.5 py-2.5 text-xs dark:bg-slate-500/10">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-slate-50 px-3.5 py-2.5 text-xs">
         <b>Cetveller nasıl okunur?</b>
         <span className="inline-flex items-center gap-1.5">
           <span className="size-2.5 rounded-full bg-slate-400" />
           her nokta geçmiş bir hafta
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-6 rounded bg-cyan-600/20 dark:bg-cyan-400/25" />
+          <span className="h-3 w-6 rounded bg-cyan-600/20" />
           &quot;genelde&quot;: haftaların yarısı bu aralıkta
         </span>
         <span className="inline-flex items-center gap-1.5">
@@ -624,7 +616,7 @@ function Metrics({ data }: { data: WeeklyProgressResponse }) {
           bu hafta
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-full border-2 border-slate-700 dark:border-slate-200" />
+          <span className="size-3 rounded-full border-2 border-slate-700" />
           geçen hafta
         </span>
       </div>
@@ -633,7 +625,7 @@ function Metrics({ data }: { data: WeeklyProgressResponse }) {
         if (cards.length === 0) return null;
         const t = GROUP_TONE[g.key];
         return (
-          <div key={g.key} className={cn("flex flex-col gap-3.5 rounded-2xl p-4 sm:p-5", t.box)}>
+          <div key={g.key} className="flex flex-col gap-3.5">
             <div className={cn("flex flex-wrap items-baseline gap-2.5 border-b-2 pb-2", t.line)}>
               <span className={cn("text-[17px] font-extrabold", t.head)}>{g.name}</span>
               <span className="text-[13px] text-muted-foreground">{g.desc}</span>
@@ -659,7 +651,7 @@ export function SeriesCard({ s }: { s: DenemeAnalysisSeries }) {
     <div
       className={cn(
         "flex min-w-0 flex-col gap-3 rounded-xl border bg-card p-4",
-        warn ? "border-orange-300 dark:border-orange-500/40" : "border-violet-200 dark:border-violet-500/30",
+        warn ? "border-orange-300" : "border-violet-200",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -673,12 +665,12 @@ export function SeriesCard({ s }: { s: DenemeAnalysisSeries }) {
           className={cn(
             "shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold",
             s.decline_run >= 3
-              ? "border border-orange-400 bg-card text-orange-800 dark:text-orange-200"
+              ? "border border-orange-400 bg-card text-orange-800"
               : s.normal_low == null
-                ? "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-200"
+                ? "bg-slate-100 text-slate-700"
                 : s.last_position === "below"
-                  ? "bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-200"
-                  : "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-200",
+                  ? "bg-orange-100 text-orange-800"
+                  : "bg-slate-100 text-slate-700",
           )}
         >
           {s.decline_run >= 3
@@ -704,7 +696,7 @@ export function SeriesCard({ s }: { s: DenemeAnalysisSeries }) {
       <div className="relative h-[70px] border-b border-border">
         {s.normal_low != null && s.normal_high != null ? (
           <div
-            className="absolute inset-x-0 bg-cyan-600/15 dark:bg-cyan-400/20"
+            className="absolute inset-x-0 bg-cyan-600/15"
             style={{ bottom: `${s.normal_low}%`, height: `${Math.max(1, s.normal_high - s.normal_low)}%` }}
           />
         ) : null}
@@ -715,7 +707,7 @@ export function SeriesCard({ s }: { s: DenemeAnalysisSeries }) {
               title={`${p.date} · ${p.net} net (%${p.net_pct ?? "—"})`}
               className={cn(
                 "flex-1 rounded-t",
-                i === pts.length - 1 ? (warn ? "bg-orange-600" : "bg-cyan-700 dark:bg-cyan-400") : "bg-slate-400",
+                i === pts.length - 1 ? (warn ? "bg-orange-600" : "bg-cyan-700") : "bg-slate-400",
               )}
               style={{ height: `${Math.max(3, p.net_pct ?? 0)}%` }}
             />
@@ -764,18 +756,18 @@ function Deneme({ data, studentId }: { data: WeeklyProgressResponse; studentId: 
       right={
         <div className="flex flex-wrap items-center gap-2">
           {dn && dn.summary.pending > 0 ? (
-            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
+            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">
               {dn.summary.pending} denemenin sonucu girilmedi
             </span>
           ) : null}
-          <Link href={`/teacher/students/${studentId}#program-exams`} className="text-[13px] font-semibold text-cyan-800 hover:underline dark:text-cyan-300">
+          <Link href={`/teacher/students/${studentId}#program-exams`} className="text-[13px] font-semibold text-cyan-800 hover:underline">
             Branş denemeleri analizi
           </Link>
         </div>
       }
     >
       {branch.length === 0 && genel.length === 0 ? (
-        <p className="rounded-xl border border-violet-200 bg-card p-4 text-sm text-muted-foreground dark:border-violet-500/30">
+        <p className="rounded-xl border border-violet-200 bg-card p-4 text-sm text-muted-foreground">
           Henüz sonucu girilmiş program denemesi yok. Deneme görevlerinde öğrenci doğru/yanlış girdikçe burada ders
           ders gidişat oluşur.
         </p>
@@ -811,8 +803,8 @@ export function StudentWeeklyProgress({ studentId }: { studentId: number }) {
   const data = q.data;
   if (!data.has_program || !data.week) {
     return (
-      <div className="flex items-start gap-3 rounded-2xl border border-cyan-300 bg-cyan-50 p-5 text-sm dark:border-cyan-500/30 dark:bg-cyan-500/10">
-        <Info className="mt-0.5 size-5 shrink-0 text-cyan-800 dark:text-cyan-300" aria-hidden />
+      <div className="flex items-start gap-3 rounded-2xl border border-cyan-300 bg-cyan-50 p-5 text-sm">
+        <Info className="mt-0.5 size-5 shrink-0 text-cyan-800" aria-hidden />
         <div>
           <p className="font-semibold">Henüz program haftası yok.</p>
           <p className="mt-1 text-muted-foreground">

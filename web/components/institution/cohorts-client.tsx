@@ -160,7 +160,7 @@ function UnlinkedBanner({ cohorts }: { cohorts: CohortStatsItem[] }) {
   const total = cohorts.reduce((a, c) => a + c.gorev_total, 0);
   if (unlinked === 0) return null;
   return (
-    <div className="rounded-md border border-amber-200 bg-amber-50 text-amber-900 px-3 py-2.5 text-sm flex items-start gap-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+    <div className="rounded-md border border-amber-200 bg-amber-50 text-amber-900 px-3 py-2.5 text-sm flex items-start gap-2">
       <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
       <div>
         <strong>
@@ -180,7 +180,7 @@ function UnlinkedBanner({ cohorts }: { cohorts: CohortStatsItem[] }) {
 
 function PrivacyNote() {
   return (
-    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2">
       <Info className="size-4 shrink-0 mt-0.5" aria-hidden />
       <div>
         <strong>Gizlilik:</strong> Bu sayfa sadece{" "}
@@ -265,14 +265,14 @@ function DeltaValue({ wow }: { wow: WeekOverWeekInfo }) {
   }
   if (wow.direction === "up") {
     return (
-      <div className="text-3xl font-semibold mt-1 text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 tabular-nums">
+      <div className="text-3xl font-semibold mt-1 text-emerald-700 inline-flex items-center gap-1 tabular-nums">
         <ArrowUpRight className="size-6" aria-hidden />+{wow.delta_pct}
       </div>
     );
   }
   if (wow.direction === "down") {
     return (
-      <div className="text-3xl font-semibold mt-1 text-rose-700 dark:text-rose-400 inline-flex items-center gap-1 tabular-nums">
+      <div className="text-3xl font-semibold mt-1 text-rose-700 inline-flex items-center gap-1 tabular-nums">
         <ArrowDownRight className="size-6" aria-hidden />
         {wow.delta_pct}
       </div>
@@ -356,7 +356,7 @@ function CohortRow({ cohort }: { cohort: CohortStatsItem }) {
           <>
             {cohort.gorev_done}/{cohort.gorev_total}
             {cohort.unlinked_test_tasks > 0 ? (
-              <span className="block text-[11px] font-medium text-amber-700 dark:text-amber-300">
+              <span className="block text-[11px] font-medium text-amber-700">
                 {cohort.unlinked_test_tasks} konusuz test görevi
               </span>
             ) : null}
@@ -366,7 +366,7 @@ function CohortRow({ cohort }: { cohort: CohortStatsItem }) {
       <td className="px-4 py-2 text-right">
         {cohort.at_risk_pct != null && cohort.at_risk_pct > 0 ? (
           <>
-            <span className="text-rose-700 dark:text-rose-400 font-medium tabular-nums">
+            <span className="text-rose-700 font-medium tabular-nums">
               %{cohort.at_risk_pct}
             </span>{" "}
             <span className="text-xs text-muted-foreground">
@@ -374,7 +374,7 @@ function CohortRow({ cohort }: { cohort: CohortStatsItem }) {
             </span>
           </>
         ) : (
-          <span className="text-emerald-700 dark:text-emerald-400">0</span>
+          <span className="text-emerald-700">0</span>
         )}
       </td>
     </tr>
@@ -405,19 +405,19 @@ function EmptyState({ tab }: { tab: CohortTab }) {
 }
 
 function rateColorClass(pct: number): string {
-  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
-  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
-  return "text-rose-700 dark:text-rose-400";
+  if (pct >= 70) return "text-emerald-700";
+  if (pct >= 40) return "text-amber-700";
+  return "text-rose-700";
 }
 
 function rateColorByColor(color: string): string {
   switch (color) {
     case "green":
-      return "text-emerald-700 dark:text-emerald-400";
+      return "text-emerald-700";
     case "amber":
-      return "text-amber-700 dark:text-amber-400";
+      return "text-amber-700";
     case "red":
-      return "text-rose-700 dark:text-rose-400";
+      return "text-rose-700";
     default:
       return "text-muted-foreground";
   }

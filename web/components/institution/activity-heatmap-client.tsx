@@ -86,7 +86,7 @@ export function ActivityHeatmapClient({ initial, weeks }: Props) {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <PeriodSwitch active={weeks} />
         {inactive_count > 0 && (
-          <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded inline-flex items-center gap-1.5 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
+          <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded inline-flex items-center gap-1.5">
             <AlertCircle className="size-3.5" aria-hidden />
             {inactive_count} öğretmen son {inactive_threshold_days} gündür
             pasif
@@ -143,7 +143,7 @@ function InfoBanner({
   inactive_threshold_days: number;
 }) {
   return (
-    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2">
       <Info className="size-4 shrink-0 mt-0.5" aria-hidden />
       <div>
         <strong>Aktivite nasıl ölçülür?</strong> Her gün 0–1 arası bir puan
@@ -207,17 +207,17 @@ function HeatmapRow({
   days_count: number;
 }) {
   return (
-    <tr className={cn(row.is_inactive && "bg-rose-50/30 dark:bg-rose-500/10")}>
+    <tr className={cn(row.is_inactive && "bg-rose-50/30")}>
       <td className="px-4 py-3 align-top">
         <div className="font-medium flex items-center gap-2 flex-wrap">
           {row.full_name}
           {row.is_inactive && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-200 dark:border-rose-500/30">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">
               pasif
             </span>
           )}
           {row.is_new && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 border border-sky-200 dark:bg-sky-500/20 dark:text-sky-200 dark:border-sky-500/30">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 border border-sky-200">
               yeni
             </span>
           )}
@@ -259,7 +259,7 @@ function EmptyState() {
           Aktivite haritası için en az bir öğretmen eklenmiş olmalı.{" "}
           <Link
             href="/institution/teachers"
-            className="text-accent hover:underline"
+            className="text-primary hover:underline"
           >
             Öğretmen ekle →
           </Link>

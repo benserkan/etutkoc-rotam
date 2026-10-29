@@ -186,7 +186,7 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
           <CardContent className="p-5">
             <div className="flex items-baseline justify-between mb-1">
               <h2 className="font-semibold inline-flex items-center gap-1.5">
-                <TrendingUp className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
+                <TrendingUp className="size-4 text-[#117A86]" aria-hidden />
                 Son 30 Gün Tamamlama
               </h2>
             </div>
@@ -289,7 +289,7 @@ function ProjectionCard({
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
           <h2 className="font-semibold inline-flex items-center gap-1.5">
-            <Target className="size-4 text-[#117A86] dark:text-teal-300" aria-hidden />
+            <Target className="size-4 text-[#117A86]" aria-hidden />
             {title}
           </h2>
           <span
@@ -307,7 +307,7 @@ function ProjectionCard({
           <StatBlock
             label="Tamamlandı"
             value={projection.completed_tests}
-            tone="text-emerald-700 dark:text-emerald-300"
+            tone="text-emerald-700"
             unit="test"
           />
           <StatBlock label="Kalan" value={projection.remaining_tests} unit="test" />
@@ -452,7 +452,7 @@ function TeacherNotesCard({ notes }: { notes: ParentTeacherNoteItem[] }) {
               <button
                 type="button"
                 onClick={() => setShowAll(true)}
-                className="text-xs font-medium text-[#117A86] dark:text-teal-300 hover:underline"
+                className="text-xs font-medium text-[#117A86] hover:underline"
               >
                 Daha eski notları gör ({hiddenCount})
               </button>
@@ -502,7 +502,7 @@ function NoteItem({ note }: { note: ParentTeacherNoteItem }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="text-xs font-medium text-[#117A86] dark:text-teal-300 hover:underline mt-1"
+          className="text-xs font-medium text-[#117A86] hover:underline mt-1"
         >
           {expanded ? "Daha az" : "Devamını oku"}
         </button>
@@ -521,19 +521,19 @@ function warningTone(level: WarningLevel): {
 } {
   if (level === "red") {
     return {
-      text: "text-rose-700 dark:text-rose-300",
-      pill: "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+      text: "text-rose-700",
+      pill: "bg-rose-50 text-rose-700 border border-rose-200",
     };
   }
   if (level === "amber") {
     return {
-      text: "text-amber-700 dark:text-amber-300",
-      pill: "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+      text: "text-amber-700",
+      pill: "bg-amber-50 text-amber-700 border border-amber-200",
     };
   }
   return {
-    text: "text-emerald-700 dark:text-emerald-300",
-    pill: "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+    text: "text-emerald-700",
+    pill: "bg-emerald-50 text-emerald-700 border border-emerald-200",
   };
 }
 

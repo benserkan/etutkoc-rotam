@@ -154,7 +154,7 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
         <div>
           <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">← Panel</Link>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Users className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
+            <Users className="size-6 text-indigo-700" aria-hidden />
             {independent ? "Bağımsız Koçlar" : "Kullanıcılar"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -165,7 +165,7 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => setDemoOpen(true)}
-                  className="border-amber-300 text-amber-900 hover:bg-amber-50 dark:text-amber-200 dark:hover:bg-amber-500/25">
+                  className="border-amber-300 text-amber-900 hover:bg-amber-50">
             <FlaskConical className="size-4" aria-hidden /> Demo Aç
           </Button>
           <Button onClick={() => setCreateOpen(true)} className="bg-indigo-700 text-white hover:bg-indigo-800">
@@ -183,7 +183,7 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
                       onClick={() => update({ plan: c.key })}
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
-                        active ? "bg-indigo-700 text-white shadow-sm" : "text-foreground hover:bg-muted",
+                        active ? "bg-indigo-700 text-white" : "text-foreground hover:bg-muted",
                       )}>
                 <span className={cn("size-2 rounded-full", c.dot)} aria-hidden />
                 {c.label}
@@ -204,7 +204,7 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
                     aria-pressed={active}
                     className={cn(
                       "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:flex-none",
-                      active ? "bg-indigo-700 text-white shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      active ? "bg-indigo-700 text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}>
               <Icon className="size-4" aria-hidden />
               {t.label}
@@ -247,7 +247,7 @@ export function AdminPeopleClient({ initial, initialQuery }: { initial: PeopleRe
                       onClick={() => update({ activity: a.key })}
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium",
-                        active ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900"
+                        active ? "border-slate-900 bg-slate-900 text-white"
                                : "bg-card text-foreground hover:bg-muted",
                       )}>
                 <span className={cn("size-2 rounded-full", a.dot)} aria-hidden />
@@ -353,7 +353,7 @@ function RoleContext({ p }: { p: PersonRow }) {
       <div className="space-y-1">
         <div className="break-words">
           {p.institution_name ?? <Muted>Bağımsız</Muted>}
-          {p.coach && <> · koç <Link href={`/admin/users/${p.coach.id}`} className="text-indigo-700 hover:underline dark:text-indigo-300">{p.coach.name}</Link></>}
+          {p.coach && <> · koç <Link href={`/admin/users/${p.coach.id}`} className="text-indigo-700 hover:underline">{p.coach.name}</Link></>}
           {p.grade_label && p.grade_label !== "—" && <Muted> · {p.grade_label}</Muted>}
         </div>
         <div className="flex items-center gap-2 text-xs" title="Son 7 gün görev tamamlama (bugünün açık görevleri sayılmaz)">
@@ -386,13 +386,13 @@ function RoleContext({ p }: { p: PersonRow }) {
     );
   }
   if (p.role === "parent") {
-    if (!p.children.length) return <span className="text-amber-800 dark:text-amber-300">Çocuğa bağlı değil</span>;
+    if (!p.children.length) return <span className="text-amber-800">Çocuğa bağlı değil</span>;
     return (
       <ul className="space-y-0.5">
         {p.children.map((c) => (
           <li key={c.id} className="break-words">
             <Muted>Velisi: </Muted>
-            <Link href={`/admin/users/${c.id}`} className="text-indigo-700 hover:underline dark:text-indigo-300">{c.name}</Link>
+            <Link href={`/admin/users/${c.id}`} className="text-indigo-700 hover:underline">{c.name}</Link>
             {c.grade_label && c.grade_label !== "—" && <Muted> ({c.grade_label})</Muted>}
             <Muted> · {c.institution_name ?? "bağımsız"}{c.coach_name ? ` · koç ${c.coach_name}` : ""}</Muted>
           </li>
@@ -446,7 +446,7 @@ function RowActions({ p, onTempPw }: {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem disabled={isAdmin} onSelect={() => setActiveOpen(true)}
-                            className={p.is_active ? "text-rose-700 dark:text-rose-300" : undefined}>
+                            className={p.is_active ? "text-rose-700" : undefined}>
             <Power className="size-4" aria-hidden /> {p.is_active ? "Pasife al" : "Aktif et"}
           </DropdownMenuItem>
         </DropdownMenuContent>

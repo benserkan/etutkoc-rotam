@@ -107,7 +107,7 @@ export function AdminPricingContentClient() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold">
-              <LayoutTemplate className="size-4 text-violet-700 dark:text-violet-300" aria-hidden />
+              <LayoutTemplate className="size-4 text-violet-700" aria-hidden />
               Kart İçerikleri (kodsuz yönetim)
             </h2>
             <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
@@ -152,7 +152,7 @@ export function AdminPricingContentClient() {
         </div>
 
         {warnings.length > 0 ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             <p className="mb-1 flex items-center gap-1.5 font-semibold">
               <AlertTriangle className="size-3.5" aria-hidden /> Tavsiyeler (kaydetmeyi engellemez)
             </p>
@@ -262,7 +262,7 @@ export function AdminPricingContentClient() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-rose-600 dark:text-rose-300 hover:text-rose-700"
+                    className="text-rose-600 hover:text-rose-700"
                     onClick={() =>
                       setCfg({ ...cfg, glossary: cfg.glossary.filter((_, j) => j !== i) })
                     }

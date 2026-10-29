@@ -165,7 +165,7 @@ function GoalCard({ goal }: { goal: GoalItem }) {
     <li
       className={cn(
         "rounded-lg border bg-card p-4 space-y-3",
-        isAchieved ? "border-emerald-300/40 bg-emerald-50/40 dark:bg-emerald-950/10" : "border-border",
+        isAchieved ? "border-emerald-300/40 bg-emerald-50/40" : "border-border",
       )}
     >
       <div className="flex items-start gap-2.5">
@@ -454,7 +454,7 @@ function SummaryPill({
 }) {
   const bg =
     accent === "yolunda"
-      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
+      ? "bg-emerald-100 text-emerald-800"
       : "bg-muted text-foreground";
   return (
     <div className={cn("rounded-md px-3 py-2 flex items-baseline justify-between", bg)}>

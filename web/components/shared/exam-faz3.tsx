@@ -78,7 +78,7 @@ export function DistractorPanel({
               {d.notes.map((n) => (
                 <li
                   key={n}
-                  className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
+                  className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
                 >
                   <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
                   <span>{n}</span>
@@ -162,7 +162,7 @@ export function ScoreEstimatePanel({ source }: { source: ProgressSource }) {
     staleTime: 60_000,
   });
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Puan tahmini hesaplanıyor…</p>;
-  if (!q.data) return <p className="text-sm text-rose-700 dark:text-rose-400">Puan tahmini yüklenemedi.</p>;
+  if (!q.data) return <p className="text-sm text-rose-700">Puan tahmini yüklenemedi.</p>;
   const d = q.data;
   return (
     <div className="space-y-4">
@@ -205,7 +205,7 @@ export function ScoreEstimatePanel({ source }: { source: ProgressSource }) {
         {d.warnings.length ? (
           <ul className="mt-3 space-y-1">
             {d.warnings.map((w) => (
-              <li key={w} className="flex gap-1.5 text-xs text-amber-800 dark:text-amber-300">
+              <li key={w} className="flex gap-1.5 text-xs text-amber-800">
                 <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                 {w}
               </li>

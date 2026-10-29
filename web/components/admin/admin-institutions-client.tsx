@@ -56,10 +56,10 @@ const LEVELS: { key: LevelFilter; label: string; hint: string; dot: string }[] =
 ];
 
 const LEVEL_RING: Record<HealthLevel, string> = {
-  critical: "ring-rose-600 text-rose-800 dark:text-rose-200",
-  risk: "ring-orange-500 text-orange-800 dark:text-orange-200",
-  watch: "ring-amber-400 text-amber-800 dark:text-amber-200",
-  healthy: "ring-emerald-600 text-emerald-800 dark:text-emerald-200",
+  critical: "ring-rose-600 text-rose-800",
+  risk: "ring-orange-500 text-orange-800",
+  watch: "ring-amber-400 text-amber-800",
+  healthy: "ring-emerald-600 text-emerald-800",
 };
 
 function trLower(s: string) {
@@ -130,7 +130,7 @@ export function AdminInstitutionsClient({ initial, initialLevel = "all" }: Props
         <div>
           <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">← Panel</Link>
           <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-            <Building2 className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
+            <Building2 className="size-6 text-indigo-700" aria-hidden />
             Kurumlar
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -151,7 +151,7 @@ export function AdminInstitutionsClient({ initial, initialLevel = "all" }: Props
             <button key={l.key} type="button" role="radio" aria-checked={active} title={l.hint}
                     onClick={() => pickLevel(l.key)}
                     className={cn("inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
-                      active ? "bg-indigo-700 text-white shadow-sm" : "text-foreground hover:bg-muted")}>
+                      active ? "bg-indigo-700 text-white" : "text-foreground hover:bg-muted")}>
               <span className={cn("size-2 rounded-full", l.dot)} aria-hidden />
               {l.label}
               <span className={cn("rounded-full px-1.5 text-xs tabular-nums", active ? "bg-white/20" : "bg-muted")}>
@@ -408,7 +408,7 @@ function CreateInstitutionDialog({
 
         {done ? (
           <div className="space-y-4 text-sm" data-testid="institution-created">
-            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-emerald-900">
               {done.res.message}
             </p>
             {done.logo === "ok" ? (
@@ -416,7 +416,7 @@ function CreateInstitutionDialog({
                 Logo yüklendi; kurum yöneticisi ve koçların panelinde görünecek.
               </p>
             ) : done.logo === "failed" ? (
-              <p className="text-rose-700 dark:text-rose-300">
+              <p className="text-rose-700">
                 Logo yüklenemedi. Kurum sayfasındaki logo kartından tekrar deneyebilirsin.
               </p>
             ) : null}
@@ -429,7 +429,7 @@ function CreateInstitutionDialog({
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-muted-foreground">Geçici şifre:</span>
                   <code
-                    className="rounded bg-amber-100 dark:bg-amber-500/15 px-2 py-1 font-mono font-semibold text-amber-900 dark:text-amber-200"
+                    className="rounded bg-amber-100 px-2 py-1 font-mono font-semibold text-amber-900"
                     data-testid="admin-temp-password"
                   >
                     {done.res.temp_password}
@@ -633,7 +633,7 @@ function CreateInstitutionDialog({
                   <p className="text-xs text-muted-foreground">
                     PNG, JPEG veya WebP · en fazla 2 MB
                   </p>
-                  {logoError ? <p className="text-xs text-rose-600 dark:text-rose-300">{logoError}</p> : null}
+                  {logoError ? <p className="text-xs text-rose-600">{logoError}</p> : null}
                 </div>
               </div>
             </fieldset>

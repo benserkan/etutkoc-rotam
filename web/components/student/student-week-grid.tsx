@@ -34,8 +34,8 @@ function gorevState(t: StudentTask): GState {
 }
 
 const MARK: Record<GState, { ch: string; cls: string }> = {
-  done: { ch: "✓", cls: "text-emerald-600 dark:text-emerald-400" },
-  partial: { ch: "◐", cls: "text-amber-600 dark:text-amber-400" },
+  done: { ch: "✓", cls: "text-emerald-600" },
+  partial: { ch: "◐", cls: "text-amber-600" },
   todo: { ch: "☐", cls: "text-muted-foreground/60" },
 };
 
@@ -180,7 +180,7 @@ function SubjGroupBlock({ g }: { g: SubjGroup }) {
         "rounded-md border-l-4 px-1.5 py-1",
         isOther
           ? "border-l-slate-400 bg-muted/40"
-          : "bg-[var(--subj-tint-l)] dark:bg-[var(--subj-tint-d)]",
+          : "bg-[var(--subj-tint-l)])]",
       )}
       style={isOther ? undefined : subjectTintVars(g.name)}
     >
@@ -318,8 +318,8 @@ export function StudentWeekGrid({ days }: { days: StudentWeekDay[] }) {
 
       <p className="px-4 pb-2.5 text-[11px] text-muted-foreground">
         Bir güne tıkla → o günün detayı açılır.
-        <span className="text-emerald-600 dark:text-emerald-300"> ✓</span> yapıldı ·
-        <span className="text-amber-600 dark:text-amber-300"> ◐</span> kısmen ·
+        <span className="text-emerald-600"> ✓</span> yapıldı ·
+        <span className="text-amber-600"> ◐</span> kısmen ·
         <span> ☐</span> yapılmadı
       </p>
     </section>

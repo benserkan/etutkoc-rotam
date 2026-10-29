@@ -113,9 +113,9 @@ export default async function StudentBookGridPage({ params }: PageProps) {
 function Cell({ cell }: { cell: BookCell }) {
   const cls =
     cell.state === "DONE"
-      ? "bg-emerald-500/20 text-emerald-800 border-emerald-500/40 dark:text-emerald-200"
+      ? "bg-emerald-500/20 text-emerald-800 border-emerald-500/40"
       : cell.state === "RESERVED"
-        ? "bg-amber-400/20 text-amber-900 border-amber-400/40 dark:text-amber-200"
+        ? "bg-amber-400/20 text-amber-900 border-amber-400/40"
         : "bg-muted text-muted-foreground border-border";
   const stateLabel =
     cell.state === "DONE" ? "tamam" : cell.state === "RESERVED" ? "rezerv" : "boş";

@@ -312,13 +312,13 @@ export function TeacherPlanClient({
       </section>
 
       <div className="flex items-start gap-3 rounded-2xl bg-muted/50 px-5 py-4">
-        <MessageCircleQuestion className="mt-0.5 size-5 shrink-0 text-cyan-700 dark:text-cyan-400" aria-hidden />
+        <MessageCircleQuestion className="mt-0.5 size-5 shrink-0 text-cyan-700" aria-hidden />
         <p className="text-sm text-muted-foreground">
           Kafana takılan bir şey mi var?{" "}
           <button
             type="button"
             onClick={() => openRotaAssistant()}
-            className="font-semibold text-cyan-800 underline-offset-2 hover:underline dark:text-cyan-300"
+            className="font-semibold text-cyan-800 underline-offset-2 hover:underline"
           >
             Rota&apos;ya sor
           </button>{" "}
@@ -491,7 +491,7 @@ function StatusHero({
   return (
     <section className={cn("rounded-3xl border-2 bg-card p-5 sm:p-7", tone.ring)} aria-label="Paket durumu">
       <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold", tone.chip)}>
-        <span className="size-1.5 rounded-full bg-white dark:bg-white" aria-hidden />
+        <span className="size-1.5 rounded-full bg-white" aria-hidden />
         {s.label}
       </span>
       <h2 className="mt-3 font-display text-3xl font-bold text-foreground">{title}</h2>
@@ -521,7 +521,7 @@ function StatusHero({
         <button
           type="button"
           onClick={onSeePlans}
-          className="mt-3 text-sm font-medium text-cyan-800 underline-offset-2 hover:underline dark:text-cyan-300"
+          className="mt-3 text-sm font-medium text-cyan-800 underline-offset-2 hover:underline"
         >
           Diğer paketleri gör
         </button>
@@ -549,7 +549,7 @@ function Fact({
         {icon}
         {label}
       </dt>
-      <dd className={cn("mt-1 text-lg font-semibold", alert ? "text-rose-700 dark:text-rose-400" : "text-foreground")}>
+      <dd className={cn("mt-1 text-lg font-semibold", alert ? "text-rose-700" : "text-foreground")}>
         {value}
       </dd>
       {hint ? <dd className="text-xs text-muted-foreground">{hint}</dd> : null}
@@ -677,7 +677,7 @@ function CreditPacks({ exhausted }: { exhausted: boolean }) {
               <span className="block text-lg font-bold text-foreground">+{p.credits.toLocaleString("tr-TR")}</span>
               <span className="block text-xs text-muted-foreground">kredi</span>
             </span>
-            <span className="text-sm font-semibold text-cyan-800 dark:text-cyan-300">
+            <span className="text-sm font-semibold text-cyan-800">
               {buying === p.code && buy.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : tl(p.price)}
             </span>
           </button>
@@ -722,7 +722,7 @@ function SelectedPlanPanel({
         <ul className="mt-3 space-y-2.5">
           {features.map((f) => (
             <li key={f} className="flex items-start gap-2.5 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+              <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
               <FeatureLine text={f} glossary={glossary} tone="theme" />
             </li>
           ))}
@@ -801,7 +801,7 @@ function CheckoutDialog({
           <Row label="Tutar" value={tl(total)} strong />
         </dl>
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
+          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
           3D Secure ile korunur; kart bilgin bize gelmez. Kendiliğinden yenileme yoktur.
           {providerQ.data?.sandbox ? " (Test modu)" : ""}
         </p>
@@ -891,7 +891,7 @@ function CancelBlock({
       </p>
       <Button
         variant="outline"
-        className="mt-3 border-rose-600/50 text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+        className="mt-3 border-rose-600/50 text-rose-700 hover:bg-rose-50"
         onClick={() => onOpenChange(true)}
       >
         İptal et

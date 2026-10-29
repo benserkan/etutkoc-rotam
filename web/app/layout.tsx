@@ -17,7 +17,7 @@ const inter = Inter({
 
 const display = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-display",
+  variable: "--font-jakarta",
   display: "swap",
 });
 
@@ -49,24 +49,18 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 /**
- * FOUC önleme — tema class'ını React hydrate olmadan önce <html>'e basar.
- * Server Component'te <script> sorun çıkarmaz (Next.js 16 React 19 uyumsuzluğu
- * yalnız Client Component içinde render edilen script'lerde tetikleniyor).
- *
- * try/catch içinde — localStorage erişilemezse (private mode) light'a düşer.
+ * Tek tema (2026-10-29 kullanıcı kararı): site cihazın koyu/açık tercihine
+ * bakmadan daima açık temada açılır; koyu mod kaldırıldı. Eski kayıtlı
+ * "lgs-theme" tercihi yok sayılır. Script, hydrate öncesi <html>'e "light"
+ * basar (eski oturumdan kalma "dark" sınıfı varsa siler).
  */
 const THEME_INIT_SCRIPT = `
 (function(){try{
-  var s=localStorage.getItem('lgs-theme');
-  var sys=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
-  var t=(s==='dark'||s==='light')?s:(s==='system'?(sys?'dark':'light'):(sys?'dark':'light'));
   var r=document.documentElement;
-  r.classList.remove('light','dark');
-  r.classList.add(t);
-  r.style.colorScheme=t;
-}catch(e){
-  document.documentElement.classList.add('light');
-}})();
+  r.classList.remove('dark');
+  r.classList.add('light');
+  r.style.colorScheme='light';
+}catch(e){}})();
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

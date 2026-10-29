@@ -119,7 +119,7 @@ export function ModeSwitchDialog({
 
           {pv.isLoading && <p className="text-xs text-muted-foreground">Etki hesaplanıyor…</p>}
           {d && !d.allowed && (
-            <div className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
+            <div className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900"
                  data-section="mode-switch:blocked">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
               <div>

@@ -91,15 +91,15 @@ export function DenemePendingCard({ audience }: { audience: Audience }) {
   return (
     <section
       data-section="deneme-pending"
-      className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-500/40 dark:bg-amber-500/10"
+      className="rounded-xl border border-amber-300 bg-amber-50 p-4"
     >
       <div className="flex items-start gap-3">
-        <ClipboardList className="mt-0.5 size-5 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden />
+        <ClipboardList className="mt-0.5 size-5 shrink-0 text-amber-700" aria-hidden />
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-amber-950 dark:text-amber-100">
+          <h3 className="text-sm font-semibold text-amber-950">
             Sonucu girilmemiş {data.count} deneme
           </h3>
-          <p className="mt-0.5 text-xs text-amber-900 dark:text-amber-200">
+          <p className="mt-0.5 text-xs text-amber-900">
             {isCoach
               ? "Öğrenci bu denemeleri çözdü ama doğru/yanlışını girmedi. Seansta birlikte girebilirsin; girilen sonuç Denemeler'e ve net grafiğine işlenir."
               : "Bu denemeleri çözdün ama doğru/yanlışını girmedin. Sonucu girince Denemelerim'e ve net grafiğine işlenir."}
@@ -109,7 +109,7 @@ export function DenemePendingCard({ audience }: { audience: Audience }) {
               <li
                 key={r.item_id}
                 data-testid="deneme-pending-row"
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-card px-3 py-2 ring-1 ring-amber-200 dark:ring-amber-500/30"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-card px-3 py-2 ring-1 ring-amber-200"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium break-words text-foreground">{r.label}</p>

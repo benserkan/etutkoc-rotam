@@ -196,12 +196,12 @@ export function DenemeForm({
                 type="button"
                 disabled={create.isPending}
                 onClick={() => applyTemplate(t)}
-                className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2.5 py-1 text-xs text-violet-900 hover:bg-violet-100 disabled:opacity-50 dark:border-violet-500/40 dark:bg-violet-500/15 dark:text-violet-100 dark:hover:bg-violet-500/25"
+                className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2.5 py-1 text-xs text-violet-900 hover:bg-violet-100 disabled:opacity-50"
               >
                 <Plus className="size-3" aria-hidden />
                 {t.label}
                 {t.kind === "brans" ? " branş" : ""} ×{t.count}
-                <span className="text-violet-700 dark:text-violet-300">· {t.question_count} soru</span>
+                <span className="text-violet-700">· {t.question_count} soru</span>
                 {t.book_id ? <BookOpen className="size-3" aria-label="kaynaktan" /> : null}
               </button>
             ))}

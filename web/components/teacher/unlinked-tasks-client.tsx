@@ -93,7 +93,7 @@ export function UnlinkedTasksClient() {
       ) : items.length === 0 ? (
         <Card>
           <CardContent className="p-6 flex items-center gap-3 text-sm">
-            <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" aria-hidden />
+            <CheckCircle2 className="size-5 text-emerald-600" aria-hidden />
             Konusuz test görevi yok — tüm test görevlerin bir konuya ya da kaynağa bağlı.
           </CardContent>
         </Card>
@@ -214,7 +214,7 @@ function UnlinkedRow({
             {DATE_FMT.format(new Date(task.date + "T12:00:00"))}
             {task.notes ? ` · not: ${task.notes}` : ""}
             {" · "}
-            <span className={done ? "text-emerald-700 dark:text-emerald-300 font-medium" : ""}>
+            <span className={done ? "text-emerald-700 font-medium" : ""}>
               {done ? "tamamlandı" : task.is_draft ? "taslak" : "bekliyor"}
             </span>
           </p>

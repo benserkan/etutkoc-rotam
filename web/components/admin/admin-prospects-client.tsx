@@ -20,12 +20,12 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE: Record<string, string> = {
-  new: "bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-  contacted: "bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-  interested: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-  member: "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  not_interested: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-300",
-  unreachable: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  new: "bg-sky-50 text-sky-800 border-sky-200",
+  contacted: "bg-indigo-50 text-indigo-800 border-indigo-200",
+  interested: "bg-amber-50 text-amber-800 border-amber-200",
+  member: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  not_interested: "bg-slate-100 text-slate-600 border-slate-200",
+  unreachable: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 export function AdminProspectsClient({ initial }: { initial: ProspectListResponse }) {
@@ -114,7 +114,7 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
         <button
           onClick={() => setStatus("")}
           className={cn("rounded-full border px-3 py-1 text-xs font-medium",
-            status === "" ? "border-cyan-500 bg-cyan-50 text-cyan-800 dark:bg-cyan-500/10 dark:text-cyan-200" : "border-border text-muted-foreground hover:bg-muted")}
+            status === "" ? "border-cyan-500 bg-cyan-50 text-cyan-800" : "border-border text-muted-foreground hover:bg-muted")}
         >
           Hepsi ({Object.values(data.counts).reduce((a, b) => a + b, 0)})
         </button>
@@ -123,7 +123,7 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
             key={key}
             onClick={() => setStatus(status === key ? "" : key)}
             className={cn("rounded-full border px-3 py-1 text-xs font-medium",
-              status === key ? "border-cyan-500 bg-cyan-50 text-cyan-800 dark:bg-cyan-500/10 dark:text-cyan-200" : "border-border text-muted-foreground hover:bg-muted")}
+              status === key ? "border-cyan-500 bg-cyan-50 text-cyan-800" : "border-border text-muted-foreground hover:bg-muted")}
           >
             {label} ({data.counts[key] ?? 0})
           </button>
@@ -164,7 +164,7 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
                 </td>
                 <td className="px-3 py-2">
                   {p.instagram ? (
-                    <div className="text-[13px] font-medium text-fuchsia-700 dark:text-fuchsia-400">
+                    <div className="text-[13px] font-medium text-fuchsia-700">
                       @{p.instagram}
                     </div>
                   ) : null}
@@ -179,34 +179,34 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
                   <StatusSelect row={p} statuses={statuses} />
                 </td>
                 <td className="px-3 py-2 text-center">
-                  {p.opt_in ? <span className="text-emerald-600 dark:text-emerald-300" title="WhatsApp izni var">✓</span>
+                  {p.opt_in ? <span className="text-emerald-600" title="WhatsApp izni var">✓</span>
                             : <span className="text-slate-400" title="İzin yok">—</span>}
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => setOfferRow(p)} title="Üyelik teklifi üret"
-                            className="rounded p-1.5 text-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
+                            className="rounded p-1.5 text-cyan-600 hover:bg-cyan-50">
                       <Gift className="size-4" />
                     </button>
                     {p.instagram ? (
                       <>
                         <button onClick={() => copyDm(p, 1)} title="1. mesajı kopyala (ilk temas)"
-                                className="rounded p-1.5 text-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
-                          <Copy className={cn("size-4", copiedId === `${p.id}-1` && "text-emerald-600 dark:text-emerald-300")} />
+                                className="rounded p-1.5 text-cyan-600 hover:bg-cyan-50">
+                          <Copy className={cn("size-4", copiedId === `${p.id}-1` && "text-emerald-600")} />
                         </button>
                         <button onClick={() => copyDm(p, 2)} title="2. mesajı kopyala (cevap geldiyse — link + detay)"
-                                className="rounded p-1.5 text-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10">
-                          <CopyPlus className={cn("size-4", copiedId === `${p.id}-2` && "text-emerald-600 dark:text-emerald-300")} />
+                                className="rounded p-1.5 text-violet-600 hover:bg-violet-50">
+                          <CopyPlus className={cn("size-4", copiedId === `${p.id}-2` && "text-emerald-600")} />
                         </button>
                         <a href={`https://instagram.com/${p.instagram}`} target="_blank" rel="noopener noreferrer"
-                           title="Instagram profilini aç (DM)" className="rounded p-1.5 text-fuchsia-600 dark:text-fuchsia-300 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10">
+                           title="Instagram profilini aç (DM)" className="rounded p-1.5 text-fuchsia-600 hover:bg-fuchsia-50">
                           <AtSign className="size-4" />
                         </a>
                       </>
                     ) : null}
                     {p.phone ? (
                       <a href={`https://wa.me/${p.phone}`} target="_blank" rel="noopener noreferrer"
-                         title="WhatsApp'tan yaz" className="rounded p-1.5 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10">
+                         title="WhatsApp'tan yaz" className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50">
                         <MessageCircle className="size-4" />
                       </a>
                     ) : null}
@@ -271,7 +271,7 @@ function OfferDialog({ row, plans, onClose }: { row: ProspectItem; plans: Prospe
         <DialogHeader><DialogTitle>{row.name} — üyelik teklifi</DialogTitle></DialogHeader>
         {result ? (
           <div className="space-y-3">
-            <p className="text-sm text-emerald-700 dark:text-emerald-300">Teklif linki hazır. WhatsApp&apos;tan gönderebilirsin.</p>
+            <p className="text-sm text-emerald-700">Teklif linki hazır. WhatsApp&apos;tan gönderebilirsin.</p>
             <div className="rounded-lg border border-border bg-muted/30 p-2 text-xs break-all">{result.public_url}</div>
             <div className="flex flex-wrap gap-2">
               <a href={result.wa_url} target="_blank" rel="noopener noreferrer"
@@ -362,7 +362,7 @@ function DeleteButton({ id, name }: { id: number; name: string }) {
     );
   }
   return (
-    <button onClick={() => setConfirm(true)} title={`${name} sil`} className="rounded p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10">
+    <button onClick={() => setConfirm(true)} title={`${name} sil`} className="rounded p-1.5 text-rose-500 hover:bg-rose-50">
       <Trash2 className="size-4" />
     </button>
   );
@@ -480,7 +480,7 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
         <DialogHeader><DialogTitle>CSV ile toplu ekle</DialogTitle></DialogHeader>
 
         <div className="space-y-3 text-sm">
-          <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[12px] leading-relaxed text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[12px] leading-relaxed text-cyan-900">
             Sütunlar: <code className="font-mono">ad, telefon</code> (zorunlu) ·
             <code className="ml-1 font-mono">tur, kurum_adi, eposta, sehir, not</code> (isteğe bağlı).
             Excel&apos;in <code className="font-mono">;</code> ayracı da okunur.
@@ -511,18 +511,18 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
           ) : null}
 
           {report ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-slate-500/10 dark:border-slate-500/30">
-              <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[13px] font-semibold text-slate-900">
                 Önizleme — {report.total_rows} satır okundu
               </p>
-              <ul className="mt-1.5 space-y-0.5 text-[12px] text-slate-700 dark:text-slate-300">
+              <ul className="mt-1.5 space-y-0.5 text-[12px] text-slate-700">
                 <li>✅ Eklenecek: <b>{report.created}</b></li>
                 <li>↩︎ Havuzda zaten var: {report.skipped_existing}</li>
                 <li>⧉ Dosya içi tekrar: {report.skipped_duplicate}</li>
                 <li>⚠︎ Geçersiz satır: {report.invalid_count}</li>
               </ul>
               {report.invalid.length ? (
-                <div className="mt-2 max-h-28 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                <div className="mt-2 max-h-28 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900">
                   {report.invalid.map((i) => (
                     <div key={`${i.row}-${i.reason}`}>
                       satır {i.row}: {i.name || i.phone || "—"} → {i.reason}
@@ -531,7 +531,7 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
                 </div>
               ) : null}
               {report.preview.length ? (
-                <div className="mt-2 max-h-28 overflow-y-auto text-[11px] text-slate-600 dark:text-slate-400">
+                <div className="mt-2 max-h-28 overflow-y-auto text-[11px] text-slate-600">
                   {report.preview.map((r) => (
                     <div key={r.phone}>{r.name} · {r.phone} · {r.kind}{r.city ? ` · ${r.city}` : ""}</div>
                   ))}

@@ -168,7 +168,7 @@ export function ResourceSidebar({
       <button
         type="button"
         onClick={onClearFocus}
-        className="text-[11px] text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 underline"
+        className="text-[11px] text-indigo-600 hover:text-indigo-800 underline"
       >
         Tümü
       </button>
@@ -178,8 +178,8 @@ export function ResourceSidebar({
       <p className="px-4 pb-1 text-xs text-muted-foreground">Ders bazında kitap ilerlemesi</p>
 
       {focusedSubjectId !== null && data && data.subjects.length > 0 ? (
-        <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-500/15 dark:border-indigo-500/30 border-b border-indigo-100 text-[11px] flex items-center justify-between gap-2">
-          <span className="text-indigo-700 dark:text-indigo-300 truncate">
+        <div className="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] flex items-center justify-between gap-2">
+          <span className="text-indigo-700 truncate">
             Filtre: <b>{data.subjects[0].name}</b>
           </span>
           <span className="text-muted-foreground">diğer dersler gizli</span>
@@ -214,8 +214,8 @@ export function ResourceSidebar({
       </div>
 
       <div className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border flex flex-wrap gap-x-3 gap-y-0.5 bg-card sticky bottom-0">
-        <span className="whitespace-nowrap text-emerald-600 dark:text-emerald-300">✓ çöz.</span>
-        <span className="whitespace-nowrap text-amber-600 dark:text-amber-300">⏳ rez.</span>
+        <span className="whitespace-nowrap text-emerald-600">✓ çöz.</span>
+        <span className="whitespace-nowrap text-amber-600">⏳ rez.</span>
         <span className="whitespace-nowrap text-foreground">⎯ kalan</span>
         <span className="basis-full">zemin rengi: çözülen oranı (açık → koyu) · SON: son görev</span>
       </div>
@@ -351,8 +351,8 @@ function SubjectRow({
           />
         </div>
         <div className="mt-1 text-[11px] text-muted-foreground flex gap-2 ml-5">
-          <span className="text-emerald-600 dark:text-emerald-300">✓{completed}</span>
-          <span className="text-amber-600 dark:text-amber-300">⏳{reserved}</span>
+          <span className="text-emerald-600">✓{completed}</span>
+          <span className="text-amber-600">⏳{reserved}</span>
           <span className="font-medium text-foreground">⎯{remaining}</span>
           <span className="text-muted-foreground/60 ml-auto">/ {total}</span>
         </div>
@@ -441,8 +441,8 @@ function BookRow({
             />
           </div>
           <div className="mt-0.5 text-[11px] text-muted-foreground flex gap-1.5 ml-4">
-            <span className="text-emerald-600 dark:text-emerald-300">✓{book.completed}</span>
-            <span className="text-amber-600 dark:text-amber-300">⏳{book.reserved}</span>
+            <span className="text-emerald-600">✓{book.completed}</span>
+            <span className="text-amber-600">⏳{book.reserved}</span>
             <span className="font-medium text-foreground ml-auto">
               kalan {book.remaining}
             </span>
@@ -453,7 +453,7 @@ function BookRow({
               className="mt-1 ml-4 text-[11px] leading-snug text-foreground"
               data-testid="book-last-task"
             >
-              <span className="mr-1 rounded bg-slate-900 px-1 py-px text-[9.5px] font-bold tracking-wider text-white dark:bg-white dark:text-slate-900">
+              <span className="mr-1 rounded bg-slate-900 px-1 py-px text-[9.5px] font-bold tracking-wider text-white">
                 SON
               </span>
               <span className="break-words">{book.last_section_label}</span>
@@ -532,8 +532,8 @@ function SectionRow({
     <li
       className={cn(
         "px-3 py-1.5 text-[11px]",
-        level > 0 && "bg-[var(--heat-l)] dark:bg-[var(--heat-d)]",
-        isLast && "border-l-[3px] border-l-slate-900 pl-2.5 dark:border-l-white",
+        level > 0 && "bg-[var(--heat-l)])]",
+        isLast && "border-l-[3px] border-l-slate-900 pl-2.5",
       )}
       style={heatVars(hue, level)}
       data-testid="resource-section"
@@ -545,7 +545,7 @@ function SectionRow({
         <span className="min-w-0 flex-1 whitespace-normal break-words text-foreground">
           {isLast ? (
             <span
-              className="mr-1 inline-block rounded bg-slate-900 px-1 py-px align-[1px] text-[9.5px] font-bold tracking-wider text-white dark:bg-white dark:text-slate-900"
+              className="mr-1 inline-block rounded bg-slate-900 px-1 py-px align-[1px] text-[9.5px] font-bold tracking-wider text-white"
               title="Bu kitapta en son görev verilen ünite"
               data-testid="section-last-badge"
             >
@@ -562,8 +562,8 @@ function SectionRow({
           ) : null}
         </span>
         <span className="text-muted-foreground whitespace-nowrap tabular-nums">
-          <span className="text-emerald-900 dark:text-emerald-100">✓{section.completed}</span>{" "}
-          <span className="text-amber-900 dark:text-amber-100">⏳{section.reserved}</span>{" "}
+          <span className="text-emerald-900">✓{section.completed}</span>{" "}
+          <span className="text-amber-900">⏳{section.reserved}</span>{" "}
           <b className="text-foreground">⎯{section.remaining}</b>
           <span className="text-foreground/75"> / {section.total}</span>
         </span>
@@ -586,7 +586,7 @@ function SectionRow({
               open
                 ? "border-cyan-500 bg-cyan-600 text-white"
                 : full
-                  ? "border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                  ? "border-amber-300 text-amber-700 hover:bg-amber-50"
                   : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >

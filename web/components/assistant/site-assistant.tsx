@@ -125,7 +125,7 @@ export function SiteAssistant() {
                   setNudge(false);
                   setOpen(true);
                 }}
-                className="mt-2 font-semibold text-cyan-800 hover:underline dark:text-cyan-300"
+                className="mt-2 font-semibold text-cyan-800 hover:underline"
               >
                 Rota&apos;ya sor
               </button>
@@ -384,7 +384,7 @@ function Panel({
                 type="button"
                 size="sm"
                 variant="outline"
-                className="border-cyan-600 text-cyan-800 hover:bg-cyan-50 dark:text-cyan-200 dark:hover:bg-cyan-500/10"
+                className="border-cyan-600 text-cyan-800 hover:bg-cyan-50"
                 onClick={() => onAction(m.action!)}
               >
                 {m.action.label}
@@ -458,13 +458,13 @@ function Panel({
               aria-label="Mesajın"
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
             />
-            {sendErr ? <p className="text-xs text-rose-700 dark:text-rose-300">{sendErr}</p> : null}
+            {sendErr ? <p className="text-xs text-rose-700">{sendErr}</p> : null}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <a
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline"
               >
                 <MessageCircle className="size-4" aria-hidden /> WhatsApp&apos;tan yaz
               </a>
@@ -501,7 +501,7 @@ function Panel({
                   }
                   ask.mutate({ chip: c.id, label: c.label });
                 }}
-                className="rounded-full border border-cyan-600/40 bg-background px-3 py-1.5 text-left text-sm text-cyan-800 transition hover:bg-cyan-50 dark:text-cyan-200 dark:hover:bg-cyan-500/10"
+                className="rounded-full border border-cyan-600/40 bg-background px-3 py-1.5 text-left text-sm text-cyan-800 transition hover:bg-cyan-50"
               >
                 {c.label}
               </button>

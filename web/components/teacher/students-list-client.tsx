@@ -292,8 +292,8 @@ function StatusTiles({
       title: "Kritik",
       hint: "Hemen ilgilen",
       icon: AlertOctagon,
-      tone: "text-rose-700 dark:text-rose-300",
-      active: "border-rose-500 ring-2 ring-rose-500/30 bg-rose-50 dark:bg-rose-500/10",
+      tone: "text-rose-700",
+      active: "border-rose-500 ring-2 ring-rose-500/30 bg-rose-50",
     },
     {
       key: "medium",
@@ -301,8 +301,8 @@ function StatusTiles({
       title: "Uyarı",
       hint: "Yakından takip et",
       icon: AlertTriangle,
-      tone: "text-amber-700 dark:text-amber-300",
-      active: "border-amber-500 ring-2 ring-amber-500/30 bg-amber-50 dark:bg-amber-500/10",
+      tone: "text-amber-700",
+      active: "border-amber-500 ring-2 ring-amber-500/30 bg-amber-50",
     },
     {
       key: "ok",
@@ -310,8 +310,8 @@ function StatusTiles({
       title: "Yolunda",
       hint: summary.paused > 0 ? `${summary.paused} öğrenci molada` : "Programı yürüyor",
       icon: CheckCircle2,
-      tone: "text-emerald-700 dark:text-emerald-300",
-      active: "border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10",
+      tone: "text-emerald-700",
+      active: "border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-50",
     },
   ];
 
@@ -354,7 +354,7 @@ function StatusTiles({
         data-testid="status-tile-requests"
         className="rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-foreground/30"
       >
-        <span className="flex items-center gap-1.5 text-sm font-medium text-cyan-700 dark:text-cyan-300">
+        <span className="flex items-center gap-1.5 text-sm font-medium text-cyan-700">
           <MessageSquareMore className="size-4" aria-hidden />
           Bekleyen talep
         </span>
@@ -397,7 +397,7 @@ function StudentRow({
     <li
       className={cn(
         "group relative px-4 py-3 transition-colors hover:bg-muted/50",
-        checked && "bg-cyan-50/60 dark:bg-cyan-500/10",
+        checked && "bg-cyan-50/60",
         COLS,
       )}
       data-risk={risk ?? "inactive"}
@@ -449,8 +449,8 @@ function StudentRow({
               className={cn(
                 "mt-0.5 text-xs font-medium break-words",
                 s.worst_warning_level === "red"
-                  ? "text-rose-700 dark:text-rose-300"
-                  : "text-amber-700 dark:text-amber-300",
+                  ? "text-rose-700"
+                  : "text-amber-700",
               )}
               title={s.worst_warning_detail ?? undefined}
             >
@@ -583,7 +583,7 @@ function Avatar({
         ? "ring-amber-500"
         : risk === "ok"
           ? "ring-emerald-500"
-          : "ring-slate-300 dark:ring-slate-600";
+          : "ring-slate-300";
   return (
     <span
       aria-hidden
@@ -726,10 +726,10 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
             </DialogDescription>
           </DialogHeader>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex gap-2"><span className="text-cyan-600 dark:text-cyan-300">•</span><span>Veliye bildirim (haftalık rapor, uyarılar) <b className="text-foreground">gönderilmez</b>.</span></li>
-            <li className="flex gap-2"><span className="text-cyan-600 dark:text-cyan-300">•</span><span>Öğrenci <b className="text-foreground">giriş yapamaz</b> (erişimi kapanır).</span></li>
-            <li className="flex gap-2"><span className="text-cyan-600 dark:text-cyan-300">•</span><span>Koç ve kurum <b className="text-foreground">istatistiklerinden çıkar</b> — ortalamanı düşürmez.</span></li>
-            <li className="flex gap-2"><span className="text-emerald-600 dark:text-emerald-300">•</span><span>Tüm verisi <b className="text-foreground">korunur</b>; istediğin an &ldquo;Koçluğu yeniden başlat&rdquo; ile geri açılır.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Veliye bildirim (haftalık rapor, uyarılar) <b className="text-foreground">gönderilmez</b>.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Öğrenci <b className="text-foreground">giriş yapamaz</b> (erişimi kapanır).</span></li>
+            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Koç ve kurum <b className="text-foreground">istatistiklerinden çıkar</b> — ortalamanı düşürmez.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-600">•</span><span>Tüm verisi <b className="text-foreground">korunur</b>; istediğin an &ldquo;Koçluğu yeniden başlat&rdquo; ile geri açılır.</span></li>
           </ul>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEndOpen(false)} disabled={deactivate.isPending}>Vazgeç</Button>
@@ -995,7 +995,7 @@ function ClassGroupBar({
                 Yine de bu şubeye al
               </button>
               <button type="button" onClick={() => setMismatch(null)}
-                className="h-8 rounded-md px-3 font-medium text-slate-950 dark:text-slate-200 hover:bg-amber-400">
+                className="h-8 rounded-md px-3 font-medium text-slate-950 hover:bg-amber-400">
                 Vazgeç
               </button>
             </div>

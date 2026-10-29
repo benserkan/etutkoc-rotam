@@ -195,9 +195,9 @@ function Stepper({ current }: { current: number }) {
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border",
                 done
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200"
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-800"
                   : active
-                    ? "border-cyan-400 bg-cyan-50 text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200"
+                    ? "border-cyan-400 bg-cyan-50 text-cyan-900"
                     : "border-border bg-muted/40 text-muted-foreground",
               )}
             >
@@ -227,7 +227,7 @@ function Stepper({ current }: { current: number }) {
 
 function StepNarration({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-md border-l-4 border-l-cyan-500 border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-100">
+    <div className="rounded-md border-l-4 border-l-cyan-500 border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-sm text-cyan-900">
       {children}
     </div>
   );
@@ -464,7 +464,7 @@ function StartChoice({
               key={o.path}
               type="button"
               onClick={() => onChoose(o.path)}
-              className="group relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-500 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+              className="group relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-cyan-500 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
               data-testid={`choose-${o.path}`}
             >
               {o.badge ? (
@@ -480,7 +480,7 @@ function StartChoice({
               <span className="mt-auto flex items-center justify-between pt-1 text-xs text-muted-foreground">
                 <span>{o.meta}</span>
                 <ArrowRight
-                  className="size-4 text-cyan-700 transition group-hover:translate-x-0.5 dark:text-cyan-300"
+                  className="size-4 text-cyan-700 transition group-hover:translate-x-0.5"
                   aria-hidden
                 />
               </span>
@@ -607,7 +607,7 @@ function StepSections({
         <Card>
           <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm">
-              <Check className="inline size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />{" "}
+              <Check className="inline size-4 text-emerald-600" aria-hidden />{" "}
               <strong>{book.sections.length} ünite</strong> eklendi
               {" · "}
               {book.sections.filter((s) => s.topic_id).length} müfredata eşli
@@ -686,7 +686,7 @@ function StepSections({
                         className={cn(
                           "rounded-full border px-2.5 py-1 text-xs font-medium transition",
                           on
-                            ? "border-cyan-500 bg-cyan-50 text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200"
+                            ? "border-cyan-500 bg-cyan-50 text-cyan-900"
                             : "border-border text-muted-foreground hover:bg-muted/50",
                         )}
                         aria-pressed={on}
@@ -788,7 +788,7 @@ function MethodCard({
       className={cn(
         "relative rounded-lg border p-3 text-left transition-colors h-full",
         active
-          ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10"
+          ? "border-cyan-500 bg-cyan-50"
           : recommended
             ? "border-cyan-300 hover:bg-muted/50"
             : "border-border hover:bg-muted/50",
@@ -800,7 +800,7 @@ function MethodCard({
           Önerilen
         </span>
       ) : null}
-      <Icon className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden />
+      <Icon className="size-5 text-cyan-700" aria-hidden />
       <p className="mt-1.5 text-sm font-semibold">{title}</p>
       <p className="mt-0.5 text-[11px] text-muted-foreground">{desc}</p>
     </button>
@@ -949,7 +949,7 @@ function StepMapping({
         </StepNarration>
         <Card>
           <CardContent className="p-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-emerald-700 dark:text-emerald-300">
+            <p className="text-sm text-emerald-700">
               <CheckCircle2 className="inline size-4" aria-hidden /> {total}/{total}{" "}
               ünite müfredata eşli
             </p>
@@ -1049,7 +1049,7 @@ function StepMapping({
                               "w-full rounded-md border border-input bg-background px-2 py-1 text-sm",
                               suggested &&
                                 valueFor(r) === r.suggested_topic_id &&
-                                "border-amber-400 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200",
+                                "border-amber-400 bg-amber-50 text-amber-900",
                             )}
                           >
                             <option value="">— eşleşmemiş —</option>

@@ -50,7 +50,7 @@ export function InstitutionBrand({
     <div
       className={cn(
         "inline-flex max-w-full items-start gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium leading-snug",
-        "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+        "bg-emerald-50 text-emerald-800 border-emerald-200",
         className,
       )}
       title={institution.name}

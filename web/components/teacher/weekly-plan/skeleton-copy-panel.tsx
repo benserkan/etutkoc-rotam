@@ -166,7 +166,7 @@ export function SkeletonCopyPanel({
                   </h4>
                   <button
                     type="button"
-                    className="text-[12px] font-medium text-cyan-800 hover:underline dark:text-cyan-300"
+                    className="text-[12px] font-medium text-cyan-800 hover:underline"
                     onClick={() => toggle(ids, !allOn)}
                   >
                     {allOn ? "Bu şubeyi bırak" : "Bu şubenin tümünü seç"}
@@ -187,7 +187,7 @@ export function SkeletonCopyPanel({
                           <span className="text-muted-foreground">· {r.grade_label}</span>
                           <span className="block text-[12px] text-muted-foreground">{effect(r)}</span>
                           {r.missing_books.length > 0 ? (
-                            <span className="block text-[12px] text-amber-800 dark:text-amber-300 break-words">
+                            <span className="block text-[12px] text-amber-800 break-words">
                               {assign ? "Atanacak kitap: " : "Kitapsız kopyalanacak: "}
                               {r.missing_books.map((b) => b.name).join(", ")}
                             </span>

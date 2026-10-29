@@ -85,7 +85,7 @@ export function GradePeriodsCard({ studentId }: { studentId: number }) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <CalendarRange className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
+          <CalendarRange className="size-4 text-cyan-600" aria-hidden />
           Sınıf dönemleri
         </CardTitle>
         <p className="text-xs text-muted-foreground">
@@ -109,7 +109,7 @@ export function GradePeriodsCard({ studentId }: { studentId: number }) {
                 <p className="font-medium">
                   {p.grade_label}
                   {p.is_current ? (
-                    <span className="ml-2 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-medium text-cyan-900 dark:bg-cyan-500/20 dark:text-cyan-200">
+                    <span className="ml-2 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-medium text-cyan-900">
                       bu dönem
                     </span>
                   ) : null}

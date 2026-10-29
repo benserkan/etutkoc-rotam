@@ -93,7 +93,7 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
         defaultCategory="kurum_ogretmen"
       />
 
-      <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+      <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2">
         <Lock className="size-4 shrink-0 mt-0.5" aria-hidden />
         <div>
           Görev içeriklerini, veli notlarını ve öğrenci ayrıntılarını görme yetkin
@@ -364,9 +364,9 @@ function KpiCard({
 
 function rateColorClass(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
-  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
-  return "text-rose-700 dark:text-rose-400";
+  if (pct >= 70) return "text-emerald-700";
+  if (pct >= 40) return "text-amber-700";
+  return "text-rose-700";
 }
 
 /**
@@ -383,16 +383,16 @@ function AiAccessCard({ teacherId, enabled }: { teacherId: number; enabled: bool
         "rounded-lg border p-4",
         enabled
           ? "border-border bg-card"
-          : "border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10",
+          : "border-amber-300 bg-amber-50",
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Sparkles className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
+            <Sparkles className="size-4 text-violet-600" aria-hidden />
             Yapay zekâ kullanımı
             {!enabled ? (
-              <span className="rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-900 dark:bg-amber-500/30 dark:text-amber-200">
+              <span className="rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-900">
                 KAPALI
               </span>
             ) : null}
@@ -409,7 +409,7 @@ function AiAccessCard({ teacherId, enabled }: { teacherId: number; enabled: bool
             size="sm"
             onClick={() => setConfirmOpen(true)}
             disabled={mut.isPending}
-            className="text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-200"
+            className="text-rose-700 hover:text-rose-800"
           >
             Kapat
           </Button>

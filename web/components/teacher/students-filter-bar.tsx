@@ -197,7 +197,7 @@ export function StudentsFilterBar({ initial, classGroups = [] }: Props) {
                   className={cn(
                     "h-8 rounded-md px-3 text-sm transition-colors",
                     on
-                      ? "bg-background font-medium text-foreground shadow-sm"
+                      ? "bg-background font-medium text-foreground"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >

@@ -83,7 +83,7 @@ export function NotifyCoachDialog({
           </label>
           <textarea
             id="notify-coach-note"
-            className="w-full min-h-[88px] resize-y rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-full min-h-[88px] resize-y rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             placeholder="Örn. Son haftalarda tempo düştü; görüşüp programı hafifletmesini rica edin."
             value={note}
             onChange={(e) => setNote(e.target.value)}

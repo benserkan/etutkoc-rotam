@@ -221,7 +221,7 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-2 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-800 dark:hover:bg-slate-500/25"
+            className="absolute right-2 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
             aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
             aria-pressed={showPassword}
           >
@@ -254,7 +254,7 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
       <Button
         type="submit"
         disabled={isSubmitting}
-        className="h-12 w-full rounded-xl bg-cyan-700 text-base font-semibold text-white shadow-sm hover:bg-cyan-800"
+        className="h-12 w-full rounded-xl bg-cyan-700 text-base font-semibold text-white hover:bg-cyan-800"
       >
         {isSubmitting ? <Loader2 className="animate-spin" /> : null}
         {pendingValues ? "Güvenlik kontrolü bekleniyor…" : isSubmitting ? "Giriş yapılıyor…" : "Giriş yap"}

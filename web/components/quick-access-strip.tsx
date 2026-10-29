@@ -99,14 +99,14 @@ export function QuickAccessStrip({ excludeHrefs, className }: Props) {
     <section
       aria-label="Hızlı erişim"
       className={cn(
-        "rounded-xl border bg-card p-4 shadow-sm",
-        "border-t-4 border-t-cyan-600",
+        "",
+        "",
         className,
       )}
     >
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
-        <h2 className="text-sm font-semibold inline-flex items-center gap-1.5">
-          <Zap className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />
+        <h2 className="text-lg font-bold inline-flex items-center gap-1.5">
+          <Zap className="size-4 text-cyan-600" aria-hidden />
           Hızlı Erişim
         </h2>
         <p className="text-xs text-muted-foreground">
@@ -170,7 +170,7 @@ function QuickCardTile({
           </span>
         )}
         {card.state === "suggested" && (
-          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-1.5 py-0.5 text-[10px] font-medium text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-1.5 py-0.5 text-[10px] font-medium text-cyan-900">
             <Sparkles className="size-2.5" aria-hidden />
             önerilen
           </span>
@@ -189,7 +189,7 @@ function QuickCardTile({
           className={cn(
             "rounded p-1 transition",
             pinned
-              ? "text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/10"
+              ? "text-cyan-700 hover:bg-cyan-500/10"
               : "text-muted-foreground/50 hover:text-cyan-700 hover:bg-cyan-500/10",
           )}
         >

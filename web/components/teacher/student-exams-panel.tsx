@@ -74,19 +74,19 @@ const fmtNet = (v: number) => fmtNum(v);
 
 // Sınav türü → sabit ton (Tailwind purge güvenli)
 const SECTION_TONE: Record<ExamSectionValue, string> = {
-  lgs: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-  tyt: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-  ayt_say: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  ayt_ea: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-  ayt_soz: "border-violet-200 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
-  ayt_dil: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-  okul: "border-slate-200 bg-slate-100 text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
-  maarif_1: "border-teal-200 bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:border-teal-500/30 dark:text-teal-200",
-  maarif_2: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-500/10 dark:border-fuchsia-500/30 dark:text-fuchsia-200",
-  maarif_9: "border-lime-200 bg-lime-50 text-lime-800 dark:bg-lime-500/10 dark:border-lime-500/30 dark:text-lime-200",
-  maarif_10: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-  maarif_11: "border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200",
-  gis_12: "border-orange-200 bg-orange-50 text-orange-800 dark:bg-orange-500/10 dark:border-orange-500/30 dark:text-orange-200",
+  lgs: "border-sky-200 bg-sky-50 text-sky-700",
+  tyt: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  ayt_say: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  ayt_ea: "border-amber-200 bg-amber-50 text-amber-800",
+  ayt_soz: "border-violet-200 bg-violet-50 text-violet-700",
+  ayt_dil: "border-rose-200 bg-rose-50 text-rose-700",
+  okul: "border-slate-200 bg-slate-100 text-slate-700",
+  maarif_1: "border-teal-200 bg-teal-50 text-teal-700",
+  maarif_2: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700",
+  maarif_9: "border-lime-200 bg-lime-50 text-lime-800",
+  maarif_10: "border-sky-200 bg-sky-50 text-sky-700",
+  maarif_11: "border-blue-200 bg-blue-50 text-blue-700",
+  gis_12: "border-orange-200 bg-orange-50 text-orange-800",
 };
 
 function sectionPenalty(section: ExamSectionValue): number {
@@ -151,7 +151,7 @@ function ExamKindSwitch({
   const item = (active: boolean) =>
     cn(
       "inline-flex h-8 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[13px] font-medium transition-colors sm:flex-none sm:px-3 sm:text-sm",
-      active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+      active ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground",
     );
   return (
     <div role="tablist" aria-label="Deneme türü" className="flex w-full rounded-lg bg-muted p-1 sm:inline-flex sm:w-auto">
@@ -260,7 +260,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
   const showSeries = hasRows && tab !== "list" && sectionsInfo.length > 1;
   const showFilters = hasRows && (showSeries || (periodMeta?.options?.length ?? 0) > 1);
   const toolbar = (
-    <div data-section="exams:toolbar" className="rounded-2xl border border-border bg-card shadow-sm">
+    <div data-section="exams:toolbar" className="rounded-2xl border border-border bg-card">
       {headerRow}
       {!branchView && hasRows ? (
         <div className="border-t border-border px-4">
@@ -276,7 +276,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
                 className={cn(
                   "shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors",
                   tab === t.key
-                    ? "border-cyan-700 text-foreground dark:border-cyan-400"
+                    ? "border-cyan-700 text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -483,8 +483,8 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
 
 // Açılır liste seçenekleri seçicinin renkli yazısını devralıp beyaz zeminde okunmuyordu.
 const OPTION_COLORS =
-  "[&_option]:bg-white [&_option]:text-slate-900 dark:[&_option]:bg-slate-900 dark:[&_option]:text-slate-100 " +
-  "[&_optgroup]:bg-slate-100 [&_optgroup]:text-slate-700 dark:[&_optgroup]:bg-slate-800 dark:[&_optgroup]:text-slate-300";
+  "[&_option]:bg-white [&_option]:text-slate-900 " +
+  "[&_optgroup]:bg-slate-100 [&_optgroup]:text-slate-700";
 
 /** Deneme türü — PDF yüklerken seçilen türlerle aynı liste (sınıfa göre). 2026-10-27 */
 function ExamSectionSelect({ row, grade }: { row: ExamResultRow; grade: string | null }) {
@@ -545,7 +545,7 @@ function ExamScopeSelect({ row }: { row: ExamResultRow }) {
         "h-6 rounded border px-1 text-[11px] font-medium",
         OPTION_COLORS,
         isBranch
-          ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200"
+          ? "border-amber-300 bg-amber-50 text-amber-900"
           : "border-border bg-background text-foreground",
       )}
     >
@@ -631,8 +631,8 @@ function ExamRow({
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 <span className="md:hidden">{formatTRDate(row.exam_date)} · </span>
-                <span className="text-emerald-700 dark:text-emerald-300">{row.total_correct}D</span>{" "}
-                <span className="text-rose-700 dark:text-rose-300">{row.total_wrong}Y</span>{" "}
+                <span className="text-emerald-700">{row.total_correct}D</span>{" "}
+                <span className="text-rose-700">{row.total_wrong}Y</span>{" "}
                 <span>{row.total_blank}B</span>
                 {" · "}
                 {row.total_questions} soru
@@ -657,7 +657,7 @@ function ExamRow({
             <div
               className={cn(
                 "hidden text-right text-sm font-bold tabular-nums md:block",
-                diff == null ? "text-muted-foreground" : diff > 0 ? "text-emerald-700 dark:text-emerald-300" : diff < 0 ? "text-rose-700 dark:text-rose-300" : "",
+                diff == null ? "text-muted-foreground" : diff > 0 ? "text-emerald-700" : diff < 0 ? "text-rose-700" : "",
               )}
               title={prev ? `Aynı serideki bir önceki deneme: ${prev.title} (${fmtNet(prev.net)} net)` : "Bu serinin ilk denemesi"}
             >
@@ -672,7 +672,7 @@ function ExamRow({
                 aria-label="Deneme detayı"
                 title="Deneme detayı: karne, soru soru tablo, yazdır ve paylaş"
               >
-                <Eye className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+                <Eye className="size-4 text-cyan-700" aria-hidden />
               </Button>
               {hasSubjects ? (
                 <Button
@@ -704,7 +704,7 @@ function ExamRow({
                   aria-label="İçe aktarılan satırları düzenle"
                   title="Soru satırlarını düzelt (konu/sonuç) — net yeniden hesaplanır, kredi düşmez"
                 >
-                  <FileCog className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
+                  <FileCog className="size-4 text-violet-600" aria-hidden />
                 </Button>
               ) : null}
               <ExamStudentShareButton row={row} share={share} />
@@ -717,7 +717,7 @@ function ExamRow({
                 <button
                   type="button"
                   onClick={() => setAnnounceOpen(true)}
-                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100"
                   title={`Veliye duyuruldu · ${formatTRDate(row.parent_notified_at.slice(0, 10))} — gönderilen maili gör / PDF olarak indir`}
                 >
                   <MailCheck className="size-3.5" aria-hidden />
@@ -731,7 +731,7 @@ function ExamRow({
                   aria-label="Sonucu veliye duyur"
                   title="Veliye gidecek maili önizle, düzenle ve gönder"
                 >
-                  <Mail className="size-4 text-teal-600 dark:text-teal-300" aria-hidden />
+                  <Mail className="size-4 text-teal-600" aria-hidden />
                 </Button>
               )}
               <Button
@@ -809,17 +809,17 @@ function ExamRow({
                         {s.name}
                         {s.unmatched ? (
                           <span
-                            className="ml-1.5 inline-flex items-center rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+                            className="ml-1.5 inline-flex items-center rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-900"
                             title="Bu satır bir Rotam dersine bağlanmadı — ad denemenin kendi başlığından geldi. 'Satırları düzelt' ile konuları bağlayınca doğru derse geçer."
                           >
                             müfredata bağlanmadı
                           </span>
                         ) : null}
                       </td>
-                      <td className="py-1 text-right tabular-nums text-emerald-600 dark:text-emerald-300">
+                      <td className="py-1 text-right tabular-nums text-emerald-600">
                         {s.correct}
                       </td>
-                      <td className="py-1 text-right tabular-nums text-rose-600 dark:text-rose-300">
+                      <td className="py-1 text-right tabular-nums text-rose-600">
                         {s.wrong}
                       </td>
                       <td className="py-1 text-right tabular-nums text-muted-foreground">
@@ -1074,7 +1074,7 @@ function ExamForm({
       {mode === "total" ? (
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1">
-            <Label htmlFor="ex-c" className="text-emerald-700 dark:text-emerald-300">Doğru</Label>
+            <Label htmlFor="ex-c" className="text-emerald-700">Doğru</Label>
             <Input
               id="ex-c"
               type="number"
@@ -1085,7 +1085,7 @@ function ExamForm({
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="ex-w" className="text-rose-700 dark:text-rose-300">Yanlış</Label>
+            <Label htmlFor="ex-w" className="text-rose-700">Yanlış</Label>
             <Input
               id="ex-w"
               type="number"
@@ -1195,7 +1195,7 @@ function ExamForm({
       {dupWarn ? (
         <div
           role="alert"
-          className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+          className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
         >
           <p>
             <b>Mükerrer olabilir:</b> {dupWarn} Aynı denemeyse kaydetme; listedeki

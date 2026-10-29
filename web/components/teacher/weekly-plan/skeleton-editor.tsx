@@ -362,7 +362,7 @@ export function SkeletonEditorDialog({
             <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden />
           </div>
         ) : subjects.length === 0 ? (
-          <p className="text-[13px] text-amber-800 dark:text-amber-200">
+          <p className="text-[13px] text-amber-800">
             Öğrencinin ders listesi boş — önce kitap ata.
           </p>
         ) : (
@@ -401,7 +401,7 @@ export function SkeletonEditorDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-rose-700 dark:text-rose-300"
+                className="text-rose-700"
                 disabled={del.isPending}
                 onClick={() => {
                   if (
@@ -638,7 +638,7 @@ function DayPanel({
               setTargets([]);
             }}
             disabled={rows.length === 0}
-            className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-cyan-800 hover:bg-cyan-500/10 disabled:opacity-40 dark:text-cyan-300"
+            className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-cyan-800 hover:bg-cyan-500/10 disabled:opacity-40"
           >
             <Copy className="size-3.5" aria-hidden /> Bu günü başka günlere kopyala
           </button>
@@ -825,7 +825,7 @@ function RowCard({
 
   return (
     <li
-      className="rounded-lg border border-border bg-card p-3 shadow-sm"
+      className="rounded-lg border border-border bg-card p-3"
       data-testid="skeleton-row"
     >
       <div className="flex flex-wrap items-end gap-2">
@@ -936,7 +936,7 @@ function RowCard({
         <button
           type="button"
           onClick={onRemove}
-          className="mb-1 ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-300"
+          className="mb-1 ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-700"
           aria-label="Satırı sil"
           title="Satırı sil"
         >
@@ -1065,7 +1065,7 @@ function RowCard({
                       twoSource,
                     )
                   }
-                  className="self-start text-[11.5px] text-cyan-800 hover:underline dark:text-cyan-300"
+                  className="self-start text-[11.5px] text-cyan-800 hover:underline"
                   data-testid="apply-second-all"
                 >
                   Bu seçimi {nm} için diğer {siblings} {twoSource ? "rutin" : "konu"} satırına
@@ -1076,7 +1076,7 @@ function RowCard({
           </Field>
         ) : null}
         {kind !== "routine" && row.book_id && current && !current.is_bank ? (
-          <p className="self-end text-[11.5px] text-amber-800 dark:text-amber-200">
+          <p className="self-end text-[11.5px] text-amber-800">
             Bu kitap soru bankası değil; 2. kaynak yalnız soru bankasıyla tanımlanır.
           </p>
         ) : null}
@@ -1249,7 +1249,7 @@ function PeriodStrip({
             <button
               type="button"
               onClick={() => setMode(mode === "edit" ? null : "edit")}
-              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300"
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10"
             >
               <Pencil className="size-3" aria-hidden /> Dönemi düzenle
             </button>
@@ -1258,7 +1258,7 @@ function PeriodStrip({
             <button
               type="button"
               onClick={() => setMode(mode === "copy" ? null : "copy")}
-              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300"
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10"
               data-testid="open-skeleton-copy"
             >
               <Copy className="size-3" aria-hidden /> Başka öğrencilere kopyala
@@ -1267,7 +1267,7 @@ function PeriodStrip({
           <button
             type="button"
             onClick={() => setMode(mode === "new" ? null : "new")}
-            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300"
+            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10"
           >
             <Plus className="size-3" aria-hidden /> Yeni dönem
           </button>

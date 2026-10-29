@@ -36,9 +36,9 @@ interface Props {
 }
 
 const PCT_TEXT: Record<string, string> = {
-  emerald: "text-emerald-700 dark:text-emerald-300",
-  amber: "text-amber-700 dark:text-amber-300",
-  rose: "text-rose-700 dark:text-rose-300",
+  emerald: "text-emerald-700",
+  amber: "text-amber-700",
+  rose: "text-rose-700",
   slate: "text-muted-foreground",
 };
 
@@ -71,7 +71,7 @@ export function AcademicClient({ initial }: Props) {
     <div className="space-y-6">
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <LineChartIcon className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
+          <LineChartIcon className="size-6 text-indigo-700" aria-hidden />
           Akademik Çıktı
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
@@ -83,8 +83,8 @@ export function AcademicClient({ initial }: Props) {
       </header>
 
       {/* Sade dil notu — net başarı oranı nedir */}
-      <Card className="border-sky-200 bg-sky-50/50 p-3 dark:bg-sky-500/10 dark:border-sky-500/30">
-        <div className="flex items-start gap-2 text-sm text-sky-900 dark:text-sky-200">
+      <Card className="border-sky-200 bg-sky-50/50 p-3">
+        <div className="flex items-start gap-2 text-sm text-sky-900">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
             <b>Net başarı oranı</b> = öğrencinin çıkardığı net ÷ sınavdaki soru
@@ -293,11 +293,11 @@ export function AcademicClient({ initial }: Props) {
       {/* Deneme girmeyen (kapsama eksiği) */}
       {d.no_exam_program.length > 0 ? (
         <Card className="overflow-hidden border-amber-300">
-          <div className="border-b border-amber-200 bg-amber-50/50 px-4 py-2.5 dark:bg-amber-500/10 dark:border-amber-500/30">
-            <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+          <div className="border-b border-amber-200 bg-amber-50/50 px-4 py-2.5">
+            <h2 className="text-sm font-semibold text-amber-900">
               Deneme girilmeyen öğrenciler ({s.no_exam_count})
             </h2>
-            <p className="text-xs text-amber-800 dark:text-amber-300">
+            <p className="text-xs text-amber-800">
               Koçları bu öğrencilerin deneme sonuçlarını girmeye teşvik edin —
               akademik gidişat ancak ölçülürse yönetilebilir.
             </p>
@@ -307,7 +307,7 @@ export function AcademicClient({ initial }: Props) {
               <li key={`${r.teacher_id}-${r.teacher_name}`} className="px-4 py-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium">{r.teacher_name}</span>
-                  <span className="shrink-0 tabular-nums text-amber-700 dark:text-amber-300">{r.count} öğrenci</span>
+                  <span className="shrink-0 tabular-nums text-amber-700">{r.count} öğrenci</span>
                 </div>
                 {r.sample_students.length > 0 ? (
                   <p className="mt-0.5 text-xs text-muted-foreground">
@@ -346,7 +346,7 @@ function DeltaValue({ delta }: { delta: number | null }) {
     <div
       className={cn(
         "mt-1 inline-flex items-center gap-1 text-2xl font-bold tabular-nums",
-        up ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300",
+        up ? "text-emerald-700" : "text-rose-700",
       )}
     >
       {up ? <TrendingUp className="size-5" aria-hidden /> : <TrendingDown className="size-5" aria-hidden />}
@@ -367,7 +367,7 @@ function MoverCard({
   rows: AcademicMoverRow[];
   emptyText: string;
 }) {
-  const toneText = tone === "emerald" ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300";
+  const toneText = tone === "emerald" ? "text-emerald-700" : "text-rose-700";
   return (
     <Card className="overflow-hidden">
       <div className="border-b border-border px-4 py-2.5">

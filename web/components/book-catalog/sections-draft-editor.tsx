@@ -83,7 +83,7 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
     <div className="space-y-2">
       {estimatedCount > 0 && (
         <div
-          className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-100"
+          className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900"
           data-testid="estimated-note"
         >
           <strong>{estimatedCount} bölümün test sayısı tahmini:</strong> içindekilerde test
@@ -93,7 +93,7 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
         </div>
       )}
       {(suspectCount > 0 || missingCount > 0) && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
           <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
           {suspectCount > 0 && (
             <span>
@@ -113,7 +113,7 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
             className={cn(
               "flex items-center gap-2 rounded-md border px-2 py-1.5",
               s.suspect
-                ? "border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30"
+                ? "border-amber-300 bg-amber-50"
                 : "border-border bg-card",
             )}
           >
@@ -143,7 +143,7 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
               className={cn(
                 "h-8 w-16 text-center text-sm",
                 (s.test_count ?? 0) < 1 &&
-                  "border-rose-400 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/40",
+                  "border-rose-400 bg-rose-50",
               )}
             />
             <span className="w-8 shrink-0 text-xs text-muted-foreground">test</span>
@@ -160,7 +160,7 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
               type="button"
               onClick={() => remove(i)}
               disabled={disabled}
-              className="shrink-0 rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+              className="shrink-0 rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
               aria-label="Bölümü kaldır"
             >
               <Trash2 className="size-4" aria-hidden />

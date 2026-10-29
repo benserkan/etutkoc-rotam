@@ -73,7 +73,7 @@ export function TopicPickerPanel({
 
   return (
     <div
-      className="rounded-lg border border-cyan-600/40 bg-card shadow-sm"
+      className="rounded-lg border border-cyan-600/40 bg-card"
       data-testid="topic-picker-panel"
       onKeyDown={(e) => {
         if (e.key === "Escape") {
@@ -119,7 +119,7 @@ export function TopicPickerPanel({
         {groups.map((g) => (
           <div key={g.key}>
             <div className="sticky top-0 z-10 flex flex-wrap items-baseline gap-x-2 bg-muted px-3 py-1 text-xs font-semibold text-foreground">
-              {g.grade ? <span className="text-cyan-700 dark:text-cyan-300">{g.grade}. sınıf</span> : null}
+              {g.grade ? <span className="text-cyan-700">{g.grade}. sınıf</span> : null}
               <span className="break-words">{g.theme ?? "Konular"}</span>
               {g.items[0]?.subject_name ? (
                 <span className="font-normal text-muted-foreground">· {g.items[0].subject_name}</span>

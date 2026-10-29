@@ -38,7 +38,7 @@ export function ExamStudentShareButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1 rounded border border-cyan-300 bg-cyan-50 px-1.5 py-1 text-[11px] font-medium text-cyan-900 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
+          className="inline-flex items-center gap-1 rounded border border-cyan-300 bg-cyan-50 px-1.5 py-1 text-[11px] font-medium text-cyan-900 hover:bg-cyan-100"
           title={`Öğrenciyle paylaşıldı · ${fmtTRDate(share.shared_at.slice(0, 10))} — notu düzenle`}
         >
           <UserCheck className="size-3.5" aria-hidden />
@@ -52,7 +52,7 @@ export function ExamStudentShareButton({
           aria-label="Öğrenciyle paylaş"
           title="Denemeyi öğrenciyle paylaş — öğrenciye not yaz"
         >
-          <Send className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+          <Send className="size-4 text-cyan-700" aria-hidden />
         </Button>
       )}
       <Dialog open={open} onOpenChange={setOpen}>

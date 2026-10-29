@@ -47,7 +47,7 @@ export function AdminAssistantClient() {
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
       <header>
         <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground">
-          <Bot className="size-6 text-cyan-700 dark:text-cyan-400" aria-hidden /> Asistan soruları
+          <Bot className="size-6 text-cyan-700" aria-hidden /> Asistan soruları
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Sitenin her yerindeki Rota asistanına sorulanlar. Sık sorulan soru, o ekranın yeterince anlaşılmadığını
@@ -141,7 +141,7 @@ export function AdminAssistantClient() {
                     {SOURCE_LABEL[r.source] ?? r.source}
                   </span>
                   {r.user_id ? (
-                    <Link href={`/admin/users/${r.user_id}`} className="font-medium text-cyan-800 hover:underline dark:text-cyan-300">
+                    <Link href={`/admin/users/${r.user_id}`} className="font-medium text-cyan-800 hover:underline">
                       {r.user_name ?? `#${r.user_id}`}
                     </Link>
                   ) : null}

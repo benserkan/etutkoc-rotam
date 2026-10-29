@@ -66,7 +66,7 @@ export function StudentAppointmentsClient({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold inline-flex items-center gap-2">
-            <Video className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <Video className="size-5 text-cyan-700" aria-hidden />
             Görüşmelerim
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -88,14 +88,14 @@ export function StudentAppointmentsClient({
 
       {/* Sıradaki görüşme */}
       {next ? (
-        <div className="rounded-xl border border-cyan-200 bg-cyan-50 dark:bg-cyan-500/10 dark:border-cyan-500/30 p-5">
-          <div className="text-xs font-semibold uppercase tracking-wide text-cyan-800 dark:text-cyan-300">
+        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-5">
+          <div className="text-xs font-semibold uppercase tracking-wide text-cyan-800">
             Sıradaki görüşmen
           </div>
-          <div className="mt-1.5 text-lg font-bold text-slate-900 dark:text-slate-100">
+          <div className="mt-1.5 text-lg font-bold text-slate-900">
             {fmtDate(next.date)} {next.weekday_label} · {next.start_time}
           </div>
-          <div className="text-sm text-slate-700 dark:text-slate-300 mt-0.5">
+          <div className="text-sm text-slate-700 mt-0.5">
             {next.coach_name ?? "Koçun"} ile · {next.duration_min} dakika
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -110,7 +110,7 @@ export function StudentAppointmentsClient({
                 Görüşmeye katıl
               </a>
             ) : (
-              <span className="text-xs text-slate-600 dark:text-slate-400">
+              <span className="text-xs text-slate-600">
                 Görüşme bağlantısını koçun paylaşacak — saat gelince buradan
                 katılabileceksin.
               </span>
@@ -131,9 +131,9 @@ export function StudentAppointmentsClient({
       {data.pending.map((p) => (
         <div
           key={p.id}
-          className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 px-4 py-3 flex flex-wrap items-center justify-between gap-2"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex flex-wrap items-center justify-between gap-2"
         >
-          <div className="text-sm text-amber-900 dark:text-amber-200">
+          <div className="text-sm text-amber-900">
             <CalendarClock className="inline size-4 mr-1.5 -mt-0.5" aria-hidden />
             <span className="font-semibold">
               {fmtDate(p.date)} {p.weekday_label} {p.start_time}
@@ -180,10 +180,10 @@ export function StudentAppointmentsClient({
                 <span className={cn(
                   "rounded-full px-2 py-0.5 text-[10px] font-semibold",
                   a.status === "done"
-                    ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-200"
+                    ? "bg-emerald-100 text-emerald-900"
                     : a.status === "no_show"
-                      ? "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200"
-                      : "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
+                      ? "bg-rose-100 text-rose-900"
+                      : "bg-slate-100 text-slate-700",
                 )}>
                   {a.status_label}
                 </span>
@@ -214,7 +214,7 @@ function UpcomingRow({ appt }: { appt: AppointmentItem }) {
           href={appt.meeting_link}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-semibold text-cyan-700 dark:text-cyan-400 hover:underline"
+          className="text-xs font-semibold text-cyan-700 hover:underline"
         >
           Görüşme linki
         </a>

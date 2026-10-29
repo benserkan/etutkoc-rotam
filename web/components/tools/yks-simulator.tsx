@@ -574,7 +574,7 @@ function ForecastBand({ f }: { f: ForecastRow }) {
           style={{ left: pos(f.score.p10), width: `calc(${pos(f.score.p90)} - ${pos(f.score.p10)})` }}
         />
         <div className="absolute top-2 flex -translate-x-1/2 flex-col items-center" style={{ left: pos(f.score.p50) }}>
-          <div className="h-10 w-1.5 rounded-full bg-slate-900 shadow" />
+          <div className="h-10 w-1.5 rounded-full bg-slate-900" />
         </div>
       </div>
       <div className="relative h-5 text-[11px] tabular-nums text-slate-400">
@@ -598,8 +598,8 @@ function LessonRow({ l }: { l: Lesson }) {
       <div>
         <div className="relative h-3 rounded-full bg-slate-100" aria-hidden>
           <div className="absolute inset-y-0 rounded-full bg-cyan-200" style={{ left: pct(l.p10), width: `calc(${pct(l.p90)} - ${pct(l.p10)})` }} />
-          <div className="absolute -top-1 size-5 -translate-x-1/2 rounded-full border-2 border-white bg-slate-400 shadow" style={{ left: pct(l.current) }} />
-          <div className="absolute -top-1 size-5 -translate-x-1/2 rounded-full border-2 border-white bg-cyan-700 shadow" style={{ left: pct(l.predicted) }} />
+          <div className="absolute -top-1 size-5 -translate-x-1/2 rounded-full border-2 border-white bg-slate-400" style={{ left: pct(l.current) }} />
+          <div className="absolute -top-1 size-5 -translate-x-1/2 rounded-full border-2 border-white bg-cyan-700" style={{ left: pct(l.predicted) }} />
         </div>
         <div className="mt-2 flex justify-between text-xs text-slate-500">
           <span>Şu an <b className="tabular-nums text-slate-800">{fmt1(l.current)}</b></span>
@@ -653,7 +653,7 @@ function Results({ result, embedded }: { result: SimResult; embedded: boolean })
       </section>
 
       {/* Sınav günü */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Sınav günü tahmini</div>

@@ -394,7 +394,7 @@ export function GuidePlayer({
                 <li key={c.key}>
                   {showModule ? (
                     <div className="mt-2 flex items-baseline justify-between gap-2 border-t px-2 pb-1 pt-3 first:mt-0 first:border-t-0 first:pt-1">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                         {c.module}
                       </span>
                       <span className="shrink-0 text-[11px] text-muted-foreground">
@@ -407,7 +407,7 @@ export function GuidePlayer({
                       className={cn(
                         "mx-2 mb-1 mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold",
                         isOther
-                          ? "bg-slate-500/10 text-slate-700 dark:text-slate-300"
+                          ? "bg-slate-500/10 text-slate-700"
                           : "bg-cyan-700 text-white",
                       )}
                     >
@@ -424,7 +424,7 @@ export function GuidePlayer({
                     data-chapter={c.key}
                     className={cn(
                       "flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition",
-                      active ? "bg-cyan-600 text-white shadow" : "hover:bg-muted",
+                      active ? "bg-cyan-600 text-white" : "hover:bg-muted",
                       isOther && !active && "opacity-70",
                     )}
                   >
@@ -457,7 +457,7 @@ export function GuidePlayer({
                       type="button"
                       onClick={() => setShowOtherBranch(true)}
                       data-section="guide-other-branch"
-                      className="mx-2 mt-1 flex w-[calc(100%-1rem)] items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted dark:border-slate-600"
+                      className="mx-2 mt-1 flex w-[calc(100%-1rem)] items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted"
                     >
                       <ChevronDown className="h-3.5 w-3.5 shrink-0" />
                       <span className="min-w-0 break-words">
@@ -475,7 +475,7 @@ export function GuidePlayer({
 
       {/* Sahne + kontroller (tam ekranda birlikte büyür) */}
       <div ref={fsRef} className="guide-fs order-1 min-w-0 lg:order-2">
-        <div className="guide-stage relative aspect-[1440/900] w-full overflow-hidden rounded-xl border bg-slate-100 dark:bg-slate-500/15 shadow-sm">
+        <div className="guide-stage relative aspect-[1440/900] w-full overflow-hidden rounded-xl border bg-slate-100">
           <Stage
             chapter={chapter}
             stepIdx={stepIdx}
@@ -546,13 +546,13 @@ export function GuidePlayer({
                         )}
                       >
                         <span className="flex items-center gap-2 font-semibold">
-                          <GitBranch className="h-4 w-4 shrink-0 text-cyan-700 dark:text-cyan-300" />
+                          <GitBranch className="h-4 w-4 shrink-0 text-cyan-700" />
                           {o.label}
                         </span>
                         <span className="mt-1.5 block text-sm leading-snug text-muted-foreground">
                           {o.description}
                         </span>
-                        <span className="mt-2 block text-xs font-medium text-cyan-800 dark:text-cyan-200">
+                        <span className="mt-2 block text-xs font-medium text-cyan-800">
                           {n} bölüm →
                         </span>
                       </button>
@@ -589,9 +589,9 @@ export function GuidePlayer({
                     </div>
 
                     {!watchedAll && !doneSet.has(chapter.key) ? (
-                      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-600/40 dark:bg-slate-500/10">
+                      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
                         <Eye className="h-4 w-4 shrink-0 text-slate-500" />
-                        <p className="min-w-0 flex-1 text-xs text-slate-700 dark:text-slate-300">
+                        <p className="min-w-0 flex-1 text-xs text-slate-700">
                           Bu bölümde izlemediğin {chapter.steps.length - watchedCount} adım
                           var — istersen sonra dönüp izleyebilirsin.
                         </p>
@@ -603,11 +603,11 @@ export function GuidePlayer({
                     ) : null}
 
                     {chapter.action?.optional ? (
-                      <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/30 dark:bg-sky-500/10">
-                        <p className="text-sm font-medium text-sky-900 dark:text-sky-200">
+                      <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3">
+                        <p className="text-sm font-medium text-sky-900">
                           İstersen şimdi dene (zorunlu değil): {chapter.action.label}
                         </p>
-                        <p className="mt-1.5 text-xs leading-relaxed text-sky-800 dark:text-sky-300">
+                        <p className="mt-1.5 text-xs leading-relaxed text-sky-800">
                           {chapter.action.hint}
                         </p>
                         <Button
@@ -627,21 +627,21 @@ export function GuidePlayer({
                         className={cn(
                           "mt-4 rounded-lg border p-3",
                           fresh
-                            ? "border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10"
+                            ? "border-emerald-200 bg-emerald-50"
                             : already
-                              ? "border-sky-200 bg-sky-50 dark:border-sky-500/30 dark:bg-sky-500/10"
-                              : "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10",
+                              ? "border-sky-200 bg-sky-50"
+                              : "border-amber-200 bg-amber-50",
                         )}
                       >
                         <div className="flex items-center gap-2">
                           {fresh ? (
-                            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
                           ) : already ? (
-                            <CheckCircle2 className="h-5 w-5 shrink-0 text-sky-600 dark:text-sky-300" />
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-sky-600" />
                           ) : (
                             <RefreshCw
                               className={cn(
-                                "h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300",
+                                "h-5 w-5 shrink-0 text-amber-600",
                                 refreshing && "animate-spin",
                               )}
                             />
@@ -650,10 +650,10 @@ export function GuidePlayer({
                             className={cn(
                               "text-sm font-medium",
                               fresh
-                                ? "text-emerald-900 dark:text-emerald-200"
+                                ? "text-emerald-900"
                                 : already
-                                  ? "text-sky-900 dark:text-sky-200"
-                                  : "text-amber-900 dark:text-amber-200",
+                                  ? "text-sky-900"
+                                  : "text-amber-900",
                             )}
                           >
                             {fresh
@@ -669,8 +669,8 @@ export function GuidePlayer({
                               className={cn(
                                 "mt-2 text-xs leading-relaxed",
                                 already
-                                  ? "text-sky-800 dark:text-sky-300"
-                                  : "text-amber-800 dark:text-amber-300",
+                                  ? "text-sky-800"
+                                  : "text-amber-800",
                               )}
                             >
                               {already
@@ -856,7 +856,7 @@ function Stage({
               {cursorAtTarget ? (
                 <span className="guide-click-ripple absolute -left-3 -top-3 h-9 w-9 rounded-full bg-cyan-400/50" />
               ) : null}
-              <MousePointer2 className="relative h-7 w-7 fill-white text-slate-900 dark:text-slate-200 drop-shadow-lg" />
+              <MousePointer2 className="relative h-7 w-7 fill-white text-slate-900 drop-shadow-lg" />
             </div>
           ) : null}
         </div>

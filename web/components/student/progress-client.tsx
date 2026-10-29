@@ -62,7 +62,7 @@ export function StudentProgressClient() {
     );
   }
   if (a.isError || !a.data) {
-    return <p className="py-10 text-sm text-rose-700 dark:text-rose-300">Gelişim verileri yüklenemedi.</p>;
+    return <p className="py-10 text-sm text-rose-700">Gelişim verileri yüklenemedi.</p>;
   }
   const d = a.data;
 
@@ -104,7 +104,7 @@ function Section({
   id?: string;
 }) {
   return (
-    <section id={id} data-section={id ? `progress:${id}` : undefined} className="min-w-0 rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <section id={id} data-section={id ? `progress:${id}` : undefined} className="min-w-0 rounded-2xl border border-border bg-card p-5">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="inline-flex items-center gap-2 text-base font-bold text-foreground">
@@ -118,7 +118,7 @@ function Section({
         {href ? (
           <Link
             href={href}
-            className="inline-flex items-center gap-1 text-[13px] font-semibold text-cyan-800 hover:underline dark:text-cyan-300"
+            className="inline-flex items-center gap-1 text-[13px] font-semibold text-cyan-800 hover:underline"
           >
             {hrefLabel ?? "Ayrıntı"} <ArrowRight className="size-3.5" aria-hidden />
           </Link>
@@ -132,9 +132,9 @@ function Section({
 /* ============================================================== 1 hero */
 
 const STATUS_TEXT = {
-  green: { chip: "Yetişiyorsun", cls: "bg-emerald-400 text-emerald-950 dark:text-emerald-950" },
-  amber: { chip: "Biraz hızlanmalısın", cls: "bg-amber-300 text-amber-950 dark:text-amber-950" },
-  red: { chip: "Hızlanman gerekiyor", cls: "bg-rose-300 text-rose-950 dark:text-rose-950" },
+  green: { chip: "Yetişiyorsun", cls: "bg-emerald-400 text-emerald-950" },
+  amber: { chip: "Biraz hızlanmalısın", cls: "bg-amber-300 text-amber-950" },
+  red: { chip: "Hızlanman gerekiyor", cls: "bg-rose-300 text-rose-950" },
 } as const;
 
 function Hero({ d }: { d: TeacherStudentAnalyticsResponse }) {
@@ -348,7 +348,7 @@ function WeeksTrend({ data }: { data: WeeklyProgressResponse }) {
       <div className="relative h-44">
         {ps?.band_low != null && ps.band_high != null ? (
           <div
-            className="absolute inset-x-0 rounded bg-cyan-600/10 dark:bg-cyan-400/15"
+            className="absolute inset-x-0 rounded bg-cyan-600/10"
             style={{ bottom: `${ps.band_low}%`, height: `${Math.max(2, ps.band_high - ps.band_low)}%` }}
             aria-hidden
           />
@@ -356,13 +356,13 @@ function WeeksTrend({ data }: { data: WeeklyProgressResponse }) {
         <div className="relative flex h-full items-end gap-2">
           {pts.map((c) => (
             <div key={c.label + c.range} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={c.range}>
-              <span className={cn("text-[11px] font-bold tabular-nums", c.current ? "text-cyan-800 dark:text-cyan-300" : "text-muted-foreground")}>
+              <span className={cn("text-[11px] font-bold tabular-nums", c.current ? "text-cyan-800" : "text-muted-foreground")}>
                 %{Math.round(c.value ?? 0)}
               </span>
               <div
                 className={cn(
                   "w-full max-w-10 rounded-t-md",
-                  c.current ? "bg-cyan-600" : "bg-slate-300 dark:bg-slate-600",
+                  c.current ? "bg-cyan-600" : "bg-slate-300",
                 )}
                 style={{ height: `${Math.max(3, c.value ?? 0)}%` }}
               />
@@ -476,7 +476,7 @@ function Subjects({ d }: { d: TeacherStudentAnalyticsResponse }) {
       {c ? (
         <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-indigo-500/10 px-4 py-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-800 dark:text-indigo-200">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-800">
               {c.focus_grade ? `${c.focus_grade}. sınıf müfredatı` : "Müfredat"}
             </p>
             <p className="text-2xl font-extrabold tabular-nums text-foreground">%{Math.round(c.coverage_pct)}</p>
@@ -511,7 +511,7 @@ function Subjects({ d }: { d: TeacherStudentAnalyticsResponse }) {
                   </span>
                 </div>
                 <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-indigo-600 dark:bg-indigo-400" style={{ width: `${Math.min(100, r.coverage_pct)}%` }} />
+                  <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.min(100, r.coverage_pct)}%` }} />
                 </div>
               </div>
             ) : null}
@@ -529,10 +529,10 @@ function Subjects({ d }: { d: TeacherStudentAnalyticsResponse }) {
 
 function accCls(p: number) {
   return p >= 70
-    ? "text-emerald-700 dark:text-emerald-300"
+    ? "text-emerald-700"
     : p >= 50
-      ? "text-amber-700 dark:text-amber-300"
-      : "text-rose-700 dark:text-rose-300";
+      ? "text-amber-700"
+      : "text-rose-700";
 }
 
 /* ============================================================== 6 denemelerim */
@@ -620,7 +620,7 @@ function WeakTopics({
             const lv = r.level === "zayif" || r.level === "dikkat" ? LEVEL[r.level] : null;
             return (
               <li key={`${r.topic_name}-${i}`} className="flex items-start gap-3 rounded-xl border border-border p-2.5">
-                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-bold text-white dark:bg-slate-200 dark:text-slate-900">
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-bold text-white">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -665,7 +665,7 @@ function DeepLinks() {
             href={x.href}
             className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-cyan-600 hover:bg-cyan-500/5"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-cyan-500/15 text-cyan-800 dark:text-cyan-300">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-cyan-500/15 text-cyan-800">
               <x.icon className="size-4" aria-hidden />
             </span>
             <span className="min-w-0">

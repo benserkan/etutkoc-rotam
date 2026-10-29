@@ -166,8 +166,8 @@ export function ProspectQuickAdd() {
 
       {/* Eklendi kartı — hemen WhatsApp'a geçiş */}
       {added ? (
-        <Card className="border-emerald-300 bg-emerald-50 p-4 dark:bg-emerald-500/10 dark:border-emerald-500/30">
-          <p className="flex items-center gap-2 text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+        <Card className="border-emerald-300 bg-emerald-50 p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
             <Check className="size-4" aria-hidden /> {added.name} havuza eklendi
           </p>
           {added.instagram ? (
@@ -180,7 +180,7 @@ export function ProspectQuickAdd() {
                 <Copy className="size-5" aria-hidden />
                 {copied === `${added.instagram}-1` ? "Kopyalandı ✓" : "1. mesajı kopyala"}
               </button>
-              <p className="mt-2 text-[11px] leading-snug text-emerald-800 dark:text-emerald-300">
+              <p className="mt-2 text-[11px] leading-snug text-emerald-800">
                 Cevap gelince <b>2. mesajı</b> (link + detay) alttaki listeden mor
                 düğmeyle kopyalarsın.
               </p>
@@ -188,7 +188,7 @@ export function ProspectQuickAdd() {
                 href={`https://instagram.com/${added.instagram}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-600 px-4 text-base font-semibold text-cyan-800 active:bg-cyan-50 dark:text-cyan-300"
+                className="mt-2 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-600 px-4 text-base font-semibold text-cyan-800 active:bg-cyan-50"
               >
                 <AtSign className="size-5" aria-hidden /> Profili aç → DM&apos;e yapıştır
               </a>
@@ -207,7 +207,7 @@ export function ProspectQuickAdd() {
           <button
             type="button"
             onClick={() => { setAdded(null); nameRef.current?.focus(); }}
-            className="mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-card text-sm font-medium text-emerald-800 dark:text-emerald-200 active:bg-emerald-50"
+            className="mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-card text-sm font-medium text-emerald-800 active:bg-emerald-50"
           >
             <Plus className="size-4" aria-hidden /> Yeni kişi ekle
           </button>
@@ -226,7 +226,7 @@ export function ProspectQuickAdd() {
                 className={
                   "min-h-[44px] rounded-xl border text-sm font-semibold transition " +
                   (kind === k
-                    ? "border-cyan-600 bg-cyan-50 text-cyan-900 dark:bg-cyan-500/15 dark:text-cyan-200"
+                    ? "border-cyan-600 bg-cyan-50 text-cyan-900"
                     : "border-input bg-background text-muted-foreground")
                 }
               >
@@ -290,7 +290,7 @@ export function ProspectQuickAdd() {
           </div>
 
           {error ? (
-            <p className="rounded-lg bg-rose-50 px-3 py-2 text-[13px] font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">
+            <p className="rounded-lg bg-rose-50 px-3 py-2 text-[13px] font-medium text-rose-800">
               {error}
             </p>
           ) : null}
@@ -329,7 +329,7 @@ export function ProspectQuickAdd() {
                       <button
                         type="button"
                         onClick={() => copyDm(a, 1)}
-                        className="flex size-11 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 active:bg-cyan-100 dark:bg-cyan-500/10 dark:text-cyan-400"
+                        className="flex size-11 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 active:bg-cyan-100"
                         aria-label={`${a.name} — 1. mesajı kopyala`}
                       >
                         {copied === `${a.instagram}-1` ? <Check className="size-5" aria-hidden />
@@ -338,7 +338,7 @@ export function ProspectQuickAdd() {
                       <button
                         type="button"
                         onClick={() => copyDm(a, 2)}
-                        className="flex size-11 items-center justify-center rounded-full bg-violet-50 text-violet-700 active:bg-violet-100 dark:bg-violet-500/10 dark:text-violet-400"
+                        className="flex size-11 items-center justify-center rounded-full bg-violet-50 text-violet-700 active:bg-violet-100"
                         aria-label={`${a.name} — 2. mesajı kopyala (cevap geldiyse)`}
                       >
                         {copied === `${a.instagram}-2` ? <Check className="size-5" aria-hidden />
@@ -348,7 +348,7 @@ export function ProspectQuickAdd() {
                         href={`https://instagram.com/${a.instagram}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex size-11 items-center justify-center rounded-full bg-fuchsia-50 text-fuchsia-700 active:bg-fuchsia-100 dark:bg-fuchsia-500/10 dark:text-fuchsia-400"
+                        className="flex size-11 items-center justify-center rounded-full bg-fuchsia-50 text-fuchsia-700 active:bg-fuchsia-100"
                         aria-label={`${a.name} — Instagram profili`}
                       >
                         <AtSign className="size-5" aria-hidden />
@@ -360,7 +360,7 @@ export function ProspectQuickAdd() {
                       href={waHref(a)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex size-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 active:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400"
+                      className="flex size-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 active:bg-emerald-100"
                       aria-label={`${a.name} — WhatsApp'ta aç`}
                     >
                       <MessageCircle className="size-5" aria-hidden />

@@ -48,7 +48,7 @@ export function ProgramHistoryPanel({ studentId, studentName }: { studentId: num
       {q.isLoading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Yükleniyor…</p>
       ) : q.isError || !q.data ? (
-        <p className="text-sm text-rose-700 dark:text-rose-300">Geçmiş yüklenemedi.</p>
+        <p className="text-sm text-rose-700">Geçmiş yüklenemedi.</p>
       ) : (
         <ProgramHistoryTimeline
           data={q.data}
@@ -76,7 +76,7 @@ function ReadonlyWeek({ studentId, week }: { studentId: number; week: HistoryWee
   });
   const [openDate, setOpenDate] = React.useState<string | null>(null);
   if (q.isLoading) return <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Hafta yükleniyor…</p>;
-  if (!q.data) return <p className="text-sm text-rose-700 dark:text-rose-300">Hafta yüklenemedi.</p>;
+  if (!q.data) return <p className="text-sm text-rose-700">Hafta yüklenemedi.</p>;
   const days = q.data.days.filter((d) => d.date >= week.start && d.date <= week.end);
   const day = days.find((d) => d.date === openDate) ?? null;
   return (

@@ -366,7 +366,7 @@ export function WeekBoard({
                 <span className="truncate">
                   {currentProgramName || "Program"}
                 </span>
-                <span className="text-[11px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded border border-cyan-200 bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 text-cyan-800 dark:text-cyan-200">
+                <span className="text-[11px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded border border-cyan-200 bg-cyan-50 text-cyan-800">
                   {currentProgramDayCount ?? data.days?.length ?? 7} gün
                 </span>
               </h1>
@@ -395,7 +395,7 @@ export function WeekBoard({
               <p className="text-sm text-muted-foreground">
                 {data.start_date} → {data.end_date}
                 {allPrograms.length === 0 ? (
-                  <span className="ml-2 text-amber-700 dark:text-amber-300 text-xs">
+                  <span className="ml-2 text-amber-700 text-xs">
                     · Henüz program oluşturulmadı
                   </span>
                 ) : null}
@@ -497,9 +497,9 @@ export function WeekBoard({
       <GuideHint module="Program" />
 
       {draftTotal > 0 ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50/60 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200 flex items-start gap-3">
+        <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3 text-sm text-amber-900 flex items-start gap-3">
           <FileEdit
-            className="size-4 text-amber-700 dark:text-amber-300 mt-0.5 flex-shrink-0"
+            className="size-4 text-amber-700 mt-0.5 flex-shrink-0"
             aria-hidden
           />
           <span>
@@ -573,7 +573,7 @@ export function WeekBoard({
                 className={cn(
                   "hidden lg:flex items-center justify-center rounded-md border border-border py-1 transition",
                   dayNav.pinned
-                    ? "text-amber-600 hover:bg-amber-500/15 dark:text-amber-400"
+                    ? "text-amber-600 hover:bg-amber-500/15"
                     : "text-muted-foreground/60 hover:bg-muted hover:text-foreground",
                 )}
                 title={dayNav.pinned ? "Gün listesi sabit — kaldır" : "Gün listesini sabitle (hep geniş)"}
@@ -643,7 +643,7 @@ export function WeekBoard({
                       "shrink-0 lg:w-full text-left rounded-lg border transition",
                       dayNav.open ? "px-2.5 py-2" : "px-0 py-1.5 lg:text-center",
                       active
-                        ? "border-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 dark:border-cyan-500/40"
+                        ? "border-cyan-400 bg-cyan-50"
                         : "border-border hover:bg-muted",
                       dragOverDate === d.date &&
                         "ring-2 ring-amber-400 ring-offset-1 ring-offset-background",
@@ -662,7 +662,7 @@ export function WeekBoard({
                         <span
                           className={cn(
                             "text-[11px] font-semibold leading-none",
-                            active ? "text-cyan-900 dark:text-cyan-200" : "text-foreground",
+                            active ? "text-cyan-900" : "text-foreground",
                           )}
                         >
                           {d.dow_label.slice(0, 3)}
@@ -691,19 +691,19 @@ export function WeekBoard({
                         className={cn(
                           "text-sm font-semibold",
                           active
-                            ? "text-cyan-900 dark:text-cyan-200"
+                            ? "text-cyan-900"
                             : "text-foreground",
                         )}
                       >
                         {d.dow_label}
                       </span>
                       {d.is_today ? (
-                        <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:border-emerald-500/30">
+                        <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
                           bugün
                         </span>
                       ) : null}
                       {(d.draft_count ?? 0) > 0 ? (
-                        <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:border-amber-500/30">
+                        <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
                           taslak
                         </span>
                       ) : null}
@@ -977,7 +977,7 @@ function ProgramsDropdown({
                 key={p.id}
                 className={cn(
                   "group flex items-stretch gap-1 rounded",
-                  isCurrent && "bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 border border-cyan-200",
+                  isCurrent && "bg-cyan-50 border border-cyan-200",
                 )}
               >
                 <Link
@@ -990,7 +990,7 @@ function ProgramsDropdown({
                       {p.name || `${p.start_date} – ${p.end_date}`}
                     </span>
                     {p.is_active ? (
-                      <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border border-emerald-200">
+                      <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
                         Bu hafta
                       </span>
                     ) : null}
@@ -1000,7 +1000,7 @@ function ProgramsDropdown({
                     {p.task_count > 0 ? (
                       <span>{p.task_count} görev</span>
                     ) : (
-                      <span className="text-amber-700 dark:text-amber-300">boş</span>
+                      <span className="text-amber-700">boş</span>
                     )}
                   </div>
                 </Link>
@@ -1017,7 +1017,7 @@ function ProgramsDropdown({
                   <button
                     type="button"
                     onClick={() => onDelete(p)}
-                    className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/25 dark:hover:text-rose-100"
+                    className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-700"
                     title="Programı sil"
                     aria-label="Programı sil"
                   >
@@ -1053,20 +1053,20 @@ function UnlinkedTasksBanner({
 
   return (
     <>
-      <div className="rounded-lg border-2 border-sky-200 bg-sky-50 dark:bg-sky-500/15 dark:border-sky-500/30 px-4 py-3 flex items-start gap-3">
-        <Sparkles className="size-5 text-sky-700 dark:text-sky-300 flex-shrink-0 mt-0.5" aria-hidden />
+      <div className="rounded-lg border-2 border-sky-200 bg-sky-50 px-4 py-3 flex items-start gap-3">
+        <Sparkles className="size-5 text-sky-700 flex-shrink-0 mt-0.5" aria-hidden />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-sky-900 dark:text-sky-200">
+          <p className="text-sm font-semibold text-sky-900">
             Bu öğrencinin {taskCount} görevi henüz bir programa bağlı değil
           </p>
-          <p className="text-xs text-sky-800 dark:text-sky-200 mt-1">
+          <p className="text-xs text-sky-800 mt-1">
             {earliest && latest ? (
               <>
                 {earliest} – {latest} arası mevcut görevleri tek tık ile{" "}
                 <b>&quot;Eski Dönem&quot;</b> programına bağlayabilirim. Veri kaybı yok.
               </>
             ) : (
-              "Eski görevleri tek tık ile  dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200'Eski Dönem' programına bağlayabilirim."
+              "Eski görevleri tek tık ile'Eski Dönem' programına bağlayabilirim."
             )}
           </p>
         </div>
@@ -1211,7 +1211,7 @@ function EditProgramDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Pencil className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <Pencil className="size-5 text-cyan-700" aria-hidden />
             Programı düzenle
           </DialogTitle>
         </DialogHeader>
@@ -1257,13 +1257,13 @@ function EditProgramDialog({
               <b
                 className={cn(
                   "tabular-nums",
-                  validDays ? "text-cyan-700 dark:text-cyan-300" : "text-rose-700 dark:text-rose-300",
+                  validDays ? "text-cyan-700" : "text-rose-700",
                 )}
               >
                 {dayCount} gün
               </b>
               {!validDays ? (
-                <span className="text-rose-700 dark:text-rose-300 ml-2 text-xs">
+                <span className="text-rose-700 ml-2 text-xs">
                   (1–14 gün arası olmalı)
                 </span>
               ) : null}
@@ -1292,11 +1292,11 @@ function EditProgramDialog({
             />
           ) : null}
           {blocking.length > 0 ? (
-            <div className="rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-sm">
-              <p className="font-semibold text-amber-900 dark:text-amber-200 mb-2">
+            <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 text-sm">
+              <p className="font-semibold text-amber-900 mb-2">
                 Yeni tarihler {blocking.length} programla çakışıyor:
               </p>
-              <ul className="space-y-1 text-amber-900 dark:text-amber-200">
+              <ul className="space-y-1 text-amber-900">
                 {blocking.map((o) => (
                   <li
                     key={o.program_id}
@@ -1305,13 +1305,13 @@ function EditProgramDialog({
                     <span>
                       <b>{o.label}</b> ({o.start_date} → {o.end_date})
                     </span>
-                    <span className="text-amber-800 dark:text-amber-200">
+                    <span className="text-amber-800">
                       {o.overlap_days} gün, {o.task_count_in_overlap} görev
                     </span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs text-amber-900 dark:text-amber-200">
+              <p className="mt-2 text-xs text-amber-900">
                 Programlar çakışamaz. Tarihleri çakışmayacak şekilde değiştir; yeni haftayı erken
                 başlatmak için “Yeni Program” kullan — eski programı erken bitirme adımları orada.
               </p>
@@ -1387,26 +1387,26 @@ function DeleteProgramDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Trash2 className="size-5 text-rose-600 dark:text-rose-300" aria-hidden />
+            <Trash2 className="size-5 text-rose-600" aria-hidden />
             Programı sil
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2 text-sm">
           <div className="rounded-md border border-border bg-muted/40 p-3">
-            <p className="font-medium text-slate-900 dark:text-slate-200">
+            <p className="font-medium text-slate-900">
               {program.name || `${program.start_date} – ${program.end_date}`}
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+            <p className="text-xs text-slate-600 mt-0.5">
               {program.start_date} → {program.end_date} · {program.day_count} gün
             </p>
           </div>
 
           {isEmpty ? (
-            <p className="text-slate-700 dark:text-slate-300">
+            <p className="text-slate-700">
               Bu program <b>boş</b> — içinde görev yok. Silmek güvenli.
             </p>
           ) : (
-            <div className="rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-amber-900 dark:text-amber-200">
+            <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 text-amber-900">
               <p className="flex items-start gap-2">
                 <TriangleAlert className="size-4 mt-0.5 shrink-0" aria-hidden />
                 <span>
@@ -1521,7 +1521,7 @@ function EarlyEndPanel({
 }) {
   const { untouched, partial, completed, releaseTests, cutTasks } = earlyEndCounts(cutting);
   return (
-              <div className="space-y-3 rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 p-3 text-sm text-amber-900 dark:text-amber-200">
+              <div className="space-y-3 rounded-lg border-2 border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
                 <div>
                   <p className="font-semibold">Önceki program bitmeden yeni program başlıyor</p>
                   {cutting.map((o) => (
@@ -1535,7 +1535,7 @@ function EarlyEndPanel({
                   ))}
                 </div>
                 <div>
-                  <Label htmlFor="wp-early-reason" className="text-amber-900 dark:text-amber-200">
+                  <Label htmlFor="wp-early-reason" className="text-amber-900">
                     Neden erken bitiriyorsun? (zorunlu)
                   </Label>
                   <textarea
@@ -1545,7 +1545,7 @@ function EarlyEndPanel({
                     rows={2}
                     maxLength={300}
                     placeholder="örn. Seans bir gün erkene alındı"
-                    className="mt-1 w-full rounded-md border border-amber-300 bg-white px-2 py-1 text-sm text-slate-900 placeholder:text-slate-400 dark:border-amber-500/40 dark:bg-slate-900 dark:text-slate-100"
+                    className="mt-1 w-full rounded-md border border-amber-300 bg-white px-2 py-1 text-sm text-slate-900 placeholder:text-slate-400"
                   />
                 </div>
                 {cutTasks > 0 ? (
@@ -1681,7 +1681,7 @@ function NewProgramDialogInner({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CalendarPlus className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <CalendarPlus className="size-5 text-cyan-700" aria-hidden />
             {step === "confirm" ? "Son onay" : "Yeni Program Oluştur"}
           </DialogTitle>
         </DialogHeader>
@@ -1749,13 +1749,13 @@ function NewProgramDialogInner({
                 <b
                   className={cn(
                     "tabular-nums",
-                    validDays ? "text-cyan-700 dark:text-cyan-300" : "text-rose-700 dark:text-rose-300",
+                    validDays ? "text-cyan-700" : "text-rose-700",
                   )}
                 >
                   {dayCount} gün
                 </b>
                 {!validDays ? (
-                  <span className="text-rose-700 dark:text-rose-300 ml-2 text-xs">
+                  <span className="text-rose-700 ml-2 text-xs">
                     (1–14 gün arası olmalı)
                   </span>
                 ) : null}
@@ -1780,7 +1780,7 @@ function NewProgramDialogInner({
             </div>
 
             {blocking.length > 0 ? (
-              <div className="rounded-lg border-2 border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 p-3 text-sm text-rose-900 dark:text-rose-200">
+              <div className="rounded-lg border-2 border-rose-300 bg-rose-50 p-3 text-sm text-rose-900">
                 <p className="font-semibold mb-1">Bu tarihlerde başlayan bir program zaten var:</p>
                 <ul className="space-y-0.5 text-xs">
                   {blocking.map((o) => (

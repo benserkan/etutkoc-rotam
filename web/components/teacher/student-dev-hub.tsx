@@ -39,10 +39,10 @@ const CHRONO: Record<DnaChronotype, string> = {
   unknown: "Belirsiz",
 };
 const BURNOUT: Record<BurnoutRiskLevel, { label: string; cls: string }> = {
-  healthy: { label: "sağlıklı", cls: "text-emerald-700 dark:text-emerald-300" },
-  watch: { label: "izle", cls: "text-amber-700 dark:text-amber-300" },
-  warn: { label: "uyarı", cls: "text-amber-800 dark:text-amber-200" },
-  critical: { label: "kritik", cls: "text-rose-700 dark:text-rose-300" },
+  healthy: { label: "sağlıklı", cls: "text-emerald-700" },
+  watch: { label: "izle", cls: "text-amber-700" },
+  warn: { label: "uyarı", cls: "text-amber-800" },
+  critical: { label: "kritik", cls: "text-rose-700" },
 };
 
 export function StudentDevHub({ studentId }: { studentId: number }) {
@@ -171,10 +171,10 @@ export function StudentDevHub({ studentId }: { studentId: number }) {
 }
 
 const TONE = {
-  amber: "border-amber-200 bg-amber-50/60 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200",
-  emerald: "border-emerald-200 bg-emerald-50/60 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200",
-  sky: "border-sky-200 bg-sky-50/60 text-sky-800 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200",
-  rose: "border-rose-200 bg-rose-50/60 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200",
+  amber: "border-amber-200 bg-amber-50/60 text-amber-800",
+  emerald: "border-emerald-200 bg-emerald-50/60 text-emerald-800",
+  sky: "border-sky-200 bg-sky-50/60 text-sky-800",
+  rose: "border-rose-200 bg-rose-50/60 text-rose-800",
 } as const;
 
 function HubCard({

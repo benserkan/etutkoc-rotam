@@ -43,7 +43,7 @@ export function ExamAddButtons({
         }}
         title="Deneme sonuç PDF'i: sorular tek tek okunur, konu analizi ve net fırsatı dolar · en çok 10 MB · okuma 3-5 dakika · dosyayı buraya sürükleyebilirsin"
         className={cn(
-          "inline-flex h-9 items-center gap-2 rounded-md bg-violet-700 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800",
+          "inline-flex h-9 items-center gap-2 rounded-md bg-violet-700 px-3.5 text-sm font-semibold text-white transition hover:bg-violet-800",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2",
           over && "ring-4 ring-violet-300",
         )}
@@ -117,7 +117,7 @@ export function ExamAddActions({
           onImport(f);
         }}
         className={cn(
-          "group flex items-center gap-4 rounded-xl bg-violet-600 p-4 text-left text-white shadow-sm transition hover:bg-violet-700",
+          "group flex items-center gap-4 rounded-xl bg-violet-600 p-4 text-left text-white transition hover:bg-violet-700",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2",
           over && "ring-4 ring-violet-300",
         )}

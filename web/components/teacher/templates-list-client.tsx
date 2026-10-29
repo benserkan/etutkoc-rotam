@@ -119,7 +119,7 @@ function TemplateCard({ tpl }: { tpl: BookTemplateListItem }) {
         </p>
         {tpl.is_ai_generated && !tpl.is_verified ? (
           <div className="pt-2 border-t border-border flex items-center justify-between gap-2">
-            <span className="text-xs text-amber-600 dark:text-amber-400">
+            <span className="text-xs text-amber-600">
               Henüz doğrulanmadı
             </span>
             <Button
@@ -135,7 +135,7 @@ function TemplateCard({ tpl }: { tpl: BookTemplateListItem }) {
             </Button>
           </div>
         ) : tpl.is_verified ? (
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 pt-2 border-t border-border">
+          <p className="text-xs text-emerald-600 pt-2 border-t border-border">
             ✓ Doğrulanmış
           </p>
         ) : null}

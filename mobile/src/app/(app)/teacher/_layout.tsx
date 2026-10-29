@@ -19,7 +19,7 @@ export default function TeacherTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: "#0e7490",
         tabBarInactiveTintColor: "#94a3b8",
-        tabBarStyle: { borderTopColor: "#e2e8f0" },
+        tabBarStyle: { borderTopColor: "#CBCBCD" },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
       }}
     >

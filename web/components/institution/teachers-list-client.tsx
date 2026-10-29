@@ -104,7 +104,7 @@ export function TeachersListClient({ initial, invitations, tab }: Props) {
             Önerilen
           </span>
           <span className="flex items-center gap-2 pr-20 font-semibold">
-            <Mail className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
+            <Mail className="size-4 shrink-0 text-emerald-600" aria-hidden />
             Davet et — öğretmen kendisi kaydolur
           </span>
           <span className="mt-1 block text-xs text-muted-foreground">
@@ -214,7 +214,7 @@ function TeacherRow({ teacher }: { teacher: TeacherSummaryItem }) {
       <td className="px-4 py-2">
         <Link
           href={`/institution/teachers/${teacher.id}`}
-          className="font-medium hover:text-accent hover:underline"
+          className="font-medium hover:text-primary hover:underline"
         >
           {teacher.full_name}
         </Link>
@@ -286,7 +286,7 @@ function PauseBadge({ reason }: { reason: string | null }) {
   if (reason && reason.startsWith("auto")) {
     return (
       <span
-        className="ml-1.5 inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border border-amber-300"
+        className="ml-1.5 inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300"
         title="Sistem tarafından sessizlik nedeniyle otomatik pasifleştirildi (uyarılar susturulmuş)"
       >
         🤖 Otomatik pasif
@@ -305,7 +305,7 @@ function PauseBadge({ reason }: { reason: string | null }) {
 
 function rateColorClass(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
-  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
-  return "text-rose-700 dark:text-rose-400";
+  if (pct >= 70) return "text-emerald-700";
+  if (pct >= 40) return "text-amber-700";
+  return "text-rose-700";
 }

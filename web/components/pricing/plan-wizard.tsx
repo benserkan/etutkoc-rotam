@@ -157,17 +157,17 @@ function OptionButton({
         "flex w-full items-start gap-3 rounded-xl border-2 px-4 py-3 text-left transition",
         selected
           ? "border-cyan-600 bg-cyan-50 shadow-sm"
-          : "border-slate-200 bg-white dark:bg-white hover:border-cyan-300 hover:shadow-sm",
+          : "border-slate-200 bg-white hover:border-cyan-300 hover:shadow-sm",
       )}
     >
       <span
         aria-hidden
         className={cn(
           "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border-2",
-          selected ? "border-cyan-600 bg-cyan-600" : "border-slate-300 bg-white dark:bg-white",
+          selected ? "border-cyan-600 bg-cyan-600" : "border-slate-300 bg-white",
         )}
       >
-        {selected ? <span className="size-1.5 rounded-full bg-white dark:bg-white" /> : null}
+        {selected ? <span className="size-1.5 rounded-full bg-white" /> : null}
       </span>
       <span>
         <span className="block text-sm font-semibold text-slate-900">{title}</span>
@@ -199,7 +199,7 @@ export function PlanWizard({
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   return (
-    <div className="mx-auto mt-8 max-w-2xl overflow-hidden rounded-3xl border border-cyan-200 bg-white dark:bg-white shadow-lg shadow-cyan-900/10">
+    <div className="mx-auto mt-8 max-w-2xl overflow-hidden rounded-3xl border border-cyan-200 bg-white shadow-lg shadow-cyan-900/10">
       {/* Başlık bandı */}
       <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-cyan-700 to-cyan-900 px-6 py-4">
         <h2 className="flex items-center gap-2.5 font-display text-base font-bold text-white">
@@ -375,7 +375,7 @@ export function PlanWizard({
               <button
                 type="button"
                 onClick={onSkip}
-                className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-500/25"
+                className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 Kartları incele
               </button>

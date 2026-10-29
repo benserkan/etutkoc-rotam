@@ -40,9 +40,9 @@ function dayCount(a: string, b: string) {
 }
 
 function pctTone(p: number) {
-  if (p >= 70) return { text: "text-emerald-700 dark:text-emerald-300", bar: "bg-emerald-500" };
-  if (p >= 40) return { text: "text-amber-700 dark:text-amber-300", bar: "bg-amber-500" };
-  return { text: "text-rose-700 dark:text-rose-300", bar: "bg-rose-500" };
+  if (p >= 70) return { text: "text-emerald-700", bar: "bg-emerald-500" };
+  if (p >= 40) return { text: "text-amber-700", bar: "bg-amber-500" };
+  return { text: "text-rose-700", bar: "bg-rose-500" };
 }
 
 function entryDate(e: HistoryEntry) {
@@ -139,13 +139,13 @@ export function ProgramHistoryTimeline({
 function SwitchRow({ s }: { s: NonNullable<HistoryEntry["switch"]> }) {
   const d = parse(s.date);
   return (
-    <div className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm text-violet-900 dark:border-violet-500/40 dark:bg-violet-500/10 dark:text-violet-100"
+    <div className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm text-violet-900"
          data-testid="history-switch">
       <div className="flex flex-wrap items-center gap-2 font-medium">
         <ArrowRightLeft className="size-4 shrink-0" aria-hidden />
         <span>{DOW[d.getDay()]} {shortDate(s.date)} · {s.from_label} → {s.to_label}</span>
       </div>
-      {s.note && <p className="mt-0.5 text-xs text-violet-800 dark:text-violet-200">{s.note}</p>}
+      {s.note && <p className="mt-0.5 text-xs text-violet-800">{s.note}</p>}
     </div>
   );
 }
@@ -212,11 +212,11 @@ function PeriodRow({ e, onOpen }: { e: HistoryEntry; onOpen: () => void }) {
   const tone = pctTone(p.pct);
   const empty = p.items_total === 0;
   return (
-    <div className="rounded-lg border border-cyan-300 bg-card dark:border-cyan-500/40" data-testid="history-period">
+    <div className="rounded-lg border border-cyan-300 bg-card" data-testid="history-period">
       <button type="button" onClick={onOpen}
               className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2.5 text-left hover:bg-muted/40">
         <span className="flex min-w-[11rem] items-center gap-2">
-          <Layers className="size-4 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+          <Layers className="size-4 shrink-0 text-cyan-700" aria-hidden />
           <span>
             <span className="block text-sm font-semibold text-foreground">
               {rangeLabel(p.opened_on, p.closed_on ?? (e.period_current ? null : p.expected_next_on))}

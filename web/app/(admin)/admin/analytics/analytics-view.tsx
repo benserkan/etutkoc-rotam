@@ -24,7 +24,7 @@ export function AnalyticsView({
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
+            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
               <BarChart3 className="size-5" aria-hidden />
             </span>
             <div>
@@ -74,21 +74,21 @@ export function AnalyticsView({
 
 function SetupGuide() {
   return (
-    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-5 dark:border-amber-900/40 dark:bg-amber-950/20">
-      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-5">
+      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-900">
         <Info className="size-4" aria-hidden /> Analitik henüz yapılandırılmadı
       </div>
-      <p className="text-sm text-amber-900/90 dark:text-amber-100/80">
+      <p className="text-sm text-amber-900/90">
         Plausible (self-host) sunucuda çalışır hale gelince burada gömülü pano görünür.
         Kurulum adımları:
       </p>
-      <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-amber-900/90 dark:text-amber-100/80">
+      <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-amber-900/90">
         <li>
-          <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">docker compose up -d plausible</code>{" "}
+          <code className="rounded bg-amber-100 px-1">docker compose up -d plausible</code>{" "}
           ile Plausible + ClickHouse ayağa kalkar (deploy/docker-compose.yml hazır).
         </li>
         <li>
-          <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">analytics.etutkoc.com</code>{" "}
+          <code className="rounded bg-amber-100 px-1">analytics.etutkoc.com</code>{" "}
           DNS A kaydı sunucuya yönlendirilir; Plausible ilk kullanıcı + site
           (<code>rotam.etutkoc.com</code>) oluşturulur.
         </li>
@@ -97,12 +97,12 @@ function SetupGuide() {
           paylaşılabilir bağlantı üretilir.
         </li>
         <li>
-          O bağlantı <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">PLAUSIBLE_SHARED_URL</code>{" "}
+          O bağlantı <code className="rounded bg-amber-100 px-1">PLAUSIBLE_SHARED_URL</code>{" "}
           olarak <code>deploy/.env</code>’e yazılır;{" "}
-          <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">docker compose up -d next</code>.
+          <code className="rounded bg-amber-100 px-1">docker compose up -d next</code>.
         </li>
       </ol>
-      <p className="mt-3 text-xs text-amber-800/80 dark:text-amber-200/60">
+      <p className="mt-3 text-xs text-amber-800/80">
         Ayrıntı: <code>deploy/PLAUSIBLE_SETUP.md</code>
       </p>
     </div>

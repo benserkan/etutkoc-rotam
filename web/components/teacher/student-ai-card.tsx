@@ -45,7 +45,7 @@ function ToggleRow({
           pending && "opacity-60",
           enabled
             ? "bg-emerald-600 text-white hover:bg-emerald-700"
-            : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-500/20 dark:text-slate-300",
+            : "bg-slate-200 text-slate-700 hover:bg-slate-300",
         )}
       >
         {pending ? (
@@ -73,7 +73,7 @@ export function StudentAiCard({ studentId }: { studentId: number }) {
   return (
     <section className="rounded-lg border border-border bg-card p-4">
       <h2 className="flex items-center gap-2 text-sm font-semibold">
-        <Sparkles className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />
+        <Sparkles className="size-4 text-violet-600" aria-hidden />
         Yapay zekâ erişimi
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">

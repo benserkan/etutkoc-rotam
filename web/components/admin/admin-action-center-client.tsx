@@ -44,11 +44,11 @@ const SUMMARY_CARDS: { key: string; label: string; sub: string; tone: string }[]
 ];
 
 const CARD_TONE: Record<string, string> = {
-  rose: "bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-  amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-  slate: "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
-  emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  indigo: "bg-indigo-50 border-indigo-200 text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
+  rose: "bg-rose-50 border-rose-200 text-rose-900",
+  amber: "bg-amber-50 border-amber-200 text-amber-900",
+  slate: "bg-slate-50 border-slate-200 text-slate-900",
+  emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
+  indigo: "bg-indigo-50 border-indigo-200 text-indigo-900",
 };
 
 export function AdminActionCenterClient({ initial }: Props) {
@@ -72,7 +72,7 @@ export function AdminActionCenterClient({ initial }: Props) {
       <header>
         <span className="text-sm text-muted-foreground">Ticari Pano</span>
         <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <Target className="size-6 text-indigo-700 dark:text-indigo-300" aria-hidden />
+          <Target className="size-6 text-indigo-700" aria-hidden />
           Aksiyon Merkezi — Bugün Ne Yapmalıyım?
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -130,7 +130,7 @@ export function AdminActionCenterClient({ initial }: Props) {
           <button
             type="button"
             onClick={() => setFilter(null)}
-            className="text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
+            className="text-xs font-medium text-indigo-700 hover:underline"
           >
             Filtreyi temizle
           </button>
@@ -138,7 +138,7 @@ export function AdminActionCenterClient({ initial }: Props) {
       ) : null}
 
       {data.items.length === 0 ? (
-        <Card className="p-12 text-center text-sm text-emerald-700 dark:text-emerald-300">
+        <Card className="p-12 text-center text-sm text-emerald-700">
           <CheckCircle2 className="mx-auto mb-2 size-8" aria-hidden />
           Tebrikler — bugün için açık aksiyon yok. Tüm kurumlar sağlıklı, ödemeler
           güncel, deneme alarmı yok.
@@ -149,7 +149,7 @@ export function AdminActionCenterClient({ initial }: Props) {
           <button
             type="button"
             onClick={() => setFilter(null)}
-            className="ml-1 font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
+            className="ml-1 font-medium text-indigo-700 hover:underline"
           >
             Tümünü göster
           </button>
@@ -216,14 +216,14 @@ function ActionRow({ it }: { it: ActionCenterItem }) {
               </Link>
               <span className={cn(
                 "rounded px-1.5 py-0.5 text-[10px] font-medium",
-                ownerType === "user" ? "bg-cyan-100 dark:bg-cyan-500/15 text-cyan-800 dark:text-cyan-200" : "bg-violet-100 dark:bg-violet-500/15 text-violet-800 dark:text-violet-200",
+                ownerType === "user" ? "bg-cyan-100 text-cyan-800" : "bg-violet-100 text-violet-800",
               )}>
                 {ownerType === "user" ? "Bağımsız koç" : "Kurum"}
               </span>
               <SeverityBadge severity={it.severity} />
               <span className="text-[11px] text-muted-foreground">{it.plan_label}</span>
               {it.monthly_price_try > 0 ? (
-                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                <span className="text-[11px] font-semibold text-emerald-700">
                   {tl(it.monthly_price_try)}/ay
                 </span>
               ) : null}
@@ -294,7 +294,7 @@ function ActionRow({ it }: { it: ActionCenterItem }) {
             {it.last_action_summary ? ` — "${it.last_action_summary.slice(0, 80)}"` : ""}
           </div>
         ) : (
-          <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300">
+          <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-700">
             <TriangleAlert className="size-3.5" aria-hidden />
             Bu kuruma daha önce hiç temas edilmemiş.
           </div>

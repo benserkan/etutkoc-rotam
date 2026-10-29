@@ -81,7 +81,7 @@ export function TopicLinkPanel({
     : dedupe([...(sug?.topic ? [sug.topic] : []), ...(sug?.options ?? [])]);
 
   return (
-    <div className="rounded-md border border-amber-200 bg-amber-50 text-amber-900 px-3 py-2.5 text-xs space-y-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+    <div className="rounded-md border border-amber-200 bg-amber-50 text-amber-900 px-3 py-2.5 text-xs space-y-2">
       <p className="flex items-start gap-1.5">
         <Link2 className="size-3.5 shrink-0 mt-0.5" aria-hidden />
         <span>
@@ -104,7 +104,7 @@ export function TopicLinkPanel({
             aria-label="Görevin konusu"
             value={value === null ? "" : String(value)}
             onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-            className="w-full min-w-0 sm:w-auto sm:flex-1 rounded-md border border-amber-300 bg-white px-2 py-1 text-xs text-slate-900 dark:border-amber-500/40 dark:bg-slate-900 dark:text-slate-100"
+            className="w-full min-w-0 sm:w-auto sm:flex-1 rounded-md border border-amber-300 bg-white px-2 py-1 text-xs text-slate-900"
           >
             <option value="">— konuya bağlama (etkinlik olarak kaydet) —</option>
             {options.map((o) => (

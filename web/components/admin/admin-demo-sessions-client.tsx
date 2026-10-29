@@ -41,9 +41,9 @@ const KIND_LABEL: Record<DemoKind, string> = {
 };
 
 const KIND_TONE: Record<DemoKind, string> = {
-  institution: "border-indigo-200 bg-indigo-50 text-indigo-800 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-  solo_coach: "border-violet-200 bg-violet-50 text-violet-800 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
-  institution_teacher: "border-sky-200 bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+  institution: "border-indigo-200 bg-indigo-50 text-indigo-800",
+  solo_coach: "border-violet-200 bg-violet-50 text-violet-800",
+  institution_teacher: "border-sky-200 bg-sky-50 text-sky-800",
 };
 
 function fmtRelative(iso: string): string {
@@ -81,7 +81,7 @@ export function AdminDemoSessionsClient({ initial }: Props) {
     <div className="px-3 sm:px-6 py-4 max-w-5xl mx-auto">
       <header className="mb-5">
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <FlaskConical className="size-6 text-amber-700 dark:text-amber-300" aria-hidden />
+          <FlaskConical className="size-6 text-amber-700" aria-hidden />
           Demo Hesaplar
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -156,10 +156,10 @@ function UniverseCreator() {
 
   return (
     <>
-      <Card className="mb-5 border-cyan-200 dark:border-cyan-500/30">
+      <Card className="mb-5 border-cyan-200">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Building2 className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <Building2 className="size-4 text-cyan-700" aria-hidden />
             <h2 className="text-sm font-semibold">
               Dolu Kurumsal Evren Oluştur
             </h2>
@@ -246,13 +246,13 @@ function UniverseCreator() {
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FlaskConical className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+              <FlaskConical className="size-4 text-cyan-700" aria-hidden />
               {result?.label} — hesaplar hazırlanıyor
             </DialogTitle>
           </DialogHeader>
           {result ? (
             <div className="space-y-3 py-1">
-              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
                 {result.note}
               </p>
               <p className="text-sm">
@@ -323,7 +323,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-2">
                 <FlaskConical
-                  className="size-4 text-amber-700 dark:text-amber-300 flex-shrink-0"
+                  className="size-4 text-amber-700 flex-shrink-0"
                   aria-hidden
                 />
                 {item.label ? (
@@ -371,7 +371,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
               variant="outline"
               size="sm"
               onClick={() => setConfirmOpen(true)}
-              className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/25"
+              className="border-rose-300 text-rose-700 hover:bg-rose-50"
             >
               <Trash2 className="size-3.5" aria-hidden />
               Sil
@@ -384,7 +384,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-rose-800 dark:text-rose-200">
+            <DialogTitle className="flex items-center gap-2 text-rose-800">
               <Trash2 className="size-4" aria-hidden />
               Bu demo seansını sil?
             </DialogTitle>
@@ -401,7 +401,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
               ) : null}
               <li>Tüm örnek görev/deneme/seans/kitap verileri</li>
             </ul>
-            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
               Yalnız <code>is_demo=True</code> kayıtlara dokunulur. Gerçek
               hesaplar etkilenmez.
             </p>

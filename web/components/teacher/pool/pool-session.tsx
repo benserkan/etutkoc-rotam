@@ -168,7 +168,7 @@ function ItemList({ studentId, data }: { studentId: number; data: PoolSessionRes
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">
         “Öğrenci” = kendi kaydı · “Seansta” = sen kaynağına bakıp işaretledin (kitaplı kalemde kitap sayacına da yazılır).
-        <span className="ml-1 italic text-violet-700 dark:text-violet-300">Eğik yazı = ders öğretmeninin ödevi.</span>
+        <span className="ml-1 italic text-violet-700">Eğik yazı = ders öğretmeninin ödevi.</span>
       </p>
       <div className="mt-3 space-y-4">
         {[...groups.entries()].sort((a, b) => (order.get(a[0]) ?? 99) - (order.get(b[0]) ?? 99)).map(([name, list]) => {
@@ -203,29 +203,29 @@ function ItemRow({ it, rail, studentId, onMark, busy }: { it: SessionItemOut; ra
       className={cn(
         "rounded-lg border border-l-4 bg-background px-3 py-2 text-sm",
         done && "bg-emerald-500/5",
-        it.avoided && !done && "border-amber-400 dark:border-amber-500/50",
+        it.avoided && !done && "border-amber-400",
       )}
       style={{ borderLeftColor: rail }}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className={cn("shrink-0", done ? "text-emerald-700 dark:text-emerald-300" : "text-muted-foreground")} title={done ? "Tamamlandı" : "Kalan var"}>
+        <span className={cn("shrink-0", done ? "text-emerald-700" : "text-muted-foreground")} title={done ? "Tamamlandı" : "Kalan var"}>
           {done ? <Check className="size-4" aria-hidden /> : <span className="inline-block size-4 rounded-full border" />}
         </span>
         <div className="min-w-0 flex-1">
-          <div className={cn("break-words font-medium text-foreground", it.teacher_homework && "italic text-violet-800 dark:text-violet-200")}>{itemTitle(it)}</div>
+          <div className={cn("break-words font-medium text-foreground", it.teacher_homework && "italic text-violet-800")}>{itemTitle(it)}</div>
           <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
             <span>{it.quantity} {UNIT_LABELS[it.unit]}</span>
             <span>· öğrenci {it.completed}</span>
             <span>· seansta {it.session_marked}</span>
             <span>· kalan {it.remaining}</span>
             {it.source !== "rehber" && <span>· {SOURCE_LABELS[it.source]}{it.approval === "bekliyor" ? " (onay bekliyor)" : ""}</span>}
-            {it.avoided && <span className="text-amber-800 dark:text-amber-200">· {it.avoided_reason}</span>}
+            {it.avoided && <span className="text-amber-800">· {it.avoided_reason}</span>}
           </div>
         </div>
         {it.book_id && (
           <Link
             href={`/teacher/students/${studentId}#books`}
-            className="text-xs text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300"
+            className="text-xs text-cyan-700 underline-offset-2 hover:underline"
             title="Kitaba bak (koltuk ızgarası Kitaplar sekmesinde)"
           >
             <BookOpen className="inline size-3.5" aria-hidden /> kitaba bak
@@ -293,7 +293,7 @@ function TopicCloseButton({ studentId, topicId, closed }: { studentId: number; t
 function AvoidedCard({ data }: { data: PoolSessionResponse }) {
   if (!data.avoided.length) return null;
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100" data-section="pool:session:avoided">
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900" data-section="pool:session:avoided">
       <h2 className="flex items-center gap-2 font-semibold"><AlertTriangle className="size-4" aria-hidden /> Kaçınılan kalemler</h2>
       <ul className="mt-1 list-disc pl-5 text-sm">
         {data.avoided.map((it) => <li key={it.id}>{itemTitle(it)} — {it.avoided_reason}</li>)}
@@ -310,17 +310,17 @@ function ExamStrip({ studentId, data }: { studentId: number; data: PoolSessionRe
   return (
     <Link href={`/teacher/students/${studentId}#exams`} className="block rounded-lg border bg-card p-4 hover:bg-accent" data-section="pool:session:exam">
       <h2 className="flex items-center gap-2 font-semibold text-foreground">
-        {up ? <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden /> : <TrendingDown className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />}
+        {up ? <TrendingUp className="size-4 text-emerald-600" aria-hidden /> : <TrendingDown className="size-4 text-rose-600" aria-hidden />}
         Deneme · {e.title} ({fmtDate(e.exam_date)}){!e.in_period && <span className="text-xs font-normal text-muted-foreground">· bu dönemden önce</span>}
       </h2>
       <div className="mt-1 space-y-0.5 text-sm text-foreground">
         <p>
           Net <strong>{e.net.toLocaleString("tr-TR")}</strong>
-          {e.delta != null && <span className={up ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}> ({e.delta > 0 ? "+" : ""}{e.delta.toLocaleString("tr-TR")} · {e.prev_title})</span>}
+          {e.delta != null && <span className={up ? "text-emerald-700" : "text-rose-700"}> ({e.delta > 0 ? "+" : ""}{e.delta.toLocaleString("tr-TR")} · {e.prev_title})</span>}
           {e.delta == null && <span className="text-muted-foreground"> · aynı türde önceki deneme yok</span>}
         </p>
         <p>Yanlış konular: {e.wrong_topics.length ? e.wrong_topics.map((w) => `${w.name} (${w.wrong})`).join(", ") : "konulu yanlış yok"}</p>
-        <p className={e.studied_but_wrong.length ? "text-rose-700 dark:text-rose-300" : "text-muted-foreground"}>
+        <p className={e.studied_but_wrong.length ? "text-rose-700" : "text-muted-foreground"}>
           Bu dönem çalıştığı konudan denemede kaçırdığı: {e.studied_but_wrong.length ? e.studied_but_wrong.map((w) => `${w.name} (${w.wrong})`).join(", ") : "yok"}
         </p>
       </div>
@@ -425,7 +425,7 @@ function FinishDialog({ studentId, data, open, onOpenChange }: {
             </span>
           </label>
           {toGunGun && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100" data-section="pool:finish:switch">
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900" data-section="pool:finish:switch">
               <p className="font-semibold">Geçişte ne olur?</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-4">
                 <li>Bu döneme kadar çözülenler müfredata ve kitap sayacına yazılmıştı — aynen kalır.</li>

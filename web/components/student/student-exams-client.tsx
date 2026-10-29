@@ -50,19 +50,19 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 const SECTION_TONE: Record<string, string> = {
-  lgs: "border-cyan-200 bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200",
-  tyt: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
-  ayt_say: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  ayt_ea: "border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-  ayt_soz: "border-violet-200 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
-  ayt_dil: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
-  okul: "border-slate-200 bg-slate-100 text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
-  maarif_1: "border-teal-200 bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:border-teal-500/30 dark:text-teal-200",
-  maarif_2: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-500/10 dark:border-fuchsia-500/30 dark:text-fuchsia-200",
-  maarif_9: "border-lime-200 bg-lime-50 text-lime-800 dark:bg-lime-500/10 dark:border-lime-500/30 dark:text-lime-200",
-  maarif_10: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
-  maarif_11: "border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200",
-  gis_12: "border-orange-200 bg-orange-50 text-orange-800 dark:bg-orange-500/10 dark:border-orange-500/30 dark:text-orange-200",
+  lgs: "border-cyan-200 bg-cyan-50 text-cyan-700",
+  tyt: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  ayt_say: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  ayt_ea: "border-amber-200 bg-amber-50 text-amber-700",
+  ayt_soz: "border-violet-200 bg-violet-50 text-violet-700",
+  ayt_dil: "border-rose-200 bg-rose-50 text-rose-700",
+  okul: "border-slate-200 bg-slate-100 text-slate-700",
+  maarif_1: "border-teal-200 bg-teal-50 text-teal-700",
+  maarif_2: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700",
+  maarif_9: "border-lime-200 bg-lime-50 text-lime-800",
+  maarif_10: "border-sky-200 bg-sky-50 text-sky-700",
+  maarif_11: "border-blue-200 bg-blue-50 text-blue-700",
+  gis_12: "border-orange-200 bg-orange-50 text-orange-800",
 };
 
 function formatTRDate(iso: string): string {
@@ -181,7 +181,7 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
                   className={cn(
                     "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
                     tab === t.key
-                      ? "border-cyan-700 text-foreground dark:border-cyan-400"
+                      ? "border-cyan-700 text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -261,16 +261,16 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
 
 function CoachNoteCard({ row, share }: { row: ExamResultRow; share: ExamShareInfo }) {
   return (
-    <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-500/30 dark:bg-cyan-500/10">
-      <p className="flex items-center gap-2 text-sm font-semibold text-cyan-950 dark:text-cyan-100">
+    <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
+      <p className="flex items-center gap-2 text-sm font-semibold text-cyan-950">
         <MessageSquareQuote className="size-4" aria-hidden />
         Koçunun değerlendirmesi
       </p>
-      <p className="mt-0.5 text-xs text-cyan-900/80 dark:text-cyan-200/80">
+      <p className="mt-0.5 text-xs text-cyan-900/80">
         {row.title} · {formatTRDate(row.exam_date)}
         {share.shared_by_name ? ` · ${share.shared_by_name}` : ""}
       </p>
-      <p className="mt-2 whitespace-pre-line text-sm text-cyan-950 dark:text-cyan-50">{share.note}</p>
+      <p className="mt-2 whitespace-pre-line text-sm text-cyan-950">{share.note}</p>
     </section>
   );
 }
@@ -319,15 +319,15 @@ function StudentExamRow({
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {formatTRDate(row.exam_date)} ·{" "}
-                <span className="text-emerald-600 dark:text-emerald-300">{row.total_correct}D</span>{" "}
-                <span className="text-rose-600 dark:text-rose-300">{row.total_wrong}Y</span>{" "}
+                <span className="text-emerald-600">{row.total_correct}D</span>{" "}
+                <span className="text-rose-600">{row.total_wrong}Y</span>{" "}
                 <span className="text-muted-foreground">{row.total_blank}B</span>
                 {" · "}
                 {row.total_questions} soru
               </p>
             </div>
             <Button variant="ghost" size="sm" onClick={onOpenDetail} aria-label="Deneme detayı">
-              <Eye className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+              <Eye className="size-4 text-cyan-700" aria-hidden />
             </Button>
             {row.import_source === "pdf_import" ? (
               <ArchiveExamWrongsButton
@@ -352,7 +352,7 @@ function StudentExamRow({
             ) : null}
           </div>
           {share?.note ? (
-            <p className="mt-2 whitespace-pre-line rounded-md border border-cyan-200 bg-cyan-50 px-2.5 py-1.5 text-xs text-cyan-950 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+            <p className="mt-2 whitespace-pre-line rounded-md border border-cyan-200 bg-cyan-50 px-2.5 py-1.5 text-xs text-cyan-950">
               <span className="font-semibold">Koçunun notu: </span>
               {share.note}
             </p>
@@ -373,10 +373,10 @@ function StudentExamRow({
                   {row.subjects.map((s) => (
                     <tr key={s.name} className="border-b border-border/60 last:border-0">
                       <td className="px-2 py-1">{s.name}</td>
-                      <td className="px-2 py-1 text-right tabular-nums text-emerald-700 dark:text-emerald-300">
+                      <td className="px-2 py-1 text-right tabular-nums text-emerald-700">
                         {s.correct}
                       </td>
-                      <td className="px-2 py-1 text-right tabular-nums text-rose-700 dark:text-rose-300">
+                      <td className="px-2 py-1 text-right tabular-nums text-rose-700">
                         {s.wrong}
                       </td>
                       <td className="px-2 py-1 text-right tabular-nums text-muted-foreground">

@@ -141,7 +141,7 @@ function ActiveSessionCard({ session }: { session: FocusSession }) {
           ) : null}
         </div>
         {overdue ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5 text-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 text-amber-900 px-2 py-0.5 text-xs">
             <AlertTriangle className="size-3.5" aria-hidden /> Süre doldu
           </span>
         ) : null}

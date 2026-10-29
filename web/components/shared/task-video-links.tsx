@@ -65,7 +65,7 @@ export function TaskVideoLinks({
                 href={v.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex max-w-full items-start gap-1 text-[12px] text-cyan-800 hover:underline dark:text-cyan-300"
+                className="inline-flex max-w-full items-start gap-1 text-[12px] text-cyan-800 hover:underline"
               >
                 <ExternalLink className="mt-0.5 size-3 shrink-0" aria-hidden />
                 <span className="break-words">

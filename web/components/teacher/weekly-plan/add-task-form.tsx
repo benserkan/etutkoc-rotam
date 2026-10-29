@@ -264,7 +264,7 @@ export function AddTaskForm({
                 className={cn(
                   "px-2 py-2.5 rounded-md text-[12px] font-medium border transition-all flex flex-col items-center gap-1",
                   active
-                    ? "border-foreground bg-foreground text-background shadow-sm"
+                    ? "border-foreground bg-foreground text-background"
                     : "border-border bg-card text-foreground hover:border-foreground/30 hover:bg-muted/50",
                 )}
               >
@@ -776,7 +776,7 @@ function TestForm({
         </div>
       </div>
       {looksLikeQuestions ? (
-        <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900">
           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             Bu kutu <b>test sayısıdır</b> — {wanted} test yazdın. Soru sayısı yazdıysan test
@@ -785,7 +785,7 @@ function TestForm({
         </p>
       ) : null}
       {overflow > 0 && selectedSection ? (
-        <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900">
           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             <b>{selectedSection.label}</b> bölümünde kayıtlı kapasite{" "}
@@ -1005,7 +1005,7 @@ function BlockForm({
 
       {selectedBlock ? (
         <form onSubmit={onSubmit} className="space-y-2">
-          <div className="rounded-md border border-indigo-200 dark:border-indigo-900 bg-indigo-50/60 dark:bg-indigo-950/25 px-3 py-2 text-[12px] text-indigo-800 dark:text-indigo-200 flex items-center justify-between gap-2">
+          <div className="rounded-md border border-indigo-200 bg-indigo-50/60 px-3 py-2 text-[12px] text-indigo-800 flex items-center justify-between gap-2">
             <span className="truncate">
               <b>{selectedBlock.title}</b>
               {selectedBlock.subject_name ? ` · ${selectedBlock.subject_name}` : ""}
@@ -1045,7 +1045,7 @@ function BlockForm({
             </div>
           </div>
           {count && Number(count) > selectedBlock.remaining ? (
-            <p className="inline-flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-300">
+            <p className="inline-flex items-center gap-1.5 text-[11px] text-amber-700">
               <AlertTriangle className="size-3" aria-hidden />
               Kalan {selectedBlock.remaining} {selectedBlock.unit}; daha fazla
               dağıtıyorsun (engellenmez — bloğun toplamı aşılır).
@@ -1459,9 +1459,9 @@ function ReviewChips({
                 : Brain;
           const scoreTone =
             it.score >= 60
-              ? "bg-rose-100 dark:bg-rose-500/15 text-rose-800 dark:text-rose-200"
+              ? "bg-rose-100 text-rose-800"
               : it.score >= 30
-                ? "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-200"
+                ? "bg-amber-100 text-amber-800"
                 : "bg-muted text-muted-foreground";
           return (
             <button
@@ -1676,7 +1676,7 @@ function OtherForm({
         />
       ) : null}
       {linking ? (
-        <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+        <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700">
           <Info className="size-3" aria-hidden />
           Görev &quot;{testCount} test&quot; olarak seçilen konuya bağlı kaydedilecek.
         </p>
@@ -1840,9 +1840,9 @@ function StatCell({
 }) {
   const toneClass = {
     neutral: "text-foreground",
-    info: "text-indigo-700 dark:text-indigo-300",
-    success: "text-emerald-700 dark:text-emerald-300",
-    danger: "text-rose-700 dark:text-rose-300",
+    info: "text-indigo-700",
+    success: "text-emerald-700",
+    danger: "text-rose-700",
   }[tone];
   return (
     <div className="px-2 py-1.5 rounded-md bg-background border border-border text-center">
@@ -1973,7 +1973,7 @@ export function SourcelessOptions({
             </div>
           </div>
           {rangeInvalid ? (
-            <p className="text-[12px] text-rose-700 dark:text-rose-300">
+            <p className="text-[12px] text-rose-700">
               Bitiş sayfası başlangıçtan küçük olamaz.
             </p>
           ) : null}

@@ -95,15 +95,15 @@ export function CarryoverPanel({
       summary={`${candidates.length} görev${totalRemaining > 0 ? ` · ${totalRemaining} test` : ""}`}
       className={
         isBrowse
-          ? "bg-slate-50/60 dark:bg-slate-500/10"
-          : "bg-amber-50/60 dark:bg-amber-500/10"
+          ? "bg-slate-50/60"
+          : "bg-amber-50/60"
       }
     >
       <div>
           <p
             className={cn(
               "px-4 pb-2 text-xs",
-              isBrowse ? "text-slate-600 dark:text-slate-300" : "text-amber-800 dark:text-amber-200",
+              isBrowse ? "text-slate-600" : "text-amber-800",
             )}
           >
             {isBrowse
@@ -127,8 +127,8 @@ export function CarryoverPanel({
                 className={cn(
                   "rounded-md border px-2.5 py-2 text-xs",
                   isBrowse
-                    ? "border-slate-200 bg-card dark:border-slate-500/40"
-                    : "cursor-grab border-amber-200 bg-card active:cursor-grabbing dark:border-amber-500/40",
+                    ? "border-slate-200 bg-card"
+                    : "cursor-grab border-amber-200 bg-card active:cursor-grabbing",
                 )}
               >
                 <div className="flex items-start gap-2">
@@ -145,26 +145,26 @@ export function CarryoverPanel({
                     title={cardTooltip(c)}
                     className="min-w-0 flex-1 rounded text-left outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-amber-400"
                   >
-                    <span className="flex items-start gap-1 font-medium text-slate-900 dark:text-slate-200">
+                    <span className="flex items-start gap-1 font-medium text-slate-900">
                       {c.is_block ? (
                         <Boxes className="mt-0.5 size-3 shrink-0 text-violet-500" aria-hidden />
                       ) : null}
                       <span className="break-words">{c.title}</span>
                     </span>
                     {c.section_items.map((si) => (
-                      <span key={si.section_id} className="block break-words text-slate-600 dark:text-slate-300">
+                      <span key={si.section_id} className="block break-words text-slate-600">
                         {si.book_name} · {si.section_label} ·{" "}
-                        <span className="font-semibold text-amber-800 dark:text-amber-200">{si.remaining} test</span>
+                        <span className="font-semibold text-amber-800">{si.remaining} test</span>
                       </span>
                     ))}
                     {c.itemless_items
                       .filter((il) => il.label !== c.title)
                       .map((il, i) => (
-                        <span key={i} className="block break-words text-slate-600 dark:text-slate-300">
+                        <span key={i} className="block break-words text-slate-600">
                           {il.label} · {il.count} soru
                         </span>
                       ))}
-                    <span className="text-slate-500 dark:text-slate-400">
+                    <span className="text-slate-500">
                       {fmtDate(c.task_date)} ·{" "}
                       <span className="underline decoration-dotted">ayrıntı</span>
                     </span>
@@ -261,7 +261,7 @@ function CarryoverDetailDialog({
 }) {
   const c = candidate;
   const itemCls =
-    "rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200";
+    "rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900";
   return (
     <Dialog open={c !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
@@ -328,7 +328,7 @@ function CarryoverDetailDialog({
                 href={c.link_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-medium text-cyan-700 underline hover:text-cyan-800 dark:text-cyan-300"
+                className="inline-flex items-center gap-1 text-xs font-medium text-cyan-700 underline hover:text-cyan-800"
               >
                 <ExternalLink className="size-3.5 shrink-0" aria-hidden />
                 Bağlantıyı aç
@@ -414,7 +414,7 @@ function AddToDayDialog({
           <div>
             <p className="mb-1.5 text-xs font-medium text-foreground">Gün</p>
             {selectableDays.length === 0 ? (
-              <p className="rounded-md bg-amber-50 dark:bg-amber-500/15 px-2 py-1.5 text-[11px] text-amber-800 dark:text-amber-200">
+              <p className="rounded-md bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800">
                 Bu haftada eklenebilecek (bugün veya ileri) gün yok. Yeni hafta
                 oluşturup oraya taşıyın.
               </p>
@@ -428,12 +428,12 @@ function AddToDayDialog({
                   className={cn(
                     "rounded-md border px-2 py-1.5 text-left text-xs transition",
                     day === d.date
-                      ? "border-amber-500 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 font-semibold text-amber-900 dark:text-amber-200"
+                      ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
                       : "border-border bg-card hover:bg-muted/50",
                   )}
                 >
                   {d.dow_label} · {fmtDate(d.date)}
-                  {d.is_today ? <span className="ml-1 text-amber-600 dark:text-amber-300">bugün</span> : null}
+                  {d.is_today ? <span className="ml-1 text-amber-600">bugün</span> : null}
                 </button>
               ))}
             </div>
@@ -449,7 +449,7 @@ function AddToDayDialog({
                   className={cn(
                     "rounded-md border px-2.5 py-1 text-xs transition",
                     period === null
-                      ? "border-slate-500 bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 font-semibold text-slate-900 dark:text-slate-200"
+                      ? "border-slate-500 bg-slate-100 font-semibold text-slate-900"
                       : "border-border bg-card hover:bg-muted/50",
                   )}
                 >
@@ -463,7 +463,7 @@ function AddToDayDialog({
                     className={cn(
                       "rounded-md border px-2.5 py-1 text-xs transition",
                       period === p.key
-                        ? "border-amber-500 bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 font-semibold text-amber-900 dark:text-amber-200"
+                        ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
                         : "border-border bg-card hover:bg-muted/50",
                     )}
                   >

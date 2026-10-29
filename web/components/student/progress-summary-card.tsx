@@ -146,7 +146,7 @@ function Tile({
         <span
           className={cn(
             "ml-auto size-2 rounded-full",
-            tone === "good" ? "bg-emerald-500" : tone === "warn" ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-600",
+            tone === "good" ? "bg-emerald-500" : tone === "warn" ? "bg-amber-500" : "bg-slate-300",
           )}
           aria-hidden
         />

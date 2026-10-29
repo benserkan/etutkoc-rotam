@@ -58,7 +58,7 @@ export function PeriodSwitcher({
             className={cn(
               "rounded-full border px-2.5 py-1 transition-colors",
               isActive
-                ? "border-cyan-300 bg-cyan-50 font-medium text-cyan-900 dark:border-cyan-500/40 dark:bg-cyan-500/15 dark:text-cyan-200"
+                ? "border-cyan-300 bg-cyan-50 font-medium text-cyan-900"
                 : "border-border text-muted-foreground hover:bg-muted",
             )}
             title={
@@ -78,7 +78,7 @@ export function PeriodSwitcher({
         className={cn(
           "rounded-full border px-2.5 py-1 transition-colors",
           active === "all"
-            ? "border-slate-400 bg-slate-100 font-medium text-slate-900 dark:border-slate-500/50 dark:bg-slate-500/20 dark:text-slate-100"
+            ? "border-slate-400 bg-slate-100 font-medium text-slate-900"
             : "border-border text-muted-foreground hover:bg-muted",
         )}
         title="Tüm dönemler birlikte"
@@ -143,7 +143,7 @@ export function PeriodContextNote({
       : meta.options.find((o) => String(o.id) === active)?.label;
 
   return (
-    <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+    <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900">
       {label ?? "Geçmiş dönem"} gösteriliyor — bu, öğrencinin{" "}
       <strong>güncel dönemi değil</strong>. Bu döneme dönmek için{" "}
       <em>bu dönem</em> seçeneğine dokun.

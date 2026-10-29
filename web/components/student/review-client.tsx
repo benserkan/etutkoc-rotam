@@ -17,10 +17,10 @@ interface Props {
 }
 
 const RATINGS = [
-  { value: 1 as const, label: "Tekrar", color: "bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-200 dark:hover:bg-rose-500/25" },
-  { value: 2 as const, label: "Zor", color: "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:hover:bg-amber-500/25" },
-  { value: 3 as const, label: "İyi", color: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-500/25" },
-  { value: 4 as const, label: "Kolay", color: "bg-sky-100 text-sky-800 hover:bg-sky-200 dark:bg-sky-900/40 dark:text-sky-200 dark:hover:bg-sky-500/25" },
+  { value: 1 as const, label: "Tekrar", color: "bg-rose-100 text-rose-800 hover:bg-rose-200" },
+  { value: 2 as const, label: "Zor", color: "bg-amber-100 text-amber-800 hover:bg-amber-200" },
+  { value: 3 as const, label: "İyi", color: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" },
+  { value: 4 as const, label: "Kolay", color: "bg-sky-100 text-sky-800 hover:bg-sky-200" },
 ];
 
 /**
@@ -108,7 +108,7 @@ export function ReviewClient({ initial }: Props) {
       </header>
 
       {!current ? (
-        <div className="rounded-xl border border-emerald-300/40 bg-emerald-50 dark:bg-emerald-950/20 px-6 py-10 text-center">
+        <div className="rounded-xl border border-emerald-300/40 bg-emerald-50 px-6 py-10 text-center">
           <CheckCircle2 className="size-10 mx-auto text-emerald-500" aria-hidden />
           <p className="font-display text-xl font-semibold mt-3">
             Bu an için kart yok 🎉
@@ -202,7 +202,7 @@ function BreakdownPill({
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 tabular-nums",
         tone === "dikkat"
-          ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
+          ? "bg-amber-100 text-amber-800"
           : "bg-muted text-foreground",
       )}
     >

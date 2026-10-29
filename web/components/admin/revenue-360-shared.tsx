@@ -67,18 +67,18 @@ import { fieldClass } from "@/components/admin/feature-catalog-ui";
 // ── Statik ton map'leri (Tailwind purge güvenli) ─────────────────────────────
 
 const BADGE: Record<string, string> = {
-  emerald: "bg-emerald-100 dark:bg-emerald-500/15 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-200",
-  lime: "bg-lime-100 dark:bg-lime-500/15 dark:border-lime-500/30 text-lime-800 dark:text-lime-200 border-lime-200",
-  amber: "bg-amber-100 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-200",
-  orange: "bg-orange-100 dark:bg-orange-500/15 dark:border-orange-500/30 text-orange-800 dark:text-orange-200 border-orange-200",
-  rose: "bg-rose-100 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-800 dark:text-rose-200 border-rose-200",
-  indigo: "bg-indigo-100 dark:bg-indigo-500/15 dark:border-indigo-500/30 text-indigo-800 dark:text-indigo-200 border-indigo-200",
-  slate: "bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-700 dark:text-slate-300 border-slate-200",
-  blue: "bg-blue-100 dark:bg-blue-500/15 dark:border-blue-500/30 text-blue-800 dark:text-blue-200 border-blue-200",
-  purple: "bg-purple-100 dark:bg-purple-500/15 dark:border-purple-500/30 text-purple-800 dark:text-purple-200 border-purple-200",
-  pink: "bg-pink-100 dark:bg-pink-500/15 dark:border-pink-500/30 text-pink-800 dark:text-pink-200 border-pink-200",
-  sky: "bg-sky-100 dark:bg-sky-500/15 dark:border-sky-500/30 text-sky-800 dark:text-sky-200 border-sky-200",
-  yellow: "bg-yellow-100 dark:bg-yellow-500/15 dark:border-yellow-500/30 text-yellow-800 dark:text-yellow-200 border-yellow-200",
+  emerald: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  lime: "bg-lime-100 text-lime-800 border-lime-200",
+  amber: "bg-amber-100 text-amber-800 border-amber-200",
+  orange: "bg-orange-100 text-orange-800 border-orange-200",
+  rose: "bg-rose-100 text-rose-800 border-rose-200",
+  indigo: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  slate: "bg-slate-100 text-slate-700 border-slate-200",
+  blue: "bg-blue-100 text-blue-800 border-blue-200",
+  purple: "bg-purple-100 text-purple-800 border-purple-200",
+  pink: "bg-pink-100 text-pink-800 border-pink-200",
+  sky: "bg-sky-100 text-sky-800 border-sky-200",
+  yellow: "bg-yellow-100 text-yellow-800 border-yellow-200",
 };
 export const badge = (t: string) => BADGE[t] ?? BADGE.slate;
 
@@ -173,15 +173,15 @@ export function HealthV2Card({
       </div>
 
       {triggers.length > 0 ? (
-        <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 px-4 py-3">
-          <div className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase text-rose-900 dark:text-rose-200">
+        <div className="border-b border-rose-200 bg-rose-50 px-4 py-3">
+          <div className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase text-rose-900">
             <TriangleAlert className="size-3.5" aria-hidden /> Erken Uyarı
           </div>
           <ul className="space-y-1.5">
             {triggers.map((t) => (
               <li key={t.code} className="text-sm">
-                <span className="font-semibold text-rose-900 dark:text-rose-200">{t.title}</span>
-                <span className="block text-xs text-rose-700 dark:text-rose-300">{t.detail}</span>
+                <span className="font-semibold text-rose-900">{t.title}</span>
+                <span className="block text-xs text-rose-700">{t.detail}</span>
               </li>
             ))}
           </ul>
@@ -317,11 +317,11 @@ export function CrmNotesPanel({
           ) : (
             <ul className="divide-y divide-border">
               {notes.map((n) => (
-                <li key={n.id} className={cn("px-4 py-3", n.pinned && "bg-amber-50/40 dark:bg-amber-500/10")}>
+                <li key={n.id} className={cn("px-4 py-3", n.pinned && "bg-amber-50/40")}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {n.pinned ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700">
                           <Pin className="size-3" aria-hidden /> SABİT
                         </span>
                       ) : null}
@@ -387,7 +387,7 @@ export function CrmActionsPanel({
   const completeMut = useCompleteCrmAction();
   const delMut = useDeleteCrmAction();
 
-  // Aksiyon şablonları (hazır script dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200'ler) — owner placeholder'larıyla doldurulur.
+  // Aksiyon şablonları (hazır script'ler) — owner placeholder'larıyla doldurulur.
   const tplQ = useQuery<ActionTemplatesResponse>({
     queryKey: adminKeys.revenueActionTemplates(),
     queryFn: getAdminActionTemplates,
@@ -432,8 +432,8 @@ export function CrmActionsPanel({
         <Card className="sticky top-4 p-4">
           <h2 className="mb-2 text-sm font-semibold">Yeni Aksiyon</h2>
           {templates.length > 0 ? (
-            <label className="mb-2 block rounded-md border border-indigo-200 bg-indigo-50/50 dark:bg-indigo-500/10 p-2">
-              <span className="text-xs font-medium text-indigo-800 dark:text-indigo-200">Şablondan doldur</span>
+            <label className="mb-2 block rounded-md border border-indigo-200 bg-indigo-50/50 p-2">
+              <span className="text-xs font-medium text-indigo-800">Şablondan doldur</span>
               <select
                 defaultValue=""
                 disabled={tplLoading}
@@ -524,7 +524,7 @@ function ActionRow({
   const [notes, setNotes] = React.useState("");
 
   return (
-    <li className={cn("px-4 py-3", !a.completed_at && "bg-indigo-50/30 dark:bg-indigo-500/10")}>
+    <li className={cn("px-4 py-3", !a.completed_at && "bg-indigo-50/30")}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -570,7 +570,7 @@ function ActionRow({
                   </Button>
                 </div>
               ) : (
-                <button type="button" onClick={() => setOpen(true)} className="text-xs text-emerald-700 dark:text-emerald-300 hover:text-emerald-900">
+                <button type="button" onClick={() => setOpen(true)} className="text-xs text-emerald-700 hover:text-emerald-900">
                   Tamamla / sonuç gir
                 </button>
               )}
@@ -704,7 +704,7 @@ function OwnerTagsCard({
   const available = meta.tag_kinds.filter((k) => !existing.has(k.value));
   const [kindRaw, setKind] = React.useState("");
   const [note, setNote] = React.useState("");
-  // Seçili tür available listesinden düşmüşse ilk uygun türe geri düş (effect dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200'siz).
+  // Seçili tür available listesinden düşmüşse ilk uygun türe geri düş (effect'siz).
   const kind = available.some((a) => a.value === kindRaw)
     ? kindRaw
     : (available[0]?.value ?? "");
@@ -780,7 +780,7 @@ export function TabBar({
           className={cn(
             "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
             active === t.id
-              ? "border-indigo-500 text-indigo-700 dark:text-indigo-300"
+              ? "border-indigo-500 text-indigo-700"
               : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
           )}
         >
@@ -788,7 +788,7 @@ export function TabBar({
           {t.badge && t.badge > 0 ? (
             <span className={cn(
               "ml-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px]",
-              active === t.id ? "bg-indigo-100 dark:bg-indigo-500/15 text-indigo-800 dark:text-indigo-200" : "bg-muted text-muted-foreground",
+              active === t.id ? "bg-indigo-100 text-indigo-800" : "bg-muted text-muted-foreground",
             )}>
               {t.badge}
             </span>
@@ -886,7 +886,7 @@ export function OffersPanel({
       <div className="md:col-span-1">
         <Card className="sticky top-4 p-4">
           <h2 className="mb-2 inline-flex items-center gap-1.5 text-sm font-semibold">
-            <Gift className="size-4 text-indigo-700 dark:text-indigo-300" aria-hidden /> Yeni Teklif
+            <Gift className="size-4 text-indigo-700" aria-hidden /> Yeni Teklif
           </h2>
           <form onSubmit={submit} className="space-y-2">
             <label className="block">
@@ -952,7 +952,7 @@ export function OffersPanel({
           ) : (
             <ul className="divide-y divide-border">
               {offers.map((o) => (
-                <li key={o.id} className={cn("px-4 py-3", o.status === "sent" && "bg-amber-50/30 dark:bg-amber-500/10")}>
+                <li key={o.id} className={cn("px-4 py-3", o.status === "sent" && "bg-amber-50/30")}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -971,7 +971,7 @@ export function OffersPanel({
                         </div>
                       ) : null}
                       {o.admin_note ? (
-                        <div className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                        <div className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-700">
                           <strong>Not (iç):</strong> {o.admin_note}
                         </div>
                       ) : null}
@@ -979,20 +979,20 @@ export function OffersPanel({
                         <span>Oluşturuldu: {fmtDateTime(o.created_at)}</span>
                         {o.sent_at ? <span>· Gönderildi: {fmtDateTime(o.sent_at)}</span> : null}
                         {o.viewed_at ? (
-                          <span className="font-medium text-emerald-700 dark:text-emerald-300">· Açıldı: {fmtDateTime(o.viewed_at)}</span>
+                          <span className="font-medium text-emerald-700">· Açıldı: {fmtDateTime(o.viewed_at)}</span>
                         ) : o.status === "sent" ? (
-                          <span className="text-amber-700 dark:text-amber-300">· Henüz açılmadı</span>
+                          <span className="text-amber-700">· Henüz açılmadı</span>
                         ) : null}
                         {o.responded_at ? <span>· Yanıt: {fmtDateTime(o.responded_at)}</span> : null}
                         {o.expires_at ? <span>· Son: {fmtDate(o.expires_at)}</span> : null}
                       </div>
                       {o.decline_reason ? (
-                        <div className="mt-1.5 rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
+                        <div className="mt-1.5 rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700">
                           <strong>Ret nedeni:</strong> {o.decline_reason}
                         </div>
                       ) : null}
                       {o.status === "draft" && editId === o.id ? (
-                        <div className="mt-2 space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/40 p-2 dark:bg-indigo-500/10 dark:border-indigo-500/30">
+                        <div className="mt-2 space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/40 p-2">
                           <label className="block">
                             <span className="text-[11px] text-muted-foreground">Başlık</span>
                             <input type="text" value={eTitle} onChange={(e) => setETitle(e.target.value)} maxLength={255} className={cn(fieldClass, "mt-0.5")} />
@@ -1029,7 +1029,7 @@ export function OffersPanel({
                         ) : o.status === "sent" ? (
                           <>
                             <a href={`/offers/${o.token}`} target="_blank" rel="noreferrer"
-                               className="inline-flex items-center gap-1 rounded border border-indigo-300 bg-card px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/25">
+                               className="inline-flex items-center gap-1 rounded border border-indigo-300 bg-card px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50">
                               <ExternalLink className="size-3.5" aria-hidden /> Public link
                             </a>
                             <Button size="sm" variant="outline" disabled={cancelMut.isPending} onClick={() => cancelMut.mutate(o.id)}>
@@ -1122,16 +1122,16 @@ function InvoiceRow({ inv }: { inv: InvoiceItem }) {
       <td className="px-4 py-2 text-xs">
         {fmtDate(inv.due_at)}
         {inv.days_overdue > 0 ? (
-          <div className="text-[10px] font-semibold text-rose-600 dark:text-rose-300">{inv.days_overdue}g gecikmiş</div>
+          <div className="text-[10px] font-semibold text-rose-600">{inv.days_overdue}g gecikmiş</div>
         ) : inv.days_until_due != null && inv.days_until_due <= 7 && inv.status === "pending" ? (
-          <div className="text-[10px] text-amber-600 dark:text-amber-300">{inv.days_until_due}g kaldı</div>
+          <div className="text-[10px] text-amber-600">{inv.days_until_due}g kaldı</div>
         ) : null}
       </td>
       <td className="px-4 py-2 text-right font-mono font-semibold whitespace-nowrap">{tl(inv.amount_try)}</td>
       <td className="px-4 py-2 text-xs text-muted-foreground">{inv.plan_label}</td>
       <td className="px-4 py-2 text-xs">
         {inv.last_reminder_kind ? (
-          <span className="text-amber-700 dark:text-amber-300">
+          <span className="text-amber-700">
             {inv.last_reminder_kind}
             {inv.attempt_count ? <span className="text-muted-foreground">·{inv.attempt_count}</span> : null}
           </span>
@@ -1145,25 +1145,25 @@ function InvoiceRow({ inv }: { inv: InvoiceItem }) {
             <button type="button" disabled={busy}
                     onClick={() => reminderMut.mutate({ invoiceId: inv.invoice_id, body: { kind: "manual" } })}
                     title="Hatırlatma gönder"
-                    className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200 dark:hover:bg-sky-500/25">
+                    className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] text-sky-700 hover:bg-sky-100 disabled:opacity-50">
               <BellRing className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { const d = prompt("Kaç gün ötelensin?", "7"); if (d) postponeMut.mutate({ invoiceId: inv.invoice_id, body: { days: Number(d) } }); }}
                     title="Vadeyi ötele"
-                    className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 hover:bg-amber-100 disabled:opacity-50 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:hover:bg-amber-500/25">
+                    className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 hover:bg-amber-100 disabled:opacity-50">
               <CalendarClock className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { if (confirm("Manuel ödendi işaretlensin mi?")) markPaidMut.mutate({ invoiceId: inv.invoice_id, body: { method: "manual" } }); }}
                     title="Manuel ödendi"
-                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:hover:bg-emerald-500/25">
+                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
               <CheckCircle2 className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { const n = prompt("İptal sebebi?"); if (n != null) cancelMut.mutate({ invoiceId: inv.invoice_id, body: { note: n } }); }}
                     title="İptal et"
-                    className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-500/25">
+                    className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-100 disabled:opacity-50">
               <Ban className="size-3.5" aria-hidden />
             </button>
           </div>

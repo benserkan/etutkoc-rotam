@@ -186,9 +186,9 @@ const PERIOD_META: Array<{
   toneText: string;
   toneBorder: string;
 }> = [
-  { key: "morning", label: "Sabah", Icon: Sunrise, toneText: "text-amber-700 dark:text-amber-300", toneBorder: "border-amber-200" },
-  { key: "noon", label: "Öğle", Icon: Sun, toneText: "text-orange-700 dark:text-orange-300", toneBorder: "border-orange-200" },
-  { key: "evening", label: "Akşam", Icon: Moon, toneText: "text-indigo-700 dark:text-indigo-300", toneBorder: "border-indigo-200" },
+  { key: "morning", label: "Sabah", Icon: Sunrise, toneText: "text-amber-700", toneBorder: "border-amber-200" },
+  { key: "noon", label: "Öğle", Icon: Sun, toneText: "text-orange-700", toneBorder: "border-orange-200" },
+  { key: "evening", label: "Akşam", Icon: Moon, toneText: "text-indigo-700", toneBorder: "border-indigo-200" },
   { key: null, label: "Saatsiz", Icon: Clock, toneText: "text-muted-foreground", toneBorder: "border-border" },
 ];
 
@@ -270,16 +270,16 @@ function DayNoteCard({
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="inline-flex items-center gap-1.5 text-sm font-medium">
-          <NotebookPen className="size-4 text-cyan-600 dark:text-cyan-400" aria-hidden />
+          <NotebookPen className="size-4 text-cyan-600" aria-hidden />
           Günün notu
         </h3>
         <span
           className={
             "text-[11px] " +
             (status === "saved"
-              ? "text-emerald-600 dark:text-emerald-400"
+              ? "text-emerald-600"
               : status === "error"
-                ? "text-rose-600 dark:text-rose-400"
+                ? "text-rose-600"
                 : "text-muted-foreground")
           }
         >

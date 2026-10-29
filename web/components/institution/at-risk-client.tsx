@@ -167,7 +167,7 @@ export function AtRiskClient({ initial }: Props) {
 
 function PrivacyNote() {
   return (
-    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2">
       <Info className="size-4 shrink-0 mt-0.5" aria-hidden />
       <div>
         <strong>Gizlilik:</strong> Bu panel öğrenci programını veya öğretmen
@@ -188,8 +188,8 @@ function CountCards({ counts }: { counts: AtRiskCountsInfo }) {
         hint="Risk puanı 80 ve üstü öğrenci sayısı. Birden çok sinyal aynı anda var; hemen koçla konuşulmalı."
         value={counts.critical}
         sub="öğrenci · acil müdahale önerilir"
-        cardClass="border-rose-200 dark:border-rose-500/30"
-        valueClass="text-rose-700 dark:text-rose-400"
+        cardClass="border-rose-200"
+        valueClass="text-rose-700"
       />
       <CountCard
         label="Risk"
@@ -197,8 +197,8 @@ function CountCards({ counts }: { counts: AtRiskCountsInfo }) {
         hint="Risk puanı 60–79 öğrenci sayısı. Koçun yakından takip etmesi gerekir."
         value={counts.high}
         sub="öğrenci · koç takip etmeli"
-        cardClass="border-orange-200 dark:border-orange-500/30"
-        valueClass="text-orange-700 dark:text-orange-400"
+        cardClass="border-orange-200"
+        valueClass="text-orange-700"
       />
       <CountCard
         label="Dikkat"
@@ -206,8 +206,8 @@ function CountCards({ counts }: { counts: AtRiskCountsInfo }) {
         hint="Risk puanı 30–59 öğrenci sayısı. Erken sinyal; henüz ciddi değil ama izlenmeli."
         value={counts.medium}
         sub="öğrenci · erken sinyal"
-        cardClass="border-amber-200 dark:border-amber-500/30"
-        valueClass="text-amber-700 dark:text-amber-400"
+        cardClass="border-amber-200"
+        valueClass="text-amber-700"
       />
     </div>
   );
@@ -256,7 +256,7 @@ export function InterventionBadge({ it }: { it: CoachInterventionItem }) {
   const dt = `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, "0")}`;
   return (
     <span
-      className="mt-1 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+      className="mt-1 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700"
       title={`${dt} tarihinde ${it.coach_name ?? "koça"} iletildi — ${it.status_label}`}
     >
       <CheckCircle2 className="size-3" aria-hidden />
@@ -361,7 +361,7 @@ function EmptyState() {
     <Card>
       <CardContent className="p-12 text-center">
         <PartyPopper
-          className="size-12 mx-auto text-emerald-600 dark:text-emerald-300 mb-3"
+          className="size-12 mx-auto text-emerald-600 mb-3"
           aria-hidden
         />
         <h2 className="text-lg font-semibold mb-1">

@@ -130,7 +130,7 @@ export function PhotoReadPanel({
           <>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm">
-                <Check className="inline size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />{" "}
+                <Check className="inline size-4 text-emerald-600" aria-hidden />{" "}
                 <strong>{draft.length} bölüm okundu</strong> — kontrol et, gerekirse
                 düzelt, sonra uygula.
               </p>
@@ -148,7 +148,7 @@ export function PhotoReadPanel({
               </Button>
             </div>
             {warnings.length > 0 ? (
-              <ul className="space-y-0.5 text-xs text-amber-800 dark:text-amber-200">
+              <ul className="space-y-0.5 text-xs text-amber-800">
                 {warnings.map((w, i) => (
                   <li key={i}>• {w}</li>
                 ))}

@@ -110,8 +110,8 @@ function SidePill({
         <span
           className={cn(
             "text-lg font-bold tabular-nums",
-            emphasis === "good" && "text-emerald-700 dark:text-emerald-400",
-            emphasis === "bad" && "text-rose-700 dark:text-rose-400",
+            emphasis === "good" && "text-emerald-700",
+            emphasis === "bad" && "text-rose-700",
             emphasis === "neutral" && "text-foreground",
           )}
         >
@@ -427,7 +427,7 @@ export function ExamTrendTopics({
     <section className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:p-6" data-section="exam-trend-topics">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-xs font-bold tracking-wider text-orange-800 dark:text-orange-300">KONU DEĞİŞİMLERİ</div>
+          <div className="text-xs font-bold tracking-wider text-orange-800">KONU DEĞİŞİMLERİ</div>
           <h3 className="mt-1 text-lg font-extrabold leading-snug sm:text-xl">Unutulan ve gelişen konular</h3>
           <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
             İlk denemeler ile son denemeler kıyaslanır; her kartta kıyasın kaç soruya dayandığı ve deneme deneme sonuç

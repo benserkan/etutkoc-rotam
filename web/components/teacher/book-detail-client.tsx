@@ -177,13 +177,13 @@ export function BookDetailClient({
           yaparken GÖRÜNMEZ. Tüm sekmelerde belirgin durur (AI sekmesinde de
           "önce ata" hatırlatması). Atama yapılınca kaybolur. */}
       {book.assigned_students.length === 0 ? (
-        <div className="flex items-start gap-3 rounded-lg border-l-4 border-l-amber-500 border border-amber-300 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
-          <AlertTriangle className="size-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" aria-hidden />
+        <div className="flex items-start gap-3 rounded-lg border-l-4 border-l-amber-500 border border-amber-300 bg-amber-50 px-4 py-3">
+          <AlertTriangle className="size-5 shrink-0 text-amber-600 mt-0.5" aria-hidden />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+            <p className="text-sm font-semibold text-amber-900">
               Bu kitap henüz hiçbir öğrenciye atanmadı
             </p>
-            <p className="text-xs text-amber-800 dark:text-amber-300/90 mt-0.5">
+            <p className="text-xs text-amber-800 mt-0.5">
               Atamadan kitap, program yaparken öğrencinin listesinde
               <strong> görünmez</strong>. Öğrenci seçip <strong>Kaydet</strong> butonuna basın.
             </p>
@@ -347,7 +347,7 @@ function SectionsTab({
             size="sm"
             variant="outline"
             onClick={() => setMapOpen(true)}
-            className="border-indigo-300 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/25"
+            className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
           >
             <Wand2 className="size-4" aria-hidden />
             Müfredata eşleştir
@@ -807,7 +807,7 @@ function AssignmentsTab({
         </p>
         <div className="flex items-center gap-2 shrink-0">
           {hasChange ? (
-            <span className="text-xs font-medium text-amber-700 dark:text-amber-300 whitespace-nowrap">
+            <span className="text-xs font-medium text-amber-700 whitespace-nowrap">
               Kaydedilmedi — başka sekmeye geçmeden kaydedin
             </span>
           ) : null}

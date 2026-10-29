@@ -54,7 +54,7 @@ export function ParentPoolCard({ studentId }: { studentId: number }) {
             <div className="text-2xl font-extrabold">{s.done_units}<span className="text-base font-semibold text-cyan-100">/{s.total_units} birim</span></div>
             <div className="text-xl font-bold">%{s.pct}</div>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/25"><div className="h-full rounded-full bg-white dark:bg-white" style={{ width: `${Math.min(100, s.pct)}%` }} /></div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/25"><div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, s.pct)}%` }} /></div>
           <div className="mt-1 text-xs text-cyan-100">{s.items_done}/{s.items_total} kalem · seansa {s.days_left} gün · birim = test sayısı (video/deneme 1)</div>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -67,7 +67,7 @@ export function ParentPoolCard({ studentId }: { studentId: number }) {
           ) : (
             <ul className="mt-1 space-y-1 text-sm">
               {d.cup.map((t, i) => (
-                <li key={i} className={cn("flex items-center gap-2", t.status === "completed" ? "text-emerald-800 dark:text-emerald-200" : "text-foreground")}>
+                <li key={i} className={cn("flex items-center gap-2", t.status === "completed" ? "text-emerald-800" : "text-foreground")}>
                   <span className={cn("size-2 rounded-full", t.status === "completed" ? "bg-emerald-600" : "bg-slate-400")} aria-hidden />
                   {t.title}
                 </li>

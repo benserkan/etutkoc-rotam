@@ -154,35 +154,35 @@ export function StudentWrongQuestionsClient({
           className={cn(
             "flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3",
             dueItems.length > 0
-              ? "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10"
-              : "border-cyan-200 bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10",
+              ? "border-amber-200 bg-amber-50"
+              : "border-cyan-200 bg-cyan-50",
           )}
         >
           <RotateCcw
             className={cn(
               "size-5",
               dueItems.length > 0
-                ? "text-amber-700 dark:text-amber-300"
-                : "text-cyan-700 dark:text-cyan-300",
+                ? "text-amber-700"
+                : "text-cyan-700",
             )}
             aria-hidden
           />
           <div className="flex-1 min-w-48">
             {dueItems.length > 0 ? (
               <>
-                <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                <div className="text-sm font-semibold text-amber-900">
                   Yeniden çözme zamanı: {dueItems.length} soru seni bekliyor
                 </div>
-                <div className="text-xs text-amber-800/80 dark:text-amber-200/70">
+                <div className="text-xs text-amber-800/80">
                   Bir yanlışı kapatmanın yolu, aradan zaman geçince yeniden çözmek.
                 </div>
               </>
             ) : (
               <>
-                <div className="text-sm font-semibold text-cyan-900 dark:text-cyan-200">
+                <div className="text-sm font-semibold text-cyan-900">
                   Alıştırma: {openItems.length} açık soru
                 </div>
-                <div className="text-xs text-cyan-800/80 dark:text-cyan-200/70">
+                <div className="text-xs text-cyan-800/80">
                   Sıradakilerin vadesi henüz gelmedi — istersen şimdi de kendini
                   deneyebilirsin.
                 </div>
@@ -319,9 +319,9 @@ function WrongCard({
       type="button"
       onClick={onOpen}
       className={cn(
-        "group flex flex-col overflow-hidden rounded-lg border bg-card text-left shadow-sm transition hover:shadow-md",
-        closed ? "border-emerald-200 dark:border-emerald-500/30 opacity-80" : "border-border",
-        item.is_due && "border-amber-300 dark:border-amber-500/40",
+        "group flex flex-col overflow-hidden rounded-lg border bg-card text-left transition hover:shadow-md",
+        closed ? "border-emerald-200 opacity-80" : "border-border",
+        item.is_due && "border-amber-300",
       )}
     >
       <div className="relative h-32 w-full bg-muted">
@@ -360,7 +360,7 @@ function WrongCard({
         </div>
         <div className="mt-auto flex items-center gap-2 pt-1.5">
           {item.error_type_label ? (
-            <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">
+            <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-800">
               {item.error_type_label}
             </span>
           ) : null}
@@ -474,7 +474,7 @@ function CaptureDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="inline-flex items-center gap-2">
-            <Camera className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <Camera className="size-4 text-cyan-700" aria-hidden />
             Yanlış soru ekle
           </DialogTitle>
         </DialogHeader>
@@ -526,7 +526,7 @@ function CaptureDialog({
 
           {/* Kaynak */}
           {source === "gorev" ? (
-            <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-200">
+            <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900">
               <BookOpen className="mr-1 inline size-3.5" aria-hidden />
               Görevden ekleniyor — ders ve konu otomatik etiketlenecek.
             </div>
@@ -688,9 +688,9 @@ function DetailDialog({
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex flex-wrap items-center gap-2 text-base">
             {closed ? (
-              <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
+              <CheckCircle2 className="size-4 text-emerald-600" aria-hidden />
             ) : (
-              <CircleDashed className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
+              <CircleDashed className="size-4 text-amber-600" aria-hidden />
             )}
             {item.topic_name ?? item.section_label ?? "Etiketsiz soru"}
             <span className="text-xs font-normal text-muted-foreground">
@@ -704,8 +704,8 @@ function DetailDialog({
             className={cn(
               "rounded-md px-3 py-2 text-xs",
               closed
-                ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200"
-                : "bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200",
+                ? "bg-emerald-50 text-emerald-900"
+                : "bg-amber-50 text-amber-900",
             )}
           >
             {closed
@@ -742,7 +742,7 @@ function DetailDialog({
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
+                className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800"
                 disabled={aiTag.isPending}
                 onClick={() =>
                   aiTag.mutate(
@@ -768,7 +768,7 @@ function DetailDialog({
                 Yapay zekâ okusun — konuyu etiketle + yaklaşım ipucu ver
               </Button>
             ) : (
-              <div className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-300">
+              <div className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                 <Sparkles className="mt-0.5 size-3.5 shrink-0 text-slate-400" aria-hidden />
                 <span>{AI_GATE_NOTE[ai.reason] ?? "Yapay zekâ şu an kullanılamıyor."}</span>
               </div>
@@ -778,7 +778,7 @@ function DetailDialog({
           {/* AI, öğrencinin seçtiğinden FARKLI konu önerdiyse (yanlış elle
               seçimi yakala) — kayıt ezilmez, öğrenci ister uygular */}
           {suggestion && suggestion.id !== item.topic_id ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
               <Sparkles className="size-3.5 shrink-0" aria-hidden />
               <span>
                 Yapay zekâ bunu <b>{suggestion.name}</b> konusuna benzetti.
@@ -786,7 +786,7 @@ function DetailDialog({
               <Button
                 size="sm"
                 variant="outline"
-                className="ml-auto h-7 border-amber-400 text-xs text-amber-800 dark:text-amber-200 hover:bg-amber-500/10"
+                className="ml-auto h-7 border-amber-400 text-xs text-amber-800 hover:bg-amber-500/10"
                 disabled={update.isPending}
                 onClick={() =>
                   update.mutate(
@@ -801,20 +801,20 @@ function DetailDialog({
           ) : null}
 
           {item.ai_hint ? (
-            <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-500/30 dark:bg-violet-500/10">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">
+            <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800">
                 <Sparkles className="size-3" aria-hidden />
                 Yaklaşım ipucu
                 {item.difficulty_guess ? (
-                  <span className="ml-auto rounded bg-violet-200/60 px-1.5 py-0.5 text-[10px] font-medium normal-case text-violet-900 dark:bg-violet-500/20 dark:text-violet-200">
+                  <span className="ml-auto rounded bg-violet-200/60 px-1.5 py-0.5 text-[10px] font-medium normal-case text-violet-900">
                     {item.difficulty_guess}
                   </span>
                 ) : null}
               </div>
-              <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-950 dark:text-violet-100">
+              <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-950">
                 {item.ai_hint}
               </p>
-              <p className="mt-1 text-[10px] text-violet-800/70 dark:text-violet-300/70">
+              <p className="mt-1 text-[10px] text-violet-800/70">
                 Yapay zekâ çözümü vermez — yolu gösterir. Çözümü sen bul.
               </p>
             </div>
@@ -822,11 +822,11 @@ function DetailDialog({
 
           {/* Koç açıklaması */}
           {item.coach_note ? (
-            <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 dark:border-cyan-500/30 dark:bg-cyan-500/10">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-cyan-800 dark:text-cyan-300">
+            <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-cyan-800">
                 Koçunun açıklaması
               </div>
-              <p className="mt-0.5 whitespace-pre-wrap text-sm text-cyan-950 dark:text-cyan-100">
+              <p className="mt-0.5 whitespace-pre-wrap text-sm text-cyan-950">
                 {item.coach_note}
               </p>
             </div>
@@ -929,7 +929,7 @@ function DetailDialog({
             <Button
               variant="outline"
               size="sm"
-              className="h-7 gap-1 text-xs text-rose-600 dark:text-rose-300 hover:bg-rose-500/10 hover:text-rose-700"
+              className="h-7 gap-1 text-xs text-rose-600 hover:bg-rose-500/10 hover:text-rose-700"
               disabled={del.isPending}
               onClick={() => {
                 if (window.confirm("Bu soru arşivden silinsin mi? Geri alınamaz.")) {
@@ -963,9 +963,9 @@ function SummaryStat({
   tone: "emerald" | "rose" | "cyan";
 }) {
   const cls = {
-    emerald: "text-emerald-700 dark:text-emerald-300",
-    rose: "text-rose-700 dark:text-rose-300",
-    cyan: "text-cyan-700 dark:text-cyan-300",
+    emerald: "text-emerald-700",
+    rose: "text-rose-700",
+    cyan: "text-cyan-700",
   }[tone];
   return (
     <div className="rounded-md border border-border bg-card px-2 py-2">
@@ -1085,7 +1085,7 @@ function ResolveDialog({
       <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden p-0">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <RotateCcw className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
+            <RotateCcw className="size-4 text-amber-600" aria-hidden />
             Yeniden çözme · {Math.min(idx + 1, queue.length)}/{queue.length}
           </DialogTitle>
         </DialogHeader>
@@ -1150,12 +1150,12 @@ function ResolveDialog({
                 ) : (
                   <div className="space-y-2">
                     {current.ai_hint ? (
-                      <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-950 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-100">
+                      <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-950">
                         <b>Yaklaşım ipucu:</b> {current.ai_hint}
                       </div>
                     ) : null}
                     {current.coach_note ? (
-                      <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-950 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+                      <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-950">
                         <b>Koçun:</b> {current.coach_note}
                       </div>
                     ) : null}
@@ -1176,7 +1176,7 @@ function ResolveDialog({
             {/* SABİT değerlendirme çubuğu */}
             <div className="shrink-0 border-t border-border bg-card px-5 py-3">
               <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-foreground">
-                <AlertTriangle className="size-3.5 text-amber-600 dark:text-amber-300" aria-hidden />
+                <AlertTriangle className="size-3.5 text-amber-600" aria-hidden />
                 Önce KENDİN çöz, sonra işaretle — sistem sana göre plan yapıyor.
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -226,8 +226,8 @@ export function GhostRow({
         className={cn(
           "flex items-center gap-2 rounded-md border border-dashed px-2.5 py-1.5 transition",
           open
-            ? "border-cyan-600 bg-cyan-500/[0.06] dark:border-cyan-400"
-            : "border-slate-400/70 bg-transparent hover:border-cyan-600 hover:bg-cyan-500/[0.04] dark:border-slate-500",
+            ? "border-cyan-600 bg-cyan-500/[0.06]"
+            : "border-slate-400/70 bg-transparent hover:border-cyan-600 hover:bg-cyan-500/[0.04]",
         )}
       >
         <button
@@ -237,7 +237,7 @@ export function GhostRow({
           className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 text-left"
           data-testid="ghost-row"
         >
-          <Sparkles className="size-3.5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+          <Sparkles className="size-3.5 shrink-0 text-cyan-700" aria-hidden />
           <span className="text-[13px] font-semibold text-foreground">{ghost.subject_name}</span>
           {source ? (
             <span className="text-[12.5px] font-medium text-foreground" data-testid="ghost-source">
@@ -291,7 +291,7 @@ export function GhostRow({
 
       {open ? (
         <div
-          className="mt-1 space-y-2 rounded-md border border-cyan-600/40 bg-card p-2.5 shadow-sm"
+          className="mt-1 space-y-2 rounded-md border border-cyan-600/40 bg-card p-2.5"
           data-testid="ghost-strip"
         >
           {ghost.is_anchor ? (
@@ -355,7 +355,7 @@ export function GhostRow({
               data-testid="ghost-activity"
               className="flex w-full items-start gap-2 rounded-md border border-border bg-background px-2.5 py-2 text-left hover:border-cyan-600 hover:bg-cyan-500/[0.05] disabled:opacity-60"
             >
-              <PencilLine className="mt-0.5 size-3.5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+              <PencilLine className="mt-0.5 size-3.5 shrink-0 text-cyan-700" aria-hidden />
               <span className="min-w-0">
                 <span className="block text-[13px] font-semibold text-foreground">
                   Etkinlik olarak yaz: {ghost.label}
@@ -473,7 +473,7 @@ export function GhostRow({
             <button
               type="button"
               onClick={() => setOther(true)}
-              className="inline-flex items-center gap-1 text-[12px] text-cyan-800 hover:underline dark:text-cyan-300"
+              className="inline-flex items-center gap-1 text-[12px] text-cyan-800 hover:underline"
             >
               <Search className="size-3" aria-hidden /> Başka konu seç
             </button>
@@ -536,7 +536,7 @@ export function DayGhostRows({
                 type="button"
                 onClick={() => setRange({ date, end: weekEnd })}
                 title="Bugünden haftanın sonuna kadar her günün rutinleri sırayla yazılır — her gün bir öncekinin kaldığı yerden devam eder"
-                className="inline-flex items-center gap-1 rounded-md border border-emerald-700 px-2 py-1 text-[11.5px] font-semibold text-emerald-800 hover:bg-emerald-500/10 disabled:opacity-60 dark:border-emerald-400 dark:text-emerald-300"
+                className="inline-flex items-center gap-1 rounded-md border border-emerald-700 px-2 py-1 text-[11.5px] font-semibold text-emerald-800 hover:bg-emerald-500/10 disabled:opacity-60"
               >
                 <CalendarCheck className="size-3.5" aria-hidden />
                 Haftanın rutinleri
@@ -652,7 +652,7 @@ function RoutinePreviewDialog({
                           <span
                             className={cn(
                               "font-semibold tabular-nums",
-                              r.too_many ? "text-rose-700 dark:text-rose-300" : "",
+                              r.too_many ? "text-rose-700" : "",
                             )}
                           >
                             {r.planned} test
@@ -713,7 +713,7 @@ export function GridGhostCells({ ghosts }: { ghosts: GhostCell[] }) {
         return (
           <div
             key={`${g.slot_id}-${g.date}`}
-            className="rounded border border-dashed border-slate-400/70 px-1 py-0.5 text-[10px] leading-tight text-muted-foreground dark:border-slate-500"
+            className="rounded border border-dashed border-slate-400/70 px-1 py-0.5 text-[10px] leading-tight text-muted-foreground"
             title={
               g.chips[0]
                 ? `Öneri: ${g.subject_name}${source ? ` · ${source}` : ""} — ${chipTitle(g.chips[0])} (${g.chips[0].reason})`

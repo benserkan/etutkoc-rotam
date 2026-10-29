@@ -60,7 +60,7 @@ export default async function MeAccountPage() {
       <div>
         <Link
           href={panelHome}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#117A86] dark:text-teal-300 hover:text-[#0E5F69] transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#117A86] hover:text-[#0E5F69] transition-colors"
         >
           <ArrowLeft className="size-3.5" aria-hidden />
           {panelHomeLabel}
@@ -70,7 +70,7 @@ export default async function MeAccountPage() {
       {user.two_factor_required && !user.two_factor_enabled ? (
         <div
           role="alert"
-          className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100"
+          className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900"
         >
           <p className="font-semibold">Yönetim paneli için iki aşamalı doğrulama zorunlu</p>
           <p className="mt-1">

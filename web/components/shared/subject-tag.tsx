@@ -29,7 +29,7 @@ export function subjectColors(name: string) {
   };
 }
 
-/** Blok/satır için CSS değişkenleri: `bg-[var(--subj-tint-l)] dark:bg-[var(--subj-tint-d)]`. */
+/** Blok/satır için CSS değişkenleri: `bg-[var(--subj-tint-l)])]`. */
 export function subjectTintVars(name: string): React.CSSProperties {
   const c = subjectColors(name);
   return {
@@ -73,8 +73,8 @@ export function SubjectTag({
             "font-bold tracking-wider px-1 py-px rounded border leading-none",
             xs ? "text-[8.5px]" : "text-[9.5px]",
             exam === "AYT"
-              ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white"
-              : "border-slate-400 text-slate-700 dark:border-slate-500 dark:text-slate-200",
+              ? "bg-slate-900 text-white border-slate-900"
+              : "border-slate-400 text-slate-700",
           )}
         >
           {exam}

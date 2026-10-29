@@ -6,6 +6,24 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## TEK TEMA + "J" PLATFORM DİLİ (2026-10-29, CANLI, migration YOK)
+
+- **Koyu mod KALDIRILDI** (kullanıcı kararı): site her cihazda açık temada açılır (`layout.tsx` THEME_INIT_SCRIPT
+  daima light; `theme-provider` sabit "light"). Kodda ~5.100 `dark:` sınıfı temizlendi (287 dosya); `@custom-variant
+  dark` globals.css'te DURUR (silinirse Tailwind'in yerleşik medya-tabanlı `dark:`'ı geri gelir). Koyu tema eslint
+  kuralları (no-dark-text-without-variant / no-light-hover-without-dark / no-white-box-theme-text) KAPALI.
+  **KURAL: yeni kodda `dark:` yazılmaz.**
+- **"J" dili** (Khan Academy + Coursera ölçümünden): beyaz zemin + beyaz kart + görünür 1px çerçeve #CBCBCD, 12px
+  köşe, kart gölgesi YOK (yalnız yüzen öğeler), tek vurgu petrol #0B6178, yazı Plus Jakarta Sans 450 (tanıtım/giriş
+  `.force-light` Inter 400). Metin #0F0F19, soluk metin #48494F (2026-10-29 bir tık koyulaştırıldı); `slate-500/600`
+  da koyulaştırıldı. **Bölüm başlığı kartın DIŞINDA, her öğe ayrı çerçeveli kart** — renkli "tepsi" kutusu yok
+  (öğrenci detay haftalık ilerleme `Zone`, koç panosu Uyarı Akışı bu düzene çevrildi). Haftalık program sayfasının
+  yerleşimi eğitim videoları nedeniyle DEĞİŞMEDİ.
+- Mobil: tailwind.config slate 50/100/200/500/600 J değerlerine çekildi (OTA). Mobilde Plus Jakarta YOK (RN'de
+  global yazı tipi her Text'e ayrı ayar ister — ayrı iş).
+- Görsel kontrol (yerel, 5 rol): koç pano/öğrenci/detay/analitik/hafta · kurum pano · süper admin pano/güvenlik
+  kamarası/kurumlar/kullanıcılar · öğrenci gelişim · veli pano. tsc + eslint (tam) temiz.
+
 ## GİRİŞ SAYFASI + TURNSTILE + CLOUDFLARE HAZIRLIĞI + KARNE ARKA PLAN OKUMA (2026-10-29, CANLI)
 
 - **Giriş sayfası yeni tasarım** (`web/app/login/*`): marka paneli + form, ikonlu alanlar, şifre göster/gizle, Caps Lock

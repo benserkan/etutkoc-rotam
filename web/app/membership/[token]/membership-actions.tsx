@@ -54,7 +54,7 @@ export function MembershipActions({
       {/* Birincil: kartla öde (mevcut koç → giriş → /teacher/plan) */}
       <a
         href="/teacher/plan"
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-cyan-800"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-cyan-800"
       >
         <CreditCard className="size-5" aria-hidden />
         Kartla Öde ve Üyeliğimi Başlat
@@ -66,7 +66,7 @@ export function MembershipActions({
       {/* Hesabı olmayan: kaydol ve öde */}
       <a
         href={signupHref}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-700 px-5 py-3 text-sm font-semibold text-cyan-800 dark:text-cyan-200 transition hover:bg-cyan-50 dark:hover:bg-cyan-500/25"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-700 px-5 py-3 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-50"
       >
         <UserPlus className="size-4" aria-hidden />
         Hesabım yok — Kaydol ve öde
@@ -74,7 +74,7 @@ export function MembershipActions({
 
       {/* İsteğe bağlı lead (ödeme değil — iletişim) */}
       {leadDone ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm text-emerald-800">
           <Check className="mr-1 inline size-4" aria-hidden />
           Bilgilerin alındı, en kısa sürede sana ulaşacağız.
         </p>

@@ -54,7 +54,7 @@ export function ProgramExamsSection({
           aria-expanded={open}
           className="flex w-full items-start gap-3 p-4 text-left"
         >
-          <ClipboardList className="mt-0.5 size-5 shrink-0 text-indigo-700 dark:text-indigo-300" aria-hidden />
+          <ClipboardList className="mt-0.5 size-5 shrink-0 text-indigo-700" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="font-semibold">
               Programdaki denemeler{" "}
@@ -87,8 +87,8 @@ export function ProgramExamsSection({
                       </span>
                       <span className="min-w-0 flex-1 basis-40 break-words text-sm">{r.title}</span>
                       <span className="text-xs tabular-nums">
-                        <span className="text-emerald-700 dark:text-emerald-300">{r.total_correct}D</span>{" "}
-                        <span className="text-rose-700 dark:text-rose-300">{r.total_wrong}Y</span>{" "}
+                        <span className="text-emerald-700">{r.total_correct}D</span>{" "}
+                        <span className="text-rose-700">{r.total_wrong}Y</span>{" "}
                         <span className="text-muted-foreground">{r.total_blank}B</span>
                         <span className="text-muted-foreground"> · {r.total_questions} soru</span>
                       </span>

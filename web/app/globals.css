@@ -13,38 +13,40 @@
    ============================================================================ */
 
 @layer base {
+  /* "J" platform dili (2026-10-29, Khan Academy + Coursera ölçümleriyle):
+     beyaz zemin · beyaz kart · görünür 1px gri çerçeve (#CBCBCD) · 12px köşe ·
+     gölgesiz kart · tek vurgu rengi petrol (#0B6178) · Plus Jakarta Sans.
+     Kartı zeminden ayıran renk tonu DEĞİL çerçevedir. Tek tema — koyu mod yok. */
   :root {
-    /* Marka paleti — lacivert primary, haki secondary, antrasit nötr */
-    --background: 220 8% 97%;            /* antrasit-50 — sayfa bg */
-    --foreground: 220 30% 11%;           /* lacivert-950 — gövde metin */
-    --card: 0 0% 100%;                   /* saf beyaz panel */
-    --card-foreground: 220 30% 11%;
+    --background: 0 0% 100%;             /* sayfa zemini beyaz */
+    --foreground: 240 24% 8%;            /* #0F0F19 gövde metin (2026-10-29: bir tık koyulaştırıldı) */
+    --card: 0 0% 100%;
+    --card-foreground: 240 22% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 11%;
-    --primary: 215 47% 23%;              /* lacivert-800 — ana CTA */
+    --popover-foreground: 240 22% 11%;
+    --primary: 193 83% 26%;              /* #0B6178 petrol — ana eylem */
     --primary-foreground: 0 0% 100%;
-    --secondary: 60 25% 21%;             /* haki-800 — ikincil CTA */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 6% 90%;                 /* antrasit-200 */
-    --muted-foreground: 220 5% 38%;      /* antrasit-500 */
-    --accent: 215 30% 35%;               /* lacivert-600 — link, focus accent */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 65% 42%;
+    --secondary: 240 9% 96%;             /* #F4F4F6 — ikincil düğme zemini */
+    --secondary-foreground: 240 22% 11%;
+    --muted: 240 9% 96%;                 /* #F4F4F6 — sakin dolgu */
+    --muted-foreground: 228 6% 30%;      /* #48494F (38%→30%: soluk metin netleşti) */
+    --accent: 192 41% 94%;               /* #EAF4F6 — seçili/üzerine gelme zemini */
+    --accent-foreground: 193 83% 22%;
+    --destructive: 4 72% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 8% 85%;
-    --input: 220 8% 85%;
-    --ring: 215 47% 35%;                 /* lacivert focus halo */
-    --radius: 0.5rem;
+    --border: 240 2% 80%;                /* #CBCBCD — kart ve ayraç çizgisi */
+    --input: 228 3% 55%;                 /* #8A8B90 — giriş kutusu çerçevesi */
+    --ring: 193 83% 30%;
+    --radius: 0.75rem;                   /* 12px kart köşesi */
 
-    /* Sidebar (Dalga 0+ kullanım için) */
-    --sidebar: 220 10% 96%;
-    --sidebar-foreground: 220 30% 11%;
-    --sidebar-primary: 215 47% 23%;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 240 22% 11%;
+    --sidebar-primary: 193 83% 26%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 8% 90%;
-    --sidebar-accent-foreground: 220 30% 11%;
-    --sidebar-border: 220 8% 85%;
-    --sidebar-ring: 215 47% 35%;
+    --sidebar-accent: 192 41% 94%;
+    --sidebar-accent-foreground: 193 83% 22%;
+    --sidebar-border: 240 2% 80%;
+    --sidebar-ring: 193 83% 30%;
   }
 
   .dark {
@@ -132,8 +134,14 @@
   --color-dow-paz: #f59e0b;
 
   /* Tipografi — root layout next/font/google ile bu variable'ları set eder */
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-display: var(--font-display), var(--font-inter), sans-serif;
+  --font-sans: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
+
+  /* J dili: ayraç çizgileri görünür olsun — hazır gri tonlar çerçeve rengine çekildi */
+  --color-slate-200: #CBCBCD;
+  --color-slate-500: #565A64; /* sabit soluk metinler de bir tık koyu */
+  --color-slate-600: #3F434C;
+  --color-gray-200: #CBCBCD;
+  --font-display: var(--font-jakarta), var(--font-inter), sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* Radius */
@@ -155,6 +163,8 @@
     background: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
+    /* Plus Jakarta 400 ince okunuyordu → değişken fontta 450 (bir tık dolgun). */
+    font-weight: 450;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -187,6 +197,8 @@
   --muted-foreground: 220 5% 38%;
   --border: 206 20% 78%;
   color-scheme: light;
+  font-family: var(--font-inter), system-ui, sans-serif; /* tanıtım sayfaları eski yazı tipinde kalır */
+  font-weight: 400;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
 }

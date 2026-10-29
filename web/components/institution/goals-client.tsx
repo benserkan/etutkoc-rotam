@@ -51,7 +51,7 @@ export function GoalsClient({ initial }: Props) {
         >
           ← Panel
         </Link>
-        <p className="text-xs uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300 font-semibold mt-2">
+        <p className="text-xs uppercase tracking-[0.2em] text-emerald-700 font-semibold mt-2">
           Kurum Geneli
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1">
@@ -87,16 +87,16 @@ export function GoalsClient({ initial }: Props) {
       </div>
 
       {students_without_goals > 0 && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3 dark:border-amber-500/30 dark:bg-amber-500/10">
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
           <AlertTriangle
-            className="size-6 shrink-0 text-amber-600 dark:text-amber-300 mt-0.5"
+            className="size-6 shrink-0 text-amber-600 mt-0.5"
             aria-hidden
           />
           <div>
-            <h3 className="font-semibold text-amber-900 dark:text-amber-200">
+            <h3 className="font-semibold text-amber-900">
               {students_without_goals} öğrenci hedefsiz
             </h3>
-            <p className="text-sm text-amber-800 mt-1 dark:text-amber-200/90">
+            <p className="text-sm text-amber-800 mt-1">
               Hedef koymak motivasyonu artırır ve ilerlemeyi ölçülebilir
               kılar. Öğretmenlerinize öğrencilerinin hedef ağacını
               tanımlamasını öneriniz.
@@ -146,7 +146,7 @@ function KpiCard({
         <div
           className={
             "text-[11px] uppercase tracking-wider " +
-            (accent ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground")
+            (accent ? "text-emerald-700" : "text-muted-foreground")
           }
         >
           <ColumnHint label={label} hint={hint} />
@@ -154,7 +154,7 @@ function KpiCard({
         <div
           className={
             "text-3xl font-semibold mt-1 tabular-nums " +
-            (accent ? "text-emerald-800 dark:text-emerald-300" : "")
+            (accent ? "text-emerald-800" : "")
           }
         >
           {value}

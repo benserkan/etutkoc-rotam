@@ -90,15 +90,15 @@ export function AdminInstitutionDetailClient({
           <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 flex items-center gap-3 flex-wrap">
             {inst.name}
             {inst.is_active ? (
-              <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
+              <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Aktif
               </span>
             ) : (
-              <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-500/15 dark:border-slate-500/30 text-slate-600 dark:text-slate-300 border border-slate-200">
+              <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                 Pasif
               </span>
             )}
-            <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
+            <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
               {institutionPlanLabel(inst.plan)}
             </span>
           </h1>
@@ -106,7 +106,7 @@ export function AdminInstitutionDetailClient({
             {inst.slug}
           </div>
         </div>
-        <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:hover:bg-indigo-500/25">
+        <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
           <Link href={`/admin/institutions/${inst.id}/account-history`}>
             <FileText className="size-4" aria-hidden />
             Hesap Hareketleri
@@ -263,7 +263,7 @@ function HealthCard({ health }: { health: InstitutionDetailResponse["health"] })
                   key={ind.code}
                   className="flex items-start gap-2 text-sm"
                 >
-                  <span className="text-rose-600 dark:text-rose-300 mt-0.5">●</span>
+                  <span className="text-rose-600 mt-0.5">●</span>
                   <div className="flex-1">
                     <div className="font-medium inline-flex items-baseline gap-1.5">
                       {ind.title}
@@ -280,7 +280,7 @@ function HealthCard({ health }: { health: InstitutionDetailResponse["health"] })
             </ul>
           </div>
         ) : (
-          <div className="mt-4 pt-4 border-t border-border text-sm text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-2">
+          <div className="mt-4 pt-4 border-t border-border text-sm text-emerald-700 inline-flex items-center gap-2">
             <span>✓</span>
             <span>Bu kurum aktif kullanılıyor — herhangi bir risk uyarısı yok.</span>
           </div>
@@ -348,7 +348,7 @@ function LogoCard({
     <Card className="border-amber-200">
       <CardContent className="p-5">
         <div className="flex items-center gap-2 mb-1">
-          <ImageIcon className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
+          <ImageIcon className="size-4 text-amber-600" aria-hidden />
           <h2 className="font-semibold">Kurum logosu</h2>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
@@ -394,7 +394,7 @@ function LogoCard({
             {hasLogo ? (
               <Button
                 variant="ghost"
-                className="text-rose-600 dark:text-rose-300 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/25 dark:hover:text-rose-100"
+                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                 onClick={() => remove.mutate()}
                 disabled={busy}
               >
@@ -549,7 +549,7 @@ function PlanCard({
       <div className="h-1 w-full bg-gradient-to-r from-cyan-600 to-cyan-800" aria-hidden />
       <CardContent className="p-5">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700">
             <Gem className="size-5" aria-hidden />
           </span>
           <div className="min-w-0">
@@ -564,27 +564,27 @@ function PlanCard({
         {focusedConfirm && !showPicker ? (
           /* ODAKLI ONAY — kurum paketi seçti, admin yalnızca onaylar */
           <div className="mt-3 space-y-3">
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
               <p className="flex items-center gap-2 font-semibold">
                 <ArrowUpRight className="size-4 shrink-0" aria-hidden />
                 Bu kurum <strong>{requestedOption?.label}</strong> paketine geçmek için talepte bulundu.
               </p>
-              {pending?.note ? <p className="mt-1 text-amber-800 dark:text-amber-200">Kurumun notu: {pending.note}</p> : null}
+              {pending?.note ? <p className="mt-1 text-amber-800">Kurumun notu: {pending.note}</p> : null}
             </div>
 
             {/* Mevcut → Talep edilen karşılaştırması */}
             <div className="flex items-center gap-3 text-sm">
               <div className="flex-1 rounded-lg border border-slate-200 bg-card p-3">
                 <p className="text-[11px] uppercase tracking-wide text-slate-500">Mevcut</p>
-                <p className="font-bold text-slate-900 dark:text-slate-200">{institutionPlanLabel(currentPlan)}</p>
-                {currentOption?.coaches ? <p className="text-xs text-slate-600 dark:text-slate-300">{currentOption.coaches}</p> : null}
+                <p className="font-bold text-slate-900">{institutionPlanLabel(currentPlan)}</p>
+                {currentOption?.coaches ? <p className="text-xs text-slate-600">{currentOption.coaches}</p> : null}
               </div>
-              <ArrowUpRight className="size-5 shrink-0 text-cyan-600 dark:text-cyan-300" aria-hidden />
-              <div className="flex-1 rounded-lg border border-cyan-600 bg-cyan-50 dark:bg-cyan-500/15 dark:border-cyan-500/30 p-3 ring-1 ring-cyan-600">
-                <p className="text-[11px] uppercase tracking-wide text-cyan-700 dark:text-cyan-300">Talep edilen</p>
-                <p className="font-bold text-slate-900 dark:text-slate-200">{requestedOption?.label}</p>
-                {requestedOption?.coaches ? <p className="text-xs text-slate-700 dark:text-slate-300">{requestedOption.coaches}</p> : null}
-                {requestedOption?.desc ? <p className="text-[11px] text-slate-600 dark:text-slate-300">{requestedOption.desc}</p> : null}
+              <ArrowUpRight className="size-5 shrink-0 text-cyan-600" aria-hidden />
+              <div className="flex-1 rounded-lg border border-cyan-600 bg-cyan-50 p-3 ring-1 ring-cyan-600">
+                <p className="text-[11px] uppercase tracking-wide text-cyan-700">Talep edilen</p>
+                <p className="font-bold text-slate-900">{requestedOption?.label}</p>
+                {requestedOption?.coaches ? <p className="text-xs text-slate-700">{requestedOption.coaches}</p> : null}
+                {requestedOption?.desc ? <p className="text-[11px] text-slate-600">{requestedOption.desc}</p> : null}
               </div>
             </div>
 
@@ -610,10 +610,10 @@ function PlanCard({
           /* SEÇİCİ — talep yok / paket belirtilmemiş / admin elle yönetiyor */
           <>
             {pending && !requestedCode ? (
-              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
                 Bu kurum yükseltme talebinde bulundu ama belirli bir paket belirtmedi —
                 uygun kademeyi seç.
-                {pending.note ? <><br /><span className="text-amber-800 dark:text-amber-200">Not: {pending.note}</span></> : null}
+                {pending.note ? <><br /><span className="text-amber-800">Not: {pending.note}</span></> : null}
               </div>
             ) : null}
 
@@ -635,7 +635,7 @@ function PlanCard({
                   >
                     {/* Üst rozetler */}
                     {details?.badge ? (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-0.5 text-[11px] font-bold text-cyan-950 shadow-sm">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-0.5 text-[11px] font-bold text-cyan-950">
                         {details.badge}
                       </span>
                     ) : null}
@@ -647,8 +647,8 @@ function PlanCard({
 
                     {/* Başlık */}
                     <div className="mb-3">
-                      <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-slate-200">{p.label}</h3>
-                      <p className="text-xs text-slate-600 dark:text-slate-300">{details?.coaches ?? p.coaches ?? "—"}</p>
+                      <h3 className="font-display text-lg font-extrabold text-slate-900">{p.label}</h3>
+                      <p className="text-xs text-slate-600">{details?.coaches ?? p.coaches ?? "—"}</p>
                     </div>
 
                     {/* Fiyat */}
@@ -656,12 +656,12 @@ function PlanCard({
                       {details && details.monthly != null ? (
                         details.monthly === 0 ? (
                           <div className="flex items-baseline gap-1">
-                            <span className="font-display text-2xl font-extrabold text-slate-900 dark:text-slate-200">Ücretsiz</span>
+                            <span className="font-display text-2xl font-extrabold text-slate-900">Ücretsiz</span>
                           </div>
                         ) : (
                           <>
                             <div className="flex items-baseline gap-1">
-                              <span className="font-display text-2xl font-extrabold text-slate-900 dark:text-slate-200">
+                              <span className="font-display text-2xl font-extrabold text-slate-900">
                                 {details.monthly.toLocaleString("tr-TR")}
                               </span>
                               <span className="text-sm text-slate-500">₺/ay</span>
@@ -673,20 +673,20 @@ function PlanCard({
                         )
                       ) : (
                         <div className="flex items-baseline gap-1">
-                          <span className="font-display text-xl font-extrabold text-slate-900 dark:text-slate-200">Özel teklif</span>
+                          <span className="font-display text-xl font-extrabold text-slate-900">Özel teklif</span>
                         </div>
                       )}
                     </div>
 
                     {/* AI kredi ön plana çıkar */}
                     {details ? (
-                      <div className="mb-3 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2 dark:bg-cyan-500/10 dark:border-cyan-500/30">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800 dark:text-cyan-200">
+                      <div className="mb-3 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800">
                           Aylık yapay zekâ kredisi
                         </p>
-                        <p className="font-display text-xl font-extrabold text-cyan-900 dark:text-cyan-200">
+                        <p className="font-display text-xl font-extrabold text-cyan-900">
                           {details.credits.toLocaleString("tr-TR")}{" "}
-                          <span className="text-xs font-medium text-cyan-700 dark:text-cyan-300">kredi</span>
+                          <span className="text-xs font-medium text-cyan-700">kredi</span>
                         </p>
                       </div>
                     ) : null}
@@ -701,15 +701,15 @@ function PlanCard({
                           <ul className="mb-4 space-y-1.5 text-xs">
                             {feats.map((f) => (
                               <li key={f} className="flex items-start gap-1.5">
-                                <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
-                                <span className="text-slate-700 dark:text-slate-300">{f}</span>
+                                <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-hidden />
+                                <span className="text-slate-700">{f}</span>
                               </li>
                             ))}
                           </ul>
                         );
                       }
                       return p.desc ? (
-                        <p className="mb-4 text-xs text-slate-600 dark:text-slate-300">{p.desc}</p>
+                        <p className="mb-4 text-xs text-slate-600">{p.desc}</p>
                       ) : null;
                     })()}
 
@@ -720,7 +720,7 @@ function PlanCard({
                         className={cn(
                           "w-full whitespace-normal text-xs",
                           isCur
-                            ? "border border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-500/25"
+                            ? "border border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-100"
                             : isSel
                               ? "bg-cyan-700 text-white hover:bg-cyan-800"
                               : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
@@ -916,13 +916,13 @@ function CountBlock({ value, label }: { value: number; label: string }) {
 
 function BackupCard({ institutionId }: { institutionId: number }) {
   return (
-    <Card className="border-violet-200 bg-violet-50/40 dark:bg-violet-500/10 dark:border-violet-500/30">
+    <Card className="border-violet-200 bg-violet-50/40">
       <CardContent className="p-5">
-        <h2 className="font-medium text-violet-900 dark:text-violet-200 mb-2 inline-flex items-center gap-1.5">
+        <h2 className="font-medium text-violet-900 mb-2 inline-flex items-center gap-1.5">
           <Download className="size-4" aria-hidden />
           Kurum Yedeği İndir
         </h2>
-        <p className="text-xs text-violet-800 dark:text-violet-200 mb-3 leading-relaxed">
+        <p className="text-xs text-violet-800 mb-3 leading-relaxed">
           Bu kuruma ait tüm verileri (kullanıcılar, kitaplar, görevler, geçmiş
           bildirimler ve son 90 günün etkinlik geçmişi) tek bir{" "}
           <code>.json</code> dosyası olarak indirir. Şifreler güvenlik nedeniyle
@@ -974,13 +974,13 @@ function DangerZone({
   }
 
   return (
-    <Card className="border-rose-200 bg-rose-50/40 dark:bg-rose-500/10 dark:border-rose-500/30">
+    <Card className="border-rose-200 bg-rose-50/40">
       <CardContent className="p-5">
-        <h2 className="font-medium text-rose-900 dark:text-rose-200 mb-2 inline-flex items-center gap-1.5">
+        <h2 className="font-medium text-rose-900 mb-2 inline-flex items-center gap-1.5">
           <ShieldAlert className="size-4" aria-hidden />
           Tehlikeli Bölge
         </h2>
-        <p className="text-xs text-rose-800 dark:text-rose-200 mb-3 leading-relaxed">
+        <p className="text-xs text-rose-800 mb-3 leading-relaxed">
           Kurumu silersen kullanıcılar <strong>silinmez</strong> — kurumdan
           ayrılırlar. Öğretmenler bağımsız öğretmen olarak sisteme devam eder,
           başka bir kuruma katılabilir veya kendi başına çalışabilir. Bu işlem
@@ -989,7 +989,7 @@ function DangerZone({
         <Button
           size="sm"
           variant="outline"
-          className="border-rose-300 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/25"
+          className="border-rose-300 text-rose-700 hover:bg-rose-100"
           onClick={() => setConfirmOpen(true)}
         >
           <Trash2 className="size-3.5" aria-hidden />
@@ -1065,7 +1065,7 @@ function UserListCard({
               <br />
               <Link
                 href={emptyHref}
-                className="text-indigo-700 dark:text-indigo-300 hover:underline mt-1 inline-block"
+                className="text-indigo-700 hover:underline mt-1 inline-block"
               >
                 Yönetici ekle →
               </Link>
@@ -1111,30 +1111,30 @@ function colorToTone(color: string) {
   > = {
     rose: {
       border: "border-rose-300",
-      text: "text-rose-700 dark:text-rose-300",
-      pill: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+      text: "text-rose-700",
+      pill: "bg-rose-50 text-rose-700 border-rose-200",
     },
     amber: {
       border: "border-amber-300",
-      text: "text-amber-700 dark:text-amber-300",
-      pill: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+      text: "text-amber-700",
+      pill: "bg-amber-50 text-amber-700 border-amber-200",
     },
     yellow: {
       border: "border-yellow-300",
-      text: "text-yellow-700 dark:text-yellow-300",
-      pill: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-200",
+      text: "text-yellow-700",
+      pill: "bg-yellow-50 text-yellow-700 border-yellow-200",
     },
     emerald: {
       border: "border-emerald-300",
-      text: "text-emerald-700 dark:text-emerald-300",
-      pill: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+      text: "text-emerald-700",
+      pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
     },
   };
   return (
     map[color] ?? {
       border: "border-slate-300",
-      text: "text-slate-700 dark:text-slate-300",
-      pill: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
+      text: "text-slate-700",
+      pill: "bg-slate-50 text-slate-700 border-slate-200",
     }
   );
 }

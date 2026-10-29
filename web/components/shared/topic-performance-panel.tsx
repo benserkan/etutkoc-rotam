@@ -41,9 +41,9 @@ const LEVEL: Record<Level, { label: string; badge: string; rank: number }> = {
 
 function accText(pct: number | null | undefined): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700 dark:text-emerald-300";
-  if (pct >= 50) return "text-amber-700 dark:text-amber-300";
-  return "text-rose-700 dark:text-rose-300";
+  if (pct >= 70) return "text-emerald-700";
+  if (pct >= 50) return "text-amber-700";
+  return "text-rose-700";
 }
 
 function fmtDate(iso: string | null | undefined): string {
@@ -181,7 +181,7 @@ function Overview({ data, audience }: { data: TopicPerformanceResponse; audience
         value={`${withRes}/${enterable}`}
         unit="test"
         label="Sonucu girilen"
-        valueCls={cov == null ? undefined : cov >= 70 ? "text-emerald-700 dark:text-emerald-300" : cov >= 30 ? "text-amber-700 dark:text-amber-300" : "text-rose-700 dark:text-rose-300"}
+        valueCls={cov == null ? undefined : cov >= 70 ? "text-emerald-700" : cov >= 30 ? "text-amber-700" : "text-rose-700"}
         note={cov == null ? "henüz test yok" : `doğru/yanlış/boş girilen test oranı: %${cov}`}
       />
       <Stat
@@ -189,7 +189,7 @@ function Overview({ data, audience }: { data: TopicPerformanceResponse; audience
         value={String(Math.max(weak, focusN))}
         unit="konu"
         label="Zayıf / dikkat"
-        valueCls={weak + focusN > 0 ? "text-rose-700 dark:text-rose-300" : undefined}
+        valueCls={weak + focusN > 0 ? "text-rose-700" : undefined}
         note={audience === "parent" ? "çalışılması gereken konular" : "aşağıda kayıp sırasıyla"}
       />
     </div>
@@ -229,7 +229,7 @@ function ResultGapBanner({ data, audience }: { data: TopicPerformanceResponse; a
         : "Doğru / yanlış sayıları girildikçe hangi konularda zorlandığı burada görünür.";
   return (
     <div
-      className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[13px] text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100"
+      className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[13px] text-amber-950"
       data-section="topic-perf:gap"
     >
       <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -339,8 +339,8 @@ function SubjectCard({ s }: { s: SubjectPerfRow }) {
         <div className="flex flex-col justify-center gap-1">
           <DybBar c={s.correct} w={s.wrong} b={s.blank ?? 0} />
           <p className="text-[11.5px] tabular-nums text-muted-foreground">
-            <span className="text-emerald-700 dark:text-emerald-300">{s.correct} D</span> ·{" "}
-            <span className="text-rose-700 dark:text-rose-300">{s.wrong} Y</span> · {s.blank ?? 0} B
+            <span className="text-emerald-700">{s.correct} D</span> ·{" "}
+            <span className="text-rose-700">{s.wrong} Y</span> · {s.blank ?? 0} B
           </p>
         </div>
         <div className="flex items-center gap-2 sm:justify-end">
@@ -378,8 +378,8 @@ function SubjectCard({ s }: { s: SubjectPerfRow }) {
                   <p className="text-[11.5px] tabular-nums text-muted-foreground">
                     {tp.answered + (tp.blank ?? 0) > 0 ? (
                       <>
-                        <span className="text-emerald-700 dark:text-emerald-300">{tp.correct} D</span> ·{" "}
-                        <span className="text-rose-700 dark:text-rose-300">{tp.wrong} Y</span> · {tp.blank ?? 0} B
+                        <span className="text-emerald-700">{tp.correct} D</span> ·{" "}
+                        <span className="text-rose-700">{tp.wrong} Y</span> · {tp.blank ?? 0} B
                       </>
                     ) : (
                       "sonuç girilmemiş"

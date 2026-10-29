@@ -74,9 +74,9 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function pctTone(pct: number): { bar: string; text: string } {
-  if (pct >= 70) return { bar: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-300" };
-  if (pct >= 40) return { bar: "bg-amber-500", text: "text-amber-700 dark:text-amber-300" };
-  return { bar: "bg-rose-500", text: "text-rose-700 dark:text-rose-300" };
+  if (pct >= 70) return { bar: "bg-emerald-500", text: "text-emerald-700" };
+  if (pct >= 40) return { bar: "bg-amber-500", text: "text-amber-700" };
+  return { bar: "bg-rose-500", text: "text-rose-700" };
 }
 
 export function PeriodHistory({ data }: { data: PoolBundleResponse }) {
@@ -101,7 +101,7 @@ export function PeriodHistory({ data }: { data: PoolBundleResponse }) {
   const total = Math.max(0, (hist.data?.total ?? data.periods_total) - (data.period ? 1 : 0));
 
   return (
-    <section className="rounded-xl border bg-card p-4 text-sm shadow-sm" data-section="pool:history">
+    <section className="rounded-xl border bg-card p-4 text-sm" data-section="pool:history">
       <header className="flex flex-wrap items-start gap-3">
         <span className="grid size-9 place-items-center rounded-lg bg-cyan-700 text-white" aria-hidden>
           <History className="size-4" />
@@ -114,7 +114,7 @@ export function PeriodHistory({ data }: { data: PoolBundleResponse }) {
           <p className="mt-0.5 text-xs text-muted-foreground">
             Geçmiş sınırsız saklanır. Bir döneme tıkla: kalem kalem (ne verildi, ne bitti) ve gün gün (hangi gün ne çalıştı).
             {" "}Gün gün programdan kalan haftalar dahil tüm geçmiş için{" "}
-            <Link href={`/teacher/students/${studentId}#history`} className="font-medium text-cyan-700 underline dark:text-cyan-300">
+            <Link href={`/teacher/students/${studentId}#history`} className="font-medium text-cyan-700 underline">
               Program geçmişi
             </Link>.
           </p>
@@ -122,7 +122,7 @@ export function PeriodHistory({ data }: { data: PoolBundleResponse }) {
       </header>
 
       {pending && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100" data-section="pool:history:pending-summary">
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900" data-section="pool:history:pending-summary">
           <Mail className="size-4 shrink-0" aria-hidden />
           <span className="min-w-0 flex-1">Dönem kapandı ({fmtShort(pending.opened_on)} → {fmtShort(pending.closed_on)}) — veli özeti hazır; otomatik gitmez, önizleyip gönder.</span>
           <Button type="button" size="sm" className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white" onClick={() => setSummaryFor(pending.id)} data-testid="pool-parent-summary-open">
@@ -211,7 +211,7 @@ function PeriodCard({ p, onOpen, onSummary, onDelete }: {
             {p.carried_out > 0 && <span className="inline-flex items-center gap-1"><ArrowUpRight className="size-3" aria-hidden />devredildi {p.carried_out}</span>}
             {p.session_marked_units > 0 && <span>seansta {p.session_marked_units} birim işaretlendi</span>}
             {p.has_session && <span className="inline-flex items-center gap-1"><MessagesSquare className="size-3" aria-hidden />seans kaydı var</span>}
-            {p.parent_summary_sent_at && <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300"><MailCheck className="size-3" aria-hidden />veliye gönderildi</span>}
+            {p.parent_summary_sent_at && <span className="inline-flex items-center gap-1 text-emerald-700"><MailCheck className="size-3" aria-hidden />veliye gönderildi</span>}
             {p.note && <span className="break-words">not: {p.note}</span>}
           </span>
         </button>
@@ -237,7 +237,7 @@ function PeriodCard({ p, onOpen, onSummary, onDelete }: {
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={onDelete} data-testid={`pool-period-delete-${p.id}`}
-                                className="text-rose-700 focus:bg-rose-50 focus:text-rose-800 dark:text-rose-300 dark:focus:bg-rose-500/15 dark:focus:text-rose-200">
+                                className="text-rose-700 focus:bg-rose-50 focus:text-rose-800">
                 <Trash2 className="size-4" aria-hidden /> Dönemi sil
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -274,7 +274,7 @@ function DeletePeriodDialog({ studentId, period, onClose }: {
             <Loader2 className="size-4 animate-spin" aria-hidden /> Etki hesaplanıyor
           </div>
         ) : !im.deletable ? (
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">{im.blocked_reason}</p>
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{im.blocked_reason}</p>
         ) : (
           <ul className="space-y-1.5 text-sm" data-section="pool:period-delete:impact">
             <ImpactLine tone="rose">

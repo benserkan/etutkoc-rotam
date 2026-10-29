@@ -92,7 +92,7 @@ export function ExamSection({
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
         <div className="min-w-0">
           <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            {Icon ? <Icon className="size-4 text-cyan-700 dark:text-cyan-400" /> : null}
+            {Icon ? <Icon className="size-4 text-cyan-700" /> : null}
             {title}
           </h4>
           {description ? (
@@ -120,7 +120,7 @@ function Delta({ value, suffix = "" }: { value: number | null; suffix?: string }
     <span
       className={cn(
         "inline-flex items-center gap-0.5 font-medium tabular-nums",
-        up ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400",
+        up ? "text-emerald-700" : "text-rose-700",
       )}
     >
       {up ? (
@@ -174,7 +174,7 @@ export function ExamShareMenu({
               window.open(`https://wa.me/?text=${encodeURIComponent(text())}`, "_blank", "noopener")
             }
           >
-            <MessageCircle className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
+            <MessageCircle className="size-4 text-emerald-600" aria-hidden />
             <span>
               WhatsApp ile gönder
               <span className="block text-[11px] text-muted-foreground">
@@ -272,9 +272,9 @@ export function OverviewTab({
           </Kpi>
           <Kpi label="Doğru · Yanlış · Boş" hint={`${last.total_questions} soru`}>
             <span className="text-lg font-semibold tabular-nums">
-              <span className="text-emerald-700 dark:text-emerald-400">{last.total_correct}</span>
+              <span className="text-emerald-700">{last.total_correct}</span>
               {" · "}
-              <span className="text-rose-700 dark:text-rose-400">{last.total_wrong}</span>
+              <span className="text-rose-700">{last.total_wrong}</span>
               {" · "}
               <span className="text-muted-foreground">{last.total_blank}</span>
             </span>
@@ -303,12 +303,12 @@ export function OverviewTab({
         </div>
 
         {insights.length ? (
-          <div className="mt-4 rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:border-cyan-500/30 dark:bg-cyan-500/10">
-            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-cyan-950 dark:text-cyan-100">
+          <div className="mt-4 rounded-lg border border-cyan-200 bg-cyan-50 p-3">
+            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-cyan-950">
               <Lightbulb className="size-3.5" aria-hidden />
               Öne çıkanlar
             </p>
-            <ul className="space-y-1 text-sm text-cyan-950 dark:text-cyan-100">
+            <ul className="space-y-1 text-sm text-cyan-950">
               {insights.map((t) => (
                 <li key={t} className="flex gap-2">
                   <span aria-hidden>•</span>
@@ -346,7 +346,7 @@ export function OverviewTab({
             <span className="text-2xl font-semibold tabular-nums">{fmtNet(avg)}</span>
           </Kpi>
           <Kpi label="En iyi net">
-            <span className="text-2xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+            <span className="text-2xl font-semibold tabular-nums text-emerald-700">
               {fmtNet(best)}
             </span>
           </Kpi>
@@ -386,7 +386,7 @@ export function DybBar({ d, y, b }: { d: number; y: number; b: number }) {
     >
       <div className="bg-emerald-500" style={{ width: `${(d / t) * 100}%` }} />
       <div className="bg-rose-500" style={{ width: `${(y / t) * 100}%` }} />
-      <div className="bg-slate-300 dark:bg-slate-600" style={{ width: `${(b / t) * 100}%` }} />
+      <div className="bg-slate-300" style={{ width: `${(b / t) * 100}%` }} />
     </div>
   );
 }
@@ -421,10 +421,10 @@ export function SubjectTable({ row, prev }: { row: ExamResultRow; prev: ExamResu
             return (
               <tr key={s.name} className="border-b border-border/60 last:border-0">
                 <td className="py-2 pr-2 text-foreground">{s.name}</td>
-                <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">
+                <td className="px-2 py-2 text-right tabular-nums text-emerald-700">
                   {s.correct}
                 </td>
-                <td className="px-2 py-2 text-right tabular-nums text-rose-700 dark:text-rose-400">
+                <td className="px-2 py-2 text-right tabular-nums text-rose-700">
                   {s.wrong}
                 </td>
                 <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{s.blank}</td>
@@ -710,7 +710,7 @@ export function BehaviorTab({ rows }: { rows: ExamResultRow[] }) {
                     <tr key={s.name} className="border-b border-border/60 last:border-0">
                       <td className="py-2 pr-2 text-foreground">{s.name}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{s.total}</td>
-                      <td className="px-2 py-2 text-right tabular-nums text-rose-700 dark:text-rose-400">{s.y}</td>
+                      <td className="px-2 py-2 text-right tabular-nums text-rose-700">{s.y}</td>
                       <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{s.b}</td>
                       <td className="px-2 py-2 text-right tabular-nums">
                         %{s.total ? Math.round((s.b / s.total) * 100) : 0}

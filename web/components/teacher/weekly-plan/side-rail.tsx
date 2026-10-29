@@ -36,9 +36,9 @@ import {
 
 const ACTIVE_TONE: Record<SideSectionDef["tone"], string> = {
   neutral: "bg-muted text-foreground",
-  cyan: "bg-cyan-500/15 text-cyan-900 dark:text-cyan-100",
-  violet: "bg-violet-500/15 text-violet-900 dark:text-violet-100",
-  amber: "bg-amber-500/15 text-amber-900 dark:text-amber-100",
+  cyan: "bg-cyan-500/15 text-cyan-900",
+  violet: "bg-violet-500/15 text-violet-900",
+  amber: "bg-amber-500/15 text-amber-900",
 };
 
 export function SideRail({

@@ -52,8 +52,8 @@ const DOT: Record<string, string> = {
   tamamlandi: "bg-emerald-300 ring-1 ring-emerald-500",
   devam: "bg-cyan-500",
   planlandi: "bg-amber-400",
-  baslanmadi: "bg-slate-300 dark:bg-slate-600",
-  kaynak_yok: "bg-slate-200 dark:bg-slate-700",
+  baslanmadi: "bg-slate-300",
+  kaynak_yok: "bg-slate-200",
 };
 
 function metricLine(t: BoardTopicItem): string {
@@ -252,10 +252,10 @@ export function CurriculumBoard({
                         {t.name}
                       </span>
                       {t.readiness === "caution" ? (
-                        <TriangleAlert className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <TriangleAlert className="h-3 w-3 shrink-0 text-amber-600" />
                       ) : null}
                       {t.readiness === "ready" ? (
-                        <Check className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                        <Check className="h-3 w-3 shrink-0 text-emerald-600" />
                       ) : null}
                       <span className="ml-auto shrink-0 whitespace-nowrap pt-px text-[10.5px] tabular-nums text-muted-foreground">
                         {metricLine(t)}
@@ -269,9 +269,9 @@ export function CurriculumBoard({
                           className={cn(
                             "text-[11px] leading-snug",
                             t.readiness === "caution"
-                              ? "text-amber-800 dark:text-amber-200"
+                              ? "text-amber-800"
                               : t.readiness === "ready"
-                                ? "text-emerald-800 dark:text-emerald-200"
+                                ? "text-emerald-800"
                                 : "text-muted-foreground",
                           )}
                         >
@@ -299,20 +299,20 @@ export function CurriculumBoard({
                           </dd>
                           {t.exam_wrong > 0 ? (
                             <>
-                              <dt className="text-amber-700 dark:text-amber-300">
+                              <dt className="text-amber-700">
                                 Denemede
                               </dt>
-                              <dd className="text-right tabular-nums text-amber-700 dark:text-amber-300">
+                              <dd className="text-right tabular-nums text-amber-700">
                                 {t.exam_wrong} yanlış
                               </dd>
                             </>
                           ) : null}
                           {t.open_wrongs > 0 ? (
                             <>
-                              <dt className="text-amber-700 dark:text-amber-300">
+                              <dt className="text-amber-700">
                                 Arşivde
                               </dt>
-                              <dd className="text-right tabular-nums text-amber-700 dark:text-amber-300">
+                              <dd className="text-right tabular-nums text-amber-700">
                                 {t.open_wrongs} açık
                               </dd>
                             </>
@@ -338,7 +338,7 @@ export function CurriculumBoard({
                                   className={cn(
                                     "flex flex-wrap items-center gap-1.5 rounded-md border px-1.5 py-1",
                                     s.recommended && t.sources.length > 1
-                                      ? "border-cyan-300 bg-cyan-50/60 dark:border-cyan-500/40 dark:bg-cyan-500/10"
+                                      ? "border-cyan-300 bg-cyan-50/60"
                                       : "border-border bg-background",
                                   )}
                                 >
@@ -362,7 +362,7 @@ export function CurriculumBoard({
                                       ) : null}
                                       {s.completed}/{s.total} çözüldü ·{" "}
                                       {s.full ? (
-                                        <span className="text-amber-700 dark:text-amber-300">
+                                        <span className="text-amber-700">
                                           kapasite doldu
                                         </span>
                                       ) : (
@@ -513,7 +513,7 @@ function UnmappedNote({ items }: { items: BoardSubjectItem["unmapped_sections"] 
   const total = items.reduce((s, u) => s + u.test_count, 0);
   return (
     <div
-      className="mb-2 rounded-md border border-amber-200 bg-amber-50/60 text-[11px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+      className="mb-2 rounded-md border border-amber-200 bg-amber-50/60 text-[11px] leading-snug text-amber-900"
       data-unmapped-note
     >
       <button
@@ -539,7 +539,7 @@ function UnmappedNote({ items }: { items: BoardSubjectItem["unmapped_sections"] 
           {[...byBook.entries()].map(([bookId, b]) => (
             <li
               key={bookId}
-              className="rounded border border-amber-200/70 bg-background/50 px-2 py-1.5 dark:border-amber-500/20"
+              className="rounded border border-amber-200/70 bg-background/50 px-2 py-1.5"
             >
               <p className="whitespace-normal break-words font-medium">{b.name}</p>
               <p className="mt-0.5 whitespace-normal break-words text-[10.5px] opacity-90">
@@ -551,7 +551,7 @@ function UnmappedNote({ items }: { items: BoardSubjectItem["unmapped_sections"] 
                 </span>
                 <Link
                   href={`/teacher/library/books/${bookId}?map=1`}
-                  className="shrink-0 font-semibold underline underline-offset-2 hover:text-amber-950 dark:hover:text-amber-100"
+                  className="shrink-0 font-semibold underline underline-offset-2 hover:text-amber-950"
                 >
                   Eşleştir →
                 </Link>

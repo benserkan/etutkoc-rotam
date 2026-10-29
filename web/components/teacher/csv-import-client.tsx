@@ -152,7 +152,7 @@ function StepIndicator({ step }: { step: Step }) {
             className={cn(
               "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors",
               active
-                ? "border-cyan-600 bg-cyan-600/10 dark:border-cyan-500"
+                ? "border-cyan-600 bg-cyan-600/10"
                 : "border-border bg-card",
             )}
           >
@@ -342,7 +342,7 @@ function InputStep({
               if (f) void handleFile(f);
             }}
           />
-          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-cyan-700 text-white shadow-sm">
+          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-cyan-700 text-white">
             {reading ? (
               <Loader2 className="size-7 animate-spin" aria-hidden />
             ) : (
@@ -369,7 +369,7 @@ function InputStep({
         {fileError ? (
           <p
             role="alert"
-            className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+            className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
           >
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
             {fileError}
@@ -378,17 +378,17 @@ function InputStep({
 
         {file ? (
           <div
-            className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-500/10"
+            className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3"
             data-testid="import-file-chip"
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
               <FileSpreadsheet className="size-5" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block break-all text-sm font-semibold text-emerald-950 dark:text-emerald-100">
+              <span className="block break-all text-sm font-semibold text-emerald-950">
                 {file.name}
               </span>
-              <span className="block text-xs text-emerald-800 dark:text-emerald-200/80">
+              <span className="block text-xs text-emerald-800">
                 {formatBytes(file.size)}
                 {file.sheet ? ` · “${file.sheet}” sayfası` : ""}
               </span>
@@ -410,7 +410,7 @@ function InputStep({
             <button
               type="button"
               onClick={clearFile}
-              className="rounded-md p-1.5 text-emerald-800 hover:bg-emerald-100 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
+              className="rounded-md p-1.5 text-emerald-800 hover:bg-emerald-100"
               aria-label="Dosyayı kaldır"
             >
               <X className="size-4" aria-hidden />
@@ -623,8 +623,8 @@ function PreviewStep({
                       className={cn(
                         "text-xs font-mono",
                         r.is_valid
-                          ? "text-emerald-600 dark:text-emerald-300"
-                          : "text-rose-600 dark:text-rose-300",
+                          ? "text-emerald-600"
+                          : "text-rose-600",
                       )}
                     >
                       {r.is_valid ? "✓" : "✗"} #{r.row_num}
@@ -658,12 +658,12 @@ function PreviewStep({
                     </p>
                   ) : null}
                   {r.errors.length > 0 ? (
-                    <p className="text-xs text-rose-600 dark:text-rose-300 mt-0.5">
+                    <p className="text-xs text-rose-600 mt-0.5">
                       {r.errors.join(" · ")}
                     </p>
                   ) : null}
                   {r.warnings.length > 0 ? (
-                    <p className="text-xs text-amber-600 dark:text-amber-300 mt-0.5">
+                    <p className="text-xs text-amber-600 mt-0.5">
                       uyarı: {r.warnings.join(" · ")}
                     </p>
                   ) : null}
@@ -758,7 +758,7 @@ function ResultStep({
       </Card>
 
       {(result.parents_failed ?? 0) > 0 ? (
-        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Bazı velilere davet gitmedi. Öğrencinin Veliler sekmesinden daveti
           yeniden gönderebilirsin (e-posta başka rolde kayıtlıysa farklı bir
           e-posta gerekir).
@@ -774,7 +774,7 @@ function ResultStep({
             <LoginCardsActions students={result.created} />
           </CardHeader>
           <CardContent className="p-0">
-            <p className="mx-4 mt-1 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <p className="mx-4 mt-1 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
               Şifreler yalnız bu ekranda görünür; sayfadan ayrılınca tekrar
               gösterilemez. Önce <b>giriş kartlarını yazdır</b> (A4&apos;e 8 kesilebilir
               kart: ad, e-posta, geçici şifre, giriş adresi ve QR) ya da{" "}
@@ -850,7 +850,7 @@ function ResultStep({
                   <span className="font-medium">
                     #{r.row_num} {r.full_name ?? "—"}
                   </span>
-                  <p className="text-xs text-rose-600 dark:text-rose-300 mt-0.5">
+                  <p className="text-xs text-rose-600 mt-0.5">
                     {r.errors.join(" · ")}
                   </p>
                 </li>
@@ -892,9 +892,9 @@ function Stat({
         className={cn(
           "text-2xl font-semibold tabular-nums",
           tone === "success"
-            ? "text-emerald-600 dark:text-emerald-300"
+            ? "text-emerald-600"
             : tone === "warn"
-              ? "text-amber-600 dark:text-amber-300"
+              ? "text-amber-600"
               : "",
         )}
       >

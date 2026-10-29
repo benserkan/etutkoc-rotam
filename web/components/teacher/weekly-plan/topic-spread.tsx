@@ -241,7 +241,7 @@ function SpreadDialog({
               })}
             </ul>
             {data.leftover > 0 ? (
-              <p className="flex items-start gap-1.5 rounded-md border border-amber-600/50 bg-amber-500/10 px-2.5 py-1.5 text-[12.5px] text-amber-900 dark:text-amber-200" data-testid="spread-leftover">
+              <p className="flex items-start gap-1.5 rounded-md border border-amber-600/50 bg-amber-500/10 px-2.5 py-1.5 text-[12.5px] text-amber-900" data-testid="spread-leftover">
                 <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                 {data.leftover} test sığmadı
                 {data.window_end ? ` (${dayLabel(data.window_end)} gününe kadar)` : ""} — günlük adedi

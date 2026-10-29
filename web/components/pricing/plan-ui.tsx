@@ -128,7 +128,7 @@ export function PlanOption({
           </span>
         ) : null}
         {disabled && disabledReason ? (
-          <span className="mt-2 block text-xs font-medium text-rose-700 dark:text-rose-400">{disabledReason}</span>
+          <span className="mt-2 block text-xs font-medium text-rose-700">{disabledReason}</span>
         ) : null}
       </span>
     </button>

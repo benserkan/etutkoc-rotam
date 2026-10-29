@@ -72,10 +72,10 @@ const STATUS_OPTIONS: { value: SessionStatus; label: string }[] = [
   { value: "no_show", label: "Gelmedi" },
 ];
 const STATUS_TONE: Record<SessionStatus, string> = {
-  done: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
-  postponed: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
-  cancelled: "border-slate-200 bg-slate-50 text-slate-600 dark:text-slate-300 dark:bg-slate-500/10 dark:border-slate-500/30",
-  no_show: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  done: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  postponed: "border-amber-200 bg-amber-50 text-amber-800",
+  cancelled: "border-slate-200 bg-slate-50 text-slate-600",
+  no_show: "border-rose-200 bg-rose-50 text-rose-700",
 };
 const CHANNEL_OPTIONS: { value: SessionChannel; label: string }[] = [
   { value: "in_person", label: "Yüz yüze" },
@@ -224,7 +224,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           <Button
             size="sm"
             variant="outline"
-            className="border-violet-200 text-violet-700 dark:text-violet-300 hover:bg-violet-50 hover:text-violet-800 dark:hover:bg-violet-500/25 dark:hover:text-violet-100"
+            className="border-violet-200 text-violet-700 hover:bg-violet-50 hover:text-violet-800"
             onClick={() => setInsightOpen(true)}
             disabled={!hasSessions || aiLocked}
             title={aiLocked ? "Ücretli pakette kullanılabilir" : hasSessions ? "Seans geçmişinden bir sonraki seans için AI önerisi" : "Önce en az bir seans kaydı gerekir"}
@@ -234,7 +234,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           <Button
             size="sm"
             variant="outline"
-            className="border-cyan-200 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 hover:text-cyan-800 dark:hover:bg-cyan-500/25 dark:hover:text-cyan-100"
+            className="border-cyan-200 text-cyan-700 hover:bg-cyan-50 hover:text-cyan-800"
             onClick={() => {
               if (reports.length === 0) createReport.mutate({}, { onSuccess: () => setReportsOpen(true) });
               else setReportsOpen((v) => !v);
@@ -252,47 +252,47 @@ export function StudentSessionsPanel({ studentId }: Props) {
       </div>
 
       {aiLocked ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
           <Lock className="size-4 shrink-0" aria-hidden />
           Yapay zekâ özellikleri (sesli dikte, fotoğraftan doldurma, koçluk içgörüsü) ücretli
           pakette açıktır.
-          <Link href="/teacher/plan" className="ml-auto font-medium text-amber-900 dark:text-amber-200 underline">
+          <Link href="/teacher/plan" className="ml-auto font-medium text-amber-900 underline">
             Paketi görüntüle
           </Link>
         </div>
       ) : null}
 
       {reportsOpen ? (
-        <section className="rounded-lg border border-cyan-200 bg-cyan-50/40 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
+        <section className="rounded-lg border border-cyan-200 bg-cyan-50/40 p-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-200">Haftalık raporlar</p>
+            <p className="text-sm font-semibold text-cyan-900">Haftalık raporlar</p>
             <Button size="sm" variant="outline" onClick={() => createReport.mutate({})} disabled={createReport.isPending}>
               {createReport.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Plus className="size-4" aria-hidden />}
               Bu hafta için üret
             </Button>
           </div>
           {reports.length === 0 ? (
-            <p className="text-xs text-cyan-900/70 dark:text-cyan-200/70">Henüz rapor yok.</p>
+            <p className="text-xs text-cyan-900/70">Henüz rapor yok.</p>
           ) : (
             <ul className="space-y-1.5">
               {reports.map((r) => (
-                <li key={r.id} className="flex flex-wrap items-center gap-2 rounded-md border border-cyan-200/70 bg-white px-2.5 py-1.5 text-xs dark:bg-transparent dark:border-cyan-500/30">
-                  <span className="font-semibold text-slate-900 dark:text-cyan-100">
+                <li key={r.id} className="flex flex-wrap items-center gap-2 rounded-md border border-cyan-200/70 bg-white px-2.5 py-1.5 text-xs">
+                  <span className="font-semibold text-slate-900">
                     {formatTRDate(r.week_start)} – {formatTRDate(r.week_end)}
                   </span>
                   {r.version > 1 ? <span className="text-muted-foreground">s{r.version}</span> : null}
                   <span className="text-muted-foreground">{r.agenda_count} gündem maddesi</span>
                   {r.has_ai_agenda ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 font-medium text-violet-700">
                       <Sparkles className="size-3" aria-hidden /> AI gündemi
                     </span>
                   ) : null}
-                  {r.session_count > 0 ? <span className="text-emerald-700 dark:text-emerald-300">seans kaydedildi</span> : null}
+                  {r.session_count > 0 ? <span className="text-emerald-700">seans kaydedildi</span> : null}
                   <span className="ml-auto inline-flex items-center gap-1.5">
                     {!r.has_ai_agenda ? (
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1 rounded-md border border-violet-200 px-2 py-1 font-medium text-violet-700 hover:bg-violet-50 disabled:opacity-50 dark:border-violet-500/30 dark:text-violet-300 dark:hover:bg-violet-500/10"
+                        className="inline-flex items-center gap-1 rounded-md border border-violet-200 px-2 py-1 font-medium text-violet-700 hover:bg-violet-50 disabled:opacity-50"
                         onClick={() => gateConsent(() => genAiAgenda.mutate({ reportId: r.id }))}
                         disabled={aiLocked || genAiAgenda.isPending}
                         title={aiLocked ? "Ücretli pakette kullanılabilir" : "Yapay zekâ akıcı seans gündemi yazar (kredi)"}
@@ -305,7 +305,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
                       href={teacherWeeklyReportParentHtmlUrl(r.id)}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 px-2 py-1 font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+                      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 px-2 py-1 font-medium text-emerald-700 hover:bg-emerald-50"
                       title="Veliyle paylaşılacak sade sürüm (yazdır/PDF)"
                     >
                       <ExternalLink className="size-3.5" aria-hidden /> Veli sürümü
@@ -323,7 +323,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
               ))}
             </ul>
           )}
-          <p className="mt-2 text-[11px] text-cyan-900/70 dark:text-cyan-200/60">
+          <p className="mt-2 text-[11px] text-cyan-900/70">
             Rapor: haftanın seyri, ders-konu doğru/yanlış, branş denemeleri, müfredat kapsama ve
             veriden çıkan seans gündemi. Yeni Seans formunda gündem maddelerini seçip seansa aktarabilirsiniz.
           </p>
@@ -380,7 +380,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="size-5 text-cyan-600 dark:text-cyan-300" aria-hidden /> Yapay zekâ özellikleri onayı
+              <ShieldCheck className="size-5 text-cyan-600" aria-hidden /> Yapay zekâ özellikleri onayı
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
@@ -390,10 +390,10 @@ export function StudentSessionsPanel({ studentId }: Props) {
               Devam etmek için onayınız gerekir.
             </p>
             <ul className="space-y-1.5 text-xs">
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Fotoğraf / ses <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Yalnızca <strong>siz</strong> görürsünüz; öğrenci ve veli erişemez.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Çıkan sonuç bir taslaktır; kaydetmeden önce kontrol edip düzeltebilirsiniz.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Fotoğraf / ses <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Yalnızca <strong>siz</strong> görürsünüz; öğrenci ve veli erişemez.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Çıkan sonuç bir taslaktır; kaydetmeden önce kontrol edip düzeltebilirsiniz.</li>
             </ul>
             <p className="text-[11px]">Bu onayı dilediğinizde geri çekebilirsiniz; bu özellikleri kullanmadan da seansları elle girebilirsiniz.</p>
           </div>
@@ -413,7 +413,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Lightbulb className="size-5 text-violet-600 dark:text-violet-300" aria-hidden /> Koçluk içgörüsü
+              <Lightbulb className="size-5 text-violet-600" aria-hidden /> Koçluk içgörüsü
             </DialogTitle>
           </DialogHeader>
 
@@ -426,7 +426,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
                 akademik durumdan bir sonraki seans için özet, gündem ve yaklaşım
                 önerileri üretilir.
               </p>
-              <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
+              <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">
                 Bu işlem yapay zekâ kullanır ve <strong>kredi düşer</strong>. Üretilen
                 içgörü kaydedilir; sonraki görüntülemeler ücretsizdir.
               </div>
@@ -441,7 +441,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           ) : (
             <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1 text-sm">
               {insightQ.data?.is_stale ? (
-                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
                   <span>
                     Bu içgörü <strong>{cachedInsight.based_on_sessions} seansa</strong> dayanıyor;
@@ -455,21 +455,21 @@ export function StudentSessionsPanel({ studentId }: Props) {
               {cachedInsight.agenda_suggestions.length > 0 ? (
                 <InsightList
                   title="Bir sonraki seansta konuş"
-                  icon={<CalendarCheck className="size-4 text-cyan-600 dark:text-cyan-300" aria-hidden />}
+                  icon={<CalendarCheck className="size-4 text-cyan-600" aria-hidden />}
                   items={cachedInsight.agenda_suggestions}
                 />
               ) : null}
               {cachedInsight.psychological_tips.length > 0 ? (
                 <InsightList
                   title="Yaklaşım ipuçları"
-                  icon={<Sparkles className="size-4 text-violet-600 dark:text-violet-300" aria-hidden />}
+                  icon={<Sparkles className="size-4 text-violet-600" aria-hidden />}
                   items={cachedInsight.psychological_tips}
                 />
               ) : null}
               {cachedInsight.watch_outs.length > 0 ? (
                 <InsightList
                   title="Dikkat"
-                  icon={<AlertTriangle className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />}
+                  icon={<AlertTriangle className="size-4 text-amber-600" aria-hidden />}
                   items={cachedInsight.watch_outs}
                   tone="warn"
                 />
@@ -515,7 +515,7 @@ function InsightList({
             key={i}
             className={cn(
               "rounded-md border px-2.5 py-1.5 text-sm",
-              tone === "warn" ? "border-amber-200 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200" : "border-border bg-card",
+              tone === "warn" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-border bg-card",
             )}
           >
             {it}
@@ -531,7 +531,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "go
     <Card>
       <CardContent className="space-y-1 p-4">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className={cn("text-2xl font-semibold tabular-nums", tone === "good" && "text-emerald-600 dark:text-emerald-300")}>{value}</p>
+        <p className={cn("text-2xl font-semibold tabular-nums", tone === "good" && "text-emerald-600")}>{value}</p>
       </CardContent>
     </Card>
   );
@@ -620,7 +620,7 @@ function AutoSnapshot({ snap }: { snap: SessionPrefillResponse }) {
           <span className="col-span-2">Geride: {snap.behind_subjects.map((s) => `${s.name} %${s.percent_done}`).join(" · ")}</span>
         ) : null}
         {snap.recent_units && snap.recent_units.length > 0 ? (
-          <span className="col-span-2 text-cyan-700 dark:text-cyan-300">
+          <span className="col-span-2 text-cyan-700">
             Geçen hafta işlenen: {snap.recent_units.slice(0, 6).map((u) => `${u.topic} (${u.tests})`).join(" · ")}
           </span>
         ) : null}
@@ -669,7 +669,7 @@ function DictateButton({
       className={cn(
         "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium transition",
         recording
-          ? "border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-700 dark:text-rose-300"
+          ? "border-rose-300 bg-rose-50 text-rose-700"
           : "border-border hover:bg-muted disabled:opacity-50",
       )}
       title="Konuşarak yazdır (sesli dikte)"
@@ -903,8 +903,8 @@ function SessionForm({
       />
 
       {!isEdit ? (
-        <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3 text-xs dark:bg-cyan-500/10 dark:border-cyan-500/30">
-          <p className="mb-1.5 font-semibold text-cyan-900 dark:text-cyan-200">Bu haftanın verisi (otomatik)</p>
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3 text-xs">
+          <p className="mb-1.5 font-semibold text-cyan-900">Bu haftanın verisi (otomatik)</p>
           {prefill.isLoading ? (
             <p className="text-muted-foreground">Hesaplanıyor…</p>
           ) : prefill.data ? (
@@ -925,8 +925,8 @@ function SessionForm({
       ) : null}
 
       {!isEdit && (prefill.data?.latest_report_agenda?.length ?? 0) > 0 ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-xs dark:bg-amber-500/10 dark:border-amber-500/30">
-          <p className="mb-1.5 font-semibold text-amber-900 dark:text-amber-200">
+        <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-xs">
+          <p className="mb-1.5 font-semibold text-amber-900">
             Haftalık rapor gündemi — seansa aktarmak istediklerini işaretle
           </p>
           <ul className="max-h-44 space-y-1 overflow-y-auto pr-1">
@@ -948,25 +948,25 @@ function SessionForm({
                         if (!checked) setAgenda((v) => appendText(v, `• ${label}: ${a.detail}`));
                       }}
                     />
-                    <span className="text-amber-950 dark:text-amber-100">
+                    <span className="text-amber-950">
                       <b>{a.title}</b>
-                      {a.severity === "high" ? <span className="ml-1 rounded bg-rose-100 px-1 text-[10px] font-semibold text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">öncelikli</span> : null}
-                      <span className="block text-amber-900/70 dark:text-amber-200/70">{a.detail}</span>
+                      {a.severity === "high" ? <span className="ml-1 rounded bg-rose-100 px-1 text-[10px] font-semibold text-rose-700">öncelikli</span> : null}
+                      <span className="block text-amber-900/70">{a.detail}</span>
                     </span>
                   </label>
                 </li>
               );
             })}
           </ul>
-          <p className="mt-1.5 text-[11px] text-amber-900/70 dark:text-amber-200/60">
+          <p className="mt-1.5 text-[11px] text-amber-900/70">
             İşaretlenen maddeler gündem alanına eklenir ve seans rapora bağlanır.
           </p>
         </div>
       ) : null}
 
       {!isEdit && queueItems.length > 0 ? (
-        <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 text-xs dark:border-cyan-500/30 dark:bg-cyan-500/10">
-          <p className="mb-1.5 font-semibold text-cyan-950 dark:text-cyan-100">
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 text-xs">
+          <p className="mb-1.5 font-semibold text-cyan-950">
             Deneme analizinden eklenen gündem ({usedQueue.length}/{queueItems.length} seçili)
           </p>
           <ul className="max-h-44 space-y-1 overflow-y-auto pr-1">
@@ -983,13 +983,13 @@ function SessionForm({
                         setSkippedQueue((prev) => (on ? [...prev, q.id] : prev.filter((x) => x !== q.id)))
                       }
                     />
-                    <span className="text-cyan-950 dark:text-cyan-100">{q.text}</span>
+                    <span className="text-cyan-950">{q.text}</span>
                   </label>
                 </li>
               );
             })}
           </ul>
-          <p className="mt-1.5 text-[11px] text-cyan-900/80 dark:text-cyan-200/70">
+          <p className="mt-1.5 text-[11px] text-cyan-900/80">
             İşaretli maddeler kaydederken gündemin sonuna eklenir ve listeden düşer; işaretsizler sonraki seansa kalır.
           </p>
         </div>

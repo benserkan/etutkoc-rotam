@@ -53,7 +53,7 @@ export function ArchiveExamWrongsButton({
           title="Yanlışlardan seçtiklerini Soru Arşivine ekle (tekrar kuyruğuna girer)"
           className={className}
         >
-          <BookX className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
+          <BookX className="size-4 text-rose-600" aria-hidden />
         </Button>
       ) : (
         <Button
@@ -61,7 +61,7 @@ export function ArchiveExamWrongsButton({
           size="sm"
           onClick={() => setOpen(true)}
           className={cn(
-            "gap-1.5 border-rose-300 text-rose-700 hover:bg-rose-500/10 hover:text-rose-800 dark:border-rose-500/40 dark:text-rose-300",
+            "gap-1.5 border-rose-300 text-rose-700 hover:bg-rose-500/10 hover:text-rose-800",
             className,
           )}
         >
@@ -165,13 +165,13 @@ function ArchiveWrongsDialog({
       <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col overflow-hidden p-0">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <BookX className="size-4 text-rose-600 dark:text-rose-300" aria-hidden />
+            <BookX className="size-4 text-rose-600" aria-hidden />
             Yanlışlardan arşive soru seç
           </DialogTitle>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {loadError ? (
-            <p className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
+            <p className="text-sm text-rose-700">{loadError}</p>
           ) : !data ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="size-6 animate-spin text-rose-500" aria-hidden />
@@ -187,7 +187,7 @@ function ArchiveWrongsDialog({
               <div className="flex gap-3 text-xs">
                 <button
                   type="button"
-                  className="text-rose-700 underline dark:text-rose-300"
+                  className="text-rose-700 underline"
                   onClick={() =>
                     setSelected(new Set(selectable.map((r) => r.question_id)))
                   }
@@ -217,7 +217,7 @@ function ArchiveWrongsDialog({
                           className={cn(
                             "flex items-center gap-2 rounded-md border px-2 py-1.5",
                             isSel
-                              ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10"
+                              ? "border-rose-300 bg-rose-50"
                               : "border-border",
                             disabled && "opacity-60",
                           )}
@@ -242,12 +242,12 @@ function ArchiveWrongsDialog({
                             </span>
                           </div>
                           {r.archived ? (
-                            <span className="shrink-0 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                            <span className="shrink-0 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
                               arşivde
                             </span>
                           ) : r.topic_id == null ? (
                             <span
-                              className="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300"
+                              className="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700"
                               title='Konusuz soru arşive giremez — "Satırları düzelt" ile konuya bağla'
                             >
                               konusuz
@@ -279,7 +279,7 @@ function ArchiveWrongsDialog({
                 </section>
               ))}
               {noTopicCount > 0 ? (
-                <p className="text-[11px] text-amber-800 dark:text-amber-300">
+                <p className="text-[11px] text-amber-800">
                   {`${noTopicCount} soru konuya bağlı olmadığından seçilemez — "Satırları düzelt" ile konuya bağlayınca eklenebilir.`}
                 </p>
               ) : null}

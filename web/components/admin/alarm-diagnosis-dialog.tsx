@@ -33,10 +33,10 @@ import type { AlarmEventItem } from "@/lib/types/admin";
 
 /** Purge-safe ton haritası (Tailwind sınıfları statik olmalı). */
 const TON: Record<string, string> = {
-  rose: "border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200",
-  amber: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200",
-  emerald: "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200",
-  slate: "border-slate-300 bg-slate-50 text-slate-900 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-200",
+  rose: "border-rose-300 bg-rose-50 text-rose-900",
+  amber: "border-amber-300 bg-amber-50 text-amber-900",
+  emerald: "border-emerald-300 bg-emerald-50 text-emerald-900",
+  slate: "border-slate-300 bg-slate-50 text-slate-900",
 };
 
 const SORUMLU: Record<string, { etiket: string; sinif: string }> = {
@@ -89,7 +89,7 @@ function Icerik({
     <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldQuestion className="size-5 text-cyan-600 dark:text-cyan-300" aria-hidden />
+            <ShieldQuestion className="size-5 text-cyan-600" aria-hidden />
             {event.rule_name}
           </DialogTitle>
         </DialogHeader>
@@ -99,7 +99,7 @@ function Icerik({
             <Loader2 className="size-4 animate-spin" aria-hidden /> Teşhis hazırlanıyor…
           </p>
         ) : !d ? (
-          <p className="py-8 text-sm text-rose-700 dark:text-rose-300">
+          <p className="py-8 text-sm text-rose-700">
             Teşhis yüklenemedi.
           </p>
         ) : (
@@ -142,9 +142,9 @@ function Icerik({
             </section>
 
             {/* 3) NE YAPMALI */}
-            <section className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:border-cyan-500/30 dark:bg-cyan-500/10">
+            <section className="rounded-lg border border-cyan-200 bg-cyan-50 p-3">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-cyan-900 dark:text-cyan-200">
+                <h3 className="text-sm font-semibold text-cyan-900">
                   Ne yapmalısın?
                 </h3>
                 <span className={cn("rounded px-2 py-0.5 text-[10px] font-semibold",
@@ -152,7 +152,7 @@ function Icerik({
                   {SORUMLU[d.sorumlu]?.etiket ?? d.sorumlu}
                 </span>
               </div>
-              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[13px] leading-5 text-cyan-900 dark:text-cyan-100">
+              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[13px] leading-5 text-cyan-900">
                 {d.ne_yapmali.map((adim, i) => <li key={i}>{adim}</li>)}
               </ol>
               {d.baglantilar.length ? (
@@ -213,7 +213,7 @@ function Icerik({
               Bu kural son 30 günde <b>{d.son_30g_tetik}</b> kez çaldı;{" "}
               <b>{d.son_30g_yanlis_alarm}</b> tanesi yanlış alarm olarak işaretlendi.
               {d.gurultu_uyarisi ? (
-                <p className="mt-1.5 flex items-start gap-1.5 font-medium text-amber-800 dark:text-amber-300">
+                <p className="mt-1.5 flex items-start gap-1.5 font-medium text-amber-800">
                   <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                   Bu kural gürültü üretiyor olabilir — eşiğini veya tanımını
                   gözden geçir, yoksa gerçek alarmlar arasında kaybolur.
@@ -254,7 +254,7 @@ function Icerik({
                 variant="outline"
                 disabled={resolve.isPending}
                 onClick={() => cozumle(true)}
-                className="border-amber-300 text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/25"
+                className="border-amber-300 text-amber-800 hover:bg-amber-50"
               >
                 <CircleSlash className="mr-1.5 size-4" aria-hidden />
                 Bu yanlış alarm

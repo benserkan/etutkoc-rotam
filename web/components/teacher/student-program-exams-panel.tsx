@@ -106,8 +106,8 @@ function colorOf(s: DenemeAnalysisSeries): string {
 
 const CONSISTENCY: Record<string, { label: string; cls: string }> = {
   high: { label: "Düzenli", cls: "bg-teal-700 text-white" },
-  mid: { label: "Orta", cls: "bg-amber-200 text-amber-950 dark:text-amber-950" },
-  low: { label: "Dalgalı", cls: "bg-orange-300 text-orange-950 dark:text-orange-950" },
+  mid: { label: "Orta", cls: "bg-amber-200 text-amber-950" },
+  low: { label: "Dalgalı", cls: "bg-orange-300 text-orange-950" },
 };
 
 // ---------------------------------------------------------------- kök
@@ -155,19 +155,19 @@ export function StudentProgramExamsPanel({
   return (
     <div className="flex flex-col gap-5" data-section="program-exams">
       {/* Başlık şeridi */}
-      <div className="relative overflow-hidden rounded-2xl border border-teal-200 bg-card p-5 dark:border-teal-500/30">
+      <div className="relative overflow-hidden rounded-2xl border border-teal-200 bg-card p-5">
         <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-teal-500/10" aria-hidden />
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
-            className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-teal-800 hover:underline dark:text-teal-300"
+            className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-teal-800 hover:underline"
           >
             <ArrowLeft className="size-4" aria-hidden />
             Karne denemelerine dön
           </button>
         ) : null}
-        <div className="text-xs font-bold tracking-wider text-teal-800 dark:text-teal-300">BRANŞ DENEMELERİ</div>
+        <div className="text-xs font-bold tracking-wider text-teal-800">BRANŞ DENEMELERİ</div>
         <h3 className="mt-1 text-xl font-extrabold leading-snug sm:text-2xl">Ders ders deneme gidişatı</h3>
         <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
           Haftalık programa deneme görevi olarak verilen ve sonucu görevden girilen denemeler. Karne yüklenen
@@ -216,12 +216,12 @@ export function StudentProgramExamsPanel({
                         className={cn(
                           "flex w-full items-start gap-2.5 rounded-xl border p-3 text-left text-sm transition-colors",
                           f.level === "warn"
-                            ? "border-orange-300 bg-orange-50 text-orange-950 hover:bg-orange-100 dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-100 dark:hover:bg-orange-500/20"
+                            ? "border-orange-300 bg-orange-50 text-orange-950 hover:bg-orange-100"
                             : "border-border bg-card hover:bg-muted",
                         )}
                       >
                         {f.level === "warn" ? (
-                          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-orange-700 dark:text-orange-300" aria-hidden />
+                          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-orange-700" aria-hidden />
                         ) : (
                           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
                         )}
@@ -355,7 +355,7 @@ function Kpis({ ov, pending }: { ov: DenemeOverview; pending: number }) {
           <div className="ml-0.5 bg-slate-400" style={{ width: `${lostTotal ? (100 * ov.lost_blank) / lostTotal : 0}%` }} />
         </div>
         <div className="flex justify-between text-[11px] font-semibold">
-          <span className="text-rose-800 dark:text-rose-300">yanlış {n1(ov.lost_wrong)}</span>
+          <span className="text-rose-800">yanlış {n1(ov.lost_wrong)}</span>
           <span className="text-muted-foreground">boş {ov.lost_blank}</span>
         </div>
       </Kpi>
@@ -393,7 +393,7 @@ function Highlights({
       pick: ov.strongest,
       title: "En güçlü ders",
       icon: Award,
-      tone: "border-teal-300 dark:border-teal-500/40",
+      tone: "border-teal-300",
       value: (v) => `${p1(v)} ortalama net`,
       note: "Net yüzdesi en yüksek ders.",
     },
@@ -401,7 +401,7 @@ function Highlights({
       pick: ov.weakest,
       title: "En çok net kaçan ders",
       icon: Target,
-      tone: "border-rose-300 dark:border-rose-500/40",
+      tone: "border-rose-300",
       value: (v) => `${p1(v)} ortalama net`,
       note: "Net yüzdesi en düşük ders.",
     },
@@ -409,7 +409,7 @@ function Highlights({
       pick: ov.rising,
       title: "Yükselen",
       icon: TrendingUp,
-      tone: "border-emerald-300 dark:border-emerald-500/40",
+      tone: "border-emerald-300",
       value: (v) => `deneme başına ${n1(v, true)} puan`,
       note: "Son denemelerde en hızlı artan.",
     },
@@ -417,7 +417,7 @@ function Highlights({
       pick: ov.falling,
       title: "Gerileyen",
       icon: TrendingDown,
-      tone: "border-orange-300 dark:border-orange-500/40",
+      tone: "border-orange-300",
       value: (v) => `deneme başına ${n1(v, true)} puan`,
       note: "Son denemelerde en hızlı düşen.",
     },
@@ -425,7 +425,7 @@ function Highlights({
       pick: ov.steadiest,
       title: "En düzenli gidişat",
       icon: Waves,
-      tone: "border-cyan-300 dark:border-cyan-500/40",
+      tone: "border-cyan-300",
       value: (v) => `±${n1(v)} puan sapma`,
       note: "Kendi eğiliminden en az sapan (zikzak çizmeyen).",
     },
@@ -475,7 +475,7 @@ function BandRuler({ s }: { s: DenemeAnalysisSeries }) {
       <div className="relative h-3 rounded-full bg-muted">
         {s.normal_low != null && s.normal_high != null ? (
           <div
-            className="absolute inset-y-0 rounded-full bg-teal-600/30 dark:bg-teal-400/30"
+            className="absolute inset-y-0 rounded-full bg-teal-600/30"
             style={{ left: `${s.normal_low}%`, width: `${Math.max(1.5, s.normal_high - s.normal_low)}%` }}
           />
         ) : null}
@@ -510,7 +510,7 @@ function TrendPill({ s }: { s: DenemeAnalysisSeries }) {
           ? "bg-teal-700 text-white"
           : s.direction === "down"
             ? "bg-orange-600 text-white"
-            : "bg-slate-200 text-slate-800 dark:bg-slate-500/30 dark:text-slate-100",
+            : "bg-slate-200 text-slate-800",
       )}
       title="Son en çok 8 denemeye oturtulan doğrunun eğimi: deneme başına net yüzdesi değişimi"
     >
@@ -523,8 +523,8 @@ function TrendPill({ s }: { s: DenemeAnalysisSeries }) {
 function AccBars({ s }: { s: DenemeAnalysisSeries }) {
   const rows: { label: string; v: number | null | undefined; cls: string }[] = [
     { label: "Deneme", v: s.accuracy_pct, cls: "bg-foreground" },
-    { label: "Test", v: s.test_accuracy_pct, cls: "bg-cyan-700 dark:bg-cyan-400" },
-    { label: "Genel d.", v: s.genel_accuracy_pct, cls: "bg-violet-600 dark:bg-violet-400" },
+    { label: "Test", v: s.test_accuracy_pct, cls: "bg-cyan-700" },
+    { label: "Genel d.", v: s.genel_accuracy_pct, cls: "bg-violet-600" },
   ];
   return (
     <div className="flex min-w-[160px] flex-col gap-1">
@@ -599,7 +599,7 @@ function ReportCard({
                         <div className="text-[11px] text-muted-foreground">
                           {s.count} deneme · {s.avg_questions != null ? `${n1(s.avg_questions)} soru` : "soru —"}
                           {s.pending > 0 ? (
-                            <span className="ml-1 font-semibold text-amber-800 dark:text-amber-300">· {s.pending} sonuç bekliyor</span>
+                            <span className="ml-1 font-semibold text-amber-800">· {s.pending} sonuç bekliyor</span>
                           ) : null}
                         </div>
                       </div>
@@ -616,8 +616,8 @@ function ReportCard({
                   <td
                     className={cn(
                       "border-b border-border py-3 pr-3 text-right font-semibold tabular-nums",
-                      s.momentum != null && s.momentum >= 3 && "text-teal-800 dark:text-teal-300",
-                      s.momentum != null && s.momentum <= -3 && "text-orange-800 dark:text-orange-300",
+                      s.momentum != null && s.momentum >= 3 && "text-teal-800",
+                      s.momentum != null && s.momentum <= -3 && "text-orange-800",
                     )}
                     title={s.momentum_window ? `Son ${s.momentum_window} deneme, önceki ${s.momentum_window} denemeyle` : undefined}
                   >
@@ -638,7 +638,7 @@ function ReportCard({
                   <td
                     className={cn(
                       "border-b border-border py-3 pr-3 text-right tabular-nums",
-                      (s.blank_rate_pct ?? 0) >= 25 && "font-bold text-orange-800 dark:text-orange-300",
+                      (s.blank_rate_pct ?? 0) >= 25 && "font-bold text-orange-800",
                     )}
                   >
                     {p1(s.blank_rate_pct)}
@@ -847,8 +847,8 @@ function Rhythm({ ov }: { ov: DenemeOverview }) {
                   w.count === 0
                     ? "h-1 bg-muted"
                     : i === weeks.length - 1
-                      ? "bg-emerald-700 dark:bg-emerald-400"
-                      : "bg-emerald-600/60 dark:bg-emerald-400/50",
+                      ? "bg-emerald-700"
+                      : "bg-emerald-600/60",
                 )}
                 style={w.count ? { height: `${(100 * w.count) / maxCount}%` } : undefined}
                 title={`${shortDate(w.week_start)} haftası · ${w.count} deneme · ${w.subjects} ders`}
@@ -980,7 +980,7 @@ function SubjectDeepDive({
             </span>
             {s.normal_low != null ? (
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-3 w-4 rounded-sm bg-teal-600/20 dark:bg-teal-400/25" aria-hidden /> normal aralık
+                <span className="h-3 w-4 rounded-sm bg-teal-600/20" aria-hidden /> normal aralık
               </span>
             ) : null}
             {proj.length ? (
@@ -1087,7 +1087,7 @@ function SubjectDeepDive({
               <div className="bg-slate-400" style={{ width: `${lostW + lostB ? (100 * lostB) / (lostW + lostB) : 0}%` }} />
             </div>
             <div className="mt-1.5 flex justify-between text-[11.5px]">
-              <span className="font-semibold text-rose-800 dark:text-rose-300">
+              <span className="font-semibold text-rose-800">
                 yanlışlar {n1(lostW)} net ({s.penalty ?? 4} yanlış 1 doğruyu götürür)
               </span>
               <span className="font-semibold text-muted-foreground">boşlar {n1(lostB)}</span>
@@ -1170,7 +1170,7 @@ function SubjectDeepDive({
                   <div key={`${d.date}-${d.i}`} className="flex flex-1 flex-col items-center gap-1">
                     <div className="flex h-20 w-full items-end">
                       <div
-                        className="w-full rounded-t-md bg-cyan-700/70 dark:bg-cyan-400/60"
+                        className="w-full rounded-t-md bg-cyan-700/70"
                         style={{ height: `${(100 * (d.min ?? 0)) / maxMin}%` }}
                         title={`${shortDate(d.date)} · ${n1(d.min)} dk/soru · ${p1(d.pct)}`}
                       />

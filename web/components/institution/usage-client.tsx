@@ -68,11 +68,11 @@ export function UsageClient({ initial }: Props) {
         >
           ← Panel
         </Link>
-        <p className="text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mt-1 font-semibold">
+        <p className="text-[11px] uppercase tracking-wider text-emerald-700 mt-1 font-semibold">
           Üyelik
         </p>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-0.5 flex items-center gap-2">
-          <Wallet className="size-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
+          <Wallet className="size-6 text-emerald-700" aria-hidden />
           Aylık Kredi Kullanımı
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
@@ -144,11 +144,11 @@ export function UsageClient({ initial }: Props) {
 
 function HardBlockBanner() {
   return (
-    <div className="rounded-md border border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-900 dark:text-rose-200 px-4 py-3 flex items-start gap-3">
+    <div className="rounded-md border border-rose-300 bg-rose-50 text-rose-900 px-4 py-3 flex items-start gap-3">
       <ShieldOff className="size-5 shrink-0 mt-0.5" aria-hidden />
       <div className="text-sm">
         <div className="font-semibold">Kullanım geçici olarak durduruldu</div>
-        <p className="mt-1 text-rose-800 dark:text-rose-200">
+        <p className="mt-1 text-rose-800">
           ETÜTKOÇ ekibi tarafından kurumunuzun yapay zeka, e-posta ve WhatsApp
           özellikleri manuel olarak durdurulmuş. Görevlerin oluşturulması ve
           diğer normal işlemler etkilenmez. Açtırmak için{" "}
@@ -173,13 +173,13 @@ function WarnBanner({
   remaining: number;
 }) {
   return (
-    <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-500/15 dark:border-amber-500/30 text-amber-900 dark:text-amber-200 px-4 py-3 flex items-start gap-3">
+    <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-900 px-4 py-3 flex items-start gap-3">
       <AlertTriangle className="size-5 shrink-0 mt-0.5" aria-hidden />
       <div className="text-sm">
         <div className="font-semibold">
           Aylık kredinin %{pct}&apos;i kullanıldı
         </div>
-        <p className="mt-1 text-amber-800 dark:text-amber-200">
+        <p className="mt-1 text-amber-800">
           Bu ay sonuna kadar <b>{remaining}</b> krediniz kaldı. Yapay zeka
           kullanımı veya WhatsApp mesaj gönderimi yoğunsa hızlı tükenebilir.
         </p>
@@ -199,11 +199,11 @@ function OveruseBanner({
 }) {
   const overflow = Math.max(0, used - allocated);
   return (
-    <div className="rounded-md border border-rose-300 bg-rose-50 dark:bg-rose-500/15 dark:border-rose-500/30 text-rose-900 dark:text-rose-200 px-4 py-3 flex items-start gap-3">
+    <div className="rounded-md border border-rose-300 bg-rose-50 text-rose-900 px-4 py-3 flex items-start gap-3">
       <AlertOctagon className="size-5 shrink-0 mt-0.5" aria-hidden />
       <div className="text-sm">
         <div className="font-semibold">Aylık krediniz tükendi</div>
-        <p className="mt-1 text-rose-800 dark:text-rose-200">
+        <p className="mt-1 text-rose-800">
           Bu ay <b className="tabular-nums">{overflow}</b> kredi aşım yaptınız
           (toplam %{pct}). Sistem çalışmaya devam ediyor — kurum
           üyeliklerinde aşımda otomatik durdurma yok. <b>Bir sonraki ayın
@@ -242,10 +242,10 @@ function MainBalanceCard({
 }) {
   const remainingTone =
     pct >= 100
-      ? "text-rose-700 dark:text-rose-300"
+      ? "text-rose-700"
       : pct >= 80
-        ? "text-amber-700 dark:text-amber-300"
-        : "text-emerald-700 dark:text-emerald-300";
+        ? "text-amber-700"
+        : "text-emerald-700";
   const barTone =
     pct >= 100
       ? "bg-rose-500"
@@ -270,7 +270,7 @@ function MainBalanceCard({
                 / {allocated} kredi
               </span>
               {bonus > 0 && (
-                <span className="ml-2 inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
+                <span className="ml-2 inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200">
                   <Gift className="size-3" aria-hidden />+{bonus} bonus
                 </span>
               )}
@@ -318,7 +318,7 @@ function MainBalanceCard({
 
         {/* "-6 nasıl olur" açıklaması — yalnız kalan eksiyse */}
         {remaining < 0 && (
-          <div className="rounded-md border border-rose-200 bg-rose-50/60 px-3 py-2 text-xs text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
+          <div className="rounded-md border border-rose-200 bg-rose-50/60 px-3 py-2 text-xs text-rose-900">
             <b>Kalan {remaining} kredi nasıl mümkün?</b> Aylık kota {allocated}{bonus > 0 ? ` (+${bonus} bonus)` : ""} ama kullanım {used}.
             {hardBlock ? (
               <> Sert kilit (hard-block) AÇIK olmasına rağmen aşımın olması süper admin&apos;in açıkça izin verdiği işlemlerden veya bonus krediden kaynaklanabilir.</>
@@ -395,10 +395,10 @@ function KindBreakdownCard({
 // ============================================================================
 
 const PERSON_ROLE_TONE: Record<string, string> = {
-  "Koç": "bg-cyan-50 text-cyan-800 dark:bg-cyan-500/10 dark:text-cyan-200",
-  "Öğrenci": "bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:text-sky-200",
-  "Veli": "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200",
-  "Yönetici": "bg-violet-50 text-violet-800 dark:bg-violet-500/10 dark:text-violet-200",
+  "Koç": "bg-cyan-50 text-cyan-800",
+  "Öğrenci": "bg-sky-50 text-sky-800",
+  "Veli": "bg-emerald-50 text-emerald-800",
+  "Yönetici": "bg-violet-50 text-violet-800",
 };
 
 function PersonBreakdownCard({ rows }: { rows: UsagePersonRow[] }) {
@@ -442,7 +442,7 @@ function PersonBreakdownCard({ rows }: { rows: UsagePersonRow[] }) {
                         className={
                           "rounded px-1.5 py-0.5 text-[10px] font-medium " +
                           (PERSON_ROLE_TONE[r.role_label] ??
-                            "bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-300")
+                            "bg-slate-100 text-slate-600")
                         }
                       >
                         {r.role_label}
@@ -524,7 +524,7 @@ function PlanInfoBlock({
             label="Hediye kredi"
             info="ETÜTKOÇ ekibinin bu ay için ek olarak tanımladığı kredi."
             value={`+${bonus}`}
-            valueClassName={bonus > 0 ? "text-violet-700 dark:text-violet-300" : undefined}
+            valueClassName={bonus > 0 ? "text-violet-700" : undefined}
           />
           <Stat label="Dönem" info="Rakamların ait olduğu takvim ayı (yıl-ay)." value={period} mono />
         </div>
@@ -539,7 +539,7 @@ function PlanInfoBlock({
                 key={kc.label}
                 className="px-2 py-0.5 rounded border border-border bg-muted/40 inline-flex items-center gap-1"
               >
-                <Sparkles className="size-2.5 text-emerald-600 dark:text-emerald-300" aria-hidden />
+                <Sparkles className="size-2.5 text-emerald-600" aria-hidden />
                 {kc.label}: <b className="tabular-nums">{kc.cost} kredi</b>
               </span>
             ))}
@@ -623,9 +623,9 @@ function EventsTable({ events }: { events: UsageEventItem[] }) {
                 const afterTone = after == null
                   ? "text-muted-foreground"
                   : after < 0
-                    ? "text-rose-700 dark:text-rose-300"
+                    ? "text-rose-700"
                     : after === 0
-                      ? "text-amber-700 dark:text-amber-300"
+                      ? "text-amber-700"
                       : "text-foreground";
                 return (
                   <tr key={e.id}>

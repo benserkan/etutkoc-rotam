@@ -359,7 +359,7 @@ export function BookScanUpload({
   return (
     <div className="space-y-3" data-testid="scan-upload">
       {scanMut.isPending ? (
-        <div className="flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-5 text-sm text-violet-900 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-100">
+        <div className="flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-5 text-sm text-violet-900">
           <Loader2 className="size-5 shrink-0 animate-spin" aria-hidden />
           <span>
             Kapak tanınıyor; katalogda yoksa içindekiler iki kez okunuyor…
@@ -372,20 +372,20 @@ export function BookScanUpload({
           type="button"
           disabled={disabled}
           onClick={() => fileRef.current?.click()}
-          className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/50 px-4 py-8 text-center transition hover:border-violet-500 hover:bg-violet-50 disabled:opacity-60 dark:border-violet-500/40 dark:bg-violet-500/5 dark:hover:bg-violet-500/10"
+          className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/50 px-4 py-8 text-center transition hover:border-violet-500 hover:bg-violet-50 disabled:opacity-60"
           data-testid="scan-button"
         >
           <span className="inline-flex size-12 items-center justify-center rounded-full bg-violet-600 text-white">
             <FileUp className="size-6" aria-hidden />
           </span>
-          <span className="text-base font-semibold text-violet-950 dark:text-violet-100">
+          <span className="text-base font-semibold text-violet-950">
             {scan ? "Başka dosya seç" : "Fotoğraf ya da PDF seç"}
           </span>
-          <span className="max-w-md text-sm text-violet-900 dark:text-violet-200">
+          <span className="max-w-md text-sm text-violet-900">
             Kapağın ve içindekiler sayfalarının fotoğrafları (en çok 8) ya da kitabın PDF’i.
             Tam kitap PDF’i de olur — yalnız ilk 20 sayfası okunur (fasikül setinde her fasikülün kapağı + içindekiler).
           </span>
-          <span className="inline-flex items-center gap-1 text-xs text-violet-800 dark:text-violet-300">
+          <span className="inline-flex items-center gap-1 text-xs text-violet-800">
             <Camera className="size-3.5" aria-hidden /> Telefonda doğrudan kamera açılır · kredi harcamaz
           </span>
         </button>
@@ -502,7 +502,7 @@ function CatalogRow({
             ) : (
               <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
             )}
-            <BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden />
             <span className="break-words">{e.name}</span>
           </div>
           <div className="pl-[2.375rem] text-xs text-muted-foreground">
@@ -550,7 +550,7 @@ function CatalogRow({
               ))}
             </ol>
           ) : (
-            <p className="text-xs text-rose-700 dark:text-rose-300">Bölümler yüklenemedi.</p>
+            <p className="text-xs text-rose-700">Bölümler yüklenemedi.</p>
           )}
         </div>
       ) : null}

@@ -86,14 +86,14 @@ const TYPE_TONE: Record<LibraryBookType, { bar: string; dot: string; badge: stri
 };
 
 const SUBJECT_TONES: Array<{ dot: string; text: string }> = [
-  { dot: "bg-indigo-500", text: "text-indigo-700 dark:text-indigo-300" },
-  { dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-300" },
-  { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-300" },
-  { dot: "bg-rose-500", text: "text-rose-700 dark:text-rose-300" },
-  { dot: "bg-violet-500", text: "text-violet-700 dark:text-violet-300" },
-  { dot: "bg-cyan-500", text: "text-cyan-700 dark:text-cyan-300" },
-  { dot: "bg-fuchsia-500", text: "text-fuchsia-700 dark:text-fuchsia-300" },
-  { dot: "bg-sky-500", text: "text-sky-700 dark:text-sky-300" },
+  { dot: "bg-indigo-500", text: "text-indigo-700" },
+  { dot: "bg-emerald-500", text: "text-emerald-700" },
+  { dot: "bg-amber-500", text: "text-amber-700" },
+  { dot: "bg-rose-500", text: "text-rose-700" },
+  { dot: "bg-violet-500", text: "text-violet-700" },
+  { dot: "bg-cyan-500", text: "text-cyan-700" },
+  { dot: "bg-fuchsia-500", text: "text-fuchsia-700" },
+  { dot: "bg-sky-500", text: "text-sky-700" },
 ];
 
 function subjectTone(subjectId: number) {
@@ -623,7 +623,7 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
                     className={cn(
                       "flex-1 rounded-md px-3 py-1.5 text-sm transition-colors sm:flex-none",
                       on
-                        ? "bg-background font-medium text-foreground shadow-sm"
+                        ? "bg-background font-medium text-foreground"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
@@ -814,19 +814,19 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
 
 const STAT_TONE = {
   slate: {
-    icon: "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-200",
+    icon: "bg-slate-100 text-slate-700",
     ring: "ring-slate-400/60",
   },
   emerald: {
-    icon: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200",
+    icon: "bg-emerald-100 text-emerald-800",
     ring: "ring-emerald-500/70",
   },
   sky: {
-    icon: "bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-200",
+    icon: "bg-sky-100 text-sky-800",
     ring: "ring-sky-500/70",
   },
   amber: {
-    icon: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200",
+    icon: "bg-amber-100 text-amber-800",
     ring: "ring-amber-500/70",
   },
 } as const;
@@ -1014,7 +1014,7 @@ function MappingBar({ book }: { book: LibraryBookListItem }) {
         <span
           className={cn(
             "tabular-nums font-medium",
-            full ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300",
+            full ? "text-emerald-700" : "text-amber-700",
           )}
         >
           {mapped}/{book.section_count}
@@ -1055,7 +1055,7 @@ function BookCard({ book }: { book: LibraryBookListItem }) {
               {LIBRARY_BOOK_TYPE_LABELS_TR[book.type]}
             </span>
             {grade ? (
-              <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[11px] font-medium text-white dark:bg-slate-600">
+              <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[11px] font-medium text-white">
                 {grade}
               </span>
             ) : null}
@@ -1094,7 +1094,7 @@ function BookCard({ book }: { book: LibraryBookListItem }) {
           <MappingBar book={book} />
 
           {issues.length > 0 ? (
-            <ul className="space-y-1 rounded-lg bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+            <ul className="space-y-1 rounded-lg bg-amber-50 p-2 text-xs text-amber-900">
               {issues.map((m) => (
                 <li key={m} className="flex gap-1.5">
                   <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -1106,7 +1106,7 @@ function BookCard({ book }: { book: LibraryBookListItem }) {
 
           <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-2 text-xs">
             {students > 0 ? (
-              <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-1 text-emerald-700">
                 <Users className="size-3.5" aria-hidden />
                 <b className="tabular-nums">{students}</b> öğrencide kullanılıyor
               </span>
@@ -1183,7 +1183,7 @@ function BookTable({ items }: { items: LibraryBookListItem[] }) {
                   <td className="px-3 py-2.5 text-muted-foreground">{gradeLabel(b) ?? "Tümü"}</td>
                   <td className="px-3 py-2.5 text-right tabular-nums">
                     {b.section_count === 0 ? (
-                      <span className="font-medium text-amber-700 dark:text-amber-300">0 — ekle</span>
+                      <span className="font-medium text-amber-700">0 — ekle</span>
                     ) : (
                       b.section_count
                     )}
@@ -1193,12 +1193,12 @@ function BookTable({ items }: { items: LibraryBookListItem[] }) {
                     {deneme || mapped === undefined || b.section_count === 0 ? (
                       <span className="text-muted-foreground">—</span>
                     ) : mapped >= b.section_count ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
+                      <span className="inline-flex items-center gap-1 text-emerald-700">
                         <CheckCircle2 className="size-3.5" aria-hidden />
                         {mapped}/{b.section_count}
                       </span>
                     ) : (
-                      <span className="font-medium text-amber-700 dark:text-amber-300">
+                      <span className="font-medium text-amber-700">
                         {mapped}/{b.section_count}
                       </span>
                     )}

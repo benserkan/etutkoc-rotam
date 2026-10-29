@@ -225,7 +225,7 @@ function RotaScene() {
             <span className="text-xs font-bold text-amber-950">2 dk izle</span>
           </span>
         </button>
-        <div className="mx-auto -mt-3 w-fit rounded-full border border-cyan-100 bg-white dark:bg-white px-3 py-1 text-center shadow-md [transform:rotate(2deg)]">
+        <div className="mx-auto -mt-3 w-fit rounded-full border border-cyan-100 bg-white px-3 py-1 text-center shadow-md [transform:rotate(2deg)]">
           <p className="text-xs font-bold text-slate-900">
             Rota <span className="font-medium text-slate-500">· dijital asistanın</span>
           </p>
@@ -255,7 +255,7 @@ function RotaScene() {
       </div>
 
       {/* Faz A — karne dosyası Rota'ya süzülür */}
-      <div className="hv3-karne absolute left-2 top-[195px] z-10 w-64 rounded-xl border border-slate-200 bg-white dark:bg-white p-3.5 shadow-xl">
+      <div className="hv3-karne absolute left-2 top-[195px] z-10 w-64 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl">
         <div className="flex items-center gap-2.5">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
             <FileText className="size-5" aria-hidden />
@@ -272,7 +272,7 @@ function RotaScene() {
       </div>
 
       {/* Faz B — TASARLANMIŞ analiz vinyeti (gerçek verilerle, büyük punto) */}
-      <div className="hv3-card1 absolute bottom-10 left-0 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white dark:bg-white shadow-2xl sm:w-[400px]">
+      <div className="hv3-card1 absolute bottom-10 left-0 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Deneme analizi hazır</span>
           <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800">40 saniye</span>
@@ -297,7 +297,7 @@ function RotaScene() {
       </div>
 
       {/* Faz C — TASARLANMIŞ veli vinyeti (sesli anlatım oynatıcısı) */}
-      <div className="hv3-card2 absolute bottom-10 left-4 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white dark:bg-white shadow-2xl sm:w-[400px]">
+      <div className="hv3-card2 absolute bottom-10 left-4 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Veli uygulaması</span>
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">az önce</span>
@@ -336,7 +336,7 @@ function RotaScene() {
       </div>
 
       {/* Faz D — hata defteri vinyeti (YSA: dijital yanlış takibi) */}
-      <div className="hv3-card3 absolute bottom-10 left-0 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white dark:bg-white shadow-2xl sm:w-[400px]">
+      <div className="hv3-card3 absolute bottom-10 left-0 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Dijital hata defteri</span>
           <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700">takipte</span>
@@ -366,7 +366,7 @@ function RotaScene() {
       </div>
 
       {/* Faz E — haftalık program + yapay zekâ görev önerisi vinyeti */}
-      <div className="hv3-card4 absolute bottom-10 left-4 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white dark:bg-white shadow-2xl sm:w-[400px]">
+      <div className="hv3-card4 absolute bottom-10 left-4 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Haftalık program · Perşembe</span>
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Rota önerisi</span>

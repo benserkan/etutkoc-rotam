@@ -235,7 +235,7 @@ function RosterRow({ row }: { row: RosterRowItem }) {
 
 function rateColorClass(pct: number | null): string {
   if (pct == null) return "text-muted-foreground";
-  if (pct >= 70) return "text-emerald-700 dark:text-emerald-400";
-  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
-  return "text-rose-700 dark:text-rose-400";
+  if (pct >= 70) return "text-emerald-700";
+  if (pct >= 40) return "text-amber-700";
+  return "text-rose-700";
 }

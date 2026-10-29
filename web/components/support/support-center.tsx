@@ -435,7 +435,7 @@ function RequestDetail({
                     className="size-9 rounded object-cover"
                   />
                 ) : (
-                  <span className="flex size-9 items-center justify-center rounded bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300">
+                  <span className="flex size-9 items-center justify-center rounded bg-rose-100 text-rose-700">
                     <FileText className="size-4" aria-hidden />
                   </span>
                 )}

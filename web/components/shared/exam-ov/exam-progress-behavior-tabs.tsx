@@ -93,16 +93,16 @@ export function ExamProgressTab({ source, series, period }: { source: ProgressSo
                     <td
                       className={cn(
                         "py-2 pr-2 text-right font-bold tabular-nums",
-                        diff == null ? "text-muted-foreground" : diff > 0 ? "text-emerald-700 dark:text-emerald-300" : diff < 0 ? "text-rose-700 dark:text-rose-300" : "",
+                        diff == null ? "text-muted-foreground" : diff > 0 ? "text-emerald-700" : diff < 0 ? "text-rose-700" : "",
                       )}
                     >
                       {diff == null ? "—" : fmtNum(diff, { plus: true })}
                     </td>
                     <td className="py-2 text-[13px]">
                       {pos === "below" ? (
-                        <span className="font-semibold text-orange-700 dark:text-orange-300">normalin altında</span>
+                        <span className="font-semibold text-orange-700">normalin altında</span>
                       ) : pos === "above" ? (
-                        <span className="font-semibold text-emerald-700 dark:text-emerald-300">normalin üstünde</span>
+                        <span className="font-semibold text-emerald-700">normalin üstünde</span>
                       ) : pos === "within" ? (
                         <span className="text-muted-foreground">normal aralıkta</span>
                       ) : (
@@ -137,12 +137,12 @@ export function ExamProgressTab({ source, series, period }: { source: ProgressSo
 
 function Mini({ label, value, tone }: { label: string; value: string; tone?: "good" | "cyan" }) {
   return (
-    <div className={cn("rounded-xl px-3 py-2", tone === "cyan" ? "bg-cyan-50 dark:bg-cyan-500/10" : "bg-muted/60")}>
+    <div className={cn("rounded-xl px-3 py-2", tone === "cyan" ? "bg-cyan-50" : "bg-muted/60")}>
       <div className="text-xs text-muted-foreground">{label}</div>
       <div
         className={cn(
           "text-lg font-extrabold tabular-nums",
-          tone === "good" ? "text-emerald-700 dark:text-emerald-300" : tone === "cyan" ? "text-cyan-800 dark:text-cyan-300" : "",
+          tone === "good" ? "text-emerald-700" : tone === "cyan" ? "text-cyan-800" : "",
         )}
       >
         {value}
@@ -172,9 +172,9 @@ function SubjectSpark({ s }: { s: OvSubjectRow }) {
         ) : null}
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} role="img" aria-label={`${s.name} netleri: ${cells.map(({ c }) => fmtNum(c!.net)).join(", ")}`}>
-        <polyline points={line} fill="none" className="stroke-cyan-700 dark:stroke-cyan-400" strokeWidth={2} />
+        <polyline points={line} fill="none" className="stroke-cyan-700" strokeWidth={2} />
         {cells.map(({ c, i }) => (
-          <circle key={i} cx={x(i)} cy={y(c!.net)} r={2.5} className="fill-cyan-700 dark:fill-cyan-400" />
+          <circle key={i} cx={x(i)} cy={y(c!.net)} r={2.5} className="fill-cyan-700" />
         ))}
       </svg>
       <div className="flex items-center justify-between text-xs">
@@ -182,7 +182,7 @@ function SubjectSpark({ s }: { s: OvSubjectRow }) {
         <span
           className={cn(
             "font-bold tabular-nums",
-            s.change == null ? "text-muted-foreground" : s.change > 0 ? "text-emerald-700 dark:text-emerald-300" : s.change < 0 ? "text-rose-700 dark:text-rose-300" : "",
+            s.change == null ? "text-muted-foreground" : s.change > 0 ? "text-emerald-700" : s.change < 0 ? "text-rose-700" : "",
           )}
         >
           {s.change == null ? "—" : fmtNum(s.change, { plus: true })}
@@ -198,12 +198,12 @@ function SubjectSpark({ s }: { s: OvSubjectRow }) {
 const TENDENCY_TEXT: Record<string, { label: string; cls: string; hint: string }> = {
   riskli: {
     label: "Hep işaretliyor",
-    cls: "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-100",
+    cls: "bg-rose-100 text-rose-900",
     hint: "Bilmediği soruyu boş bırakmıyor; yanlışlar ceza ile net götürüyor.",
   },
   cekingen: {
     label: "Çekingen",
-    cls: "bg-slate-200 text-slate-900 dark:bg-slate-500/25 dark:text-slate-100",
+    cls: "bg-slate-200 text-slate-900",
     hint: "Çoğunu boş bırakıyor; konuya giremiyor ya da süre yetmiyor.",
   },
   dengeli: {
@@ -263,7 +263,7 @@ export function ExamBehaviorTab({ source, series, period }: { source: ProgressSo
                     {r.name}
                     <span className="block text-[11px] font-normal text-muted-foreground">{r.n} denemede</span>
                   </th>
-                  <td className="py-2 pr-2 text-right tabular-nums text-rose-700 dark:text-rose-300">{r.wrong}</td>
+                  <td className="py-2 pr-2 text-right tabular-nums text-rose-700">{r.wrong}</td>
                   <td className="py-2 pr-2 text-right tabular-nums">{r.blank}</td>
                   <td className="py-2 pr-2">
                     <SplitBar

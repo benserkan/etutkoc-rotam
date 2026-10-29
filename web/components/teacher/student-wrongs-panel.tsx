@@ -152,11 +152,11 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
                         <span className="text-muted-foreground"> · {t.subject_name}</span>
                       ) : null}
                     </span>
-                    <span className="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+                    <span className="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-amber-800">
                       {t.open_count} açık
                     </span>
                     {t.closed_count > 0 ? (
-                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
+                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-emerald-800">
                         {t.closed_count} kapandı
                       </span>
                     ) : null}
@@ -277,20 +277,20 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
                         </span>
                       </span>
                       {it.error_type_label ? (
-                        <span className="hidden rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-300 sm:inline">
+                        <span className="hidden rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-800 sm:inline">
                           {it.error_type_label}
                         </span>
                       ) : null}
                       {it.coach_note ? (
                         <MessageSquarePlus
-                          className="size-3.5 text-cyan-600 dark:text-cyan-300"
+                          className="size-3.5 text-cyan-600"
                           aria-hidden
                         />
                       ) : null}
                       {it.status === "kapandi" ? (
-                        <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden />
+                        <CheckCircle2 className="size-4 text-emerald-600" aria-hidden />
                       ) : it.is_due ? (
-                        <RotateCcw className="size-4 text-amber-600 dark:text-amber-300" aria-hidden />
+                        <RotateCcw className="size-4 text-amber-600" aria-hidden />
                       ) : (
                         <span className="text-[10px] tabular-nums text-muted-foreground">
                           {it.correct_streak}/2
@@ -320,7 +320,7 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="size-5 text-cyan-600 dark:text-cyan-300" aria-hidden /> Yapay zekâ özellikleri onayı
+              <ShieldCheck className="size-5 text-cyan-600" aria-hidden /> Yapay zekâ özellikleri onayı
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
@@ -330,10 +330,10 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
               Devam etmek için onayınız gerekir.
             </p>
             <ul className="space-y-1.5 text-xs">
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Fotoğraf <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Sonuç yalnızca <strong>siz ve öğrenci</strong> tarafından görülür; veli erişemez.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
-              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden /> Yapay zekâ çözümü vermez, yalnızca yol gösterir.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Fotoğraf <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Sonuç yalnızca <strong>siz ve öğrenci</strong> tarafından görülür; veli erişemez.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Yapay zekâ çözümü vermez, yalnızca yol gösterir.</li>
             </ul>
             <p className="text-[11px]">Bu onayı dilediğinizde geri çekebilirsiniz; onaysız da soruları elle etiketleyebilirsiniz.</p>
           </div>
@@ -364,9 +364,9 @@ function Kpi({
   tone: "amber" | "rose" | "emerald" | "slate";
 }) {
   const toneCls = {
-    amber: "text-amber-700 dark:text-amber-300",
-    rose: "text-rose-700 dark:text-rose-300",
-    emerald: "text-emerald-700 dark:text-emerald-300",
+    amber: "text-amber-700",
+    rose: "text-rose-700",
+    emerald: "text-emerald-700",
     slate: "text-foreground",
   }[tone];
   return (
@@ -422,14 +422,14 @@ function CoachDetailDialog({
               className={cn(
                 "rounded px-1.5 py-0.5 font-medium",
                 item.status === "kapandi"
-                  ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300"
-                  : "bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300",
+                  ? "bg-emerald-50 text-emerald-800"
+                  : "bg-amber-50 text-amber-800",
               )}
             >
               {item.status === "kapandi" ? "Kapandı" : `Açık · seri ${item.correct_streak}/2`}
             </span>
             {item.error_type_label ? (
-              <span className="rounded bg-rose-50 px-1.5 py-0.5 font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-300">
+              <span className="rounded bg-rose-50 px-1.5 py-0.5 font-medium text-rose-800">
                 {item.error_type_label}
               </span>
             ) : null}
@@ -455,23 +455,23 @@ function CoachDetailDialog({
 
           {/* AI etiketleme — konu eşleme + zorluk + öğrenciye yaklaşım ipucu */}
           {item.ai_hint ? (
-            <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-500/30 dark:bg-violet-500/10">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">
+            <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800">
                 <Sparkles className="size-3" aria-hidden />
                 Yapay zekâ ipucu (öğrenci görüyor)
                 {item.difficulty_guess ? (
-                  <span className="ml-auto rounded bg-violet-200/60 px-1.5 py-0.5 text-[10px] font-medium normal-case text-violet-900 dark:bg-violet-500/20 dark:text-violet-200">
+                  <span className="ml-auto rounded bg-violet-200/60 px-1.5 py-0.5 text-[10px] font-medium normal-case text-violet-900">
                     {item.difficulty_guess}
                   </span>
                 ) : null}
               </div>
-              <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-950 dark:text-violet-100">
+              <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-950">
                 {item.ai_hint}
               </p>
             </div>
           ) : item.images.some((im) => im.kind === "question") ? (
             aiLocked ? (
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 <Lock className="size-4 shrink-0" aria-hidden />
                 Yapay zekâ etiketleme ücretli pakette açıktır.
                 <Link href="/teacher/plan" className="ml-auto font-medium underline">
@@ -482,7 +482,7 @@ function CoachDetailDialog({
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
+                className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800"
                 disabled={aiTag.isPending}
                 onClick={() => gateConsent(() => aiTag.mutate({ id: item.id }))}
               >

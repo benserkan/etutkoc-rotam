@@ -116,7 +116,7 @@ export function ScanJobsPanel({ onImport }: { onImport: (r: BookScanResult) => v
   return (
     <section className="mt-4 rounded-xl border border-border bg-card p-5" data-testid="scan-jobs-panel">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+        <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
           <FileSearch className="size-5" aria-hidden />
         </span>
         <div className="min-w-0">
@@ -256,7 +256,7 @@ function JobRow({
         </div>
       ) : null}
       {j.status === "failed" && j.error ? (
-        <p className="text-xs text-rose-700 dark:text-rose-300">{j.error}</p>
+        <p className="text-xs text-rose-700">{j.error}</p>
       ) : null}
       {j.status === "done" ? (
         <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -343,9 +343,9 @@ function ResultDialog({
                 {r.gates.map((g) => (
                   <li key={g.code} className="flex items-start gap-2 text-sm">
                     {g.ok ? (
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden />
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
                     ) : (
-                      <XCircle className="mt-0.5 size-4 shrink-0 text-rose-600 dark:text-rose-300" aria-hidden />
+                      <XCircle className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
                     )}
                     <span className="min-w-0 break-words">
                       <strong>{g.label}</strong> — {g.detail}
@@ -371,7 +371,7 @@ function ResultDialog({
                     className={cn(
                       "flex flex-wrap items-start gap-2 rounded-md border px-2 py-1.5 text-sm",
                       s.flag || s.test_count == null
-                        ? "border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10"
+                        ? "border-amber-300 bg-amber-50"
                         : "border-border",
                     )}
                   >

@@ -91,9 +91,9 @@ function TopicBlock({ ins, ownBooks }: { ins: TopicInsight; ownBooks: string[] }
         {p && answered > 0 ? (
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="font-medium text-emerald-700 dark:text-emerald-300">{p.correct} D</span>
-              <span className="font-medium text-rose-700 dark:text-rose-300">{p.wrong} Y</span>
-              <span className="font-medium text-slate-600 dark:text-slate-300">{p.blank} B</span>
+              <span className="font-medium text-emerald-700">{p.correct} D</span>
+              <span className="font-medium text-rose-700">{p.wrong} Y</span>
+              <span className="font-medium text-slate-600">{p.blank} B</span>
               {p.accuracy_pct != null && <span className="tabular-nums">· %{p.accuracy_pct} doğru</span>}
               {p.level_label && (
                 <span className={cn("rounded px-1.5 py-px text-[10px] font-medium", LEVEL_TONE[p.level] ?? "bg-slate-600 text-white")}>

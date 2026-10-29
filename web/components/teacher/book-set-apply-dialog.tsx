@@ -150,7 +150,7 @@ function ApplyDialog({ setId, onClose }: { setId: number; onClose: () => void })
                       </h3>
                       <button
                         type="button"
-                        className="text-xs font-medium text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300"
+                        className="text-xs font-medium text-cyan-700 underline-offset-2 hover:underline"
                         onClick={() => toggle(ids, !allOn)}
                       >
                         {allOn ? "Bu şubeyi bırak" : "Bu şubenin tümünü seç"}

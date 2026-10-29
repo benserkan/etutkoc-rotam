@@ -216,7 +216,7 @@ export function ExamTopicAnalysis({
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="py-2 text-right font-bold tabular-nums text-rose-700 dark:text-rose-300">
+                    <td className="py-2 text-right font-bold tabular-nums text-rose-700">
                       {s.gain > 0 ? `+${fmtNum(s.gain)}` : "—"}
                     </td>
                   </tr>
@@ -284,7 +284,7 @@ export function ExamTopicAnalysis({
                               style={{ width: `${maxGain ? Math.max((100 * o.net_gain_per_exam) / maxGain, 6) : 0}%` }}
                             />
                           </div>
-                          <b className="tabular-nums text-rose-700 dark:text-rose-300">+{fmtNum(o.net_gain_per_exam)}</b>
+                          <b className="tabular-nums text-rose-700">+{fmtNum(o.net_gain_per_exam)}</b>
                         </div>
                       </td>
                     </tr>
@@ -364,7 +364,7 @@ export function ExamTopicAnalysis({
       )}
 
       {d.unmatched_questions > 0 ? (
-        <p className="rounded-xl bg-amber-100 px-3 py-2 text-xs text-amber-950 dark:bg-amber-500/15 dark:text-amber-100">
+        <p className="rounded-xl bg-amber-100 px-3 py-2 text-xs text-amber-950">
           {d.unmatched_questions} soru müfredat konusuna bağlanmadan kaydedilmiş; bu sorular konu analizine girmiyor.
           {studentId != null ? " Denemenin yanındaki “Satırları düzelt” ile bağlarsan analize girer." : ""}
         </p>
@@ -378,14 +378,14 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub: 
     <div
       className={cn(
         "rounded-xl px-3 py-2.5",
-        tone === "rose" ? "bg-rose-50 dark:bg-rose-500/10" : tone === "cyan" ? "bg-cyan-50 dark:bg-cyan-500/10" : "bg-muted/60",
+        tone === "rose" ? "bg-rose-50" : tone === "cyan" ? "bg-cyan-50" : "bg-muted/60",
       )}
     >
       <div className="text-xs text-muted-foreground">{label}</div>
       <div
         className={cn(
           "text-xl font-extrabold tabular-nums",
-          tone === "rose" ? "text-rose-700 dark:text-rose-300" : tone === "cyan" ? "text-cyan-800 dark:text-cyan-300" : "",
+          tone === "rose" ? "text-rose-700" : tone === "cyan" ? "text-cyan-800" : "",
         )}
       >
         {value}

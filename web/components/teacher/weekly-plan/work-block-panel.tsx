@@ -257,7 +257,7 @@ function BlockCard({
                   }
                   setMenuOpen(false);
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-700 dark:text-rose-300 inline-flex items-center gap-2"
+                className="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-700 inline-flex items-center gap-2"
               >
                 <Trash2 className="size-3.5" aria-hidden /> Sil
               </button>
@@ -299,7 +299,7 @@ function BlockCard({
           {block.unit}
         </span>
         {full ? (
-          <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-medium">
+          <span className="inline-flex items-center gap-0.5 text-emerald-600 font-medium">
             <Check className="size-3" aria-hidden /> tamamı dağıtıldı
           </span>
         ) : (

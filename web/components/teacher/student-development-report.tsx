@@ -135,7 +135,7 @@ export function StudentDevelopmentReport({
 
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Gelişim raporu hesaplanıyor…</p>;
   if (q.isError || !q.data) {
-    return <p className="text-sm text-rose-700 dark:text-rose-400">Gelişim raporu yüklenemedi.</p>;
+    return <p className="text-sm text-rose-700">Gelişim raporu yüklenemedi.</p>;
   }
   const d = q.data;
 
@@ -255,16 +255,16 @@ type Sel = { picked: Map<string, string>; toggle: (key: string, agenda: string) 
 
 function Header({ d, fetching, onRefresh }: { d: DRReport; fetching: boolean; onRefresh: () => void }) {
   const lvl = {
-    risk: "border-rose-300 bg-rose-50 text-rose-950 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100",
-    watch: "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100",
-    good: "border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-100",
+    risk: "border-rose-300 bg-rose-50 text-rose-950",
+    watch: "border-amber-300 bg-amber-50 text-amber-950",
+    good: "border-emerald-300 bg-emerald-50 text-emerald-950",
   }[d.headline.level];
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h4 className="flex items-center gap-2 text-base font-semibold">
-            <Gauge className="size-5 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <Gauge className="size-5 text-cyan-700" aria-hidden />
             Gelişim Raporu (360°)
           </h4>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -304,7 +304,7 @@ function Section({
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h5 className="flex items-center gap-2 text-sm font-semibold">
-            <Icon className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <Icon className="size-4 text-cyan-700" aria-hidden />
             {title}
           </h5>
           {desc ? <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p> : null}
@@ -470,13 +470,13 @@ function WeekRow({ w, prev, ended }: { w: DRWeekRow; prev: DRWeekRow | null; end
       </td>
       <td className="py-1.5 pr-3 text-right tabular-nums">{w.gorev_done}/{w.gorev_total}</td>
       <td className={cn("py-1.5 pr-3 text-right font-semibold tabular-nums",
-        w.gorev_pct != null && w.gorev_pct >= 80 && "text-emerald-700 dark:text-emerald-400",
-        w.gorev_pct != null && w.gorev_pct < 60 && "text-rose-700 dark:text-rose-400")}>
+        w.gorev_pct != null && w.gorev_pct >= 80 && "text-emerald-700",
+        w.gorev_pct != null && w.gorev_pct < 60 && "text-rose-700")}>
         {pct(w.gorev_pct)}
       </td>
       <td className={cn("py-1.5 pr-3 text-right tabular-nums",
-        diff != null && diff >= 5 && "text-emerald-700 dark:text-emerald-400",
-        diff != null && diff <= -5 && "text-rose-700 dark:text-rose-400")}>
+        diff != null && diff >= 5 && "text-emerald-700",
+        diff != null && diff <= -5 && "text-rose-700")}>
         {diff == null ? "—" : `${diff > 0 ? "+" : ""}${diff}`}
       </td>
       <td className="py-1.5 pr-3 text-right tabular-nums">{w.test_done}/{w.test_planned}</td>
@@ -500,7 +500,7 @@ function WeekTip({ active, payload }: { active?: boolean; payload?: { payload: {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   return (
-    <div className="rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs text-popover-foreground shadow">
+    <div className="rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs text-popover-foreground">
       <p className="font-semibold">{p.label}</p>
       <p>Görev uyumu {pct(p.pct)}</p>
       {p.exams ? <p>Denemeler: {p.exams}</p> : null}
@@ -630,8 +630,8 @@ function ExamSeriesCard({ x }: { x: DRExamSeries }) {
                   <td className="py-1 pr-3 text-right tabular-nums">{fmtNet(s.first)}</td>
                   <td className="py-1 pr-3 text-right font-medium tabular-nums">{fmtNet(s.last)}</td>
                   <td className={cn("py-1 text-right tabular-nums",
-                    (s.change ?? 0) >= 1 && "text-emerald-700 dark:text-emerald-400",
-                    (s.change ?? 0) <= -1 && "text-rose-700 dark:text-rose-400")}>
+                    (s.change ?? 0) >= 1 && "text-emerald-700",
+                    (s.change ?? 0) <= -1 && "text-rose-700")}>
                     {s.change == null ? "—" : fmtSigned(s.change)}
                   </td>
                 </tr>
@@ -657,8 +657,8 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub?:
     <div className="rounded-lg border border-border p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={cn("mt-1 text-lg font-semibold tabular-nums",
-        tone === "good" && "text-emerald-700 dark:text-emerald-400",
-        tone === "bad" && "text-rose-700 dark:text-rose-400")}>
+        tone === "good" && "text-emerald-700",
+        tone === "bad" && "text-rose-700")}>
         {value}
       </p>
       {sub ? <p className="mt-0.5 text-[11px] text-muted-foreground">{sub}</p> : null}
@@ -813,7 +813,7 @@ function SelectableRow({
       {ctaHref ? (
         <Link
           href={ctaHref}
-          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-cyan-700 hover:underline dark:text-cyan-300"
+          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-cyan-700 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {ctaLabel ?? "Aç"}

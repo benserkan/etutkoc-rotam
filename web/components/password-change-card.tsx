@@ -140,7 +140,7 @@ export function PasswordChangeCard({
             Şifreyi güncelle
           </Button>
           {mut.isSuccess && !mut.isPending ? (
-            <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600">
               <ShieldCheck className="size-4" aria-hidden /> Güncellendi
             </span>
           ) : null}
@@ -209,7 +209,7 @@ function PasswordPolicyHint({ value }: { value: string }) {
           className={cn(
             "inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
             r.test
-              ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+              ? "border-emerald-500/30 text-emerald-600"
               : "border-border text-muted-foreground",
           )}
         >

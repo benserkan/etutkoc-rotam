@@ -67,7 +67,7 @@ export function PricingCards({
     return (
       <div className="grid items-start gap-6 md:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-96 animate-pulse rounded-2xl border border-slate-200 bg-white dark:bg-white" />
+          <div key={i} className="h-96 animate-pulse rounded-2xl border border-slate-200 bg-white" />
         ))}
       </div>
     );
@@ -84,7 +84,7 @@ export function PricingCards({
     <div className="space-y-7">
       {/* Aylık / Yıllık toggle */}
       <div className="flex flex-col items-center gap-2">
-        <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50/60 p-1 dark:bg-cyan-500/10 dark:border-cyan-500/30">
+        <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50/60 p-1">
           <button
             type="button"
             onClick={() => setYearly(false)}
@@ -150,7 +150,7 @@ function PlanCard({ card, yearly, annual, glossary }: { card: PricingCard; yearl
         "relative flex h-full flex-col rounded-2xl border p-7 transition hover:-translate-y-1.5",
         featured && "border-transparent bg-gradient-to-br from-cyan-700 to-cyan-900 text-white shadow-xl shadow-cyan-700/25 md:-translate-y-3",
         dark && "border-transparent bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-xl shadow-slate-900/30",
-        !onColor && "border-slate-200 bg-white dark:bg-white shadow-sm hover:border-cyan-300",
+        !onColor && "border-slate-200 bg-white shadow-sm hover:border-cyan-300",
       )}
     >
       {card.badge ? (
@@ -217,7 +217,7 @@ function PlanCard({ card, yearly, annual, glossary }: { card: PricingCard; yearl
           "mt-7 inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition",
           onColor
             ? "bg-amber-400 text-cyan-950 hover:bg-amber-300"
-            : "border border-cyan-600 text-cyan-700 hover:bg-cyan-50 dark:hover:bg-cyan-500/25",
+            : "border border-cyan-600 text-cyan-700 hover:bg-cyan-50",
         )}
       >
         {card.cta}

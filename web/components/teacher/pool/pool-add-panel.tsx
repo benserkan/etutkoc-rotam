@@ -116,7 +116,7 @@ export function AddPanel({ studentId, data, subjectId, onSubject }: {
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card shadow-sm" data-section="pool:add">
+    <section className="overflow-hidden rounded-xl border bg-card" data-section="pool:add">
       <header className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
         <span className="grid size-9 place-items-center rounded-lg bg-cyan-700 text-white" aria-hidden>
           <Plus className="size-4" />
@@ -205,7 +205,7 @@ function ParseOptions({ options, base, pending, onPick }: {
         {options.map((o) => (
           <button key={`${o.subject_id}-${o.topic_id ?? "s"}`} type="button" disabled={pending || noQty} onClick={() => onPick(o)}
                   className="flex w-full items-start gap-2 rounded-lg border bg-background px-3 py-2 text-left text-sm transition hover:border-cyan-600 hover:bg-cyan-500/10 disabled:opacity-60">
-            <Plus className="mt-0.5 size-4 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <Plus className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden />
             <span className="min-w-0 flex-1 break-words">
               <span className="font-medium text-foreground">{o.topic_name ?? o.subject_name}</span>
               <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
@@ -228,7 +228,7 @@ function TabBtn({ active, onClick, icon, children }: { active: boolean; onClick:
   return (
     <button type="button" role="tab" aria-selected={active} onClick={onClick}
             className={cn("inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 transition",
-              active ? "bg-cyan-700 text-white shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+              active ? "bg-cyan-700 text-white" : "text-muted-foreground hover:text-foreground")}>
       {icon}{children}
     </button>
   );
@@ -250,7 +250,7 @@ function Step({ n, title, done, disabled, summary, onEdit, children }: {
         <span className="text-sm font-semibold text-foreground">{title}</span>
         {collapsed && <span className="min-w-0 flex-1 break-words text-sm text-muted-foreground">{summary}</span>}
         {collapsed && onEdit && (
-          <button type="button" onClick={onEdit} className="ml-auto shrink-0 text-xs font-medium text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300">
+          <button type="button" onClick={onEdit} className="ml-auto shrink-0 text-xs font-medium text-cyan-700 underline-offset-2 hover:underline">
             Değiştir
           </button>
         )}
@@ -301,7 +301,7 @@ function SubjectPicker({ data, studentId, onPick }: {
                 <button key={s.id} type="button" onClick={() => onPick(s.id, key === "tyt-maarif" ? "tyt" : "all")}
                         className={cn("inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-sm text-foreground transition hover:border-cyan-600 hover:bg-cyan-500/10",
                           src && "border-cyan-700/50", s.item_count > 0 && "border-amber-500 ring-1 ring-amber-500/40")}>
-                  {src && <BookOpen className="size-3.5 text-cyan-700 dark:text-cyan-300" aria-hidden />}
+                  {src && <BookOpen className="size-3.5 text-cyan-700" aria-hidden />}
                   {s.name}
                   {src && <span className="rounded-md bg-cyan-700 px-1.5 text-[10px] font-semibold text-white">{src}</span>}
                   {s.item_count > 0 && (
@@ -318,12 +318,12 @@ function SubjectPicker({ data, studentId, onPick }: {
       ))}
       {anySource && (
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-          <BookOpen className="mt-0.5 size-3.5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+          <BookOpen className="mt-0.5 size-3.5 shrink-0 text-cyan-700" aria-hidden />
           <span>Rozetli derslerde öğrencinin sistemde kitabı var. Her ders hem kitaptan hem müfredat konusundan (kaynaksız) verilebilir.</span>
         </p>
       )}
       {data.ayt_locked && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
           <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           <span>
             Alan girilmedi — AYT dersleri ({data.locked_ayt_names.join(", ")}) kapalı. Öğrencinin alanını
@@ -363,7 +363,7 @@ function SourcePicker({ studentId, subject, maxGrade, studentGrade, books, books
         ) : (
           <div className="rounded-lg border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">
             Bu derste öğrencinin sistemde kayıtlı kitabı yok. Kitap atamak için öğrencinin Kitaplar sekmesini kullan ya da
-            <button type="button" onClick={() => setTab("topics")} className="ml-1 font-medium text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300">
+            <button type="button" onClick={() => setTab("topics")} className="ml-1 font-medium text-cyan-700 underline-offset-2 hover:underline">
               müfredat konusundan ver
             </button>.
           </div>
@@ -392,9 +392,9 @@ export function SourceOption({ active, onClick, icon, title, hint }: {
   return (
     <button type="button" role="tab" aria-selected={active} onClick={onClick}
             className={cn("flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition",
-              active ? "border-cyan-700 bg-cyan-700 text-white shadow-sm"
+              active ? "border-cyan-700 bg-cyan-700 text-white"
                 : "bg-background text-foreground hover:border-cyan-600 hover:bg-cyan-500/10")}>
-      <span className={cn("mt-0.5 shrink-0", active ? "text-white" : "text-cyan-700 dark:text-cyan-300")}>{icon}</span>
+      <span className={cn("mt-0.5 shrink-0", active ? "text-white" : "text-cyan-700")}>{icon}</span>
       <span className="min-w-0">
         <span className="block break-words text-sm font-semibold">{title}</span>
         <span className={cn("block break-words text-xs", active ? "text-cyan-50" : "text-muted-foreground")}>{hint}</span>
@@ -421,7 +421,7 @@ export function BookList({ books, loading, anchorBook, anchorSection, onPick }: 
           <div key={b.book_id} className="overflow-hidden rounded-lg border bg-background" data-book={b.book_id}>
             <button type="button" onClick={() => setOpen(isOpen ? -1 : b.book_id)} aria-expanded={isOpen}
                     className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-cyan-500/10">
-              <BookMarked className="mt-0.5 size-4 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+              <BookMarked className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden />
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-sm font-medium text-foreground">{b.name}</span>
                 <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
@@ -483,9 +483,9 @@ function SectionTally({ s, unit }: { s: PoolBookSectionOut; unit: string }) {
         <span className="bg-amber-500" style={{ width: w(reserved) }} />
       </span>
       <span className="tabular-nums"><span className="font-medium text-foreground">{total}</span> {unit}</span>
-      <span className="tabular-nums">· <span className="font-medium text-emerald-700 dark:text-emerald-300">{s.completed}</span> çözüldü</span>
-      {s.in_pool > 0 && <span className="tabular-nums">· <span className="font-medium text-sky-700 dark:text-sky-300">{s.in_pool}</span> havuzda</span>}
-      {reserved > 0 && <span className="tabular-nums" title="Gün gün programda verilmiş, henüz çözülmemiş">· <span className="font-medium text-amber-700 dark:text-amber-300">{reserved}</span> programda</span>}
+      <span className="tabular-nums">· <span className="font-medium text-emerald-700">{s.completed}</span> çözüldü</span>
+      {s.in_pool > 0 && <span className="tabular-nums">· <span className="font-medium text-sky-700">{s.in_pool}</span> havuzda</span>}
+      {reserved > 0 && <span className="tabular-nums" title="Gün gün programda verilmiş, henüz çözülmemiş">· <span className="font-medium text-amber-700">{reserved}</span> programda</span>}
     </span>
   );
 }
@@ -570,7 +570,7 @@ export function TopicPicker({ studentId, subjectId, subjectName, maxGrade = null
           return (
             <section key={g ?? "none"} data-topic-grade={g ?? ""} className={cn("rounded-lg border-l-4 bg-card", tone.border)}>
               {(multiGrade || byGrade.length > 1) && (
-                <div className={cn("sticky top-0 z-10 flex items-center gap-2 rounded-tr-lg px-3 py-1.5 text-xs font-semibold text-white shadow-sm", tone.band)}>
+                <div className={cn("sticky top-0 z-10 flex items-center gap-2 rounded-tr-lg px-3 py-1.5 text-xs font-semibold text-white", tone.band)}>
                   <span>{g ? `${g}. sınıf` : "Sınıfsız konular"}</span>
                   {g != null && g === ownGrade && <span className="rounded bg-white/25 px-1.5 text-[10px]">kendi sınıfı</span>}
                   <span className="ml-auto font-normal opacity-90">{n} konu</span>
@@ -726,7 +726,7 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
       {book ? (
         <div className="rounded-lg bg-muted/60 px-3 py-2 text-sm" data-section="pool:add:book-summary">
           <div className="flex flex-wrap items-center gap-2">
-            <BookMarked className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <BookMarked className="size-4 text-cyan-700" aria-hidden />
             <span className="font-medium text-foreground">{book.book.name}</span>
             <span className="text-muted-foreground" aria-hidden>›</span>
             <span className="font-medium text-foreground">{book.section.label}</span>
@@ -744,7 +744,7 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
           <span className="font-medium text-foreground">{topic ? topic.name : "Konusuz kalem"}</span>
           {topic && !topic.is_class_position && data.class_group && (
             <button type="button" onClick={() => setPos.mutate({ subject_id: subjectId, topic_id: topic.topic_id })}
-                    className="ml-auto text-xs text-violet-700 underline-offset-2 hover:underline dark:text-violet-300"
+                    className="ml-auto text-xs text-violet-700 underline-offset-2 hover:underline"
                     title="Şube şu an bu konuda (öğrenciden gelen cevapla)">
               Şube bu konuda
             </button>
@@ -754,7 +754,7 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
 
       {/* müfredat konusu öğrencinin kitabında da varsa: kitaptan ver önerisi (kitap takibi kaçmasın) */}
       {bookSuggestion && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-100" data-section="pool:add:book-hint">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900" data-section="pool:add:book-hint">
           <BookOpen className="size-4 shrink-0" aria-hidden />
           <span className="min-w-0 flex-1">
             Bu konu öğrencinin kitabında var: <strong>{bookSuggestion.book_name}</strong> · {bookSuggestion.section_label} ({bookSuggestion.remaining} kaldı).
@@ -797,7 +797,7 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
                         disabled={locked}
                         title={locked ? "Test ve soru kalemi bir konuya bağlanmalı — geri dönüp konu seç" : undefined}
                         className={cn("rounded-md px-3 py-1 text-sm transition disabled:cursor-not-allowed disabled:opacity-40",
-                          unit === u ? "bg-background font-semibold text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                          unit === u ? "bg-background font-semibold text-foreground" : "text-muted-foreground hover:text-foreground")}>
                   {UNIT_LABELS[u]}
                 </button>
               );
@@ -817,7 +817,7 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
             {rangeValid && <span className="text-sm tabular-nums text-foreground">{pt - pf + 1} sayfa</span>}
           </div>
           {rangeTyped && !rangeValid && (
-            <p className="text-xs text-rose-700 dark:text-rose-300">Başlangıç ≤ bitiş olacak şekilde iki sayfayı da gir.</p>
+            <p className="text-xs text-rose-700">Başlangıç ≤ bitiş olacak şekilde iki sayfayı da gir.</p>
           )}
           {pageSug.data?.last ? (
             <div className="flex flex-wrap items-center gap-2 text-xs" data-section="pool:add:page-suggestion">
@@ -850,13 +850,13 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
                    onChange={(e) => { setCustom(e.target.value); const n = Number(e.target.value); setQty(Number.isInteger(n) && n > 0 ? n : null); }} />
             {book && book.section.available > 0 && (
               <button type="button" onClick={() => { setQty(book.section.available); setCustom(String(book.section.available)); }}
-                      className="rounded-lg border border-dashed px-2.5 py-1.5 text-xs font-medium text-cyan-700 hover:bg-cyan-500/10 dark:text-cyan-300">
+                      className="rounded-lg border border-dashed px-2.5 py-1.5 text-xs font-medium text-cyan-700 hover:bg-cyan-500/10">
                 kalanı ver ({book.section.available})
               </button>
             )}
           </div>
           {over && (
-            <p className="text-xs text-amber-800 dark:text-amber-200">
+            <p className="text-xs text-amber-800">
               Bölümde {book!.section.available} verilebilir kaldı; fazlası kitap sayacını aşar (yine de eklenebilir).
             </p>
           )}
@@ -892,7 +892,7 @@ function Composer({ studentId, data, subjectId, subjectName, choice, onSwitch, o
           <Plus className="size-4" aria-hidden /> {cta}
         </Button>
         {topicNeeded && (
-          <p className="text-center text-xs text-amber-800 dark:text-amber-200">
+          <p className="text-center text-xs text-amber-800">
             Test ve soru kalemi bir konuya bağlanmalı — yoksa çözülen testler konu performansına ve müfredat haritasına
             işlenmez. Geri dönüp konu seç; video, sayfa ya da serbest ödev için Sayfa / Etkinlik birimi kullan.
           </p>
@@ -936,7 +936,7 @@ function FreeText({ studentId, data, subjectId }: { studentId: number; data: Poo
   return (
     <div className="space-y-3 px-4 py-4">
       <div className="flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
-        <Sparkles className="mt-0.5 size-4 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+        <Sparkles className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden />
         <span>
           Doğal yaz, ayraç gerekmez: <span className="font-medium text-foreground">kitap · ders · konu · sayı birim</span> —
           örn. “345 matematik üslü sayılar 4 test”, “tyt fizik basınç 3 test”, “paragraf 10 soru”.
@@ -959,7 +959,7 @@ function FreeText({ studentId, data, subjectId }: { studentId: number; data: Poo
               </span>
             ))}
           </div>
-          {res.warning && <p className="text-xs text-amber-800 dark:text-amber-200">{res.warning}</p>}
+          {res.warning && <p className="text-xs text-amber-800">{res.warning}</p>}
           {res.options && res.options.length > 0 && (
             <ParseOptions options={res.options} base={res.base ?? null} pending={add.isPending}
                           onPick={(o) => {
@@ -1052,7 +1052,7 @@ export function RelinkItemDialog({ studentId, data, item, open, onOpenChange }: 
             <p className="text-muted-foreground">Bu kalemin dersi listede yok; kaldırıp doğrusunu ekle.</p>
           )}
           {choice?.kind === "none" && (
-            <p className="text-amber-800 dark:text-amber-200">Konusuz bırakmak için kalemi değiştirmeye gerek yok — bir konu ya da bölüm seç.</p>
+            <p className="text-amber-800">Konusuz bırakmak için kalemi değiştirmeye gerek yok — bir konu ya da bölüm seç.</p>
           )}
           {picked && (
             <p className="rounded-md border border-cyan-600/40 bg-cyan-500/10 px-3 py-2 text-foreground" data-testid="relink-picked">

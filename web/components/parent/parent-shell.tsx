@@ -59,16 +59,16 @@ export function ParentShell({ user, brand, children }: Props) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Üst bant — teal accent (ETÜTKOÇ brand) */}
-      <header className="sticky top-0 z-30 bg-gradient-to-r from-[#117A86] to-[#0E5F69] text-white shadow-sm">
+      {/* Üst bant — J dili: beyaz zemin + alt çizgi (tek tema, 2026-10-29) */}
+      <header className="sticky top-0 z-30 border-b border-border bg-background text-foreground">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2 min-w-0">
-            <ShellBrand brand={brand ?? null} href="/parent" size={28} onDark className="shrink-0" />
-            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-white/20 text-white">
+            <ShellBrand brand={brand ?? null} href="/parent" size={28} className="shrink-0" />
+            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-accent text-accent-foreground">
               <HeartHandshake className="size-3" aria-hidden />
               Veli
             </span>
-            <span className="text-white/80 text-xs truncate ml-1 hidden md:inline">
+            <span className="text-muted-foreground text-xs truncate ml-1 hidden md:inline">
               {user.full_name}
             </span>
           </div>
@@ -90,7 +90,7 @@ export function ParentShell({ user, brand, children }: Props) {
               size="sm"
               onClick={() => logout.mutate()}
               disabled={logout.isPending}
-              className="text-white/90 hover:bg-white/10 hover:text-white"
+              className="text-foreground"
             >
               <LogOut className="size-4" aria-hidden />
               {logout.isPending ? "Çıkılıyor…" : "Çıkış"}
@@ -102,7 +102,7 @@ export function ParentShell({ user, brand, children }: Props) {
             variant="ghost"
             size="icon"
             onClick={() => setNavOpen(true)}
-            className="md:hidden text-white hover:bg-white/10 ml-auto"
+            className="md:hidden ml-auto"
             aria-label="Menüyü aç"
           >
             <Menu className="size-5" aria-hidden />
@@ -148,8 +148,8 @@ function NavItem({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
         active
-          ? "bg-white/20 text-white"
-          : "text-white/85 hover:bg-white/10 hover:text-white",
+          ? "bg-accent text-accent-foreground font-semibold"
+          : "text-foreground hover:bg-accent",
       )}
     >
       <Icon className="size-4" aria-hidden />
@@ -196,16 +196,16 @@ function MobileDrawer({
         aria-hidden
       />
       <div className="absolute right-0 top-0 h-full w-72 max-w-[85vw] bg-card shadow-xl border-l border-border flex flex-col">
-        <div className="flex items-center justify-between px-4 h-14 border-b border-border bg-gradient-to-r from-[#117A86] to-[#0E5F69] text-white">
+        <div className="flex items-center justify-between px-4 h-14 border-b border-border bg-background">
           <div className="leading-tight">
             <p className="text-sm font-medium truncate">{user.full_name}</p>
-            <p className="text-xs text-white/80">Veli görünümü</p>
+            <p className="text-xs text-muted-foreground">Veli görünümü</p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-white hover:bg-white/10"
+            className=""
             aria-label="Kapat"
           >
             <X className="size-5" aria-hidden />
