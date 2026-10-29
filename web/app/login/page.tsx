@@ -27,7 +27,7 @@ interface TurnstileConfig {
 const POINTS = [
   { icon: CalendarCheck2, title: "Haftalık program", text: "Kitaba bağlı görevler, kalan test kendiliğinden düşer." },
   { icon: LineChart, title: "Deneme analizi", text: "Karne yüklenir, konu konu nerede net kaçtığı görünür." },
-  { icon: Users, title: "Koç, öğrenci, veli", text: "Herkes aynı programı kendi ekranından izler." },
+  { icon: Users, title: "Koç, öğrenci, veli", text: "Öğrenci görevini işaretler, koç ve veli anında görür." },
 ];
 
 export default async function LoginPage() {
@@ -58,12 +58,13 @@ export default async function LoginPage() {
           <div className="relative space-y-8">
             <div className="space-y-3">
               <h1 className="font-display text-4xl font-bold leading-tight tracking-tight">
-                Öğrencinin yolculuğu
+                Öğrencinin nerede takıldığını bil,
                 <br />
-                tek panelde.
+                programını ona göre kur.
               </h1>
               <p className="max-w-md text-base text-cyan-100">
-                Program, deneme ve veli iletişimi aynı yerde. Kaldığın yerden devam et.
+                Sınava hazırlanan öğrencinin çözdüğü testler, deneme sonuçları ve
+                zorlandığı konular koçun önünde; veli de aynı ilerlemeyi takip eder.
               </p>
             </div>
             <ul className="space-y-4">
