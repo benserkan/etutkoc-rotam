@@ -20,6 +20,9 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   hsl(h,72%,84%) (91%'de dersler ayrışmıyordu). Seans kartı gündem/notu "•" maddelere bölünüp başlık kalın gösterilir.
   **Koç menüsü gruplu:** etiketsiz günlük (Pano/Öğrenciler/Görüşmeler) · İletişim · Program ve kaynak · İşletme ·
   katlanır Yönetim; "Gelen Talepler" → "Kurumdan gelenler" yalnız kurumlu koçta; risk rozeti kırmızı, diğerleri petrol.
+  **Süper admin menüsü:** üstte arama · Panel/Aktivite + "Bekleyenler" (iletişim/destek talepleri, alarmlar) hep açık ·
+  Müşteriler/Gelir/Pazarlama/Vitrin/İletişim/Güvenlik/Sistem katlanır (yalnız aktif sayfanın grubu açık, kapalı
+  grupta bekleyen sayısı) · aktif öğe en uzun href eşleşmesiyle.
   **KURAL: yeni kodda `dark:` yazılmaz.**
 - **"J" dili** (Khan Academy + Coursera ölçümünden): beyaz zemin + beyaz kart + görünür 1px çerçeve #CBCBCD, 12px
   köşe, kart gölgesi YOK (yalnız yüzen öğeler), tek vurgu petrol #0B6178, yazı Plus Jakarta Sans 450 (tanıtım/giriş

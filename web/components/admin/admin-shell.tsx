@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { usePanelVisitTracker } from "@/lib/hooks/use-panel-visit-tracker";
 import {
   Bug,
+  ChevronDown,
+  Search,
   Activity,
   AlertOctagon,
   BarChart3,
@@ -94,108 +96,140 @@ interface NavLink {
 
 interface NavSection {
   title: string;
+  icon?: LucideIcon;
   links: NavLink[];
+  /** false → her zaman açık (Genel + Bekleyenler). */
+  collapsible?: boolean;
 }
 
 /**
- * Süper Admin shell — sticky sidebar (lg+) + üst topbar (mobil drawer).
- *
- * Jinja parite: `base.html:482-515` (3 dropdown: Kuruluşlar/Sistem/Denetim)
- * + dashboard'daki Ticari ve Güvenlik kart grupları sidebar'a entegre.
- *
- * Tasarım yaklaşımı: kullanıcı "menü sistemleri özgür" dedi — fresh shadcn
- * sticky sidebar (institution shell pattern'i ile aynı yapı), 5 mantıksal
- * grup. Disabled item'lar P2-P14'te aktive olur.
+ * Süper Admin menüsü (2026-10-29 yeniden tasarım): 60'a yakın madde 8 düz
+ * grupta hep açıktı → işleve göre gruplar, yalnız aktif sayfanın grubu açık,
+ * kapalı grup başlığında bekleyen iş toplamı, üstte arama. Bekleyen işler
+ * (talep/alarm) en üstte "Bekleyenler" grubunda.
  */
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "",
+    collapsible: false,
     links: [
       { href: "/admin", label: "Panel", icon: LayoutDashboard },
-      { href: "/admin/activity-stream", label: "Aktivite Akışı", icon: Activity },
-      { href: "/admin/analytics", label: "Site Analitiği", icon: BarChart3 },
+      { href: "/admin/activity-stream", label: "Aktivite akışı", icon: Activity },
     ],
   },
   {
-    title: "Kuruluşlar",
+    title: "Bekleyenler",
+    collapsible: false,
+    links: [
+      { href: "/admin/contact-requests", label: "İletişim talepleri", icon: Inbox, badgeKey: "contact_new" },
+      { href: "/admin/support", label: "Destek talepleri", icon: LifeBuoy, badgeKey: "support_pending" },
+      { href: "/admin/security-monitor/alarms", label: "Alarmlar", icon: AlertOctagon, badgeKey: "unack_alarms" },
+    ],
+  },
+  {
+    title: "Müşteriler",
+    icon: Building2,
     links: [
       { href: "/admin/institutions", label: "Kurumlar", icon: Building2 },
-      { href: "/admin/users", label: "Kullanıcılar", icon: Users },
-      { href: "/admin/independent-teachers", label: "Bağımsız Koçlar", icon: Users },
+      { href: "/admin/independent-teachers", label: "Bağımsız koçlar", icon: Users },
+      { href: "/admin/users", label: "Tüm kullanıcılar", icon: Users },
+      { href: "/admin/demo-sessions", label: "Demo hesaplar", icon: FlaskConical },
     ],
   },
   {
-    title: "Denetim",
+    title: "Gelir",
+    icon: CircleDollarSign,
     links: [
-      { href: "/admin/audit", label: "Denetim", icon: FileText },
-      { href: "/admin/kvkk", label: "KVKK", icon: Scale },
-      { href: "/admin/system-health", label: "Altyapı Sağlığı", icon: Stethoscope },
-      { href: "/admin/announcements", label: "Duyurular", icon: Megaphone },
+      { href: "/admin/security-monitor/revenue", label: "Ticari genel bakış", icon: CircleDollarSign },
+      { href: "/admin/revenue/action-center", label: "Aksiyon merkezi", icon: Target },
+      { href: "/admin/revenue/forecast", label: "Gelir tahmini", icon: TrendingUp },
+      { href: "/admin/revenue/cohort", label: "Kohort ve yaşam değeri", icon: Heart },
+      { href: "/admin/payment-links", label: "Ödeme linkleri", icon: Link2 },
+      { href: "/admin/pricing", label: "Ücretlendirme", icon: Wallet },
     ],
   },
   {
-    title: "Limitler & Kullanım",
+    title: "Pazarlama",
+    icon: Send,
     links: [
-      { href: "/admin/usage", label: "Kredi Kullanımı", icon: Wallet },
-      { href: "/admin/quota", label: "Limitler", icon: Gauge },
-      { href: "/admin/feature-flags", label: "Özellik Bayrakları", icon: Sparkles },
+      { href: "/admin/prospects", label: "Hedef havuzu", icon: Target },
+      { href: "/admin/revenue/campaigns", label: "Kampanyalar", icon: Send },
+      { href: "/admin/campaign-links", label: "Kampanya linkleri", icon: Share2 },
+      { href: "/admin/membership-offers", label: "Üyelik teklifleri", icon: MessageSquare },
+      { href: "/admin/revenue/action-templates", label: "Aksiyon şablonları", icon: ClipboardList },
+      { href: "/admin/testimonials", label: "Yorumlar", icon: Star },
+      { href: "/admin/analytics", label: "Site analitiği", icon: BarChart3 },
+      { href: "/admin/conversion", label: "Dönüşüm hunisi", icon: TrendingDown },
     ],
   },
   {
     title: "Vitrin",
+    icon: Lightbulb,
     links: [
       { href: "/admin/feature-catalog", label: "Kartlar", icon: Lightbulb },
-      { href: "/admin/feature-catalog/dashboard", label: "Vitrin Yönetimi", icon: Telescope },
+      { href: "/admin/feature-catalog/dashboard", label: "Vitrin yönetimi", icon: Telescope },
       { href: "/admin/feature-catalog/experiments", label: "Deneyler", icon: ListChecks },
-      { href: "/admin/conversion", label: "Dönüşüm Hunisi", icon: TrendingDown },
     ],
   },
   {
-    title: "Ticari Pano",
+    title: "İletişim",
+    icon: MessagesSquare,
     links: [
-      { href: "/admin/security-monitor/revenue", label: "Genel Bakış", icon: CircleDollarSign },
-      { href: "/admin/revenue/action-center", label: "Aksiyon Merkezi", icon: Target },
-      { href: "/admin/revenue/forecast", label: "Tahmin", icon: TrendingUp },
-      { href: "/admin/revenue/cohort", label: "Kohort & LTV", icon: Heart },
-      { href: "/admin/revenue/campaigns", label: "Kampanyalar", icon: Send },
-      { href: "/admin/prospects", label: "Hedef Havuzu", icon: Target },
-      { href: "/admin/membership-offers", label: "Üyelik Teklifleri (WhatsApp)", icon: MessageSquare },
-      { href: "/admin/campaign-links", label: "Kampanya Linkleri", icon: Share2 },
-      { href: "/admin/revenue/action-templates", label: "Şablonlar", icon: ClipboardList },
+      { href: "/admin/announcements", label: "Duyurular", icon: Megaphone },
+      { href: "/admin/whatsapp-templates", label: "WhatsApp şablonları", icon: MessageSquare },
+      { href: "/admin/whatsapp-dispatch-log", label: "WhatsApp kayıtları", icon: Activity },
+      { href: "/admin/communication-health", label: "İletişim sağlığı", icon: MessagesSquare },
+      { href: "/admin/security-monitor/notifications", label: "Bildirim sağlığı", icon: BellRing },
+      { href: "/admin/assistant", label: "Asistan soruları", icon: Bot },
     ],
   },
   {
-    title: "Güvenlik Kamarası",
+    title: "Güvenlik",
+    icon: Shield,
     links: [
-      { href: "/admin/security-monitor", label: "Genel Bakış", icon: Shield },
-      { href: "/admin/security-monitor/integrity", label: "Veri Bütünlüğü", icon: DatabaseZap },
-      { href: "/admin/security-monitor/system", label: "Uygulama Hataları", icon: Bug },
-      { href: "/admin/security-monitor/notifications", label: "Bildirim Sağlığı", icon: BellRing },
-      { href: "/admin/communication-health", label: "İletişim Sağlığı", icon: MessagesSquare },
-      { href: "/admin/security-monitor/live", label: "Canlı Akış", icon: Activity },
+      { href: "/admin/security-monitor", label: "Güvenlik kamarası", icon: Shield },
+      { href: "/admin/security-monitor/live", label: "Canlı akış", icon: Activity },
       { href: "/admin/security-monitor/sessions", label: "Oturumlar", icon: ShieldAlert },
-      { href: "/admin/security-monitor/alarms", label: "Alarmlar", icon: AlertOctagon, badgeKey: "unack_alarms" },
       { href: "/admin/security-monitor/abuse", label: "Suistimal", icon: Flame },
-      { href: "/admin/security-monitor/activity", label: "Aktivite", icon: CalendarDays },
+      { href: "/admin/security-monitor/activity", label: "Kullanım aktivitesi", icon: CalendarDays },
+      { href: "/admin/audit", label: "Denetim kaydı", icon: FileText },
+      { href: "/admin/kvkk", label: "KVKK", icon: Scale },
     ],
   },
   {
     title: "Sistem",
+    icon: Settings,
     links: [
-      { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
-      { href: "/admin/book-catalog", label: "Kitap Kataloğu", icon: BookOpen, badgeKey: "book_catalog_pending" },
-      { href: "/admin/pricing", label: "Ücretlendirme", icon: CircleDollarSign },
-      { href: "/admin/whatsapp-templates", label: "WhatsApp Şablonları", icon: MessageSquare },
-      { href: "/admin/whatsapp-dispatch-log", label: "WhatsApp Audit", icon: Activity },
-      { href: "/admin/payment-links", label: "Ödeme Linkleri", icon: Link2 },
-      { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox, badgeKey: "contact_new" },
-      { href: "/admin/assistant", label: "Asistan Soruları", icon: Bot },
-      { href: "/admin/testimonials", label: "Sosyal Kanıt (Yorumlar)", icon: Star },
-      { href: "/admin/support", label: "Talepler", icon: LifeBuoy, badgeKey: "support_pending" },
-      { href: "/admin/demo-sessions", label: "Demo Hesaplar", icon: FlaskConical },
+      { href: "/admin/system-health", label: "Altyapı sağlığı", icon: Stethoscope },
+      { href: "/admin/security-monitor/system", label: "Uygulama hataları", icon: Bug },
+      { href: "/admin/security-monitor/integrity", label: "Veri bütünlüğü", icon: DatabaseZap },
+      { href: "/admin/book-catalog", label: "Kitap kataloğu", icon: BookOpen, badgeKey: "book_catalog_pending" },
+      { href: "/admin/usage", label: "Kredi kullanımı", icon: Wallet },
+      { href: "/admin/quota", label: "Limitler", icon: Gauge },
+      { href: "/admin/feature-flags", label: "Özellik bayrakları", icon: Sparkles },
+      { href: "/admin/settings", label: "AI ayarları", icon: KeyRound },
     ],
   },
 ];
+
+/** Alarm niteliğindeki rozetler kırmızı; diğer bekleyen işler marka renginde. */
+const ALARM_BADGES: AdminBadgeKey[] = ["unack_alarms"];
+
+/** En uzun eşleşen href aktif sayılır (/admin/security-monitor ile alt sayfaları karışmasın). */
+function activeHrefFor(pathname: string): string | null {
+  let best: string | null = null;
+  for (const sec of NAV_SECTIONS) {
+    for (const l of sec.links) {
+      const hit = l.href === "/admin" ? pathname === "/admin" : pathname === l.href || pathname.startsWith(`${l.href}/`);
+      if (hit && (!best || l.href.length > best.length)) best = l.href;
+    }
+  }
+  return best;
+}
+
+function normTr(s: string) {
+  return s.toLocaleLowerCase("tr-TR").replace(/ı/g, "i").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
 interface Props {
   user: UserPublic;
@@ -220,26 +254,14 @@ export function AdminShell({ user, children }: Props) {
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* Sidebar (lg+) */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 lg:sticky lg:top-0 lg:h-screen border-r border-border bg-card/40">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 lg:sticky lg:top-0 lg:h-screen border-r border-border bg-card">
         <div className="px-4 h-14 flex items-center border-b border-border bg-background">
           <BrandLogo href="/admin" size={28} />
           <span className="ml-2 text-[10px] uppercase tracking-wider font-semibold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded">
             Süper
           </span>
         </div>
-        <nav
-          className="flex-1 overflow-y-auto p-2 space-y-3"
-          aria-label="Süper admin paneli"
-        >
-          {NAV_SECTIONS.map((section, idx) => (
-            <NavGroup
-              key={`${section.title}-${idx}`}
-              section={section}
-              pathname={pathname}
-              badges={badges}
-            />
-          ))}
-        </nav>
+        <AdminNav pathname={pathname} badges={badges} />
         <UserCard
           user={user}
           onLogout={() => logout.mutate()}
@@ -285,44 +307,108 @@ export function AdminShell({ user, children }: Props) {
   );
 }
 
-function NavGroup({
-  section,
+function AdminNav({
   pathname,
-  onItemClick,
   badges,
+  onItemClick,
 }: {
-  section: NavSection;
   pathname: string;
-  onItemClick?: () => void;
   badges?: AdminBadgesResponse;
+  onItemClick?: () => void;
 }) {
+  const activeHref = activeHrefFor(pathname);
+  const [q, setQ] = React.useState("");
+  const [opened, setOpened] = React.useState<Record<string, boolean>>({});
+  const query = normTr(q.trim());
+
+  const sections = query
+    ? NAV_SECTIONS.map((sec) => ({
+        ...sec,
+        links: sec.links.filter((l) => normTr(`${l.label} ${sec.title}`).includes(query)),
+      })).filter((sec) => sec.links.length > 0)
+    : NAV_SECTIONS;
+
   return (
-    <div>
-      {section.title ? (
-        <p className="px-3 mb-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-          {section.title}
-        </p>
-      ) : null}
-      <div className="space-y-0.5">
-        {section.links.map((link) => (
-          <SidebarLink
-            key={link.href}
-            link={link}
-            pathname={pathname}
-            onClick={onItemClick}
-            badge={adminBadgeValue(badges, link.badgeKey)}
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="px-3 pt-3">
+        <label className="relative block">
+          <span className="sr-only">Menüde ara</span>
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Menüde ara…"
+            className="h-9 w-full rounded-lg border border-input bg-background pl-8 pr-2 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/30"
           />
-        ))}
+        </label>
       </div>
+      <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Süper admin paneli">
+        {sections.length === 0 ? (
+          <p className="px-2 text-sm text-muted-foreground">Eşleşen sayfa yok.</p>
+        ) : null}
+        {sections.map((sec, idx) => {
+          const hasActive = sec.links.some((l) => l.href === activeHref);
+          const collapsible = sec.collapsible !== false && !query;
+          const key = sec.title || `s${idx}`;
+          const open = !collapsible || (opened[key] ?? hasActive);
+          const pending = sec.links.reduce((n, l) => n + adminBadgeValue(badges, l.badgeKey), 0);
+          const SecIcon = sec.icon;
+          return (
+            <div key={key} className={cn(idx > 0 && "mt-3")}>
+              {sec.title ? (
+                collapsible ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpened((o) => ({ ...o, [key]: !open }))}
+                    aria-expanded={open}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-semibold transition-colors hover:bg-muted",
+                      hasActive ? "text-primary" : "text-foreground",
+                    )}
+                  >
+                    {SecIcon ? <SecIcon className="size-[18px] shrink-0" aria-hidden /> : null}
+                    <span className="flex-1 text-left">{sec.title}</span>
+                    {!open && pending > 0 ? <NavBadge count={pending} /> : null}
+                    <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden />
+                  </button>
+                ) : (
+                  <p className="mb-1 px-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {sec.title}
+                  </p>
+                )
+              ) : null}
+              {open ? (
+                <ul className={cn("space-y-0.5", collapsible && "mt-0.5 ml-[18px] border-l border-border pl-2")}>
+                  {sec.links.map((link) => (
+                    <li key={link.href}>
+                      <SidebarLink
+                        link={link}
+                        active={link.href === activeHref}
+                        onClick={onItemClick}
+                        badge={adminBadgeValue(badges, link.badgeKey)}
+                        nested={collapsible}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          );
+        })}
+      </nav>
     </div>
   );
 }
 
-function NavBadge({ count }: { count: number }) {
+function NavBadge({ count, alarm = false }: { count: number; alarm?: boolean }) {
   if (count <= 0) return null;
   return (
     <span
-      className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground"
+      className={cn(
+        "inline-flex h-5 min-w-[1.375rem] items-center justify-center rounded-full px-1.5 text-[11px] font-bold leading-none",
+        alarm ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground",
+      )}
       aria-label={`${count} bekliyor`}
     >
       {count > 99 ? "99+" : count}
@@ -332,50 +418,37 @@ function NavBadge({ count }: { count: number }) {
 
 function SidebarLink({
   link,
-  pathname,
+  active,
   onClick,
   badge = 0,
+  nested = false,
 }: {
   link: NavLink;
-  pathname: string;
+  active: boolean;
   onClick?: () => void;
   badge?: number;
+  nested?: boolean;
 }) {
   const Icon = link.icon;
-  const active =
-    link.href === "/admin"
-      ? pathname === "/admin"
-      : pathname === link.href || pathname.startsWith(`${link.href}/`);
-
-  if (link.disabled) {
-    return (
-      <div
-        className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground/60 cursor-not-allowed"
-        title="Yakında — bir sonraki pakette gelecek"
-      >
-        <Icon className="size-4 shrink-0" aria-hidden />
-        <span className="flex-1 truncate">{link.label}</span>
-        <span className="text-[10px] uppercase tracking-wider opacity-60">
-          yakında
-        </span>
-      </div>
-    );
-  }
-
   return (
     <Link
       href={link.href}
       onClick={onClick}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-        active
-          ? "bg-muted font-medium text-foreground"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        "group relative flex items-center gap-3 rounded-lg px-2.5 text-sm transition-colors",
+        nested ? "py-1.5" : "py-2",
+        active ? "bg-accent font-semibold text-accent-foreground" : "text-foreground hover:bg-muted",
       )}
     >
-      <Icon className="size-4 shrink-0" aria-hidden />
-      <span className="flex-1 truncate">{link.label}</span>
-      <NavBadge count={badge} />
+      {nested ? null : (
+        <Icon
+          className={cn("size-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")}
+          aria-hidden
+        />
+      )}
+      <span className="flex-1 break-words leading-snug">{link.label}</span>
+      <NavBadge count={badge} alarm={!!link.badgeKey && ALARM_BADGES.includes(link.badgeKey)} />
     </Link>
   );
 }
@@ -389,33 +462,35 @@ function UserCard({
   onLogout: () => void;
   isLoggingOut: boolean;
 }) {
+  const initials = user.full_name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toLocaleUpperCase("tr-TR"))
+    .join("");
   return (
-    <div className="border-t border-border p-3 space-y-2">
-      <div className="leading-tight">
-        <p className="text-sm font-medium truncate" title={user.full_name}>
-          {user.full_name}
-        </p>
-        <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
-          <Settings className="size-3" aria-hidden />
-          {ROLE_LABELS_TR[user.role]}
-        </p>
+    <div className="border-t border-border p-3">
+      <div className="flex items-center gap-2.5 px-1.5 py-1">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+          {initials}
+        </span>
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="break-words text-sm font-semibold">{user.full_name}</p>
+          <p className="text-xs text-muted-foreground">{ROLE_LABELS_TR[user.role]}</p>
+        </div>
       </div>
-      <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-        <Link href="/me/account">
-          <UserCog className="size-4" aria-hidden />
-          <span>Hesabım · Şifre · 2FA</span>
-        </Link>
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full justify-start"
-        onClick={onLogout}
-        disabled={isLoggingOut}
-      >
-        <LogOut className="size-4" aria-hidden />
-        <span>{isLoggingOut ? "Çıkılıyor…" : "Çıkış"}</span>
-      </Button>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Button variant="outline" size="sm" className="justify-center" asChild>
+          <Link href="/me/account" title="Hesabım, şifre ve iki aşamalı doğrulama">
+            <UserCog className="size-4" aria-hidden />
+            <span>Hesabım</span>
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" className="justify-center" onClick={onLogout} disabled={isLoggingOut}>
+          <LogOut className="size-4" aria-hidden />
+          <span>{isLoggingOut ? "Çıkılıyor…" : "Çıkış"}</span>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -476,20 +551,7 @@ function MobileDrawer({
             <X className="size-5" aria-hidden />
           </Button>
         </div>
-        <nav
-          className="flex-1 overflow-y-auto p-2 space-y-3"
-          aria-label="Süper admin paneli"
-        >
-          {NAV_SECTIONS.map((section, idx) => (
-            <NavGroup
-              key={`${section.title}-${idx}`}
-              section={section}
-              pathname={pathname}
-              onItemClick={onClose}
-              badges={badges}
-            />
-          ))}
-        </nav>
+        <AdminNav pathname={pathname} badges={badges} onItemClick={onClose} />
         <div className="p-3 border-t border-border space-y-2">
           <Button variant="ghost" className="w-full justify-start" asChild>
             <Link href="/me/account" onClick={onClose}>
