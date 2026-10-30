@@ -1,0 +1,78 @@
+{
+  "name": "Mozaik 8. Sınıf Geometri Tabanlı 12 Konsept Deneme",
+  "publisher": "Mozaik Yayınları",
+  "subject": "Matematik",
+  "curriculum_model": "lgs",
+  "type": "brans_denemesi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Mozaik Yayınları fliphtml5 demo kitabı (fliphtml5.com/bookcase/wlpbe, cobb) — kapak + içindekiler paneli; sayfa görseli indirilmedi.",
+    "Kapak: 12 konsept deneme, 240 soru (deneme başına 20); her denemedeki matematik konuları geometri bağlamında sorulur.",
+    "Demoda 1. deneme görüldü (Çarpanlar ve Katlar - Üslü İfadeler); konular deneme içinde karışık olduğundan bölümler eşleşmesiz."
+  ],
+  "sections": [
+    {
+      "label": "Konsept Deneme 1 (20 soru) — Çarpanlar ve Katlar - Üslü İfadeler",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 2 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 3 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 4 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 5 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 6 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 7 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 8 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 9 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 10 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 11 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 12 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    }
+  ]
+}

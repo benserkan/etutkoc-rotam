@@ -1,0 +1,88 @@
+{
+  "name": "Mozaik LGS Klon Türkçe 14 Deneme Sınavı",
+  "publisher": "Mozaik Yayınları",
+  "subject": "Türkçe",
+  "curriculum_model": "lgs",
+  "type": "brans_denemesi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Mozaik Yayınları fliphtml5 demo kitabı (fliphtml5.com/bookcase/wlpbe, mdku) — kapak + içindekiler paneli; sayfa görseli indirilmedi.",
+    "Kapak: 7 konu klon denemesi + 6 LGS klon denemesi + 1 LGS 2026 senaryosu = 14 deneme.",
+    "İçindekiler: 1-7 TÜRKÇE KLON, 8-13 = 2020-2025 klonları, 14 = 2026 senaryo. Konu denemelerinden yalnız 1 (Sözcükte Anlam, 20 soru) ve 5 (Akıl Yürütme-Sözel Mantık, 10 soru) demoda görüldü; diğerlerinin konusu ve soru sayısı demoda yok."
+  ],
+  "sections": [
+    {
+      "label": "Deneme 1 — Sözcükte Anlam (20 soru)",
+      "test_count": 1,
+      "topic": "Sözcükte Anlam"
+    },
+    {
+      "label": "Deneme 2 — Konu Klon Denemesi",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 3 — Konu Klon Denemesi",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 4 — Konu Klon Denemesi",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 5 — Akıl Yürütme - Sözel Mantık (10 soru)",
+      "test_count": 1,
+      "topic": "Sözel Mantık"
+    },
+    {
+      "label": "Deneme 6 — Konu Klon Denemesi",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 7 — Konu Klon Denemesi",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 8 — Klon: 2020 LGS (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 9 — Klon: 2021 LGS (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 10 — Klon: 2022 LGS (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 11 — Klon: 2023 LGS (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 12 — Klon: 2024 LGS (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 13 — Klon: 2025 LGS (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 14 — LGS 2026 Senaryosu (20 soru)",
+      "test_count": 1,
+      "topic": null
+    }
+  ]
+}

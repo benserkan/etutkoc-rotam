@@ -124,7 +124,12 @@ def main() -> int:
             if not js["topic"]:
                 es.topic_id = None
                 continue
-            t = db.query(Topic).filter(Topic.subject_id == subj.id, Topic.name == js["topic"]).first()
+            # Aynı ad farklı sınıflarda olabilir (LGS Türkçe "Paragrafta Anlam" 5-8):
+            # kitabın hedef sınıfındaki konu önce, yoksa en yüksek sınıf.
+            cands = db.query(Topic).filter(Topic.subject_id == subj.id, Topic.name == js["topic"]).all()
+            want = data.get("target_grade_max")
+            cands.sort(key=lambda x: (x.grade_level != want, -(x.grade_level or 0)))
+            t = cands[0] if cands else None
             if t is None:
                 print(f"HATA: '{js['topic']}' konusu {subj.name} dersinde yok.")
                 db.rollback()

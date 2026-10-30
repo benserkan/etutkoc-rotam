@@ -1,0 +1,138 @@
+{
+  "name": "Mozaik LGS Klon T.C. İnkılap Tarihi ve Atatürkçülük 24 Deneme Sınavı",
+  "publisher": "Mozaik Yayınları",
+  "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+  "curriculum_model": "lgs",
+  "type": "brans_denemesi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Mozaik Yayınları fliphtml5 demo kitabı (fliphtml5.com/bookcase/wlpbe, ovgr) — kapak + içindekiler paneli; sayfa görseli indirilmedi.",
+    "Kapak: 11 ünite klon denemesi + 8 LGS klon denemesi + 5 LGS 2026 senaryosu = 24 deneme, 240 soru (deneme başına 10).",
+    "Ünite denemelerinin hangi üniteye ait olduğu ve türlerin sırası demoda görülmedi; sıralama kapaktaki dağılıma göre varsayıldı (koç kendi kopyasında düzeltebilir)."
+  ],
+  "sections": [
+    {
+      "label": "Deneme 1 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 2 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 3 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 4 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 5 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 6 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 7 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 8 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 9 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 10 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 11 — Ünite Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 12 — LGS Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 13 — LGS Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 14 — LGS Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 15 — LGS Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 16 — LGS Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 17 — LGS Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 18 — LGS Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 19 — LGS Klon Denemesi (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 20 — LGS 2026 Senaryosu (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 21 — LGS 2026 Senaryosu (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 22 — LGS 2026 Senaryosu (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 23 — LGS 2026 Senaryosu (10 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Deneme 24 — LGS 2026 Senaryosu (10 soru)",
+      "test_count": 1,
+      "topic": null
+    }
+  ]
+}

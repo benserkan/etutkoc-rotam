@@ -1,0 +1,177 @@
+{
+  "name": "Mozaik HİT 7. Sınıf Matematik 32 Deneme (Haftalık İzleme)",
+  "publisher": "Mozaik Yayınları",
+  "subject": "Matematik",
+  "curriculum_model": "lgs",
+  "type": "brans_denemesi",
+  "target_grade_min": 7,
+  "target_grade_max": 7,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Mozaik Yayınları fliphtml5 demo kitabı (fliphtml5.com/bookcase/wlpbe, dibs) — kapak + içindekiler paneli; sayfa görseli indirilmedi.",
+    "Kapak: 32 deneme · 640 soru (deneme başına 20); haftalık kazanım taraması."
+  ],
+  "sections": [
+    {
+      "label": "Föy Deneme 1 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 2 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 3 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 4 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 5 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 6 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 7 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 8 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 9 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 10 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 11 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 12 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 13 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 14 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 15 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 16 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 17 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 18 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 19 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 20 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 21 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 22 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 23 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 24 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 25 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 26 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 27 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 28 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 29 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 30 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 31 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Föy Deneme 32 (20 soru)",
+      "test_count": 1,
+      "topic": null
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Mozaik LGS Klon Fen Bilimleri 13 Deneme Sınavı",
+  "publisher": "Mozaik Yayınları",
+  "subject": "Fen Bilimleri",
+  "curriculum_model": "lgs",
+  "type": "brans_denemesi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: yayınevinin fliphtml5 demo kitabı (online.fliphtml5.com/udqwy/xwvi, 2026) — kapak + görüntüleyicinin içindekiler paneli; sayfa görseli indirilmedi.",
+    "Kapak: 6 ünite klon denemesi + 6 LGS klon denemesi + 1 LGS 2026 senaryosu = 13 deneme, toplam 260 soru (deneme başına 20 soru, 40 dk).",
+    "6. deneme içindekilerde 'KLON DENEME SON' yazıyor; sayfasında 'Klon: 2023 LGS' — ad buna göre.",
+    "Ünite denemeleri ünitenin konusuna bağlı; LGS yılı klonları tüm üniteleri kapsadığından eşleşmesiz (karma)."
+  ],
+  "sections": [
+    {"label": "Deneme 1 — Mevsimler ve İklim (20 soru)", "test_count": 1, "topic": "Mevsimler ve İklim"},
+    {"label": "Deneme 2 — DNA ve Genetik Kod (20 soru)", "test_count": 1, "topic": "DNA ve Genetik Kod"},
+    {"label": "Deneme 3 — Basınç (20 soru)", "test_count": 1, "topic": "Basınç"},
+    {"label": "Deneme 4 — Madde ve Endüstri (20 soru)", "test_count": 1, "topic": "Madde ve Endüstri"},
+    {"label": "Deneme 5 — Klon: 2020 LGS (20 soru)", "test_count": 1, "topic": null},
+    {"label": "Deneme 6 — Klon: 2023 LGS (20 soru)", "test_count": 1, "topic": null},
+    {"label": "Deneme 7 — Basit Makineler (20 soru)", "test_count": 1, "topic": "Basit Makineler"},
+    {"label": "Deneme 8 — Enerji Dönüşümleri ve Çevre Bilimi (20 soru)", "test_count": 1, "topic": "Enerji Dönüşümleri ve Çevre Bilimi"},
+    {"label": "Deneme 9 — Klon: 2021 LGS (20 soru)", "test_count": 1, "topic": null},
+    {"label": "Deneme 10 — Klon: 2022 LGS (20 soru)", "test_count": 1, "topic": null},
+    {"label": "Deneme 11 — Klon: 2024 LGS (20 soru)", "test_count": 1, "topic": null},
+    {"label": "Deneme 12 — Klon: 2025 LGS (20 soru)", "test_count": 1, "topic": null},
+    {"label": "Deneme 13 — LGS 2026 Senaryosu (20 soru)", "test_count": 1, "topic": null}
+  ]
+}

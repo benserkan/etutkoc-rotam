@@ -1,0 +1,98 @@
+{
+  "name": "Mozaik 8. Sınıf Anlam Bilgisi 16 Konsept Deneme",
+  "publisher": "Mozaik Yayınları",
+  "subject": "Türkçe",
+  "curriculum_model": "lgs",
+  "type": "brans_denemesi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Mozaik Yayınları fliphtml5 demo kitabı (fliphtml5.com/bookcase/wlpbe, qfxw) — kapak + içindekiler paneli; sayfa görseli indirilmedi.",
+    "Kapak: 9 konu denemesi + 7 karma deneme = 16 konsept deneme, 255 soru.",
+    "Demoda yalnız 1. deneme görüldü (Sözcükte Anlam 1, 20 soru); diğer denemelerin konusu demoda yok."
+  ],
+  "sections": [
+    {
+      "label": "Konsept Deneme 1 — Sözcükte Anlam 1 (20 soru)",
+      "test_count": 1,
+      "topic": "Sözcükte Anlam"
+    },
+    {
+      "label": "Konsept Deneme 2",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 3",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 4",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 5",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 6",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 7",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 8",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 9",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 10",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 11",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 12",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 13",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 14",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 15",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "Konsept Deneme 16",
+      "test_count": 1,
+      "topic": null
+    }
+  ]
+}
