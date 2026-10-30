@@ -6,6 +6,33 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## NESLİHAN HOCA / BEREN VAKASI → LGS 8 TÜRKÇE PARAGRAF KONULARI + GÖREV KUTUSU + MOZAİK KATALOĞU (2026-10-30, CANLI, migration YOK)
+
+- **Vaka (canlı kayıttan):** Neslihan Aşkın #176, Arı "Paragrafın Ritmi" TYT baskısını (katalog #116) 5 kez ekleyip Beren #227'ye
+  atadı; görev kutusu yalnız sınıf müfredatı konularını taradığı için kitap görünmedi. Elle girdiği LGS kitabında "Yapı"
+  bölümü LGS 8 Türkçe'de konu olmadığından bağsız kaldı → kutuda "Eşleşen konu yok". Düzeltme: 6 kopya silindi, onaylı
+  katalog #347 (8. sınıf) Beren'e #750 olarak atandı.
+- **LGS 8 Türkçe +7 konu** (adlar TYT ile aynı): Söz Varlığı (Deyim ve Atasözleri) · Paragrafta Ana Düşünce · Yardımcı
+  Düşünce · Paragrafta Yapı · Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları · Metin Karşılaştırma · Söz Sanatları;
+  "Paragrafta Anlam" genel başlık olarak kaldı. 22 LGS Türkçe katalog kitabının bölüm adlarından; `curriculum_mapping._ALIAS`
+  yayınevi adları. `scripts/remap_lgs_turkce_paragraf.py` (kuru varsayılan) canlıda uygulandı: 85 kitap bölümü · 89 katalog
+  bölümü · 10 deneme sorusu (Kronometre "Anlatım Yönü"nün yanlış "Anlatım Bozuklukları" bağı da düzeldi).
+- **Görev kutusu** (`task_picker`): öğrenciye atanmış kitabın başka müfredattaki konuları (`kind=outside`, "başka müfredat")
+  + konusu bağlanmamış bölümler (`kind=unmapped`, topic_id = −bölüm) aramada ve "Atanmış kitapların diğer bölümleri"
+  grubunda; ikisi de yalnız kitaptan verilir. Test task_picker 13/13.
+- **Sınıf uyumsuzluğu uyarısı** (`web/lib/book-fit.ts`): Kitap ata · sihirbaz 4. adım · kitap detayı Öğrenciler — uymayan
+  atamada turuncu uyarı + "Yine de ata" (engel değil). Kitap ata'da sınıf süzgecine takılan arama → "Gizli kitapları göster".
+  Katalog satırında LGS/TYT/AYT rozeti.
+- **"Diğer" görevinde birim:** "30 soru" / "4 sayfa" de konu paneli açar (`task_topic_link.extract_count`, test > soru > sayfa;
+  "40 soruluk" sayılmaz); Konusuz Görevler sayfası birim taşır. Test task_topic_link 24/24.
+- **Mozaik fliphtml5 (bookcase/wlpbe) → 23 deneme kitabı katalogda** (prod 348-370): KLON Fen 13 / Mat 13 / Türkçe 14 /
+  İnkılap 24 · HİT 8 Mat/Fen/Türkçe 32, İnkılap 40, Paragraf 32 · Anlam Bilgisi 16 · Geometri Tabanlı 12 · HİT 5-6-7
+  Fen/Mat/Türkçe 32 + Sosyal 40. Yöntem: kapak + görüntüleyicinin içindekiler paneli + deneme kapak sayfaları (config
+  şifreli — ÇÖZÜLMEDİ, sayfa indirilmedi). **Alınmadı:** 7'li deneme + KAMP + İOKBS Klon 5'li (çok dersli, katalog tek
+  derslik) · 8. sınıf 4 soru bankası (katalogda zaten var) · 4 defter (demoda içindekiler yok) · **5-7 soru bankaları +
+  defterler (28 kitap) SIRADA** — bazılarının demosunda içindekiler sayfası var (görsel okuma gerekir).
+- Seed (`seed_book_catalog_json.py`): JSON'daki konu adı aynı derste birden çok sınıfta varsa kitabın hedef sınıfı önce.
+
 ## TEK TEMA + "J" PLATFORM DİLİ (2026-10-29, CANLI, migration YOK)
 
 - **Koyu mod KALDIRILDI** (kullanıcı kararı): site her cihazda açık temada açılır (`layout.tsx` THEME_INIT_SCRIPT
