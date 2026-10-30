@@ -42,7 +42,18 @@ LGS_CURRICULUM: dict[str, dict] = {
         # 8. sınıf (LGS) DÜZ konu — yayınevi kitaplarıyla birebir.
         "topics": [
             ("Sözcükte Anlam", 8),
+            # 2026-10-30 (koç, Neslihan Hoca saha bulgusu): yayınevleri deyim/atasözü,
+            # paragraf alt başlıkları ve söz sanatlarını AYRI ünite basar (22 LGS
+            # Türkçe katalog kitabından ölçüldü). Adlar TYT Türkçe ile aynı.
+            ("Söz Varlığı (Deyim ve Atasözleri)", 8),
             ("Cümlede Anlam", 8),
+            ("Paragrafta Ana Düşünce", 8),
+            ("Paragrafta Yardımcı Düşünce", 8),
+            ("Paragrafta Yapı", 8),
+            ("Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları", 8),
+            ("Metin Karşılaştırma", 8),
+            ("Söz Sanatları", 8),
+            # Genel / karma paragraf (alt başlığa ayrılmamış bölümler)
             ("Paragrafta Anlam", 8),
             # 2026-10-17 (koç talebi #22): LGS Türkçe'de grafik/tablo/görsel
             # yorumlama soruları düzenli çıkar; yayınevi kitaplarında ayrı ünite.

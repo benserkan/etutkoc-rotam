@@ -1032,6 +1032,9 @@ class PickerTopicItem(BaseModel):
     theme_name: str | None = None
     grade_level: int | None = None
     match: str | None = None      # arama: tam | kısmi | tema
+    # topic | outside (atanmış kitabın başka müfredattaki konusu) | unmapped
+    # (konusu bağlanmamış bölüm; topic_id = −section_id, yalnız kitaptan verilir)
+    kind: str = "topic"
 
 
 class PickerGroupItem(BaseModel):

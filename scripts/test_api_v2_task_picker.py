@@ -279,6 +279,46 @@ def main() -> int:
             f"{[(i['topic_name'], i['badge']) for i in weak]}",
         )
 
+        # ---- 12-13. Saha 2026-10-30 (Neslihan Hoca): atanmış kitap görev kutusunda
+        #      kaybolmasın — konusu bağlanmamış bölüm + sınıf müfredatı DIŞI kitap.
+        with SessionLocal() as db:
+            s5 = BookSection(book_id=ids["book"], label="Paragrafta Yapı Bölümü", order=4,
+                             test_count=8, topic_id=None)
+            subj2 = Subject(name=f"{PFX} Ortaokul Türkçe", teacher_id=ids["coach"],
+                            order=2, min_grade_level=5, max_grade_level=8)
+            db.add_all([s5, subj2])
+            db.flush()
+            t5 = Topic(subject_id=subj2.id, name="Söz Sanatları", order=1, teacher_id=ids["coach"])
+            db.add(t5)
+            db.flush()
+            book2 = Book(name=f"{PFX} Ortaokul Paragraf", teacher_id=ids["coach"],
+                         subject_id=subj2.id, type=BookType.SORU_BANKASI)
+            db.add(book2)
+            db.flush()
+            s6 = BookSection(book_id=book2.id, label="Söz Sanatları Testleri", order=1,
+                             test_count=6, topic_id=t5.id)
+            db.add(s6)
+            db.add(StudentBook(student_id=sid, book_id=book2.id))
+            ids.update(s5=s5.id, subject2=subj2.id, book2=book2.id, t5=t5.id)
+            db.commit()
+        r12 = c.get(f"/api/v2/teacher/students/{sid}/task-picker", params={"q": "yapı"})
+        hits12 = _items(r12.json(), "search") if r12.status_code == 200 else []
+        un = [i for i in hits12 if i.get("kind") == "unmapped"]
+        check(
+            "12. konusu bağlanmamış bölüm aramada çıkar (yalnız kitaptan, sahte kimlik −bölüm)",
+            len(un) == 1 and un[0]["topic_id"] == -ids["s5"]
+            and un[0]["sources"][0]["section_id"] == ids["s5"],
+            f"{[(i['topic_name'], i.get('kind')) for i in hits12]}",
+        )
+        r13 = c.get(f"/api/v2/teacher/students/{sid}/task-picker")
+        other = _items(r13.json(), "other_books") if r13.status_code == 200 else []
+        kinds = {(i["topic_id"], i.get("kind")) for i in other}
+        check(
+            "13. sınıf dışı atanmış kitabın konusu + bağsız bölüm açılış listesinde ('diğer bölümler')",
+            (ids["t5"], "outside") in kinds and (-ids["s5"], "unmapped") in kinds,
+            f"{kinds}",
+        )
+
         # ---- 11. Sahiplik
         r11 = c.get(
             f"/api/v2/teacher/students/{ids['foreign_student']}/task-picker"
@@ -307,17 +347,22 @@ def main() -> int:
                     db.execute(sa_delete(TaskBookItem)
                                .where(TaskBookItem.task_id.in_(tids)))
                     db.execute(sa_delete(Task).where(Task.id.in_(tids)))
-            if ids.get("book"):
+            for bk in ("book2", "book"):
+                if not ids.get(bk):
+                    continue
                 sbids = [r[0] for r in db.query(StudentBook.id)
-                         .filter(StudentBook.book_id == ids["book"]).all()]
+                         .filter(StudentBook.book_id == ids[bk]).all()]
                 if sbids:
                     db.execute(sa_delete(SectionProgress)
                                .where(SectionProgress.student_book_id.in_(sbids)))
                     db.execute(sa_delete(StudentBook)
                                .where(StudentBook.id.in_(sbids)))
                 db.execute(sa_delete(BookSection)
-                           .where(BookSection.book_id == ids["book"]))
-                db.execute(sa_delete(Book).where(Book.id == ids["book"]))
+                           .where(BookSection.book_id == ids[bk]))
+                db.execute(sa_delete(Book).where(Book.id == ids[bk]))
+            if ids.get("subject2"):
+                db.execute(sa_delete(Topic).where(Topic.subject_id == ids["subject2"]))
+                db.execute(sa_delete(Subject).where(Subject.id == ids["subject2"]))
             if ids.get("subject"):
                 db.execute(sa_delete(Topic).where(Topic.subject_id == ids["subject"]))
                 db.execute(sa_delete(Subject).where(Subject.id == ids["subject"]))

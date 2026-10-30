@@ -27,6 +27,8 @@ export interface TopicSuggestion {
   subject_id: number | null;
   subject_name: string | null;
   test_count: number | null;
+  /** test | soru | sayfa — test_count'ın birimi */
+  count_unit?: CountUnit | null;
   topic: TopicOption | null;
   confident: boolean;
   options: TopicOption[];
@@ -64,6 +66,7 @@ export interface ConvertItem {
   task_id: number;
   topic_id: number;
   planned_count: number;
+  unit?: CountUnit | null;
 }
 
 export interface ConvertResponse {
@@ -81,19 +84,42 @@ export const taskTopicKeys = {
     ["teacher", "me", "students", String(studentId), "task-topic-suggest", String(subjectId), text, notes] as const,
 };
 
-/** "2 test", "3 adet test", "2 yaprak test" — backend `extract_test_count` aynası. */
-const COUNT_RE = /(\d{1,2})\s*(?:adet\s*)?(?:yaprak\s*)?tes(?:t|tler)?\b/i;
+export type CountUnit = "test" | "soru" | "sayfa";
 
-export function extractTestCount(...texts: (string | null | undefined)[]): number | null {
-  for (const t of texts) {
-    if (!t) continue;
-    const m = COUNT_RE.exec(t);
-    if (m) {
-      const n = Number(m[1]);
-      if (n >= 1 && n <= 30) return n;
+/** "2 test", "3 adet test", "30 soru", "4 sayfa" — backend `extract_count` aynası.
+ *  Öncelik test > soru > sayfa; "40 soruluk deneme" soru sayılmaz. */
+const UNIT_PATTERNS: [CountUnit, RegExp, number][] = [
+  ["test", /(\d{1,2})\s*(?:adet\s*)?(?:yaprak\s*)?tes(?:t|tler)?\b/i, 30],
+  ["soru", /(\d{1,3})\s*(?:adet\s*)?soru(?:lar)?\b/i, 300],
+  ["sayfa", /(\d{1,3})\s*(?:sayfa(?:lar)?|sf)\b/i, 200],
+];
+
+export const COUNT_UNIT_MAX: Record<CountUnit, number> = { test: 30, soru: 300, sayfa: 200 };
+
+export function extractCount(
+  ...texts: (string | null | undefined)[]
+): { count: number; unit: CountUnit } | null {
+  for (const [unit, rx, max] of UNIT_PATTERNS) {
+    for (const t of texts) {
+      if (!t) continue;
+      const m = rx.exec(t);
+      if (m) {
+        const n = Number(m[1]);
+        if (n >= 1 && n <= max) return { count: n, unit };
+      }
     }
   }
   return null;
+}
+
+/** Geriye uyum: yalnız sayı. */
+export function extractTestCount(...texts: (string | null | undefined)[]): number | null {
+  return extractCount(...texts)?.count ?? null;
+}
+
+/** Görev kalemi `unit` alanı: test → null (varsayılan). */
+export function itemUnit(unit: CountUnit | null | undefined): "soru" | "sayfa" | null {
+  return unit === "soru" || unit === "sayfa" ? unit : null;
 }
 
 export function getTaskTopicSuggest(

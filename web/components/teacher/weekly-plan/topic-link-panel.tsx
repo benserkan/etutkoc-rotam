@@ -15,6 +15,7 @@ import {
   getTaskTopicSuggest,
   taskTopicKeys,
   topicOptionLabel,
+  type CountUnit,
   type TopicOption,
   type TopicSuggestion,
 } from "@/lib/api/task-topic-link";
@@ -54,6 +55,7 @@ export function TopicLinkPanel({
   studentId,
   subjectId,
   count,
+  unit = "test",
   suggestion,
   loading,
   value,
@@ -62,6 +64,7 @@ export function TopicLinkPanel({
   studentId: number;
   subjectId: number;
   count: number;
+  unit?: CountUnit;
   suggestion: TopicSuggestion | null;
   loading: boolean;
   value: number | null;
@@ -85,8 +88,14 @@ export function TopicLinkPanel({
       <p className="flex items-start gap-1.5">
         <Link2 className="size-3.5 shrink-0 mt-0.5" aria-hidden />
         <span>
-          <strong>Bu görevde {count} test var.</strong> Bir konuya bağlarsan testler
-          müfredat ilerlemesine, konu performansına ve kurum tablolarına yansır.
+          <strong>
+            Bu görevde {count} {unit} var.
+          </strong>{" "}
+          {unit === "test"
+            ? "Bir konuya bağlarsan testler müfredat ilerlemesine, konu performansına ve kurum tablolarına yansır."
+            : unit === "soru"
+              ? "Bir konuya bağlarsan sorular konu performansına (doğru/yanlış) ve müfredat ilerlemesine yansır."
+              : "Bir konuya bağlarsan çalışma müfredat ilerlemesinde görünür (sayfa test sayısına girmez)."}
           Bağlamazsan görev yalnız &ldquo;yapıldı / yapılmadı&rdquo; olarak sayılır.
         </span>
       </p>

@@ -5341,6 +5341,7 @@ def teacher_task_picker_v2(
                         status=i.status, badge=i.badge,
                         quantity=i.quantity, quantity_reason=i.quantity_reason,
                         theme_name=i.theme_name, grade_level=i.grade_level, match=i.match,
+                        kind=i.kind,
                         sources=[
                             PickerSourceItem(
                                 book_id=s.book_id, book_name=s.book_name,

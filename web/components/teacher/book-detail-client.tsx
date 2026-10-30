@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
+
+import { bookFitsStudent } from "@/lib/book-fit";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BookOpen, Loader2, Sparkles, Trash2, Wand2 } from "lucide-react";
@@ -782,6 +784,7 @@ function AssignmentsTab({
 
   function toggle(sid: number) {
     if (lockedSet.has(sid)) return; // rezerv var, dokunma
+    setUnfitOk(false);
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(sid)) next.delete(sid);
@@ -790,8 +793,21 @@ function AssignmentsTab({
     });
   }
 
+  // Yeni eklenen ve kitabın hedef sınıfına uymayan öğrenci — bir kez sorulur (engel değil).
+  const [unfitOk, setUnfitOk] = React.useState(false);
+  const unfitNew = students.filter(
+    (s) => selected.has(s.id) && !assignedSet.has(s.id) && !bookFitsStudent(book, s),
+  );
+
   function save() {
-    mut.mutate({ body: { student_ids: Array.from(selected) } });
+    if (unfitNew.length > 0 && !unfitOk) {
+      setUnfitOk(true);
+      return;
+    }
+    mut.mutate(
+      { body: { student_ids: Array.from(selected) } },
+      { onSuccess: () => setUnfitOk(false) },
+    );
   }
 
   const hasChange =
@@ -819,10 +835,22 @@ function AssignmentsTab({
             {mut.isPending ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />
             ) : null}
-            Kaydet
+            {unfitNew.length > 0 && unfitOk ? "Yine de kaydet" : "Kaydet"}
           </Button>
         </div>
       </div>
+      {unfitNew.length > 0 ? (
+        <div
+          className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+          data-testid="book-unfit-warning"
+        >
+          Bu kitap ({book.subject_name ?? "ders yok"}) {unfitNew.map((s) => s.full_name).join(", ")} için
+          hedef sınıf dışında; öğrencide <strong>{book.subject_name ?? "bu"}</strong> dersi altında görünür.{" "}
+          {unfitOk
+            ? "Bilerek atıyorsan ‘Yine de kaydet’e bas."
+            : "Öğrencinin sınavına uygun baskı varsa onu ata."}
+        </div>
+      ) : null}
       <Card>
         <CardContent className="p-0">
           {students.length === 0 ? (
@@ -852,6 +880,11 @@ function AssignmentsTab({
                         {s.email}
                         {locked ? " · kilitli (rezerv var)" : ""}
                       </span>
+                      {!bookFitsStudent(book, s) ? (
+                        <span className="mt-0.5 inline-flex rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-amber-950">
+                          {s.is_graduate ? "Mezun" : s.grade_level ? `${s.grade_level}. sınıf` : ""} — kitap bu sınıf için değil
+                        </span>
+                      ) : null}
                     </span>
                   </li>
                 );

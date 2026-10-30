@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
+
+import { bookFitsStudent } from "@/lib/book-fit";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -1115,7 +1117,12 @@ function StepAssign({
   );
   const [sel, setSel] = React.useState<Set<number>>(new Set());
   const [share, setShare] = React.useState(true);
+  const [unfitOk, setUnfitOk] = React.useState(false);
   const assignMut = useAssignBookToStudents(book.id);
+  // Kitabın hedef sınıfına uymayan öğrenci (ör. 8. sınıfa TYT kitabı) — engel değil,
+  // atamadan önce bir kez sorulur (saha 2026-10-30, Arı Paragrafın Ritmi TYT/LGS karışması).
+  const fits = (s: TeacherStudentListItem) => bookFitsStudent(book, s);
+  const unfitSel = active.filter((s) => sel.has(s.id) && !fits(s));
   const contribute = useContributeCatalog();
 
   // Katkı yalnız anlamlı yapıda önerilir (katalogdan gelmemiş + ≥2 bölüm)
@@ -1144,6 +1151,7 @@ function StepAssign({
     onDone();
   }
   function toggle(id: number) {
+    setUnfitOk(false);
     setSel((p) => {
       const n = new Set(p);
       if (n.has(id)) n.delete(id);
@@ -1152,6 +1160,10 @@ function StepAssign({
     });
   }
   function assign() {
+    if (unfitSel.length > 0 && !unfitOk) {
+      setUnfitOk(true);
+      return;
+    }
     assignMut.mutate(
       { body: { student_ids: Array.from(sel) } },
       { onSuccess: finish },
@@ -1186,6 +1198,11 @@ function StepAssign({
                         {s.grade_level}. sınıf
                       </span>
                     ) : null}
+                    {!fits(s) ? (
+                      <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-amber-950">
+                        Kitap bu sınıf için değil
+                      </span>
+                    ) : null}
                   </label>
                 </li>
               ))}
@@ -1193,6 +1210,18 @@ function StepAssign({
           )}
         </CardContent>
       </Card>
+
+      {unfitSel.length > 0 ? (
+        <div
+          className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+          data-testid="wizard-unfit-warning"
+        >
+          <strong>{book.name}</strong> {book.subject_name ?? ""} kitabı{" "}
+          {unfitSel.map((s) => s.full_name).join(", ")} için hedef sınıf dışında. Atarsan öğrencinin{" "}
+          <strong>{book.subject_name ?? "bu"}</strong> dersi altında görünür.{" "}
+          {unfitOk ? "Bilerek atıyorsan ‘Yine de ata’ya bas." : "Öğrencinin sınavına uygun baskı varsa onu seç."}
+        </div>
+      ) : null}
 
       {showShare ? (
         <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
@@ -1228,7 +1257,11 @@ function StepAssign({
             ) : (
               <Users className="size-4" aria-hidden />
             )}
-            {sel.size > 0 ? `${sel.size} öğrenciye ata ve bitir` : "Ata ve bitir"}
+            {sel.size === 0
+              ? "Ata ve bitir"
+              : unfitSel.length > 0 && unfitOk
+                ? "Yine de ata ve bitir"
+                : `${sel.size} öğrenciye ata ve bitir`}
           </Button>
         </div>
       </div>

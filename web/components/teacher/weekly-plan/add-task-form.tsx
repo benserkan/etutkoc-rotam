@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  extractTestCount,
+  extractCount,
+  itemUnit,
   getSubjectTopics,
   taskTopicKeys,
   type SubjectTopicsResponse,
@@ -1537,7 +1538,10 @@ function OtherForm({
       500,
     );
   }
-  const testCount = extractTestCount(probe.notes, probe.title);
+  // 2026-10-30: "N test" kadar "30 soru", "4 sayfa" da algılanır (birimiyle).
+  const found = extractCount(probe.notes, probe.title);
+  const testCount = found?.count ?? null;
+  const countUnit = found?.unit ?? "test";
   const link = useTopicLink(
     studentId,
     subjectId === "" ? null : subjectId,
@@ -1567,7 +1571,13 @@ function OtherForm({
             period: period,
             notes: notes.trim() || null,
             items: [
-              { book_id: null, section_id: null, topic_id: link.topicId, planned_count: testCount },
+              {
+                book_id: null,
+                section_id: null,
+                topic_id: link.topicId,
+                planned_count: testCount,
+                unit: itemUnit(countUnit),
+              },
             ],
           },
         },
@@ -1669,6 +1679,7 @@ function OtherForm({
           studentId={studentId}
           subjectId={subjectId}
           count={testCount}
+          unit={countUnit}
           suggestion={link.suggestion}
           loading={link.loading}
           value={link.topicId}
@@ -1678,7 +1689,7 @@ function OtherForm({
       {linking ? (
         <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700">
           <Info className="size-3" aria-hidden />
-          Görev &quot;{testCount} test&quot; olarak seçilen konuya bağlı kaydedilecek.
+          Görev &quot;{testCount} {countUnit}&quot; olarak seçilen konuya bağlı kaydedilecek.
         </p>
       ) : (
         <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">

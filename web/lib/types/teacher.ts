@@ -1021,6 +1021,9 @@ export interface PickerTopicItem {
   grade_level?: number | null;
   /** Arama eşleşmesi: tam | kısmi | tema */
   match?: string | null;
+  /** topic | outside (atanmış kitabın başka müfredattaki konusu) | unmapped
+   *  (konusu bağlanmamış bölüm; topic_id = −section_id, yalnız kitaptan verilir) */
+  kind?: "topic" | "outside" | "unmapped";
 }
 
 export interface PickerGroupItem {

@@ -8,7 +8,7 @@ analitik boş kaldı — oysa aynı görev "kaynaksız konu" kalemi (topic_id + 
 olarak verilseydi hepsi dolardı.
 
 Bu modül TEK MERKEZ:
-  · `extract_test_count`  — metinden "N test" (notta da başlıkta da)
+  · `extract_count`       — metinden "N test / N soru / N sayfa" (notta da başlıkta da)
   · `suggest_topic`       — dersin konuları içinde kısa yazımı ("trigo",
     "ebob ekok", "hız ivme") konuya eşler; tema/ünite adı yazıldıysa o temanın
     ALT konularını seçenek olarak döner (görev yalnız alt konuya bağlanır)
@@ -36,6 +36,13 @@ from app.services.curriculum_mapping import normalize
 # "2 test", "2test", "3 adet test", "2 yaprak test" — notta ya da başlıkta
 _COUNT_RE = re.compile(r"(\d{1,2})\s*(?:adet\s*)?(?:yaprak\s*)?tes(?:t|tler)?\b", re.IGNORECASE)
 MAX_COUNT = 30
+# 2026-10-30 (koç): "30 soru", "4 sayfa" da test gibi konuya bağlanır. "40 soruluk
+# deneme" soru sayılmaz (soruluk ≠ soru); öncelik test > soru > sayfa.
+_SORU_RE = re.compile(r"(\d{1,3})\s*(?:adet\s*)?soru(?:lar)?\b", re.IGNORECASE)
+_SAYFA_RE = re.compile(r"(\d{1,3})\s*(?:sayfa(?:lar)?|sf)\b", re.IGNORECASE)
+# Birim başına üst sınır (görev kalemi `unit`: None=test · soru · sayfa)
+MAX_BY_UNIT = {"test": MAX_COUNT, "soru": 300, "sayfa": 200}
+_UNIT_PATTERNS = (("test", _COUNT_RE), ("soru", _SORU_RE), ("sayfa", _SAYFA_RE))
 
 # Konu eşleştirmesinde anlam taşımayan sözcükler (başlıkta sık geçen gürültü)
 _NOISE = {
@@ -57,16 +64,30 @@ _ABBREV: dict[str, tuple[str, ...]] = {
 MIN_PREFIX = 3
 
 
-def extract_test_count(*texts: str | None) -> int | None:
-    for txt in texts:
-        if not txt:
-            continue
-        m = _COUNT_RE.search(txt)
-        if m:
-            n = int(m.group(1))
-            if 1 <= n <= MAX_COUNT:
-                return n
+def extract_count(*texts: str | None) -> tuple[int, str] | None:
+    """Metinden (sayı, birim): birim test | soru | sayfa. Önce tüm metinlerde test
+    aranır (bir not "2 test (30 soru)" diyorsa birim testtir), sonra soru, sonra sayfa."""
+    for unit, rx in _UNIT_PATTERNS:
+        for txt in texts:
+            if not txt:
+                continue
+            m = rx.search(txt)
+            if m:
+                n = int(m.group(1))
+                if 1 <= n <= MAX_BY_UNIT[unit]:
+                    return n, unit
     return None
+
+
+def extract_test_count(*texts: str | None) -> int | None:
+    """Geriye uyum: yalnız sayı (birim fark etmeksizin)."""
+    r = extract_count(*texts)
+    return r[0] if r else None
+
+
+def item_unit(unit: str | None) -> str | None:
+    """Kalem `unit` alanı: test → None (varsayılan), soru/sayfa olduğu gibi."""
+    return unit if unit in ("soru", "sayfa") else None
 
 
 def split_title(title: str | None) -> tuple[str, str]:
@@ -105,6 +126,7 @@ class TopicSuggestion:
     subject_id: int | None
     subject_name: str | None
     test_count: int | None
+    count_unit: str | None = None             # test | soru | sayfa
     topic: TopicOption | None = None          # tek ve kesin öneri (koç yine onaylar)
     confident: bool = False
     options: list[TopicOption] = field(default_factory=list)
@@ -180,9 +202,11 @@ def _exam_counterparts(db: Session, subject: Subject) -> list[Subject]:
 def suggest_topic(db: Session, student: User, subject: Subject | None, text: str,
                   notes: str | None = None) -> TopicSuggestion:
     """Dersin konuları içinde `text`e en uyan konu(lar). Kesin değilse seçenek döner."""
-    count = extract_test_count(notes, text)
+    found = extract_count(notes, text)
     sug = TopicSuggestion(subject_id=subject.id if subject else None,
-                          subject_name=subject.name if subject else None, test_count=count)
+                          subject_name=subject.name if subject else None,
+                          test_count=found[0] if found else None,
+                          count_unit=found[1] if found else None)
     if subject is None:
         sug.reason = "Ders anlaşılamadı."
         return sug
@@ -334,7 +358,8 @@ class LinkError(ValueError):
         self.message = message
 
 
-def convert_task(db: Session, task: Task, student: User, topic_id: int, planned_count: int) -> TaskBookItem:
+def convert_task(db: Session, task: Task, student: User, topic_id: int, planned_count: int,
+                 unit: str | None = None) -> TaskBookItem:
     """Konusuz görevi kaynaksız konu kalemli TEST görevine çevirir.
 
     · Görev, tarih, başlık, not, periyot, taslak durumu AYNEN kalır (koçun yazdığı başlık korunur).
@@ -345,8 +370,10 @@ def convert_task(db: Session, task: Task, student: User, topic_id: int, planned_
         raise LinkError("already_linked", "Bu görev zaten kaleme bağlı.")
     if task.work_block_id is not None:
         raise LinkError("block_task", "İş bloğu görevi dönüştürülemez.")
-    if not (1 <= int(planned_count) <= MAX_COUNT):
-        raise LinkError("bad_count", f"Test sayısı 1–{MAX_COUNT} arası olmalı.")
+    unit_key = unit if unit in MAX_BY_UNIT else "test"
+    cap = MAX_BY_UNIT[unit_key]
+    if not (1 <= int(planned_count) <= cap):
+        raise LinkError("bad_count", f"{unit_key.capitalize()} sayısı 1–{cap} arası olmalı.")
     topic = db.get(Topic, topic_id)
     if topic is None or not (topic.is_builtin or topic.teacher_id == student.teacher_id):
         raise LinkError("topic_not_found", "Seçilen müfredat konusu bulunamadı.")
@@ -357,6 +384,7 @@ def convert_task(db: Session, task: Task, student: User, topic_id: int, planned_
         task_id=task.id, book_id=None, book_section_id=None, topic_id=topic.id,
         label=topic.name, planned_count=int(planned_count),
         completed_count=int(planned_count) if done else 0,
+        unit=item_unit(unit_key),
     )
     db.add(item)
     task.type = TaskType.TEST

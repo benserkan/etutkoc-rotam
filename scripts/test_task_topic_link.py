@@ -128,6 +128,11 @@ def main() -> int:
         check("1 test sayısı: 'AÇI 2 TEST' / '3 adet test' / '2 yaprak test' / 'test yok'",
               ttl.extract_test_count("AÇI 2 TEST") == 2 and ttl.extract_test_count("3 adet test") == 3
               and ttl.extract_test_count("2 yaprak test") == 2 and ttl.extract_test_count("kitaptan oku") is None)
+        check("1b birim: '30 soru' → soru · '4 sayfa' → sayfa · '2 test (30 soru)' → test · '40 soruluk deneme' → yok",
+              ttl.extract_count("30 soru") == (30, "soru") and ttl.extract_count("4 sayfa") == (4, "sayfa")
+              and ttl.extract_count("2 test (30 soru)") == (2, "test")
+              and ttl.extract_count("40 soruluk deneme") is None
+              and ttl.extract_count("Paragraf 12 sf") == (12, "sayfa"))
 
         c = TestClient(app)
         r = c.post("/api/v2/auth/login", json={"email": f"{PFX}_t@test.invalid", "password": PWD})

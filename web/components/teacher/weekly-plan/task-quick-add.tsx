@@ -60,6 +60,9 @@ const BADGE_TONE: Record<string, string> = {
     "bg-amber-50 text-amber-900 border-amber-200",
   "son çalışılan":
     "bg-slate-100 text-slate-700 border-slate-200",
+  // Dolgulu: küçük rozette açık ton+koyu yazı yerine (kontrast kuralı)
+  "başka müfredat": "bg-amber-600 text-white border-amber-600",
+  "konusu bağlı değil": "bg-slate-600 text-white border-slate-600",
 };
 
 function Badge({ label }: { label: string }) {
@@ -129,7 +132,12 @@ export function TaskQuickAdd({
   const pf = Number(pageFrom);
   const pt = Number(pageTo);
   const rangeValid = pageMode && pageFrom !== "" && pageTo !== "" && pf >= 1 && pt >= pf;
-  const pageSug = usePageSuggestion(studentId, picked?.topic.topic_id ?? null, note, pageMode);
+  const pageSug = usePageSuggestion(
+    studentId,
+    picked && picked.topic.topic_id > 0 ? picked.topic.topic_id : null,
+    note,
+    pageMode,
+  );
   // Saat · periyot kartın içinde (2026-10-22) — ayrıntılı forma gitme nedeni kalktı.
   const [hour, setHour] = React.useState("");
   const [localPeriod, setLocalPeriod] = React.useState<TaskPeriod | null>(period);
@@ -654,14 +662,16 @@ export function TaskQuickAdd({
                         </span>
                       </button>
                     ))}
-                    <button
-                      type="button"
-                      onClick={() => choose(it, null)}
-                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 pl-5 text-left text-[12px] text-muted-foreground hover:bg-accent"
-                    >
-                      <Zap className="h-3 w-3 shrink-0" />
-                      Kaynak belirtmeden ver
-                    </button>
+                    {it.kind && it.kind !== "topic" ? null : (
+                      <button
+                        type="button"
+                        onClick={() => choose(it, null)}
+                        className="flex w-full items-center gap-2 rounded px-2 py-1.5 pl-5 text-left text-[12px] text-muted-foreground hover:bg-accent"
+                      >
+                        <Zap className="h-3 w-3 shrink-0" />
+                        Kaynak belirtmeden ver
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

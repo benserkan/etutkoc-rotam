@@ -16,18 +16,21 @@ import {
   useConvertUnlinkedTasks,
   type TopicOption,
   type UnlinkedTask,
+  COUNT_UNIT_MAX,
+  type CountUnit,
 } from "@/lib/api/task-topic-link";
 
 interface RowState {
   topicId: number | null;
   count: number;
+  unit: CountUnit;
   checked: boolean;
 }
 
 function defaultRow(t: UnlinkedTask): RowState {
   const s = t.suggestion;
   const topicId = s.confident && s.topic ? s.topic.topic_id : null;
-  return { topicId, count: s.test_count ?? 2, checked: topicId !== null };
+  return { topicId, count: s.test_count ?? 2, unit: s.count_unit ?? "test", checked: topicId !== null };
 }
 
 const DATE_FMT = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", weekday: "short" });
@@ -68,7 +71,7 @@ export function UnlinkedTasksClient() {
     convert.mutate({
       items: selected.map((t) => {
         const r = rowOf(t);
-        return { task_id: t.task_id, topic_id: r.topicId as number, planned_count: r.count };
+        return { task_id: t.task_id, topic_id: r.topicId as number, planned_count: r.count, unit: r.unit };
       }),
     });
   }
@@ -257,13 +260,15 @@ function UnlinkedRow({
             <input
               type="number"
               min={1}
-              max={30}
-              aria-label="Test sayısı"
+              max={COUNT_UNIT_MAX[row.unit]}
+              aria-label={`${row.unit} sayısı`}
               value={row.count}
-              onChange={(e) => onPatch({ count: Math.max(1, Math.min(30, Number(e.target.value) || 1)) })}
-              className="w-14 rounded-md border border-input bg-background px-1.5 py-1 text-sm tabular-nums"
+              onChange={(e) =>
+                onPatch({ count: Math.max(1, Math.min(COUNT_UNIT_MAX[row.unit], Number(e.target.value) || 1)) })
+              }
+              className="w-16 rounded-md border border-input bg-background px-1.5 py-1 text-sm tabular-nums"
             />
-            test
+            {row.unit}
           </label>
           {s.reason ? <span className="basis-full text-[11px] text-muted-foreground">{s.reason}</span> : null}
         </div>

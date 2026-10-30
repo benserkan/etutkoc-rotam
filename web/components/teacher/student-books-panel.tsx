@@ -988,6 +988,7 @@ function ManualAssignForm({
   }, [filtered]);
 
   function toggle(id: number) {
+    setUnfitConfirmed(false);
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -996,9 +997,18 @@ function ManualAssignForm({
     });
   }
 
+  // Sınıfa/sınava uymayan kitap seçildiyse atamadan önce bir kez sorulur (koç bilinçli
+  // atayabilir — ör. LGS öğrencisine TYT paragraf kitabı; engel değil uyarı).
+  const [unfitConfirmed, setUnfitConfirmed] = React.useState(false);
+  const unfitSelected = allBooks.filter((b) => selected.has(b.id) && b.fits_student === false);
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (selected.size === 0) return;
+    if (unfitSelected.length > 0 && !unfitConfirmed) {
+      setUnfitConfirmed(true);
+      return;
+    }
     if (selected.size === 1) {
       const [only] = selected;
       single.mutate({ body: { book_id: only } }, { onSuccess: () => onDone() });
@@ -1076,6 +1086,18 @@ function ManualAssignForm({
               Kütüphaneye kitap ekle →
             </Link>
           </div>
+        ) : filtered.length === 0 && hiddenUnfit > 0 ? (
+          // Saha 2026-10-30 (Neslihan Hoca): kütüphanede olan TYT baskısı LGS öğrencisinde
+          // "aramaya uyan kitap yok" diye görünüyordu — kitap yok değil, sınıf süzgecinde gizli.
+          <div className="space-y-2 p-6 text-center text-sm" data-testid="assign-hidden-unfit">
+            <p className="text-foreground">
+              Aramana uyan <strong>{hiddenUnfit} kitap</strong> kütüphanende var ama başka sınıf/sınav için
+              hazırlanmış, bu yüzden gizli.
+            </p>
+            <Button type="button" variant="outline" size="sm" onClick={() => setOnlyFitting(false)}>
+              Gizli kitapları göster
+            </Button>
+          </div>
         ) : filtered.length === 0 ? (
           <p className="p-6 text-center text-sm text-muted-foreground">Bu aramaya uyan kitap yok.</p>
         ) : (
@@ -1101,6 +1123,27 @@ function ManualAssignForm({
           {hiddenUnfit > 0 ? ` · sınıfa uygun olmayan ${hiddenUnfit} kitap gizli` : ""}
           {assignedCount > 0 ? ` · ${assignedCount} kitap zaten atalı` : ""}
         </p>
+        {unfitSelected.length > 0 ? (
+          <div
+            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-950"
+            data-testid="assign-unfit-warning"
+          >
+            <p className="font-semibold">Bu öğrencinin sınıfına uymayan kitap seçtin:</p>
+            <ul className="mt-1 list-disc pl-4">
+              {unfitSelected.map((b) => (
+                <li key={b.id}>
+                  {b.name} — {b.subject_name ?? "ders yok"}
+                  {b.grade_label ? ` · ${b.grade_label}` : ""}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1">
+              Kitap öğrencinin {unfitSelected[0]?.subject_name ?? "bu"} dersi altında görünür. Aynı adla öğrencinin
+              sınavına uygun baskı varsa onu seç; bilerek atıyorsan
+              {unfitConfirmed ? " aşağıdan onayla." : " Ata'ya bas, bir kez daha soracağım."}
+            </p>
+          </div>
+        ) : null}
         {selectedBooks.length > 0 ? (
           <div className="flex flex-wrap gap-1.5" data-testid="assign-selected">
             {selectedBooks.map((b) => (
@@ -1132,7 +1175,11 @@ function ManualAssignForm({
           </Button>
           <Button type="submit" disabled={isPending || selected.size === 0} data-testid="assign-submit">
             {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-            {selected.size > 0 ? `${selected.size} kitabı ata` : "Kitap seç"}
+            {selected.size === 0
+              ? "Kitap seç"
+              : unfitSelected.length > 0 && unfitConfirmed
+                ? "Yine de ata"
+                : `${selected.size} kitabı ata`}
           </Button>
         </div>
       </div>

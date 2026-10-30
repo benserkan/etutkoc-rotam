@@ -122,6 +122,42 @@ _ALIAS: dict[str, str] = {
     "denklemler esitsizlikler ilgili problemler cozer": "problemler",
     "denklemler esitsizliklerle ilgili problemler cozer": "problemler",
     "denklem esitsizlik problemleri": "problemler",
+    # Paragraf alt başlıkları + söz varlığı (2026-10-30, LGS 8 Türkçe'ye eklendi;
+    # TYT Türkçe'de de aynı adlar var). 22 LGS Türkçe katalog kitabının gerçek
+    # bölüm adlarından. NOT: yalın "konu"/"yapi" BİLİNÇLİ YOK (TYT'de "Sözcükte
+    # Yapı" var; tek sözcük ayırt etmez).
+    "ana dusunce": "paragrafta ana dusunce",
+    "paragrafta konu ana dusunce": "paragrafta ana dusunce",
+    "konu ana fikir": "paragrafta ana dusunce",
+    "ana fikir": "paragrafta ana dusunce",
+    "ana fikir ana duygu": "paragrafta ana dusunce",
+    "paragrafta ana fikir": "paragrafta ana dusunce",
+    "baslik soru": "paragrafta ana dusunce",
+    "parcada konu": "paragrafta ana dusunce",
+    "parcada baslik": "paragrafta ana dusunce",
+    "yardimci dusunce": "paragrafta yardimci dusunce",
+    "yardimci dusunceler": "paragrafta yardimci dusunce",
+    "paragrafta yardimci dusunceler": "paragrafta yardimci dusunce",
+    "paragrafin yapisi": "paragrafta yapi",
+    "paragrafin yapi yonu": "paragrafta yapi",
+    "metni ikiye bolme": "paragrafta yapi",
+    "paragrafi ikiye bolme": "paragrafta yapi",
+    "paragraf tamamlama": "paragrafta yapi",
+    "gecis baglanti ifadeleri": "paragrafta yapi",
+    "anlatim bicimleri": "anlatim bicimleri dusunceyi gelistirme yollari",
+    "anlatim teknikleri": "anlatim bicimleri dusunceyi gelistirme yollari",
+    "anlatim yontemleri": "anlatim bicimleri dusunceyi gelistirme yollari",
+    "dusunceyi gelistirme yollari": "anlatim bicimleri dusunceyi gelistirme yollari",
+    "anlatim yontemleri dusunceyi gelistirme yollari": "anlatim bicimleri dusunceyi gelistirme yollari",
+    "anlatim bicimleri metnin anlaticisi": "anlatim bicimleri dusunceyi gelistirme yollari",
+    "paragrafin anlatim yonu": "anlatim bicimleri dusunceyi gelistirme yollari",
+    "iki metin analizi": "metin karsilastirma",
+    "iki metin analizi bir metne bagli sorular": "metin karsilastirma",
+    "deyimler": "soz varligi deyim atasozleri",
+    "deyimler atasozleri": "soz varligi deyim atasozleri",
+    "deyim atasozleri": "soz varligi deyim atasozleri",
+    "atasozu deyim ozdeyis": "soz varligi deyim atasozleri",
+    "soz varligimiz": "soz varligi deyim atasozleri",
     # NOT: yalın "esitsizlikler" alias'ı BİLİNÇLİ YOK — Maarif/AYT'de birebir
     # "Eşitsizlikler" konusu var; alias exact eşleşmeyi bozardı (2026-08-11 taraması).
 }

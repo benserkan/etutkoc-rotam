@@ -33,6 +33,7 @@ import {
   coachBrowseCatalog,
   coachGetCatalogEntry,
 } from "@/lib/api/book-catalog";
+import { cn } from "@/lib/utils";
 import { useScanBook } from "@/lib/hooks/use-book-catalog-mutations";
 import { useCreateBook } from "@/lib/hooks/use-library-mutations";
 import {
@@ -464,6 +465,16 @@ function ScanOutcome({
 // Katalog satırı (tıkla → bölümler)
 // =============================================================================
 
+// Aynı adlı kitap farklı sınavlara basılır (Arı "Paragrafın Ritmi" LGS ve TYT) —
+// grup satırda dolgulu rozetle görünür ki koç yanlış baskıyı seçmesin (2026-10-30).
+const EXAM_GROUP_SHORT: Record<CatalogExamGroup, string> = { lgs: "LGS", tyt: "TYT", ayt: "AYT", okul: "Okul" };
+const EXAM_GROUP_BADGE: Record<CatalogExamGroup, string> = {
+  lgs: "bg-orange-700 text-white",
+  tyt: "bg-cyan-700 text-white",
+  ayt: "bg-violet-700 text-white",
+  okul: "bg-slate-600 text-white",
+};
+
 function CatalogRow({
   entry: e,
   busy,
@@ -504,6 +515,16 @@ function CatalogRow({
             )}
             <BookOpen className="mt-0.5 size-4 shrink-0 text-cyan-700" aria-hidden />
             <span className="break-words">{e.name}</span>
+            {e.exam_group ? (
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                  EXAM_GROUP_BADGE[e.exam_group],
+                )}
+              >
+                {EXAM_GROUP_SHORT[e.exam_group]}
+              </span>
+            ) : null}
           </div>
           <div className="pl-[2.375rem] text-xs text-muted-foreground">
             {e.publisher ? `${e.publisher} · ` : ""}

@@ -51,6 +51,7 @@ CURRICULUM_PER_SUBJECT = 2
 CURRICULUM_LIMIT = 12
 WEAK_LIMIT = 6
 RECENT_LIMIT = 6
+OTHER_LIMIT = 6
 SEARCH_LIMIT = 25
 
 RECENT_WINDOW_DAYS = 21
@@ -81,6 +82,11 @@ class PickerItem:
     theme_name: str | None = None  # üst başlık (tema/ünite) — "neden çıktı" ipucu
     grade_level: int | None = None
     match: str | None = None       # arama: "tam" | "kısmi" | "tema"
+    # 2026-10-30 (saha, Neslihan Hoca): "topic" = sınıf müfredatı konusu ·
+    # "outside" = öğrenciye ATANMIŞ kitabın başka müfredattaki konusu (ör. 8. sınıfa
+    # TYT kitabı) · "unmapped" = kitabın konusu bağlanmamış bölümü (topic_id < 0
+    # sahte kimlik = −section_id; kaynaksız verilemez, yalnız kitaptan).
+    kind: str = "topic"
 
 
 @dataclass
@@ -131,6 +137,51 @@ def _sources_by_topic(db: Session, student_id: int) -> dict[int, list[PickerSour
                 full=(total > 0 and remaining <= 0),
             )
         )
+    return out
+
+
+def _unmapped_sources(db: Session, student_id: int) -> list[tuple[PickerSource, int, str]]:
+    """Öğrenciye atanmış kitaplarda konusu BAĞLANMAMIŞ bölümler (+ kitabın dersi).
+
+    Görev kutusu konu ekseninde çalıştığı için bu bölümler hiç görünmüyordu;
+    koç "Eşleşen konu yok" görüp kitabın kütüphanede olmadığını sanıyordu."""
+    rows = (
+        db.query(
+            BookSection.id, BookSection.label, BookSection.test_count,
+            Book.id.label("book_id"), Book.name.label("book_name"),
+            Book.subject_id, Subject.name.label("subject_name"),
+            func.coalesce(SectionProgress.completed_count, 0).label("completed"),
+            func.coalesce(SectionProgress.reserved_count, 0).label("reserved"),
+        )
+        .select_from(StudentBook)
+        .join(Book, Book.id == StudentBook.book_id)
+        .join(Subject, Subject.id == Book.subject_id)
+        .join(BookSection, BookSection.book_id == Book.id)
+        .outerjoin(
+            SectionProgress,
+            and_(
+                SectionProgress.student_book_id == StudentBook.id,
+                SectionProgress.book_section_id == BookSection.id,
+            ),
+        )
+        .filter(
+            StudentBook.student_id == student_id,
+            StudentBook.archived_at.is_(None),
+            BookSection.topic_id.is_(None),
+        )
+        .order_by(Book.name, BookSection.order, BookSection.id)
+        .all()
+    )
+    out: list[tuple[PickerSource, int, str]] = []
+    for r in rows:
+        total = int(r.test_count or 0)
+        remaining = max(0, total - int(r.completed or 0) - int(r.reserved or 0))
+        out.append((
+            PickerSource(book_id=r.book_id, book_name=r.book_name, section_id=r.id,
+                         section_label=r.label, total=total, remaining=remaining,
+                         full=(total > 0 and remaining <= 0)),
+            r.subject_id, r.subject_name,
+        ))
     return out
 
 
@@ -245,10 +296,10 @@ def build_task_picker(
             )
         return qty_cache[subject_id]
 
-    def make(topic: Topic, badge: str | None) -> PickerItem:
+    def make(topic: Topic, badge: str | None, kind: str = "topic") -> PickerItem:
         secs = sources.get(topic.id, [])
         sug = qty(topic.subject_id)
-        subj = subj_by_id.get(topic.subject_id)
+        subj = subj_by_id.get(topic.subject_id) or topic.subject
         if topic.id in closed:
             status = "tamamlandi"
         elif secs:
@@ -264,6 +315,26 @@ def build_task_picker(
             sources=sorted(secs, key=lambda s: (s.full, -s.remaining)),
             theme_name=leaf_set.parent_names.get(topic.parent_id) if topic.parent_id else None,
             grade_level=topic.grade_level,
+            kind=kind,
+        )
+
+    # Atanmış kitapların müfredat DIŞI konuları + konusu bağlanmamış bölümler
+    leaf_ids = {t.id for t in leaf_topics}
+    outside_ids = [tid for tid in sources if tid not in leaf_ids]
+    outside_topics = (
+        db.query(Topic).filter(Topic.id.in_(outside_ids)).order_by(Topic.order, Topic.id).all()
+        if outside_ids else []
+    )
+    unmapped = _unmapped_sources(db, student.id)
+
+    def make_unmapped(src: PickerSource, subject_id: int, subject_name: str) -> PickerItem:
+        sug = qty(subject_id)
+        return PickerItem(
+            topic_id=-src.section_id, topic_name=src.section_label,
+            subject_id=subject_id, subject_name=subject_name,
+            status="baslanmadi" if src.remaining >= src.total else "devam",
+            badge="konusu bağlı değil", quantity=sug.quantity, quantity_reason=sug.reason,
+            sources=[src], kind="unmapped",
         )
 
     # ---- Arama modu: gruplama yok — sezgisel, yazım hatasına dayanıklı (2026-10-16)
@@ -288,10 +359,30 @@ def build_task_picker(
                 extra=" ".join(f"{s.book_name} {s.section_label}" for s in secs),
                 bonus=bonus,
             ))
+        for t in outside_topics:
+            secs = sources.get(t.id, [])
+            docs.append(SearchDoc(
+                key=t.id, name=t.name, theme=None,
+                subject=t.subject.name if t.subject else None,
+                extra=" ".join(f"{s.book_name} {s.section_label}" for s in secs),
+                bonus=0.01,
+            ))
+        for src, _sid, sname in unmapped:
+            docs.append(SearchDoc(
+                key=-src.section_id, name=src.section_label, theme=None,
+                subject=sname, extra=src.book_name, bonus=0.0,
+            ))
         topic_by_id = {t.id: t for t in leaf_topics}
+        outside_by_id = {t.id: t for t in outside_topics}
+        unmapped_by_key = {-src.section_id: (src, sid, sname) for src, sid, sname in unmapped}
         hits = []
         for h in search(q, docs, SEARCH_LIMIT):
-            it = make(topic_by_id[h.key], "kapalı" if h.key in closed else None)
+            if h.key in unmapped_by_key:
+                it = make_unmapped(*unmapped_by_key[h.key])
+            elif h.key in outside_by_id:
+                it = make(outside_by_id[h.key], "başka müfredat", kind="outside")
+            else:
+                it = make(topic_by_id[h.key], "kapalı" if h.key in closed else None)
             it.match = "tema" if h.via_theme else ("tam" if h.full else "kısmi")
             hits.append(it)
         return [PickerGroup(key="search", label="Arama sonuçları", items=hits)]
@@ -347,9 +438,23 @@ def build_task_picker(
         if tid in topic_by_id and tid not in seen and tid not in closed
     ][:RECENT_LIMIT]
 
+    # ---- Grup 4: atanmış kitapların müfredat dışı konuları + bağlanmamış bölümler
+    #      (kutu açılınca da görünsün — koç aramadan "kitap nerede?" diye kalmasın)
+    other_items: list[PickerItem] = [
+        make(t, "başka müfredat", kind="outside")
+        for t in outside_topics
+        if t.id not in closed and any(not s.full for s in sources.get(t.id, []))
+    ][:OTHER_LIMIT]
+    for src, sid, sname in unmapped:
+        if len(other_items) >= OTHER_LIMIT * 2:
+            break
+        if not src.full:
+            other_items.append(make_unmapped(src, sid, sname))
+
     groups = [
         PickerGroup(key="curriculum", label="Müfredatta sıradaki", items=curriculum_items),
         PickerGroup(key="weak", label="Zayıf · tekrar gereken", items=weak_items),
         PickerGroup(key="recent", label="Son çalıştıkların", items=recent_items),
+        PickerGroup(key="other_books", label="Atanmış kitapların diğer bölümleri", items=other_items),
     ]
     return [g for g in groups if g.items]

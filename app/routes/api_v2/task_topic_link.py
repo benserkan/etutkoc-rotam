@@ -43,7 +43,7 @@ def _opt_out(o: ttl.TopicOption) -> TopicOptionOut:
 
 def _sug_out(s: ttl.TopicSuggestion) -> TopicSuggestionOut:
     return TopicSuggestionOut(
-        subject_id=s.subject_id, subject_name=s.subject_name, test_count=s.test_count,
+        subject_id=s.subject_id, subject_name=s.subject_name, test_count=s.test_count, count_unit=s.count_unit,
         topic=_opt_out(s.topic) if s.topic else None, confident=s.confident,
         options=[_opt_out(o) for o in s.options], reason=s.reason,
     )
@@ -126,7 +126,7 @@ def convert_unlinked(body: ConvertBody, request: Request, user: User = Depends(_
             continue
         try:
             with db.begin_nested():
-                ttl.convert_task(db, task, student, it.topic_id, it.planned_count)
+                ttl.convert_task(db, task, student, it.topic_id, it.planned_count, it.unit)
         except ttl.LinkError as e:
             results.append(ConvertResultItem(task_id=it.task_id, ok=False, code=e.code, message=e.message))
             continue

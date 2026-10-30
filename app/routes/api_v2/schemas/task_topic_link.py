@@ -17,6 +17,7 @@ class TopicSuggestionOut(BaseModel):
     subject_id: int | None = None
     subject_name: str | None = None
     test_count: int | None = None
+    count_unit: str | None = None
     topic: TopicOptionOut | None = None
     confident: bool = False
     options: list[TopicOptionOut] = []
@@ -59,7 +60,8 @@ class UnlinkedTasksResponse(BaseModel):
 class ConvertItemIn(BaseModel):
     task_id: int
     topic_id: int
-    planned_count: int = Field(ge=1, le=30)
+    planned_count: int = Field(ge=1, le=300)
+    unit: str | None = Field(default=None, pattern="^(test|soru|sayfa)$")
 
 
 class ConvertBody(BaseModel):
