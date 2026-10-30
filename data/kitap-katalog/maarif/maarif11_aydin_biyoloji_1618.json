@@ -1,0 +1,42 @@
+{
+  "name": "Aydın Yayınları 11. Sınıf Biyoloji Soru Bankası (Maarif Model)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Biyoloji",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 11,
+  "target_grade_max": 11,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #1618) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: Tepki — 1. Bölüm",
+      "test_count": 15,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Tepki — 2. Bölüm",
+      "test_count": 29,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Tepki — 3. Bölüm",
+      "test_count": 27,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Homeostazi — 1. Bölüm",
+      "test_count": 20,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Homeostazi — 2. Bölüm",
+      "test_count": 37,
+      "topic": null
+    }
+  ]
+}

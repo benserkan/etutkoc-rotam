@@ -1,0 +1,42 @@
+{
+  "name": "Aydın Yayınları 11. Sınıf Matematik Soru Bankası (Maarif Model)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Matematik",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 11,
+  "target_grade_max": 11,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #1616) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: İstatistiksel Araştırma Süreci",
+      "test_count": 8,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Geometrik Şekiller",
+      "test_count": 56,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Nicelikler ve Değişimler - 1",
+      "test_count": 16,
+      "topic": null
+    },
+    {
+      "label": "4. Tema: Nicelikler ve Değişimler - 2",
+      "test_count": 27,
+      "topic": null
+    },
+    {
+      "label": "5. Tema: Nicelikler ve Değişimler - 3",
+      "test_count": 24,
+      "topic": null
+    }
+  ]
+}

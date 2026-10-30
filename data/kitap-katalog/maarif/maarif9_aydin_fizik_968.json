@@ -1,0 +1,37 @@
+{
+  "name": "Aydın Yayınları 9. Sınıf Fizik Soru Bankası (2024-2025)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Fizik",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 9,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #968) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: Fizik Bilimi ve Kariyer Keşfi",
+      "test_count": 15,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Kuvvet ve Hareket",
+      "test_count": 30,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Akışkanlar ve Sıvıların Kaldırma Kuvveti",
+      "test_count": 24,
+      "topic": null
+    },
+    {
+      "label": "4. Tema: Enerji",
+      "test_count": 19,
+      "topic": null
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Aydın Yayınları 11. Sınıf Kimya Soru Bankası (Maarif Model)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Kimya",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 11,
+  "target_grade_max": 11,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #1591) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: Etkileşim",
+      "test_count": 38,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Çeşitlilik",
+      "test_count": 56,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Sürdürülebilirlik",
+      "test_count": 8,
+      "topic": null
+    }
+  ]
+}

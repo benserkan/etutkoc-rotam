@@ -1,0 +1,37 @@
+{
+  "name": "Aydın Yayınları 10. Sınıf Biyoloji Soru Bankası (Güncel Baskı)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Biyoloji",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 10,
+  "target_grade_max": 10,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #1549) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: Enerji — 1. Bölüm",
+      "test_count": 22,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Enerji — 2. Bölüm",
+      "test_count": 33,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Ekoloji — 1. Bölüm",
+      "test_count": 31,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Ekoloji — 2. Bölüm",
+      "test_count": 16,
+      "topic": null
+    }
+  ]
+}

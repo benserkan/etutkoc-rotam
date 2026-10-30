@@ -1,0 +1,52 @@
+{
+  "name": "Aydın Yayınları 9. Sınıf Matematik Soru Bankası (Güncel Baskı)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Matematik",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 9,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #1603) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: Sayılar",
+      "test_count": 33,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Nicelikler ve Değişimler",
+      "test_count": 31,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Geometrik Şekiller",
+      "test_count": 16,
+      "topic": null
+    },
+    {
+      "label": "4. Tema: Eşlik ve Benzerlik",
+      "test_count": 27,
+      "topic": null
+    },
+    {
+      "label": "5. Tema: Algoritma ve Bilişim",
+      "test_count": 17,
+      "topic": null
+    },
+    {
+      "label": "6. Tema: İstatistiksel Araştırma Süreci",
+      "test_count": 12,
+      "topic": null
+    },
+    {
+      "label": "7. Tema: Veriden Olasılığa",
+      "test_count": 8,
+      "topic": null
+    }
+  ]
+}

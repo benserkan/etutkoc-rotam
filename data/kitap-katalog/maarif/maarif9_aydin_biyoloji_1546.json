@@ -1,0 +1,37 @@
+{
+  "name": "Aydın Yayınları 9. Sınıf Biyoloji Soru Bankası (Güncel Baskı)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Biyoloji",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 9,
+  "target_grade_max": 9,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #1546) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: Yaşam — 1. Bölüm",
+      "test_count": 17,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Yaşam — 2. Bölüm",
+      "test_count": 29,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Organizasyon — 1. Bölüm",
+      "test_count": 19,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Organizasyon — 2. Bölüm",
+      "test_count": 21,
+      "topic": null
+    }
+  ]
+}

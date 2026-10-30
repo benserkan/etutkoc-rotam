@@ -1,0 +1,47 @@
+{
+  "name": "Aydın Yayınları 10. Sınıf Kimya Konu Özetli Soru Bankası (Güncel Baskı)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Kimya",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 10,
+  "target_grade_max": 10,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #1558) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: Etkileşim — Kimyasal Değişimler ve Tepkime Türleri",
+      "test_count": 12,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Etkileşim — Mol – Tanecik İlişkisi",
+      "test_count": 20,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Etkileşim — Kimyasal Tepkime Denklemlerinin Denkleştirilmesi",
+      "test_count": 17,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Etkileşim — Gazların Özellikleri",
+      "test_count": 26,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Çeşitlilik — Çözünme Süreci, Çözünme Olayının Sınıflandırılması",
+      "test_count": 28,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Sürdürülebilirlik — Yeşil Kimya, Çevresel ve Ekolojik Sürdürülebilirlik",
+      "test_count": 9,
+      "topic": null
+    }
+  ]
+}

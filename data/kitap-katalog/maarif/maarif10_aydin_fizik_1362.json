@@ -1,0 +1,112 @@
+{
+  "name": "Aydın Yayınları 10. Sınıf Fizik Konu Özetli Soru Bankası (2025-2026)",
+  "publisher": "Aydın Yayınları",
+  "subject": "Fizik",
+  "curriculum_model": "maarif_lise",
+  "type": "soru_bankasi",
+  "target_grade_min": 10,
+  "target_grade_max": 10,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #1362) — tema/bölüm adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Ağaç tema düzeyinde: tema bölümleri resmi Maarif alt konusuna bağlanamaz (konusuz); ağaçta konu adı geçen bölümler yalnız kesin eşleşmeyle bağlandı."
+  ],
+  "sections": [
+    {
+      "label": "1. Tema: Kuvvet ve Hareket — Etkinliklerle Keşfet",
+      "test_count": 10,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Kuvvet ve Hareket — Temada Kendini Geliştir",
+      "test_count": 21,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Kuvvet ve Hareket — Fark Attıran Testler",
+      "test_count": 3,
+      "topic": null
+    },
+    {
+      "label": "1. Tema: Kuvvet ve Hareket — Yazılıya Hazırlanalım",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Enerji — Etkinliklerle Keşfet",
+      "test_count": 7,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Enerji — Temada Kendini Geliştir",
+      "test_count": 10,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Enerji — Fark Attıran Testler",
+      "test_count": 8,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Enerji — Helezon Testler",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "2. Tema: Enerji — Yazılıya Hazırlanalım",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Elektrik — Etkinliklerle Keşfet",
+      "test_count": 5,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Elektrik — Temada Kendini Geliştir",
+      "test_count": 9,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Elektrik — Fark Attıran Testler",
+      "test_count": 11,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Elektrik — Helezon Testler",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "3. Tema: Elektrik — Yazılıya Hazırlanalım",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "4. Tema: Dalgalar — Etkinliklerle Keşfet",
+      "test_count": 6,
+      "topic": null
+    },
+    {
+      "label": "4. Tema: Dalgalar — Temada Kendini Geliştir",
+      "test_count": 12,
+      "topic": null
+    },
+    {
+      "label": "4. Tema: Dalgalar — Fark Attıran Testler",
+      "test_count": 5,
+      "topic": null
+    },
+    {
+      "label": "4. Tema: Dalgalar — Helezon Testler",
+      "test_count": 1,
+      "topic": null
+    },
+    {
+      "label": "4. Tema: Dalgalar — Yazılıya Hazırlanalım",
+      "test_count": 1,
+      "topic": null
+    }
+  ]
+}
