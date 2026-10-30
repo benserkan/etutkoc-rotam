@@ -1,0 +1,77 @@
+{
+  "name": "Aydın Yayınları 8. Sınıf Matematik Üç Adım Soru Bankası",
+  "publisher": "Aydın Yayınları",
+  "subject": "Matematik",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #839) — ünite/konu adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Birden çok konuyu kapsayan bölümler (karma ünite, dil bilgisi, denemeler) bilinçli olarak konusuz."
+  ],
+  "sections": [
+    {
+      "label": "Çarpanlar ve Katlar",
+      "test_count": 13,
+      "topic": "Çarpanlar ve Katlar"
+    },
+    {
+      "label": "Üslü İfadeler",
+      "test_count": 15,
+      "topic": "Üslü İfadeler"
+    },
+    {
+      "label": "Kareköklü İfadeler",
+      "test_count": 26,
+      "topic": "Kareköklü İfadeler"
+    },
+    {
+      "label": "Veri Analizi",
+      "test_count": 4,
+      "topic": "Veri Analizi"
+    },
+    {
+      "label": "Basit Olayların Olma Olasılığı",
+      "test_count": 8,
+      "topic": "Basit Olayların Olasılığı"
+    },
+    {
+      "label": "Cebirsel İfadeler ve Özdeşlikler",
+      "test_count": 13,
+      "topic": "Cebirsel İfadeler ve Özdeşlikler"
+    },
+    {
+      "label": "Doğrusal Denklemler",
+      "test_count": 18,
+      "topic": "Doğrusal Denklemler"
+    },
+    {
+      "label": "Eşitsizlikler",
+      "test_count": 5,
+      "topic": "Eşitsizlikler"
+    },
+    {
+      "label": "Üçgenler",
+      "test_count": 13,
+      "topic": "Üçgenler"
+    },
+    {
+      "label": "Eşlik ve Benzerlik",
+      "test_count": 4,
+      "topic": "Eşlik ve Benzerlik"
+    },
+    {
+      "label": "Dönüşüm Geometrisi",
+      "test_count": 3,
+      "topic": "Dönüşüm Geometrisi"
+    },
+    {
+      "label": "Geometrik Cisimler",
+      "test_count": 9,
+      "topic": "Geometrik Cisimler"
+    }
+  ]
+}

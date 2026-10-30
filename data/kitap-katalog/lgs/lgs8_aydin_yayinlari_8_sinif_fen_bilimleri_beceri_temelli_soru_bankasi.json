@@ -1,0 +1,52 @@
+{
+  "name": "Aydın Yayınları 8. Sınıf Fen Bilimleri Beceri Temelli Soru Bankası",
+  "publisher": "Aydın Yayınları",
+  "subject": "Fen Bilimleri",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #871) — ünite/konu adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Birden çok konuyu kapsayan bölümler (karma ünite, dil bilgisi, denemeler) bilinçli olarak konusuz."
+  ],
+  "sections": [
+    {
+      "label": "Mevsimler ve İklim",
+      "test_count": 8,
+      "topic": "Mevsimler ve İklim"
+    },
+    {
+      "label": "DNA ve Genetik Kod",
+      "test_count": 10,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Basınç",
+      "test_count": 8,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Madde ve Endüstri",
+      "test_count": 21,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Basit Makineler",
+      "test_count": 9,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Enerji Dönüşümleri ve Çevre Bilimi",
+      "test_count": 12,
+      "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+    },
+    {
+      "label": "Elektrik Yükleri ve Elektrik Enerjisi",
+      "test_count": 7,
+      "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+    }
+  ]
+}

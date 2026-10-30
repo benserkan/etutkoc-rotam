@@ -1,0 +1,57 @@
+{
+  "name": "Aydın Yayınları 8. Sınıf Türkçe Üç Adım Soru Bankası",
+  "publisher": "Aydın Yayınları",
+  "subject": "Türkçe",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #841) — ünite/konu adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Birden çok konuyu kapsayan bölümler (karma ünite, dil bilgisi, denemeler) bilinçli olarak konusuz."
+  ],
+  "sections": [
+    {
+      "label": "Sözcükte Anlam",
+      "test_count": 10,
+      "topic": "Sözcükte Anlam"
+    },
+    {
+      "label": "Cümlede Anlam",
+      "test_count": 10,
+      "topic": "Cümlede Anlam"
+    },
+    {
+      "label": "Parçada Anlam",
+      "test_count": 14,
+      "topic": "Paragrafta Anlam"
+    },
+    {
+      "label": "Görsel Yorumlama / Grafik-Tablo Okuma / Sözel Mantık",
+      "test_count": 35,
+      "topic": null
+    },
+    {
+      "label": "Metin Türleri",
+      "test_count": 10,
+      "topic": "Metin Türleri"
+    },
+    {
+      "label": "Yazım Kuralları / Noktalama İşaretleri",
+      "test_count": 10,
+      "topic": null
+    },
+    {
+      "label": "Dil Bilgisi",
+      "test_count": 25,
+      "topic": null
+    },
+    {
+      "label": "Deneme Sınavları",
+      "test_count": 5,
+      "topic": null
+    }
+  ]
+}

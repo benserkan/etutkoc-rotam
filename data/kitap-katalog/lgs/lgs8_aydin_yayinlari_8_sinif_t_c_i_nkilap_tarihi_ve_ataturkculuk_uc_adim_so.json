@@ -1,0 +1,52 @@
+{
+  "name": "Aydın Yayınları 8. Sınıf T.C. İnkılap Tarihi ve Atatürkçülük Üç Adım Soru Bankası",
+  "publisher": "Aydın Yayınları",
+  "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #874) — ünite/konu adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Birden çok konuyu kapsayan bölümler (karma ünite, dil bilgisi, denemeler) bilinçli olarak konusuz."
+  ],
+  "sections": [
+    {
+      "label": "Bir Kahraman Doğuyor",
+      "test_count": 10,
+      "topic": "Bir Kahraman Doğuyor"
+    },
+    {
+      "label": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar",
+      "test_count": 24,
+      "topic": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"
+    },
+    {
+      "label": "Millî Bir Destan: Ya İstiklâl Ya Ölüm",
+      "test_count": 17,
+      "topic": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"
+    },
+    {
+      "label": "Atatürkçülük ve Çağdaşlaşan Türkiye",
+      "test_count": 19,
+      "topic": "Atatürkçülük ve Çağdaşlaşan Türkiye"
+    },
+    {
+      "label": "Demokratikleşme Çabaları",
+      "test_count": 6,
+      "topic": "Demokratikleşme Çabaları"
+    },
+    {
+      "label": "Atatürk Dönemi Türk Dış Politikası",
+      "test_count": 9,
+      "topic": "Atatürk Dönemi Türk Dış Politikası"
+    },
+    {
+      "label": "Atatürk'ün Vefatı ve II. Dünya Savaşı",
+      "test_count": 6,
+      "topic": "Atatürk'ün Ölümü ve Sonrası"
+    }
+  ]
+}

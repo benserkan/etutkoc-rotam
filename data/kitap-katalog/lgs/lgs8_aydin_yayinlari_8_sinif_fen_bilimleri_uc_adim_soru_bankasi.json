@@ -1,0 +1,137 @@
+{
+  "name": "Aydın Yayınları 8. Sınıf Fen Bilimleri Üç Adım Soru Bankası",
+  "publisher": "Aydın Yayınları",
+  "subject": "Fen Bilimleri",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #840) — ünite/konu adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Birden çok konuyu kapsayan bölümler (karma ünite, dil bilgisi, denemeler) bilinçli olarak konusuz."
+  ],
+  "sections": [
+    {
+      "label": "Mevsimler ve İklim — Mevsimlerin Oluşumu",
+      "test_count": 6,
+      "topic": "Mevsimler ve İklim"
+    },
+    {
+      "label": "Mevsimler ve İklim — İklim ve Hava Olayları",
+      "test_count": 7,
+      "topic": "Mevsimler ve İklim"
+    },
+    {
+      "label": "DNA ve Genetik Kod — DNA ve Genetik Kod",
+      "test_count": 6,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "DNA ve Genetik Kod — Kalıtım",
+      "test_count": 5,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "DNA ve Genetik Kod — Mutasyon ve Modifikasyon",
+      "test_count": 3,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "DNA ve Genetik Kod — Adaptasyon",
+      "test_count": 3,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "DNA ve Genetik Kod — Biyoteknoloji",
+      "test_count": 4,
+      "topic": "DNA ve Genetik Kod"
+    },
+    {
+      "label": "Basınç — Basınç (Katı Basıncı)",
+      "test_count": 5,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Basınç — Basınç (Sıvı Basıncı)",
+      "test_count": 6,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Basınç — Basınç (Basıncın Günlük Yaşam ve Teknolojide Kullanımı)",
+      "test_count": 3,
+      "topic": "Basınç"
+    },
+    {
+      "label": "Madde ve Endüstri — Periyodik Sistem",
+      "test_count": 5,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Madde ve Endüstri — Fiziksel ve Kimyasal Değişimler",
+      "test_count": 3,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Madde ve Endüstri — Kimyasal Tepkimeler",
+      "test_count": 4,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Madde ve Endüstri — Asit ve Bazlar",
+      "test_count": 5,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Madde ve Endüstri — Maddenin Isı ile Etkileşimi",
+      "test_count": 6,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Madde ve Endüstri — Kimya Endüstrisi",
+      "test_count": 4,
+      "topic": "Madde ve Endüstri"
+    },
+    {
+      "label": "Basit Makineler — Basit Makineler",
+      "test_count": 13,
+      "topic": "Basit Makineler"
+    },
+    {
+      "label": "Enerji Dönüşümleri ve Çevre Bilimi — Besin Zinciri ve Enerji Akışı",
+      "test_count": 4,
+      "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+    },
+    {
+      "label": "Enerji Dönüşümleri ve Çevre Bilimi — Enerji Dönüşümleri",
+      "test_count": 7,
+      "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+    },
+    {
+      "label": "Enerji Dönüşümleri ve Çevre Bilimi — Madde Döngüleri ve Çevre Sorunları",
+      "test_count": 4,
+      "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+    },
+    {
+      "label": "Enerji Dönüşümleri ve Çevre Bilimi — Sürdürülebilir Kalkınma",
+      "test_count": 4,
+      "topic": "Enerji Dönüşümleri ve Çevre Bilimi"
+    },
+    {
+      "label": "Elektrik Yükleri ve Elektrik Enerjisi — Elektrik Yükleri ve Elektriklenme",
+      "test_count": 5,
+      "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+    },
+    {
+      "label": "Elektrik Yükleri ve Elektrik Enerjisi — Elektrik Yüklü Cisimler",
+      "test_count": 6,
+      "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+    },
+    {
+      "label": "Elektrik Yükleri ve Elektrik Enerjisi — Elektrik Enerjisinin Dönüşümü",
+      "test_count": 4,
+      "topic": "Elektrik Yükleri ve Elektrik Enerjisi"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Aydın Yayınları 8. Sınıf İngilizce Beceri Temelli Soru Bankası",
+  "publisher": "Aydın Yayınları",
+  "subject": "İngilizce",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #908) — ünite/konu adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Birden çok konuyu kapsayan bölümler (karma ünite, dil bilgisi, denemeler) bilinçli olarak konusuz."
+  ],
+  "sections": [
+    {
+      "label": "Unit 1: Friendship",
+      "test_count": 8,
+      "topic": "Friendship"
+    },
+    {
+      "label": "Unit 2: Teen Life",
+      "test_count": 8,
+      "topic": "Teen Life"
+    },
+    {
+      "label": "Unit 3: In the Kitchen",
+      "test_count": 8,
+      "topic": "In the Kitchen"
+    },
+    {
+      "label": "Unit 4: On the Phone",
+      "test_count": 6,
+      "topic": "On the Phone"
+    },
+    {
+      "label": "Unit 5: The Internet",
+      "test_count": 8,
+      "topic": "The Internet"
+    },
+    {
+      "label": "Unit 6: Adventure",
+      "test_count": 8,
+      "topic": "Adventures"
+    },
+    {
+      "label": "Unit 7: Tourism",
+      "test_count": 8,
+      "topic": "Tourism"
+    },
+    {
+      "label": "Unit 8: Chores",
+      "test_count": 8,
+      "topic": "Chores, Please!"
+    },
+    {
+      "label": "Unit 9: Science",
+      "test_count": 6,
+      "topic": "Science"
+    },
+    {
+      "label": "Unit 10: Natural Forces",
+      "test_count": 6,
+      "topic": "Natural Forces"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Aydın Yayınları 8. Sınıf Türkçe Beceri Temelli Soru Bankası",
+  "publisher": "Aydın Yayınları",
+  "subject": "Türkçe",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #870) — ünite/konu adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Birden çok konuyu kapsayan bölümler (karma ünite, dil bilgisi, denemeler) bilinçli olarak konusuz."
+  ],
+  "sections": [
+    {
+      "label": "Sözcükte ve Sözcük Gruplarında Anlam",
+      "test_count": 9,
+      "topic": "Sözcükte Anlam"
+    },
+    {
+      "label": "Cümlede Anlam",
+      "test_count": 10,
+      "topic": "Cümlede Anlam"
+    },
+    {
+      "label": "Metin (Parça) ve Metne Bağlı Çoklu Sorular",
+      "test_count": 30,
+      "topic": "Paragrafta Anlam"
+    },
+    {
+      "label": "Görsel Soruları Yorumlama ve Sözel Mantık",
+      "test_count": 46,
+      "topic": null
+    },
+    {
+      "label": "Metin Türleri",
+      "test_count": 10,
+      "topic": "Metin Türleri"
+    },
+    {
+      "label": "Yazım Kuralları ve Noktalama İşaretleri",
+      "test_count": 8,
+      "topic": null
+    },
+    {
+      "label": "Dil Bilgisi",
+      "test_count": 20,
+      "topic": null
+    }
+  ]
+}

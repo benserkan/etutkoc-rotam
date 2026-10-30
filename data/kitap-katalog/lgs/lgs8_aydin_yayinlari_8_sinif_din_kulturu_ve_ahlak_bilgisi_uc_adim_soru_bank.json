@@ -1,0 +1,42 @@
+{
+  "name": "Aydın Yayınları 8. Sınıf Din Kültürü ve Ahlak Bilgisi Üç Adım Soru Bankası",
+  "publisher": "Aydın Yayınları",
+  "subject": "Din Kültürü ve Ahlak Bilgisi",
+  "curriculum_model": "lgs",
+  "type": "soru_bankasi",
+  "target_grade_min": 8,
+  "target_grade_max": 8,
+  "target_graduate": false,
+  "warnings": [],
+  "notes": [
+    "Kaynak: Aydın Yayınları çözüm uygulamasının herkese açık kitap ağacı (aydindijital.com, kitap #875) — ünite/konu adları ve test listesi birebir; soru içeriği alınmadı.",
+    "Birden çok konuyu kapsayan bölümler (karma ünite, dil bilgisi, denemeler) bilinçli olarak konusuz."
+  ],
+  "sections": [
+    {
+      "label": "Kader ve Kaza İnancı",
+      "test_count": 28,
+      "topic": "Kader İnancı"
+    },
+    {
+      "label": "Zekât ve Sadaka",
+      "test_count": 15,
+      "topic": "Zekât, Hac ve Kurban İbadeti"
+    },
+    {
+      "label": "Din ve Hayat",
+      "test_count": 14,
+      "topic": "Din ve Hayat"
+    },
+    {
+      "label": "Hz. Muhammed'in Örnekliği",
+      "test_count": 15,
+      "topic": "Hz. Muhammed'in Örnekliği"
+    },
+    {
+      "label": "Kur'an-ı Kerim ve Özellikleri",
+      "test_count": 15,
+      "topic": "Kur'an-ı Kerim ve Özellikleri"
+    }
+  ]
+}
