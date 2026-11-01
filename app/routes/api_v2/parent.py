@@ -2416,3 +2416,108 @@ def parent_student_pool_period_v2(student_id: int, period_id: int, user: User = 
         raise HTTPException(status_code=404, detail={"error": "not_found", "code": "period_not_found",
                                                      "message": "Dönem bulunamadı."})
     return period_detail_response(db, period, audience="parent")
+
+
+# ---------------------- KVKK: veli çocuğu adına silme talebi (2026-11-01) ----------------------
+
+
+def _parent_child_or_404(db: Session, user: User, student_id: int) -> User:
+    try:
+        return assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "student_not_found",
+                    "message": "Öğrenci bulunamadı."},
+        )
+
+
+def _parent_delete_status(db: Session, student: User, viewer: User):
+    from app.routes.api_v2.schemas.teacher import StudentDataDeleteStatus
+    from app.services.kvkk import can_manage_request, pending_delete_request, scheduled_deletion_at
+    at, src = scheduled_deletion_at(db, user=student)
+    req = pending_delete_request(db, target_id=student.id)
+    return StudentDataDeleteStatus(
+        student_id=student.id, request_id=req.id if req else None,
+        scheduled_at=at, source=src,
+        can_cancel=bool(req and can_manage_request(db, req=req, by_user=viewer)),
+    )
+
+
+@router.get("/students/{student_id}/data-delete")
+def parent_student_data_delete_status_v2(
+    student_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    student = _parent_child_or_404(db, user, student_id)
+    return _parent_delete_status(db, student, user)
+
+
+@router.post("/students/{student_id}/data-delete")
+def parent_student_data_delete_v2(
+    student_id: int,
+    body: dict | None = None,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veli, çocuğunun verilerinin silinmesini ister. 30 gün sonra uygulanır;
+    bu sürede veli ya da süper admin iptal edebilir. Koça bildirim gider."""
+    from app.services.kvkk import is_anonymized, request_deletion
+
+    student = _parent_child_or_404(db, user, student_id)
+    if not (body or {}).get("confirm"):
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "validation", "code": "confirmation_required",
+                    "message": "Silme talebini onaylamanız gerekiyor."},
+        )
+    if is_anonymized(student):
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "conflict", "code": "student_anonymized",
+                    "message": "Bu öğrencinin verileri zaten silinmiş."},
+        )
+    reason = (str((body or {}).get("reason") or "")).strip()[:500] or "Veli talebi"
+    request_deletion(db, target=student, requester=user, reason=reason)
+    if student.teacher_id:
+        try:
+            from app.services.push_notifications import safe_push
+            safe_push(
+                db, user_id=student.teacher_id,
+                title="Veli veri silme talebi",
+                body=f"{student.full_name} adlı öğrencinin velisi verilerin silinmesini istedi. Talep 30 gün sonra uygulanacak.",
+                data={"type": "coach", "screen": "students"},
+            )
+        except Exception:
+            pass
+    return {"data": _parent_delete_status(db, student, user),
+            "invalidate": [f"parent:students:{student.id}"]}
+
+
+@router.post("/students/{student_id}/data-delete/cancel")
+def parent_student_data_delete_cancel_v2(
+    student_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    from app.services.kvkk import cancel_request, pending_delete_request
+
+    student = _parent_child_or_404(db, user, student_id)
+    req = pending_delete_request(db, target_id=student.id)
+    if req is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "no_pending_request",
+                    "message": "Bekleyen silme talebi yok."},
+        )
+    try:
+        cancel_request(db, request_id=req.id, by_user=user, note="Veli iptal etti")
+    except PermissionError:
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "forbidden", "code": "cannot_cancel",
+                    "message": "Bu talebi iptal etme yetkiniz yok."},
+        )
+    return {"data": _parent_delete_status(db, student, user),
+            "invalidate": [f"parent:students:{student.id}"]}

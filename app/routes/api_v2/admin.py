@@ -10331,3 +10331,38 @@ def _audit_demo_seed(db: Session, *, actor: User, result) -> None:
         db.rollback()
 
 
+# ---------------------- KVKK: süper admin kullanıcı adına silme talebi (2026-11-01) ----------------------
+
+
+@router.post("/users/{user_id}/data-delete")
+def admin_user_data_delete_v2(
+    user_id: int,
+    request: Request,
+    body: dict | None = None,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Kullanıcı adına KVKK silme talebi aç (ör. e-posta/telefonla gelen başvuru).
+    body.immediate=True → 30 gün beklemeden hemen uygula."""
+    from app.services.kvkk import apply_deletion, is_anonymized, request_deletion
+
+    target = db.get(User, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail={"error": "not_found", "code": "user_not_found",
+                                                     "message": "Kullanıcı bulunamadı"})
+    if target.role == UserRole.SUPER_ADMIN or target.id == user.id:
+        raise HTTPException(status_code=403, detail={"error": "forbidden", "code": "cannot_delete_admin",
+                                                     "message": "Süper admin hesabı bu yolla silinemez."})
+    if is_anonymized(target):
+        raise HTTPException(status_code=409, detail={"error": "conflict", "code": "already_anonymized",
+                                                     "message": "Bu kullanıcının verileri zaten silinmiş."})
+    b = body or {}
+    reason = (str(b.get("reason") or "")).strip()[:500] or "Süper admin talebi"
+    req = request_deletion(db, target=target, requester=user, reason=reason)
+    applied = False
+    if b.get("immediate"):
+        apply_deletion(db, request=req, by_user=user)
+        applied = True
+    return {"data": {"request_id": req.id, "applied": applied,
+                     "process_after": req.process_after.isoformat() if req.process_after else None},
+            "invalidate": ["admin:kvkk", f"admin:users:{user_id}"]}

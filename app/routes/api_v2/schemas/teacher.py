@@ -125,6 +125,11 @@ class TeacherStudentListItem(BaseModel):
     week_gorev_done: int = 0
     # Havuz öğrencisi: dönem durumu (doluysa "Son 7 gün" sütunu dönem yüzdesini gösterir)
     pool: "PoolStatusOut | None" = None
+    # KVKK (2026-11-01): öğrencinin verilerinin silineceği an + kaynağı
+    # ("request" = silme talebi 30 gün · "retention" = koçluk bittikten 3 ay sonra)
+    deletion_scheduled_at: datetime | None = None
+    deletion_source: str | None = None
+    deletion_request_pending: bool = False   # açık silme talebi var mı (iptal edilebilir)
 
     has_pending_request: bool
     # risk_analysis seviyesi — özet kutuları + risk filtresi + koç panosundaki
@@ -3427,3 +3432,15 @@ class PageSuggestionResponse(BaseModel):
     last: PageLastRange | None = None
     next_from: int | None = None
     notes: list[str] = []
+
+
+class StudentDataDeleteBody(BaseModel):
+    reason: str | None = None
+
+
+class StudentDataDeleteStatus(BaseModel):
+    student_id: int
+    request_id: int | None
+    scheduled_at: datetime | None
+    source: str | None
+    can_cancel: bool

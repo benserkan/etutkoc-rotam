@@ -399,14 +399,7 @@ def cancel_request(
     ):
         return req   # zaten kapalı — idempotent
 
-    # Yetki
-    is_target = req.target_user_id == by_user.id
-    is_super = by_user.role == UserRole.SUPER_ADMIN
-    is_inst_admin = (
-        by_user.role == UserRole.INSTITUTION_ADMIN
-        and req.institution_id == by_user.institution_id
-    )
-    if not (is_target or is_super or is_inst_admin):
+    if not can_manage_request(db, req=req, by_user=by_user):
         raise PermissionError("Bu talebi iptal etme yetkiniz yok")
 
     req.status = DataRequestStatus.CANCELLED
@@ -458,8 +451,7 @@ def apply_deletion(
     target.password_hash = ""    # login imkânsız
     target.is_active = False
     target.must_change_password = False
-    # Telefon ve diğer profil alanları varsa temizle (Sprint'te eklenirse buraya)
-    # Şu an User modelinde telefon yok; ParentNotificationPref.phone_e164 ayrı.
+    purged = purge_personal_content(db, user=target)
 
     # Veli telefonu varsa anonimleştir
     pref = (
@@ -490,6 +482,7 @@ def apply_deletion(
             "data_subject_request_id": request.id,
             "reason": "kvkk_rtbf_anonymization",
             "request_reason": request.reason or "",
+            "purged": purged,
         }, ensure_ascii=False),
     )
     db.add(audit)
@@ -557,6 +550,278 @@ def cron_apply_expired_deletions(
 
     db.commit()
     logger.info("cron_apply_expired_deletions: %s", counts)
+    return counts
+
+
+# ============================ Kişisel içerik temizliği ============================
+# 2026-11-01: anonimleştirme yalnız ad/e-posta/şifreyi değiştiriyordu; telefon,
+# 2FA, deneme karnesi PDF'leri, günün notları, seans notları, talep mesajları,
+# yanlış soru fotoğrafları, veli sohbetleri ve yapay zekâ yorumları kalıyordu
+# (canlıda anonim koç #93'ün telefonu duruyordu). SAYISAL kayıtlar (görev, net,
+# D/Y, seans tarihi/durumu — tahsilat için) istatistik bütünlüğü için KALIR;
+# kimliği yeniden ortaya çıkarabilecek serbest metin / dosya / iletişim SİLİNİR.
+
+ERASED_TEXT = "(KVKK kapsamında silindi)"
+
+
+def purge_personal_content(db: Session, *, user: User) -> dict[str, int]:
+    """Kullanıcıya ait kimlik belirleyici içeriği sil/temizle. Commit çağıranda."""
+    from app.models import (
+        ActiveSession, CareerInsight, CoachingAppointment, CoachingAppointmentSeries,
+        CoachingInsight, CoachingReport, CoachingSession, DevicePushToken, ExamResult,
+        ParentChatMessage, ParentCommentary, ParentInsight, PhoneVerification,
+        SelfStudyEntry, StudentDayNote, SupportRequestMessage, SurveyAssignment,
+        TaskRequest, TotpBackupCode, WrongQuestion, WrongQuestionImage,
+    )
+
+    uid = user.id
+    c: dict[str, int] = {}
+    now = datetime.now(timezone.utc)
+
+    # Hesap üzerindeki kimlik alanları
+    user.phone = None
+    user.phone_verified_at = None
+    user.phone_secondary = None
+    user.phone_secondary_verified_at = None
+    user.totp_secret = None
+    user.totp_enabled_at = None
+    user.email_verified_at = None
+
+    def _del(model, *crit) -> int:
+        return db.query(model).filter(*crit).delete(synchronize_session=False)
+
+    c["totp_backup_codes"] = _del(TotpBackupCode, TotpBackupCode.user_id == uid)
+    c["device_push_tokens"] = _del(DevicePushToken, DevicePushToken.user_id == uid)
+    c["phone_verifications"] = _del(PhoneVerification, PhoneVerification.user_id == uid)
+    c["active_sessions"] = (
+        db.query(ActiveSession)
+        .filter(ActiveSession.user_id == uid, ActiveSession.terminated_at.is_(None))
+        .update({"terminated_at": now, "termination_reason": "kvkk_delete"},
+                synchronize_session=False)
+    )
+
+    # Kullanıcının yazdığı destek mesajları
+    c["support_messages"] = (
+        db.query(SupportRequestMessage)
+        .filter(SupportRequestMessage.sender_id == uid)
+        .update({"body": ERASED_TEXT}, synchronize_session=False)
+    )
+
+    # Veli olarak yazdığı sohbetler
+    c["parent_chat_as_parent"] = _del(ParentChatMessage, ParentChatMessage.parent_id == uid)
+
+    if user.role == UserRole.STUDENT:
+        c["day_notes"] = _del(StudentDayNote, StudentDayNote.student_id == uid)
+        c["parent_chat"] = _del(ParentChatMessage, ParentChatMessage.student_id == uid)
+        c["parent_commentaries"] = _del(ParentCommentary, ParentCommentary.student_id == uid)
+        c["parent_insights"] = _del(ParentInsight, ParentInsight.student_id == uid)
+        c["coaching_insights"] = _del(CoachingInsight, CoachingInsight.student_id == uid)
+        c["career_insights"] = _del(CareerInsight, CareerInsight.student_id == uid)
+        c["coaching_reports"] = _del(CoachingReport, CoachingReport.student_id == uid)
+        c["survey_assignments"] = _del(SurveyAssignment, SurveyAssignment.student_id == uid)
+
+        wq_ids = [i for (i,) in db.query(WrongQuestion.id).filter(WrongQuestion.student_id == uid).all()]
+        if wq_ids:
+            c["wrong_question_images"] = _del(
+                WrongQuestionImage, WrongQuestionImage.wrong_question_id.in_(wq_ids)
+            )
+        c["wrong_questions"] = _del(WrongQuestion, WrongQuestion.student_id == uid)
+
+        # Seans: tarih/durum/süre (tahsilat) kalır, içerik silinir
+        c["coaching_sessions"] = (
+            db.query(CoachingSession)
+            .filter(CoachingSession.student_id == uid)
+            .update({
+                "agenda": "", "next_change": None, "coach_note": None, "tags": None,
+                "auto_snapshot": None, "agenda_items": None,
+            }, synchronize_session=False)
+        )
+        c["appointments"] = (
+            db.query(CoachingAppointment)
+            .filter(CoachingAppointment.student_id == uid)
+            .update({"note": None, "request_note": None}, synchronize_session=False)
+        )
+        db.query(CoachingAppointmentSeries).filter(
+            CoachingAppointmentSeries.student_id == uid
+        ).update({"note": None}, synchronize_session=False)
+
+        # Deneme: netler kalır, karne PDF'i (ad/okul/puan) ve not silinir
+        c["exam_pdfs"] = (
+            db.query(ExamResult)
+            .filter(ExamResult.student_id == uid)
+            .update({
+                "import_pdf_data": None, "import_pdf_content_type": None,
+                "import_pdf_size": None, "import_pdf_sha256": None, "note": None,
+            }, synchronize_session=False)
+        )
+        c["task_requests"] = (
+            db.query(TaskRequest)
+            .filter(TaskRequest.student_id == uid)
+            .update({"message": None, "teacher_response": None}, synchronize_session=False)
+        )
+        c["self_study_notes"] = (
+            db.query(SelfStudyEntry)
+            .filter(SelfStudyEntry.student_id == uid)
+            .update({"note": None, "review_note": None}, synchronize_session=False)
+        )
+        # Veli bağı: veli artık anonim bir hesabın raporlarını görmez
+        c["parent_links"] = _del(ParentStudentLink, ParentStudentLink.student_id == uid)
+
+    db.flush()
+    return {k: int(v or 0) for k, v in c.items() if v}
+
+
+# ============================ Talep yetkisi + durum ============================
+
+
+def pending_delete_request(db: Session, *, target_id: int) -> DataSubjectRequest | None:
+    return (
+        db.query(DataSubjectRequest)
+        .filter(
+            DataSubjectRequest.target_user_id == target_id,
+            DataSubjectRequest.kind == DataRequestKind.DELETE,
+            DataSubjectRequest.status.in_([
+                DataRequestStatus.PENDING, DataRequestStatus.PROCESSING,
+            ]),
+        )
+        .order_by(DataSubjectRequest.id.desc())
+        .first()
+    )
+
+
+def can_manage_request(db: Session, *, req: DataSubjectRequest, by_user: User) -> bool:
+    """İptal yetkisi: veri sahibi · talebi açan · süper admin · kurum yöneticisi
+    (kendi kurumu). Koç, velinin/öğrencinin açtığı talebi iptal EDEMEZ (o kişinin
+    hakkıdır); kendi açtığı talebi ise iptal edebilir."""
+    if by_user.role == UserRole.SUPER_ADMIN:
+        return True
+    if req.target_user_id == by_user.id or req.requester_user_id == by_user.id:
+        return True
+    return (
+        by_user.role == UserRole.INSTITUTION_ADMIN
+        and req.institution_id is not None
+        and req.institution_id == by_user.institution_id
+    )
+
+
+# ============================ Saklama süresi ============================
+# Kullanıcı kararı (2026-11-01): koçluğu sonlandırılan öğrencinin verileri
+# 3 ay sonra otomatik anonimleştirilir; 14 gün önce koça hatırlatma gider.
+# Koç bu sürede "Koçluğu yeniden başlat" derse sayaç sıfırlanır.
+
+RETENTION_DAYS = 90
+RETENTION_WARN_DAYS = 14
+RETENTION_REASON = "Saklama süresi: koçluk sonlandırıldıktan 3 ay sonra otomatik silme"
+
+
+def is_anonymized(user: User) -> bool:
+    return (user.email or "").startswith("anonymized-")
+
+
+def retention_due_at(user: User) -> datetime | None:
+    """Pasif öğrencinin otomatik silinme anı (aktif / anonim / tarihsiz → None)."""
+    if user.role != UserRole.STUDENT or user.is_active or is_anonymized(user):
+        return None
+    d = user.deactivated_at
+    if d is None:
+        return None
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=timezone.utc)
+    return d + timedelta(days=RETENTION_DAYS)
+
+
+def scheduled_deletion_at(db: Session, *, user: User) -> tuple[datetime | None, str | None]:
+    """Öğrencinin en yakın silinme anı + kaynağı ('request' | 'retention')."""
+    req = pending_delete_request(db, target_id=user.id)
+    cand: list[tuple[datetime, str]] = []
+    if req is not None and req.process_after is not None:
+        pa = req.process_after
+        cand.append((pa if pa.tzinfo else pa.replace(tzinfo=timezone.utc), "request"))
+    r = retention_due_at(user)
+    if r is not None:
+        cand.append((r, "retention"))
+    if not cand:
+        return None, None
+    return min(cand, key=lambda x: x[0])
+
+
+def _fmt_tr(d: datetime) -> str:
+    local = d + timedelta(hours=3)
+    return local.strftime("%d.%m.%Y")
+
+
+def cron_retention_inactive(db: Session, *, now: datetime | None = None) -> dict:
+    """Günlük: (1) silinmesine ≤14 gün kalan pasif öğrenciler için koça
+    hatırlatma (e-posta + bildirim, bir kez); (2) süresi dolanları anonimleştir.
+    İdempotent."""
+    if now is None:
+        now = datetime.now(timezone.utc)
+    counts = {"warned": 0, "anonymized": 0}
+    students = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.STUDENT,
+            User.is_active.is_(False),
+            User.deactivated_at.isnot(None),
+            ~User.email.like("anonymized-%"),
+        )
+        .all()
+    )
+    to_warn: list[tuple[int, int, str, str, str, int]] = []
+    for st in students:
+        due = retention_due_at(st)
+        if due is None:
+            continue
+        if due <= now:
+            req = pending_delete_request(db, target_id=st.id)
+            if req is None:
+                req = DataSubjectRequest(
+                    kind=DataRequestKind.DELETE,
+                    status=DataRequestStatus.PROCESSING,
+                    requester_user_id=None,
+                    target_user_id=st.id,
+                    institution_id=st.institution_id,
+                    reason=RETENTION_REASON,
+                    process_after=now,
+                )
+                db.add(req)
+                db.flush()
+            apply_deletion(db, request=req, by_user=None, autocommit=False)
+            counts["anonymized"] += 1
+            continue
+        if st.retention_warned_at is None and due - now <= timedelta(days=RETENTION_WARN_DAYS):
+            st.retention_warned_at = now
+            if st.teacher_id:
+                days_left = max(1, int((due - now).total_seconds() // 86400))
+                deact = st.deactivated_at if st.deactivated_at.tzinfo else st.deactivated_at.replace(tzinfo=timezone.utc)
+                to_warn.append((st.teacher_id, st.id, st.full_name, _fmt_tr(deact), _fmt_tr(due), days_left))
+            counts["warned"] += 1
+    db.commit()
+
+    # Gönderim işlem DIŞINDA (kilit hijyeni)
+    for coach_id, sid, name, deact_l, due_l, days_left in to_warn:
+        coach = db.get(User, coach_id)
+        if coach is None:
+            continue
+        try:
+            from app.services.email_service import send_email
+            send_email(coach.email, "student_retention_warning", {
+                "coach_name": coach.full_name, "student_name": name,
+                "deactivated_label": deact_l, "delete_label": due_l, "days_left": days_left,
+            })
+        except Exception:  # pragma: no cover — best effort
+            logger.exception("retention warning email failed coach=%s", coach_id)
+        try:
+            from app.services.push_notifications import safe_push
+            safe_push(
+                db, user_id=coach.id,
+                title="Öğrenci verileri silinecek",
+                body=f"{name}: koçluk sonlandırıldığı için verileri {due_l} tarihinde silinecek. Devam edecekseniz koçluğu yeniden başlatın.",
+                data={"type": "coach", "screen": "students"},
+            )
+        except Exception:  # pragma: no cover
+            logger.exception("retention warning push failed coach=%s", coach_id)
+    logger.info("cron_retention_inactive: %s", counts)
     return counts
 
 

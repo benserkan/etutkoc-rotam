@@ -47,6 +47,7 @@ import type {
 } from "@/lib/types/admin";
 import { TempPasswordDialog } from "@/components/admin/admin-users-client";
 import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
+import { AdminUserKvkkCard } from "@/components/admin/admin-user-kvkk-card";
 
 interface Props {
   initial: AdminUserDetailResponse;
@@ -192,6 +193,9 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
                   userId={t.id}
                   targetName={t.full_name}
                 />
+              )}
+              {t.role !== "super_admin" && !t.email.startsWith("anonymized-") && (
+                <AdminUserKvkkCard userId={t.id} targetName={t.full_name} />
               )}
               <DangerZone
                 userId={t.id}

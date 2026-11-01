@@ -233,6 +233,8 @@ from app.routes.api_v2.schemas.teacher import (
     StudentBookListResponse,
     StudentBookSectionProgressRow,
     StudentBriefProfile,
+    StudentDataDeleteBody,
+    StudentDataDeleteStatus,
     StudentCreateBody,
     StudentCreateResult,
     StudentParentsResponse,
@@ -865,6 +867,10 @@ def teacher_students_v2(
                 _today_by_student.setdefault(_t.student_id, []).append(_t)
 
     _wrank = {"red": 0, "amber": 1, "green": 2}
+    from app.services.kvkk import scheduled_deletion_at as _sched_del
+    from app.services.kvkk import pending_delete_request as _pend_del
+    _del_by_id = {s.id: _sched_del(db, user=s) for s in page_students}
+    _req_ids = {s.id for s in page_students if _pend_del(db, target_id=s.id) is not None}
     items: list[TeacherStudentListItem] = []
     for s in page_students:
         sn = snapshots_by_id.get(s.id)
@@ -901,6 +907,9 @@ def teacher_students_v2(
             week_gorev_done=_gw.gorev_done,
             pool=pool_status_out(sn.pool) if sn else None,
             has_pending_request=s.id in pending_ids,
+            deletion_scheduled_at=_del_by_id.get(s.id, (None, None))[0],
+            deletion_source=_del_by_id.get(s.id, (None, None))[1],
+            deletion_request_pending=s.id in _req_ids,
             risk_level=(
                 None if not s.is_active else
                 {"critical": "critical", "medium": "warning", "high": "warning"}.get(
@@ -8059,12 +8068,117 @@ def teacher_reactivate_student_v2(
             data=_build_brief_profile(student),
             invalidate=_invalidate_for_students(user.id, student.id),
         )
+    from app.services.kvkk import is_anonymized, pending_delete_request
+    if is_anonymized(student):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "conflict", "code": "student_anonymized",
+                    "message": "Bu öğrencinin verileri KVKK kapsamında silinmiş; hesap yeniden açılamaz."},
+        )
+    pend = pending_delete_request(db, target_id=student.id)
+    if pend is not None and pend.requester_user_id not in (user.id, None):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "conflict", "code": "delete_requested_by_other",
+                    "message": "Öğrenci ya da velisi verilerin silinmesini istemiş. "
+                               "Talep iptal edilmeden koçluk yeniden başlatılamaz."},
+        )
     _check_student_creation_quota(db, user)
+    if pend is not None:
+        from app.models import DataRequestStatus
+        pend.status = DataRequestStatus.CANCELLED
+        pend.processed_by_user_id = user.id
+        pend.processed_at = datetime.now(timezone.utc)
+        pend.admin_note = ((pend.admin_note or "") + "\nKoç koçluğu yeniden başlattı; talep iptal edildi.").strip()
     student.is_active = True
     db.commit()
     db.refresh(student)
     return MutationResponse[StudentBriefProfile](
         data=_build_brief_profile(student),
+        invalidate=_invalidate_for_students(user.id, student.id),
+    )
+
+
+# ---------------------- KVKK: koç öğrenci adına silme talebi ----------------------
+
+
+def _student_delete_status(db: Session, student: User, viewer: User) -> StudentDataDeleteStatus:
+    from app.services.kvkk import can_manage_request, pending_delete_request, scheduled_deletion_at
+    at, src = scheduled_deletion_at(db, user=student)
+    req = pending_delete_request(db, target_id=student.id)
+    return StudentDataDeleteStatus(
+        student_id=student.id,
+        request_id=req.id if req else None,
+        scheduled_at=at,
+        source=src,
+        can_cancel=bool(req and can_manage_request(db, req=req, by_user=viewer)),
+    )
+
+
+@router.post(
+    "/students/{student_id}/data-delete",
+    response_model=MutationResponse[StudentDataDeleteStatus],
+)
+def teacher_student_data_delete_v2(
+    student_id: int,
+    body: StudentDataDeleteBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin verileri için KVKK silme talebi aç (30 gün içinde iptal edilebilir).
+    Yalnız koçluğu sonlandırılmış (pasif) öğrenci için."""
+    from app.services.kvkk import is_anonymized, request_deletion
+
+    student = _get_owned_student(db, student_id, user.id)
+    if student.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "conflict", "code": "student_active",
+                    "message": "Önce koçluğu sonlandırın; aktif öğrencinin verileri silinemez."},
+        )
+    if is_anonymized(student):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "conflict", "code": "student_anonymized",
+                    "message": "Bu öğrencinin verileri zaten silinmiş."},
+        )
+    reason = (body.reason or "").strip()[:500] or "Koç talebi"
+    request_deletion(db, target=student, requester=user, reason=reason)
+    return MutationResponse[StudentDataDeleteStatus](
+        data=_student_delete_status(db, student, user),
+        invalidate=_invalidate_for_students(user.id, student.id),
+    )
+
+
+@router.post(
+    "/students/{student_id}/data-delete/cancel",
+    response_model=MutationResponse[StudentDataDeleteStatus],
+)
+def teacher_student_data_delete_cancel_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    from app.services.kvkk import cancel_request, pending_delete_request
+
+    student = _get_owned_student(db, student_id, user.id)
+    req = pending_delete_request(db, target_id=student.id)
+    if req is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "no_pending_request",
+                    "message": "Bekleyen silme talebi yok."},
+        )
+    try:
+        cancel_request(db, request_id=req.id, by_user=user, note="Koç iptal etti")
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "cannot_cancel",
+                    "message": "Bu talebi yalnız talebi açan kişi ya da süper admin iptal edebilir."},
+        )
+    return MutationResponse[StudentDataDeleteStatus](
+        data=_student_delete_status(db, student, user),
         invalidate=_invalidate_for_students(user.id, student.id),
     )
 

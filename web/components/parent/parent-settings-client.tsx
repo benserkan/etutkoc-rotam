@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getParentSettings, parentKeys } from "@/lib/api/parent";
+import { ChildDataDeleteCard } from "@/components/parent/child-data-delete-card";
 import {
   useToggleChildMute,
   useUpdateParentPreferences,
@@ -163,6 +164,10 @@ export function ParentSettingsClient({ initial }: Props) {
 
       {data.children.length > 0 && (
         <ChildrenMuteCard childLinks={data.children} />
+      )}
+
+      {data.children.length > 0 && (
+        <ChildDataDeleteCard childLinks={data.children} />
       )}
 
       <WhatsAppCard whatsapp={data.whatsapp} />

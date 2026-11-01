@@ -22,6 +22,8 @@ import {
   MoreHorizontal,
   PauseCircle,
   PlayCircle,
+  Trash2,
+  Undo2,
   UserRound,
   Users,
   X,
@@ -30,8 +32,10 @@ import {
 import { useTeacherStudents } from "@/lib/hooks/use-teacher-queries";
 import type { TeacherStudentsListParams } from "@/lib/api/teacher";
 import {
+  useCancelStudentDataDelete,
   useDeactivateStudent,
   useReactivateStudent,
+  useStudentDataDelete,
   useResetStudentPassword,
   useSetStudentsClassGroup,
 } from "@/lib/hooks/use-teacher-mutations";
@@ -424,8 +428,8 @@ function StudentRow({
           data-testid="student-select"
         />
         <Avatar name={s.full_name} risk={risk} dim={dim} />
-        <div className={cn("min-w-0 flex-1", dim && "opacity-60")}>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div className="min-w-0 flex-1">
+          <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-1", dim && "opacity-60")}>
             <Link
               href={`/teacher/students/${s.id}`}
               className="font-medium text-foreground break-words hover:underline"
@@ -443,7 +447,14 @@ function StudentRow({
               </Link>
             ) : null}
           </div>
-          <p className="text-xs text-muted-foreground break-all">{s.email}</p>
+          <p className={cn("text-xs text-muted-foreground break-all", dim && "opacity-60")}>{s.email}</p>
+          {s.deletion_scheduled_at ? (
+            <p className="mt-0.5 text-xs font-semibold text-rose-800 break-words">
+              {s.deletion_source === "request"
+                ? `Silme talebi var · veriler ${trDate(s.deletion_scheduled_at)} tarihinde silinecek`
+                : `Veriler ${trDate(s.deletion_scheduled_at)} tarihinde silinecek (koçluk bittikten 3 ay sonra)${s.deletion_request_pending ? " · silme talebi de açık" : ""}`}
+            </p>
+          ) : null}
           {showReason ? (
             <p
               className={cn(
@@ -619,13 +630,24 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
   const [resetOpen, setResetOpen] = React.useState(false);
   const [resetResult, setResetResult] = React.useState<StudentResetPasswordResult | null>(null);
   const [endOpen, setEndOpen] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [deleteNow, setDeleteNow] = React.useState(false);
 
   const deactivate = useDeactivateStudent(student.id);
   const reactivate = useReactivateStudent(student.id);
   const resetPwd = useResetStudentPassword(student.id);
+  const dataDelete = useStudentDataDelete(student.id);
+  const cancelDelete = useCancelStudentDataDelete(student.id);
+  const hasRequest = !!student.deletion_request_pending;
 
   function confirmEnd() {
-    deactivate.mutate(undefined, { onSuccess: () => setEndOpen(false) });
+    deactivate.mutate(undefined, {
+      onSuccess: () => {
+        setEndOpen(false);
+        if (deleteNow) dataDelete.mutate({ reason: "Koçluk sonlandırılırken istendi" });
+        setDeleteNow(false);
+      },
+    });
   }
 
   function confirmReset() {
@@ -688,8 +710,51 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
               </>
             )}
           </DropdownMenuItem>
+          {!student.is_active ? (
+            hasRequest ? (
+              <DropdownMenuItem
+                disabled={cancelDelete.isPending}
+                onSelect={() => cancelDelete.mutate()}
+              >
+                <Undo2 className="text-emerald-600" aria-hidden />
+                Silme talebini iptal et
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={() => setDeleteOpen(true)}>
+                <Trash2 className="text-rose-600" aria-hidden />
+                Verilerini sil (KVKK)
+              </DropdownMenuItem>
+            )
+          ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <Dialog open={deleteOpen} onOpenChange={(o) => { if (!dataDelete.isPending) setDeleteOpen(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Öğrencinin verilerini sil</DialogTitle>
+            <DialogDescription>
+              {student.full_name} için kişisel verilerin silinmesi talebi açılacak.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex gap-2"><span className="text-rose-700">•</span><span>Silme <b className="text-foreground">30 gün sonra</b> uygulanır; bu sürede listeden iptal edebilirsin.</span></li>
+            <li className="flex gap-2"><span className="text-rose-700">•</span><span>Adı, e-postası, telefonu, günlük notları, seans notları, deneme karneleri ve yanlış soru fotoğrafları <b className="text-foreground">kalıcı olarak</b> silinir; veli bağlantısı kaldırılır.</span></li>
+            <li className="flex gap-2"><span className="text-slate-500">•</span><span>Görev ve net sayıları isimsiz olarak istatistikte kalır.</span></li>
+          </ul>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)} disabled={dataDelete.isPending}>Vazgeç</Button>
+            <Button
+              className="bg-rose-700 text-white hover:bg-rose-800"
+              disabled={dataDelete.isPending}
+              onClick={() => dataDelete.mutate({}, { onSuccess: () => setDeleteOpen(false) })}
+            >
+              {dataDelete.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Trash2 className="size-4" aria-hidden />}
+              Silme talebini aç
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={resetOpen}
@@ -746,8 +811,23 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
             <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Veliye bildirim (haftalık rapor, uyarılar) <b className="text-foreground">gönderilmez</b>.</span></li>
             <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Öğrenci <b className="text-foreground">giriş yapamaz</b> (erişimi kapanır).</span></li>
             <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Koç ve kurum <b className="text-foreground">istatistiklerinden çıkar</b> — ortalamanı düşürmez.</span></li>
-            <li className="flex gap-2"><span className="text-emerald-600">•</span><span>Tüm verisi <b className="text-foreground">korunur</b>; istediğin an &ldquo;Koçluğu yeniden başlat&rdquo; ile geri açılır.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-600">•</span><span>Verileri <b className="text-foreground">3 ay korunur</b>; bu sürede &ldquo;Koçluğu yeniden başlat&rdquo; ile her şey geri gelir.</span></li>
+            <li className="flex gap-2"><span className="text-rose-700">•</span><span>3 ay sonunda kişisel verileri <b className="text-foreground">otomatik silinir</b> (KVKK). Silmeden 14 gün önce sana hatırlatma gelir.</span></li>
           </ul>
+          <label className="flex items-start gap-2 rounded-md border border-border p-3 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4"
+              checked={deleteNow}
+              onChange={(e) => setDeleteNow(e.target.checked)}
+            />
+            <span>
+              <b className="text-foreground">Verileri 3 ay beklemeden sil</b>
+              <span className="block text-xs text-muted-foreground">
+                Öğrenci ya da veli istediyse: silme 30 gün sonra uygulanır, bu sürede iptal edilebilir.
+              </span>
+            </span>
+          </label>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEndOpen(false)} disabled={deactivate.isPending}>Vazgeç</Button>
             <Button onClick={confirmEnd} disabled={deactivate.isPending}>
@@ -1149,4 +1229,11 @@ function isSameAsInitial(
     filters.page_size === initialFilters.page_size &&
     page === initialPage
   );
+}
+
+
+function trDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 }

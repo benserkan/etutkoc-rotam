@@ -49,7 +49,7 @@ export default function TeacherStudentRoute() {
     Alert.alert(
       active ? "Öğrenciyi pasife al" : "Öğrenciyi aktif et",
       active
-        ? "Öğrenci pasife alınır (kotadan düşer). Veriler silinmez; istediğinde tekrar aktif edebilirsin."
+        ? "Koçluk sonlanır: öğrenci giriş yapamaz, kotadan düşer. Verileri 3 ay korunur, bu sürede tekrar aktif edebilirsin; 3 ay sonunda kişisel verileri otomatik silinir (KVKK). Silmeden 14 gün önce hatırlatma gelir."
         : "Öğrenci tekrar aktif öğrenci olur.",
       [
         { text: "Vazgeç", style: "cancel" },

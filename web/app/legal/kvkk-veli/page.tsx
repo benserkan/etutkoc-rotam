@@ -121,9 +121,16 @@ export default function ParentKvkkPage() {
               </Section>
 
               <Section title="5. Saklama Süresi">
-                Veli hesabı aktif olduğu sürece veriler işlenir. Hesap
-                silindikten sonra kimliği belirsiz hale getirilemeyen kayıtlar
-                (bildirim günlüğü vb.) yasal saklama süresi sonunda silinir.
+                Veli hesabı aktif olduğu sürece veriler işlenir. Çocuğunuzla
+                koçluk sona erdiğinde (koç koçluğu sonlandırdığında) çocuğunuzun
+                kişisel verileri 3 ay saklanır, ardından otomatik olarak silinir
+                (ad, iletişim bilgileri, notlar, deneme karneleri ve fotoğraflar);
+                görev ve net sayıları yalnız kimliksiz istatistik olarak kalır.
+                Çocuğunuzun verilerinin daha önce silinmesini Bildirim
+                Tercihleri sayfasından isteyebilirsiniz; talep 30 gün sonra
+                uygulanır ve bu süre içinde iptal edilebilir. Kimliği belirsiz
+                hale getirilemeyen kayıtlar (bildirim günlüğü vb.) yasal saklama
+                süresi sonunda silinir.
               </Section>
 
               <Section title="6. Haklarınız">

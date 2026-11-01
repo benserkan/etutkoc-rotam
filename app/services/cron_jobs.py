@@ -640,6 +640,12 @@ def kvkk_apply_expired_deletions(db: Session, *, now: datetime) -> dict:
     return cron_apply_expired_deletions(db, now=now)
 
 
+def kvkk_retention_inactive(db: Session, *, now: datetime) -> dict:
+    """Koçluğu 3 ay önce sonlandırılan öğrenciyi anonimleştir; 14 gün önce koça hatırlat."""
+    from app.services.kvkk import cron_retention_inactive
+    return cron_retention_inactive(db, now=now)
+
+
 def subscription_resume(db: Session, *, now: datetime) -> dict:
     """Cron: pause_until'i geçmiş kurumları otomatik akademik yıla resume eder.
 
@@ -1069,6 +1075,7 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "subscription_resume": subscription_resume,
     "subscription_guarantee_eval": subscription_guarantee_eval,
     "kvkk_apply_expired_deletions": kvkk_apply_expired_deletions,
+    "kvkk_retention_inactive": kvkk_retention_inactive,
     "auto_pause_inactive_users": auto_pause_inactive_users,
     # Katman 11.J — Güvenlik Kamerası
     "security_alarm_evaluate": security_alarm_evaluate,

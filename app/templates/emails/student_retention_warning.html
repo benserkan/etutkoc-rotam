@@ -1,0 +1,41 @@
+Subject: ETÜTKOÇ Rotam · {{ student_name }} adlı öğrencinin verileri {{ days_left }} gün sonra silinecek
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+    {% include "_brand_header.html" %}
+
+    <h2 style="font-size: 16px; color: #0f172a; margin: 0 0 12px;">Öğrenci verileri silinecek</h2>
+    <p style="font-size: 14px; line-height: 1.6; margin: 0 0 12px;">
+      Merhaba {{ coach_name }},
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; margin: 0 0 12px;">
+      <strong>{{ student_name }}</strong> ile koçluğunuz {{ deactivated_label }} tarihinde
+      sonlandırılmıştı. Kişisel verilerin korunması kuralı gereği, koçluğu sonlandırılan
+      öğrencinin verileri 3 ay sonra sistemden silinir.
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; margin: 0 0 12px;">
+      Silme tarihi: <strong>{{ delete_label }}</strong> ({{ days_left }} gün sonra).
+      Bu tarihte öğrencinin adı, e-postası, telefonu, notları, deneme karneleri ve
+      fotoğrafları kalıcı olarak silinir; geri alınamaz.
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; margin: 0 0 18px;">
+      Öğrenciyle çalışmaya devam edecekseniz, bu tarihten önce öğrenci listesinden
+      <strong>"Koçluğu yeniden başlat"</strong> demeniz yeterli; silme iptal olur.
+    </p>
+    <p style="margin: 0 0 8px;">
+      <a href="{{ app_base_url }}/teacher/students?status=pasif"
+         style="display: inline-block; background: #0e7490; color: #ffffff;
+                text-decoration: none; padding: 12px 22px; border-radius: 8px;
+                font-size: 14px; font-weight: 600;">
+        Öğrenci listesini aç
+      </a>
+    </p>
+  </div>
+  <div style="text-align: center; font-size: 11px; color: #94a3b8; margin-top: 16px;">
+    {% if brand %}{{ brand.name }} adına gönderildi · Altyapı: ETÜTKOÇ Rotam{% else %}ETÜTKOÇ Rotam · <a href="{{ app_base_url }}" style="color: #117A86;">rotam.etutkoc.com</a>{% endif %}
+  </div>
+</body>
+</html>

@@ -163,6 +163,12 @@ export interface TeacherStudentListItem {
   /** Havuz öğrencisi: dönem durumu — doluysa "Son 7 gün" yerine dönem yüzdesi gösterilir. */
   pool?: PoolStatus | null;
   has_pending_request: boolean;
+  /** KVKK: verilerin silineceği an (pasif öğrenci). */
+  deletion_scheduled_at?: string | null;
+  /** "request" = silme talebi (30 gün) · "retention" = koçluk bittikten 3 ay sonra */
+  deletion_source?: "request" | "retention" | null;
+  /** Açık (iptal edilebilir) silme talebi var mı. */
+  deletion_request_pending?: boolean;
   /** risk_analysis seviyesi (özet kutuları + risk süzgeci ile aynı). Pasifte null. */
   risk_level?: "critical" | "warning" | "ok" | null;
 }
@@ -2967,4 +2973,13 @@ export interface PageSuggestionResponse {
   last: { page_from: number; page_to: number; date: string | null; note: string | null; source: string } | null;
   next_from: number | null;
   notes: string[];
+}
+
+
+export interface StudentDataDeleteStatus {
+  student_id: number;
+  request_id: number | null;
+  scheduled_at: string | null;
+  source: "request" | "retention" | null;
+  can_cancel: boolean;
 }

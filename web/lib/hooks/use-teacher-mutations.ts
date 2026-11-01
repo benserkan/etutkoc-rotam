@@ -48,6 +48,7 @@ import type {
   RequestRejectBody,
   RequestRespondBody,
   ReviewCardsActionResult,
+  StudentDataDeleteStatus,
   ReviewSeedBody,
   ReviewSeedResult,
   StudentBookAssignBody,
@@ -2525,6 +2526,42 @@ export function useSetDenemeResultsCoach() {
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       toast.success("Deneme sonucu kaydedildi");
+    },
+  });
+}
+
+
+/** KVKK: koçluğu sonlandırılmış öğrencinin verileri için silme talebi (30 gün). */
+export function useStudentDataDelete(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<StudentDataDeleteStatus>, ApiError, { reason?: string }>({
+    mutationFn: (body) =>
+      api<MutationResponse<StudentDataDeleteStatus>>(
+        `/api/v2/teacher/students/${studentId}/data-delete`,
+        { method: "POST", body: JSON.stringify(body ?? {}) },
+      ),
+    onError: (err) => showError(err, "Silme talebi açılamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Silme talebi açıldı", {
+        description: "Veriler 30 gün sonra silinecek; bu süre içinde iptal edebilirsin.",
+      });
+    },
+  });
+}
+
+export function useCancelStudentDataDelete(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<StudentDataDeleteStatus>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<StudentDataDeleteStatus>>(
+        `/api/v2/teacher/students/${studentId}/data-delete/cancel`,
+        { method: "POST" },
+      ),
+    onError: (err) => showError(err, "Talep iptal edilemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Silme talebi iptal edildi");
     },
   });
 }

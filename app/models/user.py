@@ -174,6 +174,16 @@ class User(Base):
     last_seen_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # KVKK saklama süresi (2026-11-01): hesabın pasife alındığı an (koçluk
+    # sonlandırma). is_active değişince aşağıdaki model olayı otomatik yazar /
+    # temizler — tüm pasifleştirme yolları (koç, kurum, süper admin, toplu)
+    # kapsanır. retention_warned_at: koça "X gün sonra silinecek" hatırlatması.
+    deactivated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    retention_warned_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # Şifre değişimi zaman damgası — diğer aktif oturumları geçersiz kılmak
     # için (session.password_stamp ile karşılaştırma yapılır).
     password_changed_at: Mapped[datetime | None] = mapped_column(
@@ -428,3 +438,22 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User {self.id} {self.email} {self.role.value}>"
+
+
+# ---------------------------------------------------------------------------
+# is_active → deactivated_at (KVKK saklama süresi sayacı)
+# ---------------------------------------------------------------------------
+from sqlalchemy import event as _sa_event  # noqa: E402
+
+
+@_sa_event.listens_for(User.is_active, "set", active_history=True)
+def _track_deactivation(target: "User", value, oldvalue, initiator):  # noqa: ANN001
+    from datetime import timezone as _tz
+
+    if value is False and oldvalue is not False:
+        target.deactivated_at = datetime.now(_tz.utc)
+        target.retention_warned_at = None
+    elif value is True and oldvalue is False:
+        target.deactivated_at = None
+        target.retention_warned_at = None
+
