@@ -123,6 +123,8 @@ class TeacherStudentListItem(BaseModel):
     # Son 7 gün (bugün dahil) GÖREV tamamlama — etkinlik görevleri dahil.
     week_gorev_total: int = 0
     week_gorev_done: int = 0
+    # Havuz öğrencisi: dönem durumu (doluysa "Son 7 gün" sütunu dönem yüzdesini gösterir)
+    pool: "PoolStatusOut | None" = None
 
     has_pending_request: bool
     # risk_analysis seviyesi — özet kutuları + risk filtresi + koç panosundaki
@@ -220,6 +222,39 @@ class StudentPauseResult(BaseModel):
     released_items: int = 0
 
 
+class PoolStatusOut(BaseModel):
+    """Havuz öğrencisinin dönem durumu (pool_metrics.PoolStatus). Görev bazlı ölçüler havuzda
+    %100'e yapışır (yapılmayan kap gece silinir) → yüzeyler havuzda bunu gösterir."""
+    period_id: int
+    is_open: bool
+    status: str
+    opened_on: str
+    expected_next_on: str | None = None
+    closed_on: str | None = None
+    total_units: int
+    done_units: int
+    pct: int                      # dönem tamamlama (birim)
+    day_no: int                   # açık dönemde bugün kaçıncı gün
+    days_planned: int             # açılış → beklenen seans
+    pool_days_7: int              # son 7 gündeki havuz günü (bugün işaretsizse sayılmaz)
+    active_days_7: int            # bunların kaçında işaret var
+    idle_streak: int              # dünden geriye işaretsiz havuz günü
+    last_active: str | None = None
+
+
+def pool_status_out(st) -> "PoolStatusOut | None":
+    if st is None:
+        return None
+    iso = lambda d: d.isoformat() if d else None  # noqa: E731
+    return PoolStatusOut(
+        period_id=st.period_id, is_open=st.is_open, status=st.status, opened_on=st.opened_on.isoformat(),
+        expected_next_on=iso(st.expected_next_on), closed_on=iso(st.closed_on),
+        total_units=st.total_units, done_units=st.done_units, pct=st.pct, day_no=st.day_no,
+        days_planned=st.days_planned, pool_days_7=st.pool_days_7, active_days_7=st.active_days_7,
+        idle_streak=st.idle_streak, last_active=iso(st.last_active),
+    )
+
+
 class StudentProgramSummary(BaseModel):
     """360 paneli için hızlı plan özeti."""
     today_planned: int
@@ -238,6 +273,8 @@ class StudentProgramSummary(BaseModel):
     week_tasks_total: int = 0
     week_tasks_done: int = 0
     week_task_pct: float = 0.0
+    # Havuz öğrencisi: dönem durumu (doluysa "Son 7 gün görev" yerine bu gösterilir)
+    pool: PoolStatusOut | None = None
 
 
 class GorevSubjectItem(BaseModel):
@@ -2080,6 +2117,7 @@ class AnalyticsWeekPoint(BaseModel):
     planned: int
     completed: int
     pct: int                    # 0..100 (tamamlama)
+    kind: str = "hafta"         # hafta | donem (havuz dönemi: birim bazlı)
 
 
 class AnalyticsDayFlag(BaseModel):

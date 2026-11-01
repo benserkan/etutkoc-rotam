@@ -401,17 +401,20 @@ function WeeklyTrendCard({ weeks }: { weeks: AnalyticsWeekPoint[] }) {
   const last = shown[shown.length - 1];
   const prev = shown[shown.length - 2];
   const delta = last && prev ? last.pct - prev.pct : null;
+  const hasPool = shown.some((w) => w.kind === "donem");
   return (
     <Panel
       icon={TrendingUp}
-      title="Hafta hafta tamamlama"
-      desc="Her haftanın planlanan testlerinin yüzde kaçı çözüldü (Pazartesi başlangıçlı). 70+ yeşil, 50–69 sarı, altı kırmızı."
+      title={hasPool ? "Hafta / dönem tamamlama" : "Hafta hafta tamamlama"}
+      desc={hasPool
+        ? "Havuza geçmeden önceki haftalar: planlanan testin yüzde kaçı çözüldü. Havuz dönemleri: havuza yazılan birimin (test) yüzde kaçı yapıldı — havuzda görev yalnız kaba alınınca oluştuğu için dönem birimi esas alınır. 70+ yeşil, 50–69 sarı, altı kırmızı."
+        : "Her haftanın planlanan testlerinin yüzde kaçı çözüldü (Pazartesi başlangıçlı). 70+ yeşil, 50–69 sarı, altı kırmızı."}
       section="analytics:weekly"
       right={
         delta != null ? (
           <span className={cn("inline-flex items-center gap-1 text-[12px] font-semibold", delta > 0 ? "text-emerald-700" : delta < 0 ? "text-rose-700" : "text-muted-foreground")}>
             {delta > 0 ? <TrendingUp className="size-3.5" /> : delta < 0 ? <TrendingDown className="size-3.5" /> : <Minus className="size-3.5" />}
-            {delta > 0 ? "+" : ""}{delta} puan · geçen hafta
+            {delta > 0 ? "+" : ""}{delta} puan · {last?.kind === "donem" ? "önceki" : "geçen hafta"}
           </span>
         ) : null
       }
@@ -421,8 +424,8 @@ function WeeklyTrendCard({ weeks }: { weeks: AnalyticsWeekPoint[] }) {
       ) : (
         <ul className="space-y-2">
           {shown.map((w) => (
-            <li key={w.week_start} className="grid grid-cols-[4.5rem_minmax(0,1fr)_6.5rem] items-center gap-2 text-[12.5px]">
-              <span className="text-muted-foreground">{w.label}</span>
+            <li key={`${w.kind ?? "hafta"}-${w.week_start}`} className="grid grid-cols-[6.5rem_minmax(0,1fr)_6.5rem] items-center gap-2 text-[12.5px]">
+              <span className="break-words text-muted-foreground">{w.label}</span>
               <span className="h-3 overflow-hidden rounded-full bg-muted">
                 <span
                   className={cn("block h-full rounded-full", w.pct >= 70 ? "bg-emerald-600" : w.pct >= 50 ? "bg-amber-500" : "bg-rose-600")}

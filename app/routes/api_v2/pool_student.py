@@ -54,19 +54,44 @@ def _title(it: PoolItem, names: dict) -> str:
     return it.label or "—"
 
 
-def _pace(summary: pm.PeriodSummary, period_days_open: int) -> tuple[str, str]:
-    """K41/K42 sade tempo cümlesi — yargılamaz."""
+def _pace(summary: pm.PeriodSummary, period_days_open: int, baseline: float | None = None) -> tuple[str, str]:
+    """K41/K42 sade tempo cümlesi — yargılamaz.
+
+    H4 (2026-11-01): eskiden "günde 2 birimden fazla gerekiyorsa geride" sabit kuralı vardı →
+    77 testlik havuzda öğrenci 0. günden itibaren "geride" görüyordu, koç "yolunda". Artık:
+    alışkanlık (son 3 kapanmış dönem, koçun K42 kuralıyla AYNI) varsa gereken > alışkanlık × 1,5;
+    yoksa kalan günlerde gereken hız planlanan hızın ×1,3'ünü aşınca geride. İlk gün hiç geride değildir."""
+    from app.services.pool_flags import PACE_FACTOR
     if summary.total_units == 0:
         return "belirsiz", "Havuz boş."
     remaining = summary.total_units - summary.done_units
     if remaining <= 0:
         return "onde", "Havuzu bitirdin, kalan gün sana kaldı."
-    if summary.days_left <= 1 and remaining > 0:
-        return "geride", f"Seansa kadar {remaining} birim kaldı; bugün yapabildiğin kadarını yap."
     per_day = summary.per_day_needed
-    if per_day <= 2:
-        return "yolunda", f"Bu hızla {summary.days_left} günde biter: günde {per_day:g} birim yeter."
-    return "geride", f"Günde {per_day:g} birim gerekiyor; bugün bir fazla yapmak haftayı rahatlatır."
+    if period_days_open <= 0:
+        return "yolunda", f"Yeni dönem başladı: seansa kadar günde {per_day:g} birim yeter."
+    if summary.days_left <= 1:
+        return "geride", f"Seansa kadar {remaining} birim kaldı; bugün yapabildiğin kadarını yap."
+    span = period_days_open + summary.days_left
+    expected = summary.total_units * period_days_open / span
+    plan_per_day = summary.total_units / span
+    if baseline is not None:
+        behind = per_day > baseline * PACE_FACTOR
+    else:
+        # Takvime göre: kalan günlerde gereken hız, dönemin başta planlanan hızının ×1,3'ünü aşıyorsa
+        behind = per_day > plan_per_day * 1.3
+    if behind:
+        return "geride", f"Seansa kadar günde {per_day:g} birim gerekiyor; bugün biraz fazla yapmak işini kolaylaştırır."
+    if summary.done_units >= expected * 1.2:
+        return "onde", f"Takvimin önündesin: kalan günlerde günde {per_day:g} birim yeter."
+    return "yolunda", f"Takvime uygun gidiyorsun: günde {per_day:g} birim yeter."
+
+
+def pace_for(db: Session, period, summary: pm.PeriodSummary, today: date) -> tuple[str, str]:
+    """Tek giriş: öğrenci, veli ve kurum yüzeyleri aynı tempo kararını verir."""
+    from app.services.pool_flags import pace_baseline
+    baseline, _n = pace_baseline(db, period.student_id, period, today)
+    return _pace(summary, pm.days_without_session(period, today), baseline)
 
 
 def _previous_briefs(db: Session, student_id: int, period, today: date, limit: int = 8):
@@ -149,7 +174,7 @@ def student_pool(user: User = Depends(_require_student), db: Session = Depends(g
                                   planned=planned, completed=done,
                                   can_return=(t.status != TaskStatus.COMPLETED and done == 0)))
     s = pm.period_summary(db, period, today)
-    pace, note = _pace(s, pm.days_without_session(period, today))
+    pace, note = pace_for(db, period, s, today)
     # Haftaya dağılım önerisi — şube ders programına göre (koç önizlemesiyle aynı kural); program yoksa eşit
     lesson_days = cg.lessons if cg is not None else {}
     dist = pm.preview_distribution(live, start=today, days=max(1, s.days_left), lesson_days=lesson_days)
@@ -364,8 +389,10 @@ def _iso(d) -> str | None:
     return d.isoformat() if d else None
 
 
-def history_row_out(r: dict) -> PoolHistoryRow:
+def history_row_out(r: dict, *, coach: bool = False) -> PoolHistoryRow:
+    from app.services.pool_flags import parse_closing_flags
     return PoolHistoryRow(
+        closing_flags=parse_closing_flags(r.get("closing_flags")) if coach else [],
         id=r["id"], opened_on=r["opened_on"].isoformat(), closed_on=_iso(r["closed_on"]),
         expected_next_on=_iso(r["expected_next_on"]), status=r["status"],
         status_label=PERIOD_STATUS_LABELS.get(r["status"], r["status"]), note=r["note"],
@@ -455,7 +482,7 @@ def period_detail_response(db: Session, period, *, audience: str, today: date | 
             it = next((i for i in items if i.id == t.pool_item_id), None)
             units += 1 if (it is not None and it.unit == UNIT_ETKINLIK and r.done > 0) else r.done
         days.append(PoolPeriodDay(date=d.isoformat(), weekday=d.weekday(), tasks=rows, done_units=units))
-    return PoolPeriodDetailResponse(period=history_row_out(det.row), items=live_items, removed_items=removed_items,
+    return PoolPeriodDetailResponse(period=history_row_out(det.row, coach=audience == "teacher"), items=live_items, removed_items=removed_items,
                                     days=days, audience=audience, today=today.isoformat())
 
 

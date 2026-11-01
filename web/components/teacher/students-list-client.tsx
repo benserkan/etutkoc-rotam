@@ -492,8 +492,25 @@ function StudentRow({
             <span className="text-sm text-muted-foreground">Görev yok</span>
           )}
         </Metric>
-        <Metric label="Son 7 gün">
-          {weekPct !== null ? (
+        <Metric label={s.pool ? "Havuz dönemi" : "Son 7 gün"}>
+          {s.pool ? (
+            <>
+              <span
+                className="text-sm tabular-nums text-foreground"
+                title={`${s.pool.done_units}/${s.pool.total_units} birim · son 7 günde ${s.pool.active_days_7}/${s.pool.pool_days_7} havuz gününde işaret`}
+                data-testid="student-row-pool"
+              >
+                %{s.pool.pct}{" "}
+                <span className="hidden text-muted-foreground md:inline">
+                  · {s.pool.done_units}/{s.pool.total_units}<span className="hidden lg:inline"> birim</span>
+                </span>
+              </span>
+              <Bar pct={s.pool.pct} />
+              {s.pool.idle_streak >= 2 ? (
+                <span className="text-[11px] font-medium text-rose-700">{s.pool.idle_streak} gündür dokunmadı</span>
+              ) : null}
+            </>
+          ) : weekPct !== null ? (
             <>
               <span className="text-sm tabular-nums text-foreground" title={`${wDone}/${wTot} görev tamamlandı`}>
                 %{weekPct}{" "}

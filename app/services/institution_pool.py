@@ -113,7 +113,7 @@ def _family(code: str) -> str | None:
 
 
 def build_overview(db: Session, *, institution_id: int, today: date | None = None) -> PoolOverview:
-    from app.routes.api_v2.pool_student import _pace  # öğrencinin gördüğü tempo cümlesiyle AYNI kural
+    from app.routes.api_v2.pool_student import pace_for  # öğrencinin gördüğü tempo cümlesiyle AYNI kural
 
     today = today or date.today()
     coaches = (db.query(User)
@@ -208,7 +208,7 @@ def build_overview(db: Session, *, institution_id: int, today: date | None = Non
             if period.expected_next_on and period.expected_next_on > period.opened_on:
                 span = (period.expected_next_on - period.opened_on).days
                 expected_pcts.append(min(100, int(round(100 * (today - period.opened_on).days / span))))
-            pace[_pace(sm, pm.days_without_session(period, today))[0]] += 1
+            pace[pace_for(db, period, sm, today)[0]] += 1
             days_open = (today - period.opened_on).days
             late_days = (today - period.expected_next_on).days if period.expected_next_on else 0
             if days_open >= PERIOD_NO_SESSION_RED_DAYS or late_days >= SESSION_LATE_DAYS:

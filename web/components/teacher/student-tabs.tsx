@@ -349,6 +349,7 @@ export function StudentTabs({ studentId, initial }: Props) {
           <GorevBreakdownCard
             today={data.gorev_today ?? null}
             week={data.gorev_week ?? null}
+            poolMode={!!data.program_summary.pool}
           />
 
           {/* Sınıf dönemleri — sınır yanlışsa koç düzeltir (tek dönemde gizli) */}
@@ -871,6 +872,9 @@ function StatusSummary({
   const weekPct = weekTotal > 0 ? Math.round((ps.week_task_pct ?? 0) * 100) : null;
   const consistency = Math.round((ps.consistency_7d ?? 0) * 100);
   const hitRate = Math.round((ps.hit_rate_7d ?? 0) * 100);
+  // Havuz öğrencisi: görev = kaba alınan kalem (yapılmayan kap gece silinir) → görev sayıları
+  // hep %100'e yapışır; dönem birimi ve havuz günü katılımı gösterilir.
+  const pool = ps.pool ?? null;
   const items = data.warning_items ?? [];
   const lvl = data.worst_warning_level;
   const paused = data.student.is_paused ?? false;
@@ -930,30 +934,58 @@ function StatusSummary({
               {data.headline || verdict.title}
             </p>
             <p className="mt-0.5 text-sm opacity-90">
-              {todayTotal > 0 ? (
-                <>
-                  Bugün <strong>{todayDone}/{todayTotal}</strong> görev
-                  {todayPct != null ? ` (%${todayPct})` : ""}
-                </>
+              {pool ? (
+                <span data-testid="status-pool-line">
+                  {pool.is_open ? `Bu dönem (${pool.day_no}. gün)` : "Son dönem"}{" "}
+                  <strong>%{pool.pct}</strong> · {pool.done_units}/{pool.total_units} birim ·{" "}
+                  son 7 günde <strong>{pool.active_days_7}/{pool.pool_days_7}</strong> havuz gününde işaret
+                  {pool.idle_streak >= 2 ? (
+                    <> · <strong>{pool.idle_streak} gündür dokunmadı</strong></>
+                  ) : null}
+                </span>
               ) : (
-                <>Bugün programı yok</>
-              )}{" "}·{" "}
-              Son 7 gün <strong>{weekDone}/{weekTotal}</strong> görev
-              {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
-              Tutarlılık %{consistency}
+                <>
+                  {todayTotal > 0 ? (
+                    <>
+                      Bugün <strong>{todayDone}/{todayTotal}</strong> görev
+                      {todayPct != null ? ` (%${todayPct})` : ""}
+                    </>
+                  ) : (
+                    <>Bugün programı yok</>
+                  )}{" "}·{" "}
+                  Son 7 gün <strong>{weekDone}/{weekTotal}</strong> görev
+                  {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
+                  Tutarlılık %{consistency}
+                </>
+              )}
             </p>
-            <dl className="mt-2 grid grid-cols-1 gap-x-3 gap-y-0.5 text-xs opacity-90 sm:grid-cols-[auto_1fr]">
-              <dt className="font-semibold">Son 7 gün görev</dt>
-              <dd>
-                Son 7 günde verilen görevlerin kaçı tamamlandı. Bugünün henüz
-                yapılmamış görevleri sayılmaz (gün sürüyor).
-              </dd>
-              <dt className="font-semibold">Tutarlılık</dt>
-              <dd>
-                Son 7 günde görev verilen günlerin kaçında en az bir görev
-                tamamlandı. Programsız günler ve henüz tik atılmamış bugün sayılmaz.
-              </dd>
-            </dl>
+            {pool ? (
+              <dl className="mt-2 grid grid-cols-1 gap-x-3 gap-y-0.5 text-xs opacity-90 sm:grid-cols-[auto_1fr]">
+                <dt className="font-semibold">Dönem yüzdesi</dt>
+                <dd>
+                  Havuza yazılan birimin (test; etkinlik 1 birim) kaçı yapıldı — öğrenci kaydı ve seans
+                  işareti birlikte. Havuzda görev yalnız kaba alınınca oluştuğu için görev sayısı kullanılmaz.
+                </dd>
+                <dt className="font-semibold">Havuz günü</dt>
+                <dd>
+                  Dönem içindeki her gün havuz günüdür; en az bir işaret atılan gün sayılır. Henüz
+                  işaret atılmamış bugün paydaya girmez.
+                </dd>
+              </dl>
+            ) : (
+              <dl className="mt-2 grid grid-cols-1 gap-x-3 gap-y-0.5 text-xs opacity-90 sm:grid-cols-[auto_1fr]">
+                <dt className="font-semibold">Son 7 gün görev</dt>
+                <dd>
+                  Son 7 günde verilen görevlerin kaçı tamamlandı. Bugünün henüz
+                  yapılmamış görevleri sayılmaz (gün sürüyor).
+                </dd>
+                <dt className="font-semibold">Tutarlılık</dt>
+                <dd>
+                  Son 7 günde görev verilen günlerin kaçında en az bir görev
+                  tamamlandı. Programsız günler ve henüz tik atılmamış bugün sayılmaz.
+                </dd>
+              </dl>
+            )}
           </div>
         )}
 
@@ -1038,9 +1070,11 @@ function SummaryCard({ row }: { row: SummaryRow }) {
 function GorevBreakdownCard({
   today,
   week,
+  poolMode = false,
 }: {
   today: GorevBreakdown | null;
   week: GorevBreakdown | null;
+  poolMode?: boolean;
 }) {
   const [scope, setScope] = React.useState<"today" | "week">("today");
   const g = scope === "today" ? today : week;
@@ -1078,6 +1112,12 @@ function GorevBreakdownCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {poolMode ? (
+          <p className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900" data-testid="gorev-pool-note">
+            Havuz öğrencisi: burada yalnız kaba alınan görevler sayılır, yapılmayan kap gece havuza döner.
+            Tamamlama için Durum Özeti&apos;ndeki dönem yüzdesine bak.
+          </p>
+        ) : null}
         {/* Manşet — GÖREV (etkinlik dahil) */}
         <div className="rounded-lg border border-border bg-muted/30 p-3">
           <p className="text-sm">

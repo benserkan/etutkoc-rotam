@@ -1028,16 +1028,9 @@ def pool_history(student_id: int, offset: int = Query(0, ge=0), limit: int = Que
     """K60: dönem geçmişi sınırsız — sayfalı; her dönemde ders kırılımı, devir giriş/çıkış, seans işareti,
     veli özeti durumu."""
     student = _get_owned_student(db, student_id, user.id)
+    from app.routes.api_v2.pool_student import history_row_out
     total, rows = pm.period_history(db, student.id, offset=offset, limit=limit)
-    out = [PoolHistoryRow(
-        id=r["id"], opened_on=r["opened_on"].isoformat(), closed_on=_iso(r["closed_on"]),
-        expected_next_on=_iso(r["expected_next_on"]), status=r["status"],
-        status_label=PERIOD_STATUS_LABELS.get(r["status"], r["status"]), note=r["note"],
-        total_units=r["total_units"], done_units=r["done_units"], pct=r["pct"], items_total=r["items_total"],
-        items_done=r["items_done"], session_marked_units=r["session_marked_units"], carried_in=r["carried_in"],
-        carried_out=r["carried_out"], has_session=r["has_session"],
-        parent_summary_sent_at=_iso(r["parent_summary_sent_at"]),
-        subjects=[PoolHistorySubject(**x) for x in r["subjects"]]) for r in rows]
+    out = [history_row_out(r, coach=True) for r in rows]
     return PoolHistoryResponse(total=total, offset=offset, limit=limit, rows=out)
 
 

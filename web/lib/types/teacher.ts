@@ -160,6 +160,8 @@ export interface TeacherStudentListItem {
   /** Son 7 gün (bugün dahil) GÖREV tamamlama — etkinlik görevleri dahil. */
   week_gorev_total?: number;
   week_gorev_done?: number;
+  /** Havuz öğrencisi: dönem durumu — doluysa "Son 7 gün" yerine dönem yüzdesi gösterilir. */
+  pool?: PoolStatus | null;
   has_pending_request: boolean;
   /** risk_analysis seviyesi (özet kutuları + risk süzgeci ile aynı). Pasifte null. */
   risk_level?: "critical" | "warning" | "ok" | null;
@@ -245,6 +247,27 @@ export interface StudentProgramSummary {
   week_tasks_total?: number;
   week_tasks_done?: number;
   week_task_pct?: number;
+  /** Havuz öğrencisi: dönem durumu (görev bazlı sayılar havuzda %100'e yapışır). */
+  pool?: PoolStatus | null;
+}
+
+/** Havuz öğrencisinin dönem durumu (backend pool_metrics.PoolStatus). */
+export interface PoolStatus {
+  period_id: number;
+  is_open: boolean;
+  status: string;
+  opened_on: string;
+  expected_next_on: string | null;
+  closed_on: string | null;
+  total_units: number;
+  done_units: number;
+  pct: number;
+  day_no: number;
+  days_planned: number;
+  pool_days_7: number;
+  active_days_7: number;
+  idle_streak: number;
+  last_active: string | null;
 }
 
 export interface GorevSubjectItem {
@@ -1961,6 +1984,8 @@ export interface AnalyticsWeekPoint {
   planned: number;
   completed: number;
   pct: number;
+  /** hafta | donem (havuz dönemi — birim bazlı) */
+  kind?: "hafta" | "donem";
 }
 
 export interface AnalyticsDayFlag {

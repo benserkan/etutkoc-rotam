@@ -728,6 +728,16 @@ class PoolHistorySubject(BaseModel):
     pct: int
 
 
+class PoolClosingFlag(BaseModel):
+    """Dönem kapanırken üretilen uyarı (yalnız koça)."""
+    code: str
+    level: str
+    layer: str | None = None
+    title: str
+    detail: str | None = None
+    evidence: list[list[str]] = []
+
+
 class PoolHistoryRow(BaseModel):
     id: int
     opened_on: str
@@ -747,6 +757,7 @@ class PoolHistoryRow(BaseModel):
     has_session: bool
     parent_summary_sent_at: str | None = None
     subjects: list[PoolHistorySubject] = []
+    closing_flags: list[PoolClosingFlag] = []   # yalnız koç yüzeylerinde dolu
 
 
 class PoolHistoryResponse(BaseModel):

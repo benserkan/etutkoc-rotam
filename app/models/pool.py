@@ -178,6 +178,8 @@ class StudyPeriod(Base):
     # K53: veliye gönderilen seans özeti (rehber önizleyip gönderdi; otomatik gitmez)
     parent_summary_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     parent_summary_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Kapanış anındaki havuz bayrakları (JSON liste) — yeni dönem açılınca kaybolmasın
+    closing_flags_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

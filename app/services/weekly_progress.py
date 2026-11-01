@@ -130,26 +130,10 @@ def _calendar_fill(db: Session, student_id: int, weeks: list[Week]) -> list[Week
 
 
 def _period_weeks(db: Session, student_id: int, today: date) -> list[Week]:
-    """Havuz öğrencisi: her çalışma dönemi bir 'hafta' (seans günü yeni döneme ait)."""
-    from app.models.pool import StudyPeriod
-    periods = (db.query(StudyPeriod).filter(StudyPeriod.student_id == student_id)
-               .order_by(StudyPeriod.opened_on.asc(), StudyPeriod.id.asc()).all())
-    out: list[Week] = []
-    for i, p in enumerate(periods):
-        if p.closed_on is not None:
-            # Seans günü yalnız o gün yeni dönem açıldıysa yeni döneme aittir; açılmadıysa
-            # (gün güne geçiş, ara, görüşmesiz kapanış) kapanış günü bu dönemde kalır.
-            nxt = periods[i + 1].opened_on if i + 1 < len(periods) else None
-            end = p.closed_on - timedelta(days=1) if nxt == p.closed_on else p.closed_on
-        else:
-            exp = (p.expected_next_on - timedelta(days=1)) if p.expected_next_on else p.opened_on
-            end = max(exp, today)
-        if i + 1 < len(periods) and periods[i + 1].opened_on <= end:
-            end = periods[i + 1].opened_on - timedelta(days=1)
-        if end < p.opened_on:
-            continue
-        out.append(Week(-1_000_000 - p.id, p.opened_on, end, kind="donem"))
-    return out
+    """Havuz öğrencisi: her çalışma dönemi bir 'hafta' (gün aralığı kuralı pool_metrics'te tek merkez)."""
+    from app.services import pool_metrics
+    return [Week(-1_000_000 - p.id, a, b, kind="donem")
+            for p, a, b in pool_metrics.period_ranges(db, student_id, today)]
 
 
 def _merge_program_and_period_weeks(programs: list[Week], periods: list[Week]) -> list[Week]:
@@ -386,12 +370,31 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
     def tasks_in(a: date, b: date) -> list[Task]:
         return [t for t in tasks if a <= t.date <= b]
 
+    # Havuz dönemleri: görev = kaba alınan kalem (yapılmayan kap gece silinir) → görev uyumu hep
+    # %100'e yapışırdı. Dönem haftasında uyum/yük/boş gün havuz birimiyle ölçülür (pool_metrics).
+    pool_periods: dict[int, object] = {}
+    if any(w.kind == "donem" for w in weeks):
+        from app.models.pool import StudyPeriod
+        for p in (db.query(StudyPeriod).options(joinedload(StudyPeriod.items))
+                  .filter(StudyPeriod.student_id == student.id).all()):
+            pool_periods[-1_000_000 - p.id] = p
+
     def slice_metrics(w: Week, n: int) -> dict:
         n = max(0, min(n, w.days))
         end = w.start + timedelta(days=n - 1)
         dates = [w.start + timedelta(days=i) for i in range(n)]
         m = _metrics(tasks_in(w.start, end) if n > 0 else [], dates)
         m["load"] = len(tasks_in(w.start, w.end))
+        pp = pool_periods.get(w.program_id) if w.kind == "donem" else None
+        if pp is not None:
+            from app.services import pool_metrics
+            done_u, total_u = pool_metrics.period_units_upto(db, pp, None if n >= w.days else end, today)
+            m["gorev_done"], m["gorev_total"] = done_u, total_u
+            m["gorev_pct"] = _pct(done_u, total_u) if n > 0 and total_u > 0 else None
+            m["load"] = total_u
+            act = {t.date for t in tasks_in(w.start, end) if _is_done(t) or
+                   any(int(i.completed_count or 0) > 0 for i in t.book_items)} if n > 0 else set()
+            m["empty_days"] = sum(1 for d in dates if d not in act)
         return m
 
     # Yeni konu: konunun ilk çalışıldığı gün (tüm geçmiş)
@@ -453,6 +456,15 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
         if key == "load":
             card["hint"] = hint
             card["value_label"] = f"{cv} görev"
+            if cur.kind == "donem":
+                card["hint"] = "Bu dönem havuza yazdığın toplam birim (test; etkinlik 1 birim)."
+                card["value_label"] = f"{cv} birim"
+        if cur.kind == "donem" and key == "gorev_pct":
+            card["name"] = "Havuz tamamlama"
+            card["hint"] = ("Yapılan ÷ havuzdaki birim (test), bugüne kadarki günler. Havuzda görev "
+                            "yalnız kaba alınınca oluştuğu için görev sayısı yerine birim ölçülür.")
+        if cur.kind == "donem" and key == "empty_days":
+            card["hint"] = "Dönem içinde hiçbir işaret atılmayan gün (kap kurulmadıysa da sayılır)."
         if run >= TREND_RUN and status in ("normal", "above", "insufficient"):
             tail = full_series[-(run + 1):]
             card["verdict"] += " " + f"Son {run} haftadır her hafta kötüleşiyor (" + \
@@ -462,13 +474,26 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
     # Ders dengesi (son 3 tam hafta + bu hafta)
     recent = [w for w in history if w.end >= cur.start - timedelta(days=28)][-3:]
     subj_tot: dict[str, list[int]] = defaultdict(lambda: [0, 0])
-    for w in recent:
-        for nm, d_, t_ in _metrics(tasks_in(w.start, w.end), [])["subjects"]:
+    if cur.kind == "donem":
+        # Havuzda yapılmayan kalem görev değildir → görev bazlı denge bırakılan dersi göremez.
+        # Kapanmış dönemlerin kalem birimleri kullanılır; açık dönem yarım olduğu için girmez.
+        from app.services import pool_metrics
+        src = [w for w in recent if w.kind == "donem"] + ([cur] if ended else [])
+        for w in src:
+            pp = pool_periods.get(w.program_id)
+            if pp is None:
+                continue
+            for nm, (d_, t_) in pool_metrics.subject_units(db, pp).items():
+                subj_tot[nm][0] += d_
+                subj_tot[nm][1] += t_
+    else:
+        for w in recent:
+            for nm, d_, t_ in _metrics(tasks_in(w.start, w.end), [])["subjects"]:
+                subj_tot[nm][0] += d_
+                subj_tot[nm][1] += t_
+        for nm, d_, t_ in cur_m["subjects"]:
             subj_tot[nm][0] += d_
             subj_tot[nm][1] += t_
-    for nm, d_, t_ in cur_m["subjects"]:
-        subj_tot[nm][0] += d_
-        subj_tot[nm][1] += t_
     balance = None
     elig = {nm: v for nm, v in subj_tot.items() if v[1] >= AVOID_MIN_TASKS and nm != "Diğer"}
     if len(elig) >= 2:
@@ -481,7 +506,8 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
         balance = {"subject": worst, "subject_pct": wp, "others_pct": op, "avoided": avoided}
     cards.append({
         "key": "balance", "name": "Ders dengesi", "group": "risk", "unit": "%", "direction": 1,
-        "hint": "Son 3 hafta ve bu hafta en çok bırakılan dersin tamamlanma oranı.",
+        "hint": ("Son dönemlerde havuzda en çok bırakılan dersin tamamlanma oranı (kalem birimi)."
+                 if cur.kind == "donem" else "Son 3 hafta ve bu hafta en çok bırakılan dersin tamamlanma oranı."),
         "value": balance["subject_pct"] if balance else None,
         "value_label": f"{balance['subject']} %{balance['subject_pct']}" if balance else "—",
         "prev": None, "prev_label": "—", "status": ("below" if balance and balance["avoided"] else
@@ -492,7 +518,7 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
     })
 
     # Deneme neti (karne/elle genel deneme, aynı seri) + yanlış arşivi + talep/devir
-    cards += _extra_cards(db, student, cur, k, ended, prev_w)
+    cards += _extra_cards(db, student, cur, k, ended, prev_w, pool_periods)
 
     order = {g[0]: i for i, g in enumerate(GROUPS)}
     cards.sort(key=lambda c: order[c["group"]])
@@ -635,7 +661,8 @@ def _reword(cards: list[dict], actions: list[dict], *, ended: bool, period: bool
             a["why"] = v
 
 
-def _extra_cards(db: Session, student: User, cur: Week, k: int, ended: bool, prev_w: Week | None) -> list[dict]:
+def _extra_cards(db: Session, student: User, cur: Week, k: int, ended: bool, prev_w: Week | None,
+                 pool_periods: dict | None = None) -> list[dict]:
     from app.models.exam_result import ExamResult, analysis_exam_filter
     from app.models.task_request import TaskRequest
     from app.models.wrong_question import WrongQuestion
@@ -682,6 +709,11 @@ def _extra_cards(db: Session, student: User, cur: Week, k: int, ended: bool, pre
         a, b = rng(w)
         reqs = db.query(TaskRequest).filter(TaskRequest.student_id == student.id,
                                             TaskRequest.created_at >= a, TaskRequest.created_at < b).count()
+        pp = (pool_periods or {}).get(w.program_id) if w.kind == "donem" else None
+        if pp is not None:
+            # Havuz: görev devri yok; kalem devri sayılır (bu döneme devirle gelen kalem)
+            from app.services import pool_metrics
+            return reqs, pool_metrics.carry_counts(db, pp)[0]
         carried = db.query(Task).filter(Task.student_id == student.id, Task.carried_at.isnot(None),
                                         Task.date >= w.start, Task.date <= w.end).count()
         return reqs, carried
@@ -700,8 +732,12 @@ def _extra_cards(db: Session, student: User, cur: Week, k: int, ended: bool, pre
     pr = req_counts(prev_w) if prev_w else None
     out.append({
         "key": "requests", "name": "Talep ve devir", "group": "risk", "unit": "", "direction": -1,
-        "hint": "Görev değişiklik talebi ve sonraki haftaya devredilen görev.",
-        "value": r1 + d1, "value_label": f"{r1} talep · {d1} devir", "prev": None,
+        "hint": ("Görev değişiklik talebi ve önceki dönemden devirle gelen havuz kalemi."
+                 if cur.kind == "donem" else "Görev değişiklik talebi ve sonraki haftaya devredilen görev."),
+        "value": r1 + d1,
+        "value_label": (f"{r1} talep · {d1} kalem devirle geldi" if cur.kind == "donem"
+                        else f"{r1} talep · {d1} devir"),
+        "prev": None,
         "prev_label": f"{pr[0]} · {pr[1]}" if pr else "—", "status": "info", "low": None, "high": None,
         "baseline": [], "trend_run": 0, "trend": False,
         "verdict": f"Geçen hafta {pr[0]} talep, {pr[1]} devir vardı." if pr else "Geçen hafta kaydı yok.",
@@ -713,7 +749,8 @@ def _actions(student: User, cards: list[dict], days: list[dict], balance: dict |
              projection: dict, week: dict, deneme: dict | None = None) -> list[dict]:
     by = {c["key"]: c for c in cards}
     sid = student.id
-    week_href = f"/teacher/students/{sid}/week?start={week['start']}"
+    week_href = (f"/teacher/students/{sid}/pool" if week.get("kind") == "donem"
+                 else f"/teacher/students/{sid}/week?start={week['start']}")
     out: list[dict] = []
     # 1. Geçmiş günlerde kalan görevler
     left = [d for d in days if d["state"] in ("partial", "missed")]
@@ -729,7 +766,8 @@ def _actions(student: User, cards: list[dict], days: list[dict], balance: dict |
                     f"Bu hafta {len(left)} günde {n} görev yapılmadı ({names})."
                     )
                    + (" Yük zaten normalin üst sınırında." if by.get("load", {}).get("status") == "high" else ""),
-            "cta_label": "Haftalık programı aç", "cta_href": week_href,
+            "cta_label": "Havuzu aç" if week.get("kind") == "donem" else "Haftalık programı aç",
+            "cta_href": week_href,
             "agenda": f"Yapılmayan {n} görevi konuş, hafta içine dağıt.",
         })
     # 2. Kaçınılan ders
@@ -737,7 +775,8 @@ def _actions(student: User, cards: list[dict], days: list[dict], balance: dict |
         out.append({
             "key": "avoid", "title": f"{balance['subject']} için seansta konuş, yükü ayarla",
             "why": f"Son haftalarda en çok bırakılan ders: %{balance['subject_pct']} (diğer dersler %{balance['others_pct']}).",
-            "cta_label": f"{balance['subject']} görevlerini aç", "cta_href": week_href,
+            "cta_label": (f"Havuzda {balance['subject']} kalemlerini aç" if week.get("kind") == "donem"
+                          else f"{balance['subject']} görevlerini aç"), "cta_href": week_href,
             "agenda": f"{balance['subject']}: neden bırakılıyor? Yükü/kaynağı konuş.",
         })
     # 3. Gününde işaretleme / gece payı
@@ -762,7 +801,8 @@ def _actions(student: User, cards: list[dict], days: list[dict], balance: dict |
             "key": "load", "title": "Haftalık yükü bir miktar azalt",
             "why": f"Bu hafta {load['value_label']} verildi (genelde {round(load['low'])}–{round(load['high'])}); "
                    f"uyum {gp['value_label']} ile normalin altında.",
-            "cta_label": "Haftalık programı aç", "cta_href": week_href,
+            "cta_label": "Havuzu aç" if week.get("kind") == "donem" else "Haftalık programı aç",
+            "cta_href": week_href,
             "agenda": "Yük fazla mı geldi? Görev sayısını birlikte ayarla.",
         })
     # 5. Doğruluk düştü

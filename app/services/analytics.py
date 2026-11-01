@@ -103,6 +103,8 @@ class StudentSnapshot:
     good_signals: list[Warning] = field(default_factory=list)
     headline: str = ""
     parent_level: Literal["green", "amber", "red"] = "green"
+    # Havuz öğrencisi: dönem birimi + havuz-günü katılımı (pool_metrics.PoolStatus); gün-günde None
+    pool: object | None = None
 
 
 # ---------------------------- Yardımcılar ----------------------------
@@ -1205,6 +1207,15 @@ def student_snapshot(
     rate30 = recent_rate(db, student.id, today, 30, tests_only=True)
     cons7 = consistency_score(db, student.id, today, 7)
     hit7 = hit_rate(db, student.id, today, 7)
+    pool_st = None
+    if getattr(student, "program_mode", None) == "havuz":
+        # Havuzda görev = kaba alınan kalem; yapılmayan kap gece silinir → görev bazlı
+        # tutarlılık/tutturma hep %100'e yapışır. Havuz günü ve dönem birimiyle ölçülür.
+        from app.services import pool_metrics
+        pool_st = pool_metrics.student_status(db, student, today)
+        c = pool_metrics.consistency(db, student.id, today, 7)
+        cons7 = c if c is not None else 0.0
+        hit7 = (pool_st.pct / 100) if pool_st is not None else 0.0
     # Gerçekçi projeksiyon — 28 günlük DOW penceresi + 5 günlük sınav tamponu
     proj = compute_projection(db, student, today, window_days=28, buffer_days=5)
     from app.services.student_flags import evaluate_flags
@@ -1225,4 +1236,5 @@ def student_snapshot(
         good_signals=_rep.good,
         headline=_rep.headline,
         parent_level=_rep.parent_level,
+        pool=pool_st,
     )

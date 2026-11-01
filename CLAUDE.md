@@ -33,6 +33,30 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   defterler (28 kitap) SIRADA** — bazılarının demosunda içindekiler sayfası var (görsel okuma gerekir).
 - Seed (`seed_book_catalog_json.py`): JSON'daki konu adı aynı derste birden çok sınıfta varsa kitabın hedef sınıfı önce.
 
+## HAVUZ VERİ DOĞRULUĞU H1–H5 — Taha #84 analizi (2026-11-01, migration `x8z1e4f5e00a`)
+
+- **Teşhis (canlı, salt okuma):** 4. dönem 22 Eki–1 Kas %57 (44/77) ama öğrenci detayı/liste/analitik/haftalık
+  ilerleme "%100 · yolunda" diyordu; yeni dönem açılınca önceki dönemin uyarıları kayboluyordu.
+- **H1 — TEK MERKEZ `app/services/pool_metrics.py`:** havuzda görev = kaba alınan kalem, yapılmayan kap gece
+  silinir → görev bazlı ölçüler %100'e yapışır. Havuz öğrencisinde: tutarlılık = son N günün havuz günlerinden
+  işaretli olanlar (`consistency`), tutturma = dönem yüzdesi, `student_status` (dönem %, birim, N. gün, son 7 gün
+  havuz günü/aktif gün, `idle_streak`). `student_snapshot.pool` → detay `program_summary.pool` + liste
+  `TeacherStudentListItem.pool` (web Durum Özeti + liste "Havuz dönemi" sütunu + Görev kartında not). Analitik:
+  havuz dönemi trendde `kind=donem` nokta (birim), ritim takviminde havuz günü planlı, 30 g tutarlılık havuzdan.
+  Haftalık ilerleme dönem haftası: "Havuz tamamlama" (birim, aynı noktaya kadar `period_units_upto`), yük = birim,
+  boş gün = işaretsiz gün. `weekly_progress._period_weeks` artık `pool_metrics.period_ranges`'i kullanır.
+- **H2:** `study_periods.closing_flags_json` — `pool_mode.close_period` kapanmadan önce
+  `pool_flags.closing_snapshot` yazar (best-effort); `evaluate_pool_flags(period=)` belirli dönemi değerlendirir.
+  Koç dönem geçmişi kartı + dönem penceresi "Dönem kapanırken uyarılar" (`shared/pool-closing-flags.tsx`);
+  öğrenci/veli yüzeylerine GİTMEZ (`history_row_out(coach=)`). Yeni dönemin ilk 3 gününde sarı
+  `pool_prev_period` "Geçen dönem uyarıyla kapandı" (koça özel). Geriye dönük: `scripts/backfill_period_closing_flags.py`
+  (kuru varsayılan, `--apply`). Yan düzeltme: kap işaretlemiş öğrenci giriş damgası yoksa da "kâğıt öğrencisi" sayılmaz.
+- **H3:** ders dengesi havuzda kapanmış dönemlerin kalem birimleriyle (Taha: TYT Fizik %0); önlem `/pool`'a gider.
+- **H4:** öğrenci temposu sabit "günde >2 birim = geride" yerine `pool_student.pace_for`: alışkanlık varsa koçun
+  K42 kuralı, yoksa gereken hız > planlanan hız ×1,3; ilk gün asla geride değil (öğrenci/veli/kurum aynı karar).
+- **H5:** "Talep ve devir" havuzda devirle gelen kalemi sayar.
+- Test YENİ `test_pool_h1_h5.py` 27/27 · havuz takımları + teacher_read/students/analytics_rich yeşil.
+
 ## HAVUZ "SEANSI BİTİR" — SEANS TARİHİ SEÇİLEBİLİR (2026-11-01, migration YOK)
 
 - Saha (Taha #84): 22–29 Eki dönemi, seans yapılmış ama "Seansı bitir"e basılmamış → dönem açık kaldı, "beklenen seans geçti"

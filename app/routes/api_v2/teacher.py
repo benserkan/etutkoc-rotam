@@ -121,6 +121,7 @@ from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, 
 from app.routes.api_v2.schemas.student import DenemeResultsBody
 from app.routes.api_v2.schemas.common import task_video_refs, MutationResponse
 from app.routes.api_v2.schemas.teacher import (
+    pool_status_out,
     ExamNotifyParentsBody,
     ExamNotifyParentsResult,
     ExamParentPreviewGoal,
@@ -894,6 +895,7 @@ def teacher_students_v2(
             week_pct=week_pct,
             week_gorev_total=_gw.gorev_total,
             week_gorev_done=_gw.gorev_done,
+            pool=pool_status_out(sn.pool) if sn else None,
             has_pending_request=s.id in pending_ids,
             risk_level=(
                 None if not s.is_active else
@@ -1261,6 +1263,7 @@ def teacher_student_detail_v2(
             week_tasks_total=week_tasks_total,
             week_tasks_done=week_done,
             week_task_pct=week_task_pct,
+            pool=pool_status_out(sn.pool),
         ),
         worst_warning_level=sn.worst_warning_level,
         warnings=warnings_text,
@@ -10655,11 +10658,19 @@ def build_student_analytics(db: Session, student: User, coach_id: int | None):
         else:
             cur = 0
 
+    is_pool = getattr(student, "program_mode", None) == "havuz"
+    if is_pool:
+        # Havuz: her dönem günü programlıdır (yapılmayan kap silindiği için görev günü yanıltır)
+        from app.services import pool_metrics
+        _c30 = pool_metrics.consistency(db, student.id, today, 30)
+        cons30 = _c30 if _c30 is not None else 0.0
+    else:
+        cons30 = consistency_score(db, student.id, today, 30)
     summary = AnalyticsSummary(
         rate_7d=round(snap.rate_7d, 2),
         rate_30d=round(snap.rate_30d, 2),
         consistency_7d_pct=round(snap.consistency_7d * 100),
-        consistency_30d_pct=round(consistency_score(db, student.id, today, 30) * 100),
+        consistency_30d_pct=round(cons30 * 100),
         hit_rate_7d_pct=min(100, round(snap.hit_rate_7d * 100)),
         active_days_30=active_days_30,
         longest_streak_30=longest,
@@ -10676,19 +10687,38 @@ def build_student_analytics(db: Session, student: User, coach_id: int | None):
         b["planned"] += wk_p[d]
         b["completed"] += wk_c.get(d, 0)
     weekly_trend = []
+    pool_ranges = []
+    if is_pool:
+        from app.services import pool_metrics
+        pool_ranges = [r for r in pool_metrics.period_ranges(db, student.id, today)
+                       if r[2] >= today - timedelta(days=69)]
+    first_pool = pool_ranges[0][1] if pool_ranges else None
     for mon in sorted(wk_buckets.keys()):
+        if first_pool is not None and mon + timedelta(days=6) >= first_pool:
+            continue  # havuz dönemine giren haftalar aşağıda dönem olarak eklenir
         b = wk_buckets[mon]
         pct = round(100 * b["completed"] / b["planned"]) if b["planned"] > 0 else 0
         weekly_trend.append(AnalyticsWeekPoint(
             week_start=mon.isoformat(), label=_format_trend_label(mon),
             planned=b["planned"], completed=b["completed"], pct=pct))
+    for p_, a_, b_ in pool_ranges:
+        # Havuz dönemi = bir nokta: planlanan = havuza yazılan birim, tamamlanan = yapılan birim
+        from app.services import pool_mode as _pm
+        sm_ = _pm.period_summary(db, p_, today)
+        weekly_trend.append(AnalyticsWeekPoint(
+            week_start=a_.isoformat(), label=f"{_format_trend_label(a_)} dönemi",
+            planned=sm_.total_units, completed=sm_.done_units, pct=sm_.pct, kind="donem"))
 
     # --- Aktivite takvimi (son 35 gün) ---
     flags35 = daily_activity_flag_series(db, student.id, today, 35)
     plan35 = daily_planned_series(db, student.id, today, 35, tests_only=False)
+    pool35: set = set()
+    if is_pool:
+        from app.services import pool_metrics
+        pool35 = pool_metrics.pool_days(db, student.id, today - timedelta(days=34), today, today)
     activity_calendar = [
         AnalyticsDayFlag(date=d.isoformat(), weekday=d.weekday(),
-                         active=flags35[d], has_plan=plan35.get(d, 0) > 0)
+                         active=flags35[d], has_plan=plan35.get(d, 0) > 0 or d in pool35)
         for d in sorted(flags35.keys())
     ]
 

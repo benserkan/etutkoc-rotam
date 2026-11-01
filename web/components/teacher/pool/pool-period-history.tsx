@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { PoolPeriodDialog } from "@/components/shared/pool-period-dialog";
+import { ClosingFlagsLine } from "@/components/shared/pool-closing-flags";
 import { PoolParentSummaryDialog } from "./pool-parent-summary-dialog";
 import {
   getPoolHistory, getPoolPeriodDeleteImpact, getPoolPeriodDetail, poolHistoryKey, poolPeriodDeleteImpactKey,
@@ -214,6 +215,7 @@ function PeriodCard({ p, onOpen, onSummary, onDelete }: {
             {p.parent_summary_sent_at && <span className="inline-flex items-center gap-1 text-emerald-700"><MailCheck className="size-3" aria-hidden />veliye gönderildi</span>}
             {p.note && <span className="break-words">not: {p.note}</span>}
           </span>
+          <ClosingFlagsLine flags={p.closing_flags} />
         </button>
 
         {/* eylemler */}

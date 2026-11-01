@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import {
   SOURCE_LABELS, UNIT_LABELS, type PoolPeriodDayTask, type PoolPeriodDetailItem, type PoolPeriodDetailResponse,
 } from "@/lib/api/pool";
+import { ClosingFlagsPanel } from "@/components/shared/pool-closing-flags";
 
 const DAY_SHORT = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
@@ -84,6 +85,7 @@ function PeriodBody({ data, studentName }: { data: PoolPeriodDetailResponse; stu
         </div>
       )}
       {coach && p.note && <p className="text-xs text-muted-foreground">Not: {p.note}</p>}
+      {coach && <ClosingFlagsPanel flags={p.closing_flags} />}
       <div className="flex gap-1 rounded-md bg-muted p-1 text-sm" role="tablist">
         <TabButton active={tab === "items"} onClick={() => setTab("items")} testid="pool-period-tab-items">Havuz kalemleri</TabButton>
         <TabButton active={tab === "days"} onClick={() => setTab("days")} testid="pool-period-tab-days">Gün gün</TabButton>

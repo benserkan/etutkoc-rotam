@@ -65,7 +65,7 @@ class ProgramHistoryResponse(BaseModel):
     periods_count: int = 0
 
 
-def _response(db: Session, student: User, *, include_drafts: bool) -> ProgramHistoryResponse:
+def _response(db: Session, student: User, *, include_drafts: bool, coach: bool = False) -> ProgramHistoryResponse:
     rows = build_program_history(db, student, include_drafts=include_drafts)
     out: list[HistoryEntryOut] = []
     for e in rows:
@@ -77,7 +77,7 @@ def _response(db: Session, student: User, *, include_drafts: bool) -> ProgramHis
                 deneme_units=e.deneme_units, deneme_done=e.deneme_done, pct=e.pct,
                 days_with_tasks=e.days_with_tasks)))
         elif e.kind == "period":
-            out.append(HistoryEntryOut(kind="period", period=history_row_out(e.period), period_current=e.current))
+            out.append(HistoryEntryOut(kind="period", period=history_row_out(e.period, coach=coach), period_current=e.current))
         else:
             s = e.switch or {}
             out.append(HistoryEntryOut(kind="switch", switch=HistorySwitchOut(
@@ -94,7 +94,7 @@ def _response(db: Session, student: User, *, include_drafts: bool) -> ProgramHis
 def teacher_program_history(student_id: int, user: User = Depends(_require_teacher),
                             db: Session = Depends(get_db)) -> ProgramHistoryResponse:
     student = _get_owned_student(db, student_id, user.id)
-    return _response(db, student, include_drafts=False)
+    return _response(db, student, include_drafts=False, coach=True)
 
 
 @router.get("/student/program-history", response_model=ProgramHistoryResponse)

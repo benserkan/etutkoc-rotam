@@ -2338,7 +2338,7 @@ def parent_student_pool_v2(student_id: int, user: User = Depends(_require_parent
     kalemi ve rehbere özel notlar görünmez."""
     from app.models import Task, TaskStatus
     from app.models.pool import APPROVAL_PENDING, APPROVAL_REJECTED, PERIOD_STATUS_LABELS
-    from app.routes.api_v2.pool_student import _pace, _title
+    from app.routes.api_v2.pool_student import _title, pace_for
     from app.routes.api_v2.schemas.pool import (
         ParentPoolCup, ParentPoolItem, ParentPoolResponse, PoolPeriodBrief, StudentPoolSummary,
     )
@@ -2379,7 +2379,7 @@ def parent_student_pool_v2(student_id: int, user: User = Depends(_require_parent
                  .order_by(Task.order).all())
     in_cup = {t.pool_item_id for t in cup_tasks if t.status != TaskStatus.COMPLETED}
     s = pm.period_summary(db, period, today)
-    pace, note = _pace(s, pm.days_without_session(period, today))
+    pace, note = pace_for(db, period, s, today)
     return ParentPoolResponse(
         mode=mode, period_id=period.id, opened_on=period.opened_on.isoformat(),
         expected_next_on=period.expected_next_on.isoformat() if period.expected_next_on else None,

@@ -673,6 +673,17 @@ export interface PoolHistoryRow {
   has_session: boolean;
   parent_summary_sent_at: string | null;
   subjects: { subject: string; total: number; done: number; pct: number }[];
+  /** Dönem kapanırken üretilen uyarılar (yalnız koç yüzeylerinde dolu). */
+  closing_flags?: PoolClosingFlag[];
+}
+
+export interface PoolClosingFlag {
+  code: string;
+  level: "red" | "amber" | "green" | string;
+  layer: string | null;
+  title: string;
+  detail: string | null;
+  evidence: string[][];
 }
 
 export interface PoolHistoryResponse {

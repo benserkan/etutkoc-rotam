@@ -68,7 +68,12 @@ DAY_HEAVY_FACTOR = 3.0       # alışkanlığın 3 katı (alışkanlık yoksa 25
 DAY_HEAVY_NO_BASELINE = 25
 
 COACH_ONLY_CODES = ("pool_no_period", "pool_empty", "pool_session_overdue", "pool_session_late",
-                    "pool_dy_missing", "pool_avoided", "pool_exam_cross", "pool_bulk_mark")
+                    "pool_dy_missing", "pool_avoided", "pool_exam_cross", "pool_bulk_mark",
+                    "pool_prev_period")
+# H2 (2026-11-01, Taha #84): bayraklar yalnız açık dönemden hesaplanıyordu; seans kapanınca
+# önceki dönemin uyarıları iz bırakmadan kayboluyordu. Kapanışta anlık görüntü saklanır ve
+# yeni dönemin ilk PREV_PERIOD_DAYS gününde koça tek kart olarak taşınır.
+PREV_PERIOD_DAYS = 3
 
 
 def _aw(dt):
@@ -136,12 +141,13 @@ def _task_units_done(t: Task) -> int:
 def is_paper_student(db: Session, student: User, period: StudyPeriod | None) -> bool:
     """K40: hiç kayıt girmeyen öğrenci. Uygulamaya hiç girmemişse hemen; girmişse en az
     bir kapanmış dönem olup hiçbir dönemde öğrenci kaydı (completed) yoksa."""
-    if student.last_active_at is None:
-        return True
+    # Kap işaretlemiş öğrenci uygulamayı kullanıyordur (giriş damgası eksik olsa da) → kâğıt değil
     any_done = (db.query(PoolItem.id)
                 .filter(PoolItem.student_id == student.id, PoolItem.completed > 0).first())
     if any_done is not None:
         return False
+    if student.last_active_at is None:
+        return True
     closed = (db.query(StudyPeriod.id)
               .filter(StudyPeriod.student_id == student.id, StudyPeriod.status != PERIOD_OPEN,
                       StudyPeriod.items.any(and_(PoolItem.removed_at.is_(None), _counts_filter())))
@@ -260,7 +266,10 @@ def paper_trend(db: Session, student_id: int, period: StudyPeriod | None, today:
 
 # ---------------------------------------------------------------- ana giriş
 
-def evaluate_pool_flags(db: Session, student: User, today: date) -> FlagReport:
+def evaluate_pool_flags(db: Session, student: User, today: date, *,
+                        period: StudyPeriod | None = None) -> FlagReport:
+    """period verilirse o dönem (kapanmış olsa da) `today` günündeki gibi değerlendirilir —
+    kapanış anlık görüntüsü için. Verilmezse açık dönem."""
     from app.services.analytics import Warning
 
     rep = FlagReport(parent_level="green")  # K52: veliye havuz uyarısı gitmez
@@ -278,7 +287,8 @@ def evaluate_pool_flags(db: Session, student: User, today: date) -> FlagReport:
     now = datetime.now(timezone.utc)
     created = _aw(student.created_at)
     age = max(0, (now - created).days) if created else None
-    period = pm.get_open_period(db, student.id)
+    live_eval = period is None
+    period = period or pm.get_open_period(db, student.id)
 
     # ---------------------------------------------------------------- P. dönem
     if period is None:
@@ -443,6 +453,16 @@ def evaluate_pool_flags(db: Session, student: User, today: date) -> FlagReport:
                 f"Son dönemlerin {n} tanesinde bu dersin kalemleri dönemin son günlerine kaldı ya da yapılmadı.",
                 [("Dönem", f"{n}/{PACE_HISTORY_PERIODS}"), ("Kural", "K45 — yalnız bilgi, seansta konuş")])
 
+    # ---------------------------------------------------------------- P. geçen dönem (H2)
+    if live_eval and days_open < PREV_PERIOD_DAYS:
+        prev = previous_closing_flags(db, student.id, period)
+        bad = [f for f in prev if f.get("level") in ("red", "amber")]
+        if bad:
+            add("P", "amber", "pool_prev_period", "Geçen dönem uyarıyla kapandı",
+                "Önceki dönem kapanırken: " + "; ".join(f["title"] for f in bad[:3])
+                + ". Yeni dönemin ilk günlerinde bunu konuş.",
+                [(f["title"], f.get("detail") or "") for f in bad[:6]])
+
     # ---------------------------------------------------------------- G. iyi
     if summary.total_units > 0 and summary.pct >= 100:
         add("G", "green", "pool_good_done", "Havuzu bitirdi",
@@ -450,6 +470,40 @@ def evaluate_pool_flags(db: Session, student: User, today: date) -> FlagReport:
 
     _finish(rep, flags, period, summary)
     return rep
+
+
+def closing_snapshot(db: Session, student: User, period: StudyPeriod, closed_on: date) -> str:
+    """Dönem kapanırken üretilen bayraklar (JSON). Kapanış günündeki değerlendirme: kapanış günü
+    sürmekte sayılır, katılım/tempo o güne kadar ölçülür."""
+    import json
+    rep = evaluate_pool_flags(db, student, closed_on, period=period)
+    out = []
+    for w in rep.primary + rep.secondary + rep.good:
+        if w.code == "pool_prev_period":
+            continue
+        out.append({"code": w.code, "level": w.level, "layer": getattr(w, "layer", None),
+                    "title": w.title, "detail": w.detail,
+                    "evidence": [[str(a), str(b)] for a, b in (w.evidence or [])]})
+    return json.dumps(out, ensure_ascii=False)
+
+
+def parse_closing_flags(raw: str | None) -> list[dict]:
+    import json
+    if not raw:
+        return []
+    try:
+        v = json.loads(raw)
+        return v if isinstance(v, list) else []
+    except (ValueError, TypeError):
+        return []
+
+
+def previous_closing_flags(db: Session, student_id: int, period: StudyPeriod) -> list[dict]:
+    prev = (db.query(StudyPeriod).filter(StudyPeriod.student_id == student_id, StudyPeriod.id != period.id,
+                                         StudyPeriod.status != PERIOD_OPEN,
+                                         StudyPeriod.opened_on <= period.opened_on)
+            .order_by(StudyPeriod.opened_on.desc(), StudyPeriod.id.desc()).first())
+    return parse_closing_flags(prev.closing_flags_json) if prev is not None else []
 
 
 def bulk_marking(cup_tasks: list[Task], items_by_id: dict[int, PoolItem], baseline: float | None) -> dict | None:

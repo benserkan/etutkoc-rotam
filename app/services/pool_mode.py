@@ -229,6 +229,7 @@ def history_row(db: Session, p: StudyPeriod, today: date) -> dict:
         "session_marked_units": marked, "carried_in": carried_in, "carried_out": int(carried_out),
         "has_session": p.closed_session_id is not None or p.opened_session_id is not None,
         "parent_summary_sent_at": p.parent_summary_sent_at,
+        "closing_flags": p.closing_flags_json,
         "subjects": [{**r, "pct": int(round(100 * r["done"] / r["total"])) if r["total"] else 0}
                      for r in sorted(per.values(), key=lambda r: r["subject"])],
     }
@@ -363,6 +364,14 @@ def close_period(
         raise PoolError("bad_close", "Kapanış günü başlangıçtan önce olamaz.")
     for it in period.items:
         sync_item_progress(db, it)
+    db.flush()
+    try:  # H2: kapanış anındaki uyarılar saklanır (yeni dönem açılınca kaybolmasın) — best-effort
+        from app.services import pool_flags
+        student = period.student or db.get(User, period.student_id)
+        period.closing_flags_json = pool_flags.closing_snapshot(db, student, period, closed_on)
+    except Exception:  # noqa: BLE001 — kapanışı asla bloklamaz
+        import logging
+        logging.getLogger(__name__).exception("closing flags snapshot fail period=%s", period.id)
     period.closed_on = closed_on
     period.closed_session_id = session_id
     period.status = status
