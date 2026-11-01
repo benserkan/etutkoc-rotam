@@ -33,6 +33,14 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   defterler (28 kitap) SIRADA** — bazılarının demosunda içindekiler sayfası var (görsel okuma gerekir).
 - Seed (`seed_book_catalog_json.py`): JSON'daki konu adı aynı derste birden çok sınıfta varsa kitabın hedef sınıfı önce.
 
+## HAVUZ "SEANSI BİTİR" — SEANS TARİHİ SEÇİLEBİLİR (2026-11-01, migration YOK)
+
+- Saha (Taha #84): 22–29 Eki dönemi, seans yapılmış ama "Seansı bitir"e basılmamış → dönem açık kaldı, "beklenen seans geçti"
+  + "3 gündür havuza dokunmadı". Pencere `closed_on`u hep bugün gönderiyordu. Artık **Seans tarihi** alanı (açılış..bugün;
+  beklenen gün geçtiyse tek tık "beklenen seans günü" kısayolu); dönem o gün kapanır, yeni dönem o gün açılır, seans kaydı o
+  tarihle; beklenen sonraki seans varsayılanı seçilen gün +7. Backend gelecek tarihi 422 `closed_in_future`. Not: geç kayıt
+  kilidi kapanış +2 günden sayılır. Test pool_session 23/23 (5a0/5c/5e) · program_mode_switch 22.
+
 ## TEK TEMA + "J" PLATFORM DİLİ (2026-10-29, CANLI, migration YOK)
 
 - **Koyu mod KALDIRILDI** (kullanıcı kararı): site her cihazda açık temada açılır (`layout.tsx` THEME_INIT_SCRIPT

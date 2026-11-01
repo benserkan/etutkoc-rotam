@@ -869,6 +869,10 @@ def session_finish(student_id: int, body: SessionFinishBody, background_tasks: B
     period = _open_or_404(db, student)
     closed = _parse_iso_date(body.closed_on)
     nxt = _parse_iso_date(body.expected_next_on) if body.expected_next_on else None
+    # Seans tarihi geçmiş bir gün olabilir (seans yapıldı, ekran o gün kapatılmadı); gelecek olamaz.
+    if closed > pm.tr_date(datetime.now(timezone.utc)):
+        raise HTTPException(status_code=422, detail={"error": "validation", "code": "closed_in_future",
+                                                     "message": "Seans tarihi bugünden ileri olamaz."})
     if body.switch_to_gun_gun:
         from app.services import program_mode_switch as _pms
         if body.carry:

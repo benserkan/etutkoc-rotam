@@ -220,7 +220,12 @@ def main() -> int:
         r = c.get(f"{base}/pool/session")
         check("4f özet yüzde 62 (5/8 birim)", "yüzde 62 (5/8" in r.json()["headline"], r.json()["headline"])
 
-        # 5
+        # 5 — seans tarihi geçmiş gün olabilir (ekran o gün kapatılmadı), gelecek olamaz
+        past = today - timedelta(days=2)
+        r = c.post(f"{base}/pool/session/finish", json={
+            "closed_on": (today + timedelta(days=1)).isoformat(), "agenda": "x"})
+        check("5a0 gelecek seans tarihi → 422 closed_in_future",
+              r.status_code == 422 and r.json()["detail"]["code"] == "closed_in_future", r.text[:200])
         r = c.post(f"{base}/pool/session/finish", json={
             "closed_on": today.isoformat(), "expected_next_on": (today + timedelta(days=7)).isoformat(),
             "carry": [{"item_id": 999999, "quantity": 1}], "agenda": "x"})
@@ -231,11 +236,11 @@ def main() -> int:
                   db.get(StudyPeriod, ids["pid"]).status == "acik"
                   and db.query(CoachingSession).filter(CoachingSession.student_id == d["st"]).count() == 1)
         r = c.post(f"{base}/pool/session/finish", json={
-            "closed_on": today.isoformat(), "expected_next_on": (today + timedelta(days=7)).isoformat(),
+            "closed_on": past.isoformat(), "expected_next_on": (past + timedelta(days=7)).isoformat(),
             "carry": [{"item_id": ids["i1"], "quantity": None}, {"item_id": ids["i2"], "quantity": 1}],
             "record_session": True, "agenda": "Havuz değerlendirmesi", "coach_note": "iyi", "mood": 4})
-        check("5c seans bitti → yeni açık dönem", r.status_code == 200 and r.json()["data"]["period"]
-              and r.json()["data"]["period"]["opened_on"] == today.isoformat(), r.text[:300])
+        check("5c seans geçmiş günle bitti (2 gün önce) → yeni dönem o gün açıldı", r.status_code == 200 and r.json()["data"]["period"]
+              and r.json()["data"]["period"]["opened_on"] == past.isoformat(), r.text[:300])
         items = r.json()["data"]["period"]["items"]
         check("5d yeni havuz: 2 devir kalemi (kalan 1 + 1), kaynak devir, sayaç 1",
               len(items) == 2 and all(i["source"] == "devir" and i["carry_count"] == 1 and i["quantity"] == 1 for i in items),
@@ -245,8 +250,8 @@ def main() -> int:
             ses = (db.query(CoachingSession).filter(CoachingSession.student_id == d["st"])
                    .order_by(CoachingSession.id.desc()).first())
             newp = pool_mode.get_open_period(db, d["st"])
-            check("5e eski dönem kapandı + seans kaydı bağlı; yeni dönem seansla açıldı",
-                  old.status == "kapandi" and old.closed_session_id == ses.id and ses.agenda == "Havuz değerlendirmesi"
+            check("5e eski dönem kapandı (geçmiş gün) + seans kaydı o güne bağlı; yeni dönem seansla açıldı",
+                  old.status == "kapandi" and old.closed_on == past and ses.session_date == past and old.closed_session_id == ses.id and ses.agenda == "Havuz değerlendirmesi"
                   and ses.mood == 4 and newp.opened_session_id == ses.id)
         check("5f eski dönem geçmişte yüzde 62", any(p["id"] == ids["pid"] and p["pct"] == 62 for p in r.json()["data"]["periods"]))
     finally:

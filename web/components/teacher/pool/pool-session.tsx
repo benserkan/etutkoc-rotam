@@ -361,7 +361,20 @@ function FinishDialog({ studentId, data, open, onOpenChange }: {
   const finish = useFinishSession(studentId);
   const leftovers = data.items.filter((i) => i.remaining > 0 && i.counts && i.approval !== "reddedildi");
   const [carry, setCarry] = React.useState<Record<number, number | null>>({});
+  // Seans tarihi: seans yapılıp "Seansı bitir"e o gün basılmadıysa koç gerçek günü seçer
+  // (dönem o gün kapanır, yeni dönem o gün açılır). Varsayılan bugün.
+  const openedOn = data.period?.opened_on ?? data.today;
+  const expectedOn = data.period?.expected_next_on ?? null;
+  const expectedPassed = !!expectedOn && expectedOn < data.today && expectedOn >= openedOn;
+  const [closedOn, setClosedOn] = React.useState(data.today);
   const [next, setNext] = React.useState(addDays(data.today, 7));
+  const [nextTouched, setNextTouched] = React.useState(false);
+  function pickClosed(v: string) {
+    if (!v) return;
+    setClosedOn(v);
+    if (!nextTouched) setNext(addDays(v, 7));
+  }
+  const closedInvalid = closedOn < openedOn || closedOn > data.today;
   const [agenda, setAgenda] = React.useState(data.headline);
   const [note, setNote] = React.useState("");
   const [change, setChange] = React.useState("");
@@ -381,7 +394,7 @@ function FinishDialog({ studentId, data, open, onOpenChange }: {
   function submit() {
     finish.mutate(
       {
-        closed_on: data.today,
+        closed_on: closedOn,
         expected_next_on: next || null,
         carry: toGunGun ? [] : Object.entries(carry).map(([id, qty]) => ({ item_id: Number(id), quantity: qty })),
         record_session: record,
@@ -413,10 +426,29 @@ function FinishDialog({ studentId, data, open, onOpenChange }: {
           <DialogDescription>
             {toGunGun
               ? "Bu dönem kapanır, seans kaydı yazılır ve öğrenci gün gün programa geçer. Yeni dönem açılmaz."
-              : "Bu dönem kapanır, seans kaydı yazılır, bugün yeni dönem açılır. Kalanı olan kalemleri tek tek seç: ekle, miktarı değiştir ya da bırak."}
+              : "Bu dönem kapanır, seans kaydı yazılır, seans gününde yeni dönem açılır. Kalanı olan kalemleri tek tek seç: ekle, miktarı değiştir ya da bırak."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 text-sm">
+          <div className="rounded-md border px-3 py-2" data-section="pool:finish:date">
+            <label className="block">
+              <span className="font-medium text-foreground">Seans tarihi</span>
+              <span className="block text-xs text-muted-foreground">
+                Bu dönem bu gün kapanır, yeni dönem bu gün açılır. Seansı yapıp ekranı o gün kapatmadıysan gerçek günü seç.
+              </span>
+              <Input type="date" value={closedOn} min={openedOn} max={data.today}
+                     onChange={(e) => pickClosed(e.target.value)} className="mt-1 w-44" data-testid="finish-closed-on" />
+            </label>
+            {expectedPassed && closedOn !== expectedOn && (
+              <button type="button" onClick={() => pickClosed(expectedOn!)}
+                      className="mt-1 text-xs font-medium text-cyan-800 underline underline-offset-2 hover:text-cyan-900">
+                Beklenen seans günü {fmtDate(expectedOn)} — seans o gün yapıldıysa bunu seç
+              </button>
+            )}
+            {closedInvalid && (
+              <p className="mt-1 text-xs text-rose-700">Tarih {fmtDate(openedOn)} ile bugün arasında olmalı.</p>
+            )}
+          </div>
           <label className="flex items-start gap-2 rounded-md border px-3 py-2" data-testid="finish-to-gun-gun">
             <input type="checkbox" className="mt-0.5" checked={toGunGun} onChange={(e) => setToGunGun(e.target.checked)} />
             <span>
@@ -465,7 +497,7 @@ function FinishDialog({ studentId, data, open, onOpenChange }: {
           {!toGunGun && (
           <label className="block">
             <span className="text-xs text-muted-foreground">Beklenen sonraki seans</span>
-            <Input type="date" value={next} onChange={(e) => setNext(e.target.value)} className="mt-1 w-44" />
+            <Input type="date" value={next} min={addDays(closedOn, 1)} onChange={(e) => { setNext(e.target.value); setNextTouched(true); }} className="mt-1 w-44" />
           </label>
           )}
           <label className="flex items-center gap-2 text-sm">
@@ -491,7 +523,7 @@ function FinishDialog({ studentId, data, open, onOpenChange }: {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Vazgeç</Button>
-          <Button onClick={submit} disabled={finish.isPending} data-testid="finish-submit"
+          <Button onClick={submit} disabled={finish.isPending || closedInvalid} data-testid="finish-submit"
                   className={toGunGun ? "bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white" : undefined}>
             {toGunGun ? "Bitir ve gün gün programa geç" : "Bitir ve yeni dönemi aç"}
           </Button>
