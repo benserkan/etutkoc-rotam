@@ -441,6 +441,9 @@ export interface ReviewBreakdown {
   relearning: number;
   due_now: number;
   total: number;
+  mastered?: number;
+  new_waiting?: number;
+  new_per_day?: number;
 }
 export interface ReviewCardItem {
   id: number;
@@ -449,6 +452,7 @@ export interface ReviewCardItem {
   subject_name: string | null;
   state: string;
   review_count: number;
+  due_at?: string | null;
 }
 export interface ReviewResponse {
   due_cards: ReviewCardItem[];
@@ -506,8 +510,12 @@ export function stopFocus(sessionId: number, body: { actual_minutes?: number | n
 export function cancelFocus(sessionId: number): Promise<unknown> {
   return apiRequest(`/api/v2/student/focus/${sessionId}/cancel`, { method: "POST", body: {} });
 }
-export function rateReviewCard(cardId: number, rating: number): Promise<unknown> {
+export function rateReviewCard(cardId: number, rating: number): Promise<{ data: ReviewCardItem }> {
   return apiRequest(`/api/v2/student/review/${cardId}/rate`, { method: "POST", body: { rating } });
+}
+/** Son işaretlemeyi geri al (10 dk içinde). */
+export function undoReviewCard(cardId: number): Promise<{ data: ReviewCardItem }> {
+  return apiRequest(`/api/v2/student/review/${cardId}/undo`, { method: "POST" });
 }
 export interface GoalCreateBody {
   title: string;

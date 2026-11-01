@@ -1891,7 +1891,7 @@ class DnaNotifyParentResult(BaseModel):
 
 # --- Tekrar (Review / FSRS) ---
 
-ReviewStateLiteral = Literal["new", "learning", "review", "relearning"]
+ReviewStateLiteral = Literal["new", "learning", "review", "relearning", "mastered"]
 
 
 class ReviewBreakdownInfo(BaseModel):
@@ -1901,6 +1901,9 @@ class ReviewBreakdownInfo(BaseModel):
     relearning: int
     due_now: int
     total: int
+    mastered: int = 0
+    new_waiting: int = 0
+    new_per_day: int = 10
 
 
 class ReviewCardRow(BaseModel):
@@ -1964,6 +1967,10 @@ class TeacherReviewResponse(BaseModel):
 
 class ReviewSeedBody(BaseModel):
     subject_id: int
+    # Verilirse yalnız bu konular kart olur (dersin aday listesinden olmalı).
+    # Verilmezse (eski istemci/mobil) yalnız ÖNERİLEN konular eklenir —
+    # dersin tamamı DEĞİL (2026-11-01).
+    topic_ids: list[int] | None = None
 
 
 class ReviewSeedResult(BaseModel):
@@ -1971,6 +1978,40 @@ class ReviewSeedResult(BaseModel):
     subject_name: str
     added: int
     skipped_existing: int
+    skipped_invalid: int = 0
+    used_recommended: bool = False
+
+
+class ReviewCandidateRow(BaseModel):
+    topic_id: int
+    name: str
+    grade_level: int | None
+    unit_name: str | None
+    tests_done: int
+    exam_wrong: int
+    open_wrong: int
+    closed: bool
+    recommended: bool
+    reasons: list[str]
+    card_id: int | None
+    card_state: str | None
+
+
+class ReviewCandidatesResponse(BaseModel):
+    subject_id: int
+    subject_name: str
+    student_grade: int | None
+    topics: list[ReviewCandidateRow]
+    recommended_count: int
+    new_per_day: int
+
+
+class ReviewCardIdsBody(BaseModel):
+    card_ids: list[int]
+
+
+class ReviewCardsActionResult(BaseModel):
+    count: int
 
 
 # --- Hedefler (Goals) ---

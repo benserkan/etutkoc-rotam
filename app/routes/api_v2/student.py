@@ -2454,11 +2454,14 @@ def student_review_v2(
     now = datetime.now(timezone.utc)
     due = get_due_cards(db, student_id=user.id, now=now, limit=100)
     bd = cards_breakdown(db, student_id=user.id, now=now)
+    from app.services.review_scheduler import NEW_CARDS_PER_DAY
     return ReviewResponse(
         due_cards=[_build_review_card(c) for c in due],
         breakdown=ReviewBreakdown(
             new=bd.new, learning=bd.learning, review=bd.review,
             relearning=bd.relearning, due_now=bd.due_now, total=bd.total,
+            mastered=bd.mastered, new_waiting=bd.new_waiting,
+            new_per_day=NEW_CARDS_PER_DAY,
         ),
     )
 
@@ -2500,7 +2503,17 @@ def student_review_rate_v2(
             },
         )
     now = datetime.now(timezone.utc)
-    record_review(db, card=card, rating=body.rating, now=now)
+    try:
+        record_review(db, card=card, rating=body.rating, now=now)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": "conflict",
+                "code": "card_mastered",
+                "message": "Bu konu kalıcı hâle geldi; tekrar kuyruğunda değil.",
+            },
+        )
     _evaluate_badges_safe(db, user.id)
     db.commit()
     db.refresh(card)
@@ -2510,6 +2523,40 @@ def student_review_rate_v2(
             f"student:{user.id}:review",
             f"student:{user.id}:badges",
         ],
+    )
+
+
+@router.post(
+    "/review/{card_id}/undo",
+    response_model=MutationResponse[ReviewCardItem],
+)
+def student_review_undo_v2(
+    card_id: int,
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Son işaretlemeyi geri al (10 dk içinde). Kart puandan önceki hâline döner."""
+    from app.services.review_scheduler import UndoError, get_card, undo_last_review
+
+    card = get_card(db, card_id=card_id, student_id=user.id)
+    if not card:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "review_card_not_found",
+                    "message": "Tekrar kartı bulunamadı."},
+        )
+    try:
+        undo_last_review(db, card=card, now=datetime.now(timezone.utc))
+    except UndoError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "conflict", "code": e.code, "message": e.message},
+        )
+    db.commit()
+    db.refresh(card)
+    return MutationResponse[ReviewCardItem](
+        data=_build_review_card(card),
+        invalidate=[f"student:{user.id}:review"],
     )
 
 

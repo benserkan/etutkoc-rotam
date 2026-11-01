@@ -1769,7 +1769,7 @@ export interface DnaNotifyParentResult {
 
 // --- Review (FSRS) ---
 
-export type ReviewState = "new" | "learning" | "review" | "relearning";
+export type ReviewState = "new" | "learning" | "review" | "relearning" | "mastered";
 
 export interface ReviewBreakdownInfo {
   new: number;
@@ -1778,6 +1778,10 @@ export interface ReviewBreakdownInfo {
   relearning: number;
   due_now: number;
   total: number;
+  mastered: number;
+  /** Bugünkü günlük kotanın dışında sırada bekleyen yeni kart. */
+  new_waiting: number;
+  new_per_day: number;
 }
 
 export interface ReviewCardRow {
@@ -1840,6 +1844,8 @@ export interface TeacherReviewResponse {
 
 export interface ReviewSeedBody {
   subject_id: number;
+  /** Verilmezse yalnız önerilen konular eklenir. */
+  topic_ids?: number[];
 }
 
 export interface ReviewSeedResult {
@@ -1847,6 +1853,36 @@ export interface ReviewSeedResult {
   subject_name: string;
   added: number;
   skipped_existing: number;
+  skipped_invalid: number;
+  used_recommended: boolean;
+}
+
+export interface ReviewCandidateRow {
+  topic_id: number;
+  name: string;
+  grade_level: number | null;
+  unit_name: string | null;
+  tests_done: number;
+  exam_wrong: number;
+  open_wrong: number;
+  closed: boolean;
+  recommended: boolean;
+  reasons: string[];
+  card_id: number | null;
+  card_state: string | null;
+}
+
+export interface ReviewCandidatesResponse {
+  subject_id: number;
+  subject_name: string;
+  student_grade: number | null;
+  topics: ReviewCandidateRow[];
+  recommended_count: number;
+  new_per_day: number;
+}
+
+export interface ReviewCardsActionResult {
+  count: number;
 }
 
 // --- Goals (Hedefler) ---

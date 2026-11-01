@@ -20,6 +20,8 @@ export function ReviewView({
   busy,
   onRate,
   onClose,
+  waiting = 0,
+  perDay = 10,
 }: {
   card: ReviewCardItem | null;
   index: number;
@@ -28,6 +30,8 @@ export function ReviewView({
   busy: boolean;
   onRate: (cardId: number, rating: number) => void;
   onClose: () => void;
+  waiting?: number;
+  perDay?: number;
 }) {
   if (done || !card) {
     return (
@@ -39,6 +43,11 @@ export function ReviewView({
         <Text className="text-center text-sm text-slate-500">
           {total > 0 ? `${total} kartı tekrar ettin. Harika!` : "Şu an tekrar edilecek kart yok."}
         </Text>
+        {waiting > 0 ? (
+          <Text className="text-center text-xs text-slate-500">
+            Sırada {waiting} yeni kart var; her gün en fazla {perDay} tanesi gelir.
+          </Text>
+        ) : null}
         <DemoHint contextKey="review" role="student" />
         <Pressable onPress={onClose} className="mt-2 rounded-xl bg-brand-700 px-6 py-3 active:bg-brand-800">
           <Text className="text-base font-semibold text-white">Bitir</Text>
@@ -83,7 +92,7 @@ export function ReviewView({
           </Pressable>
         ))}
         <Text className="mt-1 text-center text-[11px] text-slate-400">
-          Dürüst ol — sistem bir sonraki tekrarı buna göre planlar.
+          Dürüst ol — "Hatırlamadım" dediğin konu bir hafta sonra yeniden gelir; o hafta çalış.
         </Text>
       </View>
     </View>

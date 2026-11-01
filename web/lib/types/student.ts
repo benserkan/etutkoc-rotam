@@ -460,7 +460,7 @@ export interface DnaResponse {
 // Review (FSRS) — Paket 4
 // =============================================================================
 
-export type ReviewState = "new" | "learning" | "review" | "relearning";
+export type ReviewState = "new" | "learning" | "review" | "relearning" | "mastered";
 
 export interface ReviewCardItem {
   id: number;
@@ -484,6 +484,10 @@ export interface ReviewBreakdown {
   relearning: number;
   due_now: number;
   total: number;
+  mastered: number;
+  /** Günlük sınır yüzünden sonraki günlere kalan yeni kart. */
+  new_waiting: number;
+  new_per_day: number;
 }
 
 export interface ReviewResponse {

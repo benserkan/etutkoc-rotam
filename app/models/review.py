@@ -44,12 +44,17 @@ STATE_NEW = "new"
 STATE_LEARNING = "learning"
 STATE_REVIEW = "review"
 STATE_RELEARNING = "relearning"
+# 2026-11-01: aralıklı başarılarla pekişip kuyruktan çıkan kart. due_at NULL;
+# koç "yeniden aç" ile REVIEW'a döndürebilir. FSRS çekirdeği bu durumu bilmez
+# (puanlanamaz) — yalnız konu kartı politikası (review_scheduler) üretir.
+STATE_MASTERED = "mastered"
 
 STATE_LABELS_TR = {
     STATE_NEW: "Yeni",
     STATE_LEARNING: "Öğreniliyor",
     STATE_REVIEW: "Pekiştirme",
     STATE_RELEARNING: "Yeniden öğrenme",
+    STATE_MASTERED: "Kalıcı",
 }
 
 

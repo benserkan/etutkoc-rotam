@@ -678,7 +678,7 @@ class DnaResponse(BaseModel):
 # -------------------- Review (FSRS spaced repetition) --------------------
 
 
-ReviewStateLiteral = Literal["new", "learning", "review", "relearning"]
+ReviewStateLiteral = Literal["new", "learning", "review", "relearning", "mastered"]
 
 
 class ReviewCardItem(BaseModel):
@@ -703,6 +703,9 @@ class ReviewBreakdown(BaseModel):
     relearning: int
     due_now: int
     total: int
+    mastered: int = 0
+    new_waiting: int = 0
+    new_per_day: int = 10
 
 
 class ReviewResponse(BaseModel):

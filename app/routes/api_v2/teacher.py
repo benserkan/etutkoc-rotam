@@ -215,6 +215,10 @@ from app.routes.api_v2.schemas.teacher import (
     RequestRespondBody,
     ReviewBreakdownInfo,
     ReviewCardRow,
+    ReviewCandidateRow,
+    ReviewCandidatesResponse,
+    ReviewCardIdsBody,
+    ReviewCardsActionResult,
     ReviewSeedBody,
     ReviewSeedResult,
     ReviewSubjectOption,
@@ -10026,6 +10030,9 @@ def teacher_student_review_v2(
             relearning=breakdown.relearning,
             due_now=breakdown.due_now,
             total=breakdown.total,
+            mastered=breakdown.mastered,
+            new_waiting=breakdown.new_waiting,
+            new_per_day=_review_new_per_day(),
         ),
         cards=cards,
         subjects=subjects,
@@ -10043,38 +10050,30 @@ def teacher_student_review_seed_v2(
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Ders kataloğundaki tüm topic'leri öğrenciye kart olarak ekle (idempotent).
+    """Seçilen konuları öğrenciye tekrar kartı olarak ekle (idempotent).
 
-    Eşdeğer Jinja: app/routes/review.py:255 (teacher_seed_subject).
-    Subject başkasının ise 404; öğrencinin sınıf seviyesine uymuyorsa yine
-    seed yapılır (servis idempotent; eşleşmeyen topic eklemez).
+    2026-11-01: dersin TÜM konuları artık eklenmez (saha: 8. sınıfa tema
+    başlıkları + 5-7. sınıf dahil 114 kart). `topic_ids` verilirse yalnız
+    dersin aday listesindeki o konular; verilmezse yalnız ÖNERİLEN konular
+    (çalışılmış / denemede yanlış / arşivde açık yanlış / koçun kapattığı).
     """
-    from sqlalchemy import or_ as sa_or
-    from app.models import Subject
-    from app.services.review_scheduler import seed_subject_for_student
+    from app.services.review_scheduler import seed_topics_for_student, topic_candidates
 
     student = _get_owned_student(db, student_id, user.id)
-    subject = (
-        db.query(Subject)
-        .filter(
-            Subject.id == body.subject_id,
-            sa_or(Subject.is_builtin.is_(True), Subject.teacher_id == user.id),
-        )
-        .first()
-    )
-    if not subject:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "error": "not_found",
-                "code": "subject_not_found",
-                "message": "Ders bulunamadı.",
-            },
-        )
+    subject = _review_subject_or_404(db, body.subject_id, user.id)
+    now = datetime.now(timezone.utc)
+    cands = topic_candidates(db, student=student, coach_id=user.id, subject_id=subject.id, now=now)
+    allowed = {c.topic_id for c in cands}
+    if body.topic_ids is None:
+        wanted = [c.topic_id for c in cands if c.recommended]
+        invalid = 0
+        used_rec = True
+    else:
+        wanted = [t for t in body.topic_ids if t in allowed]
+        invalid = len(set(body.topic_ids) - allowed)
+        used_rec = False
 
-    res = seed_subject_for_student(
-        db, student=student, subject=subject, teacher=user,
-    )
+    res = seed_topics_for_student(db, student=student, topic_ids=wanted, teacher=user)
     db.commit()
 
     return MutationResponse[ReviewSeedResult](
@@ -10083,7 +10082,118 @@ def teacher_student_review_seed_v2(
             subject_name=subject.name,
             added=res.added,
             skipped_existing=res.skipped_existing,
+            skipped_invalid=invalid,
+            used_recommended=used_rec,
         ),
+        invalidate=[f"teacher:{user.id}:students:{student.id}:review"],
+    )
+
+
+def _review_new_per_day() -> int:
+    from app.services.review_scheduler import NEW_CARDS_PER_DAY
+    return NEW_CARDS_PER_DAY
+
+
+def _review_subject_or_404(db: Session, subject_id: int, teacher_id: int):
+    from sqlalchemy import or_ as sa_or
+    from app.models import Subject
+
+    subject = (
+        db.query(Subject)
+        .filter(
+            Subject.id == subject_id,
+            sa_or(Subject.is_builtin.is_(True), Subject.teacher_id == teacher_id),
+        )
+        .first()
+    )
+    if not subject:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "subject_not_found",
+                    "message": "Ders bulunamadı."},
+        )
+    return subject
+
+
+@router.get(
+    "/students/{student_id}/review/candidates",
+    response_model=ReviewCandidatesResponse,
+)
+def teacher_student_review_candidates_v2(
+    student_id: int,
+    subject_id: int = Query(...),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kart eklemeden önce: dersin konuları + hangisinin önerildiği ve neden."""
+    from app.services.review_scheduler import topic_candidates
+
+    student = _get_owned_student(db, student_id, user.id)
+    subject = _review_subject_or_404(db, subject_id, user.id)
+    cands = topic_candidates(
+        db, student=student, coach_id=user.id, subject_id=subject.id,
+        now=datetime.now(timezone.utc),
+    )
+    return ReviewCandidatesResponse(
+        subject_id=subject.id,
+        subject_name=subject.name,
+        student_grade=student.grade_level,
+        topics=[
+            ReviewCandidateRow(
+                topic_id=c.topic_id, name=c.name, grade_level=c.grade_level,
+                unit_name=c.unit_name, tests_done=c.tests_done,
+                exam_wrong=c.exam_wrong, open_wrong=c.open_wrong, closed=c.closed,
+                recommended=c.recommended, reasons=list(c.reasons),
+                card_id=c.card_id, card_state=c.card_state,
+            )
+            for c in cands
+        ],
+        recommended_count=sum(1 for c in cands if c.recommended and c.card_id is None),
+        new_per_day=_review_new_per_day(),
+    )
+
+
+@router.post(
+    "/students/{student_id}/review/cards/delete",
+    response_model=MutationResponse[ReviewCardsActionResult],
+)
+def teacher_student_review_cards_delete_v2(
+    student_id: int,
+    body: ReviewCardIdsBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Seçili tekrar kartlarını (geçmişleriyle) sil."""
+    from app.services.review_scheduler import delete_cards
+
+    student = _get_owned_student(db, student_id, user.id)
+    n = delete_cards(db, student_id=student.id, card_ids=body.card_ids)
+    db.commit()
+    return MutationResponse[ReviewCardsActionResult](
+        data=ReviewCardsActionResult(count=n),
+        invalidate=[f"teacher:{user.id}:students:{student.id}:review"],
+    )
+
+
+@router.post(
+    "/students/{student_id}/review/cards/reopen",
+    response_model=MutationResponse[ReviewCardsActionResult],
+)
+def teacher_student_review_cards_reopen_v2(
+    student_id: int,
+    body: ReviewCardIdsBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kalıcı olmuş kartları yeniden tekrar kuyruğuna al."""
+    from app.services.review_scheduler import reopen_cards
+
+    student = _get_owned_student(db, student_id, user.id)
+    n = reopen_cards(db, student_id=student.id, card_ids=body.card_ids,
+                     now=datetime.now(timezone.utc))
+    db.commit()
+    return MutationResponse[ReviewCardsActionResult](
+        data=ReviewCardsActionResult(count=n),
         invalidate=[f"teacher:{user.id}:students:{student.id}:review"],
     )
 

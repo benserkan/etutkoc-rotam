@@ -567,6 +567,31 @@ export function useReviewRate() {
   });
 }
 
+/** Son işaretlemeyi geri al (10 dk içinde) — kart kuyruğa geri döner. */
+export function useReviewUndo() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<ReviewCardItem>, ApiError, { cardId: number }>({
+    mutationKey: ["student", "mutate-review", "undo"],
+    mutationFn: ({ cardId }) =>
+      api<MutationResponse<ReviewCardItem>>(
+        `/api/v2/student/review/${cardId}/undo`,
+        { method: "POST" },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({ queryKey: ["student", "me", "review"] });
+      toast.success("İşaretleme geri alındı", {
+        description: "Kart yeniden kuyruğunda.",
+      });
+    },
+    onError: (err) => {
+      toast.error("Geri alınamadı", {
+        description: errorMessage(err, "Sunucu hatası."),
+      });
+    },
+  });
+}
+
 // =============================================================================
 // Goals mutations — Paket 7
 // =============================================================================

@@ -70,6 +70,7 @@ import type {
   TopicInsight,
   NextUnitsResponse,
   TeacherReviewResponse,
+  ReviewCandidatesResponse,
   TeacherStudentAnalyticsResponse,
   TeacherStudentDayResponse,
   ParentProgramPreviewResponse,
@@ -237,6 +238,8 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(studentId), "dna"] as const,
   studentReview: (studentId: number) =>
     ["teacher", "me", "students", String(studentId), "review"] as const,
+  studentReviewCandidates: (studentId: number, subjectId: number) =>
+    ["teacher", "me", "students", String(studentId), "review", "candidates", String(subjectId)] as const,
   studentGoals: (studentId: number) =>
     ["teacher", "me", "students", String(studentId), "goals"] as const,
 
@@ -787,6 +790,15 @@ export function getTeacherStudentDna(
 ): Promise<TeacherDnaResponse> {
   return api<TeacherDnaResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/dna`,
+  );
+}
+
+export function getTeacherStudentReviewCandidates(
+  studentId: number,
+  subjectId: number,
+): Promise<ReviewCandidatesResponse> {
+  return api<ReviewCandidatesResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/review/candidates?subject_id=${encodeURIComponent(String(subjectId))}`,
   );
 }
 

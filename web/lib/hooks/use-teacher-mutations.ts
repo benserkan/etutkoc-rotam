@@ -47,6 +47,7 @@ import type {
   RequestApproveBody,
   RequestRejectBody,
   RequestRespondBody,
+  ReviewCardsActionResult,
   ReviewSeedBody,
   ReviewSeedResult,
   StudentBookAssignBody,
@@ -1339,6 +1340,37 @@ export function useReviewSeedSubject(studentId: number) {
       toast.success(`${subject_name} · ${parts.join(" · ")}`);
     },
   });
+}
+
+function useReviewCardsAction(
+  studentId: number,
+  action: "delete" | "reopen",
+  done: (n: number) => string,
+  failTitle: string,
+) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<ReviewCardsActionResult>, ApiError, { cardIds: number[] }>({
+    mutationFn: ({ cardIds }) =>
+      api<MutationResponse<ReviewCardsActionResult>>(
+        `/api/v2/teacher/students/${studentId}/review/cards/${action}`,
+        { method: "POST", body: JSON.stringify({ card_ids: cardIds }) },
+      ),
+    onError: (err) => showError(err, failTitle),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(done(res.data.count));
+    },
+  });
+}
+
+export function useDeleteReviewCards(studentId: number) {
+  return useReviewCardsAction(studentId, "delete", (n) => `${n} kart silindi`, "Kartlar silinemedi");
+}
+
+export function useReopenReviewCards(studentId: number) {
+  return useReviewCardsAction(
+    studentId, "reopen", (n) => `${n} kart yeniden tekrar kuyruğunda`, "Kartlar açılamadı",
+  );
 }
 
 export function useDnaNotifyParent(studentId: number) {

@@ -72,7 +72,7 @@ export default function TeacherStudentDevRoute() {
       } else {
         Alert.alert(
           "Eklenecek konu bulunamadı",
-          `${r.subject_name} için yeni tekrar kartı oluşmadı. Bu dersin konuları öğrencinin atanmış kitaplarında yoksa veya tümü zaten ekliyse kart eklenmez.`,
+          `${r.subject_name} için önerilen konu yok. Uygulama yalnız öğrencinin çalıştığı, denemede yanlış yaptığı ya da koçun kapattığı konuları ekler; konu konu seçmek için web panelini kullan.`,
         );
       }
     },

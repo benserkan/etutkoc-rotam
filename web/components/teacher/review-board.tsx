@@ -14,13 +14,25 @@ import {
   Loader2,
   PlayCircle,
   Plus,
+  RotateCcw,
   Target,
+  Trash2,
   Zap,
 } from "lucide-react";
 
-import { getTeacherStudentReview, teacherKeys } from "@/lib/api/teacher";
-import { useReviewSeedSubject } from "@/lib/hooks/use-teacher-mutations";
+import {
+  getTeacherStudentReview,
+  getTeacherStudentReviewCandidates,
+  teacherKeys,
+} from "@/lib/api/teacher";
+import {
+  useDeleteReviewCards,
+  useReopenReviewCards,
+  useReviewSeedSubject,
+} from "@/lib/hooks/use-teacher-mutations";
 import type {
+  ReviewCandidateRow,
+  ReviewCandidatesResponse,
   ReviewState,
   ReviewSubjectOption,
   StruggleCardRow,
@@ -97,9 +109,13 @@ function Body({ studentId, d }: { studentId: number; d: TeacherReviewResponse })
         <StrugglePanel studentId={studentId} cards={d.struggle_cards} />
       ) : null}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <SeedForm studentId={studentId} subjects={d.subjects} />
-        <CardListPanel d={d} />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        <SeedForm
+          studentId={studentId}
+          subjects={d.subjects}
+          newPerDay={d.breakdown.new_per_day ?? 10}
+        />
+        <CardListPanel studentId={studentId} d={d} />
       </div>
     </div>
   );
@@ -163,12 +179,12 @@ function VideoGuideScaffold() {
             </div>
             <ol className="text-foreground/90 leading-relaxed space-y-1 list-decimal list-inside text-sm">
               <li>
-                Aşağıdaki <b>Ders Konularını Ekle</b> formundan müfredata uygun
-                bir ders seç.
+                Aşağıdaki formdan bir ders seç; öğrencinin çalıştığı konular
+                işaretli gelir.
               </li>
               <li>
-                <b>Konuları Kart Olarak Ekle</b> butonuna bas — tüm konular yeni
-                kart olarak açılır.
+                İstediğin konuları işaretleyip ekle. Öğrencinin önüne günde en
+                fazla 10 yeni kart gelir, gerisi sonraki günlere kalır.
               </li>
               <li>
                 Üstteki sayım kartlarından (Bugün/Yeni/Öğreniyor/Pekiştirme)
@@ -181,8 +197,11 @@ function VideoGuideScaffold() {
               3. Bölüm — Sonuçta ne olur?
             </div>
             <p className="text-foreground/90 leading-relaxed text-sm">
-              Öğrenci kartları Tekrar / Zor / İyi / Kolay olarak puanlar. Sistem
-              zorlanılan konuları üstteki <b>Müdahale Önerileri</b> panelinde
+              Öğrenci kartları Hatırlamadım / Zor / İyi / Kolay olarak puanlar.
+              &quot;Hatırlamadım&quot; denen konu bir hafta sonra yeniden gelir (o hafta
+              çalışılsın diye); &quot;İyi&quot; denen konu en erken bir hafta sonra.
+              Üst üste aralıklı &quot;İyi&quot;lerle kart <b>Kalıcı</b> olur ve kuyruktan
+              çıkar. Sistem zorlanılan konuları üstteki <b>Müdahale Önerileri</b> panelinde
               0-100 skorla size getirir; aynı veriler haftalık ders programı
               önerilerine de otomatik beslenir.
             </p>
@@ -207,10 +226,12 @@ function BreakdownStrip({ d }: { d: TeacherReviewResponse }) {
       value: d.breakdown.review,
       tone: "text-emerald-500",
     },
+    { label: "Kalıcı", value: d.breakdown.mastered ?? 0, tone: "text-cyan-600" },
     { label: "Toplam", value: d.breakdown.total, tone: "text-foreground" },
   ];
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className="space-y-2">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       {items.map((it) => (
         <Card key={it.label}>
           <CardContent className="p-4">
@@ -223,6 +244,13 @@ function BreakdownStrip({ d }: { d: TeacherReviewResponse }) {
           </CardContent>
         </Card>
       ))}
+    </div>
+    {(d.breakdown.new_waiting ?? 0) > 0 ? (
+      <p className="text-xs text-muted-foreground">
+        &quot;Bugün vade&quot; günlük sınırı da hesaba katar: {d.breakdown.new_waiting} yeni
+        kart sonraki günlerde sırayla gelecek (günde en fazla {d.breakdown.new_per_day}).
+      </p>
+    ) : null}
     </div>
   );
 }
@@ -389,111 +417,352 @@ function StruggleCard({
 function SeedForm({
   studentId,
   subjects,
+  newPerDay,
 }: {
   studentId: number;
   subjects: ReviewSubjectOption[];
+  newPerDay: number;
 }) {
   const [subjectId, setSubjectId] = React.useState<number | "">("");
+  // Koçun seçimi; null = henüz dokunulmadı → önerilenler varsayılan.
+  const [pick, setPick] = React.useState<{ subjectId: number; ids: Set<number> } | null>(null);
   const mut = useReviewSeedSubject(studentId);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const cq = useQuery<ReviewCandidatesResponse>({
+    queryKey: teacherKeys.studentReviewCandidates(studentId, Number(subjectId || 0)),
+    queryFn: () => getTeacherStudentReviewCandidates(studentId, Number(subjectId)),
+    enabled: subjectId !== "",
+    staleTime: 15_000,
+  });
+  const topics = React.useMemo(
+    () => (subjectId !== "" && cq.data ? cq.data.topics : []),
+    [subjectId, cq.data],
+  );
+  const addable = topics.filter((t) => t.card_id === null);
+  const defaults = React.useMemo(
+    () => new Set(topics.filter((t) => t.recommended && t.card_id === null).map((t) => t.topic_id)),
+    [topics],
+  );
+  const selected = pick && pick.subjectId === subjectId ? pick.ids : defaults;
+
+  function setSel(next: Set<number>) {
     if (subjectId === "") return;
+    setPick({ subjectId, ids: next });
+  }
+  function toggle(id: number) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSel(next);
+  }
+
+  function submit() {
+    if (subjectId === "" || selected.size === 0) return;
     mut.mutate(
-      { body: { subject_id: subjectId } },
-      {
-        onSuccess: () => setSubjectId(""),
-      },
+      { body: { subject_id: subjectId, topic_ids: [...selected] } },
+      { onSuccess: () => setPick(null) },
     );
   }
 
+  // Sınıfa göre grupla (öğrencinin kendi sınıfı önce)
+  const ownGrade = cq.data?.student_grade ?? null;
+  const groups = React.useMemo(() => {
+    const m = new Map<string, ReviewCandidateRow[]>();
+    for (const t of topics) {
+      const k = t.grade_level == null ? "Sınav konuları" : `${t.grade_level}. sınıf`;
+      const arr = m.get(k) ?? [];
+      arr.push(t);
+      m.set(k, arr);
+    }
+    const own = ownGrade != null ? `${ownGrade}. sınıf` : null;
+    return [...m.entries()].sort((a, b) => {
+      if (a[0] === own) return -1;
+      if (b[0] === own) return 1;
+      return b[0].localeCompare(a[0], "tr", { numeric: true });
+    });
+  }, [topics, ownGrade]);
+
   return (
-    <Card className="lg:col-span-1">
+    <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold inline-flex items-center gap-2">
-          <Plus className="size-4" aria-hidden /> Ders Konularını Ekle
+          <Plus className="size-4" aria-hidden /> Konuları kart olarak ekle
         </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-          Seçilen dersin kataloğundaki tüm konular bu öğrenciye yeni kart olarak
-          açılır. Zaten ekli olan konular atlanır.
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Tekrar kartı <b>öğrenilmiş</b> bir konunun unutulmaması içindir. Öğrencinin
+          çalıştığı, denemede yanlış yaptığı, arşivde açık yanlışı olan ya da senin
+          kapattığın konular işaretli gelir; hiç görmediği konuyu eklemen gerekmez.
+          Öğrencinin önüne günde en fazla {newPerDay} yeni kart gelir.
         </p>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-sm text-foreground mb-1.5">Ders</label>
-            <select
-              value={subjectId}
-              onChange={(e) =>
-                setSubjectId(e.target.value === "" ? "" : Number(e.target.value))
-              }
-              required
-              className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background"
-            >
-              <option value="">— Ders seçin —</option>
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-            {subjects.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground mt-1 italic">
-                Öğrencinin sınıf seviyesine uygun ders bulunamadı.
-              </p>
-            ) : null}
-          </div>
-          <Button
-            type="submit"
-            disabled={mut.isPending || subjectId === ""}
-            className="w-full"
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <label className="block text-sm text-foreground mb-1.5" htmlFor="review-subject">
+            Ders
+          </label>
+          <select
+            id="review-subject"
+            value={subjectId}
+            onChange={(e) => {
+              setSubjectId(e.target.value === "" ? "" : Number(e.target.value));
+              setPick(null);
+            }}
+            className="w-full sm:w-80 px-3 py-2 border border-border rounded-md text-sm bg-background"
           >
-            {mut.isPending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : null}
-            Konuları Kart Olarak Ekle
-          </Button>
-        </form>
+            <option value="">— Ders seçin —</option>
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          {subjects.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground mt-1 italic">
+              Öğrencinin sınıf seviyesine uygun ders bulunamadı.
+            </p>
+          ) : null}
+        </div>
+
+        {subjectId === "" ? null : cq.isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+            <Loader2 className="size-4 animate-spin" aria-hidden /> Konular yükleniyor…
+          </div>
+        ) : topics.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">Bu derste konu bulunamadı.</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <Button type="button" size="sm" variant="outline" onClick={() => setSel(new Set(defaults))}>
+                Önerilenleri seç ({defaults.size})
+              </Button>
+              <Button
+                type="button" size="sm" variant="outline"
+                onClick={() => setSel(new Set(addable.map((t) => t.topic_id)))}
+              >
+                Tümünü seç ({addable.length})
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setSel(new Set())}>
+                Temizle
+              </Button>
+            </div>
+            <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1" data-testid="review-candidates">
+              {groups.map(([label, rows]) => (
+                <div key={label}>
+                  <div className="sticky top-0 z-10 bg-card py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {label}
+                    {ownGrade != null && label === `${ownGrade}. sınıf` ? " · kendi sınıfı" : ""}
+                  </div>
+                  <ul className="space-y-1">
+                    {rows.map((t) => {
+                      const has = t.card_id !== null;
+                      return (
+                        <li key={t.topic_id}>
+                          <label
+                            className={cn(
+                              "flex items-start gap-2.5 rounded-md border border-border px-2.5 py-2 text-sm",
+                              has ? "opacity-60" : "cursor-pointer hover:bg-muted/40",
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-0.5 size-4"
+                              disabled={has}
+                              checked={has || selected.has(t.topic_id)}
+                              onChange={() => toggle(t.topic_id)}
+                              aria-label={t.name}
+                            />
+                            <span className="flex-1 min-w-0">
+                              <span className="font-medium text-foreground break-words">{t.name}</span>
+                              {t.unit_name ? (
+                                <span className="block text-[11px] text-muted-foreground">{t.unit_name}</span>
+                              ) : null}
+                              <span className="mt-1 flex flex-wrap gap-1">
+                                {has ? (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-700 text-white">
+                                    kartı var
+                                  </span>
+                                ) : null}
+                                {t.reasons.map((r) => (
+                                  <span
+                                    key={r}
+                                    className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-700 text-white"
+                                  >
+                                    {r}
+                                  </span>
+                                ))}
+                                {!has && t.reasons.length === 0 ? (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    henüz çalışma kaydı yok
+                                  </span>
+                                ) : null}
+                              </span>
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+              <p className="text-xs text-muted-foreground">
+                {selected.size} konu seçili
+                {selected.size > newPerDay
+                  ? ` · öğrenci bunları ${Math.ceil(selected.size / newPerDay)} güne yayılmış görecek`
+                  : ""}
+              </p>
+              <Button
+                type="button"
+                onClick={submit}
+                disabled={mut.isPending || selected.size === 0}
+                className="bg-cyan-700 text-white hover:bg-cyan-800"
+              >
+                {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                {selected.size} konuyu kart olarak ekle
+              </Button>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function CardListPanel({ d }: { d: TeacherReviewResponse }) {
+function CardListPanel({ studentId, d }: { studentId: number; d: TeacherReviewResponse }) {
+  const [subjectFilter, setSubjectFilter] = React.useState<number | "">("");
+  const [sel, setSel] = React.useState<Set<number>>(new Set());
+  const [confirming, setConfirming] = React.useState(false);
+  const del = useDeleteReviewCards(studentId);
+  const reopen = useReopenReviewCards(studentId);
+
+  const subjectsInCards = React.useMemo(() => {
+    const m = new Map<number, string>();
+    for (const c of d.cards) if (c.subject_id != null) m.set(c.subject_id, c.subject_name ?? "—");
+    return [...m.entries()];
+  }, [d.cards]);
+  const visible = d.cards.filter((c) => subjectFilter === "" || c.subject_id === subjectFilter);
+  const visibleIds = visible.map((c) => c.id);
+  const selVisible = visibleIds.filter((id) => sel.has(id));
+  const allSelected = visible.length > 0 && selVisible.length === visible.length;
+
+  function toggle(id: number) {
+    const next = new Set(sel);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSel(next);
+    setConfirming(false);
+  }
+
+  function doDelete() {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    del.mutate(
+      { cardIds: selVisible },
+      { onSuccess: () => { setSel(new Set()); setConfirming(false); } },
+    );
+  }
+
   return (
-    <Card className="lg:col-span-2">
+    <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">
+        <CardTitle className="text-base font-semibold flex flex-wrap items-center gap-2">
           Kartlar ({d.cards.length})
+          {subjectsInCards.length > 1 ? (
+            <select
+              aria-label="Kartları derse göre süz"
+              value={subjectFilter}
+              onChange={(e) => {
+                setSubjectFilter(e.target.value === "" ? "" : Number(e.target.value));
+                setSel(new Set());
+                setConfirming(false);
+              }}
+              className="ml-auto text-sm font-normal px-2 py-1 border border-border rounded-md bg-background"
+            >
+              <option value="">Tüm dersler</option>
+              {subjectsInCards.map(([id, name]) => (
+                <option key={id} value={id}>{name}</option>
+              ))}
+            </select>
+          ) : null}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {d.cards.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground py-10 italic">
-            Henüz tekrar kartı yok. Soldaki formdan bir ders ekleyin.
+            Henüz tekrar kartı yok. Yukarıdaki formdan konu ekleyin.
           </div>
         ) : (
-          <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-            {d.cards.map((c) => (
-              <div
-                key={c.id}
-                className="border border-border rounded-lg p-3 hover:bg-muted/30 transition"
-              >
-                <div className="flex items-center justify-between gap-3 flex-wrap">
+          <>
+            <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
+              <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="size-4"
+                  checked={allSelected}
+                  onChange={() => {
+                    setSel(allSelected ? new Set() : new Set(visibleIds));
+                    setConfirming(false);
+                  }}
+                  aria-label="Görünen kartların tümünü seç"
+                />
+                Tümünü seç
+              </label>
+              {selVisible.length > 0 ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={doDelete}
+                  disabled={del.isPending}
+                  className={confirming ? "bg-rose-700 text-white hover:bg-rose-800" : "bg-slate-700 text-white hover:bg-slate-800"}
+                >
+                  {del.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Trash2 className="size-3.5" aria-hidden />}
+                  {confirming
+                    ? `Eminim, ${selVisible.length} kartı sil`
+                    : `Seçilenleri sil (${selVisible.length})`}
+                </Button>
+              ) : null}
+              {confirming ? (
+                <span className="text-muted-foreground">
+                  Kartlar tekrar geçmişiyle birlikte silinir; konuyu sonra yeniden ekleyebilirsin.
+                </span>
+              ) : null}
+            </div>
+            <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+              {visible.map((c) => (
+                <div
+                  key={c.id}
+                  className="border border-border rounded-lg p-3 hover:bg-muted/30 transition flex items-start gap-3"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-1 size-4"
+                    checked={sel.has(c.id)}
+                    onChange={() => toggle(c.id)}
+                    aria-label={`${c.topic_name} kartını seç`}
+                  />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <StateLabel state={c.state} label={c.state_label} />
-                      <span className="text-xs text-muted-foreground">
-                        {c.subject_name ?? "—"}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{c.subject_name ?? "—"}</span>
                     </div>
-                    <div className="text-sm font-medium text-foreground truncate mt-1">
+                    <div className="text-sm font-medium text-foreground break-words mt-1">
                       {c.topic_name}
                     </div>
                   </div>
                   <div className="text-right text-xs text-muted-foreground flex-shrink-0">
-                    {c.due_at ? (
-                      <>Vade: {formatShortDate(c.due_at)}</>
+                    {c.state === "mastered" ? (
+                      <Button
+                        type="button" size="sm" variant="outline"
+                        disabled={reopen.isPending}
+                        onClick={() => reopen.mutate({ cardIds: [c.id] })}
+                      >
+                        <RotateCcw className="size-3.5" aria-hidden /> Yeniden aç
+                      </Button>
+                    ) : c.due_at ? (
+                      <>Sıradaki tekrar: {formatShortDate(c.due_at)}</>
                     ) : (
                       "Henüz çalışılmadı"
                     )}
@@ -502,17 +771,15 @@ function CardListPanel({ d }: { d: TeacherReviewResponse }) {
                       {c.lapse_count > 0 ? (
                         <>
                           {" · "}
-                          <span className="text-rose-500">
-                            {c.lapse_count} unutma
-                          </span>
+                          <span className="text-rose-500">{c.lapse_count} unutma</span>
                         </>
                       ) : null}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </CardContent>
     </Card>
@@ -525,6 +792,7 @@ const STATE_PILL: Record<ReviewState, string> = {
   relearning: "bg-rose-500/10 text-rose-700 ring-1 ring-inset ring-rose-500/20",
   review:
     "bg-emerald-500/10 text-emerald-700 ring-1 ring-inset ring-emerald-500/20",
+  mastered: "bg-cyan-700 text-white",
 };
 
 function StateLabel({ state, label }: { state: ReviewState; label: string }) {

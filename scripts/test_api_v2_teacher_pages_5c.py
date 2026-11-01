@@ -309,7 +309,7 @@ def main() -> int:
         # 11) Review seed (idempotent)
         r = client.post(
             f"/api/v2/teacher/students/{seed['student_id']}/review/seed",
-            json={"subject_id": seed["subject_id"]},
+            json={"subject_id": seed["subject_id"], "topic_ids": [seed["topic_id"]]},
         )
         body = r.json() if r.text else {}
         added_first = body.get("data", {}).get("added", 0)
@@ -319,7 +319,7 @@ def main() -> int:
 
         r = client.post(
             f"/api/v2/teacher/students/{seed['student_id']}/review/seed",
-            json={"subject_id": seed["subject_id"]},
+            json={"subject_id": seed["subject_id"], "topic_ids": [seed["topic_id"]]},
         )
         body = r.json() if r.text else {}
         ok = (

@@ -3,21 +3,22 @@
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/error-state";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { getStudentReview, studentKeys } from "@/lib/api/student";
-import { useReviewRate } from "@/lib/hooks/use-student-mutations";
-import type { ReviewResponse } from "@/lib/types/student";
+import { useReviewRate, useReviewUndo } from "@/lib/hooks/use-student-mutations";
+import type { ReviewCardItem, ReviewResponse } from "@/lib/types/student";
 
 interface Props {
   initial: ReviewResponse;
 }
 
 const RATINGS = [
-  { value: 1 as const, label: "Tekrar", color: "bg-rose-100 text-rose-800 hover:bg-rose-200" },
+  { value: 1 as const, label: "Hatırlamadım", color: "bg-rose-100 text-rose-800 hover:bg-rose-200" },
   { value: 2 as const, label: "Zor", color: "bg-amber-100 text-amber-800 hover:bg-amber-200" },
   { value: 3 as const, label: "İyi", color: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" },
   { value: 4 as const, label: "Kolay", color: "bg-sky-100 text-sky-800 hover:bg-sky-200" },
@@ -39,6 +40,7 @@ export function ReviewClient({ initial }: Props) {
     staleTime: 60_000,
   });
   const rate = useReviewRate();
+  const undo = useReviewUndo();
   const [revealed, setRevealed] = React.useState(false);
 
   if (q.isError) {
@@ -81,7 +83,23 @@ export function ReviewClient({ initial }: Props) {
       };
     });
     setRevealed(false);
-    rate.mutate({ cardId: current.id, rating });
+    const cardId = current.id;
+    const topic = current.topic_name;
+    rate.mutate(
+      { cardId, rating },
+      {
+        onSuccess: (res) => {
+          toast.success(topic, {
+            description: rateMessage(res.data, rating),
+            duration: 8000,
+            action: {
+              label: "Geri al",
+              onClick: () => undo.mutate({ cardId }),
+            },
+          });
+        },
+      },
+    );
   }
 
   return (
@@ -91,8 +109,9 @@ export function ReviewClient({ initial }: Props) {
           Tekrar kuyruğu
         </h1>
         <p className="text-sm text-muted-foreground">
-          Konularını aralıklı tekrar et — sistem zorlandığın konuları daha sık
-          önüne getirir.
+          Konuyu aklında canlandır, sonra dürüstçe puanla. &quot;Hatırlamadım&quot;
+          dediğin konu bir hafta sonra yeniden gelir — o hafta çalış. Yanlış
+          butona bastıysan bildirimden &quot;Geri al&quot;a dokun.
         </p>
         <DemoHint contextKey="review" role="student" />
         <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -101,6 +120,7 @@ export function ReviewClient({ initial }: Props) {
           <BreakdownPill label="Öğreniliyor" value={data.breakdown.learning} />
           <BreakdownPill label="Pekiştirme" value={data.breakdown.review} />
           <BreakdownPill label="Yeniden" value={data.breakdown.relearning} />
+          <BreakdownPill label="Kalıcı" value={data.breakdown.mastered ?? 0} />
           <span className="ml-auto text-muted-foreground">
             Toplam {data.breakdown.total} kart
           </span>
@@ -114,8 +134,9 @@ export function ReviewClient({ initial }: Props) {
             Bu an için kart yok 🎉
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            Yeni kartlar koçun seed&apos;lediğinde veya vade dolduğunda burada
-            çıkar.
+            {(data.breakdown.new_waiting ?? 0) > 0
+              ? `Bugünlük bu kadar. Sırada ${data.breakdown.new_waiting} yeni kart var; her gün en fazla ${data.breakdown.new_per_day} tanesi gelir.`
+              : "Koçun yeni konu eklediğinde ya da bir kartın tekrar zamanı geldiğinde burada çıkar."}
           </p>
         </div>
       ) : (
@@ -186,7 +207,22 @@ const STATE_LABEL: Record<string, string> = {
   learning: "Öğreniliyor",
   review: "Pekiştirme",
   relearning: "Yeniden öğrenme",
+  mastered: "Kalıcı",
 };
+
+function rateMessage(card: ReviewCardItem, rating: number): string {
+  if (card.state === "mastered") {
+    return "Bu konu artık kalıcı — tekrar kuyruğundan çıktı.";
+  }
+  const days = card.due_at
+    ? Math.max(1, Math.round((new Date(card.due_at).getTime() - Date.now()) / 86_400_000))
+    : null;
+  const when = days == null ? "" : `${days} gün sonra`;
+  if (rating === 1) {
+    return `Bu hafta bu konuyu çalış; ${when} yeniden soracağım.`;
+  }
+  return when ? `Sıradaki tekrar ${when}.` : "Kaydedildi.";
+}
 
 function BreakdownPill({
   label,
