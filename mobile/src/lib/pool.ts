@@ -60,6 +60,8 @@ export interface StudentPoolResponse {
   cup: StudentCupTask[];
   projection: { date: string; units: number }[];
   lesson_today: string[];
+  /** H6: "daha önce yaptım" için seçilebilir günler (yeniden eskiye). */
+  earlier_days?: string[];
   subjects: { id: number; name: string; group?: "okul" | "sinav"; is_ayt?: boolean; book_count?: number }[];
   student_id?: number;
   grade_level?: number | null;
@@ -93,6 +95,11 @@ interface Mut { data: StudentPoolResponse; invalidate: string[] }
 
 export function cupAdd(item_id: number, count?: number | null): Promise<Mut> {
   return apiRequest<Mut>("/api/v2/student/pool/cup", { method: "POST", body: { item_id, count: count ?? null } });
+}
+
+/** H6: kalemi geçmiş bir günde yaptım — o güne yapıldı olarak yazılır. */
+export function doneEarlier(body: { item_id: number; day: string; count?: number | null; correct?: number | null; wrong?: number | null }): Promise<Mut> {
+  return apiRequest<Mut>("/api/v2/student/pool/done-earlier", { method: "POST", body });
 }
 
 export function cupReturn(task_id: number): Promise<Mut> {

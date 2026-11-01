@@ -538,11 +538,21 @@ class StudentPoolResponse(BaseModel):
     units: list[str] = []
     today: str
     lesson_days_set: bool = False   # şube ders programı girilmiş mi (dağılım ona göre)
+    earlier_days: list[str] = []    # H6: "daha önce yaptım" için seçilebilir günler (yeniden eskiye)
 
 
 class StudentCupBody(BaseModel):
     item_id: int
     count: int | None = Field(default=None, ge=1, le=500)
+
+
+class StudentEarlierDoneBody(BaseModel):
+    """H6: kalemi geçmiş bir günde yaptım (en çok 2 gün geriye, açık dönem içinde)."""
+    item_id: int
+    day: str
+    count: int | None = Field(default=None, ge=1, le=500)
+    correct: int | None = Field(default=None, ge=0, le=5000)
+    wrong: int | None = Field(default=None, ge=0, le=5000)
 
 
 class StudentCupResizeBody(BaseModel):

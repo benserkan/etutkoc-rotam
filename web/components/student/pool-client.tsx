@@ -25,7 +25,7 @@ import { PoolPeriodDialog } from "@/components/shared/pool-period-dialog";
 import { StudentPoolAddDialog } from "@/components/student/pool-add-dialog";
 import {
   getStudentPool, getStudentPoolPeriod, studentPoolKey, studentPoolPeriodKey, UNIT_LABELS,
-  useCupAdd, useCupReturn,
+  useCupAdd, useCupReturn, useDoneEarlier,
   type StudentCupTask, type StudentPoolItem, type StudentPoolResponse,
 } from "@/lib/api/pool-student";
 
@@ -61,6 +61,8 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
   const q = useQuery({ queryKey: studentPoolKey, queryFn: getStudentPool, initialData: initial });
   const data = q.data ?? initial;
   const [pick, setPick] = React.useState<StudentPoolItem | null>(null);
+  const [earlier, setEarlier] = React.useState<StudentPoolItem | null>(null);
+  const onEarlier = (data.earlier_days ?? []).length > 0 ? setEarlier : undefined;
   const [addOpen, setAddOpen] = React.useState(openAdd);
   const router = useRouter();
   const cupAdd = useCupAdd();
@@ -168,7 +170,7 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
               <h2 className="text-sm font-semibold text-cyan-900">Bugün için öneri</h2>
               <p className="text-xs text-cyan-800">Günü belli olan ya da bugün dershanede işlenen dersin kalemleri önce.</p>
               <ul className="mt-2 space-y-1.5">
-                {suggested.map((it) => <ItemRow key={it.id} it={it} onPick={onPick} busy={cupAdd.isPending} showSubject />)}
+                {suggested.map((it) => <ItemRow key={it.id} it={it} onPick={onPick} busy={cupAdd.isPending} showSubject onEarlier={onEarlier} />)}
               </ul>
             </section>
           )}
@@ -195,7 +197,7 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
                     <Bar pct={tot ? (100 * dn) / tot : 0} color={c.rail} className="w-24" />
                   </div>
                   <ul className="space-y-1.5">
-                    {list.map((it) => <ItemRow key={it.id} it={it} onPick={onPick} busy={cupAdd.isPending} />)}
+                    {list.map((it) => <ItemRow key={it.id} it={it} onPick={onPick} busy={cupAdd.isPending} onEarlier={onEarlier} />)}
                   </ul>
                 </div>
               );
@@ -211,6 +213,9 @@ export function PoolClient({ initial, openAdd = false }: { initial: StudentPoolR
                      cupUnits={data.cup.filter((c) => c.status !== "completed").reduce((a, c) => a + Math.max(0, c.planned - c.completed), 0)}
                      perDay={data.summary?.per_day_needed ?? 0}
                      onPick={(n) => cupAdd.mutate({ item_id: pick.id, count: n }, { onSuccess: () => setPick(null) })} busy={cupAdd.isPending} />
+      )}
+      {earlier && (
+        <EarlierDialog item={earlier} days={data.earlier_days ?? []} onClose={() => setEarlier(null)} />
       )}
       <StudentPoolAddDialog open={addOpen} data={data} studentId={data.student_id ?? 0}
                  studentGrade={data.grade_level ?? null}
@@ -289,8 +294,9 @@ function CupRow({ c }: { c: StudentCupTask }) {
 
 // ---------------------------------------------------------------- havuz listesi
 
-function ItemRow({ it, onPick, busy, showSubject = false }: {
+function ItemRow({ it, onPick, busy, showSubject = false, onEarlier }: {
   it: StudentPoolItem; onPick: (it: StudentPoolItem) => void; busy: boolean; showSubject?: boolean;
+  onEarlier?: (it: StudentPoolItem) => void;
 }) {
   const done = it.remaining === 0;
   const pending = it.source === "ogrenci" && it.approval === "bekliyor";
@@ -319,8 +325,16 @@ function ItemRow({ it, onPick, busy, showSubject = false }: {
       ) : it.in_cup_today ? (
         <span className="rounded-full bg-cyan-700 px-2.5 py-1 text-xs font-semibold text-white">kapta</span>
       ) : (
-        <Button size="sm" onClick={() => onPick(it)} disabled={busy}
-                className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white">Kaba al</Button>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Button size="sm" onClick={() => onPick(it)} disabled={busy}
+                  className="bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white">Kaba al</Button>
+          {onEarlier && !pending ? (
+            <button type="button" onClick={() => onEarlier(it)} data-testid={`pool-earlier-${it.id}`}
+                    className="text-xs font-medium text-cyan-800 underline-offset-2 hover:underline">
+              Daha önce yaptım
+            </button>
+          ) : null}
+        </div>
       )}
     </li>
   );
@@ -503,3 +517,91 @@ function CountDialog({ item, onClose, onPick, busy, cupUnits, perDay }: {
   );
 }
 
+
+// ---------------------------------------------------------------- H6: daha önce yaptım
+
+function dayLabel(iso: string, idx: number): string {
+  const d = new Date(`${iso}T00:00:00`);
+  const name = d.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
+  return idx === 0 ? `Dün · ${name}` : `${idx + 1} gün önce · ${name}`;
+}
+
+function EarlierDialog({ item, days, onClose }: { item: StudentPoolItem; days: string[]; onClose: () => void }) {
+  const mut = useDoneEarlier();
+  const [day, setDay] = React.useState(days[0] ?? "");
+  const [count, setCount] = React.useState(item.remaining);
+  const [correct, setCorrect] = React.useState("");
+  const [wrong, setWrong] = React.useState("");
+  const counts = item.unit !== "etkinlik";
+  const showDy = item.unit === "test" || item.unit === "soru";
+  const opts = Array.from({ length: Math.min(item.remaining, 8) }, (_, i) => i + 1);
+  function submit() {
+    mut.mutate({
+      item_id: item.id, day, count: counts ? count : null,
+      correct: correct === "" ? null : Number(correct), wrong: wrong === "" ? null : Number(wrong),
+    }, { onSuccess: onClose });
+  }
+  const chip = (on: boolean) => cn("border text-sm font-semibold",
+    on ? "border-cyan-700 bg-cyan-700 text-white" : "text-foreground hover:bg-accent");
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Daha önce yaptım</DialogTitle>
+          <DialogDescription>
+            {item.title} · kalan {item.remaining} {UNIT_LABELS[item.unit]}. Yaptığın günü seç; programında o güne
+            yazılır. Ne zaman işaretlediğin de kaydedilir, rehberin bunu görür.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4" data-section="student:pool:earlier">
+          <div className="space-y-1.5">
+            <div className="text-xs font-semibold text-foreground">Hangi gün?</div>
+            <div className="flex flex-col gap-1.5">
+              {days.map((d, i) => (
+                <button key={d} type="button" onClick={() => setDay(d)} aria-pressed={day === d}
+                        className={cn("rounded-lg px-3 py-2 text-left", chip(day === d))}>
+                  {dayLabel(d, i)}
+                </button>
+              ))}
+            </div>
+          </div>
+          {counts && (
+            <div className="space-y-1.5">
+              <div className="text-xs font-semibold text-foreground">Kaç {UNIT_LABELS[item.unit]} yaptın?</div>
+              <div className="flex flex-wrap gap-2">
+                {opts.map((n) => (
+                  <button key={n} type="button" onClick={() => setCount(n)} aria-pressed={count === n}
+                          className={cn("size-10 rounded-full", chip(count === n))}>{n}</button>
+                ))}
+                {item.remaining > 8 && (
+                  <button type="button" onClick={() => setCount(item.remaining)} aria-pressed={count === item.remaining}
+                          className={cn("h-10 rounded-full px-3", chip(count === item.remaining))}>
+                    hepsi ({item.remaining})
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          {showDy && (
+            <div className="grid grid-cols-2 gap-2">
+              <label className="space-y-1 text-xs font-semibold text-foreground">
+                Doğru (soru)
+                <input type="number" min={0} inputMode="numeric" value={correct} onChange={(e) => setCorrect(e.target.value)}
+                       className="w-full rounded-md border bg-background px-2 py-1.5 text-sm font-normal" />
+              </label>
+              <label className="space-y-1 text-xs font-semibold text-foreground">
+                Yanlış (soru)
+                <input type="number" min={0} inputMode="numeric" value={wrong} onChange={(e) => setWrong(e.target.value)}
+                       className="w-full rounded-md border bg-background px-2 py-1.5 text-sm font-normal" />
+              </label>
+            </div>
+          )}
+          <Button onClick={submit} disabled={mut.isPending || !day}
+                  className="w-full bg-cyan-700 text-white hover:bg-cyan-800 hover:text-white">
+            O güne yapıldı olarak kaydet
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

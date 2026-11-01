@@ -209,8 +209,10 @@ def main() -> int:
               st["approval"] == "bekliyor" and st["counts"] is False and st["source"] == "ogrenci", str(st))
         days = {x["date"]: x for x in j["days"]}
         p = j["period"]
-        check("T6 gün listesi açılış→kapanış kesintisiz (8 gün)",
-              len(j["days"]) == 8 and j["days"][0]["date"] == p["opened_on"] and j["days"][-1]["date"] == p["closed_on"],
+        # H7 (2026-11-01): kapanış günü o gün yeni dönem açıldığı için yeni döneme aittir → 7 gün
+        check("T6 gün listesi açılış→kapanıştan bir önceki gün kesintisiz (7 gün)",
+              len(j["days"]) == 7 and j["days"][0]["date"] == p["opened_on"]
+              and j["days"][-1]["date"] == (date.fromisoformat(p["closed_on"]) - timedelta(days=1)).isoformat(),
               f"{len(j['days'])} {j['days'][0]['date']}..{j['days'][-1]['date']}")
         g7 = days[d7]["tasks"]
         check("T7 gün-7: 4/4 test · 3D 1Y 0B · tamamlandı · günün birimi 4",
@@ -266,7 +268,7 @@ def main() -> int:
         check("V1 veli penceresi 200 · onay bekleyen kalem YOK · kaldırılan YOK · sayaç YOK (K52)",
               r.status_code == 200 and j["audience"] == "parent" and pitems == {d["i_a"], d["i_b"], d["i_c"]}
               and j["removed_items"] == [] and all(it["cup_returns"] == 0 for it in j["items"]), r.text[:200])
-        check("V2 veli gün gün: 8 gün · gün-7 görevi görünür", len(j["days"]) == 8
+        check("V2 veli gün gün: 7 gün · gün-7 görevi görünür", len(j["days"]) == 7
               and any(t["done"] == 4 for x in j["days"] for t in x["tasks"]))
         cp2 = _login(f"{PFX}_veli2@test.invalid")
         r = cp2.get(f"/api/v2/parent/students/{d['s']}/pool/periods/{d['p1']}")

@@ -83,6 +83,8 @@ export interface StudentPoolResponse {
   grade_level?: number | null;
   /** Şube ders programı girilmiş mi — dağılım önerisi buna göre */
   lesson_days_set?: boolean;
+  /** H6: "daha önce yaptım" için seçilebilir günler (yeniden eskiye, en çok 2 gün geriye). */
+  earlier_days?: string[];
 }
 
 export const UNIT_LABELS: Record<PoolUnit, string> = {
@@ -115,6 +117,13 @@ function usePoolMutation<TBody>(path: (b: TBody) => string, ok: string | null, f
 export function useCupAdd() {
   return usePoolMutation<{ item_id: number; count?: number | null }>(
     () => "/api/v2/student/pool/cup", "Kabına eklendi", "Kaba alınamadı",
+  );
+}
+
+/** H6: kalemi geçmiş bir günde yaptım — o güne yapıldı olarak yazılır. */
+export function useDoneEarlier() {
+  return usePoolMutation<{ item_id: number; day: string; count?: number | null; correct?: number | null; wrong?: number | null }>(
+    () => "/api/v2/student/pool/done-earlier", "O güne yapıldı olarak kaydedildi", "Kaydedilemedi",
   );
 }
 

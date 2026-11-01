@@ -82,6 +82,15 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   K42 kuralı, yoksa gereken hız > planlanan hız ×1,3; ilk gün asla geride değil (öğrenci/veli/kurum aynı karar).
 - **H5:** "Talep ve devir" havuzda devirle gelen kalemi sayar.
 - Test YENİ `test_pool_h1_h5.py` 27/27 · havuz takımları + teacher_read/students/analytics_rich yeşil.
+- **Canlı backfill uygulandı (kullanıcı onayı):** Taha'nın 4. dönemine kapanış uyarıları yazıldı (1 dönem).
+- **H6 "Daha önce yaptım" (migration YOK):** öğrenci havuz kalemini en çok 2 gün geriye (açık dönem içinde,
+  `pool_mode.EARLIER_ENTRY_DAYS`) yapıldı olarak kaydeder → `record_earlier_done` o güne kap görevi yazıp
+  hemen tamamlar; `completed_at` gerçek an kalır (gününde tamamlama + toplu işaretleme sonradan girişi görür).
+  POST `/student/pool/done-earlier` {item_id, day, count, correct, wrong} (bugünün kabındaki kalem 409
+  `in_cup_today`, gün dışı 422 `bad_day`, D+Y>sayı 422) · `StudentPoolResponse.earlier_days`. Web + mobil
+  Havuzum'da kalem satırında "Daha önce yaptım" (gün + sayı + D/Y).
+- **H7:** `period_detail` gün listesi `pool_metrics.period_ranges` kuralıyla (kapanış günü o gün yeni dönem
+  açıldıysa yeni döneme ait). Test YENİ `test_pool_h6_h7.py` 17/17 · step7 30 (T6/V2 yeni kural: 7 gün).
 
 ## HAVUZ "SEANSI BİTİR" — SEANS TARİHİ SEÇİLEBİLİR (2026-11-01, migration YOK)
 

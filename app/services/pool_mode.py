@@ -270,7 +270,14 @@ def period_detail(db: Session, period: StudyPeriod, *, today: date | None = None
     by_day: dict[date, list[Task]] = {}
     for t in tasks:
         by_day.setdefault(t.date, []).append(t)
+    # Gün aralığı pool_metrics.period_ranges ile aynı kural (H7): kapanış günü o gün yeni dönem
+    # açıldıysa yeni döneme aittir — iki dönemde birden "kap boş" günü görünmesin.
     end = period.closed_on or today
+    from app.services import pool_metrics
+    for p, _a, b in pool_metrics.period_ranges(db, period.student_id, today):
+        if p.id == period.id:
+            end = min(b, today) if period.closed_on is None else b
+            break
     span = {period.opened_on + timedelta(days=n) for n in range(max(0, (end - period.opened_on).days) + 1)}
     days = [(d, by_day.get(d, [])) for d in sorted(span | set(by_day))]
     return PeriodDetail(row=history_row(db, period, today), items=items, returns=returns,
@@ -883,6 +890,43 @@ def put_in_cup(db: Session, *, item: PoolItem, day: date, count: int | None = No
                 v.task_id = task.id
     item.cup_attempts = (item.cup_attempts or 0) + 1
     db.flush()
+    return task
+
+
+EARLIER_ENTRY_DAYS = 2   # H6: öğrenci en çok 2 gün geriye "daha önce yaptım" diyebilir (geç kayıt kilidiyle aynı)
+
+
+def earlier_entry_days(period: StudyPeriod, today: date) -> list[date]:
+    """H6: "daha önce yaptım" için seçilebilecek günler (yeniden eskiye): açık dönem içinde,
+    bugünden önce, en çok EARLIER_ENTRY_DAYS gün geriye."""
+    out = []
+    for n in range(1, EARLIER_ENTRY_DAYS + 1):
+        d = today - timedelta(days=n)
+        if d >= period.opened_on:
+            out.append(d)
+    return out
+
+
+def record_earlier_done(db: Session, *, item: PoolItem, day: date, today: date, count: int | None = None,
+                        correct: int | None = None, wrong: int | None = None) -> Task:
+    """H6: kalemi geçmiş bir günde yapıldı olarak kaydeder — o güne kap görevi yazılır ve hemen
+    tamamlanır. Gün gün tablo, ritim ve gece ölçüleri gerçek günü gösterir; işaretleme anı
+    (`completed_at`) ayrıca saklandığı için "gününde tamamlama" ölçüsü ve toplu işaretleme
+    uyarısı sonradan girişi yine görür."""
+    from app.services.task_service import complete_task
+
+    if day not in earlier_entry_days(item.period, today):
+        raise PoolError("bad_day", f"Yalnız dönem içindeki son {EARLIER_ENTRY_DAYS} günü seçebilirsin.")
+    try:
+        task = put_in_cup(db, item=item, day=day, count=count)
+    except PoolError as e:
+        if e.code == "already_in_cup":
+            raise PoolError("in_cup_today", "Bu kalem bugünün kabında; önce Bugün sayfasında işaretle ya da kaptan geri al.")
+        raise
+    single = len(task.book_items) == 1
+    complete_task(db, task, correct=correct if single else None, wrong=wrong if single else None)
+    db.flush()
+    sync_item_progress(db, item)
     return task
 
 

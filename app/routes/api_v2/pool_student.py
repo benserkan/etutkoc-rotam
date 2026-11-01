@@ -17,7 +17,7 @@ from app.models.pool import APPROVAL_REJECTED, POOL_UNITS, SOURCE_STUDENT
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.pool import (
     PoolBooksResponse, PoolTopicsResponse,
-    StudentCloseDayBody, StudentCupBody, StudentCupResizeBody, StudentCupTask, StudentPoolHint, StudentPoolItemBody,
+    StudentCloseDayBody, StudentCupBody, StudentCupResizeBody, StudentEarlierDoneBody, StudentCupTask, StudentPoolHint, StudentPoolItemBody,
     StudentPoolItemOut, StudentPoolProjectionDay, StudentPoolProjectionSubject, StudentPoolResponse, StudentPoolSubject,
     StudentPoolSummary,
 )
@@ -221,6 +221,7 @@ def student_pool(user: User = Depends(_require_student), db: Session = Depends(g
         items=items, cup=cup, projection=projection, lesson_today=lesson_today, subjects=subs,
         hints=hints, previous=previous, on_break=on_break, units=list(POOL_UNITS), today=today.isoformat(),
         lesson_days_set=any(v for v in lesson_days.values()),
+        earlier_days=[d.isoformat() for d in pm.earlier_entry_days(period, today)],
     )
 
 
@@ -255,6 +256,27 @@ def cup_add(body: StudentCupBody, user: User = Depends(_require_student), db: Se
         raise _http(e, 409 if e.code in ("already_in_cup", "item_done") else 422)
     db.commit()
     return MutationResponse(data=student_pool(user, db), invalidate=_day_keys(user.id, today))
+
+
+@router.post("/pool/done-earlier", response_model=MutationResponse[StudentPoolResponse])
+def done_earlier(body: StudentEarlierDoneBody, user: User = Depends(_require_student), db: Session = Depends(get_db)):
+    """H6: "Daha önce yaptım" — kalem o güne yapıldı olarak yazılır (gün gün tablo gerçek günü gösterir);
+    işaretleme anı ayrıca saklanır, sonradan giriş "gününde tamamlama" ölçüsünde yine görünür."""
+    period = _open_or_404(db, user)
+    it = _item_or_404(db, user, body.item_id, period)
+    day = _parse_iso_date(body.day)
+    today = date.today()
+    qty = body.count if body.count is not None else it.remaining
+    if (body.correct or 0) + (body.wrong or 0) > max(qty, 0) and it.unit in ("test", "soru"):
+        raise HTTPException(status_code=422, detail={"error": "validation", "code": "result_exceeds",
+                                                     "message": "Doğru + yanlış, yaptığın sayıyı geçemez."})
+    try:
+        pm.record_earlier_done(db, item=it, day=day, today=today, count=body.count,
+                               correct=body.correct, wrong=body.wrong)
+    except PoolError as e:
+        raise _http(e, 409 if e.code in ("in_cup_today", "item_done") else 422)
+    db.commit()
+    return MutationResponse(data=student_pool(user, db), invalidate=_day_keys(user.id, day) + _day_keys(user.id, today))
 
 
 @router.post("/pool/cup/{task_id}/return", response_model=MutationResponse[StudentPoolResponse])

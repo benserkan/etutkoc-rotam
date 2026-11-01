@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as React from "react";
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PeriodDetailSheet } from "@/components/pool/period-detail-sheet";
@@ -10,7 +10,7 @@ import { StudentAddItemSheet } from "@/components/pool/student-add-item-sheet";
 import { FormSheet } from "@/components/ui/form-sheet";
 import { ApiError } from "@/lib/api";
 import {
-  addStudentPoolItem, cupAdd, cupReturn, getStudentPool, getStudentPoolPeriod, poolKeys, poolPeriodKeys, UNIT_LABELS,
+  addStudentPoolItem, cupAdd, cupReturn, doneEarlier, getStudentPool, getStudentPoolPeriod, poolKeys, poolPeriodKeys, UNIT_LABELS,
   type StudentPoolItem, type StudentPoolResponse,
 } from "@/lib/pool";
 
@@ -24,6 +24,7 @@ export default function StudentPoolRoute() {
   const q = useQuery({ queryKey: poolKeys.pool, queryFn: getStudentPool });
   const [busy, setBusy] = React.useState(false);
   const [pick, setPick] = React.useState<StudentPoolItem | null>(null);
+  const [earlier, setEarlier] = React.useState<StudentPoolItem | null>(null);
   const [addOpen, setAddOpen] = React.useState(false);
   const [showProjection, setShowProjection] = React.useState(false);
 
@@ -91,6 +92,7 @@ export default function StudentPoolRoute() {
           onToggleProjection={() => setShowProjection((v) => !v)}
           onPick={(it) => (it.unit === "etkinlik" || it.remaining === 1 ? run(() => cupAdd(it.id)) : setPick(it))}
           onReturn={(taskId) => run(() => cupReturn(taskId))}
+          onEarlier={(q.data.earlier_days ?? []).length > 0 ? setEarlier : undefined}
         />
       )}
 
@@ -100,6 +102,15 @@ export default function StudentPoolRoute() {
           busy={busy}
           onClose={() => setPick(null)}
           onPick={(n) => run(() => cupAdd(pick.id, n), () => setPick(null))}
+        />
+      ) : null}
+      {earlier && q.data ? (
+        <EarlierSheet
+          item={earlier}
+          days={q.data.earlier_days ?? []}
+          busy={busy}
+          onClose={() => setEarlier(null)}
+          onSubmit={(b) => run(() => doneEarlier({ item_id: earlier.id, ...b }), () => setEarlier(null))}
         />
       ) : null}
       {q.data ? (
@@ -121,11 +132,12 @@ function fmtDate(iso: string): string {
 }
 
 function PoolBody({
-  data, busy, refreshing, onRefresh, showProjection, onToggleProjection, onPick, onReturn,
+  data, busy, refreshing, onRefresh, showProjection, onToggleProjection, onPick, onReturn, onEarlier,
 }: {
   data: StudentPoolResponse; busy: boolean; refreshing: boolean; onRefresh: () => void;
   showProjection: boolean; onToggleProjection: () => void;
   onPick: (it: StudentPoolItem) => void; onReturn: (taskId: number) => void;
+  onEarlier?: (it: StudentPoolItem) => void;
 }) {
   const s = data.summary!;
   const suggested = data.items.filter((i) => i.suggested);
@@ -211,7 +223,7 @@ function PoolBody({
           <Text className="text-sm font-semibold text-brand-900">Bugün için öneri</Text>
           <Text className="mt-0.5 text-xs text-brand-800">Günü belli olan ya da bugün dershanede işlenen dersin kalemleri önce.</Text>
           <View className="mt-2 gap-1.5">
-            {suggested.map((it) => <ItemRow key={it.id} it={it} busy={busy} onPick={onPick} />)}
+            {suggested.map((it) => <ItemRow key={it.id} it={it} busy={busy} onPick={onPick} onEarlier={onEarlier} />)}
           </View>
         </View>
       ) : null}
@@ -220,7 +232,7 @@ function PoolBody({
       {[...groups.entries()].map(([name, list]) => (
         <View key={name} className="gap-1.5">
           <Text className="text-xs font-semibold uppercase tracking-wide text-slate-500">{name}</Text>
-          {list.map((it) => <ItemRow key={it.id} it={it} busy={busy} onPick={onPick} />)}
+          {list.map((it) => <ItemRow key={it.id} it={it} busy={busy} onPick={onPick} onEarlier={onEarlier} />)}
         </View>
       ))}
 
@@ -263,7 +275,9 @@ function PreviousPeriods({ previous, center }: { previous: StudentPoolResponse["
   );
 }
 
-function ItemRow({ it, busy, onPick }: { it: StudentPoolItem; busy: boolean; onPick: (it: StudentPoolItem) => void }) {
+function ItemRow({ it, busy, onPick, onEarlier }: {
+  it: StudentPoolItem; busy: boolean; onPick: (it: StudentPoolItem) => void; onEarlier?: (it: StudentPoolItem) => void;
+}) {
   const done = it.remaining === 0;
   const pending = it.source === "ogrenci" && it.approval === "bekliyor";
   return (
@@ -280,9 +294,16 @@ function ItemRow({ it, busy, onPick }: { it: StudentPoolItem; busy: boolean; onP
       ) : it.in_cup_today ? (
         <Text className="text-xs font-semibold text-brand-700">kapta</Text>
       ) : (
-        <Pressable onPress={() => onPick(it)} disabled={busy} className="rounded-full bg-brand-700 px-3 py-1.5 active:bg-brand-800" accessibilityLabel="Kaba al">
-          <Text className="text-xs font-semibold text-white">Kaba al</Text>
-        </Pressable>
+        <View className="items-end gap-1">
+          <Pressable onPress={() => onPick(it)} disabled={busy} className="rounded-full bg-brand-700 px-3 py-1.5 active:bg-brand-800" accessibilityLabel="Kaba al">
+            <Text className="text-xs font-semibold text-white">Kaba al</Text>
+          </Pressable>
+          {onEarlier && !pending ? (
+            <Pressable onPress={() => onEarlier(it)} disabled={busy} hitSlop={6} accessibilityLabel="Daha önce yaptım">
+              <Text className="text-xs font-medium text-brand-700">Daha önce yaptım</Text>
+            </Pressable>
+          ) : null}
+        </View>
       )}
     </View>
   );
@@ -305,6 +326,84 @@ function CountSheet({ item, busy, onClose, onPick }: { item: StudentPoolItem; bu
           </Pressable>
         ) : null}
       </View>
+    </FormSheet>
+  );
+}
+
+function earlierLabel(iso: string, idx: number): string {
+  const d = new Date(`${iso}T00:00:00`);
+  const name = d.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
+  return idx === 0 ? `Dün · ${name}` : `${idx + 1} gün önce · ${name}`;
+}
+
+/** H6: kalemi geçmiş bir günde yaptım — gün + sayı (+ D/Y) seçilir, o güne yapıldı olarak yazılır. */
+function EarlierSheet({ item, days, busy, onClose, onSubmit }: {
+  item: StudentPoolItem; days: string[]; busy: boolean; onClose: () => void;
+  onSubmit: (b: { day: string; count: number | null; correct: number | null; wrong: number | null }) => void;
+}) {
+  const [day, setDay] = React.useState(days[0] ?? "");
+  const [count, setCount] = React.useState(item.remaining);
+  const [correct, setCorrect] = React.useState("");
+  const [wrong, setWrong] = React.useState("");
+  const counts = item.unit !== "etkinlik";
+  const showDy = item.unit === "test" || item.unit === "soru";
+  const opts = Array.from({ length: Math.min(item.remaining, 8) }, (_, i) => i + 1);
+  const on = (v: boolean) => (v ? "border-brand-700 bg-brand-700" : "border-slate-300 bg-white");
+  const onText = (v: boolean) => (v ? "text-white" : "text-slate-800");
+  return (
+    <FormSheet visible title="Daha önce yaptım" onClose={onClose}>
+      <Text className="text-sm text-slate-600">
+        {item.title} · kalan {item.remaining} {UNIT_LABELS[item.unit]}. Yaptığın günü seç; programında o güne yazılır.
+        Ne zaman işaretlediğin de kaydedilir, rehberin bunu görür.
+      </Text>
+      <Text className="mt-3 text-xs font-semibold text-slate-700">Hangi gün?</Text>
+      <View className="mt-1.5 gap-1.5">
+        {days.map((d, i) => (
+          <Pressable key={d} onPress={() => setDay(d)} className={`rounded-xl border px-3 py-2.5 ${on(day === d)}`}>
+            <Text className={`text-sm font-medium ${onText(day === d)}`}>{earlierLabel(d, i)}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {counts ? (
+        <>
+          <Text className="mt-3 text-xs font-semibold text-slate-700">Kaç {UNIT_LABELS[item.unit]} yaptın?</Text>
+          <View className="mt-1.5 flex-row flex-wrap gap-2">
+            {opts.map((n) => (
+              <Pressable key={n} onPress={() => setCount(n)} className={`size-11 items-center justify-center rounded-full border ${on(count === n)}`}>
+                <Text className={`text-base font-semibold ${onText(count === n)}`}>{n}</Text>
+              </Pressable>
+            ))}
+            {item.remaining > 8 ? (
+              <Pressable onPress={() => setCount(item.remaining)} className={`h-11 items-center justify-center rounded-full border px-4 ${on(count === item.remaining)}`}>
+                <Text className={`text-base font-semibold ${onText(count === item.remaining)}`}>hepsi ({item.remaining})</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </>
+      ) : null}
+      {showDy ? (
+        <View className="mt-3 flex-row gap-2">
+          <View className="flex-1">
+            <Text className="text-xs font-semibold text-slate-700">Doğru (soru)</Text>
+            <TextInput value={correct} onChangeText={setCorrect} keyboardType="number-pad"
+                       className="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-xs font-semibold text-slate-700">Yanlış (soru)</Text>
+            <TextInput value={wrong} onChangeText={setWrong} keyboardType="number-pad"
+                       className="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900" />
+          </View>
+        </View>
+      ) : null}
+      <Pressable
+        disabled={busy || !day}
+        onPress={() => onSubmit({
+          day, count: counts ? count : null,
+          correct: correct.trim() === "" ? null : Number(correct), wrong: wrong.trim() === "" ? null : Number(wrong),
+        })}
+        className="mt-4 items-center rounded-xl bg-brand-700 py-3 active:bg-brand-800">
+        <Text className="font-semibold text-white">O güne yapıldı olarak kaydet</Text>
+      </Pressable>
     </FormSheet>
   );
 }

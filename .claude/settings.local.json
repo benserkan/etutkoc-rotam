@@ -1,6 +1,8 @@
 {
   "permissions": {
     "allow": [
+      "Bash(ssh root@178.105.221.223 *)",
+      "Bash(ssh -o * root@178.105.221.223 *)",
       "Bash(ssh -o BatchMode=yes root@178.105.221.223 *)",
       "Bash(scp * root@178.105.221.223:*)"
     ]
