@@ -6,6 +6,32 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## TEKRAR KARTLARI v2 — seçici ekleme + konu ölçeği zamanlama + Kalıcı + geri al (2026-11-01, CANLI, migration YOK)
+
+- **Vaka:** Neslihan Hoca "dersten ekle" → Beren #227 (8. sınıf) 114 kart: tema başlıkları + 5-7. sınıf + hiç
+  çalışılmamış konular, hepsi aynı gün kuyrukta. Canlı ölçüm: 479 kartın %97'si hiç açılmamıştı (toplam 12 puan, tek öğrenci).
+- **Kural:** tekrar kartı ÖĞRENİLMİŞ konunun unutulmaması içindir. `review_scheduler.topic_candidates` (yalnız alt konu,
+  sınıf kümülatif = `leaf_topics_for_student`) önerir: kitapta/kaynaksız görevde test çözdü · son 180g denemede yanlış ·
+  arşivde açık yanlış · koç kapattı. GET `/teacher/students/{id}/review/candidates?subject_id=`; seed `topic_ids` alır,
+  **verilmezse yalnız önerilenler** (eski mobil/istemci dersin tamamını EKLEMEZ artık).
+- **Konu ölçeği zamanlama** (yalnız `record_review`; fsrs.py ve Yanlış Soru Arşivi DEĞİŞMEDİ): Hatırlamadım = 7 gün ·
+  Zor ≥3 · İyi/Kolay ≥7. Hep İyi: 7 → 7 → 17 → 4. İyi'de **Kalıcı** (`STATE_MASTERED="mastered"`, due NULL; kural: üst üste
+  3 aralıklı başarı + sıradaki aralık ≥30 gün). Kalıcı karta puan → 409 `card_mastered`; koç "yeniden aç".
+- **Günde ≤10 yeni kart** (`NEW_CARDS_PER_DAY`; TR günü; due listesi + sayımlar + koç filo ekranı aynı `_counts_for_students`).
+  breakdown'a `mastered` / `new_waiting` / `new_per_day`.
+- **Geri al:** POST `/student/review/{id}/undo` (10 dk, son log; önceki vade `prev.scheduled_days`'ten — log artık
+  GERÇEK uygulanan aralığı yazar). Koç: POST `.../review/cards/delete` + `.../cards/reopen`.
+- Web: koç `review-board.tsx` konu seçici (sınıf grupları, neden rozetleri, kırpma yok) + kart seç/sil (iki aşamalı onay)
+  + Kalıcı yeniden aç · öğrenci `review-client.tsx` "Hatırlamadım" etiketi + bildirimde "Geri al" + 7 gün mesajı.
+  Mobil (OTA `3a13b918`): öğrenci geri al şeridi + mesajlar; koç seed uyarı metni.
+- **Temizlik:** `scripts/cleanup_review_cards.py` (kuru varsayılan; yalnız state=new + hiç puanlanmamış + tema/sınıf dışı/
+  önerilmeyen). Canlıda uygulandı (kullanıcı onayı): 479 → 37 kart (Beren 11 · Taha 6 · Suat 8 · Yiğit 12). Yedek
+  `pre_review_v2_20261101_2001.dump`.
+- Test YENİ `test_review_cards_v2.py` 34/34 · YENİ `live_review_cards_v2.py` 17/17 (gerçek tarayıcı) · 5c 19 (seed artık
+  topic_ids) · stage12_fsrs 50 · same_day 25 · student_secondary 12 · teacher_read 12 · student_read 11 · suggestions 13.
+- **İzin notu:** canlı ssh izni `permissions.allow`'da yalnız `ssh -o BatchMode=yes root@178.105.221.223 *` biçimini
+  kapsar → canlıya daima bu biçimle bağlan. Canlıya yazma (silme/güncelleme) her seferinde kullanıcı onayı ister.
+
 ## NESLİHAN HOCA / BEREN VAKASI → LGS 8 TÜRKÇE PARAGRAF KONULARI + GÖREV KUTUSU + MOZAİK KATALOĞU (2026-10-30, CANLI, migration YOK)
 
 - **Vaka (canlı kayıttan):** Neslihan Aşkın #176, Arı "Paragrafın Ritmi" TYT baskısını (katalog #116) 5 kez ekleyip Beren #227'ye
