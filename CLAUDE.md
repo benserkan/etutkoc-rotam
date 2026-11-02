@@ -6,6 +6,34 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## KVKK SİLME KAPSAMI + 3 AYLIK SAKLAMA SÜRESİ + KOÇ/VELİ/ADMİN SİLME TALEBİ (2026-11-01, CANLI, migration `y9a2f5g6f11b`)
+
+- **Bulgular:** anonimleştirme yalnız ad/e-posta/şifreyi değiştiriyordu (anonim koç #93'te telefon duruyordu; öğrenci
+  #11'de karne PDF'i, günlük notlar, seans notları kalmıştı) · koçluğu sonlandırılan öğrenci giriş yapamadığı için kendi
+  silme talebini açamıyordu · pasif öğrenci verisi süresiz kalıyordu, pasife alma tarihi hiç tutulmuyordu.
+- **`kvkk.purge_personal_content`** (apply_deletion içinde): telefon×2, 2FA + yedek kod, bildirim cihazı, telefon
+  doğrulama, oturumlar sonlandırılır, destek mesajları "(KVKK kapsamında silindi)", veli sohbeti; öğrencide ayrıca günün
+  notu, AI yorumları (veli/koç/kariyer içgörüsü, veli yorumu), haftalık rapor, anket, yanlış soru + fotoğraf, seans içeriği
+  (tarih/durum tahsilat için KALIR), randevu notu, karne PDF'i + deneme notu (net KALIR), talep metni, bağımsız çalışma
+  notu, VELİ BAĞI. Eski 3 anonim hesaba canlıda uygulandı.
+- **Saklama süresi (kullanıcı kararı 3 ay):** `users.deactivated_at` + `retention_warned_at`; `User.is_active` "set"
+  olayı (active_history) otomatik yazar/temizler → tüm pasifleştirme yolları. Cron `kvkk_retention_inactive` (02:30 UTC):
+  76. gün koça e-posta (`student_retention_warning`) + bildirim (bir kez), 90. gün anonimleştirme (DSR kaydı, gerekçe
+  "Saklama süresi…"). Sabitler `RETENTION_DAYS=90`, `RETENTION_WARN_DAYS=14`. **Mevcut 5 pasif öğrencide sayaç migration
+  anından (2026-11-01) başladı → silinme 2027-01-30, hatırlatma 2027-01-16** (Elvin #12, Efe #15 = koç #1; Hatice'nin 3'ü).
+- **Talep açma:** koç POST `/teacher/students/{id}/data-delete` (+`/cancel`; yalnız pasif öğrenci) · veli GET/POST
+  `/parent/students/{id}/data-delete` (+`/cancel`; koça bildirim) · süper admin POST `/admin/users/{id}/data-delete`
+  {reason, immediate}. İptal yetkisi (`can_manage_request`): veri sahibi · talebi açan · kurum yön. · süper admin — koç
+  velinin talebini iptal EDEMEZ. Yeniden başlat: koçun kendi talebi iptal olur, başkasının talebi varsa 409
+  `delete_requested_by_other`, anonim öğrenci 409 `student_anonymized`. Liste satırı `deletion_scheduled_at` +
+  `deletion_source` (en yakın: request|retention) + `deletion_request_pending`.
+- Web: öğrenci listesi silinme satırı (soluklaşma yalnız ad/e-posta) + ⋯ "Verilerini sil (KVKK)" / "Silme talebini iptal
+  et" + sonlandırma penceresinde 3 ay bilgisi ve "beklemeden sil" · veli ayarlarında `child-data-delete-card` · admin
+  kullanıcı sayfasında `admin-user-kvkk-card`. Aydınlatma: `/legal/kvkk-veli` §5 + `/kvkk` saklama süreleri. Mobil koç
+  pasife alma metni (OTA `604d1449`).
+- Test YENİ `test_kvkk_retention.py` 27/27 · YENİ `live_kvkk_retention.py` 13/13 · audit_kvkk 18 · teacher_students 15 ·
+  parent 20 · me 13 · admin_users 26 · tenant 29. Yedek `pre_kvkk_retention_20261101_2057.dump`.
+
 ## TEKRAR KARTLARI v2 — seçici ekleme + konu ölçeği zamanlama + Kalıcı + geri al (2026-11-01, CANLI, migration YOK)
 
 - **Vaka:** Neslihan Hoca "dersten ekle" → Beren #227 (8. sınıf) 114 kart: tema başlıkları + 5-7. sınıf + hiç
