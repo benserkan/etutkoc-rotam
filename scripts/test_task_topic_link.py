@@ -144,8 +144,9 @@ def main() -> int:
         r = c.post(f"/api/v2/teacher/students/{d['s8']}/task-topic-suggest",
                    json={"subject_id": mat8.id, "text": "ebob ekok", "notes": "fenomen 2 test"})
         js = r.json()
-        check("2 öneri: 'ebob ekok' → Çarpanlar ve Katlar (kesin) + 2 test",
-              r.status_code == 200 and js["confident"] and js["topic"]["name"] == "Çarpanlar ve Katlar"
+        # 2026-11-07: LGS 8 ünite → alt konu (EBOB ve EKOK ayrı konu)
+        check("2 öneri: 'ebob ekok' → EBOB ve EKOK (kesin) + 2 test",
+              r.status_code == 200 and js["confident"] and js["topic"]["name"] == "EBOB ve EKOK"
               and js["test_count"] == 2, str(js)[:300])
         r = c.post(f"/api/v2/teacher/students/{d['s10']}/task-topic-suggest",
                    json={"subject_id": bio10.id, "text": "ENERJİ", "notes": "AÇI 2 TEST"})
@@ -181,7 +182,7 @@ def main() -> int:
               and c8.unlinked_test_tasks == 2, str(c8))
 
         with SessionLocal() as db:
-            ebob = db.query(Topic).filter(Topic.subject_id == mat8.id, Topic.name == "Çarpanlar ve Katlar",
+            ebob = db.query(Topic).filter(Topic.subject_id == mat8.id, Topic.name == "EBOB ve EKOK",
                                           Topic.grade_level == 8).first()
             fot = db.query(Topic).filter(Topic.subject_id == bio10.id, Topic.name == "Fotosentez").first()
             theme = db.get(Topic, fot.parent_id)
@@ -267,8 +268,8 @@ def main() -> int:
         wk = r.json()
         item = next((it for day in wk.get("days", []) for t in day.get("tasks", []) if t["id"] == d["ebob_done"]
                      for it in t["items"]), None)
-        check("22 kaynaksız görev kalemi: ders = Matematik, konu = Çarpanlar ve Katlar (Diğer değil)",
-              item and item.get("subject_name") == "Matematik" and item.get("topic_name") == "Çarpanlar ve Katlar",
+        check("22 kaynaksız görev kalemi: ders = Matematik, konu = EBOB ve EKOK (Diğer değil)",
+              item and item.get("subject_name") == "Matematik" and item.get("topic_name") == "EBOB ve EKOK",
               str(item)[:300])
 
         r = c.post(f"/api/v2/teacher/students/{d['s8']}/tasks", json={

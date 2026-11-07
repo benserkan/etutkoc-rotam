@@ -33,6 +33,87 @@ from __future__ import annotations
 # =============================================================================
 # 8. sınıf konuları (mevcut DB'de seed edilmiş, koru). 5-7 daha sonra eklenecek.
 
+# LGS 8 — ünite (PARENT) + alt konu (LEAF). 5. öğe: {"term": parent adındaki terim,
+# "adopt": mevcut DÜZ 8. sınıf konusunun adı}. Seed o düz konuyu silmez; adını
+# "<adopt> (Karma)" yapıp bu ünitenin altına taşır (ünite geneli bölümler/sorular
+# orada kalır). Alt konu adları ünite adıyla ÇAKIŞMAZ (eşleştirme anahtarı ayrışsın).
+_G8 = "Ünite"
+LGS8_MAT_UNITS: list[tuple] = [
+    (1, "Çarpanlar ve Katlar", 8, [
+        "Çarpanlar ve Asal Çarpanlara Ayırma", "EBOB ve EKOK",
+        "EBOB ve EKOK Problemleri", "Aralarında Asal Sayılar"],
+     {"term": _G8, "adopt": "Çarpanlar ve Katlar"}),
+    (2, "Üslü İfadeler", 8, [
+        "Tam Sayıların Tam Sayı Kuvvetleri", "Üslü İfadelerle İşlemler",
+        "Ondalık Gösterimlerin Çözümlenmesi",
+        "Bilimsel Gösterim (Çok Büyük ve Çok Küçük Sayılar)"],
+     {"term": _G8, "adopt": "Üslü İfadeler"}),
+    (3, "Kareköklü İfadeler", 8, [
+        "Tam Kare Sayılar ve Karekök", "Karekök Tahmini (Yaklaşık Değer)",
+        "Kareköklü İfadelerle İşlemler",
+        "Ondalık Gösterimlerin Karekökü ve Gerçek Sayılar"],
+     {"term": _G8, "adopt": "Kareköklü İfadeler"}),
+    (4, "Veri Analizi", 8, [
+        "Grafik Okuma ve Yorumlama (Çizgi, Sütun, Daire)",
+        "Grafikler Arası Dönüşüm"],
+     {"term": _G8, "adopt": "Veri Analizi"}),
+    (5, "Basit Olayların Olasılığı", 8, [
+        "Olası Durumlar", "Basit Olayların Olma Olasılığı"],
+     {"term": _G8, "adopt": "Basit Olayların Olasılığı"}),
+    (6, "Cebirsel İfadeler ve Özdeşlikler", 8, [
+        "Cebirsel İfadelerle Çarpma", "Özdeşlikler",
+        "Cebirsel İfadeleri Çarpanlarına Ayırma"],
+     {"term": _G8, "adopt": "Cebirsel İfadeler ve Özdeşlikler"}),
+    (7, "Doğrusal Denklemler", 8, [
+        "Birinci Dereceden Bir Bilinmeyenli Denklemler", "Koordinat Sistemi",
+        "Doğrusal İlişkiler ve Grafikleri", "Eğim"],
+     {"term": _G8, "adopt": "Doğrusal Denklemler"}),
+    (8, "Eşitsizlikler", 8, [
+        "Eşitsizliklerin Sayı Doğrusunda Gösterimi", "Eşitsizlik Çözme"],
+     {"term": _G8, "adopt": "Eşitsizlikler"}),
+    (9, "Üçgenler", 8, [
+        "Kenarortay, Açıortay ve Yükseklik", "Üçgen Eşitsizliği ve Açı-Kenar Bağıntısı",
+        "Üçgen Çizimi", "Pisagor Bağıntısı"],
+     {"term": _G8, "adopt": "Üçgenler"}),
+    (10, "Eşlik ve Benzerlik", 8, ["Eşlik", "Benzerlik"],
+     {"term": _G8, "adopt": "Eşlik ve Benzerlik"}),
+    (11, "Dönüşüm Geometrisi", 8, ["Öteleme", "Yansıma", "Ötelemeli Yansıma"],
+     {"term": _G8, "adopt": "Dönüşüm Geometrisi"}),
+    (12, "Geometrik Cisimler", 8, [
+        "Dik Prizmalar", "Dik Dairesel Silindir (Alan ve Hacim)", "Dik Piramit",
+        "Dik Dairesel Koni"],
+     {"term": _G8, "adopt": "Geometrik Cisimler"}),
+]
+LGS8_FEN_UNITS: list[tuple] = [
+    (1, "Mevsimler ve İklim", 8, ["Mevsimlerin Oluşumu", "İklim ve Hava Hareketleri"],
+     {"term": _G8, "adopt": "Mevsimler ve İklim"}),
+    (2, "DNA ve Genetik Kod", 8, [
+        "DNA'nın Yapısı ve Eşlenmesi", "Kalıtım (Çaprazlamalar)",
+        "Mutasyon ve Modifikasyon", "Adaptasyon (Çevreye Uyum)", "Biyoteknoloji"],
+     {"term": _G8, "adopt": "DNA ve Genetik Kod"}),
+    (3, "Basınç", 8, [
+        "Katı Basıncı", "Sıvı Basıncı", "Gaz Basıncı ve Basıncın Uygulamaları"],
+     {"term": _G8, "adopt": "Basınç"}),
+    (4, "Madde ve Endüstri", 8, [
+        "Periyodik Sistem", "Fiziksel ve Kimyasal Değişimler", "Kimyasal Tepkimeler",
+        "Asitler ve Bazlar", "Maddenin Isı ile Etkileşimi (Hâl Değişimi)",
+        "Türkiye'de Kimya Endüstrisi"],
+     {"term": _G8, "adopt": "Madde ve Endüstri"}),
+    (5, "Basit Makineler", 8, [
+        "Kaldıraçlar", "Makaralar", "Eğik Düzlem ve Çıkrık",
+        "Dişli Çark, Kasnak, Vida ve Bileşik Makineler"],
+     {"term": _G8, "adopt": "Basit Makineler"}),
+    (6, "Enerji Dönüşümleri ve Çevre Bilimi", 8, [
+        "Besin Zinciri ve Enerji Akışı", "Fotosentez", "Solunum",
+        "Madde Döngüleri ve Çevre Sorunları", "Sürdürülebilir Kalkınma"],
+     {"term": _G8, "adopt": "Enerji Dönüşümleri ve Çevre Bilimi"}),
+    (7, "Elektrik Yükleri ve Elektrik Enerjisi", 8, [
+        "Elektrik Yükleri ve Elektriklenme", "Elektrik Yüklü Cisimler ve Topraklama",
+        "Elektrik Enerjisinin Dönüşümü"],
+     {"term": _G8, "adopt": "Elektrik Yükleri ve Elektrik Enerjisi"}),
+]
+
+
 LGS_CURRICULUM: dict[str, dict] = {
     "Türkçe": {
         "min_grade": 5, "max_grade": 8,
@@ -93,21 +174,14 @@ LGS_CURRICULUM: dict[str, dict] = {
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
-        # 8. sınıf (LGS sınavı) DÜZ konu — yayınevi kitaplarıyla birebir (%100 eşleşir).
-        "topics": [
-            ("Çarpanlar ve Katlar", 8),
-            ("Üslü İfadeler", 8),
-            ("Kareköklü İfadeler", 8),
-            ("Veri Analizi", 8),
-            ("Basit Olayların Olasılığı", 8),
-            ("Cebirsel İfadeler ve Özdeşlikler", 8),
-            ("Doğrusal Denklemler", 8),
-            ("Eşitsizlikler", 8),
-            ("Üçgenler", 8),
-            ("Eşlik ve Benzerlik", 8),
-            ("Dönüşüm Geometrisi", 8),
-            ("Geometrik Cisimler", 8),
-        ],
+        # 8. sınıf: 2026-11-07'den beri ÜNİTE (PARENT) + ALT KONU (LEAF) — Mat 5-7 ile
+        # aynı yapı. Saha (Neslihan Hoca): "EBOB-EKOK", "Bilimsel Gösterim" yayınevi
+        # kitaplarında ayrı başlık ama sistemde yoktu → kaynaksız atama ünite düzeyinde
+        # kalıyordu. Alt konular 80+ LGS 8 katalog kitabının bölüm adlarından (Hız,
+        # Mozaik, Fenomen, Ay Serisi, Benim Hocam, Aydın...) + MEB kazanım tablosundan.
+        # Eski düz ünite konusu SİLİNMEZ: aynı id ile "<ad> (Karma)" adlı alt konu olur
+        # (LGS8_ADOPT) → kitap/deneme/görev bağları korunur.
+        "topics": [],
         # 5-7. sınıf: öğrenme alanı (PARENT) + geleneksel konu (LEAF). Yayınevi
         # test kitapları bu konu adlarıyla düzenlenir → eşleşir. (MEB öğrenme alanları)
         "unit_term": "Öğrenme Alanı",
@@ -135,6 +209,7 @@ LGS_CURRICULUM: dict[str, dict] = {
                 "Doğrular ve Açılar", "Çokgenler", "Çember ve Daire",
                 "Dönüşüm Geometrisi", "Cisimlerin Farklı Yönlerden Görünümleri"]),
             (4, "Veri İşleme", 7, ["Veri Analizi"]),
+            *LGS8_MAT_UNITS,
         ],
     },
     "Fen Bilimleri": {
@@ -142,16 +217,8 @@ LGS_CURRICULUM: dict[str, dict] = {
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
-        # 8. sınıf (LGS) DÜZ ünite — yayınevi kitaplarıyla birebir.
-        "topics": [
-            ("Mevsimler ve İklim", 8),
-            ("DNA ve Genetik Kod", 8),
-            ("Basınç", 8),
-            ("Madde ve Endüstri", 8),
-            ("Basit Makineler", 8),
-            ("Enerji Dönüşümleri ve Çevre Bilimi", 8),
-            ("Elektrik Yükleri ve Elektrik Enerjisi", 8),
-        ],
+        # 8. sınıf: ünite (PARENT) + alt konu (LEAF) — bkz. Matematik notu (2026-11-07).
+        "topics": [],
         # 5-7: öğrenme alanı (PARENT) + ünite (LEAF). Yayınevi kitapları ünite adıyla
         # düzenlenir → leaf = ünite. (MEB Fen öğrenme alanları)
         "unit_term": "Öğrenme Alanı",
@@ -173,6 +240,7 @@ LGS_CURRICULUM: dict[str, dict] = {
             (3, "Fiziksel Olaylar", 7, [
                 "Kuvvet ve Enerji", "Işığın Madde ile Etkileşimi", "Elektrik Devreleri"]),
             (4, "Madde ve Doğası", 7, ["Saf Madde ve Karışımlar"]),
+            *LGS8_FEN_UNITS,
         ],
     },
     "Sosyal Bilgiler": {

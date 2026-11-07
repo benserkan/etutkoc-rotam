@@ -115,8 +115,11 @@ def seed_curriculum(db: Session, *, only_model: str | None = None) -> dict[str, 
             existing_keys = {(t.name, t.grade_level, t.parent_id) for t in subject.topics}
             units = spec.get("units")
             if units:
-                term = spec.get("unit_term", "Ünite")
-                for unit_no, unit_name, grade, subtopics in units:
+                default_term = spec.get("unit_term", "Ünite")
+                for unit in units:
+                    unit_no, unit_name, grade, subtopics = unit[:4]
+                    opts = unit[4] if len(unit) > 4 else {}
+                    term = opts.get("term", default_term)
                     parent_name = f"{unit_no}. {term}: {unit_name}"
                     parent_order = grade * 10000 + unit_no * 100
                     parent = next(
@@ -133,6 +136,35 @@ def seed_curriculum(db: Session, *, only_model: str | None = None) -> dict[str, 
                         )
                         db.add(parent); db.flush()
                         added_topics += 1
+                    adopt = opts.get("adopt")
+                    if adopt:
+                        # Eski DÜZ konu (aynı id) "<ad> (Karma)" alt konusu olur: bağlı
+                        # kitap bölümü / deneme sorusu / görev kalemi korunur. İdempotent.
+                        karma_name = f"{adopt} (Karma)"
+                        karma = db.query(Topic).filter(
+                            Topic.subject_id == subject.id, Topic.grade_level == grade,
+                            Topic.is_builtin.is_(True), Topic.name == karma_name,
+                        ).first()
+                        if karma is None:
+                            karma = db.query(Topic).filter(
+                                Topic.subject_id == subject.id, Topic.grade_level == grade,
+                                Topic.is_builtin.is_(True), Topic.name == adopt,
+                                Topic.parent_id.is_(None), Topic.id != parent.id,
+                            ).first()
+                            if karma is not None:
+                                print(f"    ~ {subject_name}: {adopt} → {karma_name}")
+                                karma.name = karma_name
+                            else:
+                                karma = Topic(
+                                    subject_id=subject.id, name=karma_name,
+                                    grade_level=grade, is_builtin=True, teacher_id=None,
+                                    curriculum_model=cm_enum,
+                                )
+                                db.add(karma)
+                                added_topics += 1
+                        karma.parent_id = parent.id
+                        karma.order = parent_order + 99
+                        db.flush()
                     for sub_idx, sub_name in enumerate(subtopics):
                         if (sub_name, grade, parent.id) in existing_keys:
                             continue

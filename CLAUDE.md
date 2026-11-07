@@ -6,6 +6,23 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## LGS 8 MATEMATİK + FEN → ÜNİTE + ALT KONU (2026-11-07, Neslihan Hoca: "EBOB-EKOK, Bilimsel Gösterim yok", migration YOK)
+
+- 8. sınıf Mat (12 ünite) + Fen (7 ünite) artık 5-7 / Maarif gibi **ünite = üst başlık ("N. Ünite: X"),
+  alt konu = seçilebilir konu** (Mat 38 · Fen 28 alt konu; 80+ LGS 8 katalog kitabının bölüm adları + MEB
+  kazanım tablosundan: EBOB ve EKOK · Bilimsel Gösterim · Pisagor · Eğim · Grafik Okuma · Mutasyon…).
+  Veri `curriculum_data.LGS8_MAT_UNITS / LGS8_FEN_UNITS`; units tuple'ının 5. öğesi
+  `{"term", "adopt"}` → seed eski DÜZ konuyu SİLMEZ, aynı id ile "<ad> (Karma)" alt konusu yapar
+  (görev/kitap/deneme bağları korunur; idempotent).
+- `scripts/split_lgs8_topics.py` (kuru varsayılan, `--apply`): Karma'ya bağlı kitap/şablon bölümü + elle
+  düzeltilmemiş deneme sorusu etiketi TEK alt konuyu açıkça söylüyorsa taşınır; ünite adı / tarama /
+  tekrar / deneme / çoklu alt konu → Karma'da kalır. "Ünite — Alt konu" kuyruğa bakar. Dev: 454 şablon
+  bölümü + 1180 soru, ikinci koşu 0. seed_book_catalog_json eski ünite adını "(Karma)"ya da çözer.
+- SIRADA (kullanıcı onayıyla): Türkçe (fiilimsi türleri, hikâye unsurları, şiir) · İnkılap + Din (ünite üst
+  başlık, alt konular seçilebilir — kullanıcı kararı) — aynı adopt deseni.
+- Test task_topic_link 24/24 (ebob → EBOB ve EKOK) · lgs_units 9/9 · task_picker 13 · topic_board 18 ·
+  curriculum_progress 25 · mapping 18/13 · exam_import 97 · book_catalog 40.
+
 ## KVKK SİLME KAPSAMI + 3 AYLIK SAKLAMA SÜRESİ + KOÇ/VELİ/ADMİN SİLME TALEBİ (2026-11-01, CANLI, migration `y9a2f5g6f11b`)
 
 - **Bulgular:** anonimleştirme yalnız ad/e-posta/şifreyi değiştiriyordu (anonim koç #93'te telefon duruyordu; öğrenci

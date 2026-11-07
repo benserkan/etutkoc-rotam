@@ -126,7 +126,10 @@ def main() -> int:
                 continue
             # Aynı ad farklı sınıflarda olabilir (LGS Türkçe "Paragrafta Anlam" 5-8):
             # kitabın hedef sınıfındaki konu önce, yoksa en yüksek sınıf.
-            cands = db.query(Topic).filter(Topic.subject_id == subj.id, Topic.name == js["topic"]).all()
+            # Ünite alt konulara bölündüyse eski konu "<ad> (Karma)" adını taşır (LGS 8).
+            cands = db.query(Topic).filter(
+                Topic.subject_id == subj.id,
+                Topic.name.in_([js["topic"], f"{js['topic']} (Karma)"])).all()
             want = data.get("target_grade_max")
             cands.sort(key=lambda x: (x.grade_level != want, -(x.grade_level or 0)))
             t = cands[0] if cands else None

@@ -36,6 +36,7 @@ class _FakeBook:
     """suggest_for_book için minimal kitap (DB'ye yazmadan)."""
     def __init__(self, sections):
         self.sections = sections
+        self.subject_id = None
 
 
 class _FakeSection:
@@ -61,11 +62,15 @@ def main() -> int:
         child_parent_ids = {t.parent_id for t in ts if t.parent_id is not None}
 
         g8 = [t for t in ts if t.grade_level == 8]
+        # 2026-11-07: Matematik grade-8 de ünite (parent) + alt konu (leaf); eski düz
+        # konu aynı id ile "<ad> (Karma)" alt konusu oldu (yetim düz konu kalmaz).
         g8_flat = [t for t in g8 if t.parent_id is None and t.id not in child_parent_ids]
-        check("1. grade-8 DÜZ konu korundu (>=12, parent yok = leaf)", len(g8_flat) >= 12,
-              f"{len(g8_flat)}")
-        check("2. grade-8 'Üslü İfadeler' var (leaf)",
-              any(t.name == "Üslü İfadeler" and t.grade_level == 8 for t in g8_flat))
+        g8_parents = [t for t in g8 if t.parent_id is None and t.id in child_parent_ids]
+        check("1. grade-8: 12 ünite üst başlık, yetim düz konu yok",
+              len(g8_parents) == 12 and not g8_flat, f"{len(g8_parents)} / {len(g8_flat)}")
+        check("2. grade-8 'Üslü İfadeler (Karma)' + 'Bilimsel Gösterim' alt konu (leaf)",
+              any(t.name == "Üslü İfadeler (Karma)" and t.parent_id for t in g8)
+              and any(t.name.startswith("Bilimsel Gösterim") and t.parent_id for t in g8))
 
         parents_57 = [t for t in ts if t.grade_level in (5, 6, 7)
                       and t.parent_id is None and t.id in child_parent_ids]
