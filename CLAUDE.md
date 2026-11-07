@@ -18,8 +18,11 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   düzeltilmemiş deneme sorusu etiketi TEK alt konuyu açıkça söylüyorsa taşınır; ünite adı / tarama /
   tekrar / deneme / çoklu alt konu → Karma'da kalır. "Ünite — Alt konu" kuyruğa bakar. Dev: 454 şablon
   bölümü + 1180 soru, ikinci koşu 0. seed_book_catalog_json eski ünite adını "(Karma)"ya da çözer.
-- SIRADA (kullanıcı onayıyla): Türkçe (fiilimsi türleri, hikâye unsurları, şiir) · İnkılap + Din (ünite üst
-  başlık, alt konular seçilebilir — kullanıcı kararı) — aynı adopt deseni.
+- **Devamı (aynı gün, CANLI):** İnkılap (7 ünite → 32 alt konu) + Din (5 ünite → 14 alt konu) aynı adopt
+  deseniyle (`LGS8_INK_UNITS` / `LGS8_DIN_UNITS`). Türkçe zaten konu düzeyinde → yalnız 6 DÜZ konu eklendi
+  (İsim-Fiil · Sıfat-Fiil · Zarf-Fiil · Sözcükler Arası Anlam İlişkileri · Hikâye Unsurları ve Anlatıcı ·
+  Şiirde Tema ve Duygu); split betiği Türkçe'de "Fiilimsiler / Sözcükte Anlam / Metin Türleri / Paragrafta
+  Anlam"dan kardeş konuya taşır. "Bir Sure/Peygamber Tanıyorum" + ünite değerlendirme Karma'da kalır.
 - Test task_topic_link 24/24 (ebob → EBOB ve EKOK) · lgs_units 9/9 · task_picker 13 · topic_board 18 ·
   curriculum_progress 25 · mapping 18/13 · exam_import 97 · book_catalog 40.
 

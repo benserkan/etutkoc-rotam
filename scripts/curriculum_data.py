@@ -113,6 +113,63 @@ LGS8_FEN_UNITS: list[tuple] = [
      {"term": _G8, "adopt": "Elektrik Yükleri ve Elektrik Enerjisi"}),
 ]
 
+LGS8_INK_UNITS: list[tuple] = [
+    (1, "Bir Kahraman Doğuyor", 8, [
+        "Avrupa'daki Gelişmeler ve Osmanlı Devleti",
+        "Mustafa Kemal'in Çocukluğu ve Öğrenim Hayatı", "Mustafa Kemal'in Askerlik Hayatı",
+        "Mustafa Kemal'in Fikir Hayatı"],
+     {"term": _G8, "adopt": "Bir Kahraman Doğuyor"}),
+    (2, "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar", 8, [
+        "Birinci Dünya Savaşı ve Osmanlı Devleti", "Mondros Ateşkes Antlaşması ve İşgaller",
+        "Cemiyetler ve Kuvâ-yı Millîye", "Millî Mücadele Hazırlık Dönemi (Kongreler)",
+        "Misak-ı Millî ve TBMM'nin Açılması", "TBMM'ye Karşı Ayaklanmalar",
+        "Sevr Antlaşması"],
+     {"term": _G8, "adopt": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar"}),
+    (3, "Millî Bir Destan: Ya İstiklal Ya Ölüm!", 8, [
+        "Doğu ve Güney Cepheleri", "Batı Cephesi (İnönü Savaşları)",
+        "Maarif Kongresi ve Tekâlif-i Millîye", "Sakarya'dan Büyük Taarruz'a ve Mudanya",
+        "Lozan Barış Antlaşması", "Millî Mücadele'nin Sanat ve Edebiyata Yansımaları"],
+     {"term": _G8, "adopt": "Millî Bir Destan: Ya İstiklal Ya Ölüm!"}),
+    (4, "Atatürkçülük ve Çağdaşlaşan Türkiye", 8, [
+        "Atatürk İlkeleri ve Temel Esaslar", "Siyasi Alanda İnkılaplar",
+        "Hukuk Alanında İnkılaplar", "Eğitim ve Kültür Alanında İnkılaplar",
+        "Toplumsal Alanda İnkılaplar", "Ekonomik Alanda İnkılaplar",
+        "Sağlık Alanındaki Gelişmeler"],
+     {"term": _G8, "adopt": "Atatürkçülük ve Çağdaşlaşan Türkiye"}),
+    (5, "Demokratikleşme Çabaları", 8, [
+        "Demokratikleşme Yolunda Atılan Adımlar (Çok Partili Hayat Denemeleri)",
+        "Cumhuriyete Yönelik Tehditler (Suikast ve İsyanlar)"],
+     {"term": _G8, "adopt": "Demokratikleşme Çabaları"}),
+    (6, "Atatürk Dönemi Türk Dış Politikası", 8, [
+        "Dış Politikanın Temel İlkeleri ve Amaçları", "Dış Politikada Gelişmeler",
+        "Hatay'ın Anavatana Katılması"],
+     {"term": _G8, "adopt": "Atatürk Dönemi Türk Dış Politikası"}),
+    (7, "Atatürk'ün Ölümü ve Sonrası", 8, [
+        "Atatürk'ün Ölümü ve Eserleri", "II. Dünya Savaşı ve Türkiye",
+        "Çok Partili Hayata Geçiş"],
+     {"term": _G8, "adopt": "Atatürk'ün Ölümü ve Sonrası"}),
+]
+LGS8_DIN_UNITS: list[tuple] = [
+    (1, "Kader İnancı", 8, [
+        "Kader ve Kaza İnancı", "İnsan İradesi ve Kader", "Kaderle İlgili Kavramlar"],
+     {"term": _G8, "adopt": "Kader İnancı"}),
+    (2, "Zekât, Hac ve Kurban İbadeti", 8, [
+        "İslam'ın Paylaşma ve Yardımlaşmaya Verdiği Önem", "Zekât ve Sadaka",
+        "Hac ve Kurban"],
+     {"term": _G8, "adopt": "Zekât, Hac ve Kurban İbadeti"}),
+    (3, "Din ve Hayat", 8, ["Din, Birey ve Toplum", "Dinin Temel Gayesi"],
+     {"term": _G8, "adopt": "Din ve Hayat"}),
+    (4, "Hz. Muhammed'in Örnekliği", 8, [
+        "Hz. Muhammed'in Doğruluğu, Merhameti ve Affediciliği",
+        "Hz. Muhammed'in İstişareye ve İnsana Değer Vermesi",
+        "Hz. Muhammed'in Hakkı Gözetmesi, Cesareti ve Kararlılığı"],
+     {"term": _G8, "adopt": "Hz. Muhammed'in Örnekliği"}),
+    (5, "Kur'an-ı Kerim ve Özellikleri", 8, [
+        "İslam Dininin Temel Kaynakları", "Kur'an-ı Kerim'in Ana Konuları",
+        "Kur'an-ı Kerim'in Temel Özellikleri"],
+     {"term": _G8, "adopt": "Kur'an-ı Kerim ve Özellikleri"}),
+]
+
 
 LGS_CURRICULUM: dict[str, dict] = {
     "Türkçe": {
@@ -123,6 +180,8 @@ LGS_CURRICULUM: dict[str, dict] = {
         # 8. sınıf (LGS) DÜZ konu — yayınevi kitaplarıyla birebir.
         "topics": [
             ("Sözcükte Anlam", 8),
+            # 2026-11-07: yayınevleri ayrı ünite basar (Hız, Ankara, Fenomen, Zoom)
+            ("Sözcükler Arası Anlam İlişkileri", 8),
             # 2026-10-30 (koç, Neslihan Hoca saha bulgusu): yayınevleri deyim/atasözü,
             # paragraf alt başlıkları ve söz sanatlarını AYRI ünite basar (22 LGS
             # Türkçe katalog kitabından ölçüldü). Adlar TYT Türkçe ile aynı.
@@ -140,8 +199,15 @@ LGS_CURRICULUM: dict[str, dict] = {
             # yorumlama soruları düzenli çıkar; yayınevi kitaplarında ayrı ünite.
             ("Görsel, Tablo ve Grafik Okuma", 8),
             ("Metin Türleri", 8),
+            ("Hikâye Unsurları ve Anlatıcı", 8),
+            ("Şiirde Tema ve Duygu", 8),
             ("Sözel Mantık", 8),
             ("Fiilimsiler", 8),
+            # 2026-11-07: fiilimsi türleri ayrı başlık (Hız, Ankara, Mozaik); genel
+            # "Fiilimsiler" karma bölümler için kalır.
+            ("İsim-Fiil", 8),
+            ("Sıfat-Fiil", 8),
+            ("Zarf-Fiil", 8),
             ("Cümlenin Ögeleri", 8),
             ("Fiilde Çatı", 8),
             ("Cümle Türleri", 8),
@@ -275,29 +341,18 @@ LGS_CURRICULUM: dict[str, dict] = {
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
-        "topics": [
-            ("Bir Kahraman Doğuyor", 8),
-            ("Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar", 8),
-            ("Millî Bir Destan: Ya İstiklal Ya Ölüm!", 8),
-            ("Atatürkçülük ve Çağdaşlaşan Türkiye", 8),
-            ("Demokratikleşme Çabaları", 8),
-            ("Atatürk Dönemi Türk Dış Politikası", 8),
-            ("Atatürk'ün Ölümü ve Sonrası", 8),
-        ],
+        # 2026-11-07: ünite (PARENT) + alt konu (LEAF) — bkz. LGS8_INK_UNITS.
+        "topics": [],
+        "unit_term": "Ünite",
+        "units": [*LGS8_INK_UNITS],
     },
     "Din Kültürü ve Ahlak Bilgisi": {
         "min_grade": 5, "max_grade": 8,
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
-        # 8. sınıf (LGS) DÜZ konu — korunur.
-        "topics": [
-            ("Kader İnancı", 8),
-            ("Zekât, Hac ve Kurban İbadeti", 8),
-            ("Din ve Hayat", 8),
-            ("Hz. Muhammed'in Örnekliği", 8),
-            ("Kur'an-ı Kerim ve Özellikleri", 8),
-        ],
+        # 8. sınıf: 2026-11-07'den beri ünite (PARENT) + alt konu (LEAF) — LGS8_DIN_UNITS.
+        "topics": [],
         # 5-7: sınıf (PARENT) + ünite (LEAF). MEB Din Kültürü üniteleri.
         "unit_term": "Sınıf",
         "units": [
@@ -313,6 +368,7 @@ LGS_CURRICULUM: dict[str, dict] = {
                 "İslam Düşüncesinde Yorumlar (Tasavvuf, Alevilik-Bektaşilik)",
                 "Peygamber Olarak Hz. Muhammed (Mekke-Medine)",
                 "Yaşayan Dünya Dinleri"]),
+            *LGS8_DIN_UNITS,
         ],
     },
     "İngilizce": {

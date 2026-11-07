@@ -1,4 +1,4 @@
-"""LGS 8 Matematik + Fen — ünite "(Karma)" bağlarını alt konulara taşı (2026-11-07).
+"""LGS 8 Mat + Fen + Türkçe + İnkılap + Din — ünite "(Karma)" bağlarını alt konulara taşı (2026-11-07).
 
 Bağlam (Neslihan Hoca saha bulgusu): 8. sınıf LGS müfredatı yalnız ünite adlarından
 oluşuyordu ("Çarpanlar ve Katlar"); yayınevleri alt konu basıyor ("EBOB-EKOK",
@@ -159,6 +159,106 @@ RULES: dict[str, list[tuple[str, tuple[str, ...], tuple[str, ...]]]] = {
          ("yuklu cisim", "topraklam", "elektroskop"), ("donusum", "elektriklenme")),
         ("Elektrik Enerjisinin Dönüşümü", ("donusum",), ()),
     ],
+    # ---------------- Türkçe (düz kardeş konular; kaynak konu Karma değil) ----------------
+    "Fiilimsiler": [
+        ("İsim-Fiil", ("isim fiil", "ad eylem"), ("sifat fiil", "zarf fiil", "ortac", "ulac")),
+        ("Sıfat-Fiil", ("sifat fiil", "ortac"), ("isim fiil", "zarf fiil", "ulac")),
+        ("Zarf-Fiil", ("zarf fiil", "ulac", "bag fiil"), ("isim fiil", "sifat fiil", "ortac")),
+    ],
+    "Sözcükte Anlam": [
+        ("Sözcükler Arası Anlam İlişkileri",
+         ("anlam iliski", "es anlam", "zit anlam", "es zit", "yakin anlam", "es sesli"), ()),
+    ],
+    "Metin Türleri": [
+        ("Hikâye Unsurları ve Anlatıcı", ("hikaye unsur", "anlatici", "olay orgu"), ("siir",)),
+        ("Şiirde Tema ve Duygu", ("siir",), ("hikaye",)),
+    ],
+    "Paragrafta Anlam": [
+        ("Hikâye Unsurları ve Anlatıcı", ("hikaye unsur", "anlatici"), ("siir",)),
+        ("Şiirde Tema ve Duygu", ("siir",), ("hikaye",)),
+    ],
+    # ---------------- T.C. İnkılap Tarihi ----------------
+    "Bir Kahraman Doğuyor (Karma)": [
+        ("Avrupa'daki Gelişmeler ve Osmanlı Devleti", ("avrupa", "uyanan"), ()),
+        ("Mustafa Kemal'in Çocukluğu ve Öğrenim Hayatı", ("cocukluk", "ogrenim", "ailesi"),
+         ("askerlik", "fikir")),
+        ("Mustafa Kemal'in Askerlik Hayatı", ("askerlik",), ("ogrenim", "fikir")),
+        ("Mustafa Kemal'in Fikir Hayatı", ("fikir",), ("askerlik", "ogrenim")),
+    ],
+    "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar (Karma)": [
+        ("Birinci Dünya Savaşı ve Osmanlı Devleti", ("dunya savas", "son savasi"), ()),
+        ("Mondros Ateşkes Antlaşması ve İşgaller", ("mondros", "isgal"), ("cemiyet", "kuva")),
+        ("Cemiyetler ve Kuvâ-yı Millîye", ("cemiyet", "kuva"), ("mondros",)),
+        ("Millî Mücadele Hazırlık Dönemi (Kongreler)",
+         ("hazirlik", "kongre", "genelge", "samsun"), ("misak",)),
+        ("Misak-ı Millî ve TBMM'nin Açılması", ("misak", "mebusan", "acilis"), ("ayaklanma",)),
+        ("TBMM'ye Karşı Ayaklanmalar", ("ayaklanma", "isyan"), ()),
+        ("Sevr Antlaşması", ("sevr",), ()),
+    ],
+    "Millî Bir Destan: Ya İstiklal Ya Ölüm! (Karma)": [
+        ("Doğu ve Güney Cepheleri", ("dogu", "guney"), ("bati",)),
+        ("Batı Cephesi (İnönü Savaşları)", ("bati cephe", "inonu"), ("sakarya", "dogu")),
+        ("Maarif Kongresi ve Tekâlif-i Millîye", ("maarif", "tekalif"), ()),
+        ("Sakarya'dan Büyük Taarruz'a ve Mudanya", ("sakarya", "buyuk taarruz", "mudanya"), ()),
+        ("Lozan Barış Antlaşması", ("lozan",), ()),
+        ("Millî Mücadele'nin Sanat ve Edebiyata Yansımaları", ("sanat", "edebiyat"), ()),
+    ],
+    "Atatürkçülük ve Çağdaşlaşan Türkiye (Karma)": [
+        ("Atatürk İlkeleri ve Temel Esaslar", ("ilke", "temel esas"), ("alan",)),
+        ("Siyasi Alanda İnkılaplar", ("siyasi", "siyasal"), ("hukuk",)),
+        ("Hukuk Alanında İnkılaplar", ("hukuk",), ("siyasi",)),
+        ("Eğitim ve Kültür Alanında İnkılaplar", ("egitim", "kultur"), ()),
+        ("Toplumsal Alanda İnkılaplar", ("toplumsal",), ()),
+        ("Ekonomik Alanda İnkılaplar", ("ekonomi",), ()),
+        ("Sağlık Alanındaki Gelişmeler", ("saglik",), ()),
+    ],
+    "Demokratikleşme Çabaları (Karma)": [
+        ("Demokratikleşme Yolunda Atılan Adımlar (Çok Partili Hayat Denemeleri)",
+         ("demokratiklesme yolunda", "demokrasi yolunda", "cok partili", "firka"),
+         ("tehdit", "suikast")),
+        ("Cumhuriyete Yönelik Tehditler (Suikast ve İsyanlar)",
+         ("tehdit", "suikast", "seyh sait", "menemen"), ()),
+    ],
+    "Atatürk Dönemi Türk Dış Politikası (Karma)": [
+        ("Dış Politikanın Temel İlkeleri ve Amaçları", ("temel ilke", "amac"), ("gelisme",)),
+        ("Dış Politikada Gelişmeler",
+         ("gelisme", "bogaz", "musul", "mubadele", "balkan antant", "sadabat"),
+         ("temel ilke", "hatay")),
+        ("Hatay'ın Anavatana Katılması", ("hatay",), ()),
+    ],
+    "Atatürk'ün Ölümü ve Sonrası (Karma)": [
+        ("Atatürk'ün Ölümü ve Eserleri", ("olum", "eser"), ("dunya", "partili")),
+        ("II. Dünya Savaşı ve Türkiye", ("dunya savas", "sarsilan dunya"), ()),
+        ("Çok Partili Hayata Geçiş", ("cok partili",), ()),
+    ],
+    # ---------------- Din Kültürü ----------------
+    "Kader İnancı (Karma)": [
+        ("Kader ve Kaza İnancı", ("kaza",), ("irade", "kavram")),
+        ("İnsan İradesi ve Kader", ("irade",), ()),
+        ("Kaderle İlgili Kavramlar", ("kavram",), ()),
+    ],
+    "Zekât, Hac ve Kurban İbadeti (Karma)": [
+        ("İslam'ın Paylaşma ve Yardımlaşmaya Verdiği Önem", ("paylasma", "yardimlasma"), ()),
+        ("Zekât ve Sadaka", ("zekat", "sadaka"), ("paylasma", "hac", "kurban")),
+        ("Hac ve Kurban", ("hac", "kurban", "umre"), ("zekat",)),
+    ],
+    "Din ve Hayat (Karma)": [
+        ("Din, Birey ve Toplum", ("birey", "toplum"), ()),
+        ("Dinin Temel Gayesi", ("gaye", "amac"), ()),
+    ],
+    "Hz. Muhammed'in Örnekliği (Karma)": [
+        ("Hz. Muhammed'in Doğruluğu, Merhameti ve Affediciliği",
+         ("dogrulu", "guvenilir", "merhamet", "affedici"), ()),
+        ("Hz. Muhammed'in İstişareye ve İnsana Değer Vermesi",
+         ("istisare", "deger verme"), ()),
+        ("Hz. Muhammed'in Hakkı Gözetmesi, Cesareti ve Kararlılığı",
+         ("hakki", "cesaret", "kararlilig"), ()),
+    ],
+    "Kur'an-ı Kerim ve Özellikleri (Karma)": [
+        ("İslam Dininin Temel Kaynakları", ("kaynak",), ()),
+        ("Kur'an-ı Kerim'in Ana Konuları", ("ana konu",), ()),
+        ("Kur'an-ı Kerim'in Temel Özellikleri", ("temel ozellik",), ()),
+    ],
 }
 
 
@@ -185,7 +285,7 @@ def split_target(label: str | None, karma_name: str) -> str | None:
     exact = [n for n, _, _ in rules if _topic_key(n) == key.strip()]
     if exact:
         return exact[0]
-    base_key = _topic_key(karma_name.replace("(Karma)", ""))
+    base_key = _topic_key(karma_name.replace("(Karma)", "").strip())
     base = base_key.split()
     toks = set(key.split())
     if base and all(b in toks for b in base):
@@ -211,7 +311,9 @@ def main() -> int:
         db.query(Subject)
         .filter(Subject.is_builtin.is_(True), Subject.teacher_id.is_(None),
                 Subject.curriculum_model == CurriculumModel.LGS,
-                Subject.name.in_(["Matematik", "Fen Bilimleri"]))
+                Subject.name.in_(["Matematik", "Fen Bilimleri", "Türkçe",
+                                  "T.C. İnkılap Tarihi ve Atatürkçülük",
+                                  "Din Kültürü ve Ahlak Bilgisi"]))
         .all()
     )
     topics = (
@@ -224,12 +326,12 @@ def main() -> int:
     if not karma:
         print("(Karma) konular yok — önce seed çalışmalı (scripts.seed).")
         return 1
-    # alt konu: aynı ünitenin (karma ile aynı parent) çocukları
-    child_by = {(t.parent_id, t.name): t for t in topics if t.parent_id}
+    # hedef: kaynakla AYNI üst başlık altındaki konu (Türkçe'de düz kardeş: parent None)
+    child_by = {(t.subject_id, t.parent_id, t.name): t for t in topics}
 
     def target(label: str | None, cur: Topic) -> Topic | None:
         name = split_target(label, cur.name)
-        return child_by.get((cur.parent_id, name)) if name else None
+        return child_by.get((cur.subject_id, cur.parent_id, name)) if name else None
 
     changes: Counter[str] = Counter()
     report: Counter[tuple[str, str, str, str]] = Counter()
