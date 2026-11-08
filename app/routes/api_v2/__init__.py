@@ -22,6 +22,7 @@ from fastapi import APIRouter
 from app.routes.api_v2 import academic as v2_academic
 from app.routes.api_v2 import admin as v2_admin
 from app.routes.api_v2 import admin_book_catalog as v2_admin_book_catalog
+from app.routes.api_v2 import admin_follow_ups as v2_admin_follow_ups
 from app.routes.api_v2 import admin_conversion as v2_admin_conversion
 from app.routes.api_v2 import plan_assistant as v2_plan_assistant
 from app.routes.api_v2 import site_assistant as v2_site_assistant
@@ -90,6 +91,7 @@ router.include_router(v2_membership_public.router)
 router.include_router(v2_admin_membership.router)
 router.include_router(v2_admin_people.router)
 router.include_router(v2_admin_book_catalog.router)
+router.include_router(v2_admin_follow_ups.router)
 router.include_router(v2_admin_prospects.router)
 router.include_router(v2_admin_campaign_links.router)
 router.include_router(v2_campaign_public.router)

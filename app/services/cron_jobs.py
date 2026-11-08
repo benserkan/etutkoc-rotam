@@ -1008,6 +1008,29 @@ def rec_weights_train(db: Session, *, now: datetime) -> dict:
     return summary
 
 
+def metrics_snapshot_daily(db: Session, *, now: datetime) -> dict:
+    """Günlük 02:30 UTC — ölçüm listesi (2026-11-08).
+
+    Tanımlı her ölçünün (öneri isabeti, iskelet çip kabulü, e-posta teslimi,
+    aktif koç…) günün değerini yazar. rec_weights_train 01:40'ta koştuğu için
+    öneri isabeti o geceki eğitimin sonucudur. Bkz. metrics_registry."""
+    from app.services.metrics_registry import collect_all
+    summary = collect_all(db, now.date())
+    logger.info("metrics_snapshot_daily cron: %s", summary)
+    return summary
+
+
+def follow_up_daily(db: Session, *, now: datetime) -> dict:
+    """Günlük 06:00 UTC (09:00 TR) — takip listesi (2026-11-08).
+
+    Vadesi gelen/geçen işleri değerlendirir (ölçüye bağlıysa rapor üretir) ve
+    süper admine tek özet e-posta + push gönderir. Bkz. follow_up_service."""
+    from app.services.follow_up_service import run_daily
+    summary = run_daily(db, now.date())
+    logger.info("follow_up_daily cron: %s", summary)
+    return summary
+
+
 def panel_events_purge(db: Session, *, now: datetime) -> dict:
     """Günlük — 180 günden eski panel ziyaret olaylarını + dokunulmamış
     hızlı-erişim agregat satırlarını siler (sabitlenen/kalıcı kartlar yaşar).
@@ -1102,6 +1125,9 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     # Hızlı erişim kartları (QA-1) — ham olay saklama politikası
     "panel_events_purge": panel_events_purge,
     "rec_weights_train": rec_weights_train,
+    # Ölçüm listesi + takip listesi (2026-11-08)
+    "metrics_snapshot_daily": metrics_snapshot_daily,
+    "follow_up_daily": follow_up_daily,
     # Ölü rezerv telafisi — günlük otomatik serbest bırakma (yaz/program-arası)
     "release_dead_reservations": release_dead_reservations,
     # Online görüşme randevuları — seri üretimi + hatırlatmalar (10 dk)

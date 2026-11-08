@@ -3646,6 +3646,8 @@ class AdminBadgesResponse(BaseModel):
     unack_alarms: int = 0
     # Ortak Kitap Kataloğu — onay bekleyen koç katkısı (onayla/reddet → düşer).
     book_catalog_pending: int = 0
+    # Takip listesi — vadesi gelmiş/geçmiş açık iş (tamamla/ertele → düşer).
+    follow_ups_due: int = 0
     checked_at: datetime
 
 

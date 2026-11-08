@@ -32,6 +32,7 @@ python -m scripts.bind_landing_demos || true
 # WhatsApp şablonları seed (35 şablon, idempotent — key varsa atlar, düzenlemeleri korur).
 # Prod'da unutulmuştu → /admin/whatsapp-templates boş geliyordu (2026-06-01).
 python -m scripts.seed_whatsapp_templates || true
+python -m scripts.seed_follow_ups || true
 
 # Anket kataloğu seed (11 tanıma anketi, idempotent — code varsa atlar, düzenlemeleri korur)
 python -m scripts.seed_surveys || true

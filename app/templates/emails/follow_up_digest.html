@@ -1,0 +1,38 @@
+Subject: [Takip listesi] {{ count }} iş bekliyor{% if late %} — {{ late }} gecikmiş{% endif %}
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,-apple-system,sans-serif; max-width:600px; margin:0 auto; padding:24px; color:#1f2937;">
+  <h2 style="margin-top:0; color:#0e7490;">Bugün bakılacaklar</h2>
+  <p style="margin:0 0 16px;">Takip listesinde vadesi gelen {{ count }} iş var{% if late %}, {{ late }} tanesi gecikmiş{% endif %}. Ölçüme bağlı işlerin sonucu sistem tarafından hesaplandı; karar senin.</p>
+
+  {% for it in items %}
+  <div style="border:1px solid #e5e7eb; border-left:4px solid {% if it.late_days > 0 %}#dc2626{% elif it.priority == 'high' %}#d97706{% else %}#0e7490{% endif %}; border-radius:8px; padding:12px 14px; margin:0 0 10px;">
+    <div style="font-weight:600; font-size:15px;">{{ it.title }}</div>
+    <div style="font-size:12px; color:#6b7280; margin-top:2px;">
+      {{ it.category }} · vade {{ it.due }}{% if it.late_days > 0 %} · <span style="color:#dc2626; font-weight:600;">{{ it.late_days }} gün gecikti</span>{% endif %}
+    </div>
+    {% if it.summary %}
+    <div style="font-size:13px; margin-top:8px; padding:8px 10px; background:#f8fafc; border-radius:6px;">
+      <b>{% if it.verdict == 'declined' %}Dikkat — düşüş var{% elif it.verdict == 'improved' %}İyileşme var{% elif it.verdict == 'stable' %}Belirgin değişim yok{% else %}Ölçüm sonucu{% endif %}:</b>
+      {{ it.summary }}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  {% if upcoming %}
+  <p style="font-size:13px; color:#475569; margin:18px 0 6px;"><b>Önümüzdeki 3 gün:</b></p>
+  <ul style="font-size:13px; color:#475569; margin:0; padding-left:18px;">
+    {% for u in upcoming %}<li>{{ u.title }} — {{ u.due }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <p style="margin:24px 0;">
+    <a href="{{ app_base_url }}/admin/follow-ups"
+       style="display:inline-block; background:#0e7490; color:#ffffff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600;">
+      Takip listesini aç
+    </a>
+  </p>
+  <p style="color:#6b7280; font-size:12px;">Gecikmiş işler kapatılana ya da ertelenene kadar 3 günde bir hatırlatılır.</p>
+</body>
+</html>

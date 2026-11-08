@@ -18,6 +18,7 @@ import {
   FlaskConical,
   KeyRound,
   CircleDollarSign,
+  ClipboardCheck,
   ClipboardList,
   DatabaseZap,
   FileText,
@@ -72,7 +73,8 @@ type AdminBadgeKey =
   | "support_pending"
   | "contact_new"
   | "unack_alarms"
-  | "book_catalog_pending";
+  | "book_catalog_pending"
+  | "follow_ups_due";
 
 function adminBadgeValue(
   badges: AdminBadgesResponse | undefined,
@@ -115,12 +117,14 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin", label: "Panel", icon: LayoutDashboard },
       { href: "/admin/activity-stream", label: "Aktivite akışı", icon: Activity },
+      { href: "/admin/metrics", label: "Ölçümler", icon: Gauge },
     ],
   },
   {
     title: "Bekleyenler",
     collapsible: false,
     links: [
+      { href: "/admin/follow-ups", label: "Takip listesi", icon: ClipboardCheck, badgeKey: "follow_ups_due" },
       { href: "/admin/contact-requests", label: "İletişim talepleri", icon: Inbox, badgeKey: "contact_new" },
       { href: "/admin/support", label: "Destek talepleri", icon: LifeBuoy, badgeKey: "support_pending" },
       { href: "/admin/security-monitor/alarms", label: "Alarmlar", icon: AlertOctagon, badgeKey: "unack_alarms" },

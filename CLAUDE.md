@@ -6,6 +6,32 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## TAKİP LİSTESİ + ÖLÇÜM LİSTESİ — "2-3 hafta sonra bakılacak" unutulmasın (2026-11-08, migration `b2d5i8j9i44e`)
+
+- **Sorun:** Claude oturumlar arası kendiliğinden uyanmaz; CLAUDE.md'deki "SIRADA/2-3 hafta sonra" notları
+  kimse hatırlatmazsa unutuluyordu. Çözüm işi Claude'un hafızasından çıkarıp SİSTEME verdi.
+- **Ölçüm listesi** `metric_snapshots` + `app/services/metrics_registry.py`: her gece 02:30 UTC
+  (`metrics_snapshot_daily`) tanımlı ölçülerin günlük değeri yazılır (aynı gün idempotent). Ölçüler: öneri
+  isabeti ekranda/ilk 3 (koç + sistem, coach_rec_weights'ten), iskelet çip kabulü (30g), e-posta teslim
+  başarısı (24s), aktif koç. Az örnekli değer (`min_sample`) karara katılmaz. **Yeni ölçü = METRICS'e satır + toplayıcı.**
+- **Takip listesi** `follow_ups` + `app/services/follow_up_service.py`: tarihli iş (kategori/öncelik/tekrar).
+  Ölçüye bağlıysa (`check_kind=metric_trend` + metric_key/owner_type/min_change) rapor = başlangıç günü ↔ son
+  değer, düşen/yükselen koç adıyla; rapor her gece tazelenir. **Bildirim:** `follow_up_daily` 06:00 UTC (09:00 TR)
+  vadesi gelenler için süper admine TEK özet e-posta (`follow_up_digest`, ALARM_EXTRA_EMAILS dahil) + push;
+  vade günü bir kez, gecikmişte 3 günde bir (her gün aynı mail yok). Tekrarlayan iş tamamlanınca sıradaki açılır
+  (başlangıç = bugün). Sol menü "Takip listesi" rozeti = vadesi gelmiş açık iş; pano üstünde "Bugün bakılacaklar".
+- Uçlar `api_v2/admin_follow_ups.py`: GET/POST `/admin/follow-ups` + `/{id}` (düzenle) + complete/snooze/cancel/
+  reopen/check/delete (yalnız kapalı) · GET `/admin/metrics` + `/metrics/{key}` (koç kırılımı) + POST `/metrics/collect`.
+  Web `/admin/follow-ups` + `/admin/metrics` (Ölçümler'de "Takip ekle" ölçüyü ön-seçer).
+- **Tohum** `scripts/seed_follow_ups.py` (start.sh, key'le idempotent): öneri motoru koç isabeti (29 Kas, 28 günde
+  bir) · iskelet kabul ≥%60 (15 Kas) · Facebook adı · Yandex site haritası · çakışan programlar --apply · Neslihan
+  #731 · ProFizik 09-10 · KVKK saklama ilk koşu (31 Oca 2027).
+- **KURAL:** bundan sonra "X hafta sonra bak / kullanıcı yapacak / sonra karar" türü her iş CLAUDE.md'ye değil
+  takip listesine yazılır (panelden ya da seed'e key'li satır). Oturum başında Claude prod'daki vadesi gelen
+  işleri okur: `ssh -o BatchMode=yes root@178.105.221.223 "cd /opt/etutkoc/deploy && docker compose exec -T web
+  python -m scripts.list_follow_ups"`.
+- Test YENİ `test_api_v2_follow_ups.py` 30/30 · YENİ `live_follow_ups.py` 14/14 (gerçek tarayıcı, 390px, kırpma).
+
 ## ÖĞRENEN ÖNERİ MOTORU — günlük "Öneriler" (2026-11-08, migration `a1c4h7i8h33d`)
 
 - **Bulgu (canlı, salt okuma):** son 30 günde 1.925 görev / iskeletten 4 kabul; geçmişi yeniden oynatan

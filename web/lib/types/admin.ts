@@ -3322,6 +3322,8 @@ export interface AdminBadgesResponse {
   unack_alarms?: number;
   /** Kitap Kataloğu onay bekleyen koç katkısı — onayla/reddet → düşer. */
   book_catalog_pending?: number;
+  /** Takip listesi — vadesi gelmiş/geçmiş açık iş (tamamla/ertele → düşer). */
+  follow_ups_due?: number;
   checked_at: string;
 }
 

@@ -468,7 +468,15 @@ def admin_badges_v2(
     except Exception:  # noqa: BLE001
         book_catalog_pending = 0
 
+    try:
+        from app.services.follow_up_service import count_due as _fu_due
+
+        follow_ups_due = _fu_due(db)
+    except Exception:  # noqa: BLE001
+        follow_ups_due = 0
+
     return AdminBadgesResponse(
+        follow_ups_due=follow_ups_due,
         support_pending=support_svc.pending_count_super_admin(db),
         contact_new=contact_new,
         unack_alarms=unack_alarms,

@@ -357,6 +357,7 @@ from app.models.moment_event import MomentEvent
 from app.models.coach_device import CoachDeviceLink
 from app.models.panel_behavior import PanelRouteStat, PanelVisitEvent
 from app.models.rec_weights import CoachRecWeights
+from app.models.follow_up import FollowUp, MetricSnapshot
 from app.models.guide import UserGuideState
 from app.models.owner_contact import OwnerContact
 from app.models.owner_tag import (
@@ -640,6 +641,8 @@ __all__ = [
     "WarningState",
     "PanelRouteStat",
     "CoachRecWeights",
+    "FollowUp",
+    "MetricSnapshot",
     "MomentEvent",
     "CoachDeviceLink",
     "PanelVisitEvent",

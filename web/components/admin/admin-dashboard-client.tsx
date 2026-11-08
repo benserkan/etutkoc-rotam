@@ -28,6 +28,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
+import { FollowUpsDueCard } from "@/components/admin/follow-ups/due-today-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { getAdminDashboard, getAdminActivityStream, adminKeys } from "@/lib/api/admin";
 import type { ActivityStreamResponse } from "@/lib/types/institution";
@@ -84,6 +85,8 @@ export function AdminDashboardClient({ initial }: Props) {
           müşteri sağlığı, ticari pano kısayolları ve son aktiviteler.
         </p>
       </header>
+
+      <FollowUpsDueCard />
 
       <QuickAccessStrip
         excludeHrefs={[...COMMERCIAL_SHORTCUTS, ...SYSTEM_SHORTCUTS].map(
