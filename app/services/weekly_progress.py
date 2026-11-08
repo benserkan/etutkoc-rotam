@@ -437,6 +437,11 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
         cv = cur_m.get(key)
         base = [m[key] for m in base_ms if m.get(key) is not None]
         status, lo, hi = _status(cv, base, direction)
+        # Haftanın ilk günü (k=0): henüz geçen gün yok → "aynı nokta" geçmiş haftaların 0. günü,
+        # yani kıyaslanacak bir şey yok. Tam haftalarla kıyaslamak sahte "geçmişin en kötüsü" üretir.
+        no_compare = not ended and k == 0 and key != "load"
+        if no_compare:
+            status, lo, hi = "insufficient", None, None
         # Kırpılmış (mod geçişi) ya da kısa haftalar eğilim dizisine girmez: 3 günlük parça tam
         # haftayla kıyaslanınca sahte "kötüleşme" üretir.
         full_series = [m[key] for w, m in full_ms
@@ -448,8 +453,11 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
             "value": cv, "value_label": _fmt(cv, unit), "prev": pv, "prev_label": _fmt(pv, unit),
             "status": status, "low": lo, "high": hi, "baseline": base,
             "trend_run": run, "trend": run >= TREND_RUN,
-            "verdict": _verdict(key, cv, lo, hi, pv, status, unit),
+            "verdict": ("Bu hafta henüz geçen gün yok; kıyas ilk gün bittiğinde başlar."
+                        if no_compare else _verdict(key, cv, lo, hi, pv, status, unit)),
         }
+        if no_compare:
+            card["baseline"] = []
         if key == "accuracy_pct":
             wr, td = cur_m["result_coverage"]
             card["hint"] = f"Doğru ÷ (doğru + yanlış). Sonuç girilen {wr} / {td} testten."
@@ -571,6 +579,8 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
 
     # ----- gün gün
     usual_min, _n = usual_first_tick(db, student.id, today)
+    from app.services.analytics import next_day_marking
+    nextday, nextday_min, _nn = next_day_marking(db, student.id, today)
     weeks_table = []
     if full_history:
         for w in history:
@@ -609,6 +619,8 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
         "label": cur.label, "day_index": min(k + 1, cur.days) if not ended else cur.days,
         "days": cur.days, "ended": ended, "today_label": DAY_SHORT[today.weekday()],
         "compare_days": k, "usual_start": f"{usual_min // 60:02d}:{usual_min % 60:02d}",
+        "marks_next_day": nextday,
+        "next_day_mark_time": (f"{nextday_min // 60:02d}:{nextday_min % 60:02d}" if nextday else None),
     }
 
     from app.services.deneme_analysis import build_deneme_analysis

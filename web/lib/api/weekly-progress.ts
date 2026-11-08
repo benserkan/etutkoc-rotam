@@ -57,6 +57,8 @@ export interface WeeklyProgressResponse {
     today_label: string;
     compare_days: number;
     usual_start: string;
+    marks_next_day?: boolean;
+    next_day_mark_time?: string | null;
   } | null;
   headline: Record<string, WPCard>;
   projection: {

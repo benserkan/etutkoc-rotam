@@ -33,7 +33,9 @@ PHASE_WEEKS = 3           # "başlangıç" ve "son dönem" kıyası: ilk/son 3 h
 def _num(v: float | None, digits: int = 2) -> str:
     if v is None:
         return "—"
-    s = f"{v:.{digits}f}".rstrip("0").rstrip(".")
+    s = f"{v:.{digits}f}"
+    if "." in s:   # yalnız ondalık kısmın sıfırları atılır (100 → "100", 1,50 → "1,5")
+        s = s.rstrip("0").rstrip(".")
     return s.replace(".", ",") if s else "0"
 
 
@@ -154,8 +156,8 @@ def build_development_report(db: Session, student: User, *, series: str | None =
             for c in compare:
                 if c["key"] == "accuracy_pct":
                     c["status"] = "insufficient"
-                    c["verdict"] = (f"Çözülen {cr['tests_done_items']} testin yalnız {cr['tests_with_result']} tanesinde "
-                                    "doğru/yanlış girildi; bu oran güvenilir bir ölçüm değil.")
+                    c["verdict"] = (f"Bu hafta işaretlenen {cr['tests_done_items']} test görevinin yalnız {cr['tests_with_result']} "
+                                    "tanesinde doğru/yanlış girildi; bu oran güvenilir bir ölçüm değil.")
         this_week = {
             "week": week, "row": cur_row, "days": wp.get("days", []),
             "projection": wp.get("projection"), "compare": compare,
@@ -370,7 +372,7 @@ def build_development_report(db: Session, student: User, *, series: str | None =
     if tests_done >= COVERAGE_MIN_TESTS and (coverage or 0) < COVERAGE_LOW * 100:
         risks.append(_item(
             "data:results", "warn", "Doğru/yanlış/boş girilmiyor",
-            f"Son 4 haftada çözülen {tests_done} testin yalnız {tests_res} tanesinde sonuç girildi (%{coverage or 0}). "
+            f"Son 4 haftada işaretlenen {tests_done} test görevinin yalnız {tests_res} tanesinde doğru/yanlış girildi (%{coverage or 0}). "
             "Konu doğruluğu ve zorlandığı konular bu yüzden ölçülemiyor.",
             agenda="Testlerde doğru/yanlış/boş girmeyi alışkanlık yap — zorlandığı konular ancak böyle görünür.",
             priority=1, cta_label="Konu performansı", cta_href=f"/teacher/students/{sid}#topics"))

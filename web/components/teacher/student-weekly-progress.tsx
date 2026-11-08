@@ -237,7 +237,7 @@ function DayCard({ d, usualStart, isPeriod }: { d: WPDay; usualStart: string; is
   const bar = d.state === "partial" ? "bg-orange-600" : d.state === "missed" ? "bg-rose-600" : "bg-cyan-700";
   const note =
     d.state === "today"
-      ? `Olağan başlama ${usualStart}`
+      ? usualStart
       : d.state === "future"
         ? "görev planlı"
         : d.state === "none"
@@ -387,7 +387,11 @@ function ThisWeek({ data, studentId }: { data: WeeklyProgressResponse; studentId
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
           {data.days.map((d) => (
-            <DayCard key={d.date} d={d} usualStart={w.usual_start} isPeriod={isPeriod} />
+            <DayCard key={d.date} d={d} usualStart={
+              w.marks_next_day && w.next_day_mark_time
+                ? `Genelde ertesi gün ${w.next_day_mark_time} civarı işaretler`
+                : `Olağan başlama ${w.usual_start}`
+            } isPeriod={isPeriod} />
           ))}
         </div>
       </div>

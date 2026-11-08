@@ -168,6 +168,44 @@ def usual_first_tick(db: Session, student_id: int, today: date) -> tuple[int, in
     return max(TICK_MIN_DUE_MIN, min(TICK_MAX_DUE_MIN, p75 + 60)), len(vals)
 
 
+NEXT_DAY_MARK_SHARE = 0.6   # günlerin ≥%60'ı ertesi gün işaretleniyorsa alışkanlık say
+
+
+def next_day_marking(db: Session, student_id: int, today: date) -> tuple[bool, int, int]:
+    """Öğrenci görevlerini alışkanlık olarak ERTESİ GÜN mü işaretliyor?
+
+    Son 21 günde her gün için ilk tikin, görevin gününe göre dakikası alınır.
+    İlk tik ertesi gün 05:00'ten sonra olan günler "ertesi gün işaretlenmiş"
+    sayılır (gece yarısını biraz geçen tikler aynı günün devamıdır).
+    → (alışkanlık mı, ertesi günkü olağan işaretleme dakikası [gün başından], örnek gün).
+    Olağan dakika = ertesi gün ilk tiklerin %75'lik dilimi + 60 dk (en geç 23:00).
+    """
+    start = today - timedelta(days=TICK_HISTORY_DAYS)
+    rows = (
+        db.query(Task.date, Task.completed_at)
+        .filter(Task.student_id == student_id, Task.date >= start, Task.date < today,
+                Task.completed_at.isnot(None), Task.is_draft.is_(False))
+        .all()
+    )
+    first: dict[date, int] = {}
+    for d, ts in rows:
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        tr = ts + timedelta(hours=3)
+        mins = (tr.date() - d).days * 1440 + tr.hour * 60 + tr.minute
+        if mins < 0:
+            continue
+        first[d] = min(first.get(d, 10**6), mins)
+    n = len(first)
+    if n < TICK_MIN_SAMPLE_DAYS:
+        return False, 0, n
+    late = sorted(m - 1440 for m in first.values() if 1440 + 5 * 60 <= m < 2 * 1440)
+    if len(late) < NEXT_DAY_MARK_SHARE * n:
+        return False, 0, n
+    p75 = late[min(len(late) - 1, int(round(0.75 * (len(late) - 1))))]
+    return True, min(TICK_MAX_DUE_MIN, p75 + 60), n
+
+
 def _hm(mins: int) -> str:
     m = mins % 1440
     return f"{m // 60:02d}:{m % 60:02d}" + (" (gece)" if mins >= 1440 else "")
@@ -876,7 +914,11 @@ def legacy_warnings(
     )
     _today_gorev = len(_today_tasks)
     _today_gorev_done = sum(1 for t in _today_tasks if gorev_stats.gorev_done(t))
-    if _today_gorev > 0 and _today_gorev_done == 0:
+    # Ertesi gün işaretleyen öğrenci (ör. her sabah 09:00'da dünkü görevleri işaretler):
+    # gün içinde "başlamadı" demek her gece yanlış alarm üretir; dünün kontrolü de
+    # olağan işaretleme saati geçene kadar bekler.
+    _nextday, _nextday_due, _nextday_n = next_day_marking(db, student.id, today)
+    if _today_gorev > 0 and _today_gorev_done == 0 and not _nextday:
         # Gün içi uyarı yalnız öğrencinin OLAĞAN başlama saati geçince (2026-09-29):
         # sabah 08:52'de "bugün hiç tik yok" demek anlamsız ve alarm körlüğü
         # yaratıyordu; tiklerin çoğu 22:00–01:00 arası atılıyor. Kırmızıya dönüş
@@ -904,8 +946,14 @@ def legacy_warnings(
     # 2) Dün de tik yoksa — ciddileştir (etkinlik görevi de tik sayılır)
     yesterday = today - timedelta(days=1)
     yesterday_stats = daily_stats_for(db, student.id, yesterday)
+    _yesterday_pending = False
+    if _nextday:
+        _now_tr2 = _tr_now()
+        _yesterday_pending = (_now_tr2.date() == today
+                              and _now_tr2.hour * 60 + _now_tr2.minute < _nextday_due)
     if (
-        yesterday_stats.planned > 0
+        not _yesterday_pending
+        and yesterday_stats.planned > 0
         and yesterday_stats.completed == 0
         and yesterday_stats.tasks_completed == 0
     ):
