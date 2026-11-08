@@ -257,6 +257,26 @@ def brans_group_for_label(label: str | None) -> str | None:
     return None
 
 
+def exam_group_label(item) -> str | None:
+    """Birleşik branş denemesi kaleminin grup adı ("TYT Fen Bilimleri"); değilse None.
+    Bu denemeler tek derse bağlı değil — ızgara/ders dağılımı onları kendi grubunda gösterir
+    ("DİĞER"e düşmez). Kitaplı ya da derse bağlı kalemde None."""
+    if not getattr(item, "exam_kind", None) or getattr(item, "subject_id", None) is not None:
+        return None
+    if getattr(item, "book_id", None) is not None:
+        return None
+    key = brans_group_for_label(getattr(item, "label", None))
+    return BRANS_GROUP_LABELS.get(key) if key else None
+
+
+def exam_group_order(label: str) -> int:
+    """Grubun BRANS_GROUPS sırası (ders dağılımında sabit sıra + negatif kimlik için)."""
+    for i, (_k, lbl, *_r) in enumerate(BRANS_GROUPS):
+        if lbl == label:
+            return i
+    return len(BRANS_GROUPS)
+
+
 def exam_section_for_subject(subject: Subject | None) -> str | None:
     """Dersin sınav türü: TYT/AYT dersinde kendi alanı, LGS modelindeki derste 'lgs',
     okul (Maarif/Klasik) dersinde 'okul'."""

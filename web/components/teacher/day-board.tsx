@@ -377,6 +377,9 @@ function taskSubjKey(t: TeacherTask): { key: string; name: string } {
   if (ws?.subject_id != null) {
     return { key: `s${ws.subject_id}`, name: ws.subject_name ?? "Ders" };
   }
+  // Birleşik branş denemesi (TYT Fen Bilimleri…) — kendi grubu
+  const grp = t.items.find((it) => it.exam_group);
+  if (grp?.exam_group) return { key: `g:${grp.exam_group}`, name: grp.exam_group };
   if (t.items.length === 0 || t.work_block_id != null || t.block_detached) {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {

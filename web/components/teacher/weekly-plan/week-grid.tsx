@@ -179,6 +179,9 @@ export function taskSubjKey(t: TeacherTask, subjects?: SubjectRef[]): { key: str
     const nm = ws.subject_name ?? "Ders";
     return { key: subjectGroupKey(nm), name: nm };
   }
+  // Birleşik branş denemesi (TYT Fen Bilimleri…) — kendi grubu, "Diğer"e düşmez (2026-11-08)
+  const grp = t.items.find((it) => it.exam_group);
+  if (grp?.exam_group) return { key: subjectGroupKey(grp.exam_group), name: grp.exam_group };
   if (t.items.length === 0 || t.work_block_id != null || t.block_detached) {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {

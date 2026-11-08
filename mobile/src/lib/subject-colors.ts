@@ -7,6 +7,9 @@
  */
 
 const SUBJECT_FIXED_HUE: [RegExp, number][] = [
+  // Birleşik branş denemesi grupları (2026-11-08) — tek derse ait değil, kendi tonu
+  [/(tyt|ayt) fen bilimleri/, 245],   // çivit (Matematik 220 ↔ Kimya 275 arası)
+  [/(tyt|ayt) (edebiyat-)?sosyal bilimler/, 15], // kiremit
   [/matematik/, 220],
   [/geometri/, 165],
   [/turkce|edebiyat|paragraf|dil bilgisi/, 350],

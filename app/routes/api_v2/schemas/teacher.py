@@ -471,6 +471,8 @@ class TeacherTaskItem(BaseModel):
     # Toplu sonuç: sonucu başka satırda (o satırın id'si) · bu satır kaç denemeyi kapsıyor
     combined_into_id: int | None = None
     combined_count: int | None = None
+    # Birleşik branş denemesi grubu ("TYT Fen Bilimleri") — tek derse bağlı değil, kendi grubu
+    exam_group: str | None = None
 
 
 class TeacherTask(BaseModel):
@@ -541,6 +543,7 @@ class TeacherDaySubjectSummary(BaseModel):
     task_count: int
     tests: int                       # type=test sayısı
     denemeler: int                   # type in {brans_denemesi, genel_deneme}
+    is_group: bool = False           # birleşik branş denemesi grubu (TYT Fen Bilimleri) — ders değil
 
 
 class TeacherSuggestionInline(BaseModel):

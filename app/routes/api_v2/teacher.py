@@ -4165,7 +4165,14 @@ def _build_teacher_task_item(
         result_pending=_ds_pending(item),
         combined_into_id=item.combined_into_id,
         combined_count=item.combined_count,
+        exam_group=_ds_group(item),
     )
+
+
+def _ds_group(item: TaskBookItem) -> str | None:
+    from app.services.deneme_service import exam_group_label
+
+    return exam_group_label(item)
 
 
 def _ds_net(item: TaskBookItem) -> float | None:
@@ -5133,11 +5140,14 @@ def teacher_student_week_v2(
         week_draft_total += draft_count
 
         # Ders bazlı özet (Jinja compute_day_subject_summary)
-        raw_summary = compute_day_subject_summary(day_tasks, subjects)
+        raw_summary = compute_day_subject_summary(day_tasks, subjects, include_groups=True)
         day_subject_summary = [
             TeacherDaySubjectSummary(
-                subject_id=ent["subject"].id,
-                subject_name=ent["subject"].name,
+                # Birleşik branş grubu gerçek ders değil → negatif sabit kimlik (−1 TYT Fen…)
+                subject_id=(ent["subject"].id if ent.get("subject") is not None
+                            else -(ent.get("group_order", 0) + 1)),
+                subject_name=(ent["subject"].name if ent.get("subject") is not None else ent["group"]),
+                is_group=ent.get("subject") is None,
                 task_count=ent.get("task_count", 0),
                 tests=ent.get("tests", 0),
                 denemeler=ent.get("denemeler", 0),

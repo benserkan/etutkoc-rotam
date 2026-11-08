@@ -495,6 +495,9 @@ function taskSubject(task: TeacherTask, subjects?: SubjectRef[]): TaskSubject {
     const nm = withSubj.subject_name ?? "Ders";
     return { key: subjectGroupKey(nm), id: withSubj.subject_id, name: nm };
   }
+  // Birleşik branş denemesi (TYT Fen Bilimleri…) — kendi grubu, "Diğer"e düşmez (2026-11-08)
+  const grp = task.items.find((it) => it.exam_group);
+  if (grp?.exam_group) return { key: subjectGroupKey(grp.exam_group), id: null, name: grp.exam_group };
   // Etkinlik (kalemsiz) VEYA blok (bloğu silinmiş dahil) → "{Ders} · {içerik}" parse.
   if (task.items.length === 0 || task.work_block_id != null || task.block_detached) {
     const sep = task.title.indexOf(" · ");

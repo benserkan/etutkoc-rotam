@@ -17,7 +17,14 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   deneme başına soru `perDenemeQuestions` (toplu kalemde kayıtlı soru = toplam; "3 deneme × 18 soru" düzeldi; web öğrenci
   kartı + koç gün kartı + mobil Bugün) · (4) `ExamResultRow.exam_count` (analysis_meta.exams) → öğrenci/veli/mobil
   "Branş denemeleri" sayısı ve seri başlığı deneme adedi (`countExams`) · (6) `trDative` ("3'e", "6'ya") · (7) girilen
-  < deneme başına × 1,5 ise "Hayır, bu denemede X soru var" öne çıkar. (5) birleşik grup ızgarada "DİĞER" — konuşulacak.
+  < deneme başına × 1,5 ise "Hayır, bu denemede X soru var" öne çıkar. (5) karar A: birleşik grup (TYT Fen/Sosyal, AYT
+  Fen…) kendi başlığı — `deneme_service.exam_group_label` → kalem `exam_group`; `compute_day_subject_summary(include_groups=
+  True)` (yalnız v2; Jinja değişmez) grup satırı `is_group`, kimlik −(BRANS_GROUPS sırası+1); web ızgara/gün kartı/gün
+  panosu/öğrenci haftası + Ders Dengesi grup adıyla gruplar; renk: Fen grubu 245 (çivit), Sosyal grubu 15 (kiremit) —
+  web `subject-match` + mobil `subject-colors` aynı tablo; mobil Bugün/görev sayfası ders adı. Test YENİ
+  `test_deneme_group_display` 5/5.
+- **DEV DERSİ:** Windows'ta 8081'in sahibi "0" görünebiliyor → `Get-NetTCPConnection.OwningProcess` ile kapatma boşa
+  gider, eski arka uç çalışmaya devam eder. Süreci `Win32_Process` komut satırından (run_dev_patched) bulup kapat.
 - **SİLME OLAYI (ders):** temizlikte sayfa JS'iyle "Sil" düğmelerini "SİM yazan üst öğe" seçicisiyle tıkladım; seçici gün
   kartının tamamını eşledi → 10 gerçek görev + 2 deneme kaydı silindi, `window.confirm` "evet"e bağlı olduğundan
   "çözülenleri geri al" da onaylandı (4 kitap sayacı düştü). Yedekten (`pre_combined_20261108_0815.dump` → geçici DB)

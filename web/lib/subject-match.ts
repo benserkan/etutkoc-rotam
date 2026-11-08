@@ -64,6 +64,9 @@ function nameHashNum(name: string): number {
 const SUBJECT_FIXED_HUE: Array<[RegExp, number]> = [
   // 2026-10-08: koç koyu temada Matematik ↔ Geometri (215/190) ve Fizik ↔
   // Tarih'i ayırt edemedi → TYT tam setinde komşu dersler en az ~30-55° arayla.
+  // Birleşik branş denemesi grupları (2026-11-08) — tek derse ait değil, kendi tonu
+  [/(tyt|ayt) fen bilimleri/, 245],   // çivit (Matematik 220 ↔ Kimya 275 arası)
+  [/(tyt|ayt) (edebiyat-)?sosyal bilimler/, 15], // kiremit
   [/matematik/, 220],     // mavi
   [/geometri/, 165],      // yeşil-turkuaz (Matematik'ten 55°)
   [/turkce|edebiyat|paragraf|dil bilgisi/, 350], // kırmızı

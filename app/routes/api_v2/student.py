@@ -232,7 +232,14 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
         result_pending=_deneme_pending(item),
         combined_into_id=item.combined_into_id,
         combined_count=item.combined_count,
+        exam_group=_exam_group(item),
     )
+
+
+def _exam_group(item: TaskBookItem) -> str | None:
+    from app.services.deneme_service import exam_group_label
+
+    return exam_group_label(item)
 
 
 def _deneme_net(item: TaskBookItem) -> float | None:

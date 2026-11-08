@@ -65,7 +65,7 @@ function denemeKind(t: StudentTask): "brans" | "genel" | null {
 }
 function subjectOf(t: StudentTask): string | null {
   const it = t.items.find((x) => x.subject_id != null);
-  return it?.subject_name ?? null;
+  return it?.subject_name ?? t.items.find((x) => x.exam_group)?.exam_group ?? null;
 }
 
 function CheckCircle({ state }: { state: GState }) {

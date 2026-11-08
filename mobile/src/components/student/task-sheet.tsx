@@ -206,7 +206,8 @@ export function TaskSheetContent({
   const isActivity = rows.length === 0;
   const isDone = task.status === "completed";
 
-  const subject = task.items.find((i) => i.subject_id != null)?.subject_name ?? null;
+  const subject = task.items.find((i) => i.subject_id != null)?.subject_name
+    ?? task.items.find((i) => i.exam_group)?.exam_group ?? null;
   // Çok kalemli görevde tüm bölümler başlıkta (yalnız ilk bölüm yanıltır)
   const title = displayLabel(task.items, task.title);
   const isVideo = task.type === "video";

@@ -434,6 +434,8 @@ export interface TeacherTaskItem {
   result_pending?: boolean;
   combined_into_id?: number | null;
   combined_count?: number | null;
+  /** Birleşik branş denemesi grubu ("TYT Fen Bilimleri") — tek derse bağlı değil */
+  exam_group?: string | null;
 }
 
 export interface TaskItemResultBody {
@@ -568,6 +570,8 @@ export interface TeacherDaySubjectSummary {
   task_count: number;
   tests: number;
   denemeler: number;
+  /** Birleşik branş denemesi grubu (TYT Fen Bilimleri) — gerçek ders değil */
+  is_group?: boolean;
 }
 
 export interface TeacherSuggestionInline {

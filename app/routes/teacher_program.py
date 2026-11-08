@@ -88,7 +88,7 @@ def _ensure_student(db: Session, teacher_id: int, student_id: int) -> User:
 
 
 def compute_day_subject_summary(
-    day_tasks: list, subjects: list,
+    day_tasks: list, subjects: list, *, include_groups: bool = False,
 ) -> list[dict]:
     """Bir günün görevlerini derslere göre özetler.
 
@@ -97,8 +97,18 @@ def compute_day_subject_summary(
     Hiç görev olmayan ders de listede olur (task_count=0).
     """
     by_sid: dict[int, dict] = {}
+    by_group: dict[str, dict] = {}
     for t in day_tasks:
         for it in t.book_items:
+            if include_groups and it.book is None:
+                from app.services.deneme_service import exam_group_label
+
+                glbl = exam_group_label(it)
+                if glbl:
+                    g = by_group.setdefault(glbl, {"task_ids": set(), "tests": 0, "denemeler": 0})
+                    g["task_ids"].add(t.id)
+                    g["denemeler"] += it.planned_count
+                    continue
             if it.book is None:
                 # Kitapsız branş denemesi (D1): ders kalemde, 1 kalem = 1 deneme.
                 if getattr(it, "exam_kind", None) and getattr(it, "subject_id", None):
@@ -134,6 +144,14 @@ def compute_day_subject_summary(
             "tests": e["tests"] if e else 0,
             "denemeler": e["denemeler"] if e else 0,
         })
+    if include_groups and by_group:
+        from app.services.deneme_service import exam_group_order
+
+        # Birleşik branş grupları (TYT Fen Bilimleri…) — gerçek ders değil; dersten sonra, sabit sırada.
+        for lbl in sorted(by_group, key=exam_group_order):
+            g = by_group[lbl]
+            out.append({"subject": None, "group": lbl, "group_order": exam_group_order(lbl),
+                        "task_count": len(g["task_ids"]), "tests": 0, "denemeler": g["denemeler"]})
     return out
 
 

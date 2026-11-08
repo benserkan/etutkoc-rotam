@@ -92,6 +92,9 @@ function taskSubjKey(t: StudentTask, subjects: SubjectRef[]): { key: string; nam
     const nm = ws.subject_name ?? "Ders";
     return { key: subjectGroupKey(nm), name: nm };
   }
+  // Birleşik branş denemesi (TYT Fen Bilimleri…) — kendi grubu, "Diğer"e düşmez
+  const grp = t.items.find((it) => it.exam_group);
+  if (grp?.exam_group) return { key: subjectGroupKey(grp.exam_group), name: grp.exam_group };
   if (t.items.length === 0 || t.work_block_id != null) {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {

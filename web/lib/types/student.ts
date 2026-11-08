@@ -55,6 +55,8 @@ export interface StudentTaskItem {
   result_pending?: boolean;
   combined_into_id?: number | null;
   combined_count?: number | null;
+  /** Birleşik branş denemesi grubu ("TYT Fen Bilimleri") — tek derse bağlı değil */
+  exam_group?: string | null;
 }
 
 export type TaskPeriod = "morning" | "noon" | "evening";

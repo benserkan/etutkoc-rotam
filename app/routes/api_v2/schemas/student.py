@@ -107,6 +107,8 @@ class StudentTaskItem(BaseModel):
     # Toplu sonuç: sonucu başka satırda (o satırın id'si) · bu satır kaç denemeyi kapsıyor
     combined_into_id: int | None = None
     combined_count: int | None = None
+    # Birleşik branş denemesi grubu ("TYT Fen Bilimleri") — tek derse bağlı değil, kendi grubu
+    exam_group: str | None = None
 
 
 class StudentTask(BaseModel):
