@@ -47,7 +47,10 @@ function ExamResultBadge({ task, item }: Props) {
     completed: item.completed_count, correct: item.correct_count, wrong: item.wrong_count,
     blank: item.blank_count, net: item.net, durationMinutes: item.duration_minutes,
     resultPending: item.result_pending,
+    combinedIntoId: item.combined_into_id, combinedCount: item.combined_count,
   });
+  // Pencere görevin TÜM denemelerini açar — toplu giriş satırlar arası bağ kurar/çözer.
+  const examItems = task.items.filter((it) => it.exam_kind);
   const label = item.section_label || item.book_name || "Deneme";
   return (
     <>
@@ -69,14 +72,16 @@ function ExamResultBadge({ task, item }: Props) {
       <DenemeResultDialog
         open={open}
         onClose={() => setOpen(false)}
-        title={`${task.title} — ${label}`}
+        title={examItems.length > 1 ? task.title : `${task.title} — ${label}`}
         audience="coach"
         saving={save.isPending}
-        rows={[{
-          id: item.id, label, examSection: item.exam_section, questionCount: item.question_count,
-          completed: item.completed_count, correct: item.correct_count, wrong: item.wrong_count,
-          blank: item.blank_count, durationMinutes: item.duration_minutes,
-        }]}
+        rows={examItems.map((it) => ({
+          id: it.id, label: it.section_label || it.book_name || "Deneme",
+          examSection: it.exam_section, questionCount: it.question_count,
+          completed: it.completed_count, correct: it.correct_count, wrong: it.wrong_count,
+          blank: it.blank_count, durationMinutes: it.duration_minutes,
+          combinedIntoId: it.combined_into_id, combinedCount: it.combined_count,
+        }))}
         onSubmit={(rows) => save.mutate({ taskId: task.id, rows }, { onSuccess: () => setOpen(false) })}
       />
     </>

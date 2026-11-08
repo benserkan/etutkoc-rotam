@@ -104,6 +104,9 @@ class StudentTaskItem(BaseModel):
     duration_minutes: int | None = None
     net: float | None = None
     result_pending: bool = False
+    # Toplu sonuç: sonucu başka satırda (o satırın id'si) · bu satır kaç denemeyi kapsıyor
+    combined_into_id: int | None = None
+    combined_count: int | None = None
 
 
 class StudentTask(BaseModel):
@@ -795,6 +798,8 @@ class DenemeResultRowBody(BaseModel):
     blank: int | None = None
     question_count: int | None = None
     duration_minutes: int | None = None
+    # Toplu sonuç: bu satırın sonucu bu deneme satırlarını da kapsar (soru sayısı = toplam).
+    combine_with: list[int] | None = None
 
 
 class DenemeResultsBody(BaseModel):

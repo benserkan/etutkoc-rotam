@@ -230,6 +230,8 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
         duration_minutes=item.duration_minutes,
         net=_deneme_net(item),
         result_pending=_deneme_pending(item),
+        combined_into_id=item.combined_into_id,
+        combined_count=item.combined_count,
     )
 
 

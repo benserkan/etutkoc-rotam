@@ -468,6 +468,9 @@ class TeacherTaskItem(BaseModel):
     duration_minutes: int | None = None
     net: float | None = None
     result_pending: bool = False
+    # Toplu sonuç: sonucu başka satırda (o satırın id'si) · bu satır kaç denemeyi kapsıyor
+    combined_into_id: int | None = None
+    combined_count: int | None = None
 
 
 class TeacherTask(BaseModel):

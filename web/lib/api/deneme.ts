@@ -154,7 +154,10 @@ export interface DenemeAnalysisSeries {
   level_label?: string;
   subject: string | null;
   section: string;
+  /** deneme adedi (toplu girişte bir nokta birden çok deneme sayar) */
   count: number;
+  points_count?: number;
+  combined_points?: number;
   correct: number;
   wrong: number;
   blank: number;

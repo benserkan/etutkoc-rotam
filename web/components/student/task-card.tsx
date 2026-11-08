@@ -991,6 +991,7 @@ function DenemeTaskRows({
           const sm = denemeSummary({
             completed: it.completed, correct: it.correct, wrong: it.wrong, blank: it.blank,
             net: it.net, durationMinutes: it.duration_minutes, resultPending: it.result_pending,
+            combinedIntoId: it.combined_into_id, combinedCount: it.combined_count,
           });
           return (
             <li key={it.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -1041,6 +1042,8 @@ function DenemeTaskRows({
           wrong: it.wrong,
           blank: it.blank,
           durationMinutes: it.duration_minutes,
+          combinedIntoId: it.combined_into_id,
+          combinedCount: it.combined_count,
         }))}
         onSubmit={(rows) => save.mutate({ task, rows }, { onSuccess: () => setOpen(false) })}
       />

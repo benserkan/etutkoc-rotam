@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 
 from app.models.exam_result import SOURCE_TASK  # noqa: E402  (tek kaynak)
 _WATCHED = ("completed_count", "correct_count", "wrong_count", "blank_count",
-            "question_count", "duration_minutes", "exam_section", "exam_kind", "subject_id", "label")
+            "question_count", "duration_minutes", "exam_section", "exam_kind", "subject_id", "label",
+            "combined_count")
 
 
 def _has_result(item) -> bool:
@@ -62,16 +63,41 @@ def _base_title(item) -> str:
     return _clean(getattr(task, "title", None)) or _clean(_IDX_RE.sub("", item.label or "")) or "Deneme"
 
 
+def _deneme_numbers(item) -> list[int]:
+    """Kalemin görev içindeki deneme sıra numarası (toplu sonuçta kapsadığı tüm denemeler).
+    Numara yalnız ayırt etmek gerekiyorsa verilir: kitapsız görevde birden çok deneme,
+    kitaplı görevde aynı bölümden birden çok deneme (bölüm adı ayırmıyorsa)."""
+    siblings = sorted((it for it in (item.task.book_items or []) if getattr(it, "exam_kind", None)),
+                      key=lambda it: it.id or 0)
+    if len(siblings) <= 1:
+        return []
+    if getattr(item, "book", None) is not None:
+        same = [it for it in siblings if it.book_section_id == item.book_section_id]
+        if len(same) <= 1:
+            return []
+        siblings = same
+    pos = {id(it): i for i, it in enumerate(siblings, 1)}
+    if getattr(item, "book", None) is None and not getattr(item, "combined_count", None):
+        m = _IDX_RE.search(item.label or "")
+        if m:
+            return [int(m.group(1))]
+    nums = [pos[id(item)]] + [pos[id(it)] for it in siblings
+                              if getattr(it, "combined_into_id", None) == item.id and id(it) in pos]
+    return sorted(nums)
+
+
 def _title(item) -> str:
     base = _base_title(item)
-    if getattr(item, "book", None) is None:
-        siblings = sorted((it for it in (item.task.book_items or []) if getattr(it, "exam_kind", None)),
-                          key=lambda it: it.id or 0)
-        if len(siblings) > 1:
-            m = _IDX_RE.search(item.label or "")
-            n = int(m.group(1)) if m else next((i for i, it in enumerate(siblings, 1) if it is item), None)
-            if n:
-                base = f"{base} · {n}. deneme"
+    nums = _deneme_numbers(item)
+    n_exams = int(getattr(item, "combined_count", None) or 1)
+    if len(nums) > 1:
+        rng = (f"{nums[0]}.–{nums[-1]}." if nums == list(range(nums[0], nums[-1] + 1))
+               else ", ".join(f"{n}." for n in nums))
+        base = f"{base} · {rng} deneme (toplu)"
+    elif nums:
+        base = f"{base} · {nums[0]}. deneme"
+    elif n_exams > 1:
+        base = f"{base} · {n_exams} deneme (toplu)"
     return base[:200]
 
 
@@ -141,6 +167,8 @@ def sync_item(db: Session, item) -> None:
         meta["duration_minutes"] = int(item.duration_minutes)
     if qn:
         meta["question_count"] = int(qn)
+    if int(item.combined_count or 1) > 1:
+        meta["exams"] = int(item.combined_count)
     subj_payload = (
         json.dumps([{"name": subj_name, "correct": c, "wrong": w, "blank": int(b), "net": net}],
                    ensure_ascii=False)

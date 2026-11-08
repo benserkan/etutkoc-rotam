@@ -33,6 +33,8 @@ export interface StudentTaskItem {
   duration_minutes?: number | null;
   net?: number | null;
   result_pending?: boolean;
+  combined_into_id?: number | null;
+  combined_count?: number | null;
 }
 
 export type TaskStatus = "pending" | "in_progress" | "completed" | string;
@@ -332,6 +334,7 @@ export interface DenemeResultRow {
   blank?: number | null;
   question_count?: number | null;
   duration_minutes?: number | null;
+  combine_with?: number[];
 }
 
 export function setDenemeResults(taskId: number, rows: DenemeResultRow[]): Promise<unknown> {

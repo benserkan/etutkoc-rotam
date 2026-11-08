@@ -618,6 +618,9 @@ class DenemeRow:
     blank: int | None = None
     question_count: int | None = None
     duration_minutes: int | None = None
+    # TOPLU SONUÇ: bu satırın sonucu, listelenen diğer deneme satırlarını da kapsar
+    # (öğrenci denemeleri ayrı ayrı değil toplam olarak girdi). Soru sayısı = toplam.
+    combine_with: list[int] | None = None
 
 
 def item_net(item) -> float | None:
@@ -630,9 +633,30 @@ def item_net(item) -> float | None:
 
 
 def result_pending(item) -> bool:
-    """Deneme çözüldü (işaretli) ama doğru/yanlış girilmedi."""
+    """Deneme çözüldü (işaretli) ama doğru/yanlış girilmedi. Toplu sonuca bağlı deneme
+    (sonucu başka satırda) beklemez."""
     return (is_exam_item(item) and int(item.completed_count or 0) > 0
+            and getattr(item, "combined_into_id", None) is None
             and item.correct_count is None and item.wrong_count is None)
+
+
+def exams_in_item(item) -> int:
+    """Kalemin sonucu kaç denemeyi kapsıyor (toplu girişte >1)."""
+    return max(1, int(getattr(item, "combined_count", None) or 1))
+
+
+def _clear_combined(task: Task, items: list) -> None:
+    """Toplu bağları çöz (satırlar yeniden gönderildiğinde). Toplu kalemin soru sayısı
+    deneme başına değere geri döner."""
+    ids = {it.id for it in items}
+    for it in task.book_items:
+        if it.combined_into_id is not None and (it.combined_into_id in ids or it.id in ids):
+            it.combined_into_id = None
+    for it in items:
+        n = int(it.combined_count or 0)
+        if n > 1 and it.question_count:
+            it.question_count = max(1, round(it.question_count / n))
+        it.combined_count = None
 
 
 def apply_results(db: Session, task: Task, rows: list[DenemeRow]) -> None:
@@ -646,7 +670,22 @@ def apply_results(db: Session, task: Task, rows: list[DenemeRow]) -> None:
     from app.services.task_service import set_item_completion
 
     by_id = {it.id: it for it in task.book_items}
+    # Toplu satırların kapsadığı denemeler ayrı işlenmez (toplu satırla birlikte yazılır).
+    covered: dict[int, int] = {}
     for r in rows:
+        for oid in r.combine_with or []:
+            o = by_id.get(oid)
+            if o is None or not is_exam_item(o) or oid == r.item_id:
+                raise DenemeResultError("item_not_found", "Toplu sonuçtaki deneme satırı bulunamadı.")
+            if oid in covered:
+                raise DenemeResultError("invalid_combine", "Bir deneme iki toplu sonuca birden bağlanamaz.")
+            covered[oid] = r.item_id
+    if any(r.item_id in covered and r.combine_with for r in rows):
+        raise DenemeResultError("invalid_combine", "Toplu sonuç zincirlenemez.")
+    _clear_combined(task, [by_id[r.item_id] for r in rows if r.item_id in by_id])
+    for r in rows:
+        if r.item_id in covered:
+            continue
         it = by_id.get(r.item_id)
         if it is None or not is_exam_item(it):
             raise DenemeResultError("item_not_found", "Deneme satırı bulunamadı.")
@@ -655,7 +694,12 @@ def apply_results(db: Session, task: Task, rows: list[DenemeRow]) -> None:
                 raise DenemeResultError("invalid_result", "Doğru, yanlış ve boş negatif olamaz.")
         if r.duration_minutes is not None and not (1 <= r.duration_minutes <= MAX_DURATION_MIN):
             raise DenemeResultError("invalid_duration", "Süre 1 ile 600 dakika arasında olmalı.")
+        group = [by_id[o] for o in (r.combine_with or [])]
         qn = r.question_count if r.question_count is not None else it.question_count
+        if group and r.question_count is None and it.question_count:
+            qn = it.question_count + sum(int(o.question_count or it.question_count) for o in group)
+        if group and (not r.solved or (r.correct is None and r.wrong is None)):
+            raise DenemeResultError("invalid_combine", "Toplu sonuç için doğru/yanlış girilmeli.")
         if qn is not None and not (1 <= qn <= MAX_QUESTIONS):
             raise DenemeResultError("invalid_question_count", "Soru sayısı 1 ile 200 arasında olmalı.")
         if not r.solved:
@@ -677,10 +721,17 @@ def apply_results(db: Session, task: Task, rows: list[DenemeRow]) -> None:
             set_item_completion(db, it, 1, correct=c, wrong=w, blank=int(b or 0))
         else:
             set_item_completion(db, it, 1)
-        if r.question_count is not None:
-            it.question_count = r.question_count
+        if r.question_count is not None or group:
+            it.question_count = qn
         if r.duration_minutes is not None:
             it.duration_minutes = r.duration_minutes
+        if group:
+            it.combined_count = 1 + len(group)
+            for o in group:
+                set_item_completion(db, o, 1)
+                o.correct_count = o.wrong_count = o.blank_count = None
+                o.duration_minutes = None
+                o.combined_into_id = it.id
     db.flush()
 
 
@@ -690,7 +741,7 @@ def pending_result_items(db: Session, *, student_id: int | None = None, older_th
     q = (db.query(TaskBookItem).join(Task, Task.id == TaskBookItem.task_id)
          .filter(TaskBookItem.exam_kind.isnot(None), TaskBookItem.completed_count > 0,
                  TaskBookItem.correct_count.is_(None), TaskBookItem.wrong_count.is_(None),
-                 Task.is_draft.is_(False)))
+                 TaskBookItem.combined_into_id.is_(None), Task.is_draft.is_(False)))
     if student_id is not None:
         q = q.filter(Task.student_id == student_id)
     if older_than is not None:

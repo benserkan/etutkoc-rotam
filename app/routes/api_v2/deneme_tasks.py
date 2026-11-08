@@ -432,6 +432,7 @@ class DenemeAnalysisPoint(BaseModel):
     wrong: int
     blank: int
     duration_minutes: int | None = None
+    exams: int = 1  # toplu girişte noktanın kapsadığı deneme sayısı
 
 
 class DenemeAnalysisSeries(BaseModel):
@@ -443,6 +444,8 @@ class DenemeAnalysisSeries(BaseModel):
     level: str = "sinif"            # lgs | sinif | tyt | ayt | ydt (2026-11-08)
     level_label: str = ""
     count: int
+    points_count: int = 0
+    combined_points: int = 0
     correct: int
     wrong: int
     blank: int

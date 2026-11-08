@@ -553,8 +553,16 @@ interface DRow {
   qn: string;
   dur: string;
   origQn: number | null | undefined;
+  /** deneme başına soru (toplu satırda kayıtlı toplam ÷ deneme adedi) */
+  perQ: number | null;
+  /** bu satıra toplu bağlanan diğer denemeler */
+  combine: number[];
+  noCombine: boolean;
 }
 
+// TOPLU GİRİŞ (2026-11-08, web ile aynı kural): girilen soru (D+Y[+B]) ya da "Soru" deneme
+// başına sayıyı aşarsa "birden çok denemenin toplamı mı?" sorulur; öneri = yukarı yuvarlanmış
+// oran, kalan boş deneme sayısıyla sınırlı. Evet → sonraki boş denemeler bu satıra bağlanır.
 function DenemeSection({
   task,
   busy,
@@ -566,10 +574,11 @@ function DenemeSection({
   error: string | null;
   onSaveDeneme: (rows: DenemeResultRow[]) => void;
 }) {
+  const examItems = task.items.filter((it) => it.exam_kind);
   const [rows, setRows] = React.useState<DRow[]>(() =>
-    task.items
-      .filter((it) => it.exam_kind)
-      .map((it) => ({
+    examItems.map((it) => {
+      const k = Math.max(1, it.combined_count ?? 1);
+      return {
         itemId: it.id,
         label: it.section_label || it.book_name || "Deneme",
         section: it.exam_section,
@@ -580,12 +589,19 @@ function DenemeSection({
         qn: it.question_count != null ? String(it.question_count) : "",
         dur: it.duration_minutes != null ? String(it.duration_minutes) : "",
         origQn: it.question_count,
-      })),
+        perQ: it.question_count != null ? Math.max(1, Math.round(it.question_count / k)) : null,
+        combine: examItems.filter((o) => o.combined_into_id === it.id).map((o) => o.id),
+        noCombine: false,
+      };
+    }),
   );
   const set = (id: number, p: Partial<DRow>) =>
     setRows((rs) => rs.map((r) => (r.itemId === id ? { ...r, ...p } : r)));
+  const coveredBy: Record<number, number> = {};
+  for (const r of rows) for (const o of r.combine) coveredBy[o] = r.itemId;
+  const numberOf = (id: number) => rows.findIndex((r) => r.itemId === id) + 1;
 
-  const calc = rows.map((r) => {
+  const calc = rows.map((r, idx) => {
     const c = parseNum(r.correct);
     const w = parseNum(r.wrong);
     const qn = parseNum(r.qn);
@@ -595,15 +611,44 @@ function DenemeSection({
     const total = (c ?? 0) + (w ?? 0) + (typedB ?? autoB ?? 0);
     const over = has && qn != null && total > qn;
     const net = has ? (c ?? 0) - (w ?? 0) / (r.section === "lgs" ? 3 : 4) : null;
-    return { r, c, w, qn, typedB, autoB, has, over, net };
+    const entered = (c ?? 0) + (w ?? 0) + (typedB ?? 0);
+    const signal = Math.max(has ? entered : 0, qn != null && r.perQ != null && qn > r.perQ ? qn : 0);
+    const free = [...rows.slice(idx + 1), ...rows.slice(0, idx)].filter(
+      (o) => coveredBy[o.itemId] == null && o.combine.length === 0
+        && parseNum(o.correct) == null && parseNum(o.wrong) == null,
+    );
+    const suggestK = r.perQ != null && signal > r.perQ && r.combine.length === 0 && !r.noCombine && free.length > 0
+      ? Math.min(Math.ceil(signal / r.perQ), free.length + 1)
+      : 0;
+    return { r, c, w, qn, typedB, autoB, has, over, net, signal, free, suggestK };
   });
-  const invalid = calc.some((x) => x.r.solved && x.over);
+  const invalid = calc.some((x) => x.r.solved && coveredBy[x.r.itemId] == null && x.over);
+
+  function combine(id: number, k: number) {
+    const x = calc.find((y) => y.r.itemId === id)!;
+    const ids = x.free.slice(0, k - 1).map((o) => o.itemId);
+    setRows((rs) => rs.map((r) => (r.itemId === id
+      ? { ...r, combine: ids, qn: r.perQ != null ? String(r.perQ * k) : r.qn }
+      : ids.includes(r.itemId) ? { ...r, solved: true } : r)));
+  }
+
+  function split(id: number) {
+    setRows((rs) => rs.map((r) => (r.itemId === id
+      ? { ...r, combine: [], noCombine: true, qn: r.perQ != null ? String(r.perQ) : r.qn }
+      : r)));
+  }
 
   function build(withResults: boolean): DenemeResultRow[] {
-    return calc.map((x) => {
-      if (!x.r.solved) return { item_id: x.r.itemId, solved: false };
+    const out: DenemeResultRow[] = [];
+    for (const x of calc) {
+      if (coveredBy[x.r.itemId] != null) continue;
+      if (!x.r.solved) {
+        out.push({ item_id: x.r.itemId, solved: false });
+        continue;
+      }
       const o: DenemeResultRow = { item_id: x.r.itemId, solved: true };
-      if (x.qn != null && x.qn !== x.r.origQn) o.question_count = x.qn;
+      const grouped = withResults && x.has && x.r.combine.length > 0;
+      if (x.qn != null && (x.qn !== x.r.origQn || grouped)) o.question_count = x.qn;
       const dur = parseNum(x.r.dur);
       if (dur != null && dur > 0) o.duration_minutes = dur;
       if (withResults && x.has) {
@@ -611,8 +656,16 @@ function DenemeSection({
         o.wrong = x.w ?? 0;
         if (x.typedB != null) o.blank = x.typedB;
       }
-      return o;
-    });
+      if (grouped) o.combine_with = x.r.combine;
+      out.push(o);
+    }
+    for (const x of calc) {
+      const host = coveredBy[x.r.itemId];
+      if (host == null) continue;
+      const hx = calc.find((y) => y.r.itemId === host)!;
+      if (!(withResults && hx.has && hx.r.solved)) out.push({ item_id: x.r.itemId, solved: hx.r.solved });
+    }
+    return out;
   }
 
   return (
@@ -621,49 +674,105 @@ function DenemeSection({
         Her denemenin doğru ve yanlışını gir; boş kendiliğinden hesaplanır. Kaynağındaki soru sayısı
         farklıysa “Soru”yu düzelt.
       </Text>
-      {calc.map(({ r, autoB, has, over, net }, i) => (
-        <View key={r.itemId} className={`gap-3 rounded-2xl border p-3 ${r.solved ? "border-slate-200" : "border-dashed border-slate-300 bg-slate-50"}`}>
-          <View className="flex-row items-center justify-between gap-2">
-            <Text className="flex-1 text-sm font-semibold text-slate-800">
-              {rows.length > 1 ? `${i + 1}. ` : ""}{r.label}
-            </Text>
-            <View className="flex-row rounded-full border border-slate-300 p-0.5">
-              {[true, false].map((v) => (
-                <Pressable
-                  key={String(v)}
-                  onPress={() => set(r.itemId, { solved: v })}
-                  className={`rounded-full px-3 py-1 ${r.solved === v ? "bg-brand-700" : ""}`}
-                >
-                  <Text className={`text-xs font-semibold ${r.solved === v ? "text-white" : "text-slate-500"}`}>
-                    {v ? "Çözdüm" : "Çözmedim"}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-          {r.solved ? (
-            <>
-              <View className="flex-row gap-2">
-                <NumField label="Doğru" value={r.correct} onChangeText={(v) => set(r.itemId, { correct: v })} />
-                <NumField label="Yanlış" value={r.wrong} onChangeText={(v) => set(r.itemId, { wrong: v })} />
-                <NumField label={autoB != null && r.blank === "" ? `Boş (${autoB})` : "Boş"} value={r.blank}
-                          onChangeText={(v) => set(r.itemId, { blank: v })} />
-              </View>
-              <View className="flex-row gap-2">
-                <NumField label="Soru" value={r.qn} onChangeText={(v) => set(r.itemId, { qn: v })} />
-                <NumField label="Süre (dk)" value={r.dur} onChangeText={(v) => set(r.itemId, { dur: v })} />
-              </View>
-              <Text className={`text-xs ${over ? "text-rose-600" : "text-slate-500"}`}>
-                {over
-                  ? "Doğru + yanlış + boş soru sayısından fazla — soru sayısını düzelt."
-                  : has && net != null
-                    ? `Net ${net.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`
-                    : "Sonucu şimdi girmezsen deneme çözüldü sayılır, sonuç bekler."}
+      {calc.map(({ r, autoB, has, over, net, signal, free, suggestK }, i) => {
+        const host = coveredBy[r.itemId];
+        if (host != null) {
+          return (
+            <View key={r.itemId} className="gap-1 rounded-2xl border border-dashed border-cyan-600 bg-cyan-50 p-3">
+              <Text className="text-sm font-semibold text-slate-800">
+                {rows.length > 1 ? `${i + 1}. ` : ""}{r.label}
               </Text>
-            </>
-          ) : null}
-        </View>
-      ))}
+              <Text className="text-xs font-medium text-cyan-900">{numberOf(host)}. satırla birlikte toplu girildi</Text>
+            </View>
+          );
+        }
+        const k = 1 + r.combine.length;
+        const nums = [i + 1, ...r.combine.map(numberOf)].sort((a, b) => a - b);
+        return (
+          <View key={r.itemId} className={`gap-3 rounded-2xl border p-3 ${r.solved ? "border-slate-200" : "border-dashed border-slate-300 bg-slate-50"}`}>
+            <View className="flex-row items-center justify-between gap-2">
+              <Text className="flex-1 text-sm font-semibold text-slate-800">
+                {rows.length > 1 ? `${i + 1}. ` : ""}{r.label}{k > 1 ? `  · Toplu ${k} deneme` : ""}
+              </Text>
+              <View className="flex-row rounded-full border border-slate-300 p-0.5">
+                {[true, false].map((v) => (
+                  <Pressable
+                    key={String(v)}
+                    onPress={() => set(r.itemId, { solved: v })}
+                    className={`rounded-full px-3 py-1 ${r.solved === v ? "bg-brand-700" : ""}`}
+                  >
+                    <Text className={`text-xs font-semibold ${r.solved === v ? "text-white" : "text-slate-500"}`}>
+                      {v ? "Çözdüm" : "Çözmedim"}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            {r.solved ? (
+              <>
+                <View className="flex-row gap-2">
+                  <NumField label="Doğru" value={r.correct} onChangeText={(v) => set(r.itemId, { correct: v })} />
+                  <NumField label="Yanlış" value={r.wrong} onChangeText={(v) => set(r.itemId, { wrong: v })} />
+                  <NumField label={autoB != null && r.blank === "" ? `Boş (${autoB})` : "Boş"} value={r.blank}
+                            onChangeText={(v) => set(r.itemId, { blank: v })} />
+                </View>
+                <View className="flex-row gap-2">
+                  <NumField label={k > 1 ? "Soru (toplam)" : "Soru"} value={r.qn} onChangeText={(v) => set(r.itemId, { qn: v })} />
+                  <NumField label="Süre (dk)" value={r.dur} onChangeText={(v) => set(r.itemId, { dur: v })} />
+                </View>
+                {suggestK > 1 ? (
+                  <View className="gap-2 rounded-xl border border-amber-400 bg-amber-50 p-3">
+                    <Text className="text-xs font-semibold text-amber-950">
+                      {signal} soru girdin; bu denemede {r.perQ} soru var. Birden çok denemenin toplamını mı yazdın?
+                    </Text>
+                    <View className="flex-row flex-wrap gap-2">
+                      {Array.from({ length: free.length }, (_, j) => j + 2).map((n) => (
+                        <Pressable
+                          key={n}
+                          onPress={() => combine(r.itemId, n)}
+                          className={`rounded-lg px-3 py-2 ${n === suggestK ? "bg-brand-700" : "border border-brand-700"}`}
+                        >
+                          <Text className={`text-xs font-semibold ${n === suggestK ? "text-white" : "text-brand-700"}`}>
+                            Evet, {n} deneme ({(r.perQ ?? 0) * n} soru)
+                          </Text>
+                        </Pressable>
+                      ))}
+                      <Pressable
+                        onPress={() => set(r.itemId, { noCombine: true, qn: String(signal) })}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-2"
+                      >
+                        <Text className="text-xs font-semibold text-slate-700">Hayır, bu denemede {signal} soru var</Text>
+                      </Pressable>
+                    </View>
+                    <Text className="text-xs text-amber-900">
+                      Denemeleri ayrı ayrı biliyorsan her birini kendi satırına yazman en doğrusu.
+                    </Text>
+                  </View>
+                ) : null}
+                {k > 1 ? (
+                  <View className="flex-row flex-wrap items-center gap-2">
+                    <Text className="text-xs text-cyan-900">
+                      {nums.map((n) => `${n}.`).join(", ")} denemenin toplamı · analizde deneme başına {k}’ye bölünür.
+                    </Text>
+                    <Pressable onPress={() => split(r.itemId)}>
+                      <Text className="text-xs font-semibold text-brand-700 underline">Ayrı gir</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+                <Text className={`text-xs ${over ? "text-rose-600" : "text-slate-500"}`}>
+                  {over
+                    ? suggestK > 1
+                      ? "Toplu girdiysen yukarıdan deneme sayısını seç; değilse “Soru”yu düzelt."
+                      : "Doğru + yanlış + boş soru sayısından fazla — soru sayısını düzelt."
+                    : has && net != null
+                      ? `Net ${net.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`
+                      : "Sonucu şimdi girmezsen deneme çözüldü sayılır, sonuç bekler."}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        );
+      })}
       {error ? <Text className="text-sm text-rose-600">{error}</Text> : null}
       <Pressable
         onPress={() => onSaveDeneme(build(true))}

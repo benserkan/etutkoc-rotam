@@ -50,7 +50,12 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
   );
 }
 
-function ResultSheet({ row, onClose }: { row: DenemePendingRow; onClose: () => void }) {
+function ResultSheet({ row, siblings, onClose }: {
+  row: DenemePendingRow;
+  /** aynı görevin sonucu eksik diğer denemeleri (toplu giriş için) */
+  siblings: DenemePendingRow[];
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const [correct, setCorrect] = React.useState("");
   const [wrong, setWrong] = React.useState("");
@@ -62,6 +67,15 @@ function ResultSheet({ row, onClose }: { row: DenemePendingRow; onClose: () => v
   const has = c != null || w != null;
   const blank = has && q != null ? Math.max(0, q - (c ?? 0) - (w ?? 0)) : null;
   const over = has && q != null && (c ?? 0) + (w ?? 0) > q;
+  // TOPLU GİRİŞ: doğru + yanlış bu denemenin soru sayısını aşıyorsa ve aynı görevde sonucu
+  // eksik başka deneme varsa "birden çok denemenin toplamı mı?" diye sorulur.
+  const perQ = row.question_count;
+  const [combine, setCombine] = React.useState<number[]>([]);
+  const [noCombine, setNoCombine] = React.useState(false);
+  const signal = (c ?? 0) + (w ?? 0);
+  const suggestK = perQ && has && signal > perQ && combine.length === 0 && !noCombine && siblings.length > 0
+    ? Math.min(Math.ceil(signal / perQ), siblings.length + 1)
+    : 0;
   const net = has ? (c ?? 0) - (w ?? 0) / (row.exam_section === "lgs" ? 3 : 4) : null;
   const save = useMutation({
     mutationFn: (rows: DenemeResultRow[]) => setDenemeResults(row.task_id, rows),
@@ -72,7 +86,8 @@ function ResultSheet({ row, onClose }: { row: DenemePendingRow; onClose: () => v
   });
   const submit = () => {
     const o: DenemeResultRow = { item_id: row.item_id, solved: true, correct: c ?? 0, wrong: w ?? 0 };
-    if (q != null && q !== row.question_count) o.question_count = q;
+    if (q != null && (q !== row.question_count || combine.length > 0)) o.question_count = q;
+    if (combine.length > 0) o.combine_with = combine;
     const d = parseNum(dur);
     if (d != null && d > 0) o.duration_minutes = d;
     save.mutate([o]);
@@ -92,9 +107,50 @@ function ResultSheet({ row, onClose }: { row: DenemePendingRow; onClose: () => v
           <Field label="Soru" value={qn} onChange={setQn} />
           <Field label="Süre (dk)" value={dur} onChange={setDur} />
         </View>
+        {suggestK > 1 ? (
+          <View className="gap-2 rounded-xl border border-amber-400 bg-amber-50 p-3">
+            <Text className="text-xs font-semibold text-amber-950">
+              {signal} soru girdin; bu denemede {perQ} soru var. Birden çok denemenin toplamını mı yazdın?
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {Array.from({ length: siblings.length }, (_, j) => j + 2).map((n) => (
+                <Pressable
+                  key={n}
+                  onPress={() => {
+                    setCombine(siblings.slice(0, n - 1).map((x) => x.item_id));
+                    setQn(String((perQ ?? 0) * n));
+                  }}
+                  className={`rounded-lg px-3 py-2 ${n === suggestK ? "bg-brand-700" : "border border-brand-700"}`}
+                >
+                  <Text className={`text-xs font-semibold ${n === suggestK ? "text-white" : "text-brand-700"}`}>
+                    Evet, {n} deneme ({(perQ ?? 0) * n} soru)
+                  </Text>
+                </Pressable>
+              ))}
+              <Pressable
+                onPress={() => { setNoCombine(true); setQn(String(signal)); }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2"
+              >
+                <Text className="text-xs font-semibold text-slate-700">Hayır, bu denemede {signal} soru var</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+        {combine.length > 0 ? (
+          <View className="flex-row flex-wrap items-center gap-2">
+            <Text className="text-xs text-cyan-900">
+              {combine.length + 1} denemenin toplamı olarak kaydedilecek.
+            </Text>
+            <Pressable onPress={() => { setCombine([]); setNoCombine(true); setQn(perQ != null ? String(perQ) : qn); }}>
+              <Text className="text-xs font-semibold text-brand-700 underline">Ayrı gir</Text>
+            </Pressable>
+          </View>
+        ) : null}
         <Text className={`text-xs ${over ? "text-rose-600" : "text-slate-500"}`}>
           {over
-            ? "Doğru + yanlış soru sayısından fazla — soru sayısını düzelt."
+            ? suggestK > 1
+              ? "Toplu girdiysen yukarıdan deneme sayısını seç; değilse “Soru”yu düzelt."
+              : "Doğru + yanlış soru sayısından fazla — soru sayısını düzelt."
             : has && net != null
               ? `Boş ${blank ?? "—"} · Net ${net.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`
               : "Doğru ve yanlış sayını yaz."}
@@ -144,7 +200,13 @@ export function DenemePendingCard() {
           <Text className="text-sm font-semibold text-brand-700">Sonucu gir</Text>
         </Pressable>
       ))}
-      {open ? <ResultSheet row={open} onClose={() => setOpen(null)} /> : null}
+      {open ? (
+        <ResultSheet
+          row={open}
+          siblings={data.rows.filter((x) => x.task_id === open.task_id && x.item_id !== open.item_id)}
+          onClose={() => setOpen(null)}
+        />
+      ) : null}
     </View>
   );
 }

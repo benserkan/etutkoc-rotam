@@ -4154,6 +4154,8 @@ def _build_teacher_task_item(
         duration_minutes=item.duration_minutes,
         net=(_ds_net(item) if item.exam_kind else None),
         result_pending=_ds_pending(item),
+        combined_into_id=item.combined_into_id,
+        combined_count=item.combined_count,
     )
 
 

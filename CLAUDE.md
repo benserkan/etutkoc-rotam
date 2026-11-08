@@ -6,6 +6,27 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## TOPLU DENEME SONUCU — birden çok denemenin toplamı tek satıra (2026-11-08, migration `z0b3g6h7g22c`)
+
+- Sorun: öğrenci "3 deneme × 6 soru" görevine toplamı tek satıra yazınca (soru 18) analiz 1 deneme sayıyordu,
+  diğer satırlar "sonuç bekliyor" + hatırlatma; deneme başına ortalama/kaçan net 3 kat şişiyordu.
+- Migration (additive): `task_book_items.combined_into_id` (FK self SET NULL) + `combined_count`.
+- `deneme_service.apply_results`: satırda `combine_with` → sonuç taşıyan kalemde `combined_count = k`, soru = toplam;
+  bağlı kalemler çözüldü (kitap sayacı), sonuçsuz, `combined_into_id`; `result_pending` + bekleyen sorgusu + hatırlatma
+  bağlıları saymaz; satırlar yeniden gönderilince bağ çözülür (soru deneme başına değere iner); sonuçsuz toplu /
+  zincir 422 `invalid_combine`. `exams_in_item`.
+- Köprü: aynı bölümden birden çok deneme "· 1. deneme"; toplu "· 1.–2. deneme (toplu)"; meta `exams`.
+- Analiz (dinamik formül): nokta `exams` ağırlığı · `count` = deneme adedi, `points_count`, `combined_points` · ortalama
+  net/kaçan net/ortalama soru deneme adedine bölünür · ortalama net % deneme ağırlıklı · haftalık ritim deneme adedi.
+  Normal aralık/istikrar/eğilim noktalardan (toplamdan denemeler arası fark çıkarılamaz).
+- Algılama (web pencere + mobil task-sheet + mobil sonucu-eksik kartı): girilen soru (D+Y[+B]) ya da yazılan "Soru"
+  deneme başına sayıyı aşarsa ve sonucu boş başka deneme varsa "Birden çok denemenin toplamını mı yazdın?" — öneri
+  k = ⌈girilen ÷ deneme başına⌉ (boş deneme sayısıyla sınırlı), "Evet, N deneme" çipleri + "Hayır, bu denemede X soru
+  var"; bağlı satır "N. satırla birlikte toplu girildi", "Ayrı gir" geri alır. Koç rozeti ve web sonucu-eksik kartı
+  görevin tüm denemelerini açar. Kartta "toplu sonuçta" / "2 deneme toplu".
+- Test YENİ `test_deneme_combined_results` 26/26 · canlı tarayıcı 9/9 · deneme_results 22 · bridge 35 · analysis 30 ·
+  tasks 42 · pool_deneme 32 · brans_levels 11 · weekly_progress 26 · exam_scope 21 · student_read 11 · teacher_read 12.
+
 ## BRANŞ DENEMESİ SINAV DÜZEYİ — görev verme + analiz TYT/AYT/sınıf ayrımı (2026-11-08, migration YOK)
 
 - Bulgu (prod, salt okuma): Maarif/Klasik okul dersi (Fizik, Kimya…) seed'de TYT/AYT sınav türü taşıyordu → 10.

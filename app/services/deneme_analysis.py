@@ -37,6 +37,7 @@ from app.services.deneme_service import (
     exam_section_for_subject,
     item_subject,
     level_of_section,
+    exams_in_item,
     result_pending,
 )
 
@@ -175,17 +176,26 @@ def _penalty(section: str | None) -> int:
 def _series_metrics(points: list[dict], section: str | None = None) -> dict:
     """points: kronolojik (eski → yeni)."""
     pcts = [p["net_pct"] for p in points if p["net_pct"] is not None]
+    # Toplu giriş: bir nokta k denemeyi kapsayabilir. Deneme başına ölçüler (ortalama net,
+    # kaçan net, deneme sayısı) gerçek deneme adedine bölünür; ortalama net % deneme
+    # ağırlıklıdır. Dağılım ölçüleri (normal aralık, istikrar, eğilim) noktalardan hesaplanır —
+    # toplamdan denemeler arası fark geri çıkarılamaz.
+    ex = [int(p.get("exams") or 1) for p in points]
+    n_ex = sum(ex)
+    wp = [(p["net_pct"], int(p.get("exams") or 1)) for p in points if p["net_pct"] is not None]
     c = sum(p["correct"] for p in points)
     w = sum(p["wrong"] for p in points)
     b = sum(p["blank"] for p in points)
     q = sum(p["questions"] for p in points if p["questions"])
     timed = [p for p in points if p["duration_minutes"] and p["questions"]]
     out: dict = {
-        "count": len(points),
+        "count": n_ex,
+        "points_count": len(points),
+        "combined_points": sum(1 for e in ex if e > 1),
         "correct": c, "wrong": w, "blank": b,
         "accuracy_pct": _pct(c, c + w),
         "blank_rate_pct": _pct(b, q),
-        "avg_net_pct": round(sum(pcts) / len(pcts), 1) if pcts else None,
+        "avg_net_pct": (round(sum(v * k for v, k in wp) / sum(k for _, k in wp), 1) if wp else None),
         "last_net_pct": pcts[-1] if pcts else None,
         "min_per_question": (round(sum(p["duration_minutes"] for p in timed)
                                    / sum(p["questions"] for p in timed), 2) if timed else None),
@@ -196,7 +206,7 @@ def _series_metrics(points: list[dict], section: str | None = None) -> dict:
     }
     # --- Ek açılar (2026-10-20, branş analizi yeniden tasarımı) ---
     pen = _penalty(section)
-    n = len(points)
+    n = n_ex
     with_pct = [p for p in points if p["net_pct"] is not None]
     if with_pct:
         best = max(with_pct, key=lambda p: p["net_pct"])
@@ -275,7 +285,7 @@ def _overview(branch: list[dict], today: date) -> dict:
         r = sorted(rows, key=key, reverse=reverse)[0]
         return {"key": r["key"], "label": r["label"], "value": key(r)}
 
-    trending = [r for r in branch if r["count"] >= 3]
+    trending = [r for r in branch if r.get("points_count", r["count"]) >= 3]
     steady = [r for r in branch if r["stdev_net_pct"] is not None]
     monday = today - timedelta(days=today.weekday())
     weeks = []
@@ -284,11 +294,11 @@ def _overview(branch: list[dict], today: date) -> dict:
         we = ws + timedelta(days=6)
         hits = [(r["key"], p) for r in branch for p in r["points"]
                 if ws <= date.fromisoformat(p["date"]) <= we]
-        pcts = [p["net_pct"] for _, p in hits if p["net_pct"] is not None]
+        wpc = [(p["net_pct"], int(p.get("exams") or 1)) for _, p in hits if p["net_pct"] is not None]
         weeks.append({
-            "week_start": ws.isoformat(), "count": len(hits),
+            "week_start": ws.isoformat(), "count": sum(int(p.get("exams") or 1) for _, p in hits),
             "subjects": len({k for k, _ in hits}),
-            "avg_net_pct": round(sum(pcts) / len(pcts), 1) if pcts else None,
+            "avg_net_pct": (round(sum(v * k for v, k in wpc) / sum(k for _, k in wpc), 1) if wpc else None),
         })
     return {
         "exams": sum(r["count"] for r in branch),
@@ -339,6 +349,8 @@ def build_deneme_analysis(db: Session, student: User, *, today: date | None = No
             "net_pct": _pct(r.net, qn) if qn else None,
             "correct": r.total_correct, "wrong": r.total_wrong, "blank": r.total_blank,
             "duration_minutes": it.duration_minutes if it is not None else None,
+            # Toplu girişte bu nokta birden çok denemeyi kapsar (ağırlık).
+            "exams": exams_in_item(it) if it is not None else 1,
         })
 
     # Sonucu bekleyen (çözüldü, D/Y yok) — ders bazında

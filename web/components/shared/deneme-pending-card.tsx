@@ -138,18 +138,20 @@ export function DenemePendingCard({ audience }: { audience: Audience }) {
         audience={isCoach ? "coach" : "student"}
         saving={save.isPending}
         rows={
+          // Aynı görevin sonucu eksik tüm denemeleri birlikte açılır — öğrenci toplamı
+          // tek satıra yazarsa pencere diğer satırlara bağlamayı önerebilsin (toplu giriş).
           openRow
-            ? [{
-                id: openRow.item_id,
-                label: openRow.label,
-                examSection: openRow.exam_section,
-                questionCount: openRow.question_count,
+            ? data.rows.filter((x) => x.task_id === openRow.task_id).map((x) => ({
+                id: x.item_id,
+                label: x.label,
+                examSection: x.exam_section,
+                questionCount: x.question_count,
                 completed: 1,
                 correct: null,
                 wrong: null,
                 blank: null,
-                durationMinutes: openRow.duration_minutes,
-              }]
+                durationMinutes: x.duration_minutes,
+              }))
             : []
         }
         onSubmit={(rows) => openRow && save.mutate({ row: openRow, rows })}

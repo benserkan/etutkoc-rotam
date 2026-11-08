@@ -676,7 +676,7 @@ function ReportCard({
                       <div className="min-w-0">
                         <div className="font-bold">{nameOf(s)}</div>
                         <div className="text-[11px] text-muted-foreground">
-                          {s.count} deneme · {s.avg_questions != null ? `${n1(s.avg_questions)} soru` : "soru —"}
+                          {s.count} deneme{s.combined_points ? ` (${s.combined_points} toplu giriş)` : ""} · {s.avg_questions != null ? `${n1(s.avg_questions)} soru` : "soru —"}
                           {s.pending > 0 ? (
                             <span className="ml-1 font-semibold text-amber-800">· {s.pending} sonuç bekliyor</span>
                           ) : null}
@@ -1025,7 +1025,7 @@ function SubjectDeepDive({
             <span className="size-3 rounded-full" style={{ background: color }} aria-hidden />
             {nameOf(s)}
             <span className="text-sm font-semibold text-muted-foreground">
-              · {s.count} deneme · {shortDate(s.first_date)} – {shortDate(s.last_date)}
+              · {s.count} deneme{s.combined_points ? ` (${s.combined_points} toplu giriş — deneme başına ortalamaya bölündü)` : ""} · {shortDate(s.first_date)} – {shortDate(s.last_date)}
             </span>
           </h3>
         </div>

@@ -208,6 +208,13 @@ class TaskBookItem(Base):
     # hatırlatmanın gittiği an (bir kez; migration r2t5y8z9y44u).
     duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     result_reminded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # TOPLU SONUÇ (2026-11-08 — migration z0b3g6h7g22c): öğrenci birden çok denemenin toplamını
+    # tek satıra girdiyse sonucu taşıyan kalemde combined_count = kaç deneme (soru sayısı =
+    # toplam); diğer denemeler combined_into_id ile ona bağlanır (çözüldü, sonuç beklemez).
+    combined_into_id: Mapped[int | None] = mapped_column(
+        ForeignKey("task_book_items.id", ondelete="SET NULL"), nullable=True
+    )
+    combined_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     task: Mapped["Task"] = relationship("Task", back_populates="book_items")
     book: Mapped["Book | None"] = relationship("Book")

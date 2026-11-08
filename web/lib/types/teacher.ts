@@ -432,6 +432,8 @@ export interface TeacherTaskItem {
   duration_minutes?: number | null;
   net?: number | null;
   result_pending?: boolean;
+  combined_into_id?: number | null;
+  combined_count?: number | null;
 }
 
 export interface TaskItemResultBody {
