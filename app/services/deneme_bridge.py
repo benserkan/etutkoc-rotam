@@ -142,7 +142,7 @@ def _find(db: Session, item_id: int):
 def sync_item(db: Session, item) -> None:
     """Kalemin sonucuna göre bağlı deneme kaydını aç / güncelle / sil."""
     from app.models import ExamResult
-    from app.models.exam_result import compute_net
+    from app.models.exam_result import compute_net, subject_net
 
     if item.id is None:
         return
@@ -160,8 +160,10 @@ def sync_item(db: Session, item) -> None:
     c, w = int(item.correct_count or 0), int(item.wrong_count or 0)
     qn = item.question_count
     b = item.blank_count if item.blank_count is not None else (max(0, qn - c - w) if qn else 0)
-    net = compute_net(c, w, section)
     scope, subj_name = _scope_and_subject(item, section, qn)
+    # Branş denemesi tek dersin netidir — ders neti negatif OLABİLİR (1D 10Y = −1,5; pencere ve
+    # kart da böyle gösterir). "Taban 0" kuralı yalnız genel deneme toplamı için.
+    net = subject_net(c, w, section) if scope == "brans" else compute_net(c, w, section)
     meta = {"source": SOURCE_TASK, "task_id": task.id}
     if item.duration_minutes:
         meta["duration_minutes"] = int(item.duration_minutes)

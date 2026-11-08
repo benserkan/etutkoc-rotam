@@ -59,7 +59,7 @@ export function ProgramExamsCard({
           {groups.map((g) => (
             <View key={g.label} className="gap-1.5">
               <Text className="text-[11px] font-semibold text-slate-500">
-                {g.label} · {g.rows.length} deneme
+                {g.label} · {countExams(g.rows)} deneme
               </Text>
               {g.rows.map((r) => (
                 <View key={r.id} className="rounded-xl bg-slate-50 px-3 py-2">
@@ -122,4 +122,9 @@ export function ExamKindToggle({
       })}
     </View>
   );
+}
+
+/** Deneme adedi: toplu girilen kayıt birden çok deneme sayar (kayıt sayısı değil). */
+export function countExams(rows: { exam_count?: number }[]): number {
+  return rows.reduce((n, r) => n + Math.max(1, r.exam_count ?? 1), 0);
 }

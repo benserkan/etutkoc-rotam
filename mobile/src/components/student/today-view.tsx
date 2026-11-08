@@ -216,7 +216,9 @@ export function TodayView({
                         <Ionicons name="trophy" size={10} color="#fff" />
                         <Text className="text-[10px] font-bold uppercase tracking-wide text-white">
                           {dk === "genel" ? "Genel deneme" : "Branş denemesi"}
-                          {t.items[0]?.question_count ? ` · ${t.items[0].question_count} soru` : ""}
+                          {t.items[0]?.question_count
+                            ? ` · ${Math.max(1, Math.round(t.items[0].question_count / Math.max(1, t.items[0].combined_count ?? 1)))} soru`
+                            : ""}
                         </Text>
                       </View>
                     ) : subj ? (

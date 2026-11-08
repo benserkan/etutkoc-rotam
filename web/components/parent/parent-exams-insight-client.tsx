@@ -29,7 +29,8 @@ import { getParentExams, parentP2Keys } from "@/lib/api/parent";
 import { fmtNet, fmtTRDate } from "@/lib/exam-format";
 import type { ExamResultRow } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
-import { ExamKindSwitch, ProgramExamsSection } from "@/components/shared/program-exams-section";
+import {
+  countExams, ExamKindSwitch, ProgramExamsSection } from "@/components/shared/program-exams-section";
 import { examSeriesOptions, rowSeries } from "@/lib/exam-format";
 
 const SECTION_TONE: Record<string, string> = {
@@ -85,7 +86,7 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
         <DemoHint contextKey="ai-insight" role="parent" className="mt-2" />
       </div>
 
-      <ExamKindSwitch value={view} onChange={setView} karneCount={rows.length} programCount={programRows.length} />
+      <ExamKindSwitch value={view} onChange={setView} karneCount={rows.length} programCount={countExams(programRows)} />
 
       {view === "program" ? (
         programRows.length === 0 ? (

@@ -12,7 +12,8 @@ import { ScoreEstimatePanel } from "@/components/shared/exam-faz3";
 import { ExamProgressReport } from "@/components/shared/exam-progress-report";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 import { DenemePendingCard } from "@/components/shared/deneme-pending-card";
-import { ExamKindSwitch, ProgramExamsSection } from "@/components/shared/program-exams-section";
+import {
+  countExams, ExamKindSwitch, ProgramExamsSection } from "@/components/shared/program-exams-section";
 import {
   previousExam,
 } from "@/components/teacher/exams/exam-analytics";
@@ -122,7 +123,7 @@ export function StudentExamsClient({ initial }: { initial: StudentExamsResponse 
         </p>
       </div>
 
-      <ExamKindSwitch value={view} onChange={setView} karneCount={rows.length} programCount={programRows.length} />
+      <ExamKindSwitch value={view} onChange={setView} karneCount={rows.length} programCount={countExams(programRows)} />
 
       {view === "program" ? (
         <>

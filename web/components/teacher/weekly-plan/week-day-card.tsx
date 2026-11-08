@@ -81,6 +81,7 @@ import { DayGhostRows } from "./skeleton-ghosts";
 import type { GhostCell } from "@/lib/api/weekly-skeleton";
 import { InlineSuggestions } from "./inline-suggestions";
 import { TaskItemResultBadge } from "./task-item-result-badge";
+import { perDenemeQuestions } from "@/components/shared/deneme-result-dialog";
 
 const TR_MONTHS = [
   "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
@@ -1196,7 +1197,7 @@ function SortableTaskRow({
           ) : examItems.length > 0 ? (
             <span className="text-[11px] text-indigo-700 font-medium tabular-nums">
               {examItems.length} deneme
-              {examItems[0].question_count ? ` · ${examItems[0].question_count} soru` : ""}
+              {perDenemeQuestions(examItems[0]) ? ` · ${perDenemeQuestions(examItems[0])} soru` : ""}
             </span>
           ) : isDeneme && task.planned_count > 0 ? (
             <span className="text-[11px] text-indigo-700 font-medium tabular-nums">

@@ -59,7 +59,7 @@ export function ProgramExamsSection({
             <p className="font-semibold">
               Programdaki denemeler{" "}
               <span className="ml-1 rounded-full bg-indigo-700 px-2 py-0.5 text-[11px] font-semibold text-white tabular-nums">
-                {list.length}
+                {countExams(list)}
               </span>
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -77,7 +77,7 @@ export function ProgramExamsSection({
             {groups.map((g) => (
               <div key={g.label}>
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {g.label} · {g.rows.length} deneme
+                  {g.label} · {countExams(g.rows)} deneme
                 </p>
                 <ul className="divide-y divide-border rounded-md border border-border">
                   {g.rows.map((r) => (
@@ -153,4 +153,9 @@ export function ExamKindSwitch({
       ))}
     </div>
   );
+}
+
+/** Deneme adedi: toplu girilen kayıt birden çok deneme sayar (kayıt sayısı değil). */
+export function countExams(rows: { exam_count?: number }[]): number {
+  return rows.reduce((n, r) => n + Math.max(1, r.exam_count ?? 1), 0);
 }

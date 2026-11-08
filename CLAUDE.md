@@ -6,6 +6,26 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## BRANŞ DENEMESİ CANLI SİMÜLASYON + 6 DÜZELTME + SİLME OLAYI (2026-11-08, migration YOK)
+
+- Emir #113'e tarayıcıdan (koç sahte oturumu → haftalık program deneme formu) 15 kitapsız "SİM" görev / 31 deneme;
+  Emir sahte oturumundan 10 senaryo (toplu 2/3, çözmedim, sonuç bekliyor, "Hayır X soru", süre, negatif net, aşım).
+  Analiz değerleri ham veriyle birebir doğrulandı (ör. TYT Biyoloji 8 deneme · 35÷8 = 4,38 · %72,9 ağırlıklı).
+- Düzeltmeler: (1) `Task.book_items` `order_by=TaskBookItem.id` — Postgres kalemleri rastgele döndürüyordu, pencerede
+  "1." satır "Deneme 3/3" çıkıyor, öğrencinin 1. denemesi 3. diye kaydediliyordu · (2) branş kaydı neti `subject_net`
+  (negatif olabilir; genel toplam taban 0 kalır) + `scripts/fix_brans_negative_net.py` (kuru varsayılan) · (3) kartlarda
+  deneme başına soru `perDenemeQuestions` (toplu kalemde kayıtlı soru = toplam; "3 deneme × 18 soru" düzeldi; web öğrenci
+  kartı + koç gün kartı + mobil Bugün) · (4) `ExamResultRow.exam_count` (analysis_meta.exams) → öğrenci/veli/mobil
+  "Branş denemeleri" sayısı ve seri başlığı deneme adedi (`countExams`) · (6) `trDative` ("3'e", "6'ya") · (7) girilen
+  < deneme başına × 1,5 ise "Hayır, bu denemede X soru var" öne çıkar. (5) birleşik grup ızgarada "DİĞER" — konuşulacak.
+- **SİLME OLAYI (ders):** temizlikte sayfa JS'iyle "Sil" düğmelerini "SİM yazan üst öğe" seçicisiyle tıkladım; seçici gün
+  kartının tamamını eşledi → 10 gerçek görev + 2 deneme kaydı silindi, `window.confirm` "evet"e bağlı olduğundan
+  "çözülenleri geri al" da onaylandı (4 kitap sayacı düştü). Yedekten (`pre_combined_20261108_0815.dump` → geçici DB)
+  aynı id'lerle tek işlemde geri yüklendi; görev/kalem/deneme/sayaç md5 karşılaştırması yedekle birebir.
+  **KURAL: canlıda toplu silme sayfa üzerinden yapılmaz; silinecek kayıtlar id listesiyle hedeflenir, seçici satır
+  düzeyine daraltılır ve önce kuru çalışmayla sayılır. Onay penceresi otomatik "evet"e bağlanmaz.**
+- Test `test_deneme_combined_results` 30/30 (9a-d yeni) · deneme suite'leri + teacher_exams 23 · run_gorev_checks 83/83.
+
 ## TOPLU DENEME SONUCU — birden çok denemenin toplamı tek satıra (2026-11-08, migration `z0b3g6h7g22c`)
 
 - Sorun: öğrenci "3 deneme × 6 soru" görevine toplamı tek satıra yazınca (soru 18) analiz 1 deneme sayıyordu,

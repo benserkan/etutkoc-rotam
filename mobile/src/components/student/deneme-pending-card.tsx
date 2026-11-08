@@ -120,18 +120,18 @@ function ResultSheet({ row, siblings, onClose }: {
                     setCombine(siblings.slice(0, n - 1).map((x) => x.item_id));
                     setQn(String((perQ ?? 0) * n));
                   }}
-                  className={`rounded-lg px-3 py-2 ${n === suggestK ? "bg-brand-700" : "border border-brand-700"}`}
+                  className={`rounded-lg px-3 py-2 ${n === suggestK && signal >= (perQ ?? 0) * 1.5 ? "bg-brand-700" : "border border-brand-700"}`}
                 >
-                  <Text className={`text-xs font-semibold ${n === suggestK ? "text-white" : "text-brand-700"}`}>
+                  <Text className={`text-xs font-semibold ${n === suggestK && signal >= (perQ ?? 0) * 1.5 ? "text-white" : "text-brand-700"}`}>
                     Evet, {n} deneme ({(perQ ?? 0) * n} soru)
                   </Text>
                 </Pressable>
               ))}
               <Pressable
                 onPress={() => { setNoCombine(true); setQn(String(signal)); }}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2"
+                className={`rounded-lg px-3 py-2 ${signal < (perQ ?? 0) * 1.5 ? "bg-brand-700" : "border border-slate-300 bg-white"}`}
               >
-                <Text className="text-xs font-semibold text-slate-700">Hayır, bu denemede {signal} soru var</Text>
+                <Text className={`text-xs font-semibold ${signal < (perQ ?? 0) * 1.5 ? "text-white" : "text-slate-700"}`}>Hayır, bu denemede {signal} soru var</Text>
               </Pressable>
             </View>
           </View>

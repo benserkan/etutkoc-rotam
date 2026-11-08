@@ -39,6 +39,7 @@ import {
 import {
   DenemeResultDialog,
   denemeSummary,
+  perDenemeQuestions,
 } from "@/components/shared/deneme-result-dialog";
 import {
   CompleteSheet,
@@ -126,10 +127,10 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
           <span className="text-[11px] font-bold uppercase tracking-wider">
             {denemeKind === "genel" ? "Genel deneme" : "Branş denemesi"}
           </span>
-          {examItems[0]?.question_count ? (
+          {examItems[0] && perDenemeQuestions(examItems[0]) ? (
             <span className="text-[11px] text-indigo-100">
               · {examItems.length > 1 ? `${examItems.length} deneme × ` : ""}
-              {examItems[0].question_count} soru
+              {perDenemeQuestions(examItems[0])} soru
             </span>
           ) : null}
           <span className="ml-auto text-[11px] text-indigo-100">Sınav provası — süre tutarak çöz</span>
@@ -978,7 +979,7 @@ function DenemeTaskRows({
   const save = useSetDenemeResults(dateIso);
   const items = task.items.filter((it) => it.exam_kind);
   const pending = items.filter((it) => it.result_pending).length;
-  const q = items[0]?.question_count;
+  const q = items[0] ? perDenemeQuestions(items[0]) : null;
 
   function rowLabel(it: StudentTaskItem): string {
     return it.section_label || it.book_name || "Deneme";

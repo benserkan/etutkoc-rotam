@@ -730,18 +730,18 @@ function DenemeSection({
                         <Pressable
                           key={n}
                           onPress={() => combine(r.itemId, n)}
-                          className={`rounded-lg px-3 py-2 ${n === suggestK ? "bg-brand-700" : "border border-brand-700"}`}
+                          className={`rounded-lg px-3 py-2 ${n === suggestK && signal >= (r.perQ ?? 0) * 1.5 ? "bg-brand-700" : "border border-brand-700"}`}
                         >
-                          <Text className={`text-xs font-semibold ${n === suggestK ? "text-white" : "text-brand-700"}`}>
+                          <Text className={`text-xs font-semibold ${n === suggestK && signal >= (r.perQ ?? 0) * 1.5 ? "text-white" : "text-brand-700"}`}>
                             Evet, {n} deneme ({(r.perQ ?? 0) * n} soru)
                           </Text>
                         </Pressable>
                       ))}
                       <Pressable
                         onPress={() => set(r.itemId, { noCombine: true, qn: String(signal) })}
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-2"
+                        className={`rounded-lg px-3 py-2 ${signal < (r.perQ ?? 0) * 1.5 ? "bg-brand-700" : "border border-slate-300 bg-white"}`}
                       >
-                        <Text className="text-xs font-semibold text-slate-700">Hayır, bu denemede {signal} soru var</Text>
+                        <Text className={`text-xs font-semibold ${signal < (r.perQ ?? 0) * 1.5 ? "text-white" : "text-slate-700"}`}>Hayır, bu denemede {signal} soru var</Text>
                       </Pressable>
                     </View>
                     <Text className="text-xs text-amber-900">
@@ -752,7 +752,7 @@ function DenemeSection({
                 {k > 1 ? (
                   <View className="flex-row flex-wrap items-center gap-2">
                     <Text className="text-xs text-cyan-900">
-                      {nums.map((n) => `${n}.`).join(", ")} denemenin toplamı · analizde deneme başına {k}’ye bölünür.
+                      {nums.map((n) => `${n}.`).join(", ")} denemenin toplamı · analizde deneme başına {trDative(k)} bölünür.
                     </Text>
                     <Pressable onPress={() => split(r.itemId)}>
                       <Text className="text-xs font-semibold text-brand-700 underline">Ayrı gir</Text>
@@ -790,4 +790,12 @@ function DenemeSection({
       </Pressable>
     </View>
   );
+}
+
+/** Sayıya Türkçe yönelme eki: 2'ye, 3'e, 6'ya, 9'a, 10'a, 20'ye… */
+function trDative(n: number): string {
+  const ones: Record<number, string> = { 1: "e", 2: "ye", 3: "e", 4: "e", 5: "e", 6: "ya", 7: "ye", 8: "e", 9: "a" };
+  const tens: Record<number, string> = { 1: "a", 2: "ye", 3: "a", 4: "a", 5: "ye", 6: "a", 7: "e", 8: "e", 9: "a" };
+  const s = n % 10 !== 0 ? ones[n % 10] : n % 100 !== 0 ? tens[(n / 10) % 10] : "e";
+  return `${n}'${s}`;
 }

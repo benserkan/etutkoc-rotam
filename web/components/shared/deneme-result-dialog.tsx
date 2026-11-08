@@ -353,7 +353,7 @@ function Body({
                             onClick={() => combine(r.id, n)}
                             className={cn(
                               "rounded-md px-2.5 py-1 font-medium",
-                              n === suggestK
+                              n === suggestK && !(signal < (pq ?? 0) * 1.5)
                                 ? "bg-cyan-700 text-white hover:bg-cyan-800"
                                 : "border border-cyan-700/50 text-cyan-900 hover:bg-cyan-500/15",
                             )}
@@ -364,7 +364,14 @@ function Body({
                         <button
                           type="button"
                           onClick={() => set(r.id, { noCombine: true, qn: String(signal) })}
-                          className="rounded-md border border-input bg-background px-2.5 py-1 font-medium text-foreground hover:bg-muted"
+                          // Girilen sayı deneme başına sorunun 1,5 katından azsa (9 / 7) büyük olasılıkla
+                          // kaynağın soru sayısı farklıdır → "Hayır" öne çıkar.
+                          className={cn(
+                            "rounded-md px-2.5 py-1 font-medium",
+                            signal < (pq ?? 0) * 1.5
+                              ? "bg-cyan-700 text-white hover:bg-cyan-800"
+                              : "border border-input bg-background text-foreground hover:bg-muted",
+                          )}
                         >
                           Hayır, bu denemede {signal} soru var
                         </button>
@@ -377,7 +384,7 @@ function Body({
                   {k > 1 ? (
                     <p className="mt-1.5 text-xs text-cyan-900">
                       {nums.map((n) => `${n}.`).join(", ")} denemenin toplamı · analizde deneme başına
-                      {" "}{k}&apos;ye bölünür.{" "}
+                      {" "}{trDative(k)} bölünür.{" "}
                       <button type="button" onClick={() => split(r.id)} className="font-medium underline">
                         Ayrı gir
                       </button>
@@ -478,6 +485,12 @@ function NumField({
   );
 }
 
+/** Deneme başına soru: toplu sonucu taşıyan kalemde kayıtlı soru TOPLAMDIR (k denemenin). */
+export function perDenemeQuestions(it: { question_count?: number | null; combined_count?: number | null }): number | null {
+  if (it.question_count == null) return null;
+  return Math.max(1, Math.round(it.question_count / Math.max(1, it.combined_count ?? 1)));
+}
+
 /** Kartlarda tek satır özet: "24D 3Y 3B · net 23,25 · 35 dk" / "sonuç bekliyor" / "çözülmedi". */
 export function denemeSummary(r: {
   completed: number;
@@ -498,4 +511,12 @@ export function denemeSummary(r: {
   if (r.durationMinutes) parts.push(`${r.durationMinutes} dk`);
   if ((r.combinedCount ?? 1) > 1) parts.push(`${r.combinedCount} deneme toplu`);
   return { text: parts.join(" · "), tone: "done" };
+}
+
+/** Sayıya Türkçe yönelme eki: 2'ye, 3'e, 6'ya, 9'a, 10'a, 20'ye… */
+export function trDative(n: number): string {
+  const ones: Record<number, string> = { 1: "e", 2: "ye", 3: "e", 4: "e", 5: "e", 6: "ya", 7: "ye", 8: "e", 9: "a" };
+  const tens: Record<number, string> = { 1: "a", 2: "ye", 3: "a", 4: "a", 5: "ye", 6: "a", 7: "e", 8: "e", 9: "a" };
+  const s = n % 10 !== 0 ? ones[n % 10] : n % 100 !== 0 ? tens[(n / 10) % 10] : "e";
+  return `${n}'${s}`;
 }

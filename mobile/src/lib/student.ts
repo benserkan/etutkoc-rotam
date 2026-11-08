@@ -182,6 +182,7 @@ export interface ExamRow {
   scope?: "genel" | "brans";
   scope_subject?: string | null;
   series_key?: string;
+  exam_count?: number;
   series_label?: string;
 }
 export interface ExamSummary {

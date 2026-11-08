@@ -127,7 +127,11 @@ class Task(Base):
         "User", back_populates="tasks", foreign_keys=[student_id]
     )
     book_items: Mapped[list["TaskBookItem"]] = relationship(
-        "TaskBookItem", back_populates="task", cascade="all, delete-orphan"
+        "TaskBookItem", back_populates="task", cascade="all, delete-orphan",
+        # SABİT SIRA (2026-11-08 saha bulgusu): sırasız ilişkide Postgres kalemleri rastgele
+        # döndürüyordu → deneme penceresinde "1." satır "Deneme 3/3" çıkıyor, öğrencinin 1.
+        # denemesi 3. deneme diye kaydediliyordu. Kalemler eklenme sırasıyla gelir.
+        order_by="TaskBookItem.id",
     )
     work_block: Mapped["CoachWorkBlock | None"] = relationship(
         "CoachWorkBlock", back_populates="tasks", foreign_keys=[work_block_id]

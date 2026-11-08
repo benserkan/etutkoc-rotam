@@ -2513,6 +2513,8 @@ class ExamResultRow(BaseModel):
     scope_forced: bool = False              # koç elle işaretlediyse
     series_key: str = ""                    # "lgs" | "lgs~matematik"
     series_label: str = ""                  # "LGS (genel deneme)" | "LGS · Matematik branş"
+    # Toplu sonuç (2026-11-08): bu kayıt kaç denemeyi kapsıyor (görevde toplamı tek satıra girildiyse >1)
+    exam_count: int = 1
 
 
 class ExamListSummary(BaseModel):

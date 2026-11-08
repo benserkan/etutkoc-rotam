@@ -5,7 +5,8 @@ import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from "reac
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
-import { ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
+import {
+  countExams, ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
 import { ExamAddActions } from "@/components/exams/exam-add-actions";
 import { ExamImportFlow } from "@/components/exams/exam-import-flow";
 import { ProgressReportCard } from "@/components/exams/progress-report-card";
@@ -344,7 +345,7 @@ export function ExamsTabView({
 
   return (
     <View className="gap-4 px-4 py-4">
-        <ExamKindToggle value={view} onChange={setView} karneCount={data.rows.length} programCount={programRows.length} />
+        <ExamKindToggle value={view} onChange={setView} karneCount={data.rows.length} programCount={countExams(programRows)} />
         {view === "program" ? (
           programRows.length === 0 ? (
             <Text className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">

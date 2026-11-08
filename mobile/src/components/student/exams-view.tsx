@@ -6,7 +6,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
-import { ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
+import {
+  countExams, ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
 import { ExamAddActions } from "@/components/exams/exam-add-actions";
 import { ExamImportFlow } from "@/components/exams/exam-import-flow";
 import { ProgressReportCard } from "@/components/exams/progress-report-card";
@@ -205,7 +206,7 @@ export function ExamsView({
           refresh ? <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#0e7490" /> : undefined
         }
       >
-        <ExamKindToggle value={view} onChange={setView} karneCount={data.rows.length} programCount={programRows.length} />
+        <ExamKindToggle value={view} onChange={setView} karneCount={data.rows.length} programCount={countExams(programRows)} />
         {view === "program" ? (
           programRows.length === 0 ? (
             <Text className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">

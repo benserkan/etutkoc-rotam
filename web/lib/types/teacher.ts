@@ -2334,6 +2334,8 @@ export interface ExamResultRow {
   scope_forced?: boolean;
   /** "lgs" (genel) | "lgs~matematik" (branş) */
   series_key?: string;
+  /** Toplu sonuç: kayıt kaç denemeyi kapsıyor */
+  exam_count?: number;
   series_label?: string;
 }
 

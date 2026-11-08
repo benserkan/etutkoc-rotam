@@ -194,6 +194,25 @@ def main() -> int:
             check("7b bağ çözüldü, soru 6", a.combined_count is None and b.combined_into_id is None
                   and a.question_count == 6, f"{a.combined_count} {b.combined_into_id} {a.question_count}")
             check("7c 4 ayrı kayıt", n == 4, str(n))
+
+        # 9 — kalem sırası sabit (eklenme sırası) + negatif branş neti + liste deneme adedi
+        with SessionLocal() as db:
+            tk = db.get(Task, t["id"])
+            check("9a görev kalemleri id sırasıyla", [i.id for i in tk.book_items] == sorted(i.id for i in tk.book_items))
+        day = s.get(f"/api/v2/student/day?date={d1}").json()
+        its = [it["id"] for tk in day.get("tasks", []) if tk["id"] == t["id"] for it in tk["items"]]
+        check("9b öğrenci görevi kalemleri sıralı", its == [i1, i2, i3], str(its))
+        r = s.post(url, json={"rows": [{"item_id": i1, "solved": True, "correct": 1, "wrong": 10, "question_count": 13},
+                                       {"item_id": i2, "solved": False}, {"item_id": i3, "solved": False}]})
+        with SessionLocal() as db:
+            rec = db.query(ExamResult).filter(ExamResult.task_book_item_id == i1).first()
+            check("9c branş neti negatif kalır (1D 10Y = −1,5)", rec is not None and rec.net == -1.5, str(rec and rec.net))
+        r = s.post(url, json={"rows": [
+            {"item_id": i1, "solved": True, "correct": 10, "wrong": 0, "blank": 2, "question_count": 12, "combine_with": [i2]},
+            {"item_id": i3, "solved": False}]})
+        ex = s.get("/api/v2/student/exams").json()
+        mine = [x for x in ex.get("program_rows", []) if x["exam_date"] == d1]
+        check("9d listede toplu kayıt exam_count 2", any(x.get("exam_count") == 2 for x in mine), str([x.get("exam_count") for x in mine]))
     finally:
         with SessionLocal() as db:
             uids = [v for k, v in ids.items() if k in ("coach", "st")]

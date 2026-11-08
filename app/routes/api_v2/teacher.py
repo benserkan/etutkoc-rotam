@@ -1457,8 +1457,17 @@ def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamRes
         import_source=exam.import_source,
         score=_exam_score(exam),
         averages=_exam_averages(exam),
+        exam_count=_exam_count(exam),
         **_exam_scope_fields(exam),
     )
+
+
+def _exam_count(exam: ExamResult) -> int:
+    """Program denemesinde toplu sonuç kaç denemeyi kapsıyor (analysis_meta.exams)."""
+    try:
+        return max(1, int((json.loads(exam.analysis_meta or "{}") or {}).get("exams") or 1))
+    except (ValueError, TypeError, AttributeError):
+        return 1
 
 
 def _exam_scope_fields(exam: ExamResult) -> dict:

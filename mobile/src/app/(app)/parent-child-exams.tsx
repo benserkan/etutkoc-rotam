@@ -7,7 +7,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DemoHint } from "@/components/demos/demo-hint";
 import { ExamDetailSheet } from "@/components/exams/exam-detail-sheet";
-import { ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
+import {
+  countExams, ExamKindToggle, ProgramExamsCard } from "@/components/exams/program-exams-card";
 import { ProgressReportCard } from "@/components/exams/progress-report-card";
 import { ScoreEstimateCard } from "@/components/exams/score-estimate-card";
 import { TopicAnalysisCard } from "@/components/exams/topic-analysis-card";
@@ -86,7 +87,7 @@ export default function ParentChildExamsRoute() {
         refreshControl={<RefreshControl refreshing={examsQ.isRefetching} onRefresh={refresh} tintColor="#0e7490" />}
       >
         <DemoHint contextKey="ai-insight" role="parent" />
-        <ExamKindToggle value={view} onChange={setView} karneCount={rows.length} programCount={programRows.length} />
+        <ExamKindToggle value={view} onChange={setView} karneCount={rows.length} programCount={countExams(programRows)} />
         {view === "program" ? (
           programRows.length === 0 ? (
             <Text className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
