@@ -700,6 +700,9 @@ export interface TeacherStudentWeekResponse {
   anchor_is_manual?: boolean;
   week_draft_total?: number;
   maturity_value?: number;
+  /** Öneri isabeti (0..1): koçun verdiği bölüm ekrandaki önerilerde miydi — gece ölçümü */
+  rec_hit_rate?: number | null;
+  rec_hit_items?: number | null;
   maturity_label?: string;
   weeks_observed?: number;
   days_observed?: number;

@@ -42,6 +42,9 @@ interface Props {
   trackRequired: boolean;
   trackMissing: boolean;
   trackLabel: string | null;
+  /** Öneri isabeti (0..1, gece ölçümü) — koçun verdiği bölüm ekrandaki önerilerde miydi */
+  recHitRate?: number | null;
+  recHitItems?: number | null;
 }
 
 /**
@@ -60,6 +63,8 @@ export function InlineSuggestions({
   trackRequired,
   trackMissing,
   trackLabel,
+  recHitRate = null,
+  recHitItems = null,
 }: Props) {
   const acceptAll = useAcceptAllSuggestions(studentId);
   // Öneriler VARSAYILAN KAPALI (kullanıcı 2026-05-24) — gün kartı sadeleşsin.
@@ -118,6 +123,13 @@ export function InlineSuggestions({
             <Target className="size-3" aria-hidden />
             {maturityLabel || "—"} · %{matPct}
           </Pill>
+          {recHitRate != null ? (
+            <Pill tone="info">
+              <span title="Son haftalarda verdiğin bölümlerin kaçı önceden burada önerilmişti (gece ölçülür)">
+                İsabet %{Math.round(recHitRate * 100)}
+              </span>
+            </Pill>
+          ) : null}
           {activePhase && activePhase.kind !== "regular" ? (
             <Pill tone={phaseTone(activePhase.kind)}>
               {activePhase.kind_badge} · {activePhase.capacity_multiplier.toFixed(1)}x
@@ -194,8 +206,11 @@ export function InlineSuggestions({
             />
           ))}
           <p className="text-[11px] text-muted-foreground/80 italic pt-1">
-            Güven yüzdesi yüksek olanlar net çerçeveli, zayıf olanlar soluk
-            görünür. Daha çok plan biriktikçe öneriler keskinleşir.
+            {recHitRate != null && recHitItems
+              ? `Son haftalarda verdiğin ${recHitItems} bölümün %${Math.round(recHitRate * 100)}'i önceden burada önerilmişti. `
+              : ""}
+            Sıralama, senin bu öğrenciye görev verme alışkanlığından ve öğrencinin
+            verisinden (yapılmayan görev, zorlandığı konu, deneme yanlışı) öğrenilir.
           </p>
         </div>
       )}
@@ -240,14 +255,6 @@ function SuggestionCard({
           {s.reasons.slice(0, 1).map((reason, i) => (
             <ReasonBadge key={i} reason={reason} />
           ))}
-          {s.reasons.length > 1 ? (
-            <span
-              className="text-[10px] text-muted-foreground/60"
-              title={s.reasons.join(" · ")}
-            >
-              +{s.reasons.length - 1}
-            </span>
-          ) : null}
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <input
@@ -304,6 +311,7 @@ function SuggestionCard({
           </button>
         </div>
       </div>
+      <WhyLine reasons={s.reasons} />
     </div>
   );
 }
@@ -358,8 +366,64 @@ function Pill({
   );
 }
 
+/**
+ * Gerekçe satırı: motorun sayılı gerekçeleri ("Yapılmayan görev: son 3 haftada 3 test
+ * verilip yapılmadı"). Kırpılmaz — satır kaydırır (dar kapta "…" yasak).
+ */
+function WhyLine({ reasons }: { reasons: string[] }) {
+  const parts = reasons.filter((r) => r.includes(": ")).slice(0, 3);
+  if (parts.length === 0) return null;
+  return (
+    <p className="px-3 pb-1.5 -mt-0.5 text-[11px] leading-snug text-muted-foreground break-words">
+      {parts.map((r, i) => {
+        const [label, ...rest] = r.split(": ");
+        return (
+          <span key={i}>
+            {i > 0 ? " · " : null}
+            <span className="font-medium text-foreground/80">{label}</span>
+            {": "}
+            {rest.join(": ")}
+          </span>
+        );
+      })}
+    </p>
+  );
+}
+
+const SIGNAL_BADGES: Record<string, { tone: Tone; Icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }> }> = {
+  "Son günlerin devamı": { tone: "success", Icon: CircleDotDashed },
+  "Sıradaki bölüm": { tone: "success", Icon: ListOrdered },
+  "Kitapta sıradaki bölüm": { tone: "info", Icon: ListOrdered },
+  "Yapılmayan görev": { tone: "amber", Icon: AlertTriangle },
+  "Aksayan ders": { tone: "amber", Icon: AlertTriangle },
+  "Geçen hafta zorlandığı konu": { tone: "rose", Icon: TrendingDown },
+  "Uzun süredir verilmeyen ders": { tone: "amber", Icon: CalendarClock },
+  "Kaynakta geride kalan ders": { tone: "amber", Icon: TrendingDown },
+  "Denemede yanlış": { tone: "rose", Icon: Target },
+  "Açık yanlış": { tone: "rose", Icon: Target },
+  "Tekrarda zorlanma": { tone: "rose", Icon: Brain },
+  "Koçun gün alışkanlığı": { tone: "info", Icon: CalendarClock },
+};
+
 function ReasonBadge({ reason }: { reason: string }) {
   const lower = reason.toLocaleLowerCase("tr-TR");
+  const sigLabel = reason.includes(": ") ? reason.split(": ")[0] : null;
+  const sig = sigLabel ? SIGNAL_BADGES[sigLabel] : undefined;
+  if (sigLabel && sig) {
+    const SigIcon = sig.Icon;
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md border",
+          TONE_CLASS[sig.tone],
+        )}
+        title={reason}
+      >
+        <SigIcon className="size-3" aria-hidden />
+        <span>{sigLabel}</span>
+      </span>
+    );
+  }
   let Icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }> =
     Sparkles;
   let tone: Tone = "neutral";

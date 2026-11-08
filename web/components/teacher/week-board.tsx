@@ -770,6 +770,8 @@ export function WeekBoard({
                   trackRequired={data.track_required ?? false}
                   trackMissing={data.track_missing ?? false}
                   trackLabel={data.track_label ?? null}
+                  recHitRate={data.rec_hit_rate ?? null}
+                  recHitItems={data.rec_hit_items ?? null}
                   onCarryoverDrop={
                     selectedDay.is_past
                       ? undefined

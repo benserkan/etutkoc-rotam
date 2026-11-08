@@ -6,6 +6,40 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## ÖĞRENEN ÖNERİ MOTORU — günlük "Öneriler" (2026-11-08, migration `a1c4h7i8h33d`)
+
+- **Bulgu (canlı, salt okuma):** son 30 günde 1.925 görev / iskeletten 4 kabul; geçmişi yeniden oynatan
+  ölçümde koçun gerçekte verdiği bölüm ESKİ formülün ekrandaki önerilerinde yalnız **%6** (ilk 3'te %3).
+  Kök neden: sabit ağırlık (müfredat 0.45) koçun asıl davranışını (son günlerin devamı + kitap sırası)
+  hiç görmüyordu; öğrenme yalnız retti.
+- **Ortak sinyal katmanı `app/services/rec_signals.py`** (zaman yolculuklu, saf): iplik devamı (son 7 gün)
+  · sıradaki bölüm (önceki BİTTİYSE) · kitapta sıradaki açık bölüm · yapılmayan görev (21 gün) · aksayan
+  ders · son 10 günde düşük doğruluk · ders N gündür yok · kaynakta geride kalan ders · deneme yanlışı ·
+  açık yanlış · tekrar kartı. Her sinyal SAYILI gerekçe üretir ("son 3 haftada 3 test verilip yapılmadı").
+  İki kesim: "verildi" sinyalleri hedef güne kadar, "yapıldı/doğru mu" sinyalleri yalnız sonucu belli
+  günler (`outcome_before`) — bugünün açık görevi "yapılmadı" sayılmaz.
+- **`suggestions.rank_candidates`** (saf sıralayıcı): skor = Σ ağırlık × özellik. `LEGACY_WEIGHTS` eski
+  formülün doğrusal karşılığı (ölçüm kıyası için), `DEFAULT_WEIGHTS` canlı veriden öğrenildi. Müfredatta
+  çok ileride konu yalnız iplik/kitap sırası/yapılmayan/zorlanma/yanlış sinyaliyle aday olur.
+  `suggest_for_date(cache=)` → haftalık görünüm 7 günde veriyi bir kez yükler (0,2 sn).
+- **Ölçüm `scripts/backtest_suggestions.py`** (`--fit` · `--diag` · `--coaches`): canlıda 12 hafta, 1.991
+  kalem → ekrandaki önerilerde **%6 → %49** (ilk 3: %3 → %37); öğrenilen ağırlık eğitilmeyen son %40
+  günde %8 → %50. Kalan kaçak: koçun müfredat sırasını atlayıp ileri konuya geçmesi (sinyalsiz).
+- **Koç başına öğrenme `app/services/rec_learning.py`** + tablo `coach_rec_weights` + gece işi
+  `rec_weights_train` (01:40 UTC): koçun öğrencilerinde son 12 haftayı yeniden oynatır, ilk %70 günde
+  ağırlık öğrenir, son %30'da ölçer; varsayılanı ≥%3 geçerse kullanılır (yoksa varsayılan). Öğrenme
+  sinyali = koçun her gün GERÇEKTE verdiği bölümler (düğmeden çok daha zengin). İlk ölçüm: hiçbir koçta
+  öğrenilen varsayılanı geçmedi (varsayılan zaten tüm koçlardan öğrenildi) → herkes varsayılanda;
+  isabet Cafer %68 · Serkan %54 · Enes Arda %40.
+- **Arayüz:** öneri satırının altında sayılı gerekçe satırı (kırpılmaz), sinyal rozeti, panel başlığında
+  koçun isabet oranı (`rec_hit_rate`/`rec_hit_items` hafta yanıtında).
+- Test YENİ `test_rec_signals.py` 16/16 · suggestions_curriculum 13/13 (3c yeni ölçülmüş sözleşme) ·
+  wrong_question_ai 24/24 (17 sayılı gerekçe) · weekly_plan 15 · teacher_read 12 · insights 12 ·
+  skeleton 27 · teacher_students 15. `test_api_v2_exam_wrong_bridge` 10. senaryo ÖNCEDEN de kırmızı
+  (değişiklik saklanınca da aynı) — ayrı iş.
+- **SIRADA:** reddederken tek dokunuşla "neden istemiyorum" (ret nedeni sinyal ağırlığına geri döner) ·
+  iskelet çiplerine yeni sinyal rozetleri · 2-3 hafta sonra `--coaches` ile yeniden ölçüm.
+
 ## BRANŞ DENEMESİ CANLI SİMÜLASYON + 6 DÜZELTME + SİLME OLAYI (2026-11-08, migration YOK)
 
 - Emir #113'e tarayıcıdan (koç sahte oturumu → haftalık program deneme formu) 15 kitapsız "SİM" görev / 31 deneme;

@@ -170,9 +170,15 @@ def main() -> int:
                   sec_ids[4] in by_sec3
                   and any("ileride" in r for r in by_sec3[sec_ids[4]].reasons),
                   f"reasons={by_sec3.get(sec_ids[4]) and by_sec3[sec_ids[4]].reasons}")
-            check("3c. frontier (Bölüm 2) desenli ileri konudan yine ÜSTTE",
-                  sugg3 and sugg3[0].section_id == sec_ids[1]
-                  and by_sec3[sec_ids[4]].score < sugg3[0].score,
+            # 2026-11-08: canlı ölçüm (backtest_suggestions) koçun EN güçlü davranışının
+            # son günlerde verdiği bölümü sürdürmek olduğunu gösterdi → son 7 günde
+            # verilmiş bölüm müfredat sırasının önüne geçer, gerekçesi açıkça yazar.
+            # Önceki bölümü BİTMEMİŞ bölüm "sıradaki bölüm" sayılmaz (Karma Testler).
+            check("3c. son hafta verilen bölüm (iplik devamı) üstte + gerekçesi yazılı; "
+                  "frontier ikinci; bitmemiş bölümün ardılı öne çıkmaz",
+                  sugg3 and sugg3[0].section_id == sec_ids[4]
+                  and any(r.startswith("Son günlerin devamı") for r in sugg3[0].reasons)
+                  and len(sugg3) > 1 and sugg3[1].section_id == sec_ids[1],
                   f"sıra={[(s.section_label, round(s.score, 2)) for s in sugg3]}")
 
             # --- 4) Konuya eşlenmemiş bölüm nötr — engellenmez ---

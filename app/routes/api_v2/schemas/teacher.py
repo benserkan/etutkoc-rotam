@@ -615,6 +615,9 @@ class TeacherStudentWeekResponse(BaseModel):
     anchor_is_manual: bool = False
     week_draft_total: int = 0
     maturity_value: float = 0.0
+    # Öneri isabeti (gece ölçümü): koçun verdiği bölümün ekrandaki önerilerde olma oranı
+    rec_hit_rate: float | None = None
+    rec_hit_items: int | None = None
     maturity_label: str = ""
     weeks_observed: int = 0
     days_observed: int = 0

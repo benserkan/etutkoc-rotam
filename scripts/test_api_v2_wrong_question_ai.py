@@ -330,9 +330,10 @@ def main() -> int:
             sugg = suggest_for_date(db, ids["student"], target, model=model)
             by_sec = {s.section_id: s for s in sugg}
             s_ok = by_sec.get(ids["sec"])
-            check("17. yanlış biriken konunun bölümü öneride 'Arşivde açık yanlışı var'",
+            # 2026-11-08: gerekçe sayılı metne geçti ("Açık yanlış: arşivde 1 açık yanlış")
+            check("17. yanlış biriken konunun bölümü öneride açık yanlış gerekçesiyle",
                   s_ok is not None
-                  and any("açık yanlışı var" in r for r in s_ok.reasons),
+                  and any(r.startswith("Açık yanlış:") and "arşivde" in r for r in s_ok.reasons),
                   f"reasons={s_ok.reasons if s_ok else None}")
             s_other = by_sec.get(ids["sec2"])
             check("18. yanlışı olan bölüm, olmayandan DAHA YÜKSEK skorlu",

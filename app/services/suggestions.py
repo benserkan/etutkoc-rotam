@@ -87,6 +87,7 @@ class Suggestion:
     score: float                # sıralama için
     reasons: list[str] = field(default_factory=list)
     curriculum_rank: int | None = None  # dersin açık konuları içinde 0=sıradaki; None=eşlenmemiş
+    features: dict[str, float] = field(default_factory=dict)  # özellik vektörü (öğrenme kaydı)
 
 
 @dataclass
@@ -119,7 +120,6 @@ def build_student_model(db: Session, student_id: int, today: date | None = None)
 
     # Tüm planlama tarihçesini kullan — "< today" filtresi kullanmıyoruz
     # çünkü öğretmenin bugün yarın için yaptığı plan da onun planlama davranışını yansıtır.
-    # (İsteyen çağıran exclude_keys ile target gününün mevcut kalemlerini dışarıda bırakabilir.)
     tasks = (
         db.query(Task)
         .options(
@@ -129,7 +129,17 @@ def build_student_model(db: Session, student_id: int, today: date | None = None)
         .filter(Task.student_id == student_id)
         .all()
     )
+    reject_weights, reject_counts = _load_reject_signal(db, student_id, today)
+    return model_from_tasks(student_id, tasks, reject_weights, reject_counts)
 
+
+def model_from_tasks(
+    student_id: int,
+    tasks: list[Task],
+    reject_weights: dict | None = None,
+    reject_counts: dict | None = None,
+) -> StudentModel:
+    """Görev listesinden öğrenme modeli (saf — backtest geçmişi keserek çağırır)."""
     pattern_counts: dict[tuple[int, int, int], int] = defaultdict(int)
     typical_counts: dict[tuple[int, int, int], list[int]] = defaultdict(list)
     items_per_day: dict[int, list[int]] = defaultdict(list)
@@ -176,9 +186,6 @@ def build_student_model(db: Session, student_id: int, today: date | None = None)
     typical_items_per_day = {dow: int(round(median(v))) if v else 0 for dow, v in items_per_day.items()}
     typical_subjects_per_day = {dow: int(round(median(v))) if v else 0 for dow, v in subjects_per_day.items()}
 
-    # Reject geribildirimleri — zaman bozunumu ile ağırlıkla
-    reject_weights, reject_counts = _load_reject_signal(db, student_id, today)
-
     return StudentModel(
         student_id=student_id,
         weeks_observed=weeks_observed,
@@ -188,8 +195,8 @@ def build_student_model(db: Session, student_id: int, today: date | None = None)
         typical_items_per_day=typical_items_per_day,
         typical_subjects_per_day=typical_subjects_per_day,
         last_completed=last_completed,
-        reject_weights=reject_weights,
-        reject_counts=reject_counts,
+        reject_weights=dict(reject_weights or {}),
+        reject_counts=dict(reject_counts or {}),
     )
 
 
@@ -541,286 +548,251 @@ def _curriculum_signal(universe: dict[int, _SectionCtx]) -> _CurriculumSignal:
     return _CurriculumSignal(rank_by_section, started_topic_sections)
 
 
-def suggest_for_date(
-    db: Session,
-    student_id: int,
-    target_date: date,
+# ---------------------------- Özellik ağırlıkları ----------------------------
+#
+# Her aday bölüm bir özellik vektörüyle (0..1) tanımlanır; skor = Σ ağırlık × özellik.
+# LEGACY_WEIGHTS 2026-11-08 öncesi formülün doğrusal karşılığıdır (müfredat 0.45 ·
+# desen 0.25 · zayıflık 0.30 [eskime + tekrar + açık yanlış + deneme]); ölçüm
+# betiği eski/yeni karşılaştırmasını bununla yapar. DEFAULT_WEIGHTS yeni sinyalleri
+# (iplik devamı, yapılmayan görev, geçen haftanın zorlandığı konu, geride kalan
+# ders) de katar. Koç başına öğrenilen ağırlıklar (Faz 2) bu sözlüğün üstüne yazılır.
+
+LEGACY_WEIGHTS: dict[str, float] = {
+    "curriculum": CURRICULUM_W,
+    "started": CURRICULUM_W * CURRICULUM_STARTED_BONUS,
+    "pattern": PATTERN_W,
+    "staleness": WEAKNESS_W,
+    "review": WEAKNESS_W * 0.50,
+    "open_wrong": WEAKNESS_W * 0.55,
+    "exam_weak": WEAKNESS_W * 0.45,
+}
+
+# 2026-11-08 canlı ölçümü (scripts/backtest_suggestions.py --fit): 12 hafta, 1.991
+# test kalemi; ilk %60 günde öğrenildi, son %40'ta ölçüldü → koçun gerçekte verdiği
+# bölüm ekrandaki önerilerde eski formülde %8, bu ağırlıklarla %50. Koçu en iyi
+# açıklayan sinyal iplik devamı + kitap sırası; resmi müfredat sırası neredeyse hiç.
+# Zayıflık sinyalleri küçük ağırlıkla kalır: sıralamayı bozmaz, gerekçe olarak görünür.
+DEFAULT_WEIGHTS: dict[str, float] = {
+    "thread": 8.0,
+    "thread_next": 7.5,
+    "book_next": 0.70,
+    "coverage_lag": 0.30,
+    "pattern": 0.20,
+    "struggle": 0.20,
+    "open_wrong": 0.16,
+    "exam_weak": 0.12,
+    "review": 0.12,
+    "neglect": 0.08,
+    "subject_gap": 0.05,
+    "subject_neglect": 0.03,
+    "curriculum": 0.05,
+    "started": 0.05,
+    "staleness": 0.01,
+}
+
+# Müfredatta çok ileride olsa da adayı tutan sinyaller (koç neden önerildiğini görür)
+_FAR_RANK_EXEMPT = ("thread", "thread_next", "book_next", "neglect", "struggle", "open_wrong", "review", "exam_weak")
+
+
+def _curriculum_reason(rank: int | None) -> str | None:
+    if rank == 0:
+        return "Müfredatta sıradaki konu"
+    if rank == 1:
+        return "Müfredatta yaklaşan konu"
+    if rank is not None and rank >= CURRICULUM_FAR_RANK:
+        return "Müfredatta ileride"
+    return None
+
+
+def _staleness(ctx: _SectionCtx, last: date | None, today: date) -> float:
+    """Eski 'zayıflık' bileşeninin ilerleme/eskime kısmı (0..1)."""
+    section = ctx.section
+    if not section.test_count:
+        return 0.0
+    progress_pct = (ctx.completed + ctx.reserved) / section.test_count
+    w = 0.0
+    if progress_pct < 0.5:
+        w += (0.5 - progress_pct) * 0.8
+    if last is not None:
+        gap = (today - last).days
+        if gap > 21:
+            w += 0.45
+        elif gap > 14:
+            w += 0.30
+        elif gap > 7:
+            w += 0.15
+    elif ctx.reserved == 0 and ctx.completed == 0:
+        w += 0.10
+    return min(1.0, w)
+
+
+def rank_candidates(
     *,
-    model: StudentModel | None = None,
-    exclude_keys: Iterable[tuple[int, int]] = (),
-    today: date | None = None,
+    universe: dict[int, _SectionCtx],
+    model: StudentModel,
+    signals,
+    target_date: date,
+    today: date,
+    weights: dict[str, float] | None = None,
+    exclude_set: set[tuple[int, int]] = frozenset(),
+    phase_capacity_mult: float = 1.0,
     max_suggestions: int | None = None,
+    select: bool = True,
 ) -> list[Suggestion]:
-    """Bir gün için öneri listesi üret.
+    """Saf sıralayıcı — canlı uç ve geçmişi yeniden oynatan ölçüm aynı kodu kullanır.
 
-    Phase-aware (Faz 6.4): Öğrencinin academic_year'ında target_date'i
-    kapsayan bir phase varsa, phase.capacity_multiplier ile günlük öneri
-    hacmi ölçeklenir. Yaz kampında 1.5x, kış tatili 1.4x, sınav hazırlık
-    1.3x. Olağan dönem 1.0x.
+    `signals` = rec_signals.SignalBundle (target_date'e göre hesaplanmış).
+    `select=False` → ders çeşitliliği seçimi yapılmadan tüm sıralı liste döner.
     """
-    if today is None:
-        today = date.today()
-    if model is None:
-        model = build_student_model(db, student_id, today=today)
+    from app.services import rec_signals
 
+    w = dict(DEFAULT_WEIGHTS if weights is None else weights)
     mat = maturity(model)
     dow = target_date.weekday()
-
-    # Öğrenci kaydı — phase tespit + track/sınav-bölümü filtresi için
-    from app.models import User as _UserModel
-    student = db.get(_UserModel, student_id)
-
-    # Phase tespit — student.academic_year.active_phase_on(target_date)
-    phase_capacity_mult = 1.0
-    try:
-        if student and student.academic_year:
-            active_phase = student.academic_year.active_phase_on(target_date)
-            if active_phase:
-                phase_capacity_mult = active_phase.capacity_multiplier
-    except Exception:
-        # Phase tespiti başarısız olursa varsayılan davranış (1.0x)
-        phase_capacity_mult = 1.0
-
-    # Öğrencinin atanmış TÜM kitap bölümleri (SectionProgress kaydı şart değil)
-    universe = _section_universe(db, student_id)
-    exclude_set = set(exclude_keys)
-
-    # Faz 7: Track + sınav-bölümü filtresi
-    # 11+/mezun için sadece TYT + öğrencinin AYT alanı; LGS için sadece LGS;
-    # 9-10 için filtre yok. Subject.exam_section None ise filtreden geçer
-    # (geriye uyum + kullanıcı-tanımlı sınav-bağımsız dersler).
-    if student is not None:
-        allowed_sections = _allowed_exam_sections(student)
-        if allowed_sections is not None:
-            universe = {
-                sid: ctx for sid, ctx in universe.items()
-                if ctx.book.subject.exam_section in allowed_sections
-            }
-
-    # Müfredat sırası sinyali (frontier rank) — filtrelenmiş evren üzerinde
     curriculum = _curriculum_signal(universe)
 
-    # 1) Pattern adayları — bu haftagünü
-    pattern_scores: dict[tuple[int, int], int] = defaultdict(int)
+    # bölüm → kitapta bir önceki bölüm (iplik "sıradaki" özelliği için)
+    by_book: dict[int, list[_SectionCtx]] = defaultdict(list)
+    for ctx in universe.values():
+        by_book[ctx.book.id].append(ctx)
+    prev_of: dict[int, int] = {}
+    book_next: dict[int, float] = {}   # bölüm → kitabın ilk açık bölümü mü (1.0 süren / 0.5 başlanmamış kitap)
+    for lst in by_book.values():
+        lst.sort(key=lambda c: (c.section.order or 0, c.section.id))
+        for i in range(1, len(lst)):
+            prev_of[lst[i].section.id] = lst[i - 1].section.id
+        started_book = any(c.completed > 0 for c in lst)
+        first_open = next((c for c in lst if c.section.test_count and c.remaining > 0), None)
+        if first_open is not None:
+            book_next[first_open.section.id] = 1.0 if started_book else 0.5
+
+    coverage = rec_signals.subject_coverage_lag(
+        (c.book.subject_id, int(c.section.test_count or 0), c.completed + c.reserved)
+        for c in universe.values()
+    )
+
+    pattern_freq: dict[tuple[int, int], int] = defaultdict(int)
     for (d, book_id, section_id), freq in model.pattern_counts.items():
-        if d != dow:
-            continue
-        pattern_scores[(book_id, section_id)] = max(
-            pattern_scores[(book_id, section_id)], freq
-        )
-
-    # 2) Zayıflık adayları — dersten/bölümden uzaklaşma, geride kalma
-    weakness_scores: dict[tuple[int, int], float] = {}
-    # Review tekrar kartı sinyali — bu öğrencinin "zorlandığı" konu id'leri
-    # (Stage 12 ReviewCard verisi → AI önerisine boost). Topic→Section
-    # eşlemesi BookSection.topic_id üzerinden yapılır.
-    try:
-        from app.services.review_scheduler import struggling_topic_ids_map
-        review_struggle: dict[int, float] = struggling_topic_ids_map(
-            db, student_id=student_id, min_score=10.0
-        )
-    except Exception:
-        review_struggle = {}
-    # Yanlış Soru Arşivi sinyali (YSA Faz 3): öğrencinin AÇIK yanlışı biriken
-    # konular → o konunun bölümleri öneride öne çıkar (3+ açık yanlış = tam
-    # sinyal). Kapanan yanlışlar sayılmaz — kapanış zaten öğrenmenin kanıtı.
-    try:
-        from app.services.wrong_question_service import open_wrong_topic_map
-        wrong_struggle: dict[int, float] = open_wrong_topic_map(
-            db, student_id=student_id
-        )
-    except Exception:
-        wrong_struggle = {}
-    # Deneme köprüsü (Faz 3): son 90 günün denemelerinde YANLIŞ çözülen konular
-    # → zayıflık sinyali (2 yanlış = 0.5, 4+ = tam; boş sayılmaz).
-    try:
-        from app.services.exam_topic_analysis import exam_weak_topic_map
-        exam_struggle: dict[int, float] = exam_weak_topic_map(
-            db, student_id=student_id
-        )
-    except Exception:
-        exam_struggle = {}
-    review_weakness_keys: set[tuple[int, int]] = set()
-    wrong_weakness_keys: set[tuple[int, int]] = set()
-    exam_weakness_keys: set[tuple[int, int]] = set()
-    for section_id, ctx in universe.items():
-        section = ctx.section
-        if section.test_count == 0:
-            continue
-        remaining = ctx.remaining
-        if remaining <= 0:
-            continue
-        progress_pct = (ctx.completed + ctx.reserved) / section.test_count
-        book_id = ctx.book.id
-        last = model.last_completed.get((book_id, section_id))
-        days_gap = (today - last).days if last else None
-
-        w = 0.0
-        # Düşük yüzde → zayıflık
-        if progress_pct < 0.5:
-            w += (0.5 - progress_pct) * 0.8
-        # Uzun dokunulmamış → zayıflık
-        if days_gap is not None:
-            if days_gap > 21:
-                w += 0.45
-            elif days_gap > 14:
-                w += 0.30
-            elif days_gap > 7:
-                w += 0.15
-        elif last is None and (ctx.reserved == 0 and ctx.completed == 0):
-            # Hiç dokunulmamış
-            w += 0.10
-        # Review tekrar kartında zorlanan konu boost'u (Stage 12 → öneri besleme)
-        topic_id = section.topic_id
-        if topic_id is not None and topic_id in review_struggle:
-            review_boost = review_struggle[topic_id]  # 0..1
-            w += 0.50 * review_boost  # max +0.50 ekstra ağırlık
-            review_weakness_keys.add((book_id, section_id))
-        # Yanlış Soru Arşivi: açık yanlışı biriken konu → güçlü zayıflık sinyali
-        if topic_id is not None and topic_id in wrong_struggle:
-            w += 0.55 * wrong_struggle[topic_id]  # max +0.55
-            wrong_weakness_keys.add((book_id, section_id))
-        # Deneme sonuçları: son denemelerde yanlışı biriken konu (Faz 3)
-        if topic_id is not None and topic_id in exam_struggle:
-            w += 0.45 * exam_struggle[topic_id]  # max +0.45
-            exam_weakness_keys.add((book_id, section_id))
-        if w > 0:
-            weakness_scores[(book_id, section_id)] = min(1.0, w)
-
-    # 3) Müfredat frontier adayları — sıradaki konular desen/zayıflık sinyali
-    # olmasa da aday havuzuna girer (yeni öğrenci/yeni kitapta öneri boş kalmasın)
-    frontier_keys: set[tuple[int, int]] = set()
-    for section_id, ctx in universe.items():
-        rank = curriculum.rank_by_section.get(section_id)
-        if rank is not None and rank <= FRONTIER_POOL_RANK and ctx.remaining > 0:
-            frontier_keys.add((ctx.book.id, section_id))
-
-    # Aday birleşimi
-    all_keys = (
-        set(pattern_scores.keys()) | set(weakness_scores.keys()) | frontier_keys
-    ) - exclude_set
+        if d == dow:
+            pattern_freq[(book_id, section_id)] = max(pattern_freq[(book_id, section_id)], freq)
 
     suggestions: list[Suggestion] = []
-    for key in all_keys:
-        book_id, section_id = key
-        ctx = universe.get(section_id)
-        if not ctx:
-            continue
+    weeks = max(1, model.weeks_observed)
+    for section_id, ctx in universe.items():
         section = ctx.section
-        remaining = ctx.remaining
-        if remaining <= 0:
-            continue
         book = ctx.book
-        subject = book.subject
-
-        freq = pattern_scores.get(key, 0)
-        weeks = max(1, model.weeks_observed)
-        pattern_strength = min(1.0, freq / weeks)  # 1x/hafta = 1.0
-
-        weakness = weakness_scores.get(key, 0.0)
-
-        # Müfredat önceliği — dersin açık konuları içindeki resmi sıra
+        key = (book.id, section_id)
+        if key in exclude_set or not section.test_count or ctx.remaining <= 0:
+            continue
         rank = curriculum.rank_by_section.get(section_id)
-        in_started_topic = section_id in curriculum.started_topic_sections
-        if rank is None:
-            curriculum_score = CURRICULUM_NEUTRAL   # konuya eşlenmemiş bölüm
-        else:
-            curriculum_score = max(0.05, 1.0 - CURRICULUM_RANK_DECAY * rank)
-        if in_started_topic:
-            curriculum_score = min(1.0, curriculum_score + CURRICULUM_STARTED_BONUS)
+        freq = pattern_freq.get(key, 0)
+        feats, why = rec_signals.section_features(
+            signals,
+            section_id=section_id,
+            subject_id=book.subject_id,
+            topic_id=section.topic_id,
+            prev_section_id=prev_of.get(section_id),
+            remaining=ctx.remaining,
+            prev_finished=(
+                prev_of.get(section_id) in universe
+                and universe[prev_of[section_id]].remaining <= 0
+            ),
+            coverage=coverage.get(book.subject_id),
+        )
+        feats["curriculum"] = (
+            CURRICULUM_NEUTRAL if rank is None else max(0.05, 1.0 - CURRICULUM_RANK_DECAY * rank)
+        )
+        if section_id in curriculum.started_topic_sections:
+            feats["started"] = 1.0
+        if section_id in book_next:
+            feats["book_next"] = book_next[section_id]
+            why.setdefault("book_next", "kitabın sırayla ilk açık bölümü")
+        if freq:
+            feats["pattern"] = min(1.0, freq / weeks)
+        st = _staleness(ctx, model.last_completed.get(key), today)
+        if st:
+            feats["staleness"] = st
 
-        # Müfredatta ÇOK ileride + o güne hiç desenli değil + tekrar-kartı /
-        # yanlış-arşivi sinyali yok → önerme (kullanıcı şikâyeti: "baştayken
-        # ilerisi öneriliyor"). Biriken yanlış varsa konu ileride olsa da kalır.
+        # Aday havuzu: müfredat dışında en az bir pozitif sinyal ya da frontier
+        side = sum(w.get(k, 0.0) * v for k, v in feats.items() if k != "curriculum")
+        if side <= 0 and not (rank is not None and rank <= FRONTIER_POOL_RANK):
+            continue
+        # Müfredatta çok ileride + o güne desen yok + istisna sinyal yok → önerme
         if (
             rank is not None
             and rank >= CURRICULUM_FAR_RANK
-            and freq == 0
-            and key not in review_weakness_keys
-            and key not in wrong_weakness_keys
+            and not freq
+            and not any(feats.get(k) and w.get(k, 0.0) > 0 for k in _FAR_RANK_EXEMPT)
         ):
             continue
 
-        # Ret sinyali — hem gün-bazlı hem genel
-        reject_specific = model.reject_weights.get((dow, book_id, section_id), 0.0)
-        reject_general = model.reject_weights.get((None, book_id, section_id), 0.0)
-        reject_weight = reject_specific + 0.5 * reject_general
-        reject_count_specific = model.reject_counts.get((dow, book_id, section_id), 0)
-        reject_count_general = model.reject_counts.get((None, book_id, section_id), 0)
-        total_rejects = reject_count_specific + reject_count_general
-
-        # Çok reddedilmişse öneride bulunma
+        reject_weight = (
+            model.reject_weights.get((dow, book.id, section_id), 0.0)
+            + 0.5 * model.reject_weights.get((None, book.id, section_id), 0.0)
+        )
+        total_rejects = (
+            model.reject_counts.get((dow, book.id, section_id), 0)
+            + model.reject_counts.get((None, book.id, section_id), 0)
+        )
         if total_rejects >= REJECT_STRONG_COUNT:
             continue
+        penalty = max(0.0, 1.0 - REJECT_SCORE_PENALTY * min(1.0, reject_weight))
 
-        # Skor — müfredat sırası ANA sinyal; zayıflık + öğretmen deseni destekler
-        score = (
-            CURRICULUM_W * curriculum_score
-            + WEAKNESS_W * weakness
-            + PATTERN_W * pattern_strength
-        )
-        score *= max(0.0, 1.0 - REJECT_SCORE_PENALTY * min(1.0, reject_weight))
+        contrib = {k: w.get(k, 0.0) * v for k, v in feats.items()}
+        score = sum(contrib.values()) * penalty
 
-        # Güven — görsel yoğunluk için (müfredat sinyali yeni öğrencide de
-        # görünür olsun diye maturity'den bağımsız katkı verir)
+        weakness_like = min(1.0, sum(feats.get(k, 0.0) for k in (
+            "staleness", "neglect", "struggle", "exam_weak", "open_wrong", "review")))
         confidence = (
-            mat * (0.40 + 0.35 * pattern_strength)
-            + 0.20 * weakness
-            + 0.30 * curriculum_score
-        )
-        confidence *= max(0.0, 1.0 - REJECT_SCORE_PENALTY * min(1.0, reject_weight))
+            mat * (0.40 + 0.35 * feats.get("pattern", 0.0) + 0.35 * max(
+                feats.get("thread", 0.0), feats.get("thread_next", 0.0)))
+            + 0.20 * weakness_like
+            + 0.30 * feats["curriculum"]
+        ) * penalty
         confidence = max(MATURITY_MIN_FLOOR if mat > 0 else 0.0, min(1.0, confidence))
 
-        # Tipik adet
-        counts_list = model.typical_counts.get((dow, book_id, section_id), [])
-        if counts_list:
-            typical = int(round(median(counts_list)))
-        else:
-            typical = 2  # varsayılan
-        typical = max(1, min(typical, remaining))
+        counts_list = model.typical_counts.get((dow, book.id, section_id), [])
+        typical = int(round(median(counts_list))) if counts_list else 2
+        typical = max(1, min(typical, ctx.remaining))
 
-        # Açıklama — müfredat konumu ilk rozet (UI ilk reason'ı gösterir)
+        # Gerekçeler: katkısı en büyük sinyaller önce, sayılı metinle
         reasons: list[str] = []
-        if rank == 0:
-            reasons.append("Müfredatta sıradaki konu")
-        elif rank == 1:
-            reasons.append("Müfredatta yaklaşan konu")
-        elif rank is not None and rank >= CURRICULUM_FAR_RANK:
-            reasons.append("Müfredatta ileride")
-        if in_started_topic:
+        ordered = sorted(
+            (k for k, c in contrib.items() if c > 0 and k in why),
+            key=lambda k: -contrib[k],
+        )
+        for k in ordered[:3]:
+            reasons.append(f"{rec_signals.FEATURE_LABELS_TR[k]}: {why[k]}")
+        cr = _curriculum_reason(rank)
+        if cr:
+            reasons.append(cr)
+        if "started" in feats:
             reasons.append("Başlanan konuyu tamamlama")
-        if freq > 0:
+        if freq:
             reasons.append(f"Bu güne {freq}× önceden atanmış")
-        if key in wrong_weakness_keys:
-            reasons.append("Arşivde açık yanlışı var")
-        if key in exam_weakness_keys:
-            reasons.append("Denemelerde yanlış yapılan konu")
-        if key in review_weakness_keys:
-            reasons.append("🧠 Tekrar kartında zorlanılan konu")
-        if weakness > 0.3:
+        if feats.get("staleness", 0) > 0.3:
             reasons.append("Bu bölümde belirgin geride kalma var")
-        elif weakness > 0:
-            reasons.append("Bu bölüm dikkat gerektirebilir")
-        if total_rejects > 0:
+        if total_rejects:
             reasons.append(f"{total_rejects}× önceden reddettiniz")
         if mat < 0.3:
             reasons.append("Sistem hâlâ öğreniyor")
 
         suggestions.append(Suggestion(
-            book_id=book_id,
+            book_id=book.id,
             book_name=book.name,
             book_type=book.type.value,
             section_id=section_id,
             section_label=section.label,
-            subject_id=subject.id,
-            subject_name=subject.name,
+            subject_id=book.subject_id,
+            subject_name=book.subject.name,
             topic_name=section.topic.name if section.topic else None,
             planned_count=typical,
-            remaining=remaining,
+            remaining=ctx.remaining,
             confidence=confidence,
             score=score,
             reasons=reasons,
             curriculum_rank=rank,
+            features={k: round(v, 3) for k, v in feats.items()},
         ))
 
     suggestions.sort(key=lambda s: (
@@ -830,10 +802,10 @@ def suggest_for_date(
         s.subject_name,
         s.book_name,
     ))
+    if not select:
+        return suggestions
 
-    # Ders çeşitliliği ve tipik hacim
     typical_n = max_suggestions or model.typical_items_per_day.get(dow, 0) or 5
-    # Phase kapasite çarpanı uygulansın (yaz kampı 1.5x, sınav hazırlık 1.3x...)
     if phase_capacity_mult != 1.0:
         typical_n = int(round(typical_n * phase_capacity_mult))
     typical_n = max(3, min(15, typical_n))
@@ -841,7 +813,6 @@ def suggest_for_date(
     typical_distinct_subjects = max(2, min(6, typical_distinct_subjects))
     max_per_subject = max(1, typical_n // max(1, typical_distinct_subjects))
 
-    # İlk turda her ders için az sayıda, kalan yerler için ikinci turda doldur
     selected: list[Suggestion] = []
     per_subject: Counter[int] = Counter()
     for s in suggestions:
@@ -855,11 +826,95 @@ def suggest_for_date(
             if s in selected:
                 continue
             selected.append(s)
-            per_subject[s.subject_id] += 1
             if len(selected) >= typical_n:
                 break
-
     return selected
+
+
+def suggest_for_date(
+    db: Session,
+    student_id: int,
+    target_date: date,
+    *,
+    model: StudentModel | None = None,
+    exclude_keys: Iterable[tuple[int, int]] = (),
+    today: date | None = None,
+    max_suggestions: int | None = None,
+    weights: dict[str, float] | None = None,
+    cache: dict | None = None,
+) -> list[Suggestion]:
+    """Bir gün için öneri listesi üret (veriyi yükler, `rank_candidates`'a verir).
+
+    `cache`: aynı istekte birden çok gün hesaplanıyorsa (haftalık görünüm 7 gün)
+    çağıran boş bir dict verir; öğrenci verisi bir kez yüklenip paylaşılır.
+
+    Phase-aware (Faz 6.4): öğrencinin academic_year'ında target_date'i kapsayan
+    dönem varsa capacity_multiplier ile günlük öneri hacmi ölçeklenir.
+    """
+    from app.models import User as _UserModel
+    from app.services import rec_signals
+
+    if today is None:
+        today = date.today()
+    if model is None:
+        model = build_student_model(db, student_id, today=today)
+
+    student = db.get(_UserModel, student_id)
+    phase_capacity_mult = 1.0
+    try:
+        if student and student.academic_year:
+            active_phase = student.academic_year.active_phase_on(target_date)
+            if active_phase:
+                phase_capacity_mult = active_phase.capacity_multiplier
+    except Exception:
+        phase_capacity_mult = 1.0
+
+    c = cache if cache is not None else {}
+    if "universe" not in c:
+        universe = _section_universe(db, student_id)
+        if student is not None:
+            allowed_sections = _allowed_exam_sections(student)
+            if allowed_sections is not None:
+                universe = {
+                    sid: ctx for sid, ctx in universe.items()
+                    if ctx.book.subject.exam_section in allowed_sections
+                }
+        c["universe"] = universe
+        c["items"] = rec_signals.load_test_items(db, student_id)
+        c["exam"] = rec_signals.load_exam_rows(db, student_id)
+        c["open_wrong"] = rec_signals.load_open_wrong(db, student_id)
+        c["review"] = rec_signals.load_review(db, student_id)
+        if student is not None:
+            from app.services.rec_learning import weights_for_coach
+            c["weights"] = weights_for_coach(db, student.teacher_id)
+        else:
+            c["weights"] = None
+    universe = c["universe"]
+
+    # "Verildi" sinyalleri hedef güne kadar planlananı görür; "yapıldı mı"
+    # sinyalleri yalnız bugünden önceki günleri (sonucu belli olanları)
+    signals = rec_signals.build_signals(
+        c["items"],
+        target_date,
+        outcome_before=today,
+        exam_rows=c["exam"],
+        open_wrong=c["open_wrong"],
+        review=c["review"],
+    )
+    if weights is None:
+        # Koç başına öğrenilmiş ağırlık (gece işi); yoksa DEFAULT_WEIGHTS
+        weights = c["weights"]
+    return rank_candidates(
+        universe=universe,
+        model=model,
+        signals=signals,
+        target_date=target_date,
+        today=today,
+        weights=weights,
+        exclude_set=set(exclude_keys),
+        phase_capacity_mult=phase_capacity_mult,
+        max_suggestions=max_suggestions,
+    )
 
 
 # ---------------------------- Sözel açıklama yardımcıları ----------------------------

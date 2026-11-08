@@ -4949,6 +4949,20 @@ def teacher_student_day_v2(
 # ---------------------- /students/{id}/week ----------------------
 
 
+def _rec_hit_for_coach(db: Session, coach_id: int | None) -> tuple[float, int] | None:
+    """Koçun öneri isabeti (gece ölçümü): ayrılmış son günlerde koçun verdiği bölümün
+    ekrandaki önerilerde bulunma oranı + ölçülen kalem sayısı. Veri yoksa None."""
+    if not coach_id:
+        return None
+    from app.models.rec_weights import REC_STATUS_LEARNED, CoachRecWeights
+
+    row = db.query(CoachRecWeights).filter(CoachRecWeights.coach_id == coach_id).one_or_none()
+    if row is None or row.shown_default is None:
+        return None
+    rate = row.shown_learned if row.status == REC_STATUS_LEARNED else row.shown_default
+    return (round(float(rate or 0.0), 3), int(row.n_items or 0))
+
+
 @router.get(
     "/students/{student_id}/week",
     response_model=TeacherStudentWeekResponse,
@@ -5111,6 +5125,8 @@ def teacher_student_week_v2(
 
     # Öğrenme modeli — request başına 1 kez
     student_model = build_student_model(db, student.id, today=today)
+    sug_cache: dict = {}  # 7 günün önerileri öğrenci verisini bir kez yükler
+    rec_hit = _rec_hit_for_coach(db, student.teacher_id)
     mat = maturity(student_model)
     mat_label = maturity_label(mat)
 
@@ -5159,6 +5175,7 @@ def teacher_student_week_v2(
         exclude = {(it.book_id, it.book_section_id) for t in day_tasks for it in t.book_items}
         sugs = suggest_for_date(
             db, student.id, d, model=student_model, exclude_keys=exclude, today=today,
+            cache=sug_cache,
         )
         day_sugs = [
             TeacherSuggestionInline(
@@ -5284,6 +5301,8 @@ def teacher_student_week_v2(
         week_draft_total=week_draft_total,
         maturity_value=round(mat, 3),
         maturity_label=mat_label,
+        rec_hit_rate=rec_hit[0] if rec_hit else None,
+        rec_hit_items=rec_hit[1] if rec_hit else None,
         weeks_observed=student_model.weeks_observed,
         days_observed=student_model.days_observed,
         active_phase=active_phase,

@@ -996,6 +996,18 @@ def release_dead_reservations(db: Session, *, now: datetime) -> dict:
     return summary
 
 
+def rec_weights_train(db: Session, *, now: datetime) -> dict:
+    """Günlük — koç başına öneri ağırlığı öğrenimi (2026-11-08).
+
+    Her koçun öğrencilerinde son 12 haftayı yeniden oynatır, koçun gerçekte
+    verdiği bölümleri en iyi öne çıkaran ağırlıkları öğrenir; ayrılmış son
+    günlerde varsayılanı geçerse kullanılır. Bkz. rec_learning.train_all."""
+    from app.services.rec_learning import train_all
+    summary = train_all(db)
+    logger.info("rec_weights_train cron: %s", summary)
+    return summary
+
+
 def panel_events_purge(db: Session, *, now: datetime) -> dict:
     """Günlük — 180 günden eski panel ziyaret olaylarını + dokunulmamış
     hızlı-erişim agregat satırlarını siler (sabitlenen/kalıcı kartlar yaşar).
@@ -1089,6 +1101,7 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "offers_expire": offers_expire,
     # Hızlı erişim kartları (QA-1) — ham olay saklama politikası
     "panel_events_purge": panel_events_purge,
+    "rec_weights_train": rec_weights_train,
     # Ölü rezerv telafisi — günlük otomatik serbest bırakma (yaz/program-arası)
     "release_dead_reservations": release_dead_reservations,
     # Online görüşme randevuları — seri üretimi + hatırlatmalar (10 dk)

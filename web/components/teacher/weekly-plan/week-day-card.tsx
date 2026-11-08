@@ -122,6 +122,8 @@ interface Props {
   trackRequired: boolean;
   trackMissing: boolean;
   trackLabel: string | null;
+  recHitRate?: number | null;
+  recHitItems?: number | null;
   // Devret sürükle-bırak: bir zaman dilimi (periyot) başlığına bırakılınca o
   // periyoda taşı (week-board day-level drop period=null fallback'tir).
   onCarryoverDrop?: (period: TaskPeriod | null, taskId: number) => void;
@@ -150,6 +152,8 @@ export function WeekDayCard({
   trackRequired,
   trackMissing,
   trackLabel,
+  recHitRate = null,
+  recHitItems = null,
   onCarryoverDrop,
 }: Props) {
   const [addOpen, setAddOpen] = React.useState(false);
@@ -346,6 +350,8 @@ export function WeekDayCard({
         trackRequired={trackRequired}
         trackMissing={trackMissing}
         trackLabel={trackLabel}
+        recHitRate={recHitRate}
+        recHitItems={recHitItems}
       />
     </details>
   );

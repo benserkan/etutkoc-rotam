@@ -458,9 +458,10 @@ def student_suggestions_ahead(
     today = date.today()
     model = build_student_model(db, student.id, today=today)
     days: list[SuggestionDayBundle] = []
+    sug_cache: dict = {}
     for i in range(7):
         d = today + timedelta(days=i)
-        sugs = suggest_for_date(db, student.id, d, model=model, today=today)
+        sugs = suggest_for_date(db, student.id, d, model=model, today=today, cache=sug_cache)
         days.append(SuggestionDayBundle(
             date=d,
             suggestions=[_adapt_suggestion(s) for s in sugs],
