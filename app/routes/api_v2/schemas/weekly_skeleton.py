@@ -164,6 +164,8 @@ class GhostCell(BaseModel):
     second_book_name: str | None = None
     source_choice: bool = False
     is_anchor: bool = False
+    # Rutin/deneme satırının kitabı bitti (açık bölüm yok) — öneri üretilmez
+    book_finished: bool = False
     chips: list[GhostChip] = []
 
 

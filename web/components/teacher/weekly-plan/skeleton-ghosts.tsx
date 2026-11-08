@@ -267,7 +267,19 @@ export function GhostRow({
               konu bitti · kaynak seç
             </span>
           ) : null}
-          {preview ? (
+          {ghost.book_finished ? (
+            <span
+              className="rounded bg-rose-700 px-1.5 py-px text-[10px] font-semibold text-white"
+              data-testid="ghost-book-finished"
+            >
+              kitap bitti
+            </span>
+          ) : null}
+          {ghost.book_finished ? (
+            <span className="text-[12px] italic text-muted-foreground">
+              tüm testler çözüldü — iskelette yeni kaynak seç ya da başka konu ver
+            </span>
+          ) : preview ? (
             <span className="text-[12px] text-muted-foreground">{preview}</span>
           ) : isActivityGhost(ghost) ? (
             <span className="text-[12px] text-muted-foreground">etkinlik olarak yazılır</span>

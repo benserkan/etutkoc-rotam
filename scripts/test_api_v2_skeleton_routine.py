@@ -403,6 +403,32 @@ def main() -> int:
         check("14b. en sık günlük adet 13 → rutin adedi 3 (olağandışı değer kopyalanmaz)",
               bool(prob14) and all(x["is_routine"] and x["default_count"] == 3 for x in prob14),
               str([(x["weekday"], x["default_count"]) for x in prob14]))
+
+        # 15 — rutin kitabı BİTTİ: başka kitabın konusu bu kitabın adıyla önerilmez
+        #   (2026-11-08 saha: bitmiş Limit Kronometre "Sözcükte Yapı" öneriyordu)
+        d15 = today + timedelta(days=6)
+        with SessionLocal() as db:
+            for sp in db.query(SectionProgress).filter(
+                    SectionProgress.student_book_id.in_(ids["sbs"])).all():
+                sec = db.get(BookSection, sp.book_section_id)
+                if sec.book_id == ids["par"]:
+                    sp.completed_count = sec.test_count
+                    sp.reserved_count = 0
+            db.commit()
+        r15s = c.post(base, json={"slots": [{"weekday": d15.weekday(), "period": None,
+                                      "subject_id": ids["tur"], "position": 0,
+                                      "is_routine": True, "book_id": ids["par"],
+                                      "routine_mode": "sirali", "default_count": None}]})
+        g15 = c.get(f"{base}/ghosts", params={"start": d15.isoformat(),
+                                              "end": d15.isoformat()}).json()
+        gh15 = [x for x in g15["days"][0]["ghosts"] if x["book_id"] == ids["par"]]
+        check("15a. bitmiş rutin kitabı → book_finished, öneri çipi yok",
+              len(gh15) == 1 and gh15[0]["book_finished"] is True and gh15[0]["chips"] == [],
+              str(g15)[:300] + " | " + r15s.text[:400])
+        r15 = c.post(f"{base}/ghosts/accept-routine",
+                     json={"date": d15.isoformat(), "dry_run": True})
+        p15 = r15.json()["data"]["preview"] if r15.status_code == 200 else None
+        check("15b. bitmiş rutin 'rutinleri onayla'da görev yazmaz", p15 == [], r15.text[:300])
     finally:
         with SessionLocal() as db:
             if ids.get("st"):

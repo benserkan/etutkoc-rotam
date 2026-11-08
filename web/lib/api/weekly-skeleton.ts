@@ -151,6 +151,8 @@ export interface GhostCell {
   /** 1. kaynakta konu bitti: koç 2. kaynak / sıradaki konu arasında seçer */
   source_choice?: boolean;
   is_anchor: boolean;
+  /** Rutin/deneme satırının kitabı bitti — öneri yok, kaynak güncellenmeli */
+  book_finished?: boolean;
   chips: GhostChip[];
 }
 

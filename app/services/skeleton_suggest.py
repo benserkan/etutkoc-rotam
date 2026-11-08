@@ -1119,10 +1119,16 @@ def build_ghosts(
                     else _default_quantity(db, ctx, subj)
                 )
                 chips: list[dict] = []
+                book_finished = False
                 if (s.is_routine or is_deneme_book) and s.book_id:
                     rc = _routine_chip(ctx, s, d, fallback_q)
                     chips = [rc] if rc else []
-                if not chips and not (s.is_routine and s.label and not s.book_id):
+                    # Rutin/deneme kaynağı bitti: başka kitabın konusunu bu kitabın adıyla
+                    # önermek yanıltıcı (2026-11-08 saha: bitmiş Limit Kronometre "Sözcükte
+                    # Yapı" öneriyordu). Hayalet "kaynak bitti" der; koç satırı yeni kaynağa
+                    # bağlar ya da "başka konu" seçer.
+                    book_finished = not chips
+                if not chips and not book_finished and not (s.is_routine and s.label and not s.book_id):
                     chips = build_chips(
                         db, ctx, subject_id=subj, d=d, rotate=0 if s.book_id else k,
                         default_count=s.default_count, prefer_book=s.book_id,
@@ -1157,6 +1163,7 @@ def build_ghosts(
                     # 1. kaynakta konu bitti: koç 2. kaynak / sıradaki konu arasında seçer
                     "source_choice": any(c.get("source_choice") for c in chips),
                     "is_anchor": bool(s.is_anchor),
+                    "book_finished": book_finished,
                     "chips": chips,
                 })
         ghosts.sort(key=lambda g: (PERIOD_ORDER.get(g["period"], 3), g["position"]))
