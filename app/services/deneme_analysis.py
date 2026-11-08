@@ -30,7 +30,15 @@ from app.models import Book, Task, TaskBookItem, User
 from app.models.book import BookType
 from app.models.exam_result import SOURCE_TASK, ExamResult, analysis_exam_filter
 from app.services import exam_scope
-from app.services.deneme_service import DENEME_BOOK_TYPES, item_subject, result_pending
+from app.services.deneme_service import (
+    DENEME_BOOK_TYPES,
+    LEVEL_LABELS,
+    LEVEL_ORDER,
+    exam_section_for_subject,
+    item_subject,
+    level_of_section,
+    result_pending,
+)
 
 KIYAS_GUN = 90
 MIN_NORMAL_POINTS = 4
@@ -340,14 +348,16 @@ def build_deneme_analysis(db: Session, student: User, *, today: date | None = No
                   .filter(Task.student_id == student.id, Task.is_draft.is_(False),
                           TaskBookItem.exam_kind.isnot(None), TaskBookItem.completed_count > 0)
                   .all())
-    pending_by_subject: dict[str, int] = defaultdict(int)
+    # (düzey, ders) anahtarlı: TYT Matematik ile AYT Matematik'in bekleyenleri karışmasın.
+    pending_by_subject: dict[tuple[str, str], int] = defaultdict(int)
     pending_total = 0
     for it in pend_items:
         if not result_pending(it):
             continue
         pending_total += 1
         subj = item_subject(it)
-        pending_by_subject[_canon(subj.name) if subj else "Genel"] += 1
+        lvl = level_of_section(it.exam_section or exam_section_for_subject(subj))
+        pending_by_subject[(lvl, _canon(subj.name) if subj else "Genel")] += 1
 
     tests = _accuracy_by_subject_tests(db, student.id, since)
     karne = _accuracy_by_subject_karne(db, student.id, since)
@@ -362,8 +372,11 @@ def build_deneme_analysis(db: Session, student: User, *, today: date | None = No
         row = {k: s[k] for k in ("key", "label", "kind", "subject", "section")}
         row.update(m)
         row["points"] = s["points"]
+        lvl = level_of_section(s["section"])
+        row["level"] = lvl
+        row["level_label"] = LEVEL_LABELS.get(lvl, lvl)
         canon = s["subject"] if s["kind"] == "brans" else None
-        row["pending"] = pending_by_subject.get(canon, 0) if canon else 0
+        row["pending"] = pending_by_subject.get((lvl, canon), 0) if canon else 0
         if canon:
             t = tests.get(canon)
             if t and t["correct"] + t["wrong"] >= MIN_COMPARE_ANSWERED:
@@ -401,7 +414,9 @@ def build_deneme_analysis(db: Session, student: User, *, today: date | None = No
             flags.append({"code": "blank", "series": row["key"], "level": "info",
                           "text": f"{row['label']}: soruların %{m['blank_rate_pct']}'i boş bırakılıyor."})
 
-    out_series.sort(key=lambda r: (r["kind"] != "brans", -r["count"], r["label"]))
+    out_series.sort(key=lambda r: (r["kind"] != "brans",
+                                   LEVEL_ORDER.index(r["level"]) if r["level"] in LEVEL_ORDER else 9,
+                                   -r["count"], r["label"]))
     return {
         "overview": _overview([r for r in out_series if r["kind"] == "brans"], today),
         "generated_for": today.isoformat(),

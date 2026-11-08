@@ -6,6 +6,24 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## BRANŞ DENEMESİ SINAV DÜZEYİ — görev verme + analiz TYT/AYT/sınıf ayrımı (2026-11-08, migration YOK)
+
+- Bulgu (prod, salt okuma): Maarif/Klasik okul dersi (Fizik, Kimya…) seed'de TYT/AYT sınav türü taşıyordu → 10.
+  sınıfın "Fizik branş denemesi" AYT Sayısal serisine düşüyordu; analiz serileri "Matematik branş" diye TYT/AYT'yi
+  aynı adla gösteriyordu; görev formunda düzey seçimi yoktu. Web taraması: birleşik gruplar (TYT Fen/Sosyal 20,
+  AYT Fen/Ed-Sos1/Sos2 40) piyasayla uyumlu; "1./2. Aşama" resmî ÖSYM adı değil (MEB: yeni soru modeli 2028).
+- `deneme_service`: okul dersi → `exam_section="okul"` · `LEVEL_LABELS/LEVEL_ORDER` (lgs·sinif·tyt·ayt·ydt) +
+  `level_of_section` · `brans_levels_for` (öğrencinin dersleri + lise/mezunda yerleşik TYT, 11+/mezunda alana uygun
+  AYT; Maarif'te "TYT / 1. Aşama"; mezunda sınıf düzeyi yok) · YDT İngilizce grubu (80) · TYT/AYT Geometri'ye
+  standart soru düşmez. `deneme-options.brans_levels`; görev + havuz uçları düzey derslerini kabul eder.
+- `exam_scope` branş etiketi "TYT · Matematik branş" / "AYT · …" / "Sınıf düzeyi · …"; `deneme_analysis` seri
+  `level/level_label`, bekleyen düzeye göre, sıralama düzey sırası.
+- Web: deneme formunda "Sınav düzeyi" çipleri · Branş denemeleri analizinde düzey seçici (Tümü/TYT/AYT…; netler
+  toplanmaz) + ders karnesi "TYT branşları / AYT branşları" grupları + "TYT Matematik" adları.
+- `scripts/fix_brans_okul_sections.py` (kuru varsayılan, `--apply`): eski okul dersi branş kalemlerini "okul"a çeker
+  (köprü bağlı kaydı yeniden kurar). Test YENİ `test_deneme_brans_levels` 11/11 · deneme_tasks 42 · results 22 ·
+  bridge 35 · analysis 30 · pool_deneme 32 · brans_groups 15 · exam_scope 21 · weekly_progress 26.
+
 ## LGS 8 MATEMATİK + FEN → ÜNİTE + ALT KONU (2026-11-07, Neslihan Hoca: "EBOB-EKOK, Bilimsel Gösterim yok", migration YOK)
 
 - 8. sınıf Mat (12 ünite) + Fen (7 ünite) artık 5-7 / Maarif gibi **ünite = üst başlık ("N. Ünite: X"),

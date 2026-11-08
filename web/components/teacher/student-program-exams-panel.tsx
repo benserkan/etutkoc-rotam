@@ -95,9 +95,35 @@ function daysAgo(n: number | null | undefined): string {
   return `${n} gün önce`;
 }
 
-/** Seri adı: branşta dersin adı ("Matematik"), genelde seri etiketi. */
+const LEVEL_SHORT: Record<string, string> = { lgs: "LGS", tyt: "TYT", ayt: "AYT", ydt: "YDT" };
+const LEVEL_TITLE: Record<string, string> = {
+  lgs: "LGS",
+  sinif: "Sınıf düzeyi",
+  tyt: "TYT",
+  ayt: "AYT",
+  ydt: "YDT",
+};
+const LEVEL_ORDER = ["lgs", "sinif", "tyt", "ayt", "ydt"];
+
+/** Seri adı: branşta sınav türü + ders ("TYT Matematik" ≠ "AYT Matematik"), genelde seri etiketi. */
 function nameOf(s: DenemeAnalysisSeries): string {
-  return s.kind === "brans" && s.subject ? s.subject : s.label;
+  if (s.kind !== "brans" || !s.subject) return s.label;
+  const lv = s.level ?? "";
+  if (lv === "sinif") return `${s.subject} (sınıf düzeyi)`;
+  const short = LEVEL_SHORT[lv];
+  return short ? `${short} ${s.subject}` : s.subject;
+}
+
+/** Aynı sınav türündeki serileri ardışık gruplar (backend sıralı gönderir). */
+function groupByLevel(series: DenemeAnalysisSeries[]): { level: string; items: DenemeAnalysisSeries[] }[] {
+  const out: { level: string; items: DenemeAnalysisSeries[] }[] = [];
+  for (const s of series) {
+    const lv = s.level ?? "sinif";
+    const last = out[out.length - 1];
+    if (last && last.level === lv) last.items.push(s);
+    else out.push({ level: lv, items: [s] });
+  }
+  return out;
 }
 
 function colorOf(s: DenemeAnalysisSeries): string {
@@ -138,12 +164,22 @@ export function StudentProgramExamsPanel({
   const rows = examsQ.data?.program_rows ?? [];
   const ov = a?.overview ?? null;
 
+  // Sınav türü süzgeci (TYT · AYT · Sınıf düzeyi …) — null = tümü. 2026-11-08.
+  const levelsPresent = React.useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const s of branch) seen.set(s.level ?? "sinif", (seen.get(s.level ?? "sinif") ?? 0) + 1);
+    return [...seen.entries()].sort((x, y) => LEVEL_ORDER.indexOf(x[0]) - LEVEL_ORDER.indexOf(y[0]));
+  }, [branch]);
+  const [levelSel, setLevelSel] = React.useState<string | null>(null);
+  const effLevel = levelSel && levelsPresent.some(([k]) => k === levelSel) ? levelSel : null;
+  const shown = effLevel ? branch.filter((s) => (s.level ?? "sinif") === effLevel) : branch;
+
   const [sel, setSel] = React.useState<string | null>(null);
   // Varsayılan seçili ders: işareti olan ilk ders, yoksa en çok denemesi olan
-  const flagged = a?.flags.find((f) => branch.some((s) => s.key === f.series))?.series;
+  const flagged = a?.flags.find((f) => shown.some((s) => s.key === f.series))?.series;
   const activeKey =
-    sel && branch.some((s) => s.key === sel) ? sel : (flagged ?? branch[0]?.key ?? null);
-  const active = branch.find((s) => s.key === activeKey) ?? null;
+    sel && shown.some((s) => s.key === sel) ? sel : (flagged ?? shown[0]?.key ?? null);
+  const active = shown.find((s) => s.key === activeKey) ?? null;
 
   function focusSubject(key: string) {
     setSel(key);
@@ -235,18 +271,53 @@ export function StudentProgramExamsPanel({
             </OvSection>
           ) : null}
 
-          {branch.length > 0 ? <ReportCard series={branch} activeKey={activeKey} onPick={focusSubject} /> : null}
+          {levelsPresent.length > 1 ? (
+            <div
+              role="radiogroup"
+              aria-label="Sınav türü"
+              data-section="brans:levels"
+              className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-border bg-card p-3"
+            >
+              <span className="mr-1 text-xs font-bold text-muted-foreground">Sınav türü</span>
+              {[[null, branch.length] as [string | null, number], ...levelsPresent].map(([k, n]) => {
+                const on = effLevel === k;
+                return (
+                  <button
+                    key={k ?? "all"}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => {
+                      setLevelSel(k);
+                      setSel(null);
+                    }}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
+                      on ? "border-teal-700 bg-teal-700 text-white" : "border-input hover:bg-muted",
+                    )}
+                  >
+                    {k ? LEVEL_TITLE[k] ?? k : "Tümü"} · {n} ders
+                  </button>
+                );
+              })}
+              <span className="basis-full text-[11px] text-muted-foreground">
+                TYT ve AYT branşları farklı sınav oturumlarıdır; netleri birbirine eklenmez, ayrı izlenir.
+              </span>
+            </div>
+          ) : null}
 
-          {branch.length > 1 ? <CompareChart series={branch} /> : null}
+          {shown.length > 0 ? <ReportCard series={shown} activeKey={activeKey} onPick={focusSubject} /> : null}
 
-          {branch.length > 0 ? <HeatTable series={branch} onPick={focusSubject} /> : null}
+          {shown.length > 1 ? <CompareChart series={shown} /> : null}
+
+          {shown.length > 0 ? <HeatTable series={shown} onPick={focusSubject} /> : null}
 
           {ov && branch.length > 0 ? <Rhythm ov={ov} /> : null}
 
           {active ? (
             <SubjectDeepDive
               s={active}
-              series={branch}
+              series={shown}
               onPick={setSel}
             />
           ) : null}
@@ -583,7 +654,15 @@ function ReportCard({
             </tr>
           </thead>
           <tbody>
-            {series.map((s) => {
+            {groupByLevel(series).flatMap((g, gi, all) => [
+              all.length > 1 ? (
+                <tr key={`lv-${g.level}`}>
+                  <td colSpan={10} className={cn("pb-1 text-xs font-extrabold tracking-wide text-teal-800", gi > 0 ? "pt-4" : "pt-1")}>
+                    {LEVEL_TITLE[g.level] ?? g.level} branşları
+                  </td>
+                </tr>
+              ) : null,
+              ...g.items.map((s) => {
               const c = CONSISTENCY[s.consistency ?? ""];
               return (
                 <tr
@@ -649,7 +728,8 @@ function ReportCard({
                   </td>
                 </tr>
               );
-            })}
+              }),
+            ])}
           </tbody>
         </table>
       </div>

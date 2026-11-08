@@ -91,9 +91,19 @@ class DenemeBransGroupOut(BaseModel):
     covers: str
 
 
+class DenemeBransLevelOut(BaseModel):
+    """Branş denemesi sınav düzeyi (LGS · N. Sınıf · TYT · AYT · YDT) — 2026-11-08."""
+    key: str
+    label: str
+    hint: str
+    subjects: list[DenemeSubjectOut]
+    groups: list[DenemeBransGroupOut]
+
+
 class DenemeOptionsResponse(BaseModel):
     subjects: list[DenemeSubjectOut]
     brans_groups: list[DenemeBransGroupOut] = []
+    brans_levels: list[DenemeBransLevelOut] = []
     books: list[DenemeBookOut]
     genel_presets: list[DenemePresetOut]
     templates: list[DenemeTemplateOut]
@@ -215,18 +225,30 @@ def deneme_options(
             if s is not None:
                 subjects.append(s)
                 known.add(s.id)
+    levels = ds.brans_levels_for(db, student, subjects)
+    level_subjects = [x for lv in levels for x in lv.subjects]
     templates = ds.coach_templates(
         db, coach_id=user.id, student=student,
-        subject_ids={s.id for s in subjects}, book_ids={b.book_id for b in books},
+        subject_ids={s.id for s in subjects} | {s.id for s in level_subjects},
+        book_ids={b.book_id for b in books},
     )
+
+    def subj_out(s: Subject) -> DenemeSubjectOut:
+        return DenemeSubjectOut(
+            id=s.id, name=s.name, exam_section=ds.exam_section_for_subject(s),
+            standard_question_count=ds.standard_question_count(s),
+            deneme_book_count=book_count.get(s.id, 0),
+        )
+
     return DenemeOptionsResponse(
-        subjects=[
-            DenemeSubjectOut(
-                id=s.id, name=s.name, exam_section=ds.exam_section_for_subject(s),
-                standard_question_count=ds.standard_question_count(s),
-                deneme_book_count=book_count.get(s.id, 0),
+        subjects=[subj_out(s) for s in subjects],
+        brans_levels=[
+            DenemeBransLevelOut(
+                key=lv.key, label=lv.label, hint=lv.hint,
+                subjects=[subj_out(s) for s in lv.subjects],
+                groups=[DenemeBransGroupOut(**g.__dict__) for g in lv.groups],
             )
-            for s in subjects
+            for lv in levels
         ],
         books=[
             DenemeBookOut(
@@ -316,7 +338,12 @@ def create_deneme_task(
     elif body.kind == ds.EXAM_KIND_BRANS:
         if body.subject_id is None:
             raise _err("subject_required", "Branş denemesi için ders seçin.")
-        allowed = {s.id: s for s in _student_subjects(db, student, user.id)}
+        own = _student_subjects(db, student, user.id)
+        allowed = {s.id: s for s in own}
+        # Düzey listesindeki TYT/AYT dersleri (Maarif 10. sınıfa "TYT Matematik") da seçilebilir.
+        for lv in ds.brans_levels_for(db, student, own):
+            for s in lv.subjects:
+                allowed.setdefault(s.id, s)
         subj = allowed.get(body.subject_id)
         if subj is None:
             raise _err("subject_not_found", "Seçilen ders bu öğrencinin dersleri arasında değil.")
@@ -413,6 +440,8 @@ class DenemeAnalysisSeries(BaseModel):
     kind: Literal["genel", "brans"]
     subject: str | None = None
     section: str
+    level: str = "sinif"            # lgs | sinif | tyt | ayt | ydt (2026-11-08)
+    level_label: str = ""
     count: int
     correct: int
     wrong: int
@@ -571,7 +600,12 @@ def add_pool_deneme(
     elif body.kind == ds.EXAM_KIND_BRANS:
         if body.subject_id is None:
             raise _err("subject_required", "Branş denemesi için ders seçin.")
-        subj = {s.id: s for s in _student_subjects(db, student, user.id)}.get(body.subject_id)
+        own = _student_subjects(db, student, user.id)
+        allowed = {s.id: s for s in own}
+        for lv in ds.brans_levels_for(db, student, own):
+            for s in lv.subjects:
+                allowed.setdefault(s.id, s)
+        subj = allowed.get(body.subject_id)
         if subj is None:
             raise _err("subject_not_found", "Seçilen ders bu öğrencinin dersleri arasında değil.")
         kw.update(subject=subj, label=name or f"{subj.name} branş denemesi", exam_kind=ds.EXAM_KIND_BRANS)

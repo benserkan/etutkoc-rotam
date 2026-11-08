@@ -53,12 +53,15 @@ _STANDARD: dict[str, list[tuple[str, int]]] = {
         ("inkılap", 10), ("din", 10), ("ingilizce", 10), ("yabancı", 10),
     ],
     "tyt": [
-        ("türkçe", 40), ("geometri", 40), ("matematik", 40),
+        # geometri branşının ÖSYM karşılığı yok (Mat 40'ın içinde); yayınevi 10-20 basar
+        # → standart verilmez, koç/kitap girer. "geometri" kelimesi "matematik"ten önce
+        # kontrol edilir ki TYT Geometri'ye Matematik'in 40'ı düşmesin.
+        ("türkçe", 40), ("geometri", 0), ("matematik", 40),
         ("fizik", 7), ("kimya", 7), ("biyoloji", 6),
         ("tarih", 5), ("coğrafya", 5), ("felsefe", 5), ("din", 5),
     ],
     "ayt": [
-        ("geometri", 40), ("matematik", 40), ("fizik", 14), ("kimya", 13), ("biyoloji", 13),
+        ("geometri", 0), ("matematik", 40), ("fizik", 14), ("kimya", 13), ("biyoloji", 13),
         ("edebiyat", 24), ("türk dili", 24), ("tarih", 21), ("coğrafya", 17),
         ("felsefe", 12), ("din", 6),
     ],
@@ -105,6 +108,7 @@ BRANS_GROUPS: list[tuple[str, str, str, int, tuple[str, ...] | None, str]] = [
      "Edebiyat 24 · Tarih-1 10 · Coğrafya-1 6"),
     ("ayt_sos2", "AYT Sosyal Bilimler 2", "ayt_soz", 40, ("SOZEL",),
      "Tarih-2 11 · Coğrafya-2 11 · Felsefe Grubu 12 · Din Kültürü 6"),
+    ("ydt", "YDT Yabancı Dil (İngilizce)", "ayt_dil", 80, ("DIL",), "Yabancı dil testi · 80 soru"),
 ]
 BRANS_GROUP_LABELS = {k: lbl for k, lbl, *_ in BRANS_GROUPS}
 
@@ -139,6 +143,111 @@ def brans_groups_for(student: User) -> list[BransGroup]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# Branş denemesi SINAV DÜZEYİ (2026-11-08) — koç önce düzeyi, sonra dersi seçer.
+# Aynı ders adı farklı düzeyde farklı denemedir: "10. Sınıf Fizik" (okul) ≠ "TYT Fizik"
+# (7 soru) ≠ "AYT Fizik" (14 soru). Analiz de bu düzeylere göre gruplanır.
+# ---------------------------------------------------------------------------
+
+LEVEL_LABELS = {"lgs": "LGS", "sinif": "Sınıf düzeyi", "tyt": "TYT", "ayt": "AYT", "ydt": "YDT"}
+LEVEL_ORDER = ["lgs", "sinif", "tyt", "ayt", "ydt"]
+
+
+def level_of_section(section: str | None) -> str:
+    """exam_section → branş düzeyi (lgs | sinif | tyt | ayt | ydt)."""
+    sec = (section or "").lower()
+    if sec == "lgs":
+        return "lgs"
+    if sec == "tyt" or sec == "maarif_1":
+        return "tyt"
+    if sec == "ayt_dil":
+        return "ydt"
+    if sec.startswith("ayt") or sec == "maarif_2" or sec == "gis_12":
+        return "ayt"
+    return "sinif"
+
+
+@dataclass
+class BransLevel:
+    key: str
+    label: str
+    hint: str
+    subjects: list[Subject]
+    groups: list[BransGroup]
+
+
+def _builtin_exam_subjects(db: Session) -> list[Subject]:
+    return (
+        db.query(Subject)
+        .filter(Subject.is_builtin.is_(True), Subject.teacher_id.is_(None),
+                Subject.curriculum_model.is_(None), Subject.exam_section.isnot(None))
+        .order_by(Subject.order, Subject.name)
+        .all()
+    )
+
+
+def brans_levels_for(db: Session, student: User, subjects: list[Subject]) -> list[BransLevel]:
+    """Öğrencinin sınıfına uygun branş düzeyleri, her biri kendi dersleri + birleşik
+    denemeleriyle. `subjects` = öğrencinin ders kümesi (görev kutusuyla aynı)."""
+    from app.services.curriculum_progress import exam_subject_visible_for_track
+
+    grade = getattr(student, "grade_level", None)
+    graduate = bool(getattr(student, "is_graduate", False))
+    track = getattr(student, "track", None)
+    groups = brans_groups_for(student)
+    by_level: dict[str, list[Subject]] = {k: [] for k in LEVEL_ORDER}
+    seen: set[int] = set()
+
+    names: set[tuple[str, str]] = set()
+
+    def add(level: str, s: Subject) -> None:
+        # Aynı düzeyde aynı adlı ikinci ders (koçun kendi "TYT Matematik"i + sistemdeki)
+        # listede tekrar etmesin — önce eklenen (öğrencinin kendi kümesi) kalır.
+        key = (level, _low(s.name))
+        if s.id not in seen and key not in names:
+            seen.add(s.id)
+            names.add(key)
+            by_level[level].append(s)
+
+    for s in subjects:
+        add(level_of_section(exam_section_for_subject(s)), s)
+    lise = graduate or (grade is not None and grade >= 9)
+    if lise:
+        ayt_ok = graduate or (grade is not None and grade >= 11)
+        for s in _builtin_exam_subjects(db):
+            sec = exam_section_for_subject(s) or ""
+            lv = level_of_section(sec)
+            if lv == "tyt" or (lv == "ayt" and ayt_ok and exam_subject_visible_for_track(s, track)):
+                add(lv, s)
+    out: list[BransLevel] = []
+    model = getattr(student, "effective_curriculum_model", None)
+    maarif = model == CurriculumModel.MAARIF_LISE and not graduate
+    for key in LEVEL_ORDER:
+        subs = by_level[key]
+        grps = [g for g in groups if level_of_section(g.exam_section) == key]
+        if not subs and not grps:
+            continue
+        if key == "sinif":
+            if graduate:
+                continue
+            label = f"{grade}. Sınıf" if grade else "Sınıf düzeyi"
+            hint = "okul dersi branş denemesi (sınıf konuları)"
+        elif key == "tyt":
+            label = "TYT / 1. Aşama" if maarif else "TYT"
+            hint = "TYT oturumu dersleri (Matematik 40 · Fen 20 …)"
+        elif key == "ayt":
+            label, hint = "AYT", "alan dersleri (Matematik 40 · Fizik 14 …)"
+        elif key == "ydt":
+            label, hint = "YDT", "yabancı dil testi"
+        else:
+            label, hint = "LGS", "LGS dersleri"
+        out.append(BransLevel(key=key, label=label, hint=hint, subjects=subs, groups=grps))
+    # 9-11'de sınıf düzeyi önde, 12/mezunda TYT önde (varsayılan seçim ilk düzey)
+    if grade is not None and grade >= 12 or graduate:
+        out.sort(key=lambda lv: (lv.key == "sinif", LEVEL_ORDER.index(lv.key)))
+    return out
+
+
 def brans_group_for_label(label: str | None) -> str | None:
     """Kalem etiketinden ("TYT Fen Bilimleri 2/3") birleşik branş anahtarı."""
     low = _low(re.sub(r"\s*\d+\s*/\s*\d+\s*$", "", label or ""))
@@ -153,10 +262,15 @@ def exam_section_for_subject(subject: Subject | None) -> str | None:
     okul (Maarif/Klasik) dersinde 'okul'."""
     if subject is None:
         return None
+    model = getattr(subject, "curriculum_model", None)
+    # 2026-11-08: Maarif/Klasik lise dersi okul (sınıf düzeyi) dersidir. Seed bu derslere
+    # TYT/AYT sınav türü yazıyor ("Fizik" → AYT Sayısal) → 10. sınıfın "Fizik branş
+    # denemesi" AYT serisine düşüyordu. TYT/AYT branşı için TYT/AYT dersi seçilir.
+    if model in (CurriculumModel.MAARIF_LISE, CurriculumModel.KLASIK_LISE):
+        return "okul"
     sec = getattr(subject, "exam_section", None)
     if sec is not None:
         return sec.value if hasattr(sec, "value") else str(sec)
-    model = getattr(subject, "curriculum_model", None)
     if model == CurriculumModel.LGS:
         return "lgs"
     name = _low(subject.name)
@@ -183,7 +297,7 @@ def standard_question_count(subject: Subject | None) -> int | None:
     name = _low(subject.name)
     for word, n in _STANDARD[family]:
         if word in name:
-            return n
+            return n or None
     return None
 
 

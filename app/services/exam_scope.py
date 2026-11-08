@@ -174,7 +174,22 @@ def exam_scope(exam: ExamResult) -> ExamScope:
     if classify(exam) == "genel":
         return ExamScope("genel", None, sec, f"{label} (genel deneme)")
     subj = branch_subject(exam)
-    return ExamScope("brans", subj, f"{sec}{SEP}{_skey(subj)}", f"{label} · {subj} branş")
+    return ExamScope("brans", subj, f"{sec}{SEP}{_skey(subj)}",
+                     f"{_branch_level_label(sec, label)} · {subj} branş")
+
+
+def _branch_level_label(sec: str, section_label: str) -> str:
+    """Branşta düzey adı: AYT'de alan yazılmaz (AYT Matematik EA öğrencisinde de aynı
+    denemedir), okul türü "Sınıf düzeyi" olur. 2026-11-08."""
+    if sec.startswith("ayt_dil"):
+        return "YDT"
+    if sec.startswith("ayt"):
+        return "AYT"
+    if sec == "tyt":
+        return "TYT"
+    if sec == "okul":
+        return "Sınıf düzeyi"
+    return section_label
 
 
 def series_key(exam: ExamResult) -> str:

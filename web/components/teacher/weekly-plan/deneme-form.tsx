@@ -40,7 +40,9 @@ function sectionLabel(sec: string | null | undefined): string {
   if (!sec) return "";
   if (sec === "lgs") return "LGS";
   if (sec === "tyt") return "TYT";
+  if (sec === "ayt_dil") return "YDT";
   if (sec.startsWith("ayt")) return "AYT";
+  if (sec === "okul") return "sınıf düzeyi";
   return "";
 }
 
@@ -68,6 +70,8 @@ export function DenemeForm({
   const create = target === "pool" ? createPool : createTask;
 
   const [kind, setKind] = React.useState<"brans" | "genel">("brans");
+  // Branş sınav düzeyi (LGS / N. Sınıf / TYT / AYT / YDT) — null = ilk uygun düzey.
+  const [levelKey, setLevelKey] = React.useState<string | null>(null);
   const [subjectId, setSubjectId] = React.useState<number | null>(null);
   // Birleşik branş (TYT Fen …) seçiliyse anahtarı; ders seçimini geçersiz kılar.
   const [groupKey, setGroupKey] = React.useState<string | null>(null);
@@ -79,11 +83,19 @@ export function DenemeForm({
   const [name, setName] = React.useState("");
 
   const data = q.data;
-  const subjects = data?.subjects ?? [];
+  const levels = data?.brans_levels ?? [];
+  // Seçili düzey: koçun seçtiği, yoksa kaynağı (deneme kitabı) olan ilk düzey, yoksa ilk.
+  const level =
+    levels.find((l) => l.key === levelKey) ??
+    levels.find((l) => l.subjects.some((s) => s.deneme_book_count > 0)) ??
+    levels[0] ??
+    null;
+  // Düzey listesi yoksa (eski sunucu / sınıfı bilinmeyen öğrenci) eski düz liste.
+  const subjects = level ? level.subjects : data?.subjects ?? [];
   const books = data?.books ?? [];
   const presets = data?.genel_presets ?? [];
   // Havuz kalemi derse bağlı olmak zorunda — birleşik branş yalnız programda.
-  const groups = target === "pool" ? [] : data?.brans_groups ?? [];
+  const groups = target === "pool" ? [] : level ? level.groups : data?.brans_groups ?? [];
   const templates = (data?.templates ?? []).filter((t) => target !== "pool" || !t.group_key);
   const group = kind === "brans" ? groups.find((g) => g.key === groupKey) ?? null : null;
 
@@ -232,6 +244,41 @@ export function DenemeForm({
           </button>
         ))}
       </div>
+
+      {kind === "brans" && levels.length > 1 ? (
+        <Field label="Sınav düzeyi">
+          <div role="radiogroup" aria-label="Sınav düzeyi" className="flex flex-wrap gap-1.5">
+            {levels.map((l) => {
+              const on = level?.key === l.key;
+              return (
+                <button
+                  key={l.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  title={l.hint}
+                  onClick={() => {
+                    setLevelKey(l.key);
+                    setSubjectId(null);
+                    setGroupKey(null);
+                    setSource(null);
+                    setQOverride(null);
+                  }}
+                  className={cn(
+                    "rounded-md border px-3 py-1 text-xs font-medium transition",
+                    on
+                      ? "border-cyan-700 bg-cyan-700 text-white"
+                      : "border-input text-foreground hover:bg-muted",
+                  )}
+                >
+                  {l.label}
+                </button>
+              );
+            })}
+          </div>
+          {level ? <p className="mt-1 text-[11px] text-muted-foreground">{level.hint}</p> : null}
+        </Field>
+      ) : null}
 
       <div className="grid grid-cols-1 @md:grid-cols-2 gap-3">
         {kind === "brans" ? (

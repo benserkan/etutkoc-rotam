@@ -52,9 +52,19 @@ export interface DenemeBransGroup {
   covers: string;
 }
 
+/** Branş denemesi sınav düzeyi (LGS · N. Sınıf · TYT · AYT · YDT) — 2026-11-08. */
+export interface DenemeBransLevel {
+  key: "lgs" | "sinif" | "tyt" | "ayt" | "ydt";
+  label: string;
+  hint: string;
+  subjects: DenemeSubjectOption[];
+  groups: DenemeBransGroup[];
+}
+
 export interface DenemeOptionsResponse {
   subjects: DenemeSubjectOption[];
   brans_groups?: DenemeBransGroup[];
+  brans_levels?: DenemeBransLevel[];
   books: DenemeBookOption[];
   genel_presets: DenemeGenelPreset[];
   templates: DenemeTemplate[];
@@ -139,6 +149,9 @@ export interface DenemeAnalysisSeries {
   key: string;
   label: string;
   kind: "genel" | "brans";
+  /** lgs | sinif | tyt | ayt | ydt */
+  level?: string;
+  level_label?: string;
   subject: string | null;
   section: string;
   count: number;
