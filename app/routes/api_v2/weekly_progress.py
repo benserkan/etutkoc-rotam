@@ -116,6 +116,57 @@ class WPAction(BaseModel):
     agenda: str
 
 
+class WPLastWeek(BaseModel):
+    """Haftanın 1. günü: geçen haftanın tam sonucu (13 başlık kartları, tam haftalar tabanı)."""
+    label: str
+    start: str
+    end: str
+    kind: str = "program"
+    cards: list[WPCard] = []
+
+
+class WPReliabilityItem(BaseModel):
+    key: str
+    tone: Literal["warn", "info", "ok"]
+    title: str
+    text: str
+    agenda: str | None = None
+
+
+class WPExamTrend(BaseModel):
+    series_label: str
+    count: int
+    last_net: float
+    last_date: str
+    prev_net: float | None = None
+    diff: float | None = None
+    slope: float | None = None
+    slope_window: int = 0
+    avg_last3: float
+    tone: Literal["warn", "info", "good"]
+    text: str
+
+
+class WPTargetCheck(BaseModel):
+    target_net: float
+    target_date: str | None = None
+    gap: float
+    weeks_left: int | None = None
+    per_week_needed: float | None = None
+    pace_per_week: float | None = None
+    realistic: bool | None = None
+    tone: Literal["warn", "info", "good"]
+    text: str
+    agenda: str | None = None
+
+
+class WPOverview(BaseModel):
+    """Genel sekmesinin üstü — yalnız koç görür."""
+    reliability: list[WPReliabilityItem] = []
+    exam: WPExamTrend | None = None
+    target: WPTargetCheck | None = None
+
+
 class WeeklyProgressResponse(BaseModel):
     has_program: bool
     week: WPWeek | None = None
@@ -128,6 +179,8 @@ class WeeklyProgressResponse(BaseModel):
     cards: list[WPCard] = []
     actions: list[WPAction] = []
     deneme: DenemeAnalysisResponse | None = None
+    last_week: WPLastWeek | None = None
+    overview: WPOverview | None = None
 
 
 @router.get("/students/{student_id}/weekly-progress", response_model=WeeklyProgressResponse)

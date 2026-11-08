@@ -86,6 +86,41 @@ export interface WeeklyProgressResponse {
   cards: WPCard[];
   actions: { key: string; title: string; why: string; cta_label: string; cta_href: string; agenda: string }[];
   deneme: DenemeAnalysisResponse | null;
+  /** Haftanın 1. günü (kıyas yok): geçen haftanın tam sonucu, aynı kartlar. */
+  last_week?: { label: string; start: string; end: string; kind?: string; cards: WPCard[] } | null;
+  /** Genel sekmesinin üstü — yalnız koç görür. */
+  overview?: WPOverview | null;
+}
+
+export type WPTone = "warn" | "info" | "ok" | "good";
+
+export interface WPOverview {
+  reliability: { key: string; tone: WPTone; title: string; text: string; agenda: string | null }[];
+  exam: {
+    series_label: string;
+    count: number;
+    last_net: number;
+    last_date: string;
+    prev_net: number | null;
+    diff: number | null;
+    slope: number | null;
+    slope_window: number;
+    avg_last3: number;
+    tone: WPTone;
+    text: string;
+  } | null;
+  target: {
+    target_net: number;
+    target_date: string | null;
+    gap: number;
+    weeks_left: number | null;
+    per_week_needed: number | null;
+    pace_per_week: number | null;
+    realistic: boolean | null;
+    tone: WPTone;
+    text: string;
+    agenda: string | null;
+  } | null;
 }
 
 export const weeklyProgressKeys = {

@@ -2,9 +2,9 @@
 
 /**
  * Öğrenci detayı · Genel sekmesi — haftalık ilerleme (2026-10-20 onaylı taslak).
- *   1 Bu hafta (görev uyumu + çözülen test, aynı güne kadar kıyas) + gün gün
- *   2 Haftalar arası gidişat (son 8 program haftası) · 3 Önerilen önlemler
- *   4 13 başlık kartları (cetvel: gri nokta = geçmiş hafta) · 5 Deneme analizi (D4)
+ *   1 Özet (yalnız koç): veri güvenilirliği · deneme gidişatı · hedef gerçekçiliği (2026-11-09)
+ *   2 Önerilen önlemler · 3 Bu hafta (aynı güne kadar kıyas; 1. günde geçen hafta) + gün gün
+ *   4 Haftalar arası gidişat · 5 13 başlık (1. günde geçen hafta) · 6 Deneme analizi (D4)
  * Veri: GET /teacher/students/{id}/weekly-progress (app/services/weekly_progress.py).
  */
 import * as React from "react";
@@ -294,25 +294,197 @@ function DayCard({ d, usualStart, isPeriod }: { d: WPDay; usualStart: string; is
   );
 }
 
+// ---------------------------------------------------------------- 1 ÖZET (yalnız koç)
+
+const TONE_BOX: Record<string, { box: string; chip: string; label: string }> = {
+  warn: { box: "border-amber-300 bg-amber-50", chip: "bg-amber-600 text-white", label: "Dikkat" },
+  info: { box: "border-border bg-card", chip: "bg-slate-200 text-slate-800", label: "Bilgi" },
+  ok: { box: "border-border bg-card", chip: "bg-emerald-700 text-white", label: "Yolunda" },
+  good: { box: "border-border bg-card", chip: "bg-emerald-700 text-white", label: "Yolunda" },
+};
+
+function OverviewItem({
+  tone,
+  title,
+  text,
+  agenda,
+  agendaKey,
+  studentId,
+  link,
+}: {
+  tone: string;
+  title: string;
+  text: string;
+  agenda?: string | null;
+  agendaKey: string;
+  studentId: number;
+  link?: { href: string; label: string };
+}) {
+  const add = useAddAgendaItems(studentId);
+  const t = TONE_BOX[tone] ?? TONE_BOX.info;
+  return (
+    <div className={cn("flex flex-col gap-2 rounded-xl border p-3.5", t.box)}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <span className="text-sm font-bold leading-snug text-slate-900">{title}</span>
+        <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold", t.chip)}>{t.label}</span>
+      </div>
+      <p className="text-[13px] leading-relaxed text-slate-800">{text}</p>
+      {(agenda || link) && (
+        <div className="flex flex-wrap gap-2">
+          {link && (
+            <Button asChild size="sm" variant="outline">
+              <Link href={link.href}>
+                {link.label} <ArrowRight className="size-3.5" aria-hidden />
+              </Link>
+            </Button>
+          )}
+          {agenda && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={add.isPending}
+              onClick={() => add.mutate([{ text: agenda, key: `ov:${agendaKey}`, source: "weekly" }])}
+            >
+              <Plus className="size-3.5" aria-hidden /> Seansa ekle
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Overview({ data, studentId }: { data: WeeklyProgressResponse; studentId: number }) {
+  const ov = data.overview;
+  if (!ov) return null;
+  const rows: { label: string; desc: string; body: React.ReactNode }[] = [
+    {
+      label: "Veri güvenilirliği",
+      desc: "İşaretleme düzeni ve doğru/yanlış girme",
+      body:
+        ov.reliability.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Son iki haftada değerlendirecek kadar işaretleme yok.</p>
+        ) : (
+          ov.reliability.map((r) => (
+            <OverviewItem
+              key={r.key}
+              tone={r.tone}
+              title={r.title}
+              text={r.text}
+              agenda={r.agenda}
+              agendaKey={r.key}
+              studentId={studentId}
+              link={r.key === "results" && r.tone === "warn" ? { href: `/teacher/students/${studentId}#topics`, label: "Konu performansı" } : undefined}
+            />
+          ))
+        ),
+    },
+    {
+      label: "Deneme gidişatı",
+      desc: ov.exam ? `${ov.exam.series_label} · ${ov.exam.count} deneme` : "Genel deneme",
+      body: ov.exam ? (
+        <OverviewItem
+          tone={ov.exam.tone}
+          title={
+            ov.exam.tone === "warn"
+              ? "Eğilim aşağı"
+              : ov.exam.tone === "good"
+                ? "Eğilim yukarı"
+                : "Deneme netleri"
+          }
+          text={ov.exam.text}
+          agendaKey="exam"
+          studentId={studentId}
+          link={{ href: `/teacher/students/${studentId}#report`, label: "Gelişim raporu" }}
+        />
+      ) : (
+        <p className="text-sm text-muted-foreground">Henüz genel deneme sonucu yok.</p>
+      ),
+    },
+    {
+      label: "Hedef",
+      desc: "Hedef nete gereken tempo ile gerçek tempo",
+      body: ov.target ? (
+        <OverviewItem
+          tone={ov.target.tone}
+          title={
+            ov.target.realistic === false
+              ? "Hedef tarihi gerçekçi değil"
+              : ov.target.tone === "good"
+                ? "Hedefe doğru gidiyor"
+                : "Hedefe uzaklık"
+          }
+          text={ov.target.text}
+          agenda={ov.target.agenda}
+          agendaKey="target"
+          studentId={studentId}
+          link={{ href: `/teacher/students/${studentId}#exams`, label: "Hedefi düzenle" }}
+        />
+      ) : (
+        <OverviewItem
+          tone="info"
+          title="Hedef net belirlenmemiş"
+          text="Hedef net ve tarih girilince gereken haftalık artış ile gerçek tempo burada kıyaslanır."
+          agendaKey="target"
+          studentId={studentId}
+          link={{ href: `/teacher/students/${studentId}#exams`, label: "Hedef belirle" }}
+        />
+      ),
+    },
+  ];
+  return (
+    <Zone
+      no={1}
+      eyebrow="ÖZET"
+      tone="violet"
+      title="Önce bunlara bak"
+      desc="Verinin ne kadar güvenilir olduğu, deneme gidişatı ve hedefin gerçekçiliği. Bu bölümü yalnız sen görürsün; öğrenci ve veli görmez."
+    >
+      <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
+        {rows.map((r) => (
+          <div key={r.label} className="grid gap-3 p-4 md:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-extrabold">{r.label}</span>
+              <span className="text-xs text-muted-foreground">{r.desc}</span>
+            </div>
+            <div className="flex min-w-0 flex-col gap-2.5">{r.body}</div>
+          </div>
+        ))}
+      </div>
+    </Zone>
+  );
+}
+
+// ---------------------------------------------------------------- 3 BU HAFTA
+
 function ThisWeek({ data, studentId }: { data: WeeklyProgressResponse; studentId: number }) {
   const w = data.week!;
   const pr = data.projection;
-  const g = data.headline.gorev_pct;
-  const t = data.headline.test_done;
+  const lw = data.last_week ?? null;
+  const lwBy = lw ? Object.fromEntries(lw.cards.map((c) => [c.key, c])) : null;
+  const g = lwBy?.gorev_pct ?? data.headline.gorev_pct;
+  const t = lwBy?.test_done ?? data.headline.test_done;
   const isPeriod = w.kind === "donem";
-  const span =
-    w.compare_days > 0
+  const span = lw
+    ? `geçen ${isPeriod ? "dönem" : "hafta"} · ${lw.label}`
+    : w.compare_days > 0
       ? `${data.days[0]?.day}–${data.days[Math.max(0, w.compare_days - 1)]?.day}`
       : "henüz geçen gün yok";
   return (
     <Zone
-      no={1}
+      no={3}
       eyebrow={isPeriod ? "BU DÖNEM" : "BU HAFTA"}
       tone="cyan"
       title={isPeriod ? "Bu dönem nasıl gidiyor?" : "Bu hafta nasıl gidiyor?"}
       desc={
         <>
-          {w.ended ? (
+          {lw ? (
+            <>
+              Bugün {isPeriod ? "dönemin" : "haftanın"} ilk günü; bu {isPeriod ? "dönemin" : "haftanın"} kıyası ilk
+              gün bitince başlar. Aşağıdaki iki kart geçen {isPeriod ? "dönemin" : "haftanın"} ({lw.label}) tam
+              sonucunu gösterir.
+            </>
+          ) : w.ended ? (
             <>
               Son {isPeriod ? "havuz dönemi" : "program haftası"} ({w.label}) bitti; aktif{" "}
               {isPeriod ? "dönem" : "program"} yok. Aşağıdakiler {isPeriod ? "o dönemin" : "o haftanın"} tamamı.
@@ -338,8 +510,8 @@ function ThisWeek({ data, studentId }: { data: WeeklyProgressResponse; studentId
       }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <HeadlineCard card={g} title="GÖREV UYUMU" sub={`${span}`} />
-        <HeadlineCard card={t} title="ÇÖZÜLEN TEST" sub={`${span}`} />
+        <HeadlineCard card={g} title={lw ? "GEÇEN HAFTA · GÖREV UYUMU" : "GÖREV UYUMU"} sub={`${span}`} />
+        <HeadlineCard card={t} title={lw ? "GEÇEN HAFTA · ÇÖZÜLEN TEST" : "ÇÖZÜLEN TEST"} sub={`${span}`} />
         <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-card p-4">
           <div className="text-[13px] font-bold tracking-wide">BÖYLE GİDERSE</div>
           {pr && pr.projected_pct != null && pr.band_low != null && pr.band_high != null ? (
@@ -410,7 +582,7 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
   const pos = (v: number) => Math.max(0, Math.min(100, (100 * (v - floor)) / (100 - floor || 1)));
   return (
     <Zone
-      no={2}
+      no={4}
       eyebrow="GİDİŞAT"
       tone="indigo"
       title="Haftalar arası gidişat"
@@ -518,13 +690,12 @@ function Actions({ data, studentId }: { data: WeeklyProgressResponse; studentId:
   const add = useAddAgendaItems(studentId);
   return (
     <Zone
-      no={3}
+      no={2}
       eyebrow="ÖNLEMLER"
       tone="amber"
       title="Önerilen önlemler"
       desc="Her öneri bir ölçüme dayanır; karar senin."
-      className="min-w-0 flex-[1_1_340px]"
-    >
+      >
       {data.actions.length === 0 ? (
         <p className="rounded-xl border border-amber-200 bg-card p-4 text-sm text-muted-foreground">
           Bu hafta öne çıkan bir sorun yok.
@@ -597,13 +768,21 @@ const GROUP_TONE: Record<string, { head: string; line: string }> = {
 };
 
 function Metrics({ data }: { data: WeeklyProgressResponse }) {
+  const lw = data.last_week ?? null;
+  // 1. gün: ölçülen kartlar geçen haftanın tam sonucu; bilgi kartları (deneme, arşiv, denge, talep) güncel kalır.
+  const lwKeys = new Set(lw?.cards.map((c) => c.key) ?? []);
+  const shown = lw ? [...lw.cards, ...data.cards.filter((c) => !lwKeys.has(c.key))] : data.cards;
   return (
     <Zone
-      no={4}
+      no={5}
       eyebrow="13 BAŞLIK"
       tone="slate"
-      title="Bu hafta, öğrencinin kendi normaline göre"
-      desc="Her kart, öğrencinin geçmiş program haftalarının aynı noktasıyla kıyaslanır."
+      title={lw ? `Geçen hafta (${lw.label}), öğrencinin kendi normaline göre` : "Bu hafta, öğrencinin kendi normaline göre"}
+      desc={
+        lw
+          ? "Bugün haftanın ilk günü; bu haftanın kıyası ilk gün bitince başlar. Kartlar geçen haftanın tam sonucunu, öğrencinin geçmiş tam haftalarıyla kıyaslar."
+          : "Her kart, öğrencinin geçmiş program haftalarının aynı noktasıyla kıyaslanır."
+      }
     >
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-slate-50 px-3.5 py-2.5 text-xs">
         <b>Cetveller nasıl okunur?</b>
@@ -617,15 +796,15 @@ function Metrics({ data }: { data: WeeklyProgressResponse }) {
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-4 w-1 rounded bg-foreground" />
-          bu hafta
+          {lw ? "geçen hafta" : "bu hafta"}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="size-3 rounded-full border-2 border-slate-700" />
-          geçen hafta
+          {lw ? "önceki hafta" : "geçen hafta"}
         </span>
       </div>
       {data.groups.map((g) => {
-        const cards = data.cards.filter((c) => c.group === g.key);
+        const cards = shown.filter((c) => c.group === g.key);
         if (cards.length === 0) return null;
         const t = GROUP_TONE[g.key];
         return (
@@ -752,7 +931,7 @@ function Deneme({ data, studentId }: { data: WeeklyProgressResponse; studentId: 
   const genel = (dn?.series ?? []).filter((s) => s.kind === "genel");
   return (
     <Zone
-      no={5}
+      no={6}
       eyebrow="DENEMELER"
       tone="violet"
       title="Deneme analizi"
@@ -820,11 +999,10 @@ export function StudentWeeklyProgress({ studentId }: { studentId: number }) {
   }
   return (
     <div className="flex flex-col gap-10" data-section="student:weekly-progress">
+      <Overview data={data} studentId={studentId} />
+      <Actions data={data} studentId={studentId} />
       <ThisWeek data={data} studentId={studentId} />
-      <div className="flex flex-wrap items-stretch gap-7">
-        <Trend data={data} />
-        <Actions data={data} studentId={studentId} />
-      </div>
+      <Trend data={data} />
       <Metrics data={data} />
       <Deneme data={data} studentId={studentId} />
     </div>

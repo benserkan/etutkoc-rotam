@@ -432,52 +432,71 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
             days=min(k if k > 0 else prev_w.days, prev_w.days) - 1))
 
     # ----- kartlar
-    cards: list[dict] = []
-    for key, name, hint, group, direction, unit in METRICS:
-        cv = cur_m.get(key)
-        base = [m[key] for m in base_ms if m.get(key) is not None]
-        status, lo, hi = _status(cv, base, direction)
-        # Haftanın ilk günü (k=0): henüz geçen gün yok → "aynı nokta" geçmiş haftaların 0. günü,
-        # yani kıyaslanacak bir şey yok. Tam haftalarla kıyaslamak sahte "geçmişin en kötüsü" üretir.
-        no_compare = not ended and k == 0 and key != "load"
-        if no_compare:
-            status, lo, hi = "insufficient", None, None
-        # Kırpılmış (mod geçişi) ya da kısa haftalar eğilim dizisine girmez: 3 günlük parça tam
-        # haftayla kıyaslanınca sahte "kötüleşme" üretir.
-        full_series = [m[key] for w, m in full_ms
-                       if m.get(key) is not None and not w.cut and w.days >= MIN_WEEK_DAYS]
-        run = _decline_run(full_series, direction) if direction != 0 else 0
-        pv = prev_m.get(key) if prev_m else None
-        card = {
-            "key": key, "name": name, "hint": hint, "group": group, "unit": unit, "direction": direction,
-            "value": cv, "value_label": _fmt(cv, unit), "prev": pv, "prev_label": _fmt(pv, unit),
-            "status": status, "low": lo, "high": hi, "baseline": base,
-            "trend_run": run, "trend": run >= TREND_RUN,
-            "verdict": ("Bu hafta henüz geçen gün yok; kıyas ilk gün bittiğinde başlar."
-                        if no_compare else _verdict(key, cv, lo, hi, pv, status, unit)),
-        }
-        if no_compare:
-            card["baseline"] = []
-        if key == "accuracy_pct":
-            wr, td = cur_m["result_coverage"]
-            card["hint"] = f"Doğru ÷ (doğru + yanlış). Sonuç girilen {wr} / {td} testten."
-        if key == "load":
-            card["hint"] = hint
-            card["value_label"] = f"{cv} görev"
-            if cur.kind == "donem":
-                card["hint"] = "Bu dönem havuza yazdığın toplam birim (test; etkinlik 1 birim)."
-                card["value_label"] = f"{cv} birim"
-        if cur.kind == "donem" and key == "gorev_pct":
-            card["name"] = "Havuz tamamlama"
-            card["hint"] = ("Yapılan ÷ havuzdaki birim (test), bugüne kadarki günler. Havuzda görev "
-                            "yalnız kaba alınınca oluştuğu için görev sayısı yerine birim ölçülür.")
-        if cur.kind == "donem" and key == "empty_days":
-            card["hint"] = "Dönem içinde hiçbir işaret atılmayan gün (kap kurulmadıysa da sayılır)."
-        if run >= TREND_RUN and status in ("normal", "above", "insufficient"):
-            tail = full_series[-(run + 1):]
-            card["verdict"] += " " + f"Son {run} haftadır her hafta kötüleşiyor (" + \
-                " → ".join(_fmt(v, unit) for v in tail) + ")."
-        cards.append(card)
+    def metric_cards(c_m: dict, b_ms: list[dict], p_m: dict | None, no_cmp: bool,
+                     series_ms: list) -> list[dict]:
+        out_cards: list[dict] = []
+        for key, name, hint, group, direction, unit in METRICS:
+            cv = c_m.get(key)
+            base = [m[key] for m in b_ms if m.get(key) is not None]
+            status, lo, hi = _status(cv, base, direction)
+            # Haftanın ilk günü (k=0): henüz geçen gün yok → "aynı nokta" geçmiş haftaların 0. günü,
+            # yani kıyaslanacak bir şey yok. Tam haftalarla kıyaslamak sahte "geçmişin en kötüsü" üretir.
+            no_compare = no_cmp and key != "load"
+            if no_compare:
+                status, lo, hi = "insufficient", None, None
+            # Kırpılmış (mod geçişi) ya da kısa haftalar eğilim dizisine girmez: 3 günlük parça tam
+            # haftayla kıyaslanınca sahte "kötüleşme" üretir.
+            full_series = [m[key] for w, m in series_ms
+                           if m.get(key) is not None and not w.cut and w.days >= MIN_WEEK_DAYS]
+            run = _decline_run(full_series, direction) if direction != 0 else 0
+            pv = p_m.get(key) if p_m else None
+            card = {
+                "key": key, "name": name, "hint": hint, "group": group, "unit": unit, "direction": direction,
+                "value": cv, "value_label": _fmt(cv, unit), "prev": pv, "prev_label": _fmt(pv, unit),
+                "status": status, "low": lo, "high": hi, "baseline": base,
+                "trend_run": run, "trend": run >= TREND_RUN,
+                "verdict": ("Bu hafta henüz geçen gün yok; kıyas ilk gün bittiğinde başlar."
+                            if no_compare else _verdict(key, cv, lo, hi, pv, status, unit)),
+            }
+            if no_compare:
+                card["baseline"] = []
+            if key == "accuracy_pct":
+                wr, td = c_m["result_coverage"]
+                card["hint"] = f"Doğru ÷ (doğru + yanlış). Sonuç girilen {wr} / {td} testten."
+            if key == "load":
+                card["hint"] = hint
+                card["value_label"] = f"{cv} görev"
+                if cur.kind == "donem":
+                    card["hint"] = "Bu dönem havuza yazdığın toplam birim (test; etkinlik 1 birim)."
+                    card["value_label"] = f"{cv} birim"
+            if cur.kind == "donem" and key == "gorev_pct":
+                card["name"] = "Havuz tamamlama"
+                card["hint"] = ("Yapılan ÷ havuzdaki birim (test), bugüne kadarki günler. Havuzda görev "
+                                "yalnız kaba alınınca oluştuğu için görev sayısı yerine birim ölçülür.")
+            if cur.kind == "donem" and key == "empty_days":
+                card["hint"] = "Dönem içinde hiçbir işaret atılmayan gün (kap kurulmadıysa da sayılır)."
+            if run >= TREND_RUN and status in ("normal", "above", "insufficient"):
+                tail = full_series[-(run + 1):]
+                card["verdict"] += " " + f"Son {run} haftadır her hafta kötüleşiyor (" + \
+                    " → ".join(_fmt(v, unit) for v in tail) + ")."
+            out_cards.append(card)
+        return out_cards
+
+    cards: list[dict] = metric_cards(cur_m, base_ms, prev_m, not ended and k == 0, full_ms)
+
+    # Haftanın 1. günü kıyas yok → geçen haftanın TAM sonucu, aynı kurallarla (tam haftalar tabanı).
+    last_week = None
+    if not ended and k == 0 and prev_w is not None:
+        lw_m = next((m for w, m in full_ms if w is prev_w), None)
+        if lw_m is not None:
+            lw_base = [m for w, m in full_ms if w in baseline and w is not prev_w]
+            before = (history[-2] if len(history) >= 2 and (prev_w.start - history[-2].end).days <= 7
+                      else None)
+            before_m = next((m for w, m in full_ms if w is before), None) if before else None
+            lw_cards = metric_cards(lw_m, lw_base, before_m, False, full_ms)
+            _reword(lw_cards, [], ended=True, period=prev_w.kind == "donem")
+            last_week = {"label": prev_w.label, "start": prev_w.start.isoformat(),
+                         "end": prev_w.end.isoformat(), "kind": prev_w.kind, "cards": lw_cards}
 
     # Ders dengesi (son 3 tam hafta + bu hafta)
     recent = [w for w in history if w.end >= cur.start - timedelta(days=28)][-3:]
@@ -625,7 +644,11 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
 
     from app.services.deneme_analysis import build_deneme_analysis
     deneme = build_deneme_analysis(db, student, today=today)
-    actions = _actions(student, cards, days, balance, projection, week_info, deneme)
+    from app.services.development_report import _program_deneme_stats
+    from app.services.student_overview import build_overview
+    actions = _actions(student, cards, days, balance, projection, week_info, deneme,
+                       brans=_program_deneme_stats(db, student.id, today)["brans"])
+    overview = build_overview(db, student, today)
     if ended or cur.kind == "donem":
         _reword(cards, actions, ended=ended, period=cur.kind == "donem")
     groups = [{"key": g, "name": n, "desc": d} for g, n, d in GROUPS]
@@ -634,7 +657,7 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
         "has_program": True, "week": week_info, "headline": headline, "projection": projection,
         "days": days, "chart": chart, "period_summary": summary, "groups": groups,
         "cards": cards, "actions": actions, "deneme": deneme,
-        "weeks_table": weeks_table,
+        "weeks_table": weeks_table, "last_week": last_week, "overview": overview,
     }
 
 
@@ -758,7 +781,8 @@ def _extra_cards(db: Session, student: User, cur: Week, k: int, ended: bool, pre
 
 
 def _actions(student: User, cards: list[dict], days: list[dict], balance: dict | None,
-             projection: dict, week: dict, deneme: dict | None = None) -> list[dict]:
+             projection: dict, week: dict, deneme: dict | None = None,
+             brans: dict | None = None) -> list[dict]:
     by = {c["key"]: c for c in cards}
     sid = student.id
     week_href = (f"/teacher/students/{sid}/pool" if week.get("kind") == "donem"
@@ -825,6 +849,23 @@ def _actions(student: User, cards: list[dict], days: list[dict], balance: dict |
             "why": f"Doğruluk bu hafta {acc['value_label']} (genelde %{round(acc['low'])}–{round(acc['high'])}).",
             "cta_label": "Konu performansını aç", "cta_href": f"/teacher/students/{sid}#topics",
             "agenda": "Doğruluk düştü: hangi konularda zorlanıyor?",
+        })
+    # 5b. Branş denemelerinden kaçınma / sonucunu girmeme (son 4 hafta; Gelişim Raporu ile aynı ölçü)
+    b = brans or {}
+    if b.get("given", 0) >= 2 and b.get("solved", 0) < b["given"] / 2:
+        out.append({
+            "key": "brans", "title": "Branş denemelerini konuş",
+            "why": (f"Son 4 haftada programa {b['given']} branş denemesi kondu, {b['solved']} tanesi çözüldü"
+                    + (f", {b['result']} tanesinin sonucu girildi." if b.get("solved") else ".")),
+            "cta_label": "Branş denemeleri", "cta_href": f"/teacher/students/{sid}#program-exams",
+            "agenda": "Branş denemeleri neden çözülmüyor? Süre/zorluk mu, kaynak mı — birlikte planla.",
+        })
+    elif b.get("solved", 0) >= 2 and b.get("result", 0) < b["solved"] / 2:
+        out.append({
+            "key": "brans", "title": "Branş denemesi sonuçlarını girmesini iste",
+            "why": f"Çözülen {b['solved']} branş denemesinin {b['result']} tanesinde doğru/yanlış girildi.",
+            "cta_label": "Branş denemeleri", "cta_href": f"/teacher/students/{sid}#program-exams",
+            "agenda": "Branş denemesi sonuçlarını girmesini iste — ders bazlı gidişat ancak böyle izlenir.",
         })
     # 6. Program denemesi işaretleri (D4): üst üste düşüş / test–deneme farkı
     series = {s_["key"]: s_ for s_ in (deneme or {}).get("series", [])}

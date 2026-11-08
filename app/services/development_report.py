@@ -368,8 +368,20 @@ def build_development_report(db: Session, student: User, *, series: str | None =
                            f"Son 4 tam haftada uyum haftada ortalama {_num(abs(proj['slope_per_week']), 1)} puan azalıyor.",
                            priority=1, cta_label="Haftalık programı aç", cta_href=week_href))
 
-    # veri kalitesi riskleri
-    if tests_done >= COVERAGE_MIN_TESTS and (coverage or 0) < COVERAGE_LOW * 100:
+    # veri kalitesi riskleri — Genel sekmesinin "Veri güvenilirliği" satırıyla AYNI ölçü ve metin
+    rel = {i["key"]: i for i in ((wp.get("overview") or {}).get("reliability") or [])} if has_program else {}
+    if "bulk" in rel:
+        risks.append(_item(
+            "data:bulk", "warn", rel["bulk"]["title"], rel["bulk"]["text"],
+            agenda=rel["bulk"]["agenda"], priority=1,
+            cta_label="Haftalık programı aç", cta_href=week_href))
+    if "results" in rel:
+        if rel["results"]["tone"] == "warn":
+            risks.append(_item(
+                "data:results", "warn", "Doğru/yanlış/boş girilmiyor", rel["results"]["text"],
+                agenda=rel["results"]["agenda"],
+                priority=1, cta_label="Konu performansı", cta_href=f"/teacher/students/{sid}#topics"))
+    elif tests_done >= COVERAGE_MIN_TESTS and (coverage or 0) < COVERAGE_LOW * 100:
         risks.append(_item(
             "data:results", "warn", "Doğru/yanlış/boş girilmiyor",
             f"Son 4 haftada işaretlenen {tests_done} test görevinin yalnız {tests_res} tanesinde doğru/yanlış girildi (%{coverage or 0}). "
@@ -398,6 +410,8 @@ def build_development_report(db: Session, student: User, *, series: str | None =
     actions: list[dict] = []
     wk_prio = {"carry": 1, "avoid": 1, "load": 2, "rhythm": 2, "accuracy": 2}
     for a in wp.get("actions", []) if has_program else []:
+        if a["key"] == "brans":
+            continue  # branş denemesi raporda veri kalitesi riski olarak zaten var (act:data:brans)
         if a["key"] == "carry" and week and week["ended"]:
             n = a["title"].split()[1] if a["title"].startswith("Kalan ") else ""
             a = {**a, "title": f"Geçen haftadan kalan {n} görevi yeni haftaya devret".replace("  ", " "),
