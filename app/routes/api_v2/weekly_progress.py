@@ -27,6 +27,8 @@ class WPWeek(BaseModel):
     today_label: str
     compare_days: int
     usual_start: str
+    marks_next_day: bool = False
+    next_day_mark_time: str | None = None
 
 
 class WPCard(BaseModel):
