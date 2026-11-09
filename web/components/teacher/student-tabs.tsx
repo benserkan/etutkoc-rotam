@@ -194,6 +194,13 @@ export function StudentTabs({ studentId, initial }: Props) {
   const rawActive = useHashTab();
   const active: TabKey = rawActive === "program-exams" ? "exams" : rawActive;
   const qc = useQueryClient();
+  // Sayfanın aşağısındaki bir bağlantıyla sekme değişince yeni içerik ekranın dışında kalmasın.
+  const prevTab = React.useRef(rawActive);
+  React.useEffect(() => {
+    if (prevTab.current === rawActive) return;
+    prevTab.current = rawActive;
+    if (window.scrollY > 300) window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [rawActive]);
 
   function selectTab(key: TabKey) {
     if (typeof window !== "undefined") {
@@ -1363,9 +1370,35 @@ function AnchorEditForm({
 // Yardımcı: hash tab + tarih
 // =============================================================================
 
+// Next.js <Link href="/teacher/students/1#exams"> aynı sayfada adresi history.pushState ile
+// değiştirir; tarayıcı bu durumda "hashchange" ATMAZ → sekme açılmıyor, ikinci tıklamada
+// açılıyordu (2026-11-09, "Branş denemeleri" önlem düğmesi). pushState/replaceState bir kez
+// sarılır ve "locationchange" olayı atılır; sekme dinleyicisi onu da dinler.
+const LOCATION_EVENT = "rotam:locationchange";
+
+function patchHistoryOnce() {
+  const w = window as Window & { __rotamHistoryPatched?: boolean };
+  if (w.__rotamHistoryPatched) return;
+  w.__rotamHistoryPatched = true;
+  for (const name of ["pushState", "replaceState"] as const) {
+    const orig = window.history[name].bind(window.history);
+    window.history[name] = (...args: Parameters<History["pushState"]>) => {
+      orig(...args);
+      window.dispatchEvent(new Event(LOCATION_EVENT));
+    };
+  }
+}
+
 function subscribeHash(callback: () => void): () => void {
+  patchHistoryOnce();
   window.addEventListener("hashchange", callback);
-  return () => window.removeEventListener("hashchange", callback);
+  window.addEventListener("popstate", callback);
+  window.addEventListener(LOCATION_EVENT, callback);
+  return () => {
+    window.removeEventListener("hashchange", callback);
+    window.removeEventListener("popstate", callback);
+    window.removeEventListener(LOCATION_EVENT, callback);
+  };
 }
 
 function getHashTab(): TabKey {
