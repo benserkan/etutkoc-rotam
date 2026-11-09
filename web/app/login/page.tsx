@@ -17,6 +17,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Giriş",
+  // ?returnUrl=... kopyaları tek adrese toplansın (Search Console "kopya")
+  alternates: { canonical: "/login" },
 };
 
 interface TurnstileConfig {

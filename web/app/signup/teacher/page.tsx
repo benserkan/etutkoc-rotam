@@ -17,7 +17,11 @@ import { SignupTeacherForm } from "./signup-teacher-form";
  */
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Öğretmen Kaydı" };
+export const metadata = {
+  title: "Öğretmen Kaydı",
+  // ?plan=... kopyaları tek adrese toplansın (Search Console "kopya")
+  alternates: { canonical: "/signup/teacher" },
+};
 
 interface TurnstileConfig {
   enabled: boolean;
