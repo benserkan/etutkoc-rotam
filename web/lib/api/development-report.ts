@@ -93,7 +93,7 @@ export interface DRDay {
   date: string;
   day: string;
   label: string;
-  state: "future" | "today" | "none" | "done" | "partial" | "missed";
+  state: "future" | "today" | "pending" | "none" | "done" | "partial" | "missed";
   total: number;
   done: number;
   missing: { title: string; tests: number | null }[];

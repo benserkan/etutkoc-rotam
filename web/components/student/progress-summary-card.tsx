@@ -20,6 +20,7 @@ const DAY_CLS: Record<WPDay["state"], string> = {
   partial: "bg-amber-400 text-amber-950",
   missed: "bg-rose-600 text-white",
   today: "bg-cyan-700 text-white ring-2 ring-cyan-300",
+  pending: "border border-dashed border-amber-400 bg-amber-50 text-amber-900",
   future: "bg-muted text-muted-foreground",
   none: "border border-dashed border-border text-muted-foreground",
 };

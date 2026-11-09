@@ -198,7 +198,7 @@ def exam_overview(db: Session, student: User, today: date) -> dict:
             pace_txt = ("hesaplanamıyor" if pace is None else f"haftada {_sgn(pace)}{num(abs(pace))} net")
             realistic = pace is not None and pace >= need
             t_tone = "good" if realistic else "warn"
-            txt_t = (f"{head} → {num(gap)} net açık; {weeks_left} haftada haftada +{num(need)} net gerekiyor. "
+            txt_t = (f"{head} → {num(gap)} net açık; {weeks_left} hafta kaldı, haftada +{num(need)} net artış gerekiyor. "
                      f"Son denemelerin temposu {pace_txt}.")
             txt_t += (" Bu tempoyla hedef tutar." if realistic else
                       " Bu tarih gerçekçi görünmüyor; hedefi ya da tarihi öğrenciyle birlikte gözden geçir.")

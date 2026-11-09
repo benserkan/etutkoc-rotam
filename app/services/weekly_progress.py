@@ -349,6 +349,16 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
 
     # Aynı noktaya kadar: geçen gün sayısı (bugün sayılmaz)
     k = cur.days if ended else (today - cur.start).days
+    # Ertesi gün işaretleyen öğrenci: olağan işaretleme saati gelmeden dün "bitmiş gün" sayılmaz
+    # (yoksa her sabah sahte "%0 · geçmişin en kötüsü" ve "kalan görevi dağıt" çıkar).
+    from app.services.analytics import _tr_now, next_day_marking
+    nextday, nextday_min, _nn = next_day_marking(db, student.id, today)
+    _now = _tr_now()
+    awaiting: date | None = None
+    if nextday and _now.date() == today and _now.hour * 60 + _now.minute < nextday_min:
+        awaiting = today - timedelta(days=1)
+        if not ended and k > 0 and awaiting >= cur.start:
+            k -= 1
     period = grade_period_service.current_period(db, student.id)
     period_start = period.started_on if period is not None else None
     first_ids = {w.program_id for w in weeks[:ONBOARDING_WEEKS]}
@@ -598,8 +608,6 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
 
     # ----- gün gün
     usual_min, _n = usual_first_tick(db, student.id, today)
-    from app.services.analytics import next_day_marking
-    nextday, nextday_min, _nn = next_day_marking(db, student.id, today)
     weeks_table = []
     if full_history:
         for w in history:
@@ -618,6 +626,8 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
             state = "future"
         elif d == today and not ended:
             state = "today"
+        elif d == awaiting and ts and len(done) < len(ts):
+            state = "pending"
         elif not ts:
             state = "none"
         elif len(done) == len(ts):
@@ -639,6 +649,7 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
         "days": cur.days, "ended": ended, "today_label": DAY_SHORT[today.weekday()],
         "compare_days": k, "usual_start": f"{usual_min // 60:02d}:{usual_min % 60:02d}",
         "marks_next_day": nextday,
+        "awaiting_mark": awaiting.isoformat() if awaiting else None,
         "next_day_mark_time": (f"{nextday_min // 60:02d}:{nextday_min % 60:02d}" if nextday else None),
     }
 

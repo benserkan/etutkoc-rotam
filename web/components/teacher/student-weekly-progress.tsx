@@ -223,13 +223,24 @@ function HeadlineCard({ card, title, sub }: { card: WPCard | undefined; title: s
   );
 }
 
-function DayCard({ d, usualStart, isPeriod }: { d: WPDay; usualStart: string; isPeriod: boolean }) {
+function DayCard({
+  d,
+  usualStart,
+  isPeriod,
+  markTime,
+}: {
+  d: WPDay;
+  usualStart: string;
+  isPeriod: boolean;
+  markTime?: string | null;
+}) {
   const [open, setOpen] = React.useState(false);
   const tone = {
     done: "border-sky-200 bg-sky-50",
     partial: "border-orange-300 bg-orange-50",
     missed: "border-rose-300 bg-rose-50",
     today: "border-2 border-cyan-700 bg-card",
+    pending: "border-dashed border-amber-400 bg-amber-50",
     future: "border-dashed border-slate-300 bg-card",
     none: "border-dashed border-slate-300 bg-card",
   }[d.state];
@@ -238,7 +249,9 @@ function DayCard({ d, usualStart, isPeriod }: { d: WPDay; usualStart: string; is
   const note =
     d.state === "today"
       ? usualStart
-      : d.state === "future"
+      : d.state === "pending"
+        ? `İşaretleme bekleniyor${markTime ? ` (genelde ${markTime} civarı)` : ""}`
+        : d.state === "future"
         ? "görev planlı"
         : d.state === "none"
           ? isPeriod ? "kap boş" : "program yok"
@@ -248,7 +261,13 @@ function DayCard({ d, usualStart, isPeriod }: { d: WPDay; usualStart: string; is
               ? `Gününde · ${d.first_tick}`
               : "Tamamlandı";
   const popTitle =
-    d.state === "today" ? "Bugünün görevleri (gün sürüyor)" : d.state === "future" ? "Planlı görevler" : `Yapılmayan ${d.missing.length} görev`;
+    d.state === "today"
+      ? "Bugünün görevleri (gün sürüyor)"
+      : d.state === "future"
+        ? "Planlı görevler"
+        : d.state === "pending"
+          ? "Henüz işaretlenmemiş görevler"
+          : `Yapılmayan ${d.missing.length} görev`;
   const hasPop = d.missing.length > 0;
   return (
     <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
@@ -563,7 +582,7 @@ function ThisWeek({ data, studentId }: { data: WeeklyProgressResponse; studentId
               w.marks_next_day && w.next_day_mark_time
                 ? `Genelde ertesi gün ${w.next_day_mark_time} civarı işaretler`
                 : `Olağan başlama ${w.usual_start}`
-            } isPeriod={isPeriod} />
+            } isPeriod={isPeriod} markTime={w.next_day_mark_time} />
           ))}
         </div>
       </div>

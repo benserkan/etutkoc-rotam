@@ -262,6 +262,7 @@ const DAY_STATE: Record<WPDay["state"], { cls: string; label: string }> = {
   partial: { cls: "bg-amber-400 text-amber-950", label: "kısmen" },
   missed: { cls: "bg-rose-600 text-white", label: "yapılmadı" },
   today: { cls: "bg-cyan-700 text-white ring-2 ring-cyan-300", label: "bugün" },
+  pending: { cls: "border border-dashed border-amber-400 bg-amber-50 text-amber-900", label: "işaretlenecek" },
   future: { cls: "bg-muted text-muted-foreground", label: "gelecek" },
   none: { cls: "border border-dashed border-border text-muted-foreground", label: "görev yok" },
 };

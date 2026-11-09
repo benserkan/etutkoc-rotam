@@ -29,6 +29,7 @@ class WPWeek(BaseModel):
     usual_start: str
     marks_next_day: bool = False
     next_day_mark_time: str | None = None
+    awaiting_mark: str | None = None
 
 
 class WPCard(BaseModel):
@@ -60,7 +61,7 @@ class WPDay(BaseModel):
     date: str
     day: str
     label: str
-    state: Literal["future", "today", "none", "done", "partial", "missed"]
+    state: Literal["future", "today", "pending", "none", "done", "partial", "missed"]
     total: int
     done: int
     missing: list[WPMissing]

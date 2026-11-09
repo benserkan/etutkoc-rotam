@@ -33,6 +33,11 @@ def student_weekly_progress(user: User = Depends(_require_student), db: Session 
 
     data = build_weekly_progress(db, user)
     data["actions"] = []  # koçun "Seansa ekle" önlemleri
+    # Eski mobil sürümler "pending" gün durumunu tanımaz (gün tablosu çöker) → bilinen durumlara çevir.
+    for d in data.get("days") or []:
+        if d.get("state") == "pending":
+            d["state"] = "partial" if d.get("done") else "missed"
+    data["overview"] = None  # Özet (toplu işaretleme, hedef gerçekçiliği) yalnız koçta
     return data
 
 

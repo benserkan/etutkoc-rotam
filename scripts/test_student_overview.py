@@ -208,6 +208,34 @@ def main():
         w2 = build_weekly_progress(db, toplu, today=today + timedelta(days=1))
         check("2. gün: last_week yok", w2.get("last_week") is None)
 
+        print("— 5b. Sabah: ertesi gün işaretleyende dün henüz 'bitmiş gün' değil")
+        from app.services import analytics
+        orig = analytics._tr_now
+        tomorrow = today + timedelta(days=1)
+        try:
+            analytics._tr_now = lambda: datetime.combine(tomorrow, time(7, 0))
+            wm = build_weekly_progress(db, toplu, today=tomorrow)
+            analytics._tr_now = lambda: datetime.combine(tomorrow, time(12, 0))
+            wn = build_weekly_progress(db, toplu, today=tomorrow)
+            # öğrenci ucu: Özet koça özel, "pending" eski mobil için bilinen duruma çevrilir
+            analytics._tr_now = lambda: datetime.combine(today, time(7, 0))
+            from app.routes.api_v2.student_progress import student_weekly_progress
+            sv = student_weekly_progress(user=toplu, db=db)
+        finally:
+            analytics._tr_now = orig
+        check("07:00: dün 'işaretleme bekleniyor'", wm["days"][0]["state"] == "pending", wm["days"][0]["state"])
+        check("07:00: kıyas noktası geri çekildi (compare_days 0) + geçen hafta gösterilir",
+              wm["week"]["compare_days"] == 0 and wm.get("last_week") is not None, wm["week"])
+        check("07:00: sahte 'kalan görevi dağıt' önlemi yok", "carry" not in {a["key"] for a in wm["actions"]},
+              [a["key"] for a in wm["actions"]])
+        check("07:00: görev uyumu 'geçmişin en kötüsü' değil",
+              {c["key"]: c for c in wm["cards"]}["gorev_pct"]["status"] != "critical")
+        check("12:00: olağan saat geçti → dün 'yapılmadı' ve önlem çıkar",
+              wn["days"][0]["state"] == "missed" and "carry" in {a["key"] for a in wn["actions"]},
+              (wn["days"][0]["state"], [a["key"] for a in wn["actions"]]))
+        check("öğrenci ucu: Özet gönderilmez", sv.get("overview") is None)
+        check("öğrenci ucu: önlemler gönderilmez", sv.get("actions") == [])
+
         print("— 6. Gelişim Raporu ile tutarlılık")
         rep = development_report.build_development_report(db, toplu, today=today)
         rk = {x["key"]: x for x in rep["risks"]}

@@ -74,6 +74,7 @@ const DAY_STATE: Record<string, { cls: string; label: string }> = {
   missed: { cls: "bg-rose-600 text-white", label: "yapılmadı" },
   none: { cls: "bg-muted text-muted-foreground", label: "görev yok" },
   today: { cls: "bg-cyan-700 text-white", label: "bugün" },
+  pending: { cls: "border border-dashed border-amber-400 bg-amber-50 text-amber-900", label: "işaretlenecek" },
   future: { cls: "border border-dashed border-border text-muted-foreground", label: "gelecek" },
 };
 

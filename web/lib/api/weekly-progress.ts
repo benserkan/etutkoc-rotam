@@ -35,7 +35,7 @@ export interface WPDay {
   date: string;
   day: string;
   label: string;
-  state: "future" | "today" | "none" | "done" | "partial" | "missed";
+  state: "future" | "today" | "pending" | "none" | "done" | "partial" | "missed";
   total: number;
   done: number;
   missing: { title: string; tests: number | null }[];
@@ -59,6 +59,8 @@ export interface WeeklyProgressResponse {
     usual_start: string;
     marks_next_day?: boolean;
     next_day_mark_time?: string | null;
+    /** Ertesi gün işaretleyen öğrencide olağan saat gelmeden 'bitmemiş' sayılan dün (ISO). */
+    awaiting_mark?: string | null;
   } | null;
   headline: Record<string, WPCard>;
   projection: {
