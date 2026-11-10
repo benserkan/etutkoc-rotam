@@ -586,6 +586,7 @@ class TeacherStudentWeekDay(BaseModel):
     # Görev/test/deneme ayrımı — "122 test" (deneme soruları test sayılıyordu) yerine:
     test_planned: int = 0      # soru bankası test hacmi (deneme HARİÇ)
     test_completed: int = 0
+    question_completed: int = 0  # çözülen SORU (kalemsiz görev + soru birimli kalem; test değil)
     deneme_planned: int = 0    # branş+tam deneme (AYRI; soru/deneme adedi)
     deneme_completed: int = 0
     deneme_count: int = 0      # deneme görev adedi

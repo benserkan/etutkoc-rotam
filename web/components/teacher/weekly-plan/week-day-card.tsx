@@ -218,6 +218,9 @@ export function WeekDayCard({
                   · {day.test_completed}/{day.test_planned} test
                 </span>
               ) : null}
+              {(day.question_completed ?? 0) > 0 ? (
+                <span className="tabular-nums">· {day.question_completed} soru</span>
+              ) : null}
               {(day.deneme_count ?? 0) > 0 ? (
                 <span className="tabular-nums">· {day.deneme_count} deneme</span>
               ) : null}

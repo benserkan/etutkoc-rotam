@@ -47,6 +47,8 @@ export interface DRWeekRow {
   gorev_total: number;
   gorev_pct: number | null;
   test_done: number;
+  /** Kalemsiz görevlere girilen çözülen soru (test değil). */
+  questions_done?: number;
   test_planned: number;
   ontime_pct: number | null;
   night_pct: number | null;

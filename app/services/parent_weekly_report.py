@@ -167,6 +167,7 @@ def build_weekly_report(
             "pct": ds.gorev_pct,
             "test_completed": ds.test_completed,
             "test_planned": ds.test_planned,
+            "question_completed": ds.question_completed,
         })
 
     # --- Ders kırılımı (bu hafta, TEST görevleri) ---
@@ -310,6 +311,7 @@ def build_weekly_report(
         "completion_pct": this_pct,
         "test_completed": this_sum.test_completed,
         "test_planned": this_sum.test_planned,
+        "question_completed": this_sum.question_completed,
         "active_days": active_days,
         "daily": daily,
         "subjects": subjects,

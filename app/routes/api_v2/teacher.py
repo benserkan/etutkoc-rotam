@@ -5222,6 +5222,7 @@ def teacher_student_week_v2(
             pct=pct,
             test_planned=_g.test_planned,
             test_completed=_g.test_completed,
+            question_completed=_g.question_completed,
             deneme_planned=_g.deneme_planned,
             deneme_completed=_g.deneme_completed,
             deneme_count=_g.deneme_units,

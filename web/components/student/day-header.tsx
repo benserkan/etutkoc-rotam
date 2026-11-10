@@ -101,6 +101,9 @@ export function DayHeader({ day, onRequestAdd, havuz = false }: Props) {
           {day.summary.test_planned > 0 ? (
             <> · {day.summary.test_completed}/{day.summary.test_planned} test</>
           ) : null}
+          {(day.summary.question_completed ?? 0) > 0 ? (
+            <> · {day.summary.question_completed} soru</>
+          ) : null}
           {day.summary.deneme_count > 0 ? (
             <> · {day.summary.deneme_count} deneme</>
           ) : null}

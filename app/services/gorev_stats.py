@@ -258,6 +258,11 @@ class GorevSummary:
     # görev başına 1. Ekranlardaki "N deneme" sayısı buradan okunur.
     deneme_units: int = 0
     deneme_units_done: int = 0
+    # ÇÖZÜLEN SORU (test DEĞİL, 2026-11-10 koç kararı): kalemsiz göreve girilen "çözdüğüm soru"
+    # (solved_count) + soru birimli kalemler. Test hacmine KARIŞMAZ; ayrı gösterilir
+    # (1–7 Eki haftası 73 test + 69 soru = "142 test" görünüyordu — Emir #113).
+    question_planned: int = 0
+    question_completed: int = 0
     # Ders bazında TEST görevleri (sıralı)
     subjects: list[SubjectGorev] = field(default_factory=list)
     # Denemeler ayrı liste
@@ -330,12 +335,16 @@ def summarize(tasks: list[Task]) -> GorevSummary:
             ))
         else:  # etkinlik
             s.etkinlikler.append(t.title or "Etkinlik")
-            # Itemless görevde öğrencinin girdiği çözülen soru → "çözülen test"
-            # hacmine sayılır (kullanıcı kararı). Kategori etkinlik KALIR; plan
-            # yok (test_planned'a girmez); manşet görev %'sini etkilemez.
+            # Kalemsiz görevde öğrencinin girdiği "çözdüğüm soru" ve soru birimli kalemler
+            # SORU olarak ayrı sayılır — test hacmine KARIŞMAZ (2026-11-10 koç kararı;
+            # önceki karar solved_count'u test sayıyordu, birimler karışıyordu).
             _sc = int(getattr(t, "solved_count", 0) or 0)
             if _sc > 0:
-                s.test_completed += _sc
+                s.question_completed += _sc
+            for _it in (t.book_items or []):
+                if item_unit(_it) == "soru":
+                    s.question_planned += int(_it.planned_count or 0)
+                    s.question_completed += int(_it.completed_count or 0)
 
     s.subjects = sorted(subj_map.values(), key=lambda x: (x.order, x.subject_id or 0))
     return s

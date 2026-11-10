@@ -46,10 +46,12 @@ try:
     check("2. status COMPLETED", t.status == TaskStatus.COMPLETED)
     check("3. response solved_count=20", res.data.solved_count == 20, f"got {res.data.solved_count}")
 
-    # 2) gorev_stats: kategori etkinlik, test_completed=20, gorev_done=1
+    # 2) gorev_stats: kategori etkinlik, soru ayrı (question_completed=20), gorev_done=1
     g = gorev_stats.summarize([t])
     check("4. kategori etkinlik (deneme/tam_deneme DEĞİL)", g.cat_total["etkinlik"] == 1 and g.cat_total["tam_deneme"] == 0)
-    check("5. test_completed=20 (çözülen test hacmine)", g.test_completed == 20, f"got {g.test_completed}")
+    # 2026-11-10 koç kararı: soru TEST DEĞİL — ayrı sayılır, test hacmine karışmaz
+    check("5a. test_completed=0 (soru test hacmine karışmaz)", g.test_completed == 0, f"got {g.test_completed}")
+    check("5b. question_completed=20 (soru ayrı)", g.question_completed == 20, f"got {g.question_completed}")
     check("6. test_planned=0 (plan yok)", g.test_planned == 0, f"got {g.test_planned}")
     check("7. gorev_done=1 (manşet görev tamam)", g.gorev_done == 1)
 

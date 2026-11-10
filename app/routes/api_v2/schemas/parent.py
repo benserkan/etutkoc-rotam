@@ -226,6 +226,7 @@ class WeeklyReportDaily(BaseModel):
     pct: int           # 0..100 (görev tamamlama)
     test_completed: int
     test_planned: int
+    question_completed: int = 0   # çözülen soru (test değil)
 
 
 class WeeklyReportSubject(BaseModel):
@@ -280,6 +281,7 @@ class WeeklyReportResponse(BaseModel):
     completion_pct: int
     test_completed: int
     test_planned: int
+    question_completed: int = 0   # çözülen soru (test değil)
     active_days: int    # görev tamamlanan gün sayısı (0..7)
     daily: list[WeeklyReportDaily]
     # ders kırılımı (completed desc)

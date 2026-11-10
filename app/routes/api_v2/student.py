@@ -508,6 +508,7 @@ def _build_day_summary(tasks: list[Task]) -> DaySummary:
         gorev_done=g.gorev_done,
         test_planned=g.test_planned,
         test_completed=g.test_completed,
+        question_completed=g.question_completed,
         deneme_count=g.deneme_units,
         etkinlik_count=g.cat_total["etkinlik"],
     )
@@ -726,6 +727,7 @@ def student_week_v2(
     total_completed = 0
     total_gorev = total_gorev_done = 0
     total_test_planned = total_test_completed = 0
+    total_question_completed = 0
     for d in days:
         day_tasks = tasks_by_day[d]
         planned = sum(it.planned_count for t in day_tasks for it in t.book_items)
@@ -748,6 +750,7 @@ def student_week_v2(
             gorev_done=_g.gorev_done,
             test_planned=_g.test_planned,
             test_completed=_g.test_completed,
+            question_completed=_g.question_completed,
             deneme_count=_g.deneme_units,
             etkinlik_count=_g.cat_total["etkinlik"],
             tasks=[_build_task(db, t, today) for t in day_tasks],
@@ -758,6 +761,7 @@ def student_week_v2(
         total_gorev_done += _g.gorev_done
         total_test_planned += _g.test_planned
         total_test_completed += _g.test_completed
+        total_question_completed += _g.question_completed
 
     total_pct = gorev_stats.completion_pct(t for d in days for t in tasks_by_day[d])
 
@@ -774,6 +778,7 @@ def student_week_v2(
         total_gorev_done=total_gorev_done,
         total_test_planned=total_test_planned,
         total_test_completed=total_test_completed,
+        total_question_completed=total_question_completed,
     )
 
 

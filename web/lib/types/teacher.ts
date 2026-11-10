@@ -612,6 +612,8 @@ export interface TeacherStudentWeekDay {
   // Görev/test/deneme ayrımı
   test_planned?: number;
   test_completed?: number;
+  /** Çözülen SORU (kalemsiz göreve girilen; test değil). */
+  question_completed?: number;
   deneme_planned?: number;
   deneme_completed?: number;
   deneme_count?: number;

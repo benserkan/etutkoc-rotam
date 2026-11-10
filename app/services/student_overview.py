@@ -121,26 +121,36 @@ def reliability(tasks: list[Task], today: date) -> list[dict]:
 
 # ---------------------------------------------------------------- 2-3. deneme + hedef
 
-def exam_overview(db: Session, student: User, today: date) -> dict:
-    """Sayılar Gelişim Raporu ile aynı: genel deneme serisi, aynı sınıf dönemi, aynı eğim penceresi."""
-    from app.models.exam_result import ExamResult, analysis_exam_filter
-    from app.services import exam_scope, grade_period_service
+_SECTION_ORDER = ["lgs", "tyt", "ayt_say", "ayt_ea", "ayt_soz", "ayt_dil",
+                  "maarif_1", "maarif_2", "maarif_9", "maarif_10", "maarif_11",
+                  "gis_9", "gis_10", "gis_11", "gis_12", "okul"]
+_TRACK_AYT = {"sayisal": "ayt_say", "ea": "ayt_ea", "sozel": "ayt_soz", "dil": "ayt_dil"}
+
+
+def _relevant_section(student: User, sec: str) -> bool:
+    """Öğrencinin girdiği/gireceği sınav türü mü? Ortaokul (5-8) -> LGS + okul; lise/mezun -> LGS dışı.
+    AYT alanı biliniyorsa yalnız o alan."""
+    g = student.grade_level
+    middle = g is not None and g <= 8 and not student.is_graduate
+    if sec == "okul":
+        return True
+    if middle:
+        return sec == "lgs"
+    if sec == "lgs":
+        return False
+    tr = getattr(student.track, "value", student.track)
+    alan = _TRACK_AYT.get(str(tr).lower()) if tr else None
+    if alan and sec.startswith("ayt_"):
+        return sec == alan
+    return True
+
+
+def _series_block(db: Session, student: User, today: date, ser: list, key: str) -> tuple[dict, dict | None]:
+    from app.services import exam_scope
     from app.services.exam_progress import SLOPE_WINDOW, _slope, get_targets
 
     wp = _wp()
     num, d_ = wp._num, wp._d
-    win = grade_period_service.resolve_window(db, student.id, None)
-    q = db.query(ExamResult).filter(ExamResult.student_id == student.id, analysis_exam_filter())
-    if win.start is not None:
-        q = q.filter(ExamResult.exam_date >= win.start)
-    if win.end is not None:
-        q = q.filter(ExamResult.exam_date <= win.end)
-    genel = [e for e in q.order_by(ExamResult.exam_date.asc(), ExamResult.id.asc()).all()
-             if exam_scope.classify(e) == "genel"]
-    if not genel:
-        return {"exam": None, "target": None}
-    key = exam_scope.primary_general_key(genel)
-    ser = [e for e in genel if exam_scope.series_key(e) == key]
     label = exam_scope.exam_scope(ser[-1]).series_label
     nets = [round(e.net, 2) for e in ser]
     last, prev = ser[-1], (ser[-2] if len(ser) > 1 else None)
@@ -157,16 +167,17 @@ def exam_overview(db: Session, student: User, today: date) -> dict:
         ters = (diff or 0) > 0 and slope <= -TREND_EPS or (diff or 0) < 0 and slope >= TREND_EPS
         txt += (f"{'; ama' if ters else ';'} son {len(win_nets)} denemenin eğilimi {yon} "
                 f"(deneme başına {_sgn(slope)}{num(abs(slope))} net)")
-    txt += f". Son 3 ortalama {num(avg3)}."
+    txt += f". Son 3 ortalama {num(avg3)}." if len(ser) > 1 else "."
+    if len(ser) == 1:
+        txt += " Bu türde tek deneme var; gidişat ikinci denemeden sonra görünür."
     tone = ("info" if slope is None else "warn" if slope <= -TREND_EPS else
             "good" if slope >= TREND_EPS else "info")
     exam = {
-        "series_label": label, "count": len(ser), "last_net": round(last.net, 2),
+        "series_key": key, "series_label": label, "count": len(ser), "last_net": round(last.net, 2),
         "last_date": last.exam_date.isoformat(), "prev_net": round(prev.net, 2) if prev else None,
         "diff": diff, "slope": slope, "slope_window": len(win_nets), "avg_last3": avg3,
         "tone": tone, "text": txt,
     }
-
     tgt = get_targets(db, student.id).get(exam_scope.section_of_key(key))
     target = None
     if tgt and tgt.get("target_net"):
@@ -184,7 +195,7 @@ def exam_overview(db: Session, student: User, today: date) -> dict:
             span = (w_ex[-1].exam_date - w_ex[0].exam_date).days
             if span > 0:
                 pace = round(slope * (len(w_ex) - 1) / (span / 7), 2)
-        head = (f"Hedef: {d_(tdate) + ' tarihine kadar ' if tdate else ''}{num(tnet)} net. "
+        head = (f"{label} hedefi: {d_(tdate) + ' tarihine kadar ' if tdate else ''}{num(tnet)} net. "
                 f"Son 3 ortalama {num(avg3)}")
         realistic: bool | None
         if gap <= 0:
@@ -205,12 +216,67 @@ def exam_overview(db: Session, student: User, today: date) -> dict:
         else:
             t_tone, realistic = "info", None
             txt_t = f"{head} → {num(gap)} net açık. Hedef tarihi yok; tempo kıyası için tarih ekle."
-        target = {"target_net": tnet, "target_date": tdate.isoformat() if tdate else None, "gap": gap,
+        target = {"series_key": key, "series_label": label, "target_net": tnet, "target_date": tdate.isoformat() if tdate else None, "gap": gap,
                   "weeks_left": weeks_left, "per_week_needed": need, "pace_per_week": pace,
                   "realistic": realistic, "tone": t_tone, "text": txt_t,
                   "agenda": (None if realistic is not False else
                              f"{label} hedefi ({num(tnet)} net) ve tarihini birlikte gözden geçir.")}
-    return {"exam": exam, "target": target}
+    return exam, target
+
+
+def exam_overview(db: Session, student: User, today: date) -> dict:
+    """Deneme gidişatı + hedef — öğrencinin girdiği HER sınav türü ayrı (TYT ve AYT yan yana).
+
+    Kural (koç, 2026-11-10): en çok denemesi olan tür öne çıkarılmaz; öğrencinin sınav türüne
+    uygun her genel seri kendi satırıyla görünür. Sayılar Gelişim Raporu ile aynı (aynı sınıf
+    dönemi, aynı eğim penceresi). Türüne uymayan seri (12. sınıfta LGS denemesi gibi)
+    gidişata girmez; ayrıca not edilir.
+    """
+    from app.models.curriculum import EXAM_SECTION_LABELS, ExamSection
+    from app.models.exam_result import ExamResult, analysis_exam_filter
+    from app.services import exam_scope, grade_period_service
+
+    win = grade_period_service.resolve_window(db, student.id, None)
+    q = db.query(ExamResult).filter(ExamResult.student_id == student.id, analysis_exam_filter())
+    if win.start is not None:
+        q = q.filter(ExamResult.exam_date >= win.start)
+    if win.end is not None:
+        q = q.filter(ExamResult.exam_date <= win.end)
+    genel = [e for e in q.order_by(ExamResult.exam_date.asc(), ExamResult.id.asc()).all()
+             if exam_scope.classify(e) == "genel"]
+    by_key: dict[str, list] = defaultdict(list)
+    for e in genel:
+        by_key[exam_scope.series_key(e)].append(e)
+
+    def order(k: str) -> int:
+        sec = exam_scope.section_of_key(k)
+        return _SECTION_ORDER.index(sec) if sec in _SECTION_ORDER else len(_SECTION_ORDER)
+
+    exams: list[dict] = []
+    targets: list[dict] = []
+    skipped: list[str] = []
+    for k in sorted(by_key, key=order):
+        sec = exam_scope.section_of_key(k)
+        if not _relevant_section(student, sec):
+            try:
+                lab = EXAM_SECTION_LABELS[ExamSection(sec)]
+            except (ValueError, KeyError):
+                lab = sec.upper()
+            skipped.append(f"{lab} ({len(by_key[k])} deneme)")
+            continue
+        ex, tg = _series_block(db, student, today, by_key[k], k)
+        exams.append(ex)
+        if tg:
+            targets.append(tg)
+    # okul yazılısı yalnız sınav serisi yoksa gösterilir
+    if any(exam_scope.section_of_key(x["series_key"]) != "okul" for x in exams):
+        exams = [x for x in exams if exam_scope.section_of_key(x["series_key"]) != "okul"]
+    note = None
+    if skipped:
+        note = ("Öğrencinin sınav türüne uymayan denemeler gidişata katılmadı: " + ", ".join(skipped)
+                + ". Yanlış öğrenciye ya da yanlış türle yüklendiyse Denemeler sekmesinden düzelt.")
+    return {"exam": exams[0] if exams else None, "target": targets[0] if targets else None,
+            "exams": exams, "targets": targets, "exam_note": note}
 
 
 def build_overview(db: Session, student: User, today: date) -> dict:

@@ -311,6 +311,7 @@ export function StudentWeekGrid({ days }: { days: StudentWeekDay[] }) {
                   <p className="text-[9px] text-muted-foreground tabular-nums">
                     {doneCount}/{day.tasks.length} görev
                     {day.test_planned > 0 ? ` · ${day.test_completed}/${day.test_planned} test` : ""}
+                    {(day.question_completed ?? 0) > 0 ? ` · ${day.question_completed} soru` : ""}
                   </p>
                 </div>
               ) : null}

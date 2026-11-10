@@ -96,33 +96,46 @@ export interface WeeklyProgressResponse {
 
 export type WPTone = "warn" | "info" | "ok" | "good";
 
+export interface WPExamTrend {
+  series_key?: string | null;
+  series_label: string;
+  count: number;
+  last_net: number;
+  last_date: string;
+  prev_net: number | null;
+  diff: number | null;
+  slope: number | null;
+  slope_window: number;
+  avg_last3: number;
+  tone: WPTone;
+  text: string;
+}
+
+export interface WPTargetCheck {
+  series_key?: string | null;
+  series_label?: string | null;
+  target_net: number;
+  target_date: string | null;
+  gap: number;
+  weeks_left: number | null;
+  per_week_needed: number | null;
+  pace_per_week: number | null;
+  realistic: boolean | null;
+  tone: WPTone;
+  text: string;
+  agenda: string | null;
+}
+
 export interface WPOverview {
   reliability: { key: string; tone: WPTone; title: string; text: string; agenda: string | null }[];
-  exam: {
-    series_label: string;
-    count: number;
-    last_net: number;
-    last_date: string;
-    prev_net: number | null;
-    diff: number | null;
-    slope: number | null;
-    slope_window: number;
-    avg_last3: number;
-    tone: WPTone;
-    text: string;
-  } | null;
-  target: {
-    target_net: number;
-    target_date: string | null;
-    gap: number;
-    weeks_left: number | null;
-    per_week_needed: number | null;
-    pace_per_week: number | null;
-    realistic: boolean | null;
-    tone: WPTone;
-    text: string;
-    agenda: string | null;
-  } | null;
+  /** Geriye uyum: ilk seri. */
+  exam: WPExamTrend | null;
+  target: WPTargetCheck | null;
+  /** Öğrencinin girdiği her sınav türü (TYT, AYT…) ayrı satır. */
+  exams?: WPExamTrend[];
+  targets?: WPTargetCheck[];
+  /** Türüne uymayan denemeler gidişata katılmadı. */
+  exam_note?: string | null;
 }
 
 export const weeklyProgressKeys = {

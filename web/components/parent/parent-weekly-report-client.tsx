@@ -577,6 +577,7 @@ function DayRow({ day }: { day: WeeklyReportDaily }) {
             {" · "}
             {day.gorev_done}/{day.gorev_total} görev
             {day.test_completed > 0 ? ` · ${day.test_completed} test` : ""}
+            {(day.question_completed ?? 0) > 0 ? ` · ${day.question_completed} soru` : ""}
           </>
         )}
       </span>

@@ -135,6 +135,7 @@ class WPReliabilityItem(BaseModel):
 
 
 class WPExamTrend(BaseModel):
+    series_key: str | None = None
     series_label: str
     count: int
     last_net: float
@@ -149,6 +150,8 @@ class WPExamTrend(BaseModel):
 
 
 class WPTargetCheck(BaseModel):
+    series_key: str | None = None
+    series_label: str | None = None
     target_net: float
     target_date: str | None = None
     gap: float
@@ -164,8 +167,11 @@ class WPTargetCheck(BaseModel):
 class WPOverview(BaseModel):
     """Genel sekmesinin üstü — yalnız koç görür."""
     reliability: list[WPReliabilityItem] = []
-    exam: WPExamTrend | None = None
+    exam: WPExamTrend | None = None          # geriye uyum: ilk seri
     target: WPTargetCheck | None = None
+    exams: list[WPExamTrend] = []             # öğrencinin her sınav türü (TYT, AYT…)
+    targets: list[WPTargetCheck] = []
+    exam_note: str | None = None              # türüne uymayan denemeler gidişata katılmadı
 
 
 class WeeklyProgressResponse(BaseModel):

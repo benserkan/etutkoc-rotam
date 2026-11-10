@@ -376,6 +376,74 @@ function OverviewItem({
 function Overview({ data, studentId }: { data: WeeklyProgressResponse; studentId: number }) {
   const ov = data.overview;
   if (!ov) return null;
+  const exams = ov.exams && ov.exams.length ? ov.exams : ov.exam ? [ov.exam] : [];
+  const targets = ov.targets && ov.targets.length ? ov.targets : ov.target ? [ov.target] : [];
+  const examRows: { label: string; desc: string; body: React.ReactNode }[] =
+    exams.length === 0
+      ? [
+          {
+            label: "Deneme gidişatı",
+            desc: "Genel deneme",
+            body: (
+              <>
+                <p className="text-sm text-muted-foreground">Henüz genel deneme sonucu yok.</p>
+                {ov.exam_note ? <p className="text-xs text-muted-foreground">{ov.exam_note}</p> : null}
+              </>
+            ),
+          },
+        ]
+      : exams.map((ex, i) => ({
+          label: exams.length > 1 ? `Deneme gidişatı · ${ex.series_label.replace(/\s*\(genel deneme\)$/, "")}` : "Deneme gidişatı",
+          desc: `${ex.series_label} · ${ex.count} deneme`,
+          body: (
+            <>
+              <OverviewItem
+                tone={ex.tone}
+                title={ex.count < 2 ? "Tek deneme" : ex.tone === "warn" ? "Eğilim aşağı" : ex.tone === "good" ? "Eğilim yukarı" : "Deneme netleri"}
+                text={ex.text}
+                agendaKey={`exam-${ex.series_key ?? i}`}
+                studentId={studentId}
+                link={{ href: `/teacher/students/${studentId}#report`, label: "Gelişim raporu" }}
+              />
+              {i === exams.length - 1 && ov.exam_note ? (
+                <p className="text-xs text-muted-foreground">{ov.exam_note}</p>
+              ) : null}
+            </>
+          ),
+        }));
+  const targetRows: { label: string; desc: string; body: React.ReactNode }[] =
+    targets.length === 0
+      ? [
+          {
+            label: "Hedef",
+            desc: "Hedef nete gereken tempo ile gerçek tempo",
+            body: (
+              <OverviewItem
+                tone="info"
+                title="Hedef net belirlenmemiş"
+                text="Hedef net ve tarih girilince gereken haftalık artış ile gerçek tempo burada kıyaslanır."
+                agendaKey="target"
+                studentId={studentId}
+                link={{ href: `/teacher/students/${studentId}#exams`, label: "Hedef belirle" }}
+              />
+            ),
+          },
+        ]
+      : targets.map((t, i) => ({
+          label: targets.length > 1 || exams.length > 1 ? `Hedef · ${(t.series_label ?? "").replace(/\s*\(genel deneme\)$/, "")}` : "Hedef",
+          desc: "Hedef nete gereken tempo ile gerçek tempo",
+          body: (
+            <OverviewItem
+              tone={t.tone}
+              title={t.realistic === false ? "Hedef tarihi gerçekçi değil" : t.tone === "good" ? "Hedefe doğru gidiyor" : "Hedefe uzaklık"}
+              text={t.text}
+              agenda={t.agenda}
+              agendaKey={`target-${t.series_key ?? i}`}
+              studentId={studentId}
+              link={{ href: `/teacher/students/${studentId}#exams`, label: "Hedefi düzenle" }}
+            />
+          ),
+        }));
   const rows: { label: string; desc: string; body: React.ReactNode }[] = [
     {
       label: "Veri güvenilirliği",
@@ -398,58 +466,8 @@ function Overview({ data, studentId }: { data: WeeklyProgressResponse; studentId
           ))
         ),
     },
-    {
-      label: "Deneme gidişatı",
-      desc: ov.exam ? `${ov.exam.series_label} · ${ov.exam.count} deneme` : "Genel deneme",
-      body: ov.exam ? (
-        <OverviewItem
-          tone={ov.exam.tone}
-          title={
-            ov.exam.tone === "warn"
-              ? "Eğilim aşağı"
-              : ov.exam.tone === "good"
-                ? "Eğilim yukarı"
-                : "Deneme netleri"
-          }
-          text={ov.exam.text}
-          agendaKey="exam"
-          studentId={studentId}
-          link={{ href: `/teacher/students/${studentId}#report`, label: "Gelişim raporu" }}
-        />
-      ) : (
-        <p className="text-sm text-muted-foreground">Henüz genel deneme sonucu yok.</p>
-      ),
-    },
-    {
-      label: "Hedef",
-      desc: "Hedef nete gereken tempo ile gerçek tempo",
-      body: ov.target ? (
-        <OverviewItem
-          tone={ov.target.tone}
-          title={
-            ov.target.realistic === false
-              ? "Hedef tarihi gerçekçi değil"
-              : ov.target.tone === "good"
-                ? "Hedefe doğru gidiyor"
-                : "Hedefe uzaklık"
-          }
-          text={ov.target.text}
-          agenda={ov.target.agenda}
-          agendaKey="target"
-          studentId={studentId}
-          link={{ href: `/teacher/students/${studentId}#exams`, label: "Hedefi düzenle" }}
-        />
-      ) : (
-        <OverviewItem
-          tone="info"
-          title="Hedef net belirlenmemiş"
-          text="Hedef net ve tarih girilince gereken haftalık artış ile gerçek tempo burada kıyaslanır."
-          agendaKey="target"
-          studentId={studentId}
-          link={{ href: `/teacher/students/${studentId}#exams`, label: "Hedef belirle" }}
-        />
-      ),
-    },
+    ...examRows,
+    ...targetRows,
   ];
   return (
     <Zone

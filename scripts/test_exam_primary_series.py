@@ -56,6 +56,8 @@ def main():
                               section=ExamSection.TYT, total_correct=100, total_wrong=10, total_blank=10, net=n))
         db.add(ExamResult(student_id=st.id, title="AYT-1", exam_date=today - timedelta(days=1),
                           section=ExamSection.AYT_SAY, total_correct=66, total_wrong=8, total_blank=6, net=64))
+        db.add(ExamResult(student_id=st.id, title="LGS yanlis yukleme", exam_date=today - timedelta(days=2),
+                          section=ExamSection.LGS, total_correct=80, total_wrong=5, total_blank=5, net=78.33))
         db.commit()
         try:
             set_target(db, st.id, section="tyt", target_net=100, actor=st)
@@ -69,7 +71,7 @@ def main():
               exam_scope.primary_general_key(exams))
 
         s = exam_list_summary(exams)
-        check("2a. count tüm denemeler (4)", s.count == 4, s.count)
+        check("2a. count tüm denemeler (5)", s.count == 5, s.count)
         check("2b. ortalama yalnız TYT (91.33)", abs(s.avg_net - 91.33) < 0.01, s.avg_net)
         check("2c. eğilim TYT ilk→son (+8.5)", s.trend_delta == 8.5, s.trend_delta)
         check("2d. seri etiketi TYT", "TYT" in (s.series_label or ""), s.series_label)
@@ -78,6 +80,12 @@ def main():
         ex = ov.get("exam") or {}
         check("3a. Genel deneme özeti TYT serisi", "TYT" in (ex.get("series_label") or ""), ex.get("series_label"))
         check("3b. son net 98.5, önceki 85.5", ex.get("last_net") == 98.5 and ex.get("prev_net") == 85.5, ex)
+        keys = [x["series_key"] for x in ov.get("exams") or []]
+        check("3d. Genel'de TYT ve AYT ayrı satır (sıra TYT, AYT)", keys == ["tyt", "ayt_say"], keys)
+        check("3e. LGS (sınav türüne uymayan) gidişata girmez, not edilir",
+              "lgs" not in keys and "LGS" in (ov.get("exam_note") or ""), ov.get("exam_note"))
+        ayt = (ov.get("exams") or [{}, {}])[-1]
+        check("3f. tek AYT denemesi 'tek deneme' notu", "tek deneme" in (ayt.get("text") or ""), ayt.get("text"))
         check("3c. TYT hedefi Genel'de görünür (100)", (ov.get("target") or {}).get("target_net") == 100, ov.get("target"))
 
         from app.services import weekly_progress as wpm

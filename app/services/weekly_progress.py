@@ -218,6 +218,7 @@ def _metrics(tasks: list[Task], dates: list[date]) -> dict:
         "gorev_done": s.gorev_done, "gorev_total": s.gorev_total,
         "gorev_pct": _pct(s.gorev_done, s.gorev_total),
         "test_done": s.test_completed, "test_planned": s.test_planned,
+        "questions_done": s.question_completed,
         "ontime_pct": _pct(sum(1 for o in ont if o), len(ont)),
         "night_pct": _pct(len(night), len(timed)),
         "accuracy_pct": _pct(c, c + w),
@@ -470,6 +471,10 @@ def build_weekly_progress(db: Session, student: User, *, today: date | None = No
             }
             if no_compare:
                 card["baseline"] = []
+            if key == "test_done" and c_m.get("questions_done"):
+                # Kalemsiz görevlere girilen soru TEST DEĞİL — yan yana ayrı birimle
+                card["value_label"] = f"{_fmt(cv, unit)} · {c_m['questions_done']} soru"
+                card["questions"] = c_m["questions_done"]
             if key == "accuracy_pct":
                 wr, td = c_m["result_coverage"]
                 card["hint"] = f"Doğru ÷ (doğru + yanlış). Sonuç girilen {wr} / {td} testten."
@@ -681,6 +686,7 @@ def _week_row(w: Week, m: dict, *, current: bool, in_baseline: bool, compare_day
         "compare_days": compare_days,
         "gorev_done": m["gorev_done"], "gorev_total": m["gorev_total"], "gorev_pct": m["gorev_pct"],
         "test_done": m["test_done"], "test_planned": m["test_planned"],
+        "questions_done": m.get("questions_done", 0),
         "ontime_pct": m["ontime_pct"], "night_pct": m["night_pct"], "empty_days": m["empty_days"],
         "accuracy_pct": m["accuracy_pct"], "tests_with_result": wr, "tests_done_items": td,
     }

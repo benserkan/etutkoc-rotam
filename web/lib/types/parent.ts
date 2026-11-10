@@ -204,6 +204,7 @@ export interface WeeklyReportDaily {
   gorev_total: number;
   pct: number;
   test_completed: number;
+  question_completed?: number;
   test_planned: number;
 }
 
@@ -256,6 +257,7 @@ export interface WeeklyReportResponse {
   gorev_total: number;
   completion_pct: number;
   test_completed: number;
+  question_completed?: number;
   test_planned: number;
   active_days: number;
   daily: WeeklyReportDaily[];

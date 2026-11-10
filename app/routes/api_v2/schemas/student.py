@@ -162,6 +162,7 @@ class DaySummary(BaseModel):
     gorev_done: int = 0
     test_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
     test_completed: int = 0
+    question_completed: int = 0  # çözülen soru (test değil)
     deneme_count: int = 0
     etkinlik_count: int = 0
 
@@ -278,6 +279,7 @@ class StudentWeekDay(BaseModel):
     gorev_done: int = 0
     test_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
     test_completed: int = 0
+    question_completed: int = 0  # çözülen soru (test değil)
     deneme_count: int = 0
     etkinlik_count: int = 0
     tasks: list[StudentTask]
@@ -297,6 +299,7 @@ class StudentWeekResponse(BaseModel):
     total_gorev_done: int = 0
     total_test_planned: int = 0
     total_test_completed: int = 0
+    total_question_completed: int = 0
 
 
 # ============================================================================

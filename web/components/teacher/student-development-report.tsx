@@ -480,7 +480,7 @@ function WeekRow({ w, prev, ended }: { w: DRWeekRow; prev: DRWeekRow | null; end
         diff != null && diff <= -5 && "text-rose-700")}>
         {diff == null ? "—" : `${diff > 0 ? "+" : ""}${diff}`}
       </td>
-      <td className="py-1.5 pr-3 text-right tabular-nums">{w.test_done}/{w.test_planned}</td>
+      <td className="py-1.5 pr-3 text-right tabular-nums">{w.test_done}/{w.test_planned}{w.questions_done ? <span className="block text-xs text-muted-foreground">+{w.questions_done} soru</span> : null}</td>
       <td className="py-1.5 pr-3 text-right tabular-nums">{pct(w.ontime_pct)}</td>
       <td className="py-1.5 pr-3 text-right tabular-nums">{w.empty_days}</td>
       <td className="py-1.5 pr-3 text-right tabular-nums">

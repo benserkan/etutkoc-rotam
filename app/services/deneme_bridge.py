@@ -56,7 +56,11 @@ def _base_title(item) -> str:
     book = getattr(item, "book", None)
     sec = getattr(item, "section", None)
     if book is not None and sec is not None:
-        return f"{book.name} — {_clean(sec.label)}"
+        lab = _clean(sec.label)
+        # Bölüm adı yalnız "Deneme" ise ayırt etmez → "Kitap · 2. deneme" (tekrarlı "— Deneme · 2. deneme" olmasın)
+        if lab.lower().replace("i̇", "i") in ("deneme", "denemeler", "deneme sınavı"):
+            return book.name
+        return f"{book.name} — {lab}"
     if book is not None:
         return book.name
     task = getattr(item, "task", None)

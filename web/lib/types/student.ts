@@ -107,6 +107,8 @@ export interface DaySummary {
   gorev_done: number;
   test_planned: number;            // yalnız soru bankası (deneme HARİÇ)
   test_completed: number;
+  /** Çözülen SORU (kalemsiz göreve girilen; test değil). */
+  question_completed?: number;
   deneme_count: number;
   etkinlik_count: number;
 }
@@ -217,6 +219,8 @@ export interface StudentWeekDay {
   gorev_done: number;
   test_planned: number;            // yalnız soru bankası (deneme HARİÇ)
   test_completed: number;
+  /** Çözülen SORU (kalemsiz göreve girilen; test değil). */
+  question_completed?: number;
   deneme_count: number;
   etkinlik_count: number;
   tasks: StudentTask[];
@@ -235,6 +239,7 @@ export interface StudentWeekResponse {
   total_gorev_done: number;
   total_test_planned: number;
   total_test_completed: number;
+  total_question_completed?: number;
 }
 
 // =============================================================================
