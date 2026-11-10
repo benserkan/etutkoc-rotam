@@ -1029,6 +1029,12 @@ def _kazanim_rule(label: str | None, topics: list, home_sid: int | None):
     low = _norm(label or "")
     if not low:
         return None
+    # "Paragrafta (Konu / Ana Fikir / Yapı)" gibi birden çok konu sayan etiket bağlanmaz (Karma kalır)
+    if _re.search(r"\([^)]*/[^)]*\)", label or ""):
+        return None
+    hits = [names for pat, names in _KAZANIM_RULES if _re.search(pat, low)]
+    if len(hits) > 1:
+        return None
     for pat, names in _KAZANIM_RULES:
         if not _re.search(pat, low):
             continue

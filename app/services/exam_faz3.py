@@ -326,7 +326,13 @@ def _group_nets(exam: ExamResult, fn) -> tuple[dict[str, float], list[str]]:
         if g is None:
             unknown.append(d["name"])
             continue
-        nets[g] += float(d.get("net") or 0)
+        # Yuvarlanmış ders neti (18,67) yerine D/Y'den tam değer: LGS'de üçte birler 6 derste
+        # toplanınca ağırlıklı net 0,03 kayıyordu (239,36 ≠ 239,33). D/Y yoksa kayıtlı net.
+        if d.get("correct") is not None and d.get("wrong") is not None:
+            from app.models.exam_result import section_penalty
+            nets[g] += int(d["correct"]) - int(d["wrong"]) / section_penalty(exam.section)
+        else:
+            nets[g] += float(d.get("net") or 0)
     return dict(nets), unknown
 
 

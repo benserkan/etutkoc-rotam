@@ -613,6 +613,11 @@ function ExamSeriesCard({ x }: { x: DRExamSeries }) {
           Ders netleri, soru sayısı denemeden denemeye değiştiği için burada kıyaslanmaz; ders ders
           inceleme Denemeler sekmesinde.
         </p>
+      ) : !x.subjects.length && (st?.count ?? 0) === 1 ? (
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          Bu türde tek deneme var; ders ders değişim ikinci denemeden sonra görünür. Ders netleri
+          Denemeler sekmesinde.
+        </p>
       ) : x.subjects.length ? (
         <div className="relative mt-3 overflow-x-auto">
           <table className="w-full min-w-[360px] text-sm">

@@ -33,6 +33,8 @@ cases = [
     ("Metnin içeriğini yorumlar.", 5, None),
     ("Metnin ana fikrini belirler.", 9, 11),          # aynı ad başka derste → öğrencinin dersi
     ("Metnin ana fikrini belirler.", None, None),      # ders belirsiz + iki aday → bağlama
+    ("Paragrafta (Konu / Ana Fikir / Yapı)", 5, None),  # çok konulu etiket → Karma kalır
+    ("Metnin ana fikrini ve yardımcı fikirlerini belirler.", 5, None),  # iki kural → bağlama
 ]
 ok = 0
 for label, sid, exp in cases:
