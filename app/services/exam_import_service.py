@@ -824,7 +824,22 @@ def normalize_topics(
             a.hit_count = (a.hit_count or 0) + 1
             stats["alias"] += 1
 
-        # Katman 0 — öğrenen sözlük. Koçun elle düzelttiği kayıt her şeyi ezer.
+        # Katman 0 — koçun elle düzelttiği sözlük kaydı her şeyi ezer.
+        alias = _alias_hit(lkey, coach_only=True)
+        if alias is not None:
+            _use_alias(alias)
+            continue
+        # Katman 0b — kesin kazanım kuralı ("ana fikir", "yardımcı fikir", "söz sanatı"…).
+        # Öğrenilmiş YZ kaydından ÖNCE: o kayıtlar konu listesi genişlemeden önce öğrenildiyse
+        # genel başlığa ("Paragrafta Anlam") yapışık kalır (Beril #86 viraj.pdf, 2026-11-10).
+        rule_tp = _kazanim_rule(row.get("topic_raw"), topics, home_sid)
+        if rule_tp is not None:
+            _assign_topic(row, rule_tp, subj_by_id, source="auto")
+            stats["auto"] += 1
+            stale = _alias_hit(lkey)
+            if stale is not None and stale.source != ALIAS_SOURCE_COACH and stale.topic_id != rule_tp.id:
+                stale.topic_id = rule_tp.id   # sözlük de düzelsin
+            continue
         alias = _alias_hit(lkey, coach_only=bool(tail_key))
         if alias is not None:
             _use_alias(alias)
@@ -990,6 +1005,42 @@ def _prefer_school_topics(rows: list[dict], topics: list[Topic],
             _assign_topic(row, alt, subj_by_id, source=row["topic_source"])
             changed += 1
     return changed
+
+
+
+# Kazanım cümlesi → alt konu (kesin kurallar). Desen ASCII-katlanmış küçük metinde aranır;
+# hedef konu adayların içinde (öğrencinin evreni + aynı ders) yoksa kural atlanır.
+_KAZANIM_RULES: list[tuple[str, tuple[str, ...]]] = [
+    (r"\bana (fikr|fikir|duygu|dusunce)", ("Paragrafta Ana Düşünce",)),
+    (r"yardimci (fikir|fikr|dusunce)", ("Paragrafta Yardımcı Düşünce",)),
+    (r"soz sanat", ("Söz Sanatları",)),
+    (r"hikaye unsur|hikaye(nin)? unsurlar|anlatici", ("Hikâye Unsurları ve Anlatıcı",)),
+    (r"dusunceyi gelistirme|anlatim bicim",
+     ("Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları",)),
+    (r"metinler? arasi(nda)? karsilastir|metin karsilastir", ("Metin Karşılaştırma",)),
+    (r"\bdeyim|atasoz", ("Söz Varlığı (Deyim ve Atasözleri)",)),
+]
+
+
+def _kazanim_rule(label: str | None, topics: list, home_sid: int | None):
+    import re as _re
+    from app.services.curriculum_mapping import normalize as _norm
+
+    low = _norm(label or "")
+    if not low:
+        return None
+    for pat, names in _KAZANIM_RULES:
+        if not _re.search(pat, low):
+            continue
+        for name in names:
+            cands = [t for t in topics if t.name == name]
+            if home_sid is not None:
+                same = [t for t in cands if t.subject_id == home_sid]
+                cands = same or cands
+            if len(cands) == 1:
+                return cands[0]
+        return None
+    return None
 
 
 def _assign_topic(row: dict, tp: Topic, subj_by_id: dict[int, Subject], *, source: str) -> None:
