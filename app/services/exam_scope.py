@@ -90,8 +90,16 @@ def _meta_scope(exam: ExamResult) -> str | None:
         meta = json.loads(exam.analysis_meta) if exam.analysis_meta else {}
     except ValueError:
         return None
-    v = meta.get("scope") if isinstance(meta, dict) else None
-    return v if v in ("genel", "brans") else None
+    if not isinstance(meta, dict):
+        return None
+    v = meta.get("scope")
+    if v not in ("genel", "brans"):
+        return None
+    # PDF içe aktarma 2026-11-10'a kadar kapsam TAHMİNİNİ ("full"/"brans") bu anahtara yazıyordu;
+    # o değer koç kararı değildir. İçe aktarılmış kayıtta yalnız koçun işareti (scope_by) geçerli.
+    if meta.get("imported_at") and meta.get("scope_by") != "coach":
+        return None
+    return v
 
 
 def _skey(label: str) -> str:

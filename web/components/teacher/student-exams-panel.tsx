@@ -4,8 +4,12 @@ import { GuideHint } from "@/components/guide/guide-hint";
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  BookX,
   Mail,
   MailCheck,
+  MoreHorizontal,
+  Send,
+  UserCheck,
   ChevronDown,
   ClipboardList,
   Eye,
@@ -63,6 +67,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -586,6 +597,8 @@ function ExamRow({
   // Veliye duyur: window.confirm YERİNE önizle-düzenle-gönder modalı
   // (koç isteği 2026-09-10) — koç neyin gideceğini görmeden onaylamasın.
   const [announceOpen, setAnnounceOpen] = React.useState(false);
+  const [archiveOpen, setArchiveOpen] = React.useState(false);
+  const [shareOpen, setShareOpen] = React.useState(false);
   const del = useDeleteExam();
   const hasSubjects = row.subjects.length > 0;
 
@@ -663,100 +676,122 @@ function ExamRow({
             >
               {diff == null ? "—" : fmtNum(diff, { plus: true })}
             </div>
-            {/* dar ekranda işlemler alt satıra iner (390px'te satırı taşırıyordu) */}
-            <div className="flex w-full flex-wrap items-center justify-end gap-0 sm:w-auto sm:shrink-0 md:w-[340px] md:flex-nowrap">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onOpenDetail}
-                aria-label="Deneme detayı"
-                title="Deneme detayı: karne, soru soru tablo, yazdır ve paylaş"
-              >
+            {/* İşlemler (2026-11-10, koç: "simgeler anlaşılmıyor"): tek görünür düğme "Detay",
+                durumlar yazılı etiket, gerisi etiketli "İşlemler" menüsünde. */}
+            <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:shrink-0 md:flex-nowrap md:pl-2">
+              {row.parent_notified_at ? (
+                <button
+                  type="button"
+                  onClick={() => setAnnounceOpen(true)}
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-700 px-2 py-0.5 text-[11px] font-bold text-white hover:bg-emerald-800"
+                  title={`Veliye duyuruldu · ${formatTRDate(row.parent_notified_at.slice(0, 10))} — gönderilen maili gör / PDF olarak indir`}
+                >
+                  <MailCheck className="size-3" aria-hidden />
+                  Veliye duyuruldu
+                </button>
+              ) : null}
+              {share ? (
+                <button
+                  type="button"
+                  onClick={() => setShareOpen(true)}
+                  className="inline-flex items-center gap-1 rounded-full bg-cyan-700 px-2 py-0.5 text-[11px] font-bold text-white hover:bg-cyan-800"
+                  title="Öğrenciyle paylaşıldı — notu düzenle"
+                >
+                  <UserCheck className="size-3" aria-hidden />
+                  Öğrencide
+                </button>
+              ) : null}
+              <Button variant="outline" size="sm" onClick={onOpenDetail} className="h-8 gap-1.5">
                 <Eye className="size-4 text-cyan-700" aria-hidden />
+                Detay
               </Button>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1" aria-label="Deneme işlemleri">
+                    <MoreHorizontal className="size-4" aria-hidden />
+                    İşlemler
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuItem onSelect={onOpenDetail}>
+                    <Eye className="size-4 text-cyan-700" aria-hidden />
+                    Deneme detayı (karne, soru soru)
+                  </DropdownMenuItem>
+                  {hasSubjects ? (
+                    <DropdownMenuItem onSelect={() => setOpen((v) => !v)}>
+                      <ChevronDown className={cn("size-4", open && "rotate-180")} aria-hidden />
+                      {open ? "Ders kırılımını gizle" : "Ders kırılımını göster"}
+                    </DropdownMenuItem>
+                  ) : null}
+                  {row.import_source === "pdf_import" && row.total_wrong > 0 ? (
+                    <DropdownMenuItem onSelect={() => setArchiveOpen(true)}>
+                      <BookX className="size-4 text-rose-600" aria-hidden />
+                      Yanlışlardan arşive soru seç
+                    </DropdownMenuItem>
+                  ) : null}
+                  {row.import_source === "pdf_import" ? (
+                    <DropdownMenuItem onSelect={() => setImportEditOpen(true)}>
+                      <FileCog className="size-4 text-violet-600" aria-hidden />
+                      Soru satırlarını düzelt
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setShareOpen(true)}>
+                    <Send className="size-4 text-cyan-700" aria-hidden />
+                    {share ? "Öğrenci notunu düzenle" : "Öğrenciyle paylaş"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setAnnounceOpen(true)}>
+                    {row.parent_notified_at ? (
+                      <MailCheck className="size-4 text-emerald-700" aria-hidden />
+                    ) : (
+                      <Mail className="size-4 text-teal-600" aria-hidden />
+                    )}
+                    {row.parent_notified_at ? "Veliye giden maili gör / PDF" : "Veliye duyur"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                    <Pencil className="size-4" aria-hidden />
+                    Denemeyi düzenle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={onDelete}
+                    disabled={del.isPending}
+                    className="text-rose-700 focus:text-rose-800"
+                  >
+                    {del.isPending ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                    ) : (
+                      <Trash2 className="size-4 text-rose-700" aria-hidden />
+                    )}
+                    Denemeyi sil
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               {hasSubjects ? (
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="h-8"
                   onClick={() => setOpen((v) => !v)}
                   aria-label={open ? "Ders kırılımını gizle" : "Ders kırılımını göster"}
+                  title={open ? "Ders kırılımını gizle" : "Ders kırılımını göster"}
                   aria-expanded={open}
                 >
-                  <ChevronDown
-                    className={cn("size-4 transition-transform", open && "rotate-180")}
-                    aria-hidden
-                  />
+                  <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} aria-hidden />
                 </Button>
               ) : null}
-              {row.import_source === "pdf_import" ? (
-                <ArchiveExamWrongsButton
-                  examId={row.id}
-                  studentId={studentId}
-                  wrongCount={row.total_wrong}
-                  compact
-                />
-              ) : null}
-              {row.import_source === "pdf_import" ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setImportEditOpen(true)}
-                  aria-label="İçe aktarılan satırları düzenle"
-                  title="Soru satırlarını düzelt (konu/sonuç) — net yeniden hesaplanır, kredi düşmez"
-                >
-                  <FileCog className="size-4 text-violet-600" aria-hidden />
-                </Button>
-              ) : null}
-              <ExamStudentShareButton row={row} share={share} />
-              {/* Veliye duyur — duyurulduysa düğme "Duyuruldu"ya döner (2026-09-05) */}
-              {row.parent_notified_at ? (
-                /* Duyurulmuş olsa da TIKLANABİLİR: koç gönderdiği maili
-                   yeniden görüntüleyip PDF olarak indirebilmeli (saha
-                   bulgusu 2026-09-10: "duyurulduktan sonra PDF'e
-                   ulaşamıyorum"). Tekrar gönderim modalda kapalı. */
-                <button
-                  type="button"
-                  onClick={() => setAnnounceOpen(true)}
-                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100"
-                  title={`Veliye duyuruldu · ${formatTRDate(row.parent_notified_at.slice(0, 10))} — gönderilen maili gör / PDF olarak indir`}
-                >
-                  <MailCheck className="size-3.5" aria-hidden />
-                  Duyuruldu
-                </button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAnnounceOpen(true)}
-                  aria-label="Sonucu veliye duyur"
-                  title="Veliye gidecek maili önizle, düzenle ve gönder"
-                >
-                  <Mail className="size-4 text-teal-600" aria-hidden />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditOpen(true)}
-                aria-label="Denemeyi düzenle"
-              >
-                <Pencil className="size-4" aria-hidden />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onDelete}
-                disabled={del.isPending}
-                aria-label="Denemeyi sil"
-              >
-                {del.isPending ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                ) : (
-                  <Trash2 className="size-4" aria-hidden />
-                )}
-              </Button>
             </div>
           </div>
+
+          <ArchiveExamWrongsButton
+            examId={row.id}
+            studentId={studentId}
+            wrongCount={row.total_wrong}
+            open={archiveOpen}
+            onOpenChange={setArchiveOpen}
+            hideTrigger
+          />
+          <ExamStudentShareButton row={row} share={share} open={shareOpen} onOpenChange={setShareOpen} hideTrigger />
 
           <ExamImportDialog
             open={importEditOpen}

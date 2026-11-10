@@ -360,9 +360,12 @@ def _subject_matrix(exams: list[ExamResult], pen: int) -> list[dict]:
     order: list[str] = []
     data: dict[str, list[dict | None]] = {}
     qmax: dict[str, int] = {}
+    unm: set[str] = set()   # konusu müfredata bağlanamayan sorular (belgenin ham ders adıyla)
     for i, e in enumerate(exams):
         for r in _effective_rows(e):
             n = _clean_name(r["name"])
+            if r.get("unmatched"):
+                unm.add(n)
             if n not in data:
                 data[n] = [None] * len(exams)
                 order.append(n)
@@ -379,7 +382,10 @@ def _subject_matrix(exams: list[ExamResult], pen: int) -> list[dict]:
         rows.append({
             "name": n, "questions": qmax[n], "cells": cells,
             "change": round(lastc["net"] - first["net"], 2) if len(present) >= 2 else None,
-            "reading": _subject_reading(present),
+            "unmatched": n in unm,
+            "reading": ("Bu soruların konusu müfredata bağlanmadı; deneme satırında "
+                        "\"Soru satırlarını düzelt\" ile bağlanınca doğru derse geçer."
+                        if n in unm else _subject_reading(present)),
             "blank_share": round(sum(c["blank"] for c in present) / max(1, sum(c["questions"] for c in present)), 3),
             "chronic_blank": (_subject_reading(present) or "").startswith("Her denemede"),
             "total_wrong": sum(c["wrong"] for c in present), "total_blank": sum(c["blank"] for c in present),

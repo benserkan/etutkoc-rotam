@@ -31,6 +31,9 @@ export function ArchiveExamWrongsButton({
   wrongCount,
   compact = false,
   className,
+  open: openProp,
+  onOpenChange,
+  hideTrigger = false,
 }: {
   examId: number;
   studentId?: number | null;
@@ -39,12 +42,18 @@ export function ArchiveExamWrongsButton({
   /** true → yalnız ikon (liste satırı); false → ikon + etiket (dialog). */
   compact?: boolean;
   className?: string;
+  /** Dışarıdan (ör. "İşlemler" menüsünden) açmak için kontrollü kullanım. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [openState, setOpenState] = React.useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => (onOpenChange ? onOpenChange(v) : setOpenState(v));
   if (wrongCount <= 0) return null;
   return (
     <>
-      {compact ? (
+      {hideTrigger ? null : compact ? (
         <Button
           variant="ghost"
           size="sm"

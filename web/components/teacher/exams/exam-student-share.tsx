@@ -27,14 +27,23 @@ import type { ExamResultRow } from "@/lib/types/teacher";
 export function ExamStudentShareButton({
   row,
   share,
+  open: openProp,
+  onOpenChange,
+  hideTrigger = false,
 }: {
   row: ExamResultRow;
   share: ExamShareInfo | null;
+  /** Dışarıdan (ör. "İşlemler" menüsünden) açmak için kontrollü kullanım. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [openState, setOpenState] = React.useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => (onOpenChange ? onOpenChange(v) : setOpenState(v));
   return (
     <>
-      {share ? (
+      {hideTrigger ? null : share ? (
         <button
           type="button"
           onClick={() => setOpen(true)}

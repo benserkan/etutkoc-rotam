@@ -2175,7 +2175,10 @@ def confirm(
     rows_in = prep["rows_in"]
     meta = {
         "universe": prep["universe"],
-        "scope": payload.get("scope") or "full",
+        # İçe aktarmanın kapsam TAHMİNİ (full|brans). "scope" anahtarı koçun genel/branş kararıdır
+        # (exam_scope) — aynı anahtara yazılınca tahmin koç kararı sanılıyordu (2026-11-10, Emir
+        # AYT-1 tam deneme "Matematik + Fizik branş" görünüyordu).
+        "import_scope": payload.get("scope") or "full",
         "grade_hint": payload.get("grade_hint"),
         "score_info": payload.get("score_info"),
         "suspect_count": sum(1 for r in rows_in if r.get("is_suspect")),
@@ -2248,9 +2251,11 @@ def update_imported(
         meta = json.loads(exam.analysis_meta) if exam.analysis_meta else {}
     except ValueError:
         meta = {}
+    if meta.get("scope") in ("full", "brans") and meta.get("scope_by") != "coach":
+        meta.pop("scope", None)  # eski içe aktarma tahmini; koç kararı değil
     meta.update({
         "universe": prep["universe"],
-        "scope": payload.get("scope") or meta.get("scope") or "full",
+        "import_scope": payload.get("scope") or meta.get("import_scope") or "full",
         "grade_hint": payload.get("grade_hint") or meta.get("grade_hint"),
         "suspect_count": sum(1 for r in rows_in if r.get("is_suspect")),
         "edited_count": sum(1 for r in rows_in if r.get("manually_edited")),
@@ -2475,7 +2480,7 @@ def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
         "universe": universe,
         "section": section.value,
         "section_label": EXAM_SECTION_LABELS[section],
-        "scope": meta.get("scope") or "full",
+        "scope": meta.get("import_scope") or "full",
         "confidence": "high",
         "parts": [{"part": None, "section": section.value,
                    "section_label": EXAM_SECTION_LABELS[section],

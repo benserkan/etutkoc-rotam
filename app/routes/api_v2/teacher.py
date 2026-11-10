@@ -2013,8 +2013,10 @@ def _set_exam_scope(exam: ExamResult, scope: str | None) -> None:
         meta = {}
     if scope in ("genel", "brans"):
         meta["scope"] = scope
+        meta["scope_by"] = "coach"
     else:
         meta.pop("scope", None)
+        meta.pop("scope_by", None)
     exam.analysis_meta = json.dumps(meta, ensure_ascii=False) if meta else None
 
 

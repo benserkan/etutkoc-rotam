@@ -261,6 +261,14 @@ export function SubjectMatrix({
             <tr key={r.name}>
               <th scope="row" className="whitespace-nowrap px-2 text-left text-[13px] font-semibold">
                 {r.name} <span className="font-normal text-muted-foreground">({r.questions})</span>
+                {r.unmatched ? (
+                  <span
+                    className="ml-1.5 rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-bold text-white"
+                    title="Bu soruların konusu müfredata bağlanmadı; deneme satırındaki İşlemler → Soru satırlarını düzelt ile bağlanınca doğru derse geçer."
+                  >
+                    konusu bağlanmadı
+                  </span>
+                ) : null}
               </th>
               {r.cells.map((c, i) => (
                 <td

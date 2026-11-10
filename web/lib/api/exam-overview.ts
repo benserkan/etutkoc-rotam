@@ -105,6 +105,8 @@ export interface OvSubjectRow {
   total_blank: number;
   blank_share: number;
   chronic_blank: boolean;
+  /** Konusu müfredata bağlanmayan sorular (belgenin ham ders adıyla, ör. "Fen Bilimleri"). */
+  unmatched?: boolean;
 }
 
 export interface OvOpportunity {

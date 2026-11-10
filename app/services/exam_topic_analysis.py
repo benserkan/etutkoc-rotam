@@ -178,6 +178,16 @@ def build_exam_topic_analysis(
         ).all()
     } if topics_db else {}
     topic_meta = {t.id: t for t in topics_db}
+    # AYT denemesinde AYT listesinde olmayan konu (Ekosistem, Basınç…) TYT taksonomisinden
+    # eşleşir; ders adı denemenin ders kırılımıyla aynı kural: AYT karşılığıyla gösterilir
+    # ("TYT Biyoloji" → "AYT Biyoloji"; 2026-11-10, Emir AYT-1). Konu kimliği değişmez.
+    if sec is not None and sec.value.startswith("ayt") and subj_names:
+        from app.models.exam_result import EXAM_UNIVERSE_AYT
+
+        ayt_disp = {exam_import_service._subject_key(s.name): s.name
+                    for s in exam_import_service.universe_subjects(db, EXAM_UNIVERSE_AYT, student)}
+        subj_names = {sid: ayt_disp.get(exam_import_service._subject_key(n), n)
+                      for sid, n in subj_names.items()}
 
     agg: dict[int, dict] = {}
     unmatched = 0
