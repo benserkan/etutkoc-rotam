@@ -232,6 +232,14 @@ def series_options(exams: list[ExamResult]) -> list[dict]:
              "section": section_of_key(k)} for k, n in ordered]
 
 
+def primary_general_key(exams: list[ExamResult]) -> str | None:
+    """Öğrencinin ana genel deneme serisi — seçicinin varsayılanıyla AYNI kural
+    (en çok denemesi olan genel seri; okul yazılısı sonda). Tek bir AYT denemesi
+    10 TYT denemesini gölgelemesin (Emir #113, 2026-11-10)."""
+    opts = [o for o in series_options(exams) if o["kind"] == "genel"]
+    return opts[0]["value"] if opts else None
+
+
 def resolve_series(requested: str | None, options: list[dict]) -> str | None:
     """İstenen seri; yoksa / yalnız tür verildiyse uyumlu ilk seri.
 

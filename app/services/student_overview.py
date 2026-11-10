@@ -66,7 +66,7 @@ def reliability(tasks: list[Task], today: date) -> list[dict]:
     if bulk >= BULK_WARN_DAYS and bulk >= marked / 2 and example:
         d, n, sec = example
         txt = (f"Son {RELIAB_DAYS} günde işaretleme yapılan {marked} günün {bulk} tanesinde o günün bütün "
-               f"görevleri {BULK_SECONDS // 60} dakikadan kısa sürede \"yapıldı\" yapıldı "
+               f"görevleri {BULK_SECONDS // 60} dakikadan kısa sürede \"yapıldı\" olarak işaretlendi "
                f"(ör. {wp._d(d)}: {n} görev {sec} saniyede).")
         if next_note:
             txt += f" İşaretleme genelde ertesi gün yapılıyor ({marked} günün {next_day} tanesinde)."
@@ -139,7 +139,7 @@ def exam_overview(db: Session, student: User, today: date) -> dict:
              if exam_scope.classify(e) == "genel"]
     if not genel:
         return {"exam": None, "target": None}
-    key = exam_scope.series_key(genel[-1])
+    key = exam_scope.primary_general_key(genel)
     ser = [e for e in genel if exam_scope.series_key(e) == key]
     label = exam_scope.exam_scope(ser[-1]).series_label
     nets = [round(e.net, 2) for e in ser]

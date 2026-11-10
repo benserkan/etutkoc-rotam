@@ -169,7 +169,8 @@ def build_development_report(db: Session, student: User, *, series: str | None =
     journey = None
     if full or exams:
         first_ph, last_ph = full[:PHASE_WEEKS], full[-PHASE_WEEKS:]
-        tests_total = sum(w["test_done"] for w in weeks)
+        # "N hafta · toplam X test" — yalnız sayılan N tam hafta (kesik + süren hafta hariç)
+        tests_total = sum(w["test_done"] for w in full)
         journey = {
             "weeks": len(full),
             "first_week": full[0]["label"] if full else None,

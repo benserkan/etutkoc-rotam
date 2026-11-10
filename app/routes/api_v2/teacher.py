@@ -1404,18 +1404,29 @@ def split_program_exams(exams: list[ExamResult]) -> tuple[list[ExamResult], list
 
 
 def exam_list_summary(exams: list[ExamResult]) -> ExamListSummary:
-    """Liste özeti — exams DESC sıralı (ilk = en yeni)."""
-    nets = [e.net for e in exams]
-    count = len(nets)
+    """Liste özeti — exams DESC sıralı (ilk = en yeni).
+
+    Net istatistikleri yalnız ANA genel seriden: TYT (120 soru) ile AYT (80 soru)
+    netleri aynı ortalamaya girerse "ortalama 91, gelişim −38" gibi anlamsız sayı
+    çıkar (Emir #113, 2026-11-10). `count` tüm denemelerin sayısıdır.
+    """
+    from app.services import exam_scope
+
+    key = exam_scope.primary_general_key(exams)
+    ser = [e for e in exams if exam_scope.series_key(e) == key] if key else list(exams)
+    nets = [e.net for e in ser]
+    n = len(nets)
     last_net = nets[0] if nets else None
     first_net = nets[-1] if nets else None
     return ExamListSummary(
-        count=count,
-        avg_net=round(sum(nets) / count, 2) if count else 0.0,
+        count=len(exams),
+        avg_net=round(sum(nets) / n, 2) if n else 0.0,
         best_net=round(max(nets), 2) if nets else 0.0,
         last_net=last_net,
         first_net=first_net,
-        trend_delta=round(last_net - first_net, 2) if count >= 2 else None,
+        trend_delta=round(last_net - first_net, 2) if n >= 2 else None,
+        series_label=exam_scope.exam_scope(ser[0]).series_label if ser else None,
+        series_count=n,
     )
 
 

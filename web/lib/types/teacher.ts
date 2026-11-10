@@ -2376,6 +2376,9 @@ export interface ExamListSummary {
   last_net: number | null;
   first_net: number | null;
   trend_delta: number | null;
+  /** Net ortalaması/en iyi/eğilim yalnız bu seriden (ana genel deneme serisi). */
+  series_label?: string | null;
+  series_count?: number | null;
 }
 
 export interface StudentExamListResponse {

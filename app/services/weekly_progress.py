@@ -718,8 +718,11 @@ def _extra_cards(db: Session, student: User, cur: Week, k: int, ended: bool, pre
     exams = (db.query(ExamResult).filter(ExamResult.student_id == student.id, analysis_exam_filter())
              .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc()).limit(40).all())
     genel = [e for e in exams if exam_scope.classify(e) == "genel"]
-    last = genel[0] if genel else None
-    prev = next((e for e in genel[1:] if exam_scope.series_key(e) == exam_scope.series_key(last)), None) if last else None
+    # Ana genel seri (seçici varsayılanıyla aynı): tek bir AYT denemesi 10 TYT denemesini gölgelemesin
+    pkey = exam_scope.primary_general_key(genel)
+    ser = [e for e in genel if exam_scope.series_key(e) == pkey]
+    last = ser[0] if ser else None
+    prev = ser[1] if len(ser) > 1 else None
     if last:
         diff = round(last.net - prev.net, 2) if prev else None
         status = ("insufficient" if prev is None else "above" if diff > 0 else "below" if diff < 0 else "normal")

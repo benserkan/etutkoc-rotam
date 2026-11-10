@@ -130,6 +130,11 @@ export default function ParentChildExamsRoute() {
                 </View>
               ))}
             </View>
+            {exams.summary.series_label ? (
+              <Text className="text-[11px] text-slate-500">
+                Ortalama ve en iyi net: {exams.summary.series_label}
+              </Text>
+            ) : null}
 
             {sections.length > 1 ? (
               <View className="flex-row flex-wrap gap-1.5">

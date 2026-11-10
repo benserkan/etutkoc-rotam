@@ -194,6 +194,8 @@ export interface ExamSummary {
   last_net: number | null;
   first_net: number | null;
   trend_delta: number | null;
+  /** Net ortalaması/en iyi yalnız bu seriden (TYT ile AYT birlikte ortalanmaz). */
+  series_label?: string | null;
 }
 export interface StudentExamsResponse {
   summary: ExamSummary;

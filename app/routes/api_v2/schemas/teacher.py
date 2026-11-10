@@ -2530,6 +2530,9 @@ class ExamListSummary(BaseModel):
     last_net: float | None = None
     first_net: float | None = None
     trend_delta: float | None = None  # son - ilk (gelişim)
+    # Net ortalaması/en iyi/eğilim YALNIZ bu seriden (TYT ile AYT netleri birlikte ortalanmaz)
+    series_label: str | None = None
+    series_count: int | None = None
 
 
 class StudentExamListResponse(BaseModel):
