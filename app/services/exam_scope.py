@@ -180,7 +180,9 @@ def exam_scope(exam: ExamResult) -> ExamScope:
     if is_varying_section(exam.section):
         return ExamScope("genel", None, sec, label)
     if classify(exam) == "genel":
-        return ExamScope("genel", None, sec, f"{label} (genel deneme)")
+        # "AYT (Sayısal)" + " (genel deneme)" çift parantez olmasın → "AYT Sayısal (genel deneme)"
+        flat = re.sub(r"\s*\(([^()]+)\)$", r" \1", label)
+        return ExamScope("genel", None, sec, f"{flat} (genel deneme)")
     subj = branch_subject(exam)
     return ExamScope("brans", subj, f"{sec}{SEP}{_skey(subj)}",
                      f"{_branch_level_label(sec, label)} · {subj} branş")
