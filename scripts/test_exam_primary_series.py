@@ -85,7 +85,7 @@ def main():
         check("3e. LGS (sınav türüne uymayan) gidişata girmez, not edilir",
               "lgs" not in keys and "LGS" in (ov.get("exam_note") or ""), ov.get("exam_note"))
         ayt = (ov.get("exams") or [{}, {}])[-1]
-        check("3f. tek AYT denemesi 'tek deneme' notu", "tek deneme" in (ayt.get("text") or ""), ayt.get("text"))
+        check("3f. tek AYT denemesi 'ilk deneme' notu", "İlk deneme" in (ayt.get("text") or ""), ayt.get("text"))
         check("3c. TYT hedefi Genel'de görünür (100)", (ov.get("target") or {}).get("target_net") == 100, ov.get("target"))
 
         from app.services import weekly_progress as wpm

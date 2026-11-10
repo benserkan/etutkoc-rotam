@@ -107,8 +107,11 @@ def reliability(tasks: list[Task], today: date) -> list[dict]:
         if res_t < RESULT_LOW * done_t:
             out.append({
                 "key": "results", "tone": "warn", "title": "Doğru/yanlış girilmiyor",
-                "text": (f"Son 4 haftada çözülen {done_t} testin yalnız {res_t} tanesinde doğru/yanlış girildi "
-                         f"(%{pct}). Doğruluk ve zorlandığı konular bu yüzden ölçülemiyor."),
+                "text": ((f"Son 4 haftada çözülen {done_t} testin hiçbirinde doğru/yanlış girilmedi."
+                          if res_t == 0 else
+                          f"Son 4 haftada çözülen {done_t} testin yalnız {res_t} tanesinde doğru/yanlış girildi "
+                          f"(%{pct}).")
+                         + " Doğruluk ve zorlandığı konular bu yüzden ölçülemiyor."),
                 "agenda": "Testlerde doğru/yanlış/boş girmeyi alışkanlık yap — zorlandığı konular ancak böyle görünür.",
                 "tests_done": done_t, "tests_with_result": res_t,
             })
@@ -159,7 +162,8 @@ def _series_block(db: Session, student: User, today: date, ser: list, key: str) 
     slope = _slope(win_nets)
     avg3 = round(sum(nets[-3:]) / len(nets[-3:]), 2)
 
-    txt = f"Son deneme {num(last.net)} net ({d_(last.exam_date)})"
+    txt = (f"Son deneme {num(last.net)} net ({d_(last.exam_date)})" if len(ser) > 1
+           else f"İlk deneme {num(last.net)} net ({d_(last.exam_date)})")
     if diff is not None:
         txt += f", öncekine göre {_sgn(diff)}{num(abs(diff))}"
     if slope is not None:
@@ -169,7 +173,7 @@ def _series_block(db: Session, student: User, today: date, ser: list, key: str) 
                 f"(deneme başına {_sgn(slope)}{num(abs(slope))} net)")
     txt += f". Son 3 ortalama {num(avg3)}." if len(ser) > 1 else "."
     if len(ser) == 1:
-        txt += " Bu türde tek deneme var; gidişat ikinci denemeden sonra görünür."
+        txt += " Gidişat ikinci denemeden sonra görünür."
     tone = ("info" if slope is None else "warn" if slope <= -TREND_EPS else
             "good" if slope >= TREND_EPS else "info")
     exam = {

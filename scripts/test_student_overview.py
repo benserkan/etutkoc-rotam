@@ -155,7 +155,7 @@ def main():
         check("toplu: seansa ekle metni var", bool(r.get("bulk", {}).get("agenda")))
         check("toplu: D/Y girilmiyor sarı", r.get("results", {}).get("tone") == "warn", r.get("results"))
         check("toplu: sayılar test cinsinden (son 4 hafta 28 gün × 15 test = 420)",
-              "çözülen 420 testin yalnız 0 tanesinde" in r.get("results", {}).get("text", ""),
+              "çözülen 420 testin hiçbirinde" in r.get("results", {}).get("text", ""),
               r.get("results", {}).get("text"))
 
         we = build_weekly_progress(db, ertesi, today=today)
