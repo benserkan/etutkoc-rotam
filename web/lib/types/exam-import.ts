@@ -73,7 +73,9 @@ export interface ExamImportDraft {
   universe: "tyt" | "ayt" | "lgs" | "okul";
   section: string;
   section_label: string;
-  scope: "full" | "brans";
+  scope: "full" | "brans" | "session";
+  /** LGS tek oturum karnesi: "sozel" (50 soru) | "sayisal" (40 soru). */
+  session?: "sozel" | "sayisal" | null;
   confidence: "high" | "medium" | "low";
   parts: ImportPart[];
   subjects: ImportDraftSubject[];

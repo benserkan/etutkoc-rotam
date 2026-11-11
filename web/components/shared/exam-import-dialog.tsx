@@ -213,6 +213,8 @@ function ImportFlow({
   const [titleTouched, setTitleTouched] = React.useState(false);
   const [examDate, setExamDate] = React.useState("");
   const [section, setSection] = React.useState("");
+  // Karne puanı — okuma şüpheliyse (nete eşit / aralık dışı) BOŞ başlar, koç düzeltir ya da boş bırakır.
+  const [scoreText, setScoreText] = React.useState("");
   // Birleşik belge (TG kitapçığı): seçili oturum — yalnız o oturumun soruları
   // kaydedilir; koç ikinci oturum için tekrar "kaydet" yapar (analiz tek, kredi tek).
   const [selectedPart, setSelectedPart] = React.useState<string | null>(null);
@@ -244,6 +246,11 @@ function ImportFlow({
     setTitle(autoTitle(d.title, d, firstPart));
     setTitleTouched(false);
     setExamDate(d.exam_date ?? "");
+    {
+      const si = d.score_info as { score?: unknown; score_issue?: string } | null;
+      const raw = si && si.score != null && !si.score_issue ? String(si.score).replace(".", ",") : "";
+      setScoreText(raw);
+    }
     setSection(d.parts[0]?.section ?? d.section);
     setDup(d.duplicate ?? null);
     setStep("preview");
@@ -419,7 +426,7 @@ function ImportFlow({
       section,
       scope: draft.scope,
       grade_hint: draft.grade_hint,
-      score_info: draft.score_info,
+      score_info: buildScoreInfo(draft.score_info, scoreText),
       force: mode === "force",
       replace_exam_id: mode === "replace" ? (dup?.exam_id ?? null) : null,
       rows: activeRows.map((r): ConfirmRow => ({
@@ -489,7 +496,9 @@ function ImportFlow({
             {draft ? (
               <span className="text-xs font-normal text-muted-foreground">
                 {draft.section_label}
-                {draft.scope === "brans" ? " · branş" : ""}
+                {draft.session
+                  ? ` · ${draft.session === "sozel" ? "Sözel" : "Sayısal"} oturumu`
+                  : draft.scope === "brans" ? " · branş" : ""}
               </span>
             ) : null}
           </DialogTitle>
@@ -557,6 +566,8 @@ function ImportFlow({
               dup={dup}
               onTitle={(v) => { setTitle(v); setTitleTouched(true); }}
               onDate={setExamDate}
+              scoreText={scoreText}
+              onScore={setScoreText}
               onSection={setSection}
               onSwitchPart={switchPart}
               onEditRow={editRow}
@@ -777,10 +788,14 @@ function PreviewStep({
   dup,
   onTitle,
   onDate,
+  scoreText,
+  onScore,
   onSection,
   onSwitchPart,
   onEditRow,
 }: {
+  scoreText: string;
+  onScore: (v: string) => void;
   draft: ExamImportDraft;
   rows: EditRow[];
   selectedPart: string | null;
@@ -886,6 +901,7 @@ function PreviewStep({
           ))}
         </select>
       </div>
+      <ScoreField draft={draft} value={scoreText} onChange={onScore} />
       {draft.confidence !== "high" ? (
         <p className="text-xs text-amber-800">
           <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
@@ -1235,4 +1251,54 @@ function QuotaNote({ studentId }: { studentId?: number }) {
       satırı kontrol edip düzeltebilirsin.
     </p>
   );
+}
+
+
+/** Karne puanı (2026-11-11): şüpheli okumada kırmızı çerçeve + neden + "boş bırakabilirsin". */
+function ScoreField({ draft, value, onChange }: {
+  draft: ExamImportDraft; value: string; onChange: (v: string) => void;
+}) {
+  const si = draft.score_info as { score?: unknown; score_issue?: string; score_read?: unknown } | null;
+  const issue = si?.score_issue ?? null;
+  if (!si || (si.score == null && !issue)) return null;
+  const bad = issue != null && value.trim() === String(si.score_read ?? "").replace(".", ",");
+  return (
+    <div className={cn("rounded-md border px-3 py-2", issue ? "border-rose-300 bg-rose-50" : "border-border bg-card")}>
+      <label className="flex flex-wrap items-center gap-2 text-sm">
+        <span className={cn("font-medium", issue ? "text-rose-900" : "text-foreground")}>Karnedeki puan</span>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          inputMode="decimal"
+          placeholder={issue ? "karnede puan yoksa boş bırak" : "ör. 465,63"}
+          aria-label="Karnedeki puan"
+          aria-invalid={bad || undefined}
+          className={cn(
+            "h-8 w-44 rounded-md border bg-card px-2 text-sm text-foreground",
+            issue ? "border-rose-500 ring-1 ring-rose-300" : "border-border",
+          )}
+        />
+      </label>
+      {issue ? (
+        <p className="mt-1 text-xs text-rose-900">
+          <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
+          {issue} Karnede puan yazıyorsa buraya gir; yazmıyorsa boş bırak — deneme yine kaydedilir.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function buildScoreInfo(info: unknown, text: string): Record<string, unknown> | null {
+  const base = { ...((info as Record<string, unknown> | null) ?? {}) };
+  delete base.score_issue;
+  delete base.score_read;
+  const t = text.trim().replace(",", ".");
+  const n = t ? Number(t) : NaN;
+  if (Number.isFinite(n)) base.score = n;
+  else {
+    base.score = null;
+    base.rank_overall = base.rank_overall ?? null;
+  }
+  return Object.keys(base).length ? base : null;
 }

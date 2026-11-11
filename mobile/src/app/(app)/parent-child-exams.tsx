@@ -135,6 +135,26 @@ export default function ParentChildExamsRoute() {
                 Ortalama ve en iyi net: {exams.summary.series_label}
               </Text>
             ) : null}
+            {(exams.summary.subject_progress?.length ?? 0) > 0 ? (
+              <View className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <Text className="mb-1 text-xs font-bold text-slate-700">
+                  Henüz tam deneme yok — ders bazlı ilerleme
+                </Text>
+                {exams.summary.subject_progress!.map((s) => (
+                  <View key={s.name} className="flex-row items-center justify-between py-0.5">
+                    <Text className="flex-1 text-xs text-slate-700">{s.name}</Text>
+                    <Text className="text-xs font-semibold text-slate-900">
+                      {s.count >= 2 ? `${fmtNet(s.first_net)} → ${fmtNet(s.last_net)}` : fmtNet(s.last_net)}
+                    </Text>
+                    {s.change != null ? (
+                      <Text className={`ml-2 w-12 text-right text-xs ${s.change >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                        {s.change >= 0 ? "+" : ""}{fmtNet(s.change)}
+                      </Text>
+                    ) : <Text className="ml-2 w-12" />}
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
             {sections.length > 1 ? (
               <View className="flex-row flex-wrap gap-1.5">

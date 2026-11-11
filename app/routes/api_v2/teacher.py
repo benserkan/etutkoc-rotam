@@ -1413,6 +1413,12 @@ def exam_list_summary(exams: list[ExamResult]) -> ExamListSummary:
     from app.services import exam_scope
 
     key = exam_scope.primary_general_key(exams)
+    general = key is not None
+    if key is None:
+        # Tam deneme yok (yalnız oturum/branş): en çok denemesi olan seri — sözel ile sayısal
+        # oturum netleri ASLA birlikte ortalanmaz (2026-11-11).
+        opts = exam_scope.series_options(exams)
+        key = opts[0]["value"] if opts else None
     ser = [e for e in exams if exam_scope.series_key(e) == key] if key else list(exams)
     nets = [e.net for e in ser]
     n = len(nets)
@@ -1427,7 +1433,40 @@ def exam_list_summary(exams: list[ExamResult]) -> ExamListSummary:
         trend_delta=round(last_net - first_net, 2) if n >= 2 else None,
         series_label=exam_scope.exam_scope(ser[0]).series_label if ser else None,
         series_count=n,
+        subject_progress=([] if general else _subject_progress(exams)),
     )
+
+
+def _subject_progress(exams: list[ExamResult]) -> list[dict]:
+    """Ders bazlı ilerleme — tam deneme yokken (yalnız oturum/branş) özetin asıl ölçüsü.
+    Her ders kendi içinde kıyaslanır (Türkçe yalnız sözel oturumda geçer, karışmaz).
+    exams DESC sıralı; ilk = en yeni."""
+    from app.services import exam_scope
+
+    by: dict[str, list[tuple]] = {}
+    label: dict[str, str] = {}
+    for e in reversed(exams):            # eskiden yeniye
+        try:
+            rows = json.loads(e.subject_nets) if e.subject_nets else []
+        except ValueError:
+            rows = []
+        for d in rows if isinstance(rows, list) else []:
+            if not isinstance(d, dict) or not d.get("name"):
+                continue
+            q = int(d.get("correct") or 0) + int(d.get("wrong") or 0) + int(d.get("blank") or 0)
+            if q <= 0:
+                continue
+            k = exam_scope.lgs_subject_key(d["name"]) or exam_scope._canon_subject(d["name"])
+            label.setdefault(k, str(d["name"]))
+            by.setdefault(k, []).append((e.exam_date.isoformat(), float(d.get("net") or 0), q))
+    out = []
+    for k, pts in by.items():
+        first, last = pts[0], pts[-1]
+        out.append({"name": label[k], "count": len(pts), "questions": last[2],
+                    "first_net": round(first[1], 2), "last_net": round(last[1], 2),
+                    "change": round(last[1] - first[1], 2) if len(pts) >= 2 else None,
+                    "last_date": last[0]})
+    return sorted(out, key=lambda x: x["name"])
 
 
 def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamResultRow:
@@ -1485,7 +1524,7 @@ def _exam_scope_fields(exam: ExamResult) -> dict:
     from app.services import exam_scope as _es
     sc = _es.exam_scope(exam)
     return {
-        "scope": sc.kind, "scope_subject": sc.subject,
+        "scope": sc.kind, "scope_subject": sc.subject, "scope_session": sc.session,
         "scope_forced": _es._meta_scope(exam) is not None,
         "series_key": sc.series_key, "series_label": sc.series_label,
     }
@@ -1972,6 +2011,8 @@ def teacher_create_exam_v2(
         dup = exam_duplicate.find_duplicate(
             db, student.id, section=f["section"],
             title=f["title"], exam_date=f["exam_date"],
+            subjects={k for k in (exam_duplicate._subject_key(s.name)
+                                  for s in (body.subjects or [])) if k},
         )
         if dup is not None:
             raise HTTPException(status_code=409, detail={

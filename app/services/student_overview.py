@@ -130,7 +130,7 @@ _SECTION_ORDER = ["lgs", "tyt", "ayt_say", "ayt_ea", "ayt_soz", "ayt_dil",
 _TRACK_AYT = {"sayisal": "ayt_say", "ea": "ayt_ea", "sozel": "ayt_soz", "dil": "ayt_dil"}
 
 
-def _relevant_section(student: User, sec: str) -> bool:
+def _relevant_section(student: User, sec: str, strict_track: bool = True) -> bool:
     """Öğrencinin girdiği/gireceği sınav türü mü? Ortaokul (5-8) -> LGS + okul; lise/mezun -> LGS dışı.
     AYT alanı biliniyorsa yalnız o alan."""
     g = student.grade_level
@@ -143,7 +143,7 @@ def _relevant_section(student: User, sec: str) -> bool:
         return False
     tr = getattr(student.track, "value", student.track)
     alan = _TRACK_AYT.get(str(tr).lower()) if tr else None
-    if alan and sec.startswith("ayt_"):
+    if strict_track and alan and sec.startswith("ayt_"):
         return sec == alan
     return True
 
@@ -276,8 +276,16 @@ def exam_overview(db: Session, student: User, today: date) -> dict:
     if any(exam_scope.section_of_key(x["series_key"]) != "okul" for x in exams):
         exams = [x for x in exams if exam_scope.section_of_key(x["series_key"]) != "okul"]
     note = None
+    if not exams:
+        # Tam deneme yok: oturum/branş serileri varsa ne olduğunu söyle (Genel boş görünmesin)
+        others = [o for o in exam_scope.series_options(q.all()) if o["kind"] != "genel"
+                  and _relevant_section(student, o["section"])]
+        if others:
+            parts = " · ".join(f"{o['label']} {o['count']} deneme" for o in others[:4])
+            note = (f"Henüz tam deneme yok; {parts}. Oturum ve branş denemeleri net gidişatına, "
+                    "hedefe ve puan tahminine katılmaz — konu analizleri Denemeler sekmesinde.")
     if skipped:
-        note = ("Öğrencinin sınav türüne uymayan denemeler gidişata katılmadı: " + ", ".join(skipped)
+        note = ((note + " ") if note else "") + ("Öğrencinin sınav türüne uymayan denemeler gidişata katılmadı: " + ", ".join(skipped)
                 + ". Yanlış öğrenciye ya da yanlış türle yüklendiyse Denemeler sekmesinden düzelt.")
     return {"exam": exams[0] if exams else None, "target": targets[0] if targets else None,
             "exams": exams, "targets": targets, "exam_note": note}

@@ -157,9 +157,11 @@ def main():
         j = r.json()
         s = j["summary"]
         # 2 deneme: net 18.0 (05-01) + 21.0 (05-10). DESC → last=21.0 (en yeni), first=18.0
-        ok = (r.status_code == 200 and s["count"] == 2 and abs(s["avg_net"] - 19.5) < 0.01
-              and abs(s["best_net"] - 21.0) < 0.01 and abs(s["last_net"] - 21.0) < 0.01
-              and abs(s["first_net"] - 18.0) < 0.01 and abs(s["trend_delta"] - 3.0) < 0.01)
+        # 2026-11-11: farklı serilerin (LGS 18 ↔ TYT 21) netleri ASLA birlikte ortalanmaz; tam deneme
+        # yokken özet tek seriden + ders bazlı ilerleme. count tüm denemeler.
+        ok = (r.status_code == 200 and s["count"] == 2 and s["series_count"] == 1
+              and s["trend_delta"] is None and abs(s["avg_net"] - s["last_net"]) < 0.01
+              and s["avg_net"] in (18.0, 21.0) and len(s.get("subject_progress") or []) >= 1)
         check("7. summary count/avg/best/last/first/trend", ok, f"status={r.status_code} {s}")
         check("7b. rows DESC (en yeni ilk)",
               r.status_code == 200 and j["rows"][0]["exam_date"] == "2026-05-10", f"{[x['exam_date'] for x in j['rows']]}")

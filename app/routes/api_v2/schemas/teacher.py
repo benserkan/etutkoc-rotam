@@ -2517,6 +2517,7 @@ class ExamResultRow(BaseModel):
     # 2026-10-06: genel/branş ayrımı (exam_scope) — netler yalnız AYNI seride kıyaslanır
     scope: str = "genel"                    # "genel" | "brans"
     scope_subject: str | None = None        # branşta ders ("Matematik")
+    scope_session: str | None = None        # LGS tek oturum: "sozel" | "sayisal"
     scope_forced: bool = False              # koç elle işaretlediyse
     series_key: str = ""                    # "lgs" | "lgs~matematik"
     series_label: str = ""                  # "LGS (genel deneme)" | "LGS · Matematik branş"
@@ -2534,6 +2535,8 @@ class ExamListSummary(BaseModel):
     # Net ortalaması/en iyi/eğilim YALNIZ bu seriden (TYT ile AYT netleri birlikte ortalanmaz)
     series_label: str | None = None
     series_count: int | None = None
+    # Tam deneme yokken (yalnız oturum/branş) ders bazlı ilerleme: [{name, count, first_net, last_net, change}]
+    subject_progress: list[dict] = []
 
 
 class StudentExamListResponse(BaseModel):

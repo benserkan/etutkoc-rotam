@@ -93,8 +93,15 @@ def _aware(dt: datetime | None) -> datetime | None:
 # ---------------------------------------------------------------------------
 
 
-def section_choices() -> list[dict]:
-    return [{"value": s.value, "label": EXAM_SECTION_LABELS[s]} for s in ExamSection]
+def section_choices(student: User | None = None, keep: str | None = None) -> list[dict]:
+    """Önizleme tür seçicisi — öğrencinin sınıfına uygun türler (8. sınıfa TYT/AYT gösterilmez).
+    Okunan tür uygun listede değilse (yanlış tespit) yine de eklenir ki seçici boş kalmasın."""
+    from app.services.student_overview import _relevant_section
+
+    out = [{"value": s.value, "label": EXAM_SECTION_LABELS[s]} for s in ExamSection
+           if student is None or _relevant_section(student, s.value, strict_track=False)
+           or s.value == keep]
+    return out or [{"value": s.value, "label": EXAM_SECTION_LABELS[s]} for s in ExamSection]
 
 
 def check_pdf_duplicate(db: Session, student: User, pdf_bytes: bytes) -> None:
@@ -171,7 +178,7 @@ def analyze_core(
                 "detail": f"Karnede tarih yazmıyor; dosya adından {fd.strftime('%d.%m.%Y')} "
                           "alındı — doğru değilse değiştir.",
             }]
-    draft["section_choices"] = section_choices()
+    draft["section_choices"] = section_choices(student, keep=draft.get("section"))
     draft["credits_charged"] = 0 if quota.applies else KIND_CREDITS[UsageKind.AI_EXAM_IMPORT]
     draft["free_quota_left"] = (quota.left - 1) if quota.applies else None
     return draft

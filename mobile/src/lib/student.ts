@@ -196,6 +196,8 @@ export interface ExamSummary {
   trend_delta: number | null;
   /** Net ortalaması/en iyi yalnız bu seriden (TYT ile AYT birlikte ortalanmaz). */
   series_label?: string | null;
+  /** Tam deneme yokken (yalnız oturum/branş) ders bazlı ilerleme. */
+  subject_progress?: { name: string; count: number; first_net: number; last_net: number; change: number | null }[];
 }
 export interface StudentExamsResponse {
   summary: ExamSummary;

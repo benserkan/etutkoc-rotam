@@ -158,6 +158,43 @@ def find_by_pdf(
     return q.order_by(ExamResult.id.asc()).first()
 
 
+def _subject_key(name: str | None) -> str | None:
+    """Ders adını kıyas anahtarına çevir (LGS varyasyonları dahil: "Din K.ve A.B." = "Din")."""
+    from app.services.exam_scope import _canon_subject, lgs_subject_key
+
+    if not name or not str(name).strip():
+        return None
+    return lgs_subject_key(name) or _canon_subject(str(name)).lower()
+
+
+def subject_keys_of_rows(rows) -> set[str]:
+    keys = set()
+    for r in rows or []:
+        for f in ("subject_raw", "subject_name_raw", "subject", "display_subject"):
+            k = _subject_key(_row_field(r, f))
+            if k:
+                keys.add(k)
+                break
+    return keys
+
+
+def subject_keys_of_exam(exam: ExamResult) -> set[str]:
+    keys = set()
+    try:
+        import json
+        data = json.loads(exam.subject_nets) if exam.subject_nets else []
+    except ValueError:
+        data = []
+    for d in data if isinstance(data, list) else []:
+        if isinstance(d, dict):
+            k = _subject_key(d.get("name"))
+            if k:
+                keys.add(k)
+    if not keys and exam.questions:
+        keys = subject_keys_of_rows(exam.questions)
+    return keys
+
+
 def find_duplicate(
     db: Session,
     student_id: int,
@@ -168,6 +205,7 @@ def find_duplicate(
     exam_date: date | None = None,
     pdf_sha: str | None = None,
     exclude_exam_id: int | None = None,
+    subjects: set[str] | None = None,
 ) -> DuplicateMatch | None:
     """Üç katmanı sırayla dener; en güçlü eşleşmeyi döndürür (exact > likely)."""
     # --- 1. belge
@@ -210,6 +248,9 @@ def find_duplicate(
         return best
 
     # --- 3. ad + tarih
+    # Ders kümeleri HİÇ örtüşmüyorsa aynı deneme değildir: aynı adlı LGS'nin sözel ve sayısal
+    # oturum karneleri (2026-11-11, Beril testi) — "yerine yaz" sözel kaydı silerdi.
+    new_keys = set(subjects or ()) or subject_keys_of_rows(rows)
     nt = normalize_title(title)
     if nt and exam_date is not None:
         q = db.query(ExamResult).filter(ExamResult.student_id == student_id)
@@ -219,6 +260,10 @@ def find_duplicate(
         for e in q.all():
             if normalize_title(e.title) != nt:
                 continue
+            if new_keys:
+                old_keys = subject_keys_of_exam(e)
+                if old_keys and not (old_keys & new_keys):
+                    continue
             gap = abs((e.exam_date - exam_date).days)
             if gap == 0:
                 return DuplicateMatch(

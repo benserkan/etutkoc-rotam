@@ -668,8 +668,9 @@ def main() -> int:
 
         # 15) section_choices okul dahil (manuel tür seçici)
         vals = {c["value"] for c in draft.get("section_choices", [])}
-        check("15. tür seçici okul dahil tüm türleri sunar",
-              {"tyt", "ayt_say", "lgs", "okul"} <= vals, str(vals))
+        # 2026-11-11: seçici öğrencinin sınıfına göre süzülür (lise öğrencisine LGS gösterilmez)
+        check("15. tür seçici öğrencinin sınıfına uygun türleri sunar (okul dahil, LGS yok)",
+              {"tyt", "ayt_say", "okul"} <= vals and "lgs" not in vals, str(vals))
 
         # --- 16) CONFIRM: Zzz satırını koç elle Rasyonel'e bağlar ---
         conf_rows = []

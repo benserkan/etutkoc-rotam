@@ -102,6 +102,90 @@ def _meta_scope(exam: ExamResult) -> str | None:
     return v
 
 
+# ---------------------------------------------------------------- LGS oturumu (2026-11-11)
+# LGS iki oturumdur: SÖZEL (Türkçe 20 · İnkılap 10 · Din 10 · İngilizce 10 = 50) ve SAYISAL
+# (Matematik 20 · Fen 20 = 40). Okullar/yayınevleri bazen tek oturumluk karne verir. Bu
+# denemeler branş DEĞİL, kendi serisi olan oturumdur ("LGS Sözel" / "LGS Sayısal"). Tam LGS
+# (genel) serisine KARIŞMAZ: net gidişatı, puan tahmini, hedef yalnız tam denemeden.
+LGS_SOZEL = frozenset({"turkce", "inkilap", "din", "ingilizce"})
+LGS_SAYISAL = frozenset({"matematik", "fen"})
+SESSION_LABELS = {"sozel": "LGS Sözel", "sayisal": "LGS Sayısal"}
+
+# Ders adı varyasyonları (yayınevi/okul farklı yazar): ASCII-katlanmış küçük metinde aranır,
+# ilk eşleşen kazanır. "tarih" LGS'de İnkılap Tarihi'dir; "sosyal" LGS'de İnkılap'ın eski adı.
+_LGS_SUBJECT_PATTERNS: list[tuple[str, str]] = [
+    (r"turkce|\btur\b|\btrk\b|turk dili|paragraf", "turkce"),
+    (r"inkilap|ataturkculuk|\btarih|\btar\b|\bink\b|sosyal bilgi|\bsosyal\b|\bsos\b", "inkilap"),
+    (r"\bdin\b|din kultur|\bdkab\b|\bdk\b|ahlak", "din"),
+    (r"ingilizce|\bing\b|yabanci dil|english|\bydl?\b", "ingilizce"),
+    (r"matematik|\bmat\b|geometri", "matematik"),
+    (r"\bfen\b|fen bilim|\bfb\b", "fen"),
+]
+
+
+def _ascii(s: str) -> str:
+    tr = str.maketrans("ÇĞİIÖŞÜçğıöşüÂâÎîÛû", "CGIIOSUcgiosuAaIiUu")
+    return re.sub(r"[^a-z0-9]+", " ", (s or "").translate(tr).lower()).strip()
+
+
+def lgs_subject_key(name: str | None) -> str | None:
+    """LGS ders adını kanonik anahtara çevir; tanınmazsa None.
+    "Din K.ve A.B." / "DKAB" / "Din" → din · "T.C. İnkılap Tarihi…" / "Tarih" / "TAR" → inkilap."""
+    low = _ascii(name or "")
+    if not low:
+        return None
+    for pat, key in _LGS_SUBJECT_PATTERNS:
+        if re.search(pat, low):
+            return key
+    return None
+
+
+def lgs_session_of_subjects(names, qcounts=None) -> str | None:
+    """Ders adları kümesi tek oturumu mu gösteriyor? 'sozel' | 'sayisal' | None.
+
+    Sözel: Türkçe dahil en az 3 sözel ders, sayısal ders YOK (bazı okullar İngilizceyi ayrı yapar).
+    Sayısal: Matematik VE Fen, sözel ders YOK. Tanınmayan ders adı varsa karar verilmez (None).
+    """
+    keys = set()
+    for n in names:
+        k = lgs_subject_key(n)
+        if k is None:
+            return None
+        keys.add(k)
+    if not keys:
+        return None
+    if keys <= LGS_SOZEL and "turkce" in keys and len(keys) >= 3:
+        return "sozel"
+    if keys == LGS_SAYISAL:
+        return "sayisal"
+    return None
+
+
+def lgs_session(exam: ExamResult) -> str | None:
+    """Kayıtlı LGS denemesi tek oturum mu? Ders kırılımından; yoksa başlık/tek satır adından
+    ("LGS Sayısal Bölüm" program denemesi, "Sözel bölüm" satırı)."""
+    if _section_value(exam.section) != "lgs":
+        return None
+    rows = _subject_rows(exam)
+    if rows:
+        if len(rows) == 1:
+            low1 = _ascii(rows[0]["name"])
+            if "sozel" in low1:
+                return "sozel"
+            if "sayisal" in low1:
+                return "sayisal"
+        s = lgs_session_of_subjects([r["name"] for r in rows])
+        if s:
+            return s
+    low = _ascii(exam.title or "")
+    qn = exam.total_correct + exam.total_wrong + exam.total_blank
+    if re.search(r"\bsozel\b", low) and (not qn or qn <= 60):
+        return "sozel"
+    if re.search(r"\bsayisal\b", low) and (not qn or qn <= 50):
+        return "sayisal"
+    return None
+
+
 def _skey(label: str) -> str:
     return re.sub(r"[^a-z0-9çğıöşü]+", "-", _low(label)).strip("-") or "ders"
 
@@ -112,6 +196,7 @@ class ExamScope:
     subject: str | None     # branşta ders etiketi ("Matematik")
     series_key: str         # "lgs" | "lgs~matematik"
     series_label: str       # "LGS (genel)" | "LGS · Matematik branş"
+    session: str | None = None  # LGS oturumu: "sozel" | "sayisal" (kind "brans" — genel seriye girmez)
 
     @property
     def is_branch(self) -> bool:
@@ -161,6 +246,8 @@ def classify(exam: ExamResult) -> str:
     forced = _meta_scope(exam)
     if forced:
         return forced
+    if lgs_session(exam):
+        return "brans"          # oturum: genel seriye karışmaz (etiketi/serisi exam_scope'ta)
     if "branş" in _low(exam.title or "") or "brans" in _low(exam.title or ""):
         return "brans"
     sec = _section_value(exam.section)
@@ -183,6 +270,9 @@ def exam_scope(exam: ExamResult) -> ExamScope:
         # "AYT (Sayısal)" + " (genel deneme)" çift parantez olmasın → "AYT Sayısal (genel deneme)"
         flat = re.sub(r"\s*\(([^()]+)\)$", r" \1", label)
         return ExamScope("genel", None, sec, f"{flat} (genel deneme)")
+    ses = lgs_session(exam) if _meta_scope(exam) != "brans" else None
+    if ses:
+        return ExamScope("brans", SESSION_LABELS[ses], f"{sec}{SEP}{ses}", SESSION_LABELS[ses], ses)
     subj = branch_subject(exam)
     return ExamScope("brans", subj, f"{sec}{SEP}{_skey(subj)}",
                      f"{_branch_level_label(sec, label)} · {subj} branş")

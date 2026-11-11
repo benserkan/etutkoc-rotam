@@ -365,7 +365,8 @@ def teacher_exam_import_rows(
     db.commit()  # sözlük hit sayaçları (normalize alias katmanı)
     return ExamImportDraft(
         **draft,
-        section_choices=_section_choices(),
+        section_choices=[SectionChoice(**c) for c in jobs.section_choices(
+            student, keep=draft.get("section"))],
         credits_charged=0,
     )
 

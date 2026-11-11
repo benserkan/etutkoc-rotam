@@ -1555,6 +1555,12 @@ def detect_universe(read: dict, student: User) -> dict:
         votes[EXAM_UNIVERSE_AYT] += 1
     elif 70 <= n_q <= 95 and n_subj >= 5 and grade is not None and grade <= 8:
         votes[EXAM_UNIVERSE_LGS] += 1
+    # LGS TEK OTURUM karnesi (2026-11-11): sözel 50 (Türkçe/İnkılap/Din/İngilizce) ya da sayısal
+    # 40 (Matematik/Fen). Ders adı varyasyonları exam_scope.lgs_subject_key'de ("Din K.ve A.B.", "TAR"…).
+    from app.services.exam_scope import lgs_session_of_subjects
+    _ses = lgs_session_of_subjects({q["subject"] for q in read["questions"]})
+    if _ses and 25 <= n_q <= 60 and not (student.is_graduate or (grade or 0) >= 9):
+        votes[EXAM_UNIVERSE_LGS] += 2
     elif 60 <= n_q <= 90 and n_subj >= 2:
         votes[EXAM_UNIVERSE_AYT] += 1
     # 3) öğrenci bağlamı
@@ -1568,6 +1574,8 @@ def detect_universe(read: dict, student: User) -> dict:
     top = votes[universe]
     confidence = "high" if top >= 3 else ("medium" if top == 2 else "low")
     scope = "brans" if n_subj <= 2 else "full"
+    if universe == EXAM_UNIVERSE_LGS and _ses:
+        scope = "session"          # bilgi: tek oturum (sınıflama kayıtta exam_scope'tan)
 
     section = _section_for(universe, read, student)
     gis = _gis_section_for(h, read, student)
@@ -1576,7 +1584,8 @@ def detect_universe(read: dict, student: User) -> dict:
         universe = universe_for_section(gis)
         confidence = "high"
     return {"universe": universe, "section": section.value,
-            "scope": scope, "confidence": confidence}
+            "scope": scope, "confidence": confidence,
+            "session": _ses if universe == EXAM_UNIVERSE_LGS else None}
 
 
 def _gis_section_for(h: str, read: dict, student: User) -> ExamSection | None:
@@ -2021,6 +2030,7 @@ def analyze(
         "section": first_det["section"],
         "section_label": EXAM_SECTION_LABELS[ExamSection(first_det["section"])],
         "scope": first_det["scope"],
+        "session": first_det.get("session"),
         "confidence": first_det["confidence"],
         "parts": parts_out,
         "subjects": subjects_out,
@@ -2033,9 +2043,55 @@ def analyze(
         "match_stats": stats_total,
         "duplicate_exam_id": dup_id,
         "duplicate": dup_match.as_details() if dup_match else None,
-        "score_info": _score_info_with_averages(merged),
+        "score_info": _check_score(_score_info_with_averages(merged), subjects_out,
+                                   first_det["section"], checks),
         "topic_choices": topic_choices,
     }
+
+
+# Karne puanı aralıkları (ham puan): LGS 100–500, YKS 100–560. Okul/izleme sınavlarında
+# puan ölçeği değişken → yalnız "nete eşit" kontrolü yapılır.
+_SCORE_RANGES = {"lgs": (100.0, 500.0), "tyt": (100.0, 560.0), "ayt_say": (100.0, 560.0),
+                 "ayt_ea": (100.0, 560.0), "ayt_soz": (100.0, 560.0), "ayt_dil": (100.0, 560.0)}
+
+
+def _check_score(info: dict | None, subjects: list[dict], section: str, checks: list) -> dict | None:
+    """Okunan karne puanını doğrula — REDDETMEZ, işaretler (2026-11-11 koç kararı).
+
+    Oturum karnesinde LGS puanı yoktur; okuma netin kendisini puan sanabiliyor (Beril testi:
+    sözel 44,67 net → "puan 44,67"). Şüpheli puan `score_issue` ile işaretlenir, kontrol listesine
+    düşer; önizleme puan alanını boş + kırmızı çerçeveli açar, koç düzeltir ya da boş bırakır.
+    """
+    if not info or info.get("score") in (None, ""):
+        return info
+    try:
+        score = float(str(info["score"]).replace(",", "."))
+    except (TypeError, ValueError):
+        score = None
+    net = round(sum(float(x.get("net") or 0) for x in subjects or []), 2)
+    issue = None
+    if score is None:
+        issue = "Karnedeki puan sayı olarak okunamadı."
+    elif subjects and abs(score - net) < 0.02:
+        issue = (f"Okunan puan ({_tr_num(score)}) denemenin netiyle aynı — büyük ihtimalle puan değil "
+                 "net okundu. Tek oturumluk karnelerde puan yazmaz.")
+    elif section in _SCORE_RANGES:
+        lo, hi = _SCORE_RANGES[section]
+        if not (lo <= score <= hi):
+            issue = (f"Okunan puan ({_tr_num(score)}) {int(lo)}–{int(hi)} aralığının dışında; "
+                     "karnede puan farklı yazıyor olabilir.")
+    if issue:
+        info = dict(info)
+        info["score_issue"] = issue
+        info["score_read"] = info.get("score")
+        checks.append({"code": "score_suspect", "label": "Karne puanı", "ok": False,
+                       "detail": issue + " Önizlemedeki puan alanından düzelt ya da boş bırak."})
+    return info
+
+
+def _tr_num(v: float) -> str:
+    s = f"{v:.2f}".rstrip("0").rstrip(".")
+    return s.replace(".", ",")
 
 
 def _score_info_with_averages(merged: dict) -> dict | None:

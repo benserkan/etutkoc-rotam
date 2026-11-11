@@ -563,7 +563,7 @@ function ExamScopeSelect({ row }: { row: ExamResultRow }) {
       <option value="auto">
         {row.scope_forced
           ? "Sisteme bırak"
-          : `${isBranch ? `${row.scope_subject ?? "Branş"} branş` : "Genel deneme"} (otomatik)`}
+          : `${row.scope_session ? `${row.scope_subject} oturumu` : isBranch ? `${row.scope_subject ?? "Branş"} branş` : "Genel deneme"} (otomatik)`}
       </option>
       <option value="genel">Genel deneme</option>
       <option value="brans">

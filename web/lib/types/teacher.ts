@@ -2340,6 +2340,8 @@ export interface ExamResultRow {
   /** Genel deneme mi branş mı (2026-10-06) — netler yalnız aynı seride kıyaslanır. */
   scope?: "genel" | "brans";
   scope_subject?: string | null;
+  /** LGS tek oturum: "sozel" | "sayisal" (tam LGS serisine girmez). */
+  scope_session?: string | null;
   scope_forced?: boolean;
   /** "lgs" (genel) | "lgs~matematik" (branş) */
   series_key?: string;
