@@ -95,7 +95,8 @@ class ExamImportDraft(BaseModel):
     universe: str                          # tyt|ayt|lgs|okul
     section: str
     section_label: str
-    scope: str                             # full|brans
+    scope: str                             # full|brans|session
+    session: str | None = None             # LGS tek oturum: sozel|sayisal
     confidence: str                        # high|medium|low
     parts: list[ImportPart]                # >1 ise birleşik belge (oturum seçici)
     subjects: list[ImportDraftSubject]
