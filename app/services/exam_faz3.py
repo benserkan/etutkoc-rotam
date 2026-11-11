@@ -359,6 +359,7 @@ def score_estimate(db: Session, student: User) -> dict:
     # sınavın puanını temsil etmez (exam_scope).
     from app.services import exam_scope
     branch_only = {e.section for e in exams if exam_scope.classify(e) == "brans"}
+    has_session = any(exam_scope.lgs_session(e) for e in exams if exam_scope.classify(e) == "brans")
     exams = [e for e in exams if exam_scope.classify(e) == "genel"]
     branch_only -= {e.section for e in exams}
     # Puan yalnız DERS DAĞILIMI olan denemeden hesaplanabilir: toplam-yalnız (elle) girilen
@@ -376,9 +377,11 @@ def score_estimate(db: Session, student: User) -> dict:
                           "hesaplanır; YKS'de diploma notu (OBP) da eklenir. Yön göstermek içindir.")}
     if branch_only:
         out["warnings"].append(
-            "Branş denemeleri puan tahminine katılmaz; tahmin için "
+            ("Tek oturum (LGS Sözel / LGS Sayısal) ve branş denemeleri" if has_session
+             else "Branş denemeleri")
+            + " puan tahminine katılmaz; tahmin için "
             + ", ".join(EXAM_SECTION_LABELS[s] for s in sorted(branch_only, key=lambda x: x.value))
-            + " genel denemesi girilmeli.")
+            + (" tam (iki oturumlu) denemesi girilmeli." if has_session else " genel denemesi girilmeli."))
 
     newest_no_rows = {}
     for e in no_rows:
