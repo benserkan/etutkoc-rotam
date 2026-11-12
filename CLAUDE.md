@@ -6,6 +6,36 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## KURUM YÖNETİCİSİ HAFTALIK ÖZETİ v2 + VELİ MAİLİ TASLAĞI (2026-11-12, CANLI commit `85efea9`, migration YOK)
+
+- **Kullanıcı kararları:** pilot/onay düğmesi/gölge dönem YOK; fark çıkarsa bölüm atılmaz → sorun giderilir
+  (bağımsız hesap esas) + **veri güvenilirliği skoru** hesaplanıp kayda geçer; kurum kimliği her mailde önde
+  (kuruma bağlı koçların velilere giden mailleri dahil — `_brand_header` zaten var).
+- **Hafta:** `admin_digest.report_week(today)` = bugünden önceki son tamamlanmış Pzt–Paz (eskiden Pazartesi
+  gönderiminde "Salı–Pazartesi"). Panel servisleri referans günü alır: `compute_compliance/teacher_scorecard/
+  action_center/academic(today=)`; risk değerlendirmesi `now` = o Pazarın sonu (`_ref_now`) — iki farklı
+  "şimdi" Açı'da sahte 100/100 kritik üretiyordu.
+- **`app/services/digest_reliability.py`:** tutarlılık kontrolleri (öğrenci kümesi · uyum panel↔bağımsız
+  Python sayımı `completion.item_counts` · koç satırları=kurum toplamı · trend son nokta · programsız koç↔kurum
+  [3 gün kuralı koç satırında yoktu — Açı'da 6≠5, düzeltildi] · risk karne↔değerlendirme) + veri kalitesi
+  (program kapsaması · D/Y girişi · işaretleme düzeni · deneme kaydı). Skor = 0,4×tutarlılık + 0,6×kalite;
+  `payload_json["reliability"]`. Payload sürüm 2 (`version`), sürüm 1 alanları arşiv uyumu için korunur.
+- **E-posta** `admin_weekly_summary.html` yeniden: kurum logosu (PLATFORM_TEMPLATES'ten ÇIKARILDI +
+  `brand_institution_id`), emojisiz, özet cümlesi, 4 sayı, 8 hafta eğilim, koç tablosu (uyum/değişim/programsız/
+  riskli/son görülme/karne), Müdahale Merkezi'nden 6 öncelik (nedenleriyle), deneme/veli/havuz, güvenilirlik
+  satırı. Arşiv: liste "Veri güvenilirliği" sütunu, detayda kontrol dökümü + gönderilen e-postanın birebir
+  görünümü (`GET /institution/admin-digest/{id}/html`, sürüm 1'de 404). Yan düzeltmeler: "Risk risk" başlığı,
+  "%86'ini" ekleri, alıcı listesi `
+` bölme.
+- Test YENİ `test_admin_digest_v2.py` 29/29 · compliance 10 · scorecard 7 · action_center 8 · academic 13 ·
+  institution/p3 · simulate_action_center 11 · branding 23. Açı'ya örnek mail benserkan@gmail.com'a gönderildi
+  (kayıt açılmadan — `scratchpad/send_test_digest.py` deseni).
+- **Ölçüm (prod, 9 hafta):** bir haftanın tamamlamalarının Pazartesi 12:00 TR'de ort. ~%5'i (en çok %12)
+  henüz işaretlenmemiş; Salı 12:00'de ~%2. Gönderim saati kararı kullanıcıda.
+- **Veli maili v2:** Emir verisiyle taslak (`scratchpad/mail_draft/veli_haftalik_emir.html`), henüz koda
+  dökülmedi. Bulunan hatalar: rapor ekranı −29 test düşüşte "İstikrarlı ve güçlü" diyor; deneme gidişatı
+  branş serisinden; mail ile ekran farklı hafta tanımı. **SIRADA:** veli maili v2 → WhatsApp stratejisi.
+
 ## TAKİP LİSTESİ + ÖLÇÜM LİSTESİ — "2-3 hafta sonra bakılacak" unutulmasın (2026-11-08, migration `b2d5i8j9i44e`)
 
 - **Sorun:** Claude oturumlar arası kendiliğinden uyanmaz; CLAUDE.md'deki "SIRADA/2-3 hafta sonra" notları
