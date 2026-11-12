@@ -88,9 +88,13 @@ def _summarize(totals: dict[int, dict]) -> dict:
     }
 
 
-def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> dict:
-    """Program uyum panosu verisi — kurum özeti + trend + öğretmen/öğrenci kırılımı."""
-    today = date.today()
+def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8,
+                       today: date | None = None) -> dict:
+    """Program uyum panosu verisi — kurum özeti + trend + öğretmen/öğrenci kırılımı.
+
+    today: referans günü (varsayılan bugün). Haftalık yönetici özeti geçen haftanın
+    Pazarını verir → "bu hafta" = Pzt–Paz tamamı (2026-11-12)."""
+    today = today or date.today()
     # Tamamlama: kayan 7 gün (TEK TANIM) — bu 7 gün vs önceki 7 gün
     this_ws, this_we = completion.window(today)
     last_ws, last_we = completion.window(today - timedelta(days=7))
@@ -125,8 +129,8 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
     )
     teacher_name = {int(t.id): (t.full_name or t.email) for t in teachers}
 
-    this_totals = _student_totals_for_week(db, student_ids=student_ids, ws=this_ws, we=this_we)
-    last_totals = _student_totals_for_week(db, student_ids=student_ids, ws=last_ws, we=last_we)
+    this_totals = _student_totals_for_week(db, student_ids=student_ids, ws=this_ws, we=this_we, today=today)
+    last_totals = _student_totals_for_week(db, student_ids=student_ids, ws=last_ws, we=last_we, today=today)
 
     # "Programı var mı?" — takvim haftasının TAMAMI (gelecek günler dahil) ve
     # her görev türü. Eskiden bugüne kesilmiş TEST hacmine bakılıyordu → Pazartesi
@@ -222,7 +226,8 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
     # ---- Boş program: bu hafta hiç planlı görevi olmayan aktif öğrenci ----
     # Onboarding grace: yeni eklenen öğrenci (hesap < grace) henüz programsızsa
     # "boş" sayılmaz — koça program kurması için süre tanı (yanlış-pozitif önler).
-    now = datetime.now(timezone.utc)
+    now = (datetime.now(timezone.utc) if today == date.today()
+           else datetime(today.year, today.month, today.day, 23, 59, tzinfo=timezone.utc))
     empty_by_teacher: dict[int | None, dict] = {}
     empty_total = 0
     for sid in student_ids:
@@ -254,7 +259,7 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
     trend = []
     for wb in range(weeks - 1, -1, -1):
         ws, we = completion.window(today - timedelta(days=7 * wb))
-        wt = _student_totals_for_week(db, student_ids=student_ids, ws=ws, we=we)
+        wt = _student_totals_for_week(db, student_ids=student_ids, ws=ws, we=we, today=today)
         s = _summarize(wt)
         trend.append({
             "week_start": ws.isoformat(),

@@ -409,6 +409,36 @@ export interface AdminDigestSummary {
   sent_at: string | null;
   error_message: string | null;
   created_at: string;
+  /** Veri güvenilirliği (sürüm 2 özetler; eski kayıtlarda null). */
+  reliability_score: number | null;
+  reliability_level: "high" | "medium" | "low" | null;
+  reliability_label: string | null;
+  version: number;
+}
+
+export interface AdminDigestReliabilityCheck {
+  key: string;
+  label: string;
+  status: "ok" | "fixed" | "warn";
+  detail: string;
+}
+
+export interface AdminDigestReliabilityComponent {
+  key: string;
+  label: string;
+  score: number | null;
+  detail: string;
+}
+
+export interface AdminDigestReliability {
+  score: number;
+  level: "high" | "medium" | "low";
+  level_label: string;
+  consistency: number;
+  quality: number | null;
+  checks: AdminDigestReliabilityCheck[];
+  components: AdminDigestReliabilityComponent[];
+  fixed_count: number;
 }
 
 export interface AdminDigestListResponse {
@@ -470,6 +500,10 @@ export interface AdminDigestPayload {
   inactive_teachers: AdminDigestInactiveTeacherEntry[];
   grade_cohorts: AdminDigestCohortEntry[];
   track_cohorts: AdminDigestCohortEntry[];
+  /** Sürüm 2 (2026-11-12) */
+  version?: number;
+  week_label?: string;
+  reliability?: AdminDigestReliability;
 }
 
 export interface AdminDigestDetailResponse extends AdminDigestSummary {

@@ -2435,6 +2435,16 @@ def institution_usage_v2(
 
 
 def _digest_to_summary(d: AdminWeeklyDigest) -> AdminDigestSummary:
+    import json as _json
+    rel: dict = {}
+    version = 1
+    if d.payload_json:
+        try:
+            p = _json.loads(d.payload_json)
+            rel = p.get("reliability") or {}
+            version = int(p.get("version") or 1)
+        except (ValueError, TypeError):
+            pass
     return AdminDigestSummary(
         id=d.id,
         institution_id=d.institution_id,
@@ -2445,6 +2455,10 @@ def _digest_to_summary(d: AdminWeeklyDigest) -> AdminDigestSummary:
         sent_at=d.sent_at,
         error_message=d.error_message,
         created_at=d.created_at,
+        reliability_score=rel.get("score"),
+        reliability_level=rel.get("level"),
+        reliability_label=rel.get("level_label"),
+        version=version,
     )
 
 
@@ -2513,8 +2527,9 @@ def institution_admin_digest_detail_v2(
             payload = None
     emails: list[str] = []
     if digest.recipient_emails:
+        import re as _re
         emails = [
-            e.strip() for e in digest.recipient_emails.split(",") if e.strip()
+            e.strip() for e in _re.split(r"[,\n]", digest.recipient_emails) if e.strip()
         ]
     summary = _digest_to_summary(digest)
     return AdminDigestDetailResponse(
@@ -2522,6 +2537,36 @@ def institution_admin_digest_detail_v2(
         payload=payload,
         recipient_emails=emails,
     )
+
+
+@router.get("/admin-digest/{digest_id}/html")
+def institution_admin_digest_html_v2(
+    digest_id: int,
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Gönderilen e-postanın birebir görünümü (kayıtlı veriden aynı şablonla çizilir)."""
+    import json as _json
+
+    from fastapi.responses import HTMLResponse
+
+    from app.services.admin_digest import render_digest_html
+    inst = _get_institution_or_403(db, user.institution_id)
+    digest = (db.query(AdminWeeklyDigest)
+              .filter(AdminWeeklyDigest.id == digest_id,
+                      AdminWeeklyDigest.institution_id == inst.id).first())
+    payload = None
+    if digest and digest.payload_json:
+        try:
+            payload = _json.loads(digest.payload_json)
+        except (ValueError, TypeError):
+            payload = None
+    if not digest or not payload or int(payload.get("version") or 1) < 2:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "digest_html_unavailable",
+            "message": "Bu özetin e-posta görünümü yok (eski biçimde kaydedilmiş)."})
+    _subject, html = render_digest_html(db, institution=inst, payload=payload)
+    return HTMLResponse(html, headers={"Cache-Control": "no-store"})
 
 
 @router.post(

@@ -624,6 +624,11 @@ class AdminDigestSummary(BaseModel):
     sent_at: datetime | None = None
     error_message: str | None = None
     created_at: datetime
+    # Veri güvenilirliği (2026-11-12, sürüm 2 özetlerde; eski kayıtlarda boş)
+    reliability_score: int | None = None
+    reliability_level: str | None = None       # high | medium | low
+    reliability_label: str | None = None       # Yüksek | Orta | Düşük
+    version: int = 1
 
 
 class AdminDigestListResponse(BaseModel):

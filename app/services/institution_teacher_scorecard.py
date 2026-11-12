@@ -48,11 +48,12 @@ def _score_label(score: int) -> str:
     return "Dikkat"
 
 
-def compute_teacher_scorecard(db: Session, *, institution_id: int, weeks: int = 4) -> dict:
-    """Öğretmen başına etkililik karnesi (son N hafta)."""
+def compute_teacher_scorecard(db: Session, *, institution_id: int, weeks: int = 4,
+                              today=None) -> dict:
+    """Öğretmen başına etkililik karnesi (son N hafta). today: referans günü."""
     from datetime import date, timedelta
 
-    today = date.today()
+    today = today or date.today()
     # Kayan pencere: son `weeks` × 7 gün, bugün dahil (TEK TANIM ile aynı ölçü;
     # yarım takvim haftası artık "disiplin"i düşürmez)
     ws = today - timedelta(days=7 * weeks - 1)
@@ -77,12 +78,13 @@ def compute_teacher_scorecard(db: Session, *, institution_id: int, weeks: int = 
     student_ids = [int(s.id) for s in students]
     student_teacher = {int(s.id): s.teacher_id for s in students}
 
-    totals = _student_totals_for_week(db, student_ids=student_ids, ws=ws, we=we)
+    totals = _student_totals_for_week(db, student_ids=student_ids, ws=ws, we=we, today=today)
 
     # Risk: high+critical öğrenci sayısı (öğretmen başına)
     risk_by_teacher: dict[int | None, int] = {}
     if students:
-        assessments = bulk_risk_assessment(db, students=students)
+        from app.services.institution_action_center import _ref_now
+        assessments = bulk_risk_assessment(db, students=students, today=today, now=_ref_now(today))
         for a in filter_at_risk(assessments, min_level="high"):
             tid = a.student.teacher_id
             risk_by_teacher[tid] = risk_by_teacher.get(tid, 0) + 1

@@ -30,11 +30,22 @@ LOW_RATE_THRESHOLD = 40  # koç tamamlaması < %40 → uyarı
 LOW_RATE_CRITICAL = 25   # < %25 → kritik
 
 
-def compute_action_center(db: Session, *, institution_id: int) -> dict:
-    """Önceliklendirilmiş müdahale kartları + özet sayım."""
+_RISK_PHRASE = {"critical": "kritik risk", "high": "yüksek risk", "medium": "dikkat"}
+
+
+def _ref_now(day):
+    """Geçmiş bir gün için değerlendirme anı: o günün sonu (bugünse şimdi)."""
+    from datetime import datetime, timezone
+    real = datetime.now(timezone.utc)
+    ref = datetime(day.year, day.month, day.day, 20, 59, tzinfo=timezone.utc)
+    return min(real, ref)
+
+
+def compute_action_center(db: Session, *, institution_id: int, today=None) -> dict:
+    """Önceliklendirilmiş müdahale kartları + özet sayım. today: referans günü."""
     items: list[dict] = []
 
-    comp = compute_compliance(db, institution_id=institution_id, weeks=2)
+    comp = compute_compliance(db, institution_id=institution_id, weeks=2, today=today)
 
     # 1) Programı olmayan öğrenciler — koç başına (takvim haftasının tamamı,
     #    her görev türü; pasif öğrenciler ve 3 günden yeni hesaplar sayılmaz)
@@ -66,14 +77,14 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
         sev = "critical" if rate < LOW_RATE_CRITICAL else "warn"
         desc = f"{t['student_count']} aktif öğrenci."
         if acc is not None:
-            desc += f" Çözdükleri soruların %{acc}'ini doğru yaptılar."
+            desc += f" Çözdükleri soruların doğru oranı %{acc}."
             if acc >= 80:
                 desc += (" Doğru oranı yüksek: sorun bilgi eksikliğinden çok programın "
                          "yüküne ya da çalışmaya ayrılan zamana işaret ediyor olabilir.")
         items.append({
             "severity": sev,
             "category": "low_compliance",
-            "title": f"{t['teacher_name']}: öğrencileri {period} planlanan testlerin %{rate}'ini çözdü",
+            "title": f"{t['teacher_name']}: öğrencileri {period} planlanan testleri %{rate} oranında çözdü",
             "description": desc,
             "teacher_name": t["teacher_name"],
             "count": t["student_count"],
@@ -101,7 +112,8 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
             int(t.id): (t.full_name or t.email)
             for t in db.query(User).filter(User.id.in_(teacher_ids)).all()
         }
-        assessments = bulk_risk_assessment(db, students=students)
+        assessments = bulk_risk_assessment(db, students=students, **(
+            {'today': today, 'now': _ref_now(today)} if today else {}))
         surfaced_ids: set[int] = set()
         critical = [a for a in filter_at_risk(assessments, min_level="high")]
         critical.sort(key=lambda a: -a.score)
@@ -112,7 +124,7 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
             items.append({
                 "severity": sev,
                 "category": "at_risk",
-                "title": f"{a.student.full_name or a.student.email} — {a.level_label} risk (puan {a.score}/100)",
+                "title": f"{a.student.full_name or a.student.email} — {_RISK_PHRASE.get(a.level, a.level_label)} (puan {a.score}/100)",
                 "description": (f"Koç: {tname}" + (f" · Nedenleri: {ind}" if ind else "")),
                 "teacher_name": tname,
                 "count": 1,

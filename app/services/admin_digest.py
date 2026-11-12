@@ -28,6 +28,7 @@ from app.services.cohort_analysis import (
     cohort_by_track,
     institution_week_over_week,
 )
+from app.services import completion
 from app.services.email_service import send_email
 from app.services.risk_analysis import (
     bulk_risk_assessment,
@@ -58,130 +59,363 @@ def previous_week_start(today: date | None = None) -> date:
 # ---------------------------- Payload üretici ----------------------------
 
 
+_TR_MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos",
+              "Eylül", "Ekim", "Kasım", "Aralık"]
+_TR_MON_SHORT = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"]
+
+
+def report_week(today: date | None = None) -> tuple[date, date]:
+    """Raporlanan hafta: bugünden önceki son TAMAMLANMIŞ Pazartesi–Pazar haftası.
+    Pazartesi sabahı gönderim → geçen hafta (2026-11-12: eskiden "son 7 gün"
+    Pazartesi'nin yarım gününü katıyordu)."""
+    today = today or date.today()
+    end = today - timedelta(days=today.weekday() + 1)
+    return end - timedelta(days=6), end
+
+
+def _range_label(ws: date, we: date) -> str:
+    if ws.month == we.month:
+        return f"{ws.day}–{we.day} {_TR_MONTHS[we.month - 1]} {we.year}"
+    return f"{ws.day} {_TR_MONTHS[ws.month - 1]} – {we.day} {_TR_MONTHS[we.month - 1]} {we.year}"
+
+
+def _short(d: date) -> str:
+    return f"{d.day} {_TR_MON_SHORT[d.month - 1]}"
+
+
+def _days_since(dt, today: date) -> int | None:
+    if dt is None:
+        return None
+    d = dt.date() if hasattr(dt, "date") else dt
+    return max(0, (today - d).days)
+
+
+def _trim_leading_empty(points: list[dict]) -> list[dict]:
+    """Kurum sisteme yeni başladıysa veri olmayan ilk haftalar grafikte boş sütun olmasın."""
+    i = 0
+    while i < len(points) and points[i]["rate"] is None:
+        i += 1
+    return points[i:]
+
+
+def _ref_now(week_end: date):
+    """Raporlanan haftanın son anı (Pazar 23:59 TR). Haftalık değerlendirmelerde
+    "kaç gündür görülmedi" gibi ölçüler de bu ana göre hesaplanır."""
+    from datetime import datetime, timezone
+    real = datetime.now(timezone.utc)
+    ref = datetime(week_end.year, week_end.month, week_end.day, 20, 59, tzinfo=timezone.utc)
+    return min(real, ref)
+
+
+def _headline(rate, delta, risk_total, empty, students) -> tuple[str, str]:
+    """Haftanın tek cümlelik özeti (kural tabanlı) → (metin, ton)."""
+    if students == 0:
+        return "Kurumda bu hafta aktif öğrenci yok.", "info"
+    if rate is None:
+        return "Bu hafta öğrencilere yayınlanmış test görevi yok; uyum ölçülemedi.", "warn"
+    parts = []
+    if rate >= 70:
+        tone = "good"
+        parts.append(f"Öğrenciler programlarının %{rate} oranında testini çözdü — güçlü bir hafta")
+    elif rate >= 40:
+        tone = "warn"
+        parts.append(f"Program uyumu %{rate} — orta seviyede")
+    else:
+        tone = "bad"
+        parts.append(f"Program uyumu %{rate} — düşük")
+    if delta is not None and abs(delta) >= 5:
+        parts[-1] += f" (geçen haftaya göre {'+' if delta > 0 else '−'}{abs(delta)} puan)"
+    text = parts[0] + "."
+    extra = []
+    if empty:
+        extra.append(f"{empty} öğrencinin programı yok")
+    if risk_total:
+        extra.append(f"{risk_total} öğrenci risk altında")
+    if extra:
+        text += " Dikkat: " + ", ".join(extra) + "."
+        if tone == "good":
+            tone = "warn"
+    return text, tone
+
+
+def _grade_highlight(cohorts) -> dict:
+    have = [c for c in cohorts if c.weekly_rate_pct is not None]
+    best = max(have, key=lambda c: c.weekly_rate_pct) if have else None
+    worst = min(have, key=lambda c: c.weekly_rate_pct) if have else None
+    return {"best_grade_label": best.cohort_label if best else None,
+            "best_grade_rate": best.weekly_rate_pct if best else None,
+            "worst_grade_label": worst.cohort_label if worst else None,
+            "worst_grade_rate": worst.weekly_rate_pct if worst else None}
+
+
 def build_weekly_digest_payload(
     db: Session,
     *,
     institution: Institution,
     week_end: date | None = None,
 ) -> dict[str, Any]:
-    """Verilen kurum için haftalık özet payload'ı üret.
+    """Kurum yöneticisi haftalık özeti (sürüm 2, 2026-11-12).
 
-    week_end: hesaplama günü (default bugün). Hafta = son 7 gün (week_end dahil).
-    Cron çağırırken week_end = today (Pazartesi sabahı önceki haftayı görür).
+    week_end: raporlanan haftanın PAZAR günü (verilmezse `report_week()`).
+    Tüm sayılar kurum panelindeki servislerden, aynı referans günüyle gelir
+    (Program Uyumu · Öğretmen Karnesi · Müdahale Merkezi · Akademik Çıktı · Veli
+    Güveni · Havuz). Uyum sayıları `digest_reliability` ile bağımsız olarak yeniden
+    hesaplanır; fark varsa bağımsız hesap esas alınır ve skora işlenir.
     """
+    from app.services import digest_reliability as dr
+    from app.services.institution_academic import compute_academic
+    from app.services.institution_action_center import compute_action_center
+    from app.services.institution_compliance import compute_compliance
+    from app.services.institution_parent_trust import compute_parent_trust
+    from app.services.institution_pool import build_overview as pool_overview
+    from app.services.institution_teacher_scorecard import compute_teacher_scorecard
+
     if week_end is None:
-        week_end = date.today()
-    week_start = week_end - timedelta(days=6)
+        week_start, week_end = report_week()
+    else:
+        week_start = week_end - timedelta(days=6)
+    iid = institution.id
+    rel = dr.Reliability()
 
-    # 1) Kurum geneli kohort özeti — sınıf ve alan
-    grade_cohorts = cohort_by_grade(db, institution_id=institution.id, today=week_end)
-    track_cohorts = cohort_by_track(db, institution_id=institution.id, today=week_end)
+    comp = compute_compliance(db, institution_id=iid, weeks=8, today=week_end)
+    card = compute_teacher_scorecard(db, institution_id=iid, weeks=4, today=week_end)
+    act = compute_action_center(db, institution_id=iid, today=week_end)
+    acad = compute_academic(db, institution_id=iid, weeks=8, today=week_end)
+    trust = compute_parent_trust(db, institution_id=iid, days=30)
+    try:
+        pool = pool_overview(db, institution_id=iid, today=week_end)
+    except Exception as e:  # havuz panosu yardımcı bilgi — özet onsuz da çıkar
+        logger.warning("admin_digest pool overview failed inst=%s: %s", iid, e)
+        pool = None
 
-    # 2) Week-over-week
-    wow = institution_week_over_week(
-        db, institution_id=institution.id, today=week_end,
-    )
+    # ---------- öğrenci kümesi (kurum öğrencileri) ----------
+    students = (db.query(User).filter(User.role == UserRole.STUDENT,
+                                      User.institution_id == iid,
+                                      User.is_active.is_(True)).all())
+    student_ids = [int(s.id) for s in students]
+    student_teacher = {int(s.id): s.teacher_id for s in students}
+    teachers = (db.query(User).filter(User.role == UserRole.TEACHER,
+                                      User.institution_id == iid).all())
+    teacher_ids = {int(t.id) for t in teachers}
+    by_coach_ids = {int(s.id) for s in (
+        db.query(User).filter(User.role == UserRole.STUDENT, User.is_active.is_(True),
+                              User.teacher_id.in_(teacher_ids)).all() if teacher_ids else [])}
+    only_coach = by_coach_ids - set(student_ids)
+    if only_coach:
+        rel.checks.append(dr.Check(
+            "student_set", "Öğrenci listesi", "warn",
+            f"{len(only_coach)} öğrenci kurumun koçuna bağlı ama kurum kaydında değil; "
+            "uyum hesabına girmedi. Kurum panelinden öğrencinin kurumunu kontrol edin."))
+    else:
+        rel.checks.append(dr.Check("student_set", "Öğrenci listesi", "ok",
+                                   f"{len(student_ids)} aktif öğrenci, hepsi kuruma ve bir koça bağlı."
+                                   if student_ids else "Aktif öğrenci yok."))
 
-    # 3) Risk altındaki öğrenciler (özet sayım)
-    teacher_ids_q = (
-        db.query(User.id).filter(
-            User.role == UserRole.TEACHER,
-            User.institution_id == institution.id,
-        )
-    )
-    teacher_ids = [t[0] for t in teacher_ids_q.all()]
-    students = []
-    if teacher_ids:
-        students = (
-            db.query(User)
-            .filter(
-                User.role == UserRole.STUDENT,
-                User.teacher_id.in_(teacher_ids),
-                User.is_active.is_(True),
-                User.is_paused.is_(False),   # pasif öğrenci digest sayımına dahil değil
-            )
-            .all()
-        )
-    student_total = len(students)
-    risk_critical = risk_high = risk_medium = 0
-    if students:
-        assessments = bulk_risk_assessment(db, students=students, today=week_end)
-        at_risk = filter_at_risk(assessments, min_level="medium")
-        for a in at_risk:
-            if a.level == "critical":
-                risk_critical += 1
-            elif a.level == "high":
-                risk_high += 1
-            elif a.level == "medium":
-                risk_medium += 1
+    # ---------- 1. uyum: panel ↔ bağımsız hesap ----------
+    s = comp["summary"]
+    ind = dr.independent_totals(db, student_ids, week_start, week_end)
+    ip = sum(v[0] for v in ind.values())
+    ic = sum(v[1] for v in ind.values())
+    icorr = sum(v[2] for v in ind.values())
+    iwrong = sum(v[3] for v in ind.values())
+    ires = sum(v[4] for v in ind.values())
+    rate, planned, done = s["rate"], s["planned"], s["completed"]
+    if (planned, done) != (ip, ic):
+        rel.checks.append(dr.Check(
+            "compliance", "Program uyumu", "fixed",
+            f"Panel {done}/{planned} test dedi, ham görev kalemlerinden yeniden sayım {ic}/{ip}. "
+            "Özette ham sayım kullanıldı."))
+        planned, done = ip, ic
+        rate = completion.rate(ip, ic)
+    else:
+        rel.checks.append(dr.Check("compliance", "Program uyumu", "ok",
+                                   f"{done}/{planned} test — iki ayrı hesap birebir aynı."))
+    accuracy = (round(100 * icorr / (icorr + iwrong)) if (icorr + iwrong) else None)
 
-    # 4) Pasif öğretmenler (son 7 gün hiç login yok)
-    inactives = inactive_teachers(
-        db, institution_id=institution.id, days=7, today=week_end,
-    )
+    # koç satırları toplamı = kurum toplamı
+    rows_p = sum(t["planned"] for t in comp["teachers"])
+    rows_c = sum(t["completed"] for t in comp["teachers"])
+    if (rows_p, rows_c) != (s["planned"], s["completed"]):
+        rel.checks.append(dr.Check("coach_rows", "Koç satırları", "fixed",
+                                   f"Koç satırlarının toplamı ({rows_c}/{rows_p}) kurum toplamından "
+                                   f"({s['completed']}/{s['planned']}) farklı; koç oranları ham sayımdan yeniden kuruldu."))
+    else:
+        rel.checks.append(dr.Check("coach_rows", "Koç satırları", "ok",
+                                   "Koç satırlarının toplamı kurum toplamına eşit."))
 
-    # 5) Toplam sayımlar
-    teacher_total = len(teacher_ids)
+    # trendin son haftası = bu hafta
+    trend = comp["trend"]
+    if trend and trend[-1]["rate"] != s["rate"]:
+        rel.checks.append(dr.Check("trend", "8 haftalık eğilim", "fixed",
+                                   "Eğilimin son haftası özetle uyuşmadı; son nokta özetten alındı."))
+        trend[-1]["rate"] = rate
+    else:
+        rel.checks.append(dr.Check("trend", "8 haftalık eğilim", "ok",
+                                   "Eğilimin son haftası özetle aynı."))
+    last_rate = s["last_week_rate"]
+    delta = (rate - last_rate) if (rate is not None and last_rate is not None) else None
 
-    # En zor / en başarılı sınıf — bu hafta plan oranıyla
-    best_grade = None
-    worst_grade = None
-    plan_having_grades = [c for c in grade_cohorts if c.weekly_rate_pct is not None]
-    if plan_having_grades:
-        best_grade = max(plan_having_grades, key=lambda c: c.weekly_rate_pct)
-        worst_grade = min(plan_having_grades, key=lambda c: c.weekly_rate_pct)
+    # ---------- 2. risk: tek değerlendirme ----------
+    ref_now = _ref_now(week_end)
+    assessments = bulk_risk_assessment(db, students=students, today=week_end, now=ref_now)
+    # Kıyas karneyle aynı kümede (tüm aktif öğrenciler); özette molada olanlar sayılmaz.
+    hi_all = sum(1 for a in filter_at_risk(assessments, min_level="high"))
+    at_risk = [a for a in filter_at_risk(assessments, min_level="medium") if not a.student.is_paused]
+    risk_crit = sum(1 for a in at_risk if a.level == "critical")
+    risk_high = sum(1 for a in at_risk if a.level == "high")
+    risk_med = sum(1 for a in at_risk if a.level == "medium")
+    card_risk = sum(t["risk_students"] for t in card["teachers"])
+    hi_total = risk_crit + risk_high
+    paused_note = (f" Moladaki {hi_all - hi_total} öğrenci özette sayılmadı." if hi_all != hi_total else "")
+    if card_risk != hi_all:
+        rel.checks.append(dr.Check("risk", "Risk sayımı", "fixed",
+                                   f"Öğretmen karnesi {card_risk}, risk değerlendirmesi {hi_all} yüksek/kritik "
+                                   "öğrenci verdi; özette risk değerlendirmesi kullanıldı." + paused_note))
+    else:
+        rel.checks.append(dr.Check("risk", "Risk sayımı", "ok",
+                                   f"{hi_all} yüksek/kritik riskli öğrenci — karne ve risk değerlendirmesi aynı."
+                                   + paused_note))
+    risk_by_coach: dict[int | None, int] = {}
+    for a in at_risk:
+        if a.level in ("critical", "high"):
+            risk_by_coach[a.student.teacher_id] = risk_by_coach.get(a.student.teacher_id, 0) + 1
 
-    return {
-        "institution_id": institution.id,
+    # ---------- programsız: koç satırları ↔ kurum toplamı (aynı kural: 3 günlük süre) ----------
+    empty_by = {e["teacher_id"]: e["count"] for e in comp["empty_program"]}
+    raw_empty = sum(t["empty_students"] for t in comp["teachers"])
+    if raw_empty != s["empty_count"]:
+        rel.checks.append(dr.Check(
+            "empty", "Programsız öğrenci", "fixed",
+            f"Koç satırları {raw_empty}, kurum toplamı {s['empty_count']} programsız öğrenci verdi "
+            "(fark: yeni eklenen öğrencilere tanınan 3 günlük süre koç satırında uygulanmamış). "
+            "Koç satırları aynı kuralla yeniden sayıldı."))
+    else:
+        rel.checks.append(dr.Check("empty", "Programsız öğrenci", "ok",
+                                   f"{s['empty_count']} öğrenci — koç satırları ve kurum toplamı aynı."))
+
+    # ---------- 3. koç tablosu ----------
+    card_by = {t["teacher_id"]: t for t in card["teachers"]}
+    teacher_by = {int(t.id): t for t in teachers}
+    exam_by = {t["teacher_id"]: t for t in acad.get("teachers", [])}
+    coaches = []
+    for t in comp["teachers"]:
+        tid = t["teacher_id"]
+        mine = [sid for sid in student_ids if student_teacher.get(sid) == tid]
+        ind_p = sum(ind.get(sid, [0, 0])[0] for sid in mine)
+        ind_c = sum(ind.get(sid, [0, 0])[1] for sid in mine)
+        tr = completion.rate(ind_p, ind_c)
+        u = teacher_by.get(tid) if tid else None
+        coaches.append({
+            "teacher_id": tid,
+            "name": t["teacher_name"],
+            "students": t["student_count"],
+            "rate": tr,
+            "last_rate": t["last_rate"],
+            "delta": (tr - t["last_rate"]) if (tr is not None and t["last_rate"] is not None) else None,
+            "accuracy": t["accuracy"],
+            "empty": empty_by.get(tid, 0),
+            "risk": risk_by_coach.get(tid, 0),
+            "score": (card_by.get(tid) or {}).get("score"),
+            "score_label": (card_by.get(tid) or {}).get("score_label"),
+            "exam_count": (exam_by.get(tid) or {}).get("exam_count", 0),
+            "seen_days": _days_since(u.last_active_at, week_end + timedelta(days=1)) if u else None,
+        })
+    coaches.sort(key=lambda c: (c["rate"] is None, c["rate"] if c["rate"] is not None else 999))
+
+    inactives = [c for c in coaches if c["teacher_id"] and (c["seen_days"] is None or c["seen_days"] >= 7)]
+
+    # ---------- 4. müdahale ----------
+    sev_order = {"critical": 0, "warn": 1, "info": 2}
+    actions = sorted(act["items"], key=lambda i: sev_order.get(i["severity"], 3))[:6]
+
+    # ---------- 5. veri kalitesi ----------
+    n = len(student_ids)
+    empty = s["empty_count"]
+    rel.components.append(dr.Component(
+        "program", "Program kapsaması",
+        round(100 * (n - empty) / n) if n else None,
+        f"{n - empty} / {n} öğrencinin bu hafta programı var." if n else "Aktif öğrenci yok."))
+    rel.components.append(dr.Component(
+        "results", "Doğru/yanlış girişi",
+        round(100 * ires / done) if done >= 10 else None,
+        (f"Çözülen {done} testin {ires} tanesinde doğru/yanlış girildi."
+         if done >= 10 else "Bu hafta ölçmeye yetecek test çözülmedi (en az 10).")))
+    clean, judged = dr.marking_ratio(db, student_ids, week_end)
+    rel.components.append(dr.Component(
+        "marking", "İşaretleme düzeni",
+        round(100 * clean / judged) if judged else None,
+        (f"Düzenli işaretleyen öğrenci {clean} / {judged}; kalanlar görevleri saniyeler içinde "
+         "toplu işaretliyor (yapıldığını kanıtlamaz)." if judged and clean < judged else
+         f"İşaretleme düzeni olağan ({judged} öğrenci)." if judged else
+         "Değerlendirmeye yetecek işaretleme yok.")))
+    asum = acad["summary"]
+    rel.components.append(dr.Component(
+        "exams", "Deneme kaydı",
+        asum.get("coverage_pct") if n else None,
+        f"Son {asum.get('weeks', 8)} haftada {asum.get('students_with_exam', 0)} / {n} öğrencinin denemesi girildi."))
+
+    reliability = rel.as_dict()
+    grade_cohorts = cohort_by_grade(db, institution_id=iid, today=week_end)
+    track_cohorts = cohort_by_track(db, institution_id=iid, today=week_end)
+
+    headline, tone = _headline(rate, delta, hi_total, empty, n)
+
+    payload: dict[str, Any] = {
+        "version": 2,
+        "institution_id": iid,
         "institution_name": institution.name,
         "week_start": week_start.isoformat(),
         "week_end": week_end.isoformat(),
-        "totals": {
-            "student_count": student_total,
-            "teacher_count": teacher_total,
-            "inactive_teacher_count": len(inactives),
+        "week_label": _range_label(week_start, week_end),
+        "headline": {"text": headline, "tone": tone},
+        "kpis": {
+            "students": n,
+            "teachers": len(teachers),
+            "rate": rate, "last_rate": last_rate, "delta": delta,
+            "planned": planned, "completed": done, "accuracy": accuracy,
+            "empty": empty,
+            "risk_critical": risk_crit, "risk_high": risk_high, "risk_medium": risk_med,
+            "parent_coverage": trust["summary"].get("coverage_pct"),
         },
-        "completion": {
-            "this_week_rate": wow.this_week_rate,
-            "last_week_rate": wow.last_week_rate,
-            "delta_pct": wow.delta_pct,
-            "direction": wow.direction,
+        "trend": _trim_leading_empty(
+            [{"label": _short(date.fromisoformat(w["week_start"]) + timedelta(days=6)),
+              "rate": w["rate"]} for w in trend]),
+        "coaches": coaches,
+        "actions": [{"severity": a["severity"], "title": a["title"],
+                     "description": a.get("description"),
+                     "suggestion": a.get("suggestion")} for a in actions],
+        "actions_total": act["summary"],
+        "academic": {
+            "coverage_pct": asum.get("coverage_pct"),
+            "students_with_exam": asum.get("students_with_exam"),
+            "recent_exams": asum.get("recent_exams"),
+            "avg_net_pct": asum.get("avg_net_pct"),
+            "delta": asum.get("delta"),
+            "improving": acad.get("improving", [])[:3],
+            "declining": acad.get("declining", [])[:3],
         },
-        "at_risk": {
-            "critical": risk_critical,
-            "high": risk_high,
-            "medium": risk_medium,
-            "total": risk_critical + risk_high + risk_medium,
-        },
-        "highlight": {
-            "best_grade_label": best_grade.cohort_label if best_grade else None,
-            "best_grade_rate": best_grade.weekly_rate_pct if best_grade else None,
-            "worst_grade_label": worst_grade.cohort_label if worst_grade else None,
-            "worst_grade_rate": worst_grade.weekly_rate_pct if worst_grade else None,
-        },
-        "inactive_teachers": [
-            {"id": t.id, "name": t.full_name, "email": t.email}
-            for t in inactives[:5]   # ilk 5 — özet için yeter
-        ],
-        "grade_cohorts": [
-            {
-                "label": c.cohort_label,
-                "n": c.student_count,
-                "rate": c.weekly_rate_pct,
-                "color": c.rate_color,
-            }
-            for c in grade_cohorts
-        ],
-        "track_cohorts": [
-            {
-                "label": c.cohort_label,
-                "n": c.student_count,
-                "rate": c.weekly_rate_pct,
-                "color": c.rate_color,
-            }
-            for c in track_cohorts
-        ],
+        "parents": trust["summary"],
+        "pool": ({"students": pool.students, "late_sessions": pool.late_sessions,
+                  "open_periods": pool.open_periods, "avg_open_pct": pool.avg_open_pct}
+                 if pool and pool.students else None),
+        "reliability": reliability,
+        # ---- sürüm 1 alanları (arşiv ekranı geriye uyum) ----
+        "totals": {"student_count": n, "teacher_count": len(teachers),
+                   "inactive_teacher_count": len(inactives)},
+        "completion": {"this_week_rate": rate, "last_week_rate": last_rate,
+                       "delta_pct": delta,
+                       "direction": ("up" if (delta or 0) > 0 else "down" if (delta or 0) < 0 else "flat")},
+        "at_risk": {"critical": risk_crit, "high": risk_high, "medium": risk_med,
+                    "total": risk_crit + risk_high + risk_med},
+        "highlight": _grade_highlight(grade_cohorts),
+        "inactive_teachers": [{"id": c["teacher_id"], "name": c["name"], "email": ""}
+                              for c in inactives[:5]],
+        "grade_cohorts": [{"label": c.cohort_label, "n": c.student_count,
+                           "rate": c.weekly_rate_pct, "color": c.rate_color} for c in grade_cohorts],
+        "track_cohorts": [{"label": c.cohort_label, "n": c.student_count,
+                           "rate": c.weekly_rate_pct, "color": c.rate_color} for c in track_cohorts],
     }
+    return payload
 
 
 # ---------------------------- Gönderim ----------------------------
@@ -193,6 +427,7 @@ def send_admin_weekly_digest(
     institution: Institution,
     week_end: date | None = None,
     force: bool = False,
+    today: date | None = None,
 ) -> AdminWeeklyDigest:
     """Bir kurum için haftalık özet üret + e-posta gönder + DB'ye kaydet.
 
@@ -202,9 +437,11 @@ def send_admin_weekly_digest(
 
     Returns: AdminWeeklyDigest satırı (mevcut veya yeni oluşturulmuş).
     """
+    # Raporlanan hafta: geçen Pazartesi–Pazar (week_end verilirse o Pazar)
     if week_end is None:
-        week_end = date.today()
-    week_start = week_end - timedelta(days=6)
+        week_start, week_end = report_week(today)
+    else:
+        week_start = week_end - timedelta(days=6)
 
     existing = (
         db.query(AdminWeeklyDigest)
@@ -271,6 +508,7 @@ def send_admin_weekly_digest(
             "payload": payload,
             "institution": institution,
             "admin_email": email,
+            "brand_institution_id": institution.id,   # kurumsal kimlik (logo + ad)
         }
         try:
             ok = send_email(
@@ -321,3 +559,22 @@ def send_admin_weekly_digest(
 
     db.commit()
     return digest
+
+
+# ---------------------------- Görüntüleme ----------------------------
+
+
+def render_digest_html(db: Session, *, institution: Institution, payload: dict) -> tuple[str, str]:
+    """Özeti e-postadaki hâliyle çiz (kurum markalı) → (konu, html).
+
+    Arşiv ekranındaki "gönderilen e-posta" görünümü ve test gönderimi bunu kullanır;
+    e-posta ile ekran birebir aynı şablondan çıkar."""
+    from app.services import branding
+    from app.services.email_service import _render
+
+    brand = branding.brand_for_institution(institution)
+    subject, html, _plain = _render("admin_weekly_summary", {
+        "payload": payload, "institution": institution,
+        "brand": brand.as_email_ctx() if brand else None,
+    })
+    return subject, html

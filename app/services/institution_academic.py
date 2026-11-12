@@ -43,8 +43,9 @@ def _week_monday(d: date) -> date:
     return d - timedelta(days=d.weekday())
 
 
-def compute_academic(db: Session, *, institution_id: int, weeks: int = 8) -> dict:
-    today = date.today()
+def compute_academic(db: Session, *, institution_id: int, weeks: int = 8,
+                     today: date | None = None) -> dict:
+    today = today or date.today()
 
     # Aktif öğrenciler + koç eşlemesi
     students = (

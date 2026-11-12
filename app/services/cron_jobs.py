@@ -476,7 +476,7 @@ def admin_weekly_digest(db: Session, *, now: datetime) -> dict:
             continue
         try:
             digest = send_admin_weekly_digest(
-                db, institution=inst, week_end=today, force=False,
+                db, institution=inst, today=today, force=False,
             )
             status = digest.send_status
             if status == "sent":

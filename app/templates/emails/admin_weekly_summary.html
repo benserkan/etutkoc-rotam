@@ -1,134 +1,199 @@
-Subject: ETÜTKOÇ Rotam · {{ payload.institution_name }} haftalık özet
+Subject: {{ payload.institution_name }} · haftalık yönetici özeti · {{ payload.week_label or (payload.week_start ~ ' – ' ~ payload.week_end) }}
 
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
-  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+</head>
+{% set k = payload.kpis or {} %}
+{% set rel = payload.reliability or {} %}
+{% macro pct(v) %}{% if v is none %}—{% else %}%{{ v }}{% endif %}{% endmacro %}
+{% macro rate_color(v) %}{% if v is none %}#475569{% elif v >= 70 %}#047857{% elif v >= 40 %}#b45309{% else %}#b91c1c{% endif %}{% endmacro %}
+{% macro signed(v) %}{% if v is none %}—{% elif v > 0 %}+{{ v }}{% else %}{{ v }}{% endif %}{% endmacro %}
+<body style="margin:0;padding:0;background:#eef2f5;">
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#eef2f5;">{{ payload.headline.text if payload.headline else '' }}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2f5;">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #d5dbe1;border-radius:12px;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;">
 
-    <!-- Brand header -->
-    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 20px;">
-      <img src="{{ app_base_url }}/etutkoc-mark.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
-      <span style="font-size: 18px; font-weight: 800;">
-        <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
-      </span>
-    </div>
+<!-- Kurum kimliği -->
+<tr><td style="padding:22px 28px 0;">
+  {% include "_brand_header.html" %}
+</td></tr>
+<tr><td style="padding:0 28px;">
+  <div style="font-size:22px;font-weight:800;line-height:1.25;">Haftalık yönetici özeti</div>
+  <div style="font-size:13px;color:#475569;margin-top:4px;">{{ payload.week_label }} · Pazartesi–Pazar · {{ k.students }} aktif öğrenci · {{ k.teachers }} koç</div>
+</td></tr>
 
-    <h2 style="font-size: 17px; color: #0f172a; margin: 0 0 4px;">Haftalık Yönetici Özeti</h2>
-    <div style="font-size: 12px; color: #64748b; margin-bottom: 18px;">
-      <b>{{ payload.institution_name }}</b> · {{ payload.week_start }} — {{ payload.week_end }}
-    </div>
+<!-- Haftanın özeti -->
+{% if payload.headline %}
+{% set tone = payload.headline.tone %}
+<tr><td style="padding:16px 28px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-radius:10px;{% if tone == 'good' %}background:#ecfdf5;border:1px solid #a7f3d0;{% elif tone == 'bad' %}background:#fef2f2;border:1px solid #fecaca;{% else %}background:#fffbeb;border:1px solid #fde68a;{% endif %}">
+  <tr><td style="padding:14px 16px;font-size:15px;line-height:1.5;color:{% if tone == 'good' %}#064e3b{% elif tone == 'bad' %}#7f1d1d{% else %}#78350f{% endif %};">
+    {{ payload.headline.text }}
+  </td></tr></table>
+</td></tr>
+{% endif %}
 
-    <!-- Toplam sayımlar -->
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 16px;">
-      <tr>
-        <td style="background: #f1f5f9; padding: 12px; border-radius: 8px; width: 30%;" valign="top">
-          <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Öğretmen</div>
-          <div style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ payload.totals.teacher_count }}</div>
-          {% if payload.totals.inactive_teacher_count > 0 %}
-          <div style="font-size: 10px; color: #b45309; margin-top: 4px;">⚠️ {{ payload.totals.inactive_teacher_count }} pasif</div>
-          {% endif %}
-        </td>
-        <td style="width: 8px;"></td>
-        <td style="background: #f1f5f9; padding: 12px; border-radius: 8px; width: 30%;" valign="top">
-          <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Öğrenci</div>
-          <div style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ payload.totals.student_count }}</div>
-          <div style="font-size: 10px; color: #64748b; margin-top: 4px;">aktif</div>
-        </td>
-        <td style="width: 8px;"></td>
-        <td style="background: #f1f5f9; padding: 12px; border-radius: 8px; width: 30%;" valign="top">
-          <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Risk Altında</div>
-          {% set rt = payload.at_risk.total %}
-          <div style="font-size: 22px; font-weight: 700; color: {% if rt > 0 %}#dc2626{% else %}#059669{% endif %}; margin-top: 2px;">{{ rt }}</div>
-          {% if payload.at_risk.critical > 0 %}
-          <div style="font-size: 10px; color: #dc2626; margin-top: 4px;">🔴 {{ payload.at_risk.critical }} kritik</div>
-          {% endif %}
-        </td>
-      </tr>
-    </table>
+<!-- Dört ana sayı -->
+<tr><td style="padding:16px 28px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td width="25%" valign="top" style="padding-right:4px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:10px;">
+        <div style="font-size:12px;color:#475569;">Program uyumu</div>
+        <div style="font-size:24px;font-weight:800;color:{{ rate_color(k.rate) }};line-height:1.2;">{{ pct(k.rate) }}</div>
+        <div style="font-size:11px;color:#334155;">{{ k.completed }} / {{ k.planned }} test</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px;">Geçen hafta {{ pct(k.last_rate) }}</div>
+      </td></tr></table>
+    </td>
+    <td width="25%" valign="top" style="padding:0 2px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:10px;">
+        <div style="font-size:12px;color:#475569;">Doğru oranı</div>
+        <div style="font-size:24px;font-weight:800;line-height:1.2;">{{ pct(k.accuracy) }}</div>
+        <div style="font-size:11px;color:#334155;">sonucu girilen testlerde</div>
+      </td></tr></table>
+    </td>
+    <td width="25%" valign="top" style="padding:0 2px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:10px;">
+        <div style="font-size:12px;color:#475569;">Risk altında</div>
+        {% set rk = (k.risk_critical or 0) + (k.risk_high or 0) %}
+        <div style="font-size:24px;font-weight:800;color:{% if rk %}#b91c1c{% else %}#047857{% endif %};line-height:1.2;">{{ rk }}</div>
+        <div style="font-size:11px;color:#334155;">{{ k.risk_critical or 0 }} kritik · {{ k.risk_high or 0 }} yüksek</div>
+      </td></tr></table>
+    </td>
+    <td width="25%" valign="top" style="padding-left:4px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:10px;">
+        <div style="font-size:12px;color:#475569;">Programsız</div>
+        <div style="font-size:24px;font-weight:800;color:{% if k.empty %}#b45309{% else %}#047857{% endif %};line-height:1.2;">{{ k.empty }}</div>
+        <div style="font-size:11px;color:#334155;">öğrenci, bu hafta</div>
+      </td></tr></table>
+    </td>
+  </tr></table>
+</td></tr>
 
-    <!-- Tamamlama oranı + delta -->
-    {% set ck = payload.completion %}
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;">
-      <div style="font-size: 13px; color: #475569; margin-bottom: 6px;">
-        Bu hafta kurum geneli tamamlama oranı:
-      </div>
-      <div style="display: inline-block;">
-        <span style="font-size: 28px; font-weight: 800; color: {% if ck.this_week_rate is none %}#94a3b8{% elif ck.this_week_rate >= 70 %}#059669{% elif ck.this_week_rate >= 40 %}#d97706{% else %}#dc2626{% endif %};">
-          {% if ck.this_week_rate is not none %}%{{ ck.this_week_rate }}{% else %}—{% endif %}
-        </span>
-        {% if ck.delta_pct is not none %}
-        <span style="font-size: 14px; color: {% if ck.direction == 'up' %}#059669{% elif ck.direction == 'down' %}#dc2626{% else %}#475569{% endif %}; margin-left: 8px;">
-          {% if ck.direction == 'up' %}↑ +{{ ck.delta_pct }}{% elif ck.direction == 'down' %}↓ {{ ck.delta_pct }}{% else %}— stabil{% endif %}
-        </span>
-        <span style="font-size: 11px; color: #94a3b8;">geçen haftaya göre</span>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Highlights -->
-    {% if payload.highlight.best_grade_label or payload.highlight.worst_grade_label %}
-    <div style="margin-bottom: 16px;">
-      <div style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 8px;">📊 Sınıf bazlı öne çıkanlar</div>
-      {% if payload.highlight.best_grade_label %}
-      <div style="font-size: 13px; color: #0f172a; line-height: 1.6;">
-        🏆 En yüksek tamamlama: <b>{{ payload.highlight.best_grade_label }}</b>
-        — <span style="color: #059669; font-weight: 600;">%{{ payload.highlight.best_grade_rate }}</span>
-      </div>
+<!-- 8 haftalık eğilim -->
+{% set tr = payload.trend or [] %}
+{% if tr|selectattr('rate')|list %}
+<tr><td style="padding:20px 28px 0;">
+  <div style="font-size:14px;font-weight:700;">Son 8 hafta · program uyumu</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;margin-top:8px;">
+  <tr valign="bottom" style="height:90px;">
+    {% for w in tr %}
+    <td align="center" style="padding:0 3px;">
+      {% if w.rate is not none %}
+      <div style="font-size:10px;color:{% if loop.last %}#0f172a;font-weight:700{% else %}#475569{% endif %};">{{ w.rate }}</div>
+      <div style="height:{{ [w.rate * 0.7, 2]|max|round|int }}px;background:{% if loop.last %}#0f172a{% elif w.rate < 40 %}#f87171{% else %}#94a3b8{% endif %};border-radius:3px 3px 0 0;"></div>
+      {% else %}
+      <div style="font-size:10px;color:#94a3b8;">—</div>
       {% endif %}
-      {% if payload.highlight.worst_grade_label and payload.highlight.worst_grade_label != payload.highlight.best_grade_label %}
-      <div style="font-size: 13px; color: #0f172a; line-height: 1.6;">
-        ⚠️ En düşük tamamlama: <b>{{ payload.highlight.worst_grade_label }}</b>
-        — <span style="color: #dc2626; font-weight: 600;">%{{ payload.highlight.worst_grade_rate }}</span>
-      </div>
-      {% endif %}
-    </div>
-    {% endif %}
+    </td>
+    {% endfor %}
+  </tr>
+  <tr>
+    {% for w in tr %}<td align="center" style="font-size:10px;color:#475569;padding-top:4px;">{{ w.label }}</td>{% endfor %}
+  </tr></table>
+  <div style="font-size:11px;color:#475569;margin-top:4px;">Her sütun Pazartesi–Pazar haftası; tarih haftanın son günü. Kırmızı: %40'ın altı.</div>
+</td></tr>
+{% endif %}
 
-    <!-- Pasif öğretmenler -->
-    {% if payload.inactive_teachers %}
-    <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
-      <div style="font-size: 12px; font-weight: 600; color: #9a3412; margin-bottom: 6px;">
-        😴 Son 7 gündür pasif öğretmenler ({{ payload.totals.inactive_teacher_count }})
-      </div>
-      <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #7c2d12;">
-        {% for t in payload.inactive_teachers %}
-        <li style="margin: 2px 0;">{{ t.name }} <span style="color: #a8a29e;">· {{ t.email }}</span></li>
-        {% endfor %}
-        {% if payload.totals.inactive_teacher_count > payload.inactive_teachers|length %}
-        <li style="margin: 2px 0; font-style: italic;">+{{ payload.totals.inactive_teacher_count - payload.inactive_teachers|length }} daha</li>
-        {% endif %}
-      </ul>
-    </div>
-    {% endif %}
+<!-- Koçlar -->
+{% if payload.coaches %}
+<tr><td style="padding:22px 28px 0;">
+  <div style="font-size:14px;font-weight:700;">Koçlara göre</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;font-size:12px;border-collapse:collapse;">
+    <tr style="background:#f1f5f9;color:#334155;">
+      <td style="padding:7px 8px;font-weight:700;">Koç</td>
+      <td align="right" style="padding:7px 6px;font-weight:700;">Öğrenci</td>
+      <td align="right" style="padding:7px 6px;font-weight:700;">Uyum</td>
+      <td align="right" style="padding:7px 6px;font-weight:700;">Değişim</td>
+      <td align="right" style="padding:7px 6px;font-weight:700;">Programsız</td>
+      <td align="right" style="padding:7px 6px;font-weight:700;">Riskli</td>
+      <td align="right" style="padding:7px 8px;font-weight:700;">Son görülme</td>
+    </tr>
+    {% for c in payload.coaches %}
+    <tr>
+      <td style="padding:8px;border-bottom:1px solid #eef2f5;font-weight:600;">{{ c.name }}{% if c.score_label %}<div style="font-size:11px;font-weight:400;color:#475569;">Karne: {{ c.score }} · {{ c.score_label }}</div>{% endif %}</td>
+      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;">{{ c.students }}</td>
+      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;font-weight:700;color:{{ rate_color(c.rate) }};">{{ pct(c.rate) }}</td>
+      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;color:{% if c.delta is not none and c.delta < 0 %}#b91c1c{% elif c.delta %}#047857{% else %}#475569{% endif %};">{{ signed(c.delta) }}</td>
+      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;color:{% if c.empty %}#b45309{% else %}#475569{% endif %};">{{ c.empty }}</td>
+      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;color:{% if c.risk %}#b91c1c{% else %}#475569{% endif %};">{{ c.risk }}</td>
+      <td align="right" style="padding:8px;border-bottom:1px solid #eef2f5;color:{% if c.seen_days is none or c.seen_days >= 7 %}#b45309{% else %}#475569{% endif %};">{% if c.seen_days is none %}hiç{% elif c.seen_days == 0 %}bugün{% else %}{{ c.seen_days }} gün önce{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</td></tr>
+{% endif %}
 
-    <!-- Risk dağılımı -->
-    {% if payload.at_risk.total > 0 %}
-    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
-      <div style="font-size: 12px; font-weight: 600; color: #991b1b; margin-bottom: 4px;">
-        ⚠️ Risk altında: {{ payload.at_risk.total }} öğrenci
-      </div>
-      <div style="font-size: 12px; color: #7f1d1d;">
-        🔴 Kritik: {{ payload.at_risk.critical }} ·
-        🟠 Risk: {{ payload.at_risk.high }} ·
-        🟡 Dikkat: {{ payload.at_risk.medium }}
-      </div>
-    </div>
-    {% endif %}
+<!-- Müdahale -->
+{% if payload.actions %}
+<tr><td style="padding:22px 28px 0;">
+  <div style="font-size:14px;font-weight:700;">Bu hafta ilgilenilmesi gerekenler</div>
+  {% set at = payload.actions_total or {} %}
+  <div style="font-size:12px;color:#475569;margin:2px 0 8px;">Müdahale Merkezi: {{ at.critical or 0 }} kritik, {{ at.warn or 0 }} uyarı. En öncelikli {{ payload.actions|length }} tanesi:</div>
+  {% for a in payload.actions %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;border-left:4px solid {% if a.severity == 'critical' %}#dc2626{% else %}#d97706{% endif %};background:#f8fafc;">
+  <tr><td style="padding:9px 12px;">
+    <div style="font-size:13px;font-weight:600;color:#0f172a;">{{ a.title }}</div>
+    {% if a.description %}<div style="font-size:12px;color:#475569;margin-top:2px;">{{ a.description }}</div>{% endif %}
+    {% if a.suggestion %}<div style="font-size:12px;color:#334155;margin-top:2px;">{{ a.suggestion }}</div>{% endif %}
+  </td></tr></table>
+  {% endfor %}
+</td></tr>
+{% endif %}
 
-    <!-- Eylem butonu -->
-    <div style="text-align: center; margin: 24px 0 12px;">
-      <a href="{{ app_base_url }}/institution"
-         style="display: inline-block; background: #117A86; color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
-        Yönetici paneline git →
-      </a>
-    </div>
+<!-- Akademik + veli + havuz -->
+<tr><td style="padding:20px 28px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td width="50%" valign="top" style="padding-right:5px;">
+      {% set ac = payload.academic or {} %}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:12px;">
+        <div style="font-size:13px;font-weight:700;">Denemeler</div>
+        <div style="font-size:12px;color:#334155;line-height:1.55;margin-top:4px;">
+          {{ ac.students_with_exam or 0 }} / {{ k.students }} öğrencinin son 8 haftada denemesi var (%{{ ac.coverage_pct or 0 }}).<br>
+          Son 30 günde {{ ac.recent_exams or 0 }} deneme girildi.
+          {% if ac.avg_net_pct is not none %}<br>Ortalama net başarısı %{{ ac.avg_net_pct }}{% if ac.delta is not none %} ({{ signed(ac.delta) }} puan){% endif %}.{% endif %}
+        </div>
+      </td></tr></table>
+    </td>
+    <td width="50%" valign="top" style="padding-left:5px;">
+      {% set pt = payload.parents or {} %}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:12px;">
+        <div style="font-size:13px;font-weight:700;">Veliler</div>
+        <div style="font-size:12px;color:#334155;line-height:1.55;margin-top:4px;">
+          {{ pt.covered_students or 0 }} / {{ pt.total_students or 0 }} öğrencinin velisi sistemde (%{{ pt.coverage_pct or 0 }}).<br>
+          Son 30 günde {{ pt.notif_sent or 0 }} bildirim gönderildi{% if pt.notif_success_pct is not none %}, başarı %{{ pt.notif_success_pct }}{% endif %}.
+        </div>
+      </td></tr></table>
+    </td>
+  </tr></table>
+  {% if payload.pool %}
+  <div style="font-size:12px;color:#334155;margin-top:10px;">Haftalık havuz: {{ payload.pool.students }} öğrenci, {{ payload.pool.open_periods }} açık dönem{% if payload.pool.late_sessions %}, <b style="color:#b45309;">{{ payload.pool.late_sessions }} seansı gecikmiş</b>{% endif %}.</div>
+  {% endif %}
+</td></tr>
 
-    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 14px;">
-    <p style="margin: 0; font-size: 10px; color: #94a3b8; line-height: 1.55;">
-      Bu otomatik haftalık özet her Pazartesi sabahı gönderilir.<br>
-      ETÜTKOÇ Rotam · {{ app_base_url }} · gizli, kuruma özel
-    </p>
+<!-- Panel -->
+<tr><td style="padding:22px 28px 0;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td style="background:#0f172a;border-radius:8px;"><a href="{{ app_base_url }}/institution/action-center" style="display:inline-block;padding:12px 20px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;">Müdahale Merkezi'ni aç</a></td>
+    <td style="width:10px;"></td>
+    <td style="border:1px solid #0f172a;border-radius:8px;"><a href="{{ app_base_url }}/institution/compliance" style="display:inline-block;padding:11px 18px;color:#0f172a;font-size:14px;font-weight:700;text-decoration:none;">Program uyumu</a></td>
+  </tr></table>
+</td></tr>
+
+<!-- Alt bilgi + güvenilirlik -->
+<tr><td style="padding:24px 28px 22px;">
+  <div style="border-top:1px solid #e5e7eb;padding-top:12px;font-size:11px;color:#64748b;line-height:1.6;">
+    {% if rel.score is defined %}Veri güvenilirliği: <b>{{ rel.score }}/100 ({{ rel.level_label }})</b>{% if rel.fixed_count %} · {{ rel.fixed_count }} tutarsızlık otomatik düzeltildi{% endif %}. Ayrıntı: panel → Haftalık Özet.<br>{% endif %}
+    Uyum: o hafta öğrencilere verilen testlerin kaçı çözüldü (deneme ve etkinlik görevleri hariç). Bu özet her Pazartesi gönderilir; kuruma özeldir.<br>
+    {% include "_brand_footer.html" %}
   </div>
+</td></tr>
+
+</table>
+</td></tr></table>
 </body>
 </html>

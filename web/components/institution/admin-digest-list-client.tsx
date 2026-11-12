@@ -126,6 +126,9 @@ function DigestTable({ items }: { items: AdminDigestSummary[] }) {
                 <ColumnHint label="Alıcı" hint="Özetin gönderildiği kurum yöneticisi sayısı." />
               </th>
               <th className="text-left px-4 py-2 font-medium">
+                <ColumnHint label="Veri güvenilirliği" hint="0–100. Özetteki sayılar iki ayrı yoldan hesaplanıp karşılaştırılır; fark çıkarsa düzeltilir. Skor bu kontrollerle birlikte verinin kalitesini (program kapsaması, doğru/yanlış girişi, işaretleme düzeni, deneme kaydı) özetler. Ayrıntısı özetin detayında." />
+              </th>
+              <th className="text-left px-4 py-2 font-medium">
                 Gönderim Zamanı
               </th>
               <th className="text-right px-4 py-2 font-medium">
@@ -165,6 +168,9 @@ function DigestRow({ digest }: { digest: AdminDigestSummary }) {
       </td>
       <td className="px-4 py-2 text-right tabular-nums">
         {digest.recipient_count}
+      </td>
+      <td className="px-4 py-2">
+        <ReliabilityBadge score={digest.reliability_score} level={digest.reliability_level} />
       </td>
       <td className="px-4 py-2 text-xs text-muted-foreground">
         {digest.sent_at ? formatDateTime(digest.sent_at) : "—"}
@@ -313,4 +319,31 @@ export function formatDateTime(iso: string): string {
   const hh = String(d.getHours()).padStart(2, "0");
   const mn = String(d.getMinutes()).padStart(2, "0");
   return `${dd}.${mm}.${yyyy} ${hh}:${mn}`;
+}
+
+
+const RELIABILITY_TONE: Record<string, string> = {
+  high: "bg-emerald-700 text-white",
+  medium: "bg-amber-600 text-white",
+  low: "bg-rose-700 text-white",
+};
+const RELIABILITY_LABEL: Record<string, string> = { high: "Yüksek", medium: "Orta", low: "Düşük" };
+
+export function ReliabilityBadge({
+  score,
+  level,
+}: {
+  score: number | null;
+  level: string | null;
+}) {
+  if (score == null || !level) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  return (
+    <span
+      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums ${RELIABILITY_TONE[level] ?? "bg-slate-700 text-white"}`}
+    >
+      {score}/100 · {RELIABILITY_LABEL[level] ?? level}
+    </span>
+  );
 }

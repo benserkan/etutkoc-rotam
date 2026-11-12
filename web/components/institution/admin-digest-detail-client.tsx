@@ -35,8 +35,10 @@ import type {
   AdminDigestDetailResponse,
   AdminDigestPayload,
   AdminDigestPayloadCompletion,
+  AdminDigestReliability,
 } from "@/lib/types/institution";
 import {
+  ReliabilityBadge,
   SendStatusLabel,
   formatDateTime,
   formatRange,
@@ -105,6 +107,11 @@ export function AdminDigestDetailClient({ initial, digestId }: Props) {
             </p>
           </CardContent>
         </Card>
+      ) : (payload.version ?? 1) >= 2 ? (
+        <>
+          {payload.reliability ? <ReliabilityCard rel={payload.reliability} /> : null}
+          <EmailPreview digestId={digestId} />
+        </>
       ) : (
         <>
           <TotalsGrid payload={payload} />
@@ -502,3 +509,90 @@ function RecipientsBlock({
   );
 }
 
+
+
+const CHECK_TONE: Record<string, { label: string; cls: string }> = {
+  ok: { label: "Tutarlı", cls: "bg-emerald-700 text-white" },
+  fixed: { label: "Düzeltildi", cls: "bg-amber-600 text-white" },
+  warn: { label: "Kontrol edin", cls: "bg-rose-700 text-white" },
+};
+
+/** Veri güvenilirliği: tutarlılık kontrolleri + veri kalitesi (2026-11-12). */
+function ReliabilityCard({ rel }: { rel: AdminDigestReliability }) {
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-base font-semibold">Veri güvenilirliği</h2>
+          <ReliabilityBadge score={rel.score} level={rel.level} />
+          <span className="text-sm text-muted-foreground">
+            Tutarlılık {rel.consistency}/100
+            {rel.quality != null ? ` · Veri kalitesi ${rel.quality}/100` : ""}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Özetteki sayılar iki ayrı yoldan hesaplanıp karşılaştırıldı. Fark çıkan yerde bağımsız
+          hesap esas alındı ve aşağıda &quot;Düzeltildi&quot; olarak yazıldı; e-postaya düzeltilmiş
+          değer gitti. Skor = 0,4 × tutarlılık + 0,6 × veri kalitesi.
+        </p>
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Tutarlılık kontrolleri</h3>
+          <ul className="space-y-2">
+            {rel.checks.map((c) => {
+              const t = CHECK_TONE[c.status] ?? CHECK_TONE.ok;
+              return (
+                <li key={c.key} className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-3">
+                  <span className={`shrink-0 self-start rounded-md px-2 py-0.5 text-xs font-semibold ${t.cls}`}>
+                    {t.label}
+                  </span>
+                  <span className="text-sm">
+                    <span className="font-medium">{c.label}:</span> {c.detail}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Veri kalitesi</h3>
+          <ul className="space-y-2">
+            {rel.components.map((c) => (
+              <li key={c.key} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 text-sm">
+                <span>
+                  <span className="font-medium">{c.label}:</span> {c.detail}
+                </span>
+                <span className="font-semibold tabular-nums">
+                  {c.score == null ? "ölçülmedi" : `${c.score}/100`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Gönderilen e-postanın birebir görünümü (kayıtlı veriden aynı şablonla çizilir). */
+function EmailPreview({ digestId }: { digestId: number }) {
+  const [height, setHeight] = React.useState(1400);
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <div className="px-5 py-3 border-b border-border text-sm font-semibold">
+          Gönderilen e-posta
+        </div>
+        <iframe
+          title="Gönderilen e-posta"
+          src={`/api/v2/institution/admin-digest/${digestId}/html`}
+          className="w-full block bg-[#eef2f5]"
+          style={{ height }}
+          onLoad={(e) => {
+            const doc = e.currentTarget.contentDocument;
+            if (doc?.body) setHeight(doc.body.scrollHeight + 24);
+          }}
+        />
+      </CardContent>
+    </Card>
+  );
+}
