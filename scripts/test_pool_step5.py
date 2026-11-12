@@ -234,7 +234,7 @@ def main() -> int:
             logs = db.query(NotificationLog).filter(NotificationLog.student_id == d["main"]).all()
             check("B7 gönder: 1 veliye kuyruğa girdi (QUEUED), özel şablon, dönem damgalandı",
                   res["queued"] == 1 and len(logs) == 1 and logs[0].status == NotificationStatus.QUEUED
-                  and db.get(StudyPeriod, d["p_old"]).parent_summary_sent_at is not None, str(res))
+                  and db.get(StudyPeriod, d["p_old"]).parent_summary_sent_at is not None, str(res) + str([(l.kind, l.status) for l in logs]))
             snap = pps.sent_snapshot(db.get(StudyPeriod, d["p_old"]))
             check("B8 gönderilen hâl saklandı (yeniden açma/PDF aynı)", snap and snap["narrative"] == ["Özel cümle."], str(snap and snap.get("narrative")))
 

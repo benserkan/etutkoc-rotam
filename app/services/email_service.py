@@ -72,7 +72,10 @@ def _render(name: str, ctx: dict[str, Any]) -> tuple[str, str, str]:
     subject = ""
     body = rendered
     if lines and lines[0].lower().startswith("subject:"):
-        subject = lines[0].split(":", 1)[1].strip()
+        # Konu satırı düz metindir: şablon motorunun HTML kaçışı geri açılır
+        # ("Emir'in" → "Emir&#39;in" görünüyordu).
+        import html as _html
+        subject = _html.unescape(lines[0].split(":", 1)[1].strip())
         body = lines[1] if len(lines) > 1 else ""
     brand = ctx.get("brand")
     if brand:

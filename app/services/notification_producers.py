@@ -400,46 +400,23 @@ def produce_weekly_report(
     *,
     parent: User,
     student: User,
-    week_start: date,
-    week_end: date,
-    completed: int,
-    planned: int,
-    rate_pct: int | None,
+    week_start: date | None = None,
+    week_end: date | None = None,
+    completed: int | None = None,
+    planned: int | None = None,
+    rate_pct: int | None = None,
+    today: date | None = None,
 ) -> list[NotificationLog]:
-    daily_breakdown = _build_daily_breakdown(
-        db, student_id=student.id, week_start=week_start, week_end=week_end,
-    )
-    # GÖREV-bazlı hafta manşeti (her madde 1 görev; deneme test'e karışmaz)
-    wk_gorev_total = sum(d["gorev_total"] for d in daily_breakdown)
-    wk_gorev_done = sum(d["gorev_done"] for d in daily_breakdown)
-    wk_test_planned = sum(d["test_planned"] for d in daily_breakdown)
-    wk_test_completed = sum(d["test_completed"] for d in daily_breakdown)
-    wk_deneme = sum(d["deneme_count"] for d in daily_breakdown)
-    wk_etkinlik = sum(d["etkinlik_count"] for d in daily_breakdown)
-    base_payload: dict[str, Any] = {
-        "__template": "parent_weekly_report",
-        "student_id": student.id,
-        "student_name": student.full_name,
-        "week_start": week_start.isoformat(),
-        "week_end": week_end.isoformat(),
-        "completed": completed,           # geriye uyum (test-bazlı)
-        "planned": planned,
-        "rate_pct": rate_pct,
-        # GÖREV-bazlı hafta özeti (manşet)
-        "gorev_total": wk_gorev_total,
-        "gorev_done": wk_gorev_done,
-        "gorev_rate": (
-            round(100 * wk_gorev_done / wk_gorev_total) if wk_gorev_total else 0
-        ),
-        "test_planned": wk_test_planned,  # yalnız soru bankası (deneme HARİÇ)
-        "test_completed": wk_test_completed,
-        "deneme_count": wk_deneme,
-        "etkinlik_count": wk_etkinlik,
-        # Günlük detay + son deneme — template'in zenginleştirilmesi için
-        "daily_breakdown": daily_breakdown,
-        "latest_exam": _get_latest_exam(db, student_id=student.id, since_days=7),
-        "unsubscribe_token": _unsub_token(db, parent.id),
-    }
+    """Veli haftalık raporu (sürüm 2, 2026-11-12): son tamamlanmış Pazartesi–Pazar haftası.
+    Sayılar uygulamadaki Haftalık Rapor ekranıyla aynı servisten (`parent_weekly_mail`).
+    week_start/week_end/completed/planned/rate_pct eski çağıranlar için duruyor; kullanılmaz."""
+    from app.services.parent_weekly_mail import build_mail_payload
+
+    base_payload: dict[str, Any] = build_mail_payload(db, parent, student, today=today)
+    base_payload["unsubscribe_token"] = _unsub_token(db, parent.id)
+    completed = base_payload["gorev_done"]
+    planned = base_payload["gorev_total"]
+    rate_pct = base_payload["completion_pct"]
 
     logs: list[NotificationLog] = []
     logs.append(

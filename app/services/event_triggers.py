@@ -142,6 +142,10 @@ def on_task_completed(db: Session, student: User) -> dict:
     Çağrıyı yapan route'un commit etmesi beklenir.
     """
     summary = {"checked": 1, "fired_for_parents": 0, "skipped_recent": 0, "skipped_no_cycle": 0}
+    # 2026-11-12: haftalık veli raporu sabit takvimle gider (cron `parent_weekly_report`,
+    # Pazartesi 19:00 TR, Pzt–Paz). Döngü-bitti tetiklemesi kapalı.
+    summary["skipped_no_cycle"] = 1
+    return summary
 
     # Havuz modu (Adım 5): haftalık rapor yerine K53 seans özeti (rehber onayıyla) gider.
     if getattr(student, "program_mode", "gun_gun") == "havuz":

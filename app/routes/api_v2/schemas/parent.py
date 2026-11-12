@@ -300,6 +300,8 @@ class WeeklyReportResponse(BaseModel):
     # genel değerlendirme
     verdict_level: str  # "good" | "warn" | "bad"
     verdict_text: str
+    # Öğrencinin kendi olağan aralığı (önceki 8 programlı hafta, 2026-11-12)
+    normal: dict | None = None
 
 
 # =============================================================================

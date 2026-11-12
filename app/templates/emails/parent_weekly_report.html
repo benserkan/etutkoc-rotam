@@ -1,142 +1,188 @@
-Subject: ETÜTKOÇ Rotam · {{ student_name }} haftalık raporu
+Subject: {{ student_gen or (student_name ~ ' için') }} haftası · {{ week_label or week_start }}{% if gorev_total %} · görev uyumu %{{ completion_pct }}{% endif %}
 
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
-  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
-    {% include "_brand_header.html" %}
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+</head>
+{% set cmp = comparison or {} %}
+{% set nr = normal or {} %}
+{% macro h2(t) %}<div style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 6px;">{{ t }}</div>{% endmacro %}
+<body style="margin:0;padding:0;background:#eef2f5;">
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#eef2f5;">{{ verdict_text }}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2f5;">
+<tr><td align="center" style="padding:20px 10px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #d5dbe1;border-radius:12px;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;">
 
-    <h2 style="font-size: 16px; color: #0f172a; margin: 0 0 6px;">{{ student_name }} — Haftalık Rapor</h2>
-    <div style="font-size: 12px; color: #64748b; margin-bottom: 16px;">
-      {{ week_start }} — {{ week_end }}
-    </div>
-
-    {% if gorev_total and gorev_total > 0 %}
-    <p style="margin: 0 0 12px; line-height: 1.55;">
-      <b>{{ student_name }}</b> bu hafta planlanan {{ gorev_total }} görevden <b>{{ gorev_done }}</b> tanesini tamamladı.
-    </p>
-
-    <div style="background: #f1f5f9; border-radius: 8px; padding: 14px 18px; margin: 16px 0;">
-      <div style="height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden;">
-        {% set pct = gorev_rate if gorev_rate is not none else 0 %}
-        <div style="height: 100%; width: {{ pct }}%; background: {% if pct >= 70 %}#059669{% elif pct >= 40 %}#E8AC2D{% else %}#dc2626{% endif %};"></div>
-      </div>
-      <p style="margin: 10px 0 0; font-size: 13px; color: #334155;">
-        <b>%{{ pct }}</b> görev tamamlama oranı
-      </p>
-      <p style="margin: 6px 0 0; font-size: 12px; color: #64748b;">
-        {% if test_planned and test_planned > 0 %}<b>{{ test_completed }}</b>/{{ test_planned }} test çözüldü{% endif %}{% if deneme_count and deneme_count > 0 %}{% if test_planned and test_planned > 0 %} · {% endif %}<b>{{ deneme_count }}</b> deneme{% endif %}{% if etkinlik_count and etkinlik_count > 0 %} · <b>{{ etkinlik_count }}</b> etkinlik{% endif %}
-      </p>
-    </div>
-
-    <p style="margin: 14px 0; font-size: 13px; color: #475569; line-height: 1.55;">
-      {% if pct >= 70 %}
-      Tebrikler! Bu hafta görevlerinin önemli kısmını tamamladı.
-      {% elif pct >= 40 %}
-      Orta seviye bir tamamlama oranı. Önümüzdeki hafta ivmelenebilir.
-      {% else %}
-      Bu hafta beklenenin altında bir performans var. Programın aksayan kısımlarını öğretmen yeniden değerlendirecek.
-      {% endif %}
-    </p>
-    {% else %}
-    <p style="margin: 0 0 12px; line-height: 1.55;">
-      Bu hafta <b>{{ student_name }}</b> için planlanmış görev bulunmuyordu.
-    </p>
-    {% endif %}
-
-    {# Günlük detay programı — ders + konu + soru sayıları #}
-    {% if daily_breakdown %}
-    <h3 style="font-size: 14px; color: #0f172a; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
-      Günlük Program
-    </h3>
-    <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px;">
-      {% for day in daily_breakdown %}
-      <tr>
-        <td style="padding: 8px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; width: 86px;">
-          <div style="font-weight: 700; color: #117A86;">{{ day.day_name }}</div>
-          <div style="font-size: 11px; color: #64748b;">{{ day.day_label }}</div>
-        </td>
-        <td style="padding: 8px 10px; border-bottom: 1px solid #f1f5f9;">
-          {% if day.has_tasks %}
-            {# Test görevleri — ders bazlı #}
-            {% for grp in day.subject_groups %}
-            <div style="margin-bottom: 6px;">
-              <span style="font-weight: 700; color: #117A86; font-size: 12px;">{{ grp.subject }}</span>
-              {% for it in grp.rows %}
-              <div style="margin: 2px 0 0 8px;">
-                <span style="font-weight: 600; color: #1e293b;">{{ it.book }}</span>{% if it.section %} <span style="color: #64748b;">· {{ it.section }}</span>{% endif %}
-                <span style="float: right; font-variant-numeric: tabular-nums; color: {% if it.completed >= it.planned %}#059669{% else %}#475569{% endif %};">
-                  <b>{{ it.completed }}</b>/{{ it.planned }} test
-                </span>
-              </div>
-              {% endfor %}
-            </div>
-            {% endfor %}
-            {# Denemeler — AYRI (test'e karışmaz) #}
-            {% if day.denemeler %}
-            <div style="margin: 6px 0 4px;">
-              <span style="font-weight: 700; color: #7c3aed; font-size: 12px;">Denemeler</span>
-              {% for d in day.denemeler %}
-              <div style="margin: 2px 0 0 8px;">
-                <span style="font-weight: 600; color: #1e293b;">{{ d.title }}</span>
-                <span style="float: right; font-variant-numeric: tabular-nums; color: {% if d.is_done %}#059669{% else %}#475569{% endif %};">
-                  {% if d.is_tam %}{{ d.completed }}/{{ d.planned }} soru{% else %}{{ d.completed }}/{{ d.planned }} deneme{% endif %}
-                </span>
-              </div>
-              {% endfor %}
-            </div>
-            {% endif %}
-            {# Etkinlikler — kalemsiz (video/özet/tekrar/diğer) #}
-            {% if day.activities %}
-            <div style="margin: 6px 0 4px;">
-              <span style="font-weight: 700; color: #0891b2; font-size: 12px;">Etkinlikler</span>
-              {% for a in day.activities %}
-              <div style="margin: 2px 0 0 8px; color: #475569;">{{ a.title or "Etkinlik" }}</div>
-              {% endfor %}
-            </div>
-            {% endif %}
-            <div style="margin-top: 4px; font-size: 11px; color: #64748b; text-align: right;">
-              {{ day.gorev_done or 0 }}/{{ day.gorev_total or 0 }} görev{% if (day.test_planned or 0) > 0 %} · {{ day.test_completed }}/{{ day.test_planned }} test{% endif %}
-            </div>
-          {% else %}
-            <span style="color: #cbd5e1; font-style: italic;">— görev yok —</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </table>
-    {% endif %}
-
-    {# Son deneme — varsa #}
-    {% if latest_exam %}
-    <div style="background: #ecfeff; border: 1px solid #117A86; border-radius: 8px; padding: 14px 18px; margin: 18px 0;">
-      <div style="font-size: 11px; font-weight: 700; color: #117A86; text-transform: uppercase; letter-spacing: 0.5px;">
-        Son Deneme {% if latest_exam.section %}· {{ latest_exam.section }}{% endif %}
-      </div>
-      <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin: 6px 0 4px;">
-        {{ latest_exam.title }}{% if latest_exam.date_iso %} <span style="font-weight: 400; color: #64748b; font-size: 12px;">· {{ latest_exam.date_iso }}</span>{% endif %}
-      </div>
-      <div style="font-size: 13px; color: #334155;">
-        <span style="color: #117A86; font-weight: 700; font-size: 16px;">{{ "%.2f"|format(latest_exam.net) if latest_exam.net is not none else "—" }}</span> net
-        <span style="color: #64748b; margin: 0 8px;">·</span>
-        <span><b>{{ latest_exam.correct }}</b> doğru / <b>{{ latest_exam.wrong }}</b> yanlış / <b>{{ latest_exam.blank }}</b> boş</span>
-      </div>
-    </div>
-    {% endif %}
-
-    <p style="margin: 20px 0 0;">
-      <a href="{{ app_base_url }}/parent/students/{{ student_id }}/week"
-         style="display: inline-block; background: #117A86; color: white; padding: 11px 22px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
-        Haftalık görünüm →
-      </a>
-    </p>
-
-    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 14px;">
-    <p style="margin: 0; font-size: 10px; color: #94a3b8; line-height: 1.55;">
-      {% include "_brand_footer.html" %}<br>
-      Bildirimleri kapatmak için: <a href="{{ app_base_url }}/parent/unsubscribe/{{ unsubscribe_token }}" style="color: #94a3b8;">tek tıkla kapat</a>
-    </p>
+<!-- Kimlik -->
+<tr><td style="padding:22px 24px 0;">
+  {% include "_brand_header.html" %}
+  <div style="font-size:22px;font-weight:800;line-height:1.25;">{{ student_gen or student_name }} haftası</div>
+  <div style="font-size:13px;color:#475569;margin-top:4px;">
+    {{ week_label }}{% if days_to_exam %} · sınava {{ days_to_exam }} gün{% endif %}{% if coach_name %} · Koçu: {{ coach_name }}{% endif %}
   </div>
+</td></tr>
+
+<!-- Haftanın özeti -->
+<tr><td style="padding:16px 24px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-radius:10px;{% if verdict_level == 'good' %}background:#ecfdf5;border:1px solid #a7f3d0;{% elif verdict_level == 'bad' %}background:#fef2f2;border:1px solid #fecaca;{% else %}background:#fffbeb;border:1px solid #fde68a;{% endif %}">
+  <tr><td style="padding:14px 16px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.04em;color:{% if verdict_level == 'good' %}#047857{% elif verdict_level == 'bad' %}#b91c1c{% else %}#b45309{% endif %};">HAFTANIN ÖZETİ</div>
+    <div style="font-size:15px;line-height:1.55;color:#0f172a;margin-top:4px;">{{ verdict_text }}</div>
+  </td></tr></table>
+</td></tr>
+
+<!-- Üç sayı -->
+<tr><td style="padding:14px 24px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td width="33%" valign="top" style="padding-right:5px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:11px;">
+        <div style="font-size:12px;color:#475569;">Görev uyumu</div>
+        <div style="font-size:24px;font-weight:800;line-height:1.25;">%{{ completion_pct }}</div>
+        <div style="font-size:12px;color:#334155;">{{ gorev_total }} görevin {{ gorev_done }} tanesi</div>
+        <div style="font-size:11px;color:#475569;margin-top:5px;">{% if cmp.last_completion_pct is not none %}Geçen hafta %{{ cmp.last_completion_pct }}{% endif %}{% if nr.pct_low is not none %}<br>Olağanı %{{ nr.pct_low }}–{{ nr.pct_high }}{% endif %}</div>
+      </td></tr></table>
+    </td>
+    <td width="33%" valign="top" style="padding:0 3px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:11px;">
+        <div style="font-size:12px;color:#475569;">Çözülen test</div>
+        <div style="font-size:24px;font-weight:800;line-height:1.25;">{{ test_completed }}</div>
+        <div style="font-size:12px;color:#334155;">planlanan {{ test_planned }}{% if question_completed %} · +{{ question_completed }} soru{% endif %}</div>
+        <div style="font-size:11px;color:#475569;margin-top:5px;">{% if cmp.last_test_completed is not none %}Geçen hafta {{ cmp.last_test_completed }}{% endif %}{% if nr.tests_low is not none %}<br>Olağanı {{ nr.tests_low }}–{{ nr.tests_high }}{% endif %}</div>
+      </td></tr></table>
+    </td>
+    <td width="33%" valign="top" style="padding-left:5px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:11px;">
+        <div style="font-size:12px;color:#475569;">Çalıştığı gün</div>
+        <div style="font-size:24px;font-weight:800;line-height:1.25;">{{ active_days }}/7</div>
+        <div style="font-size:12px;color:#334155;">{% if active_days == 7 %}boş gün yok{% else %}{{ 7 - active_days }} gün görev yapılmadı{% endif %}</div>
+      </td></tr></table>
+    </td>
+  </tr></table>
+  <div style="font-size:11px;color:#475569;margin-top:6px;">"Olağanı": öğrencinin önceki 8 haftasının orta yarısı — kendi temposu, sınıf ortalaması değil.</div>
+</td></tr>
+
+<!-- Haftalar -->
+{% if history and history|length >= 3 %}
+<tr><td style="padding:20px 24px 0;">
+  {{ h2("Haftalara göre görev uyumu") }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;">
+  <tr valign="bottom" style="height:92px;">
+    {% for w in history %}
+    {% set below = nr.pct_low is not none and w.pct < nr.pct_low %}
+    <td align="center" style="padding:0 2px;">
+      <div style="font-size:10px;font-weight:{% if loop.last %}800{% else %}400{% endif %};color:{% if below %}#b91c1c{% else %}#334155{% endif %};">%{{ w.pct }}</div>
+      <div style="height:{{ [w.pct * 0.7, 3]|max|round|int }}px;background:{% if below %}#dc2626{% elif loop.last %}#0B6178{% else %}#94a3b8{% endif %};border-radius:3px 3px 0 0;"></div>
+    </td>
+    {% endfor %}
+  </tr>
+  <tr>{% for w in history %}<td align="center" style="font-size:10px;color:{% if loop.last %}#0B6178;font-weight:700{% else %}#475569{% endif %};padding-top:4px;">{{ w.label }}</td>{% endfor %}</tr>
+  </table>
+  <div style="font-size:12px;color:#475569;margin-top:6px;">Kırmızı sütunlar öğrencinin olağan aralığının altında kalan haftalar.</div>
+</td></tr>
+{% endif %}
+
+<!-- Dersler -->
+{% if lagging or done_all %}
+<tr><td style="padding:20px 24px 0;">
+  {{ h2("Derslere göre") }}
+  {% for s in lagging %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;"><tr>
+    <td style="padding:5px 0;font-weight:600;color:#b45309;">{{ s.subject_name }}</td>
+    <td align="right" style="padding:5px 0;color:#334155;">{{ s.planned }} testin {{ s.completed }} tanesi çözüldü</td>
+  </tr></table>
+  {% endfor %}
+  {% if done_all %}<div style="font-size:13px;line-height:1.55;color:#047857;margin-top:6px;">Verilen testlerin tamamı çözülen dersler: {{ done_all|join(", ") }}.</div>{% endif %}
+</td></tr>
+{% endif %}
+
+<!-- Denemeler -->
+{% if series or branch %}
+<tr><td style="padding:20px 24px 0;">
+  {{ h2("Denemeler") }}
+  {% for s in series %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;margin-bottom:8px;"><tr><td style="padding:12px 14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td valign="top">
+        <div style="font-size:12px;color:#475569;">{{ s.label }} · tam deneme · {{ s.count }} deneme</div>
+        <div style="font-size:13px;margin-top:2px;">Son: {{ s.last_title }} · {{ s.last_date }}</div>
+      </td>
+      <td align="right" valign="top" style="white-space:nowrap;">
+        <div style="font-size:22px;font-weight:800;color:#0B6178;line-height:1.1;">{{ s.last_net }}</div>
+        <div style="font-size:12px;color:#475569;">net{% if s.questions %} · {{ s.questions }} soruda{% endif %}</div>
+      </td>
+    </tr></table>
+    <div style="font-size:13px;color:#334155;line-height:1.55;margin-top:6px;">
+      {% if s.diff_text %}{{ s.diff_text|capitalize }}. Son 3 deneme ortalaması {{ s.avg3 }} net.{% else %}İlk tam denemesi; gidişat ikinci denemeden sonra görünür.{% endif %}
+      {% if s.target %}<br>{{ s.target }}.{% endif %}
+    </div>
+  </td></tr></table>
+  {% endfor %}
+  {% if branch %}
+  <div style="font-size:13px;color:#334155;line-height:1.55;">Bu hafta {{ branch|sum(attribute='count') }} branş denemesi çözdü: {% for b in branch %}{{ b.label }} {{ b.nets }} net{% if not loop.last %}; {% endif %}{% endfor %}. Branş netleri tam denemeyle doğrudan karşılaştırılmaz.</div>
+  {% endif %}
+</td></tr>
+{% endif %}
+
+<!-- Net kazandıracak konular -->
+{% if topics %}
+<tr><td style="padding:20px 24px 0;">
+  {{ h2("En çok net kazandıracak 3 konu") }}
+  <div style="font-size:12px;color:#475569;margin-bottom:6px;">Son {{ topics.count }} {{ topics.series }} denemesindeki yanlış ve boşlardan hesaplandı.{% if topics.loss_note %} {{ topics.loss_note }}{% endif %}</div>
+  {% for t in topics['items'] %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;border-bottom:1px solid #eef2f5;"><tr>
+    <td style="padding:7px 0;"><b>{{ loop.index }}.</b> {{ t.topic }} <span style="color:#475569;">· {{ t.subject }}</span></td>
+    <td align="right" style="padding:7px 0;font-weight:700;color:#047857;white-space:nowrap;">+{{ t.gain }} net</td>
+  </tr></table>
+  {% endfor %}
+  <div style="font-size:12px;color:#475569;margin-top:6px;">Net değeri: bu konu tamamen oturursa deneme başına beklenen kazanç.</div>
+</td></tr>
+{% endif %}
+
+<!-- Gelecek hafta -->
+{% if next_week %}
+<tr><td style="padding:20px 24px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f0f7f9;border-radius:10px;"><tr><td style="padding:13px 15px;">
+    <div style="font-size:15px;font-weight:800;color:#0B6178;">Gelecek hafta · {{ next_week.label }}</div>
+    <div style="font-size:14px;line-height:1.55;margin-top:4px;">
+      Programında <b>{{ next_week.tasks }} görev</b> var.{% if next_week.top %} En çok {% for t in next_week.top %}{{ t.subject }} ({{ t.count }}){% if not loop.last %}{% if loop.revindex == 2 %} ve {% else %}, {% endif %}{% endif %}{% endfor %} çalışacak.{% endif %}
+      {% if next_week.focus_note %}{{ next_week.focus_note }}{% endif %}
+    </div>
+  </td></tr></table>
+</td></tr>
+{% endif %}
+
+<!-- Koç notu -->
+{% if teacher_notes %}
+<tr><td style="padding:20px 24px 0;">
+  {{ h2("Koçunuzdan") }}
+  {% for n in teacher_notes %}<div style="font-size:14px;line-height:1.6;color:#1e293b;border-left:3px solid #0B6178;padding-left:10px;margin-bottom:8px;">{{ n.body }}</div>{% endfor %}
+</td></tr>
+{% endif %}
+
+<!-- Düğmeler -->
+<tr><td style="padding:20px 24px 0;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    {% if rota %}
+    <td style="background:#0B6178;border-radius:8px;"><a href="{{ app_base_url }}/parent/students/{{ student_id }}" style="display:inline-block;padding:12px 16px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;">Haftayı Rota'dan dinle</a></td>
+    <td style="width:8px;"></td>
+    {% endif %}
+    <td style="{% if rota %}border:1px solid #0B6178{% else %}background:#0B6178{% endif %};border-radius:8px;"><a href="{{ app_base_url }}/parent/students/{{ student_id }}/report?week_start={{ week_start }}" style="display:inline-block;padding:11px 16px;color:{% if rota %}#0B6178{% else %}#ffffff{% endif %};font-size:14px;font-weight:700;text-decoration:none;">Ayrıntılı rapor</a></td>
+  </tr></table>
+  {% if rota %}<div style="font-size:12px;color:#475569;margin-top:8px;">Rota, haftanın programını ve denemelerini size sade bir dille sesli anlatır; merak ettiğinizi sorabilirsiniz.</div>{% endif %}
+</td></tr>
+
+<tr><td style="padding:22px 24px 20px;">
+  <div style="border-top:1px solid #e5e7eb;padding-top:12px;font-size:11px;color:#64748b;line-height:1.6;">
+    Bu rapor her Pazartesi akşamı, bir önceki Pazartesi–Pazar haftası için gönderilir. Rakamlar uygulamadaki "Haftalık Rapor" ekranıyla aynı hesaptan gelir.<br>
+    {% include "_brand_footer.html" %}<br>
+    Bildirimleri kapatmak için: <a href="{{ app_base_url }}/parent/unsubscribe/{{ unsubscribe_token }}" style="color:#64748b;">tek tıkla kapat</a>
+  </div>
+</td></tr>
+
+</table>
+</td></tr></table>
 </body>
 </html>

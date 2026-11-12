@@ -117,6 +117,89 @@ def _verdict(level: str, direction: str, gorev_total: int) -> tuple[str, str]:
     return (level, table.get((level, direction), "Bu haftanın özeti aşağıda."))
 
 
+NORMAL_WEEKS = 8            # olağan aralık: önceki 8 hafta (programlı haftalar)
+NORMAL_MIN_WEEKS = 4        # daha azında aralık hesaplanmaz
+
+
+def _quartiles(vals: list[float]) -> tuple[float, float]:
+    from statistics import median
+    s = sorted(vals)
+    n = len(s)
+    return float(median(s[: n // 2])), float(median(s[(n + 1) // 2:]))
+
+
+def _normal_band(db: Session, student_id: int, mon: date) -> dict[str, Any] | None:
+    """Önceki 8 programlı haftanın orta yarısı (çeyrekler arası) — görev uyumu ve test.
+    Öğrencinin KENDİ olağanı; sınıf/kurum ortalaması değil."""
+    start = mon - timedelta(days=7 * NORMAL_WEEKS)
+    tasks = _week_tasks(db, student_id, start, mon - timedelta(days=1))
+    weeks: list[dict[str, Any]] = []
+    for i in range(NORMAL_WEEKS, 0, -1):
+        ws = mon - timedelta(days=7 * i)
+        wt = [t for t in tasks if ws <= t.date <= ws + timedelta(days=6)]
+        s = gorev_stats.summarize(wt)
+        if s.gorev_total == 0:
+            continue
+        weeks.append({"start": ws.isoformat(), "pct": s.gorev_pct, "tests": s.test_completed,
+                      "gorev_done": s.gorev_done, "gorev_total": s.gorev_total})
+    if len(weeks) < NORMAL_MIN_WEEKS:
+        return {"weeks": weeks, "pct_low": None, "pct_high": None, "tests_low": None, "tests_high": None}
+    pl, ph = _quartiles([w["pct"] for w in weeks])
+    tl, th = _quartiles([w["tests"] for w in weeks])
+    return {"weeks": weeks, "pct_low": round(pl), "pct_high": round(ph),
+            "tests_low": round(tl), "tests_high": round(th)}
+
+
+def _position(v: float | None, lo: float | None, hi: float | None) -> str | None:
+    if v is None or lo is None or hi is None:
+        return None
+    if v < lo:
+        return "below"
+    if v > hi:
+        return "above"
+    return "within"
+
+
+def _verdict_v2(name: str, *, gorev_total: int, gorev_done: int, pct: int, active_days: int,
+                tests: int, last_tests: int | None, last_pct: int | None,
+                normal: dict | None) -> tuple[str, str]:
+    """Kendi olağanıyla kıyaslayan, sayı uydurmayan değerlendirme (2026-11-12).
+
+    Eski tablo yalnız tamamlama yüzdesine bakıyordu: test sayısı 121 → 92 düşmüşken
+    "İstikrarlı ve güçlü bir hafta" diyordu (Emir, 2–8 Kas)."""
+    first = (name or "").split()[0] if name else "Öğrenci"
+    if gorev_total == 0:
+        return ("warn", "Bu hafta için yayınlanmış bir program görünmüyor. Koçunuzla iletişime geçebilirsiniz.")
+    parts = [f"{first} bu hafta {active_days} gün çalıştı ve {gorev_total} görevin {gorev_done} tanesini "
+             f"tamamladı (görev uyumu %{pct})."]
+    pos_p = _position(pct, (normal or {}).get("pct_low"), (normal or {}).get("pct_high"))
+    pos_t = _position(tests, (normal or {}).get("tests_low"), (normal or {}).get("tests_high"))
+    if pos_p == "within":
+        parts.append(f"Bu, kendi olağan aralığı olan %{normal['pct_low']}–{normal['pct_high']} içinde.")
+    elif pos_p == "above":
+        parts.append(f"Bu, kendi olağan aralığının (%{normal['pct_low']}–{normal['pct_high']}) üstünde.")
+    elif pos_p == "below":
+        parts.append(f"Bu, kendi olağan aralığının (%{normal['pct_low']}–{normal['pct_high']}) altında.")
+    elif last_pct is not None:
+        parts.append(f"Geçen hafta %{last_pct} idi.")
+    if last_tests is not None and tests != last_tests:
+        diff = tests - last_tests
+        t = f"Çözdüğü test sayısı {tests}; geçen hafta {last_tests} idi"
+        last_pos = _position(last_tests, (normal or {}).get("tests_low"), (normal or {}).get("tests_high"))
+        if diff < 0 and last_pos == "above" and pos_t != "below":
+            t += ", ancak geçen hafta zaten olağanın üstünde yoğun bir haftaydı"
+        elif diff < 0 and pos_t == "below":
+            t += f"; bu, olağan aralığının ({normal['tests_low']}–{normal['tests_high']}) altında"
+        parts.append(t + ".")
+    if pct >= 70 and pos_p != "below" and pos_t != "below":
+        level = "good"
+    elif pct < 40 or (pos_p == "below" and pos_t == "below"):
+        level = "bad"
+    else:
+        level = "warn"
+    return level, " ".join(parts)
+
+
 def build_weekly_report(
     db: Session,
     parent: User,
@@ -256,12 +339,15 @@ def build_weekly_report(
     exam_trend_delta: float | None = None
     exam_trend_section: str | None = None
     if exam_rows:
-        # aynı SERİ (tür + genel/branş) — exam_scope, 2026-10-06
+        # aynı SERİ (tür + genel/branş) — exam_scope, 2026-10-06.
+        # 2026-11-12: önce TAM deneme serisi (son deneme branş olsa bile gidişat tam
+        # denemeden okunur — branş netiyle "düşüş" denmesin).
         from app.services import exam_scope
-        latest = exam_rows[0]
+        primary = exam_scope.primary_general_key(exam_rows)
+        latest = next((r for r in exam_rows if exam_scope.series_key(r) == primary), exam_rows[0])             if primary else exam_rows[0]
         latest_key = exam_scope.series_key(latest)
         prev_same = None
-        for r in exam_rows[1:]:
+        for r in exam_rows[exam_rows.index(latest) + 1:]:
             if exam_scope.series_key(r) == latest_key:
                 prev_same = r
                 break
@@ -291,14 +377,12 @@ def build_weekly_report(
         for n in note_rows
     ]
 
-    # --- Genel değerlendirme ---
-    if this_pct >= 70:
-        level = "good"
-    elif this_pct >= 40:
-        level = "warn"
-    else:
-        level = "bad"
-    verdict_level, verdict_text = _verdict(level, direction, this_sum.gorev_total)
+    # --- Genel değerlendirme (öğrencinin kendi olağanıyla) ---
+    normal = _normal_band(db, student.id, mon)
+    verdict_level, verdict_text = _verdict_v2(
+        student.full_name, gorev_total=this_sum.gorev_total, gorev_done=this_sum.gorev_done,
+        pct=this_pct, active_days=active_days, tests=this_sum.test_completed,
+        last_tests=comparison["last_test_completed"], last_pct=last_pct, normal=normal)
 
     return {
         "student": {"id": student.id, "full_name": student.full_name},
@@ -325,4 +409,5 @@ def build_weekly_report(
         "teacher_notes": teacher_notes,
         "verdict_level": verdict_level,
         "verdict_text": verdict_text,
+        "normal": normal,
     }

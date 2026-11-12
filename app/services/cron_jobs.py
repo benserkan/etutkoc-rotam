@@ -236,6 +236,9 @@ def weekly_backstop(db: Session, *, now: datetime) -> dict:
 
     Tek kural: bir öğrenciye 7 gün içinde 1 weekly_report yeterli.
     """
+    # 2026-11-12: haftalık rapor artık `parent_weekly_report` (Pazartesi 19:00 TR) ile
+    # gider; bu yedek tarama rastgele günlerde "son 7 gün" raporu üretiyordu → kapalı.
+    return {"disabled": "replaced_by_parent_weekly_report"}
     today = _today_utc(now)
     pairs = _all_parent_student_pairs(db)
     counts = {"sent": 0, "skipped_recent": 0, "skipped_no_tasks": 0}
@@ -276,6 +279,51 @@ def weekly_backstop(db: Session, *, now: datetime) -> dict:
 
     db.flush()
     logger.info("weekly_backstop cron: %s", counts)
+    return counts
+
+
+# ---------------------------- Job: veli haftalık raporu (sürüm 2) ----------------------------
+
+
+def parent_weekly_report(db: Session, *, now: datetime) -> dict:
+    """Her Pazartesi 16:00 UTC (TR 19:00) — her veliye çocuğunun geçen Pazartesi–Pazar
+    haftasının raporu (2026-11-12). Eski düzen (döngü bitince + gece yedek tarama,
+    "son 7 gün") her öğrenciye farklı gün ve farklı 7 günlük dilim gönderiyordu;
+    uygulamadaki Haftalık Rapor ekranıyla rakamlar ayrışıyordu.
+
+    Tekrar koruması: bu Pazartesi'den beri aynı veli+öğrenciye haftalık rapor
+    kuyruklandıysa atlanır (aynı gün iki kez çalışsa da tek mail)."""
+    today = _today_utc(now)
+    monday = today - timedelta(days=today.weekday())
+    since = datetime(monday.year, monday.month, monday.day, tzinfo=timezone.utc)
+    ws = monday - timedelta(days=7)
+    we = monday - timedelta(days=1)
+    counts = {"sent": 0, "skipped_recent": 0, "skipped_no_tasks": 0, "failed": 0}
+    for parent, student, link in _all_parent_student_pairs(db):
+        exists = (db.query(NotificationLog.id)
+                  .filter(NotificationLog.parent_id == parent.id,
+                          NotificationLog.student_id == student.id,
+                          NotificationLog.kind == NotificationKind.WEEKLY_REPORT,
+                          NotificationLog.queued_at >= since)
+                  .first())
+        if exists:
+            counts["skipped_recent"] += 1
+            continue
+        any_task = (db.query(Task.id)
+                    .filter(Task.student_id == student.id, Task.is_draft.is_(False),
+                            Task.date >= ws, Task.date <= we).first())
+        if not any_task:
+            counts["skipped_no_tasks"] += 1
+            continue
+        try:
+            with db.begin_nested():
+                produce_weekly_report(db, parent=parent, student=student, today=today)
+            counts["sent"] += 1
+        except Exception as e:  # bir öğrencinin hatası diğer velileri durdurmaz
+            logger.exception("parent_weekly_report parent=%s student=%s: %s", parent.id, student.id, e)
+            counts["failed"] += 1
+    db.flush()
+    logger.info("parent_weekly_report cron: %s", counts)
     return counts
 
 
@@ -1096,6 +1144,7 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "pool_daily_close": pool_daily_close,
     "pool_reminders": pool_reminders,
     "weekly_backstop": weekly_backstop,
+    "parent_weekly_report": parent_weekly_report,
     "student_weekly_email": student_weekly_email,
     "drop_alert": drop_alert,
     "exam_approaching": exam_approaching,
