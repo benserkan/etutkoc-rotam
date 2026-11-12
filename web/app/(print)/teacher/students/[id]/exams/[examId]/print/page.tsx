@@ -36,10 +36,14 @@ const MAX_TREND = 6;
 
 export default async function ExamReportPrintPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; examId: string }>;
+  /** veli=1 → veliyle paylaşılan sürüm: koça özel not basılmaz. */
+  searchParams: Promise<{ veli?: string }>;
 }) {
   const { id, examId } = await params;
+  const forParent = (await searchParams).veli === "1";
   const sid = encodeURIComponent(id);
 
   let studentName = "";
@@ -338,7 +342,7 @@ export default async function ExamReportPrintPage({
         </Section>
       ) : null}
 
-      {row.note ? (
+      {row.note && !forParent ? (
         <Section title="Koç notu">
           <p className="text-sm">{row.note}</p>
         </Section>

@@ -7,6 +7,9 @@ import type {
   BulkTargetsResponse,
   DispatchLogResponse,
   DispatchStatsResponse,
+  ShareLinkBody,
+  ShareLinkResult,
+  ShareTargetsResponse,
   WaLinkRequestBody,
   WaLinkResult,
   WaTargetBrief,
@@ -21,6 +24,8 @@ export const messagingKeys = {
   bulkTargets: (group: string) =>
     ["messaging", "bulk-targets", group] as const,
   dispatchStats: () => ["messaging", "dispatch-stats"] as const,
+  shareTargets: (studentId: number) =>
+    ["messaging", "share-targets", String(studentId)] as const,
 };
 
 export function getMessagingTemplates(category: string | null = null) {
@@ -78,4 +83,16 @@ export function getAdminWhatsAppDispatchLog(
   return api<DispatchLogResponse>(
     `/api/v2/admin/whatsapp-dispatch-log?${qs.toString()}`,
   );
+}
+
+// Rapor paylaşımı (PDF + WhatsApp) — 2026-11-12
+export function getShareTargets(studentId: number) {
+  return api<ShareTargetsResponse>(`/api/v2/messaging/share-targets?student_id=${studentId}`);
+}
+
+export function buildShareLink(body: ShareLinkBody) {
+  return api<ShareLinkResult>("/api/v2/messaging/share-link", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }

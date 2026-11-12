@@ -31,6 +31,9 @@ from app.routes.api_v2.schemas.messaging import (
     BulkTargetCandidateModel,
     BulkTargetsResponse,
     DispatchStatsResponse,
+    ShareLinkBody,
+    ShareLinkResult,
+    ShareTargetsResponse,
     WaLinkRequestBody,
     WaLinkResult,
     WaTargetBrief,
@@ -47,7 +50,9 @@ from app.services.whatsapp_bulk_service import (
 )
 from app.services.whatsapp_link_service import (
     WaDispatchError,
+    build_share_dispatch,
     build_wa_dispatch,
+    share_targets_for_student,
     can_message_phone,
     can_send_wa_to,
     mask_phone_e164,
@@ -339,3 +344,47 @@ def messaging_dispatch_stats(
         warning_level=stats.warning_level,
         warning_message=stats.warning_message,
     )
+
+
+# ============================================================================
+# Rapor paylaşımı (PDF + WhatsApp) — 2026-11-12
+# ============================================================================
+
+
+def _wa_error(e: WaDispatchError) -> HTTPException:
+    return HTTPException(status_code=e.status,
+                         detail={"error": "invalid", "code": e.code, "message": e.message})
+
+
+@router.get("/share-targets", response_model=ShareTargetsResponse)
+def messaging_share_targets(
+    student_id: int,
+    sender: User = Depends(_require_messaging_sender),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin raporunun gönderilebileceği kişiler (veliler + öğrenci)."""
+    try:
+        student, targets = share_targets_for_student(db, sender=sender, student_id=student_id)
+    except WaDispatchError as e:
+        raise _wa_error(e)
+    return ShareTargetsResponse(student_id=student.id, student_name=student.full_name,
+                                targets=targets)
+
+
+@router.post("/share-link", response_model=ShareLinkResult)
+def messaging_share_link(
+    body: ShareLinkBody,
+    sender: User = Depends(_require_messaging_sender),
+    db: Session = Depends(get_db),
+):
+    """Rapor PDF'i WhatsApp'tan paylaşılırken: sohbet bağlantısı + denetim kaydı.
+    PDF tarayıcıda üretilir; sunucu yalnız kişiyi doğrular ve kaydı tutar."""
+    try:
+        res = build_share_dispatch(db, sender=sender, kind=body.kind, text=body.text,
+                                   student_id=body.student_id,
+                                   target_user_id=body.target_user_id, ref_id=body.ref_id)
+    except WaDispatchError as e:
+        db.rollback()
+        raise _wa_error(e)
+    db.commit()
+    return ShareLinkResult(**res)

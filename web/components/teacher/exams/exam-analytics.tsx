@@ -33,6 +33,7 @@ import {
 import { toast } from "sonner";
 
 import { ExamAveragesButton } from "@/components/teacher/exams/exam-averages-dialog";
+import { ShareReportDialog } from "@/components/shared/share-report-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -150,8 +151,30 @@ export function ExamShareMenu({
   size?: "sm" | "default";
 }) {
   const text = () => buildShareText(row, prev, studentName);
+  const [parentOpen, setParentOpen] = React.useState(false);
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <Button
+        size={size}
+        onClick={() => setParentOpen(true)}
+        className="bg-emerald-700 text-white hover:bg-emerald-800 hover:text-white"
+        title="Deneme karnesini PDF olarak veliye WhatsApp'tan gönder"
+        data-testid="exam-share-parent"
+      >
+        <MessageCircle className="size-4" aria-hidden />
+        Veliye WhatsApp
+      </Button>
+      <ShareReportDialog
+        open={parentOpen}
+        onClose={() => setParentOpen(false)}
+        studentId={studentId}
+        kind="exam_card"
+        refId={row.id}
+        printUrl={`${examPrintUrl(studentId, row.id)}?veli=1`}
+        fileName={examCardFileName(row, studentName)}
+        title={`${row.title} deneme karnesi`}
+        message={buildParentShareMessage(row, prev, studentName)}
+      />
       <Button
         size={size}
         variant="outline"
@@ -215,6 +238,54 @@ export function ExamShareMenu({
       </DropdownMenu>
     </div>
   );
+}
+
+/** Veliye giden kısa mesaj — ayrıntı PDF karnede; koça özel not YOK. */
+function buildParentShareMessage(
+  row: ExamResultRow,
+  prev: ExamResultRow | null,
+  studentName?: string | null,
+): string {
+  const first = (studentName ?? "").trim().split(/\s+/)[0];
+  const who = first ? `${first}'${genitiveSuffix(first)}` : "Öğrencinin";
+  let line = `${who} ${row.section_label} denemesi (${row.title}, ${longTRDate(row.exam_date)}): ${shortNet(row.net)} net`;
+  if (prev) {
+    const d = row.net - prev.net;
+    line += d === 0 ? ", önceki denemeyle aynı" : `, önceki denemeye göre ${d > 0 ? "+" : "−"}${shortNet(Math.abs(d))}`;
+  }
+  return `Merhaba,
+${line}.
+Ders ders sonuçlar ve konu analizi ekteki karnede.`;
+}
+
+const TR_MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+function longTRDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return y && m && d ? `${d} ${TR_MONTHS[m - 1]} ${y}` : iso;
+}
+
+/** 42 → "42", 98.5 → "98,5", 13.75 → "13,75". */
+function shortNet(n: number): string {
+  return String(Math.round(n * 100) / 100).replace(".", ",");
+}
+
+function genitiveSuffix(name: string): string {
+  const vowels = "aıoueiöü";
+  const lower = name.toLocaleLowerCase("tr");
+  const last = [...lower].reverse().find((c) => vowels.includes(c)) ?? "e";
+  const v = ({ a: "ı", ı: "ı", o: "u", u: "u", e: "i", i: "i", ö: "ü", ü: "ü" } as Record<string, string>)[last];
+  return `${vowels.includes(lower[lower.length - 1]) ? "n" : ""}${v}n`;
+}
+
+function examCardFileName(row: ExamResultRow, studentName?: string | null): string {
+  const base = `${studentName ?? "ogrenci"} ${row.title} karne`
+    .toLocaleLowerCase("tr")
+    .replace(/[çğıöşü]/g, (c) => ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" } as Record<string, string>)[c])
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return `${base || "deneme-karnesi"}.pdf`;
 }
 
 // ---------------------------------------------------------------- Genel Bakış

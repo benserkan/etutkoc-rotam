@@ -156,3 +156,35 @@ export interface DispatchLogResponse {
   days: number;
   sender_filter_id: number | null;
 }
+
+// Rapor paylaşımı (PDF + WhatsApp) — 2026-11-12
+export type ShareReportKind = "exam_card" | "exam_progress" | "parent_weekly" | "program";
+
+export interface ShareTargetItem {
+  user_id: number;
+  full_name: string;
+  relation_label: string;
+  phone_masked: string | null;
+  can_message: boolean;
+}
+
+export interface ShareTargetsResponse {
+  student_id: number;
+  student_name: string;
+  targets: ShareTargetItem[];
+}
+
+export interface ShareLinkBody {
+  student_id: number;
+  kind: ShareReportKind;
+  text: string;
+  target_user_id?: number | null;
+  ref_id?: number | null;
+}
+
+export interface ShareLinkResult {
+  wa_url: string;
+  target_name: string | null;
+  target_phone_masked: string | null;
+  log_id: number | null;
+}

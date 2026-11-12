@@ -193,3 +193,37 @@ class DispatchLogResponse(BaseModel):
     summary: DispatchLogSummary
     days: int                           # filter window (1-90)
     sender_filter_id: int | None = None
+
+
+# ============================================================================
+# Rapor paylaşımı (PDF + WhatsApp) — 2026-11-12
+# ============================================================================
+
+
+class ShareTargetItem(BaseModel):
+    user_id: int
+    full_name: str
+    relation_label: str
+    phone_masked: str | None = None
+    can_message: bool
+
+
+class ShareTargetsResponse(BaseModel):
+    student_id: int
+    student_name: str
+    targets: list[ShareTargetItem]
+
+
+class ShareLinkBody(BaseModel):
+    student_id: int = Field(gt=0)
+    kind: str = Field(pattern="^(exam_card|exam_progress|parent_weekly|program)$")
+    text: str = Field(default="", max_length=1500)
+    target_user_id: int | None = Field(default=None, gt=0)
+    ref_id: int | None = None
+
+
+class ShareLinkResult(BaseModel):
+    wa_url: str
+    target_name: str | None = None
+    target_phone_masked: str | None = None
+    log_id: int | None = None
