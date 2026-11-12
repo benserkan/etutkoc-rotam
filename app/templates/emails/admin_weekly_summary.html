@@ -8,187 +8,198 @@ Subject: {{ payload.institution_name }} · haftalık yönetici özeti · {{ payl
 <meta name="color-scheme" content="light only">
 </head>
 {% set k = payload.kpis or {} %}
-{% set rel = payload.reliability or {} %}
+{% set nar = payload.narrative or {} %}
 {% macro pct(v) %}{% if v is none %}—{% else %}%{{ v }}{% endif %}{% endmacro %}
 {% macro rate_color(v) %}{% if v is none %}#475569{% elif v >= 70 %}#047857{% elif v >= 40 %}#b45309{% else %}#b91c1c{% endif %}{% endmacro %}
-{% macro signed(v) %}{% if v is none %}—{% elif v > 0 %}+{{ v }}{% else %}{{ v }}{% endif %}{% endmacro %}
+{% macro h2(t) %}<div style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 8px;">{{ t }}</div>{% endmacro %}
+{% macro p(t, color='#1e293b') %}<p style="margin:0 0 10px;font-size:14px;line-height:1.6;color:{{ color }};">{{ t }}</p>{% endmacro %}
 <body style="margin:0;padding:0;background:#eef2f5;">
-<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#eef2f5;">{{ payload.headline.text if payload.headline else '' }}</div>
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#eef2f5;">{{ (nar.paragraphs or [''])[0] }}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2f5;">
-<tr><td align="center" style="padding:24px 12px;">
+<tr><td align="center" style="padding:20px 10px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #d5dbe1;border-radius:12px;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;">
 
 <!-- Kurum kimliği -->
-<tr><td style="padding:22px 28px 0;">
+<tr><td style="padding:22px 24px 0;">
   {% include "_brand_header.html" %}
-</td></tr>
-<tr><td style="padding:0 28px;">
   <div style="font-size:22px;font-weight:800;line-height:1.25;">Haftalık yönetici özeti</div>
-  <div style="font-size:13px;color:#475569;margin-top:4px;">{{ payload.week_label }} · Pazartesi–Pazar · {{ k.students }} aktif öğrenci · {{ k.teachers }} koç</div>
+  <div style="font-size:13px;color:#475569;margin-top:4px;">{{ payload.week_label }} (Pazartesi–Pazar) · {{ k.students }} aktif öğrenci · {{ k.teachers }} koç</div>
 </td></tr>
 
-<!-- Haftanın özeti -->
-{% if payload.headline %}
-{% set tone = payload.headline.tone %}
-<tr><td style="padding:16px 28px 0;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-radius:10px;{% if tone == 'good' %}background:#ecfdf5;border:1px solid #a7f3d0;{% elif tone == 'bad' %}background:#fef2f2;border:1px solid #fecaca;{% else %}background:#fffbeb;border:1px solid #fde68a;{% endif %}">
-  <tr><td style="padding:14px 16px;font-size:15px;line-height:1.5;color:{% if tone == 'good' %}#064e3b{% elif tone == 'bad' %}#7f1d1d{% else %}#78350f{% endif %};">
-    {{ payload.headline.text }}
-  </td></tr></table>
-</td></tr>
-{% endif %}
-
-<!-- Dört ana sayı -->
-<tr><td style="padding:16px 28px 0;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-    <td width="25%" valign="top" style="padding-right:4px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:10px;">
-        <div style="font-size:12px;color:#475569;">Program uyumu</div>
-        <div style="font-size:24px;font-weight:800;color:{{ rate_color(k.rate) }};line-height:1.2;">{{ pct(k.rate) }}</div>
-        <div style="font-size:11px;color:#334155;">{{ k.completed }} / {{ k.planned }} test</div>
-        <div style="font-size:11px;color:#475569;margin-top:4px;">Geçen hafta {{ pct(k.last_rate) }}</div>
-      </td></tr></table>
-    </td>
-    <td width="25%" valign="top" style="padding:0 2px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:10px;">
-        <div style="font-size:12px;color:#475569;">Doğru oranı</div>
-        <div style="font-size:24px;font-weight:800;line-height:1.2;">{{ pct(k.accuracy) }}</div>
-        <div style="font-size:11px;color:#334155;">sonucu girilen testlerde</div>
-      </td></tr></table>
-    </td>
-    <td width="25%" valign="top" style="padding:0 2px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:10px;">
-        <div style="font-size:12px;color:#475569;">Risk altında</div>
-        {% set rk = (k.risk_critical or 0) + (k.risk_high or 0) %}
-        <div style="font-size:24px;font-weight:800;color:{% if rk %}#b91c1c{% else %}#047857{% endif %};line-height:1.2;">{{ rk }}</div>
-        <div style="font-size:11px;color:#334155;">{{ k.risk_critical or 0 }} kritik · {{ k.risk_high or 0 }} yüksek</div>
-      </td></tr></table>
-    </td>
-    <td width="25%" valign="top" style="padding-left:4px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:10px;">
-        <div style="font-size:12px;color:#475569;">Programsız</div>
-        <div style="font-size:24px;font-weight:800;color:{% if k.empty %}#b45309{% else %}#047857{% endif %};line-height:1.2;">{{ k.empty }}</div>
-        <div style="font-size:11px;color:#334155;">öğrenci, bu hafta</div>
-      </td></tr></table>
-    </td>
-  </tr></table>
-</td></tr>
-
-<!-- 8 haftalık eğilim -->
-{% set tr = payload.trend or [] %}
-{% if tr|selectattr('rate')|list %}
-<tr><td style="padding:20px 28px 0;">
-  <div style="font-size:14px;font-weight:700;">Son 8 hafta · program uyumu</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;margin-top:8px;">
-  <tr valign="bottom" style="height:90px;">
-    {% for w in tr %}
-    <td align="center" style="padding:0 3px;">
-      {% if w.rate is not none %}
-      <div style="font-size:10px;color:{% if loop.last %}#0f172a;font-weight:700{% else %}#475569{% endif %};">{{ w.rate }}</div>
-      <div style="height:{{ [w.rate * 0.7, 2]|max|round|int }}px;background:{% if loop.last %}#0f172a{% elif w.rate < 40 %}#f87171{% else %}#94a3b8{% endif %};border-radius:3px 3px 0 0;"></div>
-      {% else %}
-      <div style="font-size:10px;color:#94a3b8;">—</div>
-      {% endif %}
-    </td>
+<!-- 1. Haftanın özeti -->
+<tr><td style="padding:18px 24px 0;">
+  {{ h2("Bu haftanın özeti") }}
+  {% for t in nar.paragraphs or [] %}{{ p(t) }}{% endfor %}
+  {% if nar.good_text %}{{ p(nar.good_text, '#065f46') }}{% endif %}
+  {% if nar.reasons %}
+  <div style="font-size:14px;font-weight:700;color:#7f1d1d;margin:4px 0 6px;">{{ nar.reason_title }}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    {% for r in nar.reasons %}
+    <tr><td valign="top" style="width:22px;font-size:14px;font-weight:700;color:#7f1d1d;padding:0 0 8px;">{{ loop.index }}.</td>
+        <td style="font-size:14px;line-height:1.55;color:#1e293b;padding:0 0 8px;">{{ r }}</td></tr>
     {% endfor %}
-  </tr>
-  <tr>
-    {% for w in tr %}<td align="center" style="font-size:10px;color:#475569;padding-top:4px;">{{ w.label }}</td>{% endfor %}
-  </tr></table>
-  <div style="font-size:11px;color:#475569;margin-top:4px;">Her sütun Pazartesi–Pazar haftası; tarih haftanın son günü. Kırmızı: %40'ın altı.</div>
+  </table>
+  {% endif %}
+  {% for t in nar.notes or [] %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 8px;background:#fffbeb;border-left:4px solid #d97706;">
+    <tr><td style="padding:10px 12px;font-size:14px;line-height:1.55;color:#78350f;">{{ t }}</td></tr>
+  </table>
+  {% endfor %}
 </td></tr>
-{% endif %}
 
-<!-- Koçlar -->
-{% if payload.coaches %}
-<tr><td style="padding:22px 28px 0;">
-  <div style="font-size:14px;font-weight:700;">Koçlara göre</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;font-size:12px;border-collapse:collapse;">
-    <tr style="background:#f1f5f9;color:#334155;">
-      <td style="padding:7px 8px;font-weight:700;">Koç</td>
-      <td align="right" style="padding:7px 6px;font-weight:700;">Öğrenci</td>
-      <td align="right" style="padding:7px 6px;font-weight:700;">Uyum</td>
-      <td align="right" style="padding:7px 6px;font-weight:700;">Değişim</td>
-      <td align="right" style="padding:7px 6px;font-weight:700;">Programsız</td>
-      <td align="right" style="padding:7px 6px;font-weight:700;">Riskli</td>
-      <td align="right" style="padding:7px 8px;font-weight:700;">Son görülme</td>
-    </tr>
-    {% for c in payload.coaches %}
+<!-- 2. Sayılar (2 × 2) -->
+<tr><td style="padding:14px 24px 0;">
+  {% set rk = (k.risk_critical or 0) + (k.risk_high or 0) %}
+  {% set boxes = [
+      ("Program uyumu", pct(k.rate), rate_color(k.rate), (k.completed ~ " / " ~ k.planned ~ " test çözüldü")),
+      ("Geçen hafta", pct(k.last_rate), "#475569", "aynı ölçüyle"),
+      ("Risk altında", rk ~ " öğrenci", ("#b91c1c" if rk else "#047857"), ((k.risk_critical or 0) ~ " kritik, " ~ (k.risk_high or 0) ~ " yüksek")),
+      ("Programı olmayan", (k.empty or 0) ~ " öğrenci", ("#b45309" if k.empty else "#047857"), "bu hafta hiç görevi yok"),
+  ] %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    {% for row in boxes|batch(2) %}
     <tr>
-      <td style="padding:8px;border-bottom:1px solid #eef2f5;font-weight:600;">{{ c.name }}{% if c.score_label %}<div style="font-size:11px;font-weight:400;color:#475569;">Karne: {{ c.score }} · {{ c.score_label }}</div>{% endif %}</td>
-      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;">{{ c.students }}</td>
-      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;font-weight:700;color:{{ rate_color(c.rate) }};">{{ pct(c.rate) }}</td>
-      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;color:{% if c.delta is not none and c.delta < 0 %}#b91c1c{% elif c.delta %}#047857{% else %}#475569{% endif %};">{{ signed(c.delta) }}</td>
-      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;color:{% if c.empty %}#b45309{% else %}#475569{% endif %};">{{ c.empty }}</td>
-      <td align="right" style="padding:8px 6px;border-bottom:1px solid #eef2f5;color:{% if c.risk %}#b91c1c{% else %}#475569{% endif %};">{{ c.risk }}</td>
-      <td align="right" style="padding:8px;border-bottom:1px solid #eef2f5;color:{% if c.seen_days is none or c.seen_days >= 7 %}#b45309{% else %}#475569{% endif %};">{% if c.seen_days is none %}hiç{% elif c.seen_days == 0 %}bugün{% else %}{{ c.seen_days }} gün önce{% endif %}</td>
+      {% for b in row %}
+      <td width="50%" valign="top" style="padding:{% if loop.first %}0 5px 10px 0{% else %}0 0 10px 5px{% endif %};">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:12px;">
+          <div style="font-size:12px;color:#475569;">{{ b[0] }}</div>
+          <div style="font-size:24px;font-weight:800;color:{{ b[2] }};line-height:1.25;">{{ b[1] }}</div>
+          <div style="font-size:12px;color:#334155;">{{ b[3] }}</div>
+        </td></tr></table>
+      </td>
+      {% endfor %}
     </tr>
     {% endfor %}
   </table>
+  {% if k.accuracy is not none %}<div style="font-size:12px;color:#475569;">Doğru/yanlış girilen testlerde doğru oranı %{{ k.accuracy }}.</div>{% endif %}
+</td></tr>
+
+<!-- 3. Eğilim -->
+{% set tr = payload.trend or [] %}
+{% if tr|selectattr('rate')|list|length >= 2 %}
+<tr><td style="padding:20px 24px 0;">
+  {{ h2("Haftalara göre program uyumu") }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;">
+  <tr valign="bottom" style="height:96px;">
+    {% for w in tr %}
+    <td align="center" style="padding:0 3px;">
+      {% if w.rate is not none %}
+      {% set red = w.rate < 40 %}
+      <div style="font-size:11px;font-weight:{% if loop.last %}800{% else %}400{% endif %};color:{% if red %}#b91c1c{% else %}#334155{% endif %};">%{{ w.rate }}</div>
+      <div style="height:{{ [w.rate * 0.75, 3]|max|round|int }}px;background:{% if red %}#dc2626{% elif loop.last %}#0f172a{% else %}#94a3b8{% endif %};border-radius:3px 3px 0 0;"></div>
+      {% else %}<div style="font-size:11px;color:#94a3b8;">—</div>{% endif %}
+    </td>
+    {% endfor %}
+  </tr>
+  <tr>{% for w in tr %}<td align="center" style="font-size:11px;color:{% if loop.last %}#0f172a;font-weight:700{% else %}#475569{% endif %};padding-top:4px;">{% if loop.last %}Bu hafta{% else %}{{ w.label }}{% endif %}</td>{% endfor %}</tr>
+  </table>
+  <div style="font-size:12px;color:#475569;margin-top:6px;">Her sütun bir Pazartesi–Pazar haftası (altındaki tarih haftanın son günü). Kırmızı sütunlar %40'ın altındaki haftalar.</div>
 </td></tr>
 {% endif %}
 
-<!-- Müdahale -->
-{% if payload.actions %}
-<tr><td style="padding:22px 28px 0;">
-  <div style="font-size:14px;font-weight:700;">Bu hafta ilgilenilmesi gerekenler</div>
-  {% set at = payload.actions_total or {} %}
-  <div style="font-size:12px;color:#475569;margin:2px 0 8px;">Müdahale Merkezi: {{ at.critical or 0 }} kritik, {{ at.warn or 0 }} uyarı. En öncelikli {{ payload.actions|length }} tanesi:</div>
-  {% for a in payload.actions %}
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;border-left:4px solid {% if a.severity == 'critical' %}#dc2626{% else %}#d97706{% endif %};background:#f8fafc;">
-  <tr><td style="padding:9px 12px;">
-    <div style="font-size:13px;font-weight:600;color:#0f172a;">{{ a.title }}</div>
-    {% if a.description %}<div style="font-size:12px;color:#475569;margin-top:2px;">{{ a.description }}</div>{% endif %}
-    {% if a.suggestion %}<div style="font-size:12px;color:#334155;margin-top:2px;">{{ a.suggestion }}</div>{% endif %}
+<!-- 4. Koçlar -->
+{% if payload.coaches %}
+<tr><td style="padding:22px 24px 0;">
+  {{ h2("Koçlara göre") }}
+  {% for c in payload.coaches %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;margin-bottom:10px;">
+  <tr><td style="padding:12px 14px;">
+    <div style="font-size:15px;font-weight:800;">{{ c.name }}</div>
+    <div style="font-size:12px;color:#475569;margin-bottom:8px;">{{ c.students }} öğrenci · son görülme {% if c.seen_days is none %}hiç giriş yok{% elif c.seen_days == 0 %}bugün{% else %}{{ c.seen_days }} gün önce{% endif %}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:13px;">
+      <tr><td style="padding:3px 0;color:#475569;">Program uyumu</td><td align="right" style="padding:3px 0;font-weight:700;color:{{ rate_color(c.rate) }};">{{ pct(c.rate) }}{% if c.last_rate is not none %} <span style="font-weight:400;color:#475569;">(geçen hafta %{{ c.last_rate }})</span>{% endif %}</td></tr>
+      <tr><td style="padding:3px 0;color:#475569;">Programı olmayan öğrenci</td><td align="right" style="padding:3px 0;font-weight:700;color:{% if c.empty %}#b45309{% else %}#0f172a{% endif %};">{{ c.empty }}</td></tr>
+      <tr><td style="padding:3px 0;color:#475569;">Risk altındaki öğrenci</td><td align="right" style="padding:3px 0;font-weight:700;color:{% if c.risk %}#b91c1c{% else %}#0f172a{% endif %};">{{ c.risk }}</td></tr>
+      {% if c.score is not none %}<tr><td style="padding:3px 0;color:#475569;">Koç etkililik puanı (son 4 hafta)</td><td align="right" style="padding:3px 0;font-weight:700;">{{ c.score }}/100 · {{ c.score_label }}</td></tr>{% endif %}
+    </table>
   </td></tr></table>
   {% endfor %}
+  <div style="font-size:12px;color:#475569;line-height:1.5;">Koç etkililik puanı; öğrencilerin test tamamlama oranı (%40), doğru oranı (%25), öğrenci başına verilen program düzeni (%20) ve risk altında olmayan öğrenci payından (%15) hesaplanır. 75 ve üstü örnek, 50–74 iyi, 30–49 gelişmeli, 30 altı dikkat.</div>
 </td></tr>
 {% endif %}
 
-<!-- Akademik + veli + havuz -->
-<tr><td style="padding:20px 28px 0;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-    <td width="50%" valign="top" style="padding-right:5px;">
-      {% set ac = payload.academic or {} %}
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:12px;">
-        <div style="font-size:13px;font-weight:700;">Denemeler</div>
-        <div style="font-size:12px;color:#334155;line-height:1.55;margin-top:4px;">
-          {{ ac.students_with_exam or 0 }} / {{ k.students }} öğrencinin son 8 haftada denemesi var (%{{ ac.coverage_pct or 0 }}).<br>
-          Son 30 günde {{ ac.recent_exams or 0 }} deneme girildi.
-          {% if ac.avg_net_pct is not none %}<br>Ortalama net başarısı %{{ ac.avg_net_pct }}{% if ac.delta is not none %} ({{ signed(ac.delta) }} puan){% endif %}.{% endif %}
-        </div>
-      </td></tr></table>
-    </td>
-    <td width="50%" valign="top" style="padding-left:5px;">
-      {% set pt = payload.parents or {} %}
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d5dbe1;border-radius:10px;"><tr><td style="padding:12px;">
-        <div style="font-size:13px;font-weight:700;">Veliler</div>
-        <div style="font-size:12px;color:#334155;line-height:1.55;margin-top:4px;">
-          {{ pt.covered_students or 0 }} / {{ pt.total_students or 0 }} öğrencinin velisi sistemde (%{{ pt.coverage_pct or 0 }}).<br>
-          Son 30 günde {{ pt.notif_sent or 0 }} bildirim gönderildi{% if pt.notif_success_pct is not none %}, başarı %{{ pt.notif_success_pct }}{% endif %}.
-        </div>
-      </td></tr></table>
-    </td>
-  </tr></table>
-  {% if payload.pool %}
-  <div style="font-size:12px;color:#334155;margin-top:10px;">Haftalık havuz: {{ payload.pool.students }} öğrenci, {{ payload.pool.open_periods }} açık dönem{% if payload.pool.late_sessions %}, <b style="color:#b45309;">{{ payload.pool.late_sessions }} seansı gecikmiş</b>{% endif %}.</div>
+<!-- 5. Risk altındaki öğrenciler -->
+{% if payload.risk_students %}
+<tr><td style="padding:22px 24px 0;">
+  {{ h2("Risk altındaki öğrenciler") }}
+  {{ p("Bu öğrencilerle koçun birebir görüşmesi önerilir. Her öğrencinin altında riskin nedenleri yazıyor.", '#334155') }}
+  {% for r in payload.risk_students %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;border-left:4px solid {% if r.level == 'critical' %}#dc2626{% else %}#d97706{% endif %};background:#f8fafc;">
+  <tr><td style="padding:10px 12px;">
+    <div style="font-size:14px;font-weight:700;color:#0f172a;">{{ r.name }} <span style="font-size:12px;font-weight:700;color:{% if r.level == 'critical' %}#b91c1c{% else %}#b45309{% endif %};">· {{ r.level_label }}</span></div>
+    <div style="font-size:12px;color:#475569;margin:2px 0 4px;">Koçu: {{ r.coach }}</div>
+    {% for reason in r.reasons %}<div style="font-size:13px;line-height:1.5;color:#1e293b;">• {{ reason }}</div>{% endfor %}
+  </td></tr></table>
+  {% endfor %}
+  {% if payload.risk_total_high and payload.risk_total_high > payload.risk_students|length %}<div style="font-size:12px;color:#475569;">+{{ payload.risk_total_high - payload.risk_students|length }} öğrenci daha — tamamı panelde.</div>{% endif %}
+</td></tr>
+{% endif %}
+
+<!-- 6. Programı olmayan öğrenciler -->
+{% if payload.empty_groups %}
+<tr><td style="padding:22px 24px 0;">
+  {{ h2("Bu hafta programı olmayan öğrenciler") }}
+  {% for g in payload.empty_groups %}
+  {{ p(g.coach ~ " — " ~ g.count ~ " öğrenci: " ~ g.names|join(", ") ~ (" ve diğerleri" if g.count > g.names|length else "") ~ ".") }}
+  {% endfor %}
+  {{ p("Koçtan bu öğrenciler için program girmesini isteyin. Yeni eklenen öğrenciler (3 günden yeni) sayılmaz.", '#475569') }}
+</td></tr>
+{% endif %}
+
+<!-- 7. Denemeler -->
+{% set ac = payload.academic or {} %}
+<tr><td style="padding:22px 24px 0;">
+  {{ h2("Deneme sonuçları") }}
+  {% if (ac.students_with_exam or 0) == 0 %}
+  {{ p("Son 8 haftada " ~ k.students ~ " öğrencinin hiçbiri için deneme sonucu girilmedi.") }}
+  {% else %}
+  {{ p("Son 8 haftada " ~ ac.students_with_exam ~ " öğrencinin deneme sonucu girildi; " ~ (ac.no_exam_count or 0) ~ " öğrencinin hiç deneme sonucu yok. Son 30 günde " ~ (ac.recent_exams or 0) ~ " deneme girildi.") }}
+  {% if ac.avg_net_pct is not none %}{{ p("Ortalama net başarısı %" ~ ac.avg_net_pct ~ ".") }}{% endif %}
+  {% endif %}
+  {% if (ac.no_exam_count or 0) > 0 %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f0f7f9;border-radius:8px;"><tr><td style="padding:10px 12px;font-size:13px;line-height:1.55;color:#0f172a;">
+    <b>Neden önemli?</b> Deneme sonuçları girilmeden öğrencinin hangi konularda net kaybettiği, hedefine ne kadar yaklaştığı ve programın sınava etkisi ölçülemez. Koçlar karne PDF'ini sisteme yükleyerek bunu birkaç dakikada yapabilir.
+  </td></tr></table>
   {% endif %}
 </td></tr>
 
-<!-- Panel -->
-<tr><td style="padding:22px 28px 0;">
+<!-- 8. Veliler -->
+{% set pu = payload.parent_usage or {} %}
+{% if pu.students %}
+<tr><td style="padding:22px 24px 0;">
+  {{ h2("Veliler") }}
+  {{ p(pu.students ~ " öğrenciden " ~ pu.covered ~ " tanesinin velisi sisteme kayıtlı. Kayıtlı " ~ pu.parent_count ~ " veliden " ~ pu.logged_in_30d ~ " tanesi son 30 günde sisteme girdi.") }}
+  {% if pu.most_active %}
+  <div style="font-size:14px;font-weight:700;margin:2px 0 4px;">Sistemi en çok kullanan veliler</div>
+  {% for r in pu.most_active %}<div style="font-size:13px;line-height:1.55;">{{ loop.index }}. {{ r.name }} <span style="color:#475569;">(velisi: {{ r.children }}) — son 30 günde {{ r.visits }} ziyaret</span></div>{% endfor %}
+  {% endif %}
+  {% if pu.never %}
+  <div style="font-size:14px;font-weight:700;margin:10px 0 4px;">Sisteme hiç giriş yapmayan veliler</div>
+  {% for r in pu.never %}<div style="font-size:13px;line-height:1.55;">{{ loop.index }}. {{ r.name }} <span style="color:#475569;">(velisi: {{ r.children }})</span></div>{% endfor %}
+  {% if pu.never_count > pu.never|length %}<div style="font-size:12px;color:#475569;">+{{ pu.never_count - pu.never|length }} veli daha</div>{% endif %}
+  {% endif %}
+  {% if pu.never_count or pu.no_parent_count %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;background:#f0f7f9;border-radius:8px;"><tr><td style="padding:10px 12px;font-size:13px;line-height:1.55;color:#0f172a;">
+    <b>Öneri:</b>
+    {% if pu.never_count %}Hiç giriş yapmayan velilere nedenini sorun; giriş bilgisine ulaşamamış olabilirler.{% endif %}
+    {% if pu.no_parent_count %} {{ pu.no_parent_count }} öğrencinin velisi henüz sistemde yok; koçlar velileri davet ettiğinde haftalık ilerleme raporu velilere otomatik gider.{% endif %}
+  </td></tr></table>
+  {% endif %}
+</td></tr>
+{% endif %}
+
+<!-- 9. Panel -->
+<tr><td style="padding:22px 24px 0;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-    <td style="background:#0f172a;border-radius:8px;"><a href="{{ app_base_url }}/institution/action-center" style="display:inline-block;padding:12px 20px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;">Müdahale Merkezi'ni aç</a></td>
-    <td style="width:10px;"></td>
-    <td style="border:1px solid #0f172a;border-radius:8px;"><a href="{{ app_base_url }}/institution/compliance" style="display:inline-block;padding:11px 18px;color:#0f172a;font-size:14px;font-weight:700;text-decoration:none;">Program uyumu</a></td>
+    <td style="background:#0f172a;border-radius:8px;"><a href="{{ app_base_url }}/institution/action-center" style="display:inline-block;padding:12px 18px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;">Müdahale Merkezi</a></td>
+    <td style="width:8px;"></td>
+    <td style="border:1px solid #0f172a;border-radius:8px;"><a href="{{ app_base_url }}/institution/compliance" style="display:inline-block;padding:11px 16px;color:#0f172a;font-size:14px;font-weight:700;text-decoration:none;">Program uyumu</a></td>
   </tr></table>
 </td></tr>
 
-<!-- Alt bilgi + güvenilirlik -->
-<tr><td style="padding:24px 28px 22px;">
+<tr><td style="padding:22px 24px 20px;">
   <div style="border-top:1px solid #e5e7eb;padding-top:12px;font-size:11px;color:#64748b;line-height:1.6;">
-    {% if rel.score is defined %}Veri güvenilirliği: <b>{{ rel.score }}/100 ({{ rel.level_label }})</b>{% if rel.fixed_count %} · {{ rel.fixed_count }} tutarsızlık otomatik düzeltildi{% endif %}. Ayrıntı: panel → Haftalık Özet.<br>{% endif %}
-    Uyum: o hafta öğrencilere verilen testlerin kaçı çözüldü (deneme ve etkinlik görevleri hariç). Bu özet her Pazartesi gönderilir; kuruma özeldir.<br>
+    Program uyumu: o hafta öğrencilere verilen testlerden kaçının çözüldüğü (deneme ve etkinlik görevleri hariç). Bu özet her hafta gönderilir; kurumunuza özeldir.<br>
     {% include "_brand_footer.html" %}
   </div>
 </td></tr>

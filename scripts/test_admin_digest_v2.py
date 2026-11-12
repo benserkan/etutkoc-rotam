@@ -159,7 +159,14 @@ def main():
         check("kurum adına gönderildi notu", f"{inst.name} adına gönderildi" in html)
         check("ETÜTKOÇ başlığı yok (kurum kimliği önde)", "Çalışma Takip Sistemi" not in html)
         check("emoji yok", not EMOJI.search(html), EMOJI.findall(html)[:5])
-        check("güvenilirlik satırı var", f"{rel['score']}/100" in html)
+        check("güvenilirlik skoru mailde yok (yalnız arşiv ekranında)", "Veri güvenilirliği" not in html)
+        nar = p["narrative"]
+        check("özet cümleyle başlar", nar["paragraphs"][0].startswith("Kurumunuzdaki öğrencilerin program uyumu"),
+              nar["paragraphs"][0])
+        check("uyumlu ilerleyen öğrenci adı yazılı (Öğr 0 %80)", "Öğr 0" in nar["good_text"], nar["good_text"])
+        check("programsız öğrenci 'neden' değil not olarak", not any("programı" in r for r in nar["reasons"])
+              and any("Öğr 2" in t for t in nar["notes"]), (nar["reasons"], nar["notes"]))
+        check("şablonda ham 'Karne: 55' kalıbı yok", "Karne:" not in html)
 
         print("— 6-7. Gönderim + arşiv")
         email_service_send = admin_digest.send_email

@@ -107,6 +107,189 @@ def _ref_now(week_end: date):
     return min(real, ref)
 
 
+# ---------------------------- Anlatı (2026-11-12, saha geri bildirimi) ----------------------------
+# Kural: mail rakamı okura yorumlatmaz, cümle kurar. Her neden gerçekten hesaba giren
+# veriden türetilir (programı olmayan öğrencinin görevi yoktur → uyum oranını düşürmez;
+# ayrı bir dikkat maddesi olarak yazılır, "düşüşün nedeni" denmez).
+
+GOOD_RATE = 70          # "programını uyumlu ilerletiyor" eşiği (öğrenci, haftalık test)
+STOPPED_MIN_PLANNED = 3  # "hiç çözmedi" sayılması için en az planlanan test
+SHARP_DROP = 30          # öğrenci bazında sert düşüş (puan)
+MAX_NAMES = 8
+
+
+def _names(xs: list[str], limit: int = MAX_NAMES) -> str:
+    xs = [x for x in xs if x]
+    if not xs:
+        return ""
+    if len(xs) <= limit:
+        return ", ".join(xs)
+    return ", ".join(xs[:limit]) + f" ve {len(xs) - limit} öğrenci daha"
+
+
+def _num(text: str | None, pat: str) -> int | None:
+    import re
+    m = re.search(pat, text or "")
+    return int(m.group(1)) if m else None
+
+
+def risk_reasons(indicators) -> list[str]:
+    """Risk göstergelerini velinin/yöneticinin okuyacağı düz cümlelere çevir.
+    Bayrak motorundan gelen ek göstergeler (flag_*) ana göstergeyle aynı olguyu başka
+    bir ölçüyle söylüyorsa atlanır ("7 gündür girmedi" + "10 gündür uygulamayı açmadı")."""
+    out: list[str] = []
+    codes = {i.code for i in indicators}
+    for i in indicators:
+        code, det = i.code, i.detail or ""
+        if code.startswith("flag_"):
+            low = (i.title or "").lower()
+            if "no_login_5d" in codes and ("açmadı" in low or "giriş" in low or "görülmedi" in low):
+                continue
+            if "low_completion" in codes and "tamamlama" in low:
+                continue
+            if "no_program" in codes and "program" in low:
+                continue
+            if "consecutive_empty" in codes and ("boş" in low or "üst üste" in low):
+                continue
+        if code == "no_login_5d":
+            d = _num(det, r"(\d+) gün")
+            out.append("Hiç giriş yapmadı" if d is None else f"{d} gündür sisteme girmedi")
+        elif code == "low_completion":
+            p = _num(det, r"planlanan (\d+) test")
+            r = _num(det, r"%(\d+)")
+            if p is not None and r == 0:
+                out.append(f"Bu hafta verilen {p} testin hiçbirini çözmedi")
+            elif p is not None and r is not None:
+                out.append(f"Bu hafta verilen {p} testin yalnız yüzde {r} kadarını çözdü")
+            else:
+                out.append("Haftalık tamamlama %40'ın altında")
+        elif code == "consecutive_empty":
+            d = _num(det, r"son (\d+) gün")
+            out.append(f"Görev verilen son {d} günün hiçbirinde görev yapmadı" if d else i.title)
+        elif code == "drop_30pct":
+            a = _num(det, r"Geçen hafta %(\d+)")
+            b = _num(det, r"bu hafta %(\d+)")
+            out.append(f"Tamamlama oranı geçen haftaya göre düştü (%{a} → %{b})" if a is not None else i.title)
+        elif code == "no_program":
+            out.append("Bu hafta programı yok")
+        else:
+            out.append(i.title)
+    return out
+
+
+def build_narrative(*, rate, last_rate, delta, week_label, student_rows: list[dict],
+                    planned, last_planned, empty_names: list[str], risk_rows: list[dict]) -> dict:
+    """Haftanın özeti: paragraflar + gerekçe listeleri.
+
+    student_rows: {name, planned, completed, rate, last_rate} (bu hafta planı olanlar)."""
+    paras: list[str] = []
+    if rate is None:
+        paras.append(f"{week_label} tarihleri arasında öğrencilere yayınlanmış test görevi olmadığı için "
+                     "program uyumu ölçülemedi.")
+    else:
+        paras.append(f"Kurumunuzdaki öğrencilerin program uyumu {week_label} tarihleri arasında "
+                     f"%{rate} olarak ölçüldü: öğrencilere verilen {planned} testin "
+                     f"{round(planned * rate / 100) if planned else 0} tanesi çözüldü.")
+        if last_rate is not None and delta is not None:
+            if delta <= -5:
+                paras.append(f"Bu oran geçen hafta %{last_rate} idi; {abs(delta)} puan düştü.")
+            elif delta >= 5:
+                paras.append(f"Bu oran geçen hafta %{last_rate} idi; {delta} puan yükseldi.")
+            else:
+                paras.append(f"Geçen hafta da benzer seviyedeydi (%{last_rate}).")
+
+    good = sorted([r for r in student_rows if r["rate"] is not None and r["rate"] >= GOOD_RATE],
+                  key=lambda r: -r["rate"])
+    good_text = (f"Programını uyumlu ilerleten öğrenciler (testlerinin en az %{GOOD_RATE}'ini çözenler): "
+                 f"{_names([r['name'] for r in good])}." if good else
+                 f"Bu hafta testlerinin en az %{GOOD_RATE}'ini çözen öğrenci olmadı.")
+
+    reasons: list[str] = []
+    stopped = [r for r in student_rows if r["planned"] >= STOPPED_MIN_PLANNED and r["completed"] == 0]
+    if stopped:
+        reasons.append(f"{len(stopped)} öğrenci kendisine verilen testlerin hiçbirini çözmedi: "
+                       f"{_names([r['name'] for r in stopped])}.")
+    sharp = [r for r in student_rows if r not in stopped and r["rate"] is not None
+             and r["last_rate"] is not None and r["last_rate"] - r["rate"] >= SHARP_DROP]
+    sharp.sort(key=lambda r: r["rate"] - r["last_rate"])
+    if sharp:
+        reasons.append(f"{len(sharp)} öğrencinin tamamlaması geçen haftaya göre sert düştü: "
+                       + _names([f"{r['name']} (%{r['last_rate']} → %{r['rate']})" for r in sharp], 6) + ".")
+    if last_planned and planned and planned >= last_planned * 1.25 and delta is not None and delta < 0:
+        reasons.append(f"Bu hafta daha fazla test verildi ({last_planned} → {planned}); "
+                       "artan yük tamamlama oranını düşürmüş olabilir.")
+    reason_title = ("Düşüşün nedenleri" if (delta is not None and delta <= -5)
+                    else "Dikkat edilmesi gerekenler") if reasons else None
+
+    notes: list[str] = []
+    if empty_names:
+        notes.append(f"{len(empty_names)} öğrencinin bu hafta hiç programı yoktu: {_names(empty_names)}. "
+                     "Bu öğrencilerin görevi olmadığı için uyum oranına dahil edilmediler; koçun program "
+                     "girmesi gerekiyor.")
+    if risk_rows:
+        from collections import Counter
+        cnt = Counter()
+        for r in risk_rows:
+            for reason in r["reasons"]:
+                key = ("en az 5 gündür sisteme girmeyen" if "sisteme girmedi" in reason or "giriş yapmadı" in reason
+                       else "verilen testlerin hiçbirini ya da çok azını çözen"
+                       if ("testin" in reason or "%40" in reason)
+                       else "günlerce hiç görev yapmayan" if "hiçbirinde görev" in reason
+                       else "tamamlaması sert düşen" if "düştü" in reason else None)
+                if key:
+                    cnt[key] += 1
+        parts = [f"{k} {n} öğrenci" for k, n in cnt.most_common()]
+        notes.append(f"{len(risk_rows)} öğrenci risk altında."
+                     + (f" Bunlar arasında {', '.join(parts)} var (bir öğrencide birden çok neden olabilir)."
+                        if parts else "") + " Ayrıntı aşağıda.")
+    return {"paragraphs": paras, "good_text": good_text, "reason_title": reason_title,
+            "reasons": reasons, "notes": notes}
+
+
+def parent_block(db: Session, students: list[User], week_end: date) -> dict:
+    """Veli kullanımı: kayıtlı veliler, en çok kullananlar, hiç girmeyenler, velisi olmayanlar."""
+    from datetime import datetime, timezone
+
+    from sqlalchemy import func as sa_func
+
+    from app.models import ParentStudentLink
+    from app.models.panel_behavior import PanelVisitEvent
+
+    sids = [int(s.id) for s in students]
+    name_of = {int(s.id): (s.full_name or s.email) for s in students}
+    links = (db.query(ParentStudentLink).filter(ParentStudentLink.student_id.in_(sids)).all()
+             if sids else [])
+    pids = sorted({ln.parent_id for ln in links})
+    parents = {int(p.id): p for p in db.query(User).filter(User.id.in_(pids)).all()} if pids else {}
+    since = datetime(week_end.year, week_end.month, week_end.day, tzinfo=timezone.utc) - timedelta(days=29)
+    visits = dict(db.query(PanelVisitEvent.user_id, sa_func.count(PanelVisitEvent.id))
+                  .filter(PanelVisitEvent.user_id.in_(pids), PanelVisitEvent.created_at >= since)
+                  .group_by(PanelVisitEvent.user_id).all()) if pids else {}
+    children: dict[int, list[str]] = {}
+    for ln in links:
+        children.setdefault(ln.parent_id, []).append(name_of.get(ln.student_id, ""))
+    rows = []
+    for pid, p in parents.items():
+        if not p.is_active:
+            continue
+        seen = p.last_active_at
+        rows.append({
+            "name": p.full_name or p.email,
+            "children": ", ".join(sorted(set(children.get(pid, [])))),
+            "visits": int(visits.get(pid, 0)),
+            "seen_days": _days_since(seen, week_end + timedelta(days=1)) if seen else None,
+        })
+    active = sorted([r for r in rows if r["visits"] > 0], key=lambda r: -r["visits"])[:3]
+    never = [r for r in rows if r["seen_days"] is None]
+    idle = [r for r in rows if r["seen_days"] is not None and r["seen_days"] >= 30]
+    covered = {ln.student_id for ln in links if ln.parent_id in parents and parents[ln.parent_id].is_active}
+    no_parent = [name_of[s] for s in sids if s not in covered]
+    return {"students": len(sids), "covered": len(covered), "parent_count": len(rows),
+            "logged_in_30d": sum(1 for r in rows if r["seen_days"] is not None and r["seen_days"] < 30),
+            "most_active": active, "never": never[:8], "never_count": len(never),
+            "idle_count": len(idle), "no_parent_count": len(no_parent), "no_parent": no_parent[:8]}
+
+
 def _headline(rate, delta, risk_total, empty, students) -> tuple[str, str]:
     """Haftanın tek cümlelik özeti (kural tabanlı) → (metin, ton)."""
     if students == 0:
@@ -355,6 +538,40 @@ def build_weekly_digest_payload(
         f"Son {asum.get('weeks', 8)} haftada {asum.get('students_with_exam', 0)} / {n} öğrencinin denemesi girildi."))
 
     reliability = rel.as_dict()
+
+    # ---------- anlatı: öğrenci bazında bu hafta / geçen hafta ----------
+    ind_last = dr.independent_totals(db, student_ids, week_start - timedelta(days=7),
+                                     week_end - timedelta(days=7))
+    name_of = {int(x.id): (x.full_name or x.email) for x in students}
+    student_rows = []
+    for sid in student_ids:
+        p_, c_ = (ind.get(sid) or [0, 0])[:2]
+        if p_ <= 0:
+            continue
+        lp, lc = (ind_last.get(sid) or [0, 0])[:2]
+        student_rows.append({"name": name_of[sid], "planned": p_, "completed": c_,
+                             "rate": completion.rate(p_, c_), "last_rate": completion.rate(lp, lc)})
+    last_planned = sum(v[0] for v in ind_last.values())
+    tname = {int(t.id): (t.full_name or t.email) for t in teachers}
+    lvl_order = {"critical": 0, "high": 1}
+    risk_rows = [
+        {"name": name_of.get(int(a.student.id), a.student.full_name),
+         "coach": tname.get(a.student.teacher_id, "—"),
+         "level": a.level,
+         "level_label": "Kritik risk" if a.level == "critical" else "Yüksek risk",
+         "reasons": risk_reasons(a.indicators)[:4]}
+        for a in sorted([a for a in at_risk if a.level in lvl_order],
+                        key=lambda a: (lvl_order[a.level], -a.score))
+    ][:15]
+    empty_groups = [{"coach": e["teacher_name"], "count": e["count"], "names": e["sample_students"]}
+                    for e in comp["empty_program"]]
+    empty_names = [nm for e in comp["empty_program"] for nm in e["sample_students"]]
+    narrative = build_narrative(rate=rate, last_rate=last_rate, delta=delta,
+                                week_label=_range_label(week_start, week_end),
+                                student_rows=student_rows, planned=planned,
+                                last_planned=last_planned, empty_names=empty_names,
+                                risk_rows=risk_rows)
+    parents = parent_block(db, students, week_end)
     grade_cohorts = cohort_by_grade(db, institution_id=iid, today=week_end)
     track_cohorts = cohort_by_track(db, institution_id=iid, today=week_end)
 
@@ -368,6 +585,11 @@ def build_weekly_digest_payload(
         "week_end": week_end.isoformat(),
         "week_label": _range_label(week_start, week_end),
         "headline": {"text": headline, "tone": tone},
+        "narrative": narrative,
+        "risk_students": risk_rows,
+        "risk_total_high": len([a for a in at_risk if a.level in lvl_order]),
+        "empty_groups": empty_groups,
+        "parent_usage": parents,
         "kpis": {
             "students": n,
             "teachers": len(teachers),
@@ -388,6 +610,7 @@ def build_weekly_digest_payload(
         "academic": {
             "coverage_pct": asum.get("coverage_pct"),
             "students_with_exam": asum.get("students_with_exam"),
+            "no_exam_count": asum.get("no_exam_count"),
             "recent_exams": asum.get("recent_exams"),
             "avg_net_pct": asum.get("avg_net_pct"),
             "delta": asum.get("delta"),
