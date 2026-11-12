@@ -133,7 +133,7 @@ def _num(text: str | None, pat: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def risk_reasons(indicators) -> list[str]:
+def risk_reasons(indicators, student=None) -> list[str]:
     """Risk göstergelerini velinin/yöneticinin okuyacağı düz cümlelere çevir.
     Bayrak motorundan gelen ek göstergeler (flag_*) ana göstergeyle aynı olguyu başka
     bir ölçüyle söylüyorsa atlanır ("7 gündür girmedi" + "10 gündür uygulamayı açmadı")."""
@@ -152,8 +152,23 @@ def risk_reasons(indicators) -> list[str]:
             if "consecutive_empty" in codes and ("boş" in low or "üst üste" in low):
                 continue
         if code == "no_login_5d":
-            d = _num(det, r"(\d+) gün")
-            out.append("Hiç giriş yapmadı" if d is None else f"{d} gündür sisteme girmedi")
+            # Mail haftadan 2 gün sonra okunur: "N gündür girmedi" gönderim anına göre
+            # yeniden ölçülür; bu arada giriş yaptıysa cümle yanlış kalmasın.
+            seen = getattr(student, "last_active_at", None) if student is not None else None
+            if student is not None and seen is None:
+                out.append("Sisteme hiç giriş yapmadı")
+            elif seen is not None:
+                from datetime import datetime, timezone
+                s_ = seen if seen.tzinfo else seen.replace(tzinfo=timezone.utc)
+                now_days = (datetime.now(timezone.utc) - s_).days
+                d = _num(det, r"(\d+) gün")
+                if now_days >= 5:
+                    out.append(f"{now_days} gündür sisteme girmedi")
+                else:
+                    out.append(f"Hafta boyunca {d or 5}+ gün sisteme girmedi (sonradan giriş yaptı)")
+            else:
+                d = _num(det, r"(\d+) gün")
+                out.append("Hiç giriş yapmadı" if d is None else f"{d} gündür sisteme girmedi")
         elif code == "low_completion":
             p = _num(det, r"planlanan (\d+) test")
             r = _num(det, r"%(\d+)")
@@ -171,7 +186,8 @@ def risk_reasons(indicators) -> list[str]:
             b = _num(det, r"bu hafta %(\d+)")
             out.append(f"Tamamlama oranı geçen haftaya göre düştü (%{a} → %{b})" if a is not None else i.title)
         elif code == "no_program":
-            out.append("Bu hafta programı yok")
+            # bayrak motoru: değerlendirme gününden SONRASI için yayınlanmış görev yok
+            out.append("Yeni hafta için programı girilmemiş")
         else:
             out.append(i.title)
     return out
@@ -501,7 +517,8 @@ def build_weekly_digest_payload(
             "score": (card_by.get(tid) or {}).get("score"),
             "score_label": (card_by.get(tid) or {}).get("score_label"),
             "exam_count": (exam_by.get(tid) or {}).get("exam_count", 0),
-            "seen_days": _days_since(u.last_active_at, week_end + timedelta(days=1)) if u else None,
+            # son görülme okunduğu ana (gönderim) göre — "bugün" gerçekten bugün
+            "seen_days": _days_since(u.last_active_at, date.today()) if u else None,
         })
     coaches.sort(key=lambda c: (c["rate"] is None, c["rate"] if c["rate"] is not None else 999))
 
@@ -559,7 +576,7 @@ def build_weekly_digest_payload(
          "coach": tname.get(a.student.teacher_id, "—"),
          "level": a.level,
          "level_label": "Kritik risk" if a.level == "critical" else "Yüksek risk",
-         "reasons": risk_reasons(a.indicators)[:4]}
+         "reasons": risk_reasons(a.indicators, a.student)[:4]}
         for a in sorted([a for a in at_risk if a.level in lvl_order],
                         key=lambda a: (lvl_order[a.level], -a.score))
     ][:15]
