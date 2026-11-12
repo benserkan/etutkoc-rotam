@@ -6,7 +6,7 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
-## KURUM YÖNETİCİSİ HAFTALIK ÖZETİ v2 + VELİ MAİLİ TASLAĞI (2026-11-12, CANLI commit `85efea9`, migration YOK)
+## KURUM YÖNETİCİSİ HAFTALIK ÖZETİ v2 + VELİ MAİLİ v2 (2026-11-12, CANLI)
 
 - **Kullanıcı kararları:** pilot/onay düğmesi/gölge dönem YOK; fark çıkarsa bölüm atılmaz → sorun giderilir
   (bağımsız hesap esas) + **veri güvenilirliği skoru** hesaplanıp kayda geçer; kurum kimliği her mailde önde
@@ -31,10 +31,23 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   institution/p3 · simulate_action_center 11 · branding 23. Açı'ya örnek mail benserkan@gmail.com'a gönderildi
   (kayıt açılmadan — `scratchpad/send_test_digest.py` deseni).
 - **Ölçüm (prod, 9 hafta):** bir haftanın tamamlamalarının Pazartesi 12:00 TR'de ort. ~%5'i (en çok %12)
-  henüz işaretlenmemiş; Salı 12:00'de ~%2. Gönderim saati kararı kullanıcıda.
-- **Veli maili v2:** Emir verisiyle taslak (`scratchpad/mail_draft/veli_haftalik_emir.html`), henüz koda
-  dökülmedi. Bulunan hatalar: rapor ekranı −29 test düşüşte "İstikrarlı ve güçlü" diyor; deneme gidişatı
-  branş serisinden; mail ile ekran farklı hafta tanımı. **SIRADA:** veli maili v2 → WhatsApp stratejisi.
+  henüz işaretlenmemiş; Salı 12:00'de ~%2 → **kurum özeti Salı 12:00 TR'ye alındı** (migration `c3e6j9k0j55f`).
+  Mailde anlatı paragrafı + numaralı nedenler, risk kartları cümleyle, deneme "neden önemli" kutusu, veliler
+  (en aktif / hiç girmeyen + öneri); güvenilirlik skoru mailde YOK, yalnız arşivde.
+- **VELİ HAFTALIK RAPOR MAİLİ v2 — CANLI (commit `b264a9d`, migration `d4f7k0l1k66g`):** kullanıcı kararı Pzt–Paz
+  takvim haftası, **Pazartesi 19:00 TR** (cron `parent_weekly_report` 16:00 UTC; aynı gün tekrar yazmaz,
+  rapor haftasında görevi olmayan öğrenciye gitmez). Eski düzen (döngü-bitti tetiği + 23:55 `weekly_backstop`,
+  "son 7 gün") KAPATILDI — her öğrenciye farklı gün/farklı dilim gidiyor, ekranla ayrışıyordu.
+  TEK KAYNAK `parent_weekly_mail.build_mail_payload` = `parent_weekly_report.build_weekly_report` (ekran) +
+  olağan aralık (önceki 8 programlı haftanın çeyrekleri, `normal`) + yeni değerlendirme cümlesi (`_verdict_v2`;
+  −29 testte "istikrarlı" diyen eski cümle gitti) + tam deneme serileri (`primary_general_key`, hedef) + haftanın
+  branş denemeleri ders başına gruplu + en çok net kazandıracak 3 konu (`exam_overview`) + gelecek hafta ders
+  dağılımı + kurum/koç kimliği + Rota butonu (kapı açıksa) + "Ayrıntılı rapor" `?week_start=`. Konu satırı
+  "Emir'in haftası · 2–8 Kasım 2026 · görev uyumu %80" (`genitive`); `_render` konuyu HTML-unescape eder.
+  Test YENİ `test_parent_weekly_mail_v2.py` 27/27 · parent_weekly_report 14 · parent 20 · wa_channel 14 ·
+  comm_log 28 · push 9 · admin_digest_v2 33 · pool_step5 34 · trial 4 · exam_notify 39. Emir'in maili test
+  olarak benserkan@gmail.com'a gönderildi (kuyruğa yazılmadan). Yedek `pre_parentmail_20261112_0910.dump`.
+  **SIRADA:** WhatsApp stratejisi (PDF rapor, kurum↔koç↔öğrenci↔veli iletişimi).
 
 ## TAKİP LİSTESİ + ÖLÇÜM LİSTESİ — "2-3 hafta sonra bakılacak" unutulmasın (2026-11-08, migration `b2d5i8j9i44e`)
 
