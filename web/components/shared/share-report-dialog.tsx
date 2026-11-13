@@ -165,19 +165,20 @@ function Inner({
 
   /** Bilgisayar (ya da telefonda sohbet): PDF iner, seçilen kişinin sohbeti açılır. */
   async function openChat() {
-    if (!file) return;
     // Açılır pencere engelini aşmak için pencere tıklama anında açılır.
     const win = window.open("about:blank", "_blank");
     setBusy(true);
     try {
       const res = await record(selected === SELF ? null : selected);
-      download();
+      if (file) download();
       if (win) win.location.href = res.wa_url;
       else window.open(res.wa_url, "_blank", "noopener");
       toast.success(
-        res.target_name
-          ? `PDF indirildi. ${res.target_name} ile sohbet açıldı — dosyayı ataç simgesinden ekle.`
-          : "PDF indirildi. WhatsApp'ta kişiyi seç, dosyayı ataç simgesinden ekle.",
+        !file
+          ? "WhatsApp açıldı — mesaj hazır. PDF'i yazdırma sayfasından kaydedip ekleyebilirsin."
+          : res.target_name
+            ? `PDF indirildi. ${res.target_name} ile sohbet açıldı — dosyayı ataç simgesinden ekle.`
+            : "PDF indirildi. WhatsApp'ta kişiyi seç, dosyayı ataç simgesinden ekle.",
       );
       onClose();
     } catch (e) {
@@ -278,9 +279,32 @@ function Inner({
         </section>
 
         {pdfError ? (
-          <p className="rounded-md bg-rose-500/10 px-3 py-2 text-sm text-rose-800">
-            PDF hazırlanamadı. Yazdır menüsünden açıp “PDF olarak kaydet” seçebilirsin.
-          </p>
+          <div className="grid gap-2">
+            <p className="rounded-md bg-rose-500/10 px-3 py-2 text-sm text-rose-800">
+              PDF hazırlanamadı. Mesajı yine de gönderebilir, karneyi yazdırma sayfasından
+              “PDF olarak kaydet” ile kaydedip ekleyebilirsin.
+            </p>
+            <Button
+              type="button"
+              onClick={openChat}
+              disabled={busy}
+              className="h-auto min-h-11 whitespace-normal bg-emerald-700 py-2 text-white hover:bg-emerald-800 hover:text-white"
+              data-testid="share-open-chat"
+            >
+              <MessageCircle className="size-4 shrink-0" aria-hidden />
+              {selected === SELF || !selectedTarget
+                ? "Mesajı WhatsApp'ta aç"
+                : `Mesajı ${firstName(selectedTarget.full_name)} ile sohbette aç`}
+            </Button>
+            <a
+              href={printUrl}
+              target="_blank"
+              rel="noopener"
+              className="text-center text-sm font-medium text-cyan-800 underline"
+            >
+              Yazdırma sayfasını aç
+            </a>
+          </div>
         ) : !file ? (
           <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-3 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" aria-hidden />

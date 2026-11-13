@@ -69,6 +69,14 @@
         Content-Security-Policy "frame-ancestors https://etutkoc.com https://www.etutkoc.com"
     }
 
+    # Yazdırma sayfaları: PDF tarayıcıda görünmez çerçevede üretilir
+    # (veliye WhatsApp karnesi, programı paylaş) → yalnız aynı site çerçeveleyebilir.
+    @print_pages path_regexp ^/.+/print$
+    header @print_pages {
+        -X-Frame-Options
+        Content-Security-Policy "frame-ancestors 'self'"
+    }
+
     route {
         # =====================================================================
         # 1. DOKUNULMAZ — daima FastAPI (mobile/webhooks/print/legal)
