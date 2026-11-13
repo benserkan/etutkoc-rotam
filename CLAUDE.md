@@ -49,6 +49,28 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   olarak benserkan@gmail.com'a gönderildi (kuyruğa yazılmadan). Yedek `pre_parentmail_20261112_0910.dump`.
   **SIRADA:** WhatsApp stratejisi (PDF rapor, kurum↔koç↔öğrenci↔veli iletişimi).
 
+## VELİ DENEME ANALİZ RAPORU — bağlantı + Rota sesi + sunucu PDF (2026-11-13, CANLI, migration `e5g8l1m2l77h`)
+
+- **Saha bulguları (koç, telefonda):** iki düğme kafa karıştırıyordu; "PDF'i indir, sohbeti aç" dosyayı EKLEMİYOR (WhatsApp
+  bağlantıyla açılan sohbete dosya ekletmez — teknik sınır); iPhone'da tarayıcı PDF'i ara ara düşüyordu (Safari tuval
+  ~16,7 M piksel sınırı); canlı Caddy `X-Frame-Options: DENY` yazdırma çerçevesini de engelliyordu (yazdırma sayfaları
+  `@print_pages` ile `frame-ancestors 'self'`); İşlemler menüsünde her deneme için WhatsApp yoktu; 3 farklı veli çıktısı.
+- **Kullanıcı kararları:** bağlantı + PDF · ses Rota'nın sesi (ücretsiz pakette telefonun sesi).
+- `exam_parent_reports` (token 32 krk, 60 gün, koç iptali, görüntülenme, ses önbelleği `audio_signature`). İçerik SAKLANMAZ —
+  her açılışta güncel denemeden. TEK KAYNAK `app/services/exam_parent_report.py` `build_report_data` (sayılar
+  `build_email_context`'ten; duyurulmuşsa koçun gönderdiği metin) → sayfa `/rapor/[token]` + `render_report_pdf`
+  (PyMuPDF Story HTML, DejaVu) + `speech_text`. Ders seviyesi doğru/soru: ≥%75 Güçlü · ≥%50 Gelişiyor · altı Desteklenecek;
+  "Evde nasıl destek olabilirsiniz" ≤3 öneri; net açıklaması.
+- Uçlar: koç POST `/teacher/exams/{id}/parent-report` (bağlantı, varsa aynısı) · `/revoke` · POST `.../parent-report.pdf`
+  (duyuru penceresinin "PDF olarak indir"i artık bu) · herkese açık `/api/v2/public/exam-report/{token}` GET · `/voice`
+  (koçun kredisi AI_PARENT_COMMENTARY_VOICE, ilk dinlemede bir kez; kapı `_parent_insight_gate`, olmazsa fallback) ·
+  `/audio` · `/pdf`. Duyuru e-postasına "Analiz raporunu aç · sesli dinle" düğmesi (`report_url`).
+- Web: `ExamReportShareDialog` (kişi + mesaj + bağlantı → TEK düğme "Olgun ile WhatsApp'ta gönder", telefon ve bilgisayar
+  aynı; "Raporu önizle" + "PDF'i indir") — kart + deneme detayı + İşlemler menüsü. `ShareRecipients` ortak bileşen.
+  Program paylaşımı eski `ShareReportDialog`'da (dokunmatik cihazda tek düğme dosya paylaşımı, bilgisayarda indir+sohbet).
+- Test YENİ `test_exam_parent_report.py` 21/21 · notify_parents 39 · share_report 13 · teacher_exams 23.
+  `live_exam_parent_announce` PDF adımı eski iframe yazdırmasını bekliyor — güncellenmeli.
+
 ## TAKİP LİSTESİ + ÖLÇÜM LİSTESİ — "2-3 hafta sonra bakılacak" unutulmasın (2026-11-08, migration `b2d5i8j9i44e`)
 
 - **Sorun:** Claude oturumlar arası kendiliğinden uyanmaz; CLAUDE.md'deki "SIRADA/2-3 hafta sonra" notları
