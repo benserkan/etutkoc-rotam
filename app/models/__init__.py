@@ -957,3 +957,5 @@ __all__ = [
 
 # Görev denemesi → Denemeler köprüsü (D3): before_flush dinleyicisini kaydet.
 from app.services import deneme_bridge as _deneme_bridge  # noqa: E402,F401
+
+from app.models.exam_parent_report import ExamParentReport  # noqa: E402,F401

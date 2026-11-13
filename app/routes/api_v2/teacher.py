@@ -12735,6 +12735,82 @@ _PRINT_HELPER = """
 """
 
 
+class ExamParentReportLink(BaseModel):
+    url: str
+    token: str
+    expires_at: str
+    created: bool
+
+
+@router.post("/exams/{exam_id}/parent-report", response_model=ExamParentReportLink)
+def teacher_exam_parent_report_link_v2(
+    exam_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Denemenin veli analiz raporu bağlantısı (varsa geçerli olan, yoksa yeni — 60 gün)."""
+    from app.services.exam_parent_report import get_or_create_report, report_url
+
+    exam = _get_owned_exam(db, exam_id, user.id)
+    rep, created = get_or_create_report(db, exam, user.id)
+    db.commit()
+    return ExamParentReportLink(
+        url=report_url(rep.token), token=rep.token,
+        expires_at=rep.expires_at.isoformat(), created=created,
+    )
+
+
+@router.post("/exams/{exam_id}/parent-report/revoke", response_model=MutationResponse)
+def teacher_exam_parent_report_revoke_v2(
+    exam_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Veliye gönderilen rapor bağlantısını kapat (açık bağlantılar çalışmaz olur)."""
+    from datetime import datetime as _dt, timezone as _tz
+
+    from app.models.exam_parent_report import ExamParentReport
+
+    exam = _get_owned_exam(db, exam_id, user.id)
+    n = (db.query(ExamParentReport)
+         .filter(ExamParentReport.exam_id == exam.id, ExamParentReport.revoked_at.is_(None))
+         .update({ExamParentReport.revoked_at: _dt.now(_tz.utc)}, synchronize_session=False))
+    db.commit()
+    return MutationResponse(ok=True, message=f"{n} bağlantı kapatıldı.", data=None, invalidate=[])
+
+
+@router.post("/exams/{exam_id}/parent-report.pdf")
+def teacher_exam_parent_report_pdf_v2(
+    exam_id: int,
+    body: ExamNotifyParentsBody | None = None,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Veli analiz raporunun PDF'i — koçun düzenlemesiyle (duyurulmuşsa gönderilen metin).
+
+    Veliye giden bağlantıdaki rapor ve WhatsApp PDF'iyle AYNI standart (tek kaynak).
+    """
+    from fastapi.responses import Response as _Resp
+
+    from app.services.exam_parent_report import build_report_data, pdf_filename, render_report_pdf
+
+    exam = _get_owned_exam(db, exam_id, user.id)
+    sent = exam.parent_notified_at is not None
+    data = build_report_data(
+        db, exam,
+        narrative=None if sent else _clean_narrative(body.narrative if body else None),
+        include_subjects=True if sent else (body.include_subjects if body else True),
+        include_history=True if sent else (body.include_history if body else True),
+        include_opportunities=True if sent else (body.include_opportunities if body else True),
+        include_goal=True if sent else (body.include_goal if body else True),
+    )
+    pdf = render_report_pdf(data)
+    return _Resp(content=pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f'attachment; filename="{pdf_filename(data)}"',
+        "Cache-Control": "private, max-age=0, no-store",
+    })
+
+
 @router.post("/exams/{exam_id}/parent-preview.html", response_class=HTMLResponse)
 def teacher_exam_parent_preview_html_v2(
     exam_id: int,

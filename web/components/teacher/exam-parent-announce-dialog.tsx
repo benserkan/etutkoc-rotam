@@ -37,7 +37,7 @@ import {
 
 import {
   getExamParentPreview,
-  getExamParentPreviewHtml,
+  downloadExamParentReportPdf,
   teacherKeys,
 } from "@/lib/api/teacher";
 import type { ExamParentPreviewResponse } from "@/lib/types/teacher";
@@ -165,40 +165,17 @@ export function ExamParentAnnounceDialog({
     setIncludeGoal(true);
   }
 
-  /** Modaldaki güncel içerikle mailin yazdırılabilir hâlini aç.
-   *
-   * Gizli iframe'e yazılır ve print() çağrılır → tarayıcının yazdırma
-   * penceresinde "PDF olarak kaydet" ile dosya elde edilir (WhatsApp'tan
-   * paylaşmak için). PDF kütüphanesi eklemedik: çıktı gerçek mail
-   * şablonundan üretildiği için mail ile PDF ayrışamıyor ve sunucuda ek
-   * bağımlılık/yük oluşmuyor.
-   */
+  /** Veli analiz raporunun PDF'i — sunucu üretir; WhatsApp bağlantısı ve
+   *  duyuru e-postasındaki raporla AYNI standart (2026-11-13). Modaldaki güncel
+   *  düzenleme uygulanır; duyuru yapılmışsa veliye giden metin. */
   async function downloadPdf() {
     if (printing) return;
     setPrinting(true);
     try {
-      const html = await getExamParentPreviewHtml(examId, currentBody());
-      const frame = document.createElement("iframe");
-      frame.setAttribute("aria-hidden", "true");
-      frame.style.cssText =
-        "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
-      document.body.appendChild(frame);
-      const doc = frame.contentDocument;
-      if (!doc) throw new Error("no_frame");
-      doc.open();
-      doc.write(html);
-      doc.close();
-      // Yazdırma penceresi kapanınca iframe'i topla (sayfada iz bırakmasın).
-      window.setTimeout(() => {
-        try {
-          frame.contentWindow?.focus();
-        } catch {
-          /* yoksay */
-        }
-        window.setTimeout(() => frame.remove(), 60_000);
-      }, 400);
+      const cleaned = lines.map((l) => l.trim()).filter(Boolean);
+      await downloadExamParentReportPdf(examId, { ...currentBody(), narrative: cleaned });
     } catch {
-      toast.error("Yazdırma önizlemesi hazırlanamadı.");
+      toast.error("PDF hazırlanamadı, biraz sonra tekrar dene.");
     } finally {
       setPrinting(false);
     }

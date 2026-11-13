@@ -33,7 +33,7 @@ import {
 import { toast } from "sonner";
 
 import { ExamAveragesButton } from "@/components/teacher/exams/exam-averages-dialog";
-import { ShareReportDialog } from "@/components/shared/share-report-dialog";
+import { ExamReportShareDialog } from "@/components/shared/exam-report-share-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -154,15 +154,12 @@ export function ExamParentWhatsAppDialog({
   studentName?: string | null;
 }) {
   return (
-    <ShareReportDialog
+    <ExamReportShareDialog
       open={open}
       onClose={onClose}
+      examId={row.id}
       studentId={studentId}
-      kind="exam_card"
-      refId={row.id}
-      printUrl={`${examPrintUrl(studentId, row.id)}?veli=1`}
-      fileName={examCardFileName(row, studentName)}
-      title={`${row.title} deneme karnesi`}
+      title={`${row.title} deneme raporu`}
       message={buildParentShareMessage(row, prev, studentName)}
     />
   );
@@ -283,7 +280,7 @@ function buildParentShareMessage(
   }
   return `Merhaba,
 ${line}.
-Ders ders sonuçlar ve konu analizi ekteki karnede.`;
+Ders ders sonuçlar ve konu analizi raporda; sesli olarak da dinleyebilirsiniz.`;
 }
 
 const TR_MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
@@ -306,15 +303,6 @@ function genitiveSuffix(name: string): string {
   return `${vowels.includes(lower[lower.length - 1]) ? "n" : ""}${v}n`;
 }
 
-function examCardFileName(row: ExamResultRow, studentName?: string | null): string {
-  const base = `${studentName ?? "ogrenci"} ${row.title} karne`
-    .toLocaleLowerCase("tr")
-    .replace(/[çğıöşü]/g, (c) => ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" } as Record<string, string>)[c])
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-  return `${base || "deneme-karnesi"}.pdf`;
-}
 
 // ---------------------------------------------------------------- Genel Bakış
 

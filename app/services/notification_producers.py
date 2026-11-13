@@ -806,6 +806,14 @@ def produce_exam_result(
         "student_name": student.full_name,
         "unsubscribe_token": _unsub_token(db, parent.id),
     }
+    # Analiz raporu bağlantısı (sesli dinleme + PDF) — WhatsApp'la aynı rapor.
+    try:
+        from app.services.exam_parent_report import get_or_create_report, report_url
+
+        rep, _ = get_or_create_report(db, exam, None)
+        payload["report_url"] = report_url(rep.token)
+    except Exception:  # bağlantı kurulamazsa mail yine gider
+        payload["report_url"] = None
     summary = payload
 
     return [

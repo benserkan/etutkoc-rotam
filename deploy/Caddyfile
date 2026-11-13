@@ -269,6 +269,10 @@
         # → FastAPI. Süper admin oluşturma /api/v2/admin/membership-offers.
         reverse_proxy /membership/* next:3000
 
+        # /rapor/[token] — veliye bağlantıyla giden deneme analiz raporu (login'siz).
+        # Veri /api/v2/public/exam-report/{token} → FastAPI.
+        reverse_proxy /rapor/* next:3000
+
         # ---------- Kampanya / Genel Link (public) — AÇIK (2026-06-21, Yol A) ----------
         # /kampanya/[token] (login'siz markalı kampanya landing → lead formu).
         # POST /api/v2/campaign/{token}/lead → FastAPI. Süper admin yönetim

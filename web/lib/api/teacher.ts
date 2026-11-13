@@ -1001,3 +1001,43 @@ export async function getExamParentPreviewHtml(
   if (!res.ok) throw new Error("preview_html_failed");
   return res.text();
 }
+
+/** Denemenin veli analiz raporu bağlantısı (varsa geçerli olan, yoksa yeni — 60 gün). */
+export interface ExamParentReportLink {
+  url: string;
+  token: string;
+  expires_at: string;
+  created: boolean;
+}
+
+export function getExamParentReportLink(examId: number) {
+  return api<ExamParentReportLink>(`/api/v2/teacher/exams/${examId}/parent-report`, { method: "POST" });
+}
+
+export function revokeExamParentReport(examId: number) {
+  return api<MutationResponse<null>>(`/api/v2/teacher/exams/${examId}/parent-report/revoke`, { method: "POST" });
+}
+
+/** Veli analiz raporunun PDF'i (sunucu üretir) — duyuru penceresi ve WhatsApp ile aynı standart. */
+export async function downloadExamParentReportPdf(
+  examId: number,
+  body?: ExamNotifyParentsBody,
+): Promise<void> {
+  const res = await api<Response>(`/api/v2/teacher/exams/${examId}/parent-report.pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body ?? {}),
+    raw: true,
+  });
+  const blob = await res.blob();
+  const cd = res.headers.get("Content-Disposition") ?? "";
+  const name = /filename="([^"]+)"/.exec(cd)?.[1] ?? "deneme-raporu.pdf";
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

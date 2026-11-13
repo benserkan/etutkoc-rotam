@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { ApiError } from "@/lib/api";
 import { buildShareLink, getShareTargets, messagingKeys } from "@/lib/api/messaging";
-import type { ShareReportKind } from "@/lib/types/messaging";
+import type { ShareReportKind, ShareTargetItem } from "@/lib/types/messaging";
 import { buildPdfFromPrint } from "@/lib/pdf-from-print";
 import { cn } from "@/lib/utils";
 
@@ -66,7 +66,84 @@ export function ShareReportDialog({
   );
 }
 
-const SELF = 0; // "kişiyi WhatsApp'ta kendim seçeceğim"
+export const SELF = 0; // "kişiyi WhatsApp'ta kendim seçeceğim"
+
+/** "Kime?" listesi — veliler + öğrencinin kendisi + "kişiyi kendim seçeceğim". */
+export function ShareRecipients({
+  loading,
+  error,
+  targets,
+  selected,
+  onPick,
+}: {
+  loading: boolean;
+  error: boolean;
+  targets: ShareTargetItem[];
+  selected: number;
+  onPick: (id: number) => void;
+}) {
+  return (
+  <section className="grid gap-2" data-testid="share-recipients">
+    <h3 className="text-sm font-semibold text-slate-900">Kime?</h3>
+    {loading ? (
+      <p className="text-sm text-muted-foreground">Kişiler yükleniyor…</p>
+    ) : error ? (
+      <p className="rounded-md bg-rose-500/10 px-3 py-2 text-sm text-rose-800">
+        Kişiler yüklenemedi.
+      </p>
+    ) : (
+      <div className="grid gap-1.5">
+        {targets.map((t) => {
+          const disabled = !t.can_message;
+          return (
+            <label
+              key={t.user_id}
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 text-sm",
+                selected === t.user_id ? "border-emerald-600 bg-emerald-50" : "border-border",
+                disabled && "cursor-not-allowed opacity-60",
+              )}
+            >
+              <input
+                type="radio"
+                name="share-target"
+                className="mt-1"
+                checked={selected === t.user_id}
+                disabled={disabled}
+                onChange={() => onPick(t.user_id)}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium text-slate-900">
+                  {t.full_name} <span className="font-normal text-slate-600">· {t.relation_label}</span>
+                </span>
+                <span className="flex items-center gap-1 text-xs text-slate-600">
+                  <Phone className="size-3" aria-hidden />
+                  {t.phone_masked ?? "Telefon numarası kayıtlı değil"}
+                </span>
+              </span>
+            </label>
+          );
+        })}
+        <label
+          className={cn(
+            "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 text-sm",
+            selected === SELF ? "border-emerald-600 bg-emerald-50" : "border-border",
+          )}
+        >
+          <input
+            type="radio"
+            name="share-target"
+            className="mt-1"
+            checked={selected === SELF}
+            onChange={() => onPick(SELF)}
+          />
+          <span className="text-slate-900">Kişiyi WhatsApp&apos;ta kendim seçeceğim</span>
+        </label>
+      </div>
+    )}
+  </section>
+  );
+}
 
 function Inner({
   onClose, studentId, kind, refId, printUrl, fileName, title, message, orientation,
@@ -210,65 +287,13 @@ function Inner({
           </DialogDescription>
         </DialogHeader>
 
-        <section className="grid gap-2" data-testid="share-recipients">
-          <h3 className="text-sm font-semibold text-slate-900">Kime?</h3>
-          {targetsQ.isLoading ? (
-            <p className="text-sm text-muted-foreground">Kişiler yükleniyor…</p>
-          ) : targetsQ.isError ? (
-            <p className="rounded-md bg-rose-500/10 px-3 py-2 text-sm text-rose-800">
-              Kişiler yüklenemedi.
-            </p>
-          ) : (
-            <div className="grid gap-1.5">
-              {targets.map((t) => {
-                const disabled = !t.can_message;
-                return (
-                  <label
-                    key={t.user_id}
-                    className={cn(
-                      "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 text-sm",
-                      selected === t.user_id ? "border-emerald-600 bg-emerald-50" : "border-border",
-                      disabled && "cursor-not-allowed opacity-60",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="share-target"
-                      className="mt-1"
-                      checked={selected === t.user_id}
-                      disabled={disabled}
-                      onChange={() => setPicked(t.user_id)}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-medium text-slate-900">
-                        {t.full_name} <span className="font-normal text-slate-600">· {t.relation_label}</span>
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-slate-600">
-                        <Phone className="size-3" aria-hidden />
-                        {t.phone_masked ?? "Telefon numarası kayıtlı değil"}
-                      </span>
-                    </span>
-                  </label>
-                );
-              })}
-              <label
-                className={cn(
-                  "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 text-sm",
-                  selected === SELF ? "border-emerald-600 bg-emerald-50" : "border-border",
-                )}
-              >
-                <input
-                  type="radio"
-                  name="share-target"
-                  className="mt-1"
-                  checked={selected === SELF}
-                  onChange={() => setPicked(SELF)}
-                />
-                <span className="text-slate-900">Kişiyi WhatsApp&apos;ta kendim seçeceğim</span>
-              </label>
-            </div>
-          )}
-        </section>
+        <ShareRecipients
+          loading={targetsQ.isLoading}
+          error={targetsQ.isError}
+          targets={targets}
+          selected={selected}
+          onPick={setPicked}
+        />
 
         <section className="grid gap-1.5">
           <label htmlFor="share-text" className="text-sm font-semibold text-slate-900">

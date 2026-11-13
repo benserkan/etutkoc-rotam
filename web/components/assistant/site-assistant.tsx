@@ -60,7 +60,7 @@ function readChat(): Msg[] {
 }
 
 function hiddenOn(path: string): boolean {
-  return path.includes("/print") || /\/guide(\/|$)/.test(path) || path.endsWith("/gomulu");
+  return path.includes("/print") || /\/guide(\/|$)/.test(path) || path.endsWith("/gomulu") || path.startsWith("/rapor/");
 }
 
 export function SiteAssistant() {
