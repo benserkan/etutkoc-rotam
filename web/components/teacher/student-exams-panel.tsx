@@ -7,6 +7,7 @@ import {
   BookX,
   Mail,
   MailCheck,
+  MessageCircle,
   MoreHorizontal,
   Send,
   UserCheck,
@@ -33,7 +34,7 @@ import { ColumnHint } from "@/components/ui/column-hint";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 import { ExamOverviewTab } from "@/components/shared/exam-ov/exam-overview-tab";
 import { ExamParentAnnounceDialog } from "@/components/teacher/exam-parent-announce-dialog";
-import { previousExam } from "@/components/teacher/exams/exam-analytics";
+import { ExamParentWhatsAppDialog, previousExam } from "@/components/teacher/exams/exam-analytics";
 import { ExamBehaviorTab, ExamProgressTab } from "@/components/shared/exam-ov/exam-progress-behavior-tabs";
 import { examSeriesOptions, rowSeries } from "@/lib/exam-format";
 import { ExamDetailDialog } from "@/components/teacher/exams/exam-detail-dialog";
@@ -450,6 +451,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
                     studentGrade={data.student_grade ?? null}
                     share={shares[String(row.id)] ?? null}
                     onOpenDetail={() => setDetailId(row.id)}
+                    studentName={studentName}
                   />
                 ))}
               </ul>
@@ -581,6 +583,7 @@ function ExamRow({
   share,
   onOpenDetail,
   prev,
+  studentName,
 }: {
   row: ExamResultRow;
   studentId: number;
@@ -589,7 +592,9 @@ function ExamRow({
   share: ExamShareInfo | null;
   onOpenDetail: () => void;
   prev: ExamResultRow | null;
+  studentName?: string | null;
 }) {
+  const [waOpen, setWaOpen] = React.useState(false);
   const diff = prev ? row.net - prev.net : null;
   const [open, setOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
@@ -740,6 +745,10 @@ function ExamRow({
                     <Send className="size-4 text-cyan-700" aria-hidden />
                     {share ? "Öğrenci notunu düzenle" : "Öğrenciyle paylaş"}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setWaOpen(true)}>
+                    <MessageCircle className="size-4 text-emerald-700" aria-hidden />
+                    Veliye WhatsApp&apos;tan gönder (PDF)
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setAnnounceOpen(true)}>
                     {row.parent_notified_at ? (
                       <MailCheck className="size-4 text-emerald-700" aria-hidden />
@@ -783,6 +792,14 @@ function ExamRow({
             </div>
           </div>
 
+          <ExamParentWhatsAppDialog
+            open={waOpen}
+            onClose={() => setWaOpen(false)}
+            row={row}
+            prev={prev}
+            studentId={studentId}
+            studentName={studentName}
+          />
           <ArchiveExamWrongsButton
             examId={row.id}
             studentId={studentId}

@@ -30,14 +30,26 @@ export async function buildPdfFromPrint(url: string, orientation: "landscape" | 
     if (!main) throw new Error("no main");
 
     const { toJpeg } = await import("html-to-image");
-    // JPEG: PNG'ye göre ~20 kat küçük dosya (WhatsApp'a gönderilecek); metin okunurluğu korunur.
-    const dataUrl = await toJpeg(main, {
-      quality: 0.88,
-      pixelRatio: 2,
-      backgroundColor: "#ffffff",
-      skipFonts: true,
-      filter: (node) => !((node as Element).classList?.contains("no-print") ?? false),
-    });
+    // iPhone Safari tuvali ~16,7 milyon pikselde keser; uzun karnede 2x ölçek bunu aşıp
+    // "PDF hazırlanamadı" hatasını ARA ARA veriyordu (sayfa boyuna göre). Ölçek alana göre
+    // ayarlanır, yine de başaramazsa 1x ile bir kez daha denenir.
+    const area = Math.max(1, main.scrollWidth * main.scrollHeight);
+    const safeRatio = Math.max(1, Math.min(2, Math.sqrt(12_000_000 / area)));
+    const render = (pixelRatio: number) =>
+      toJpeg(main, {
+        quality: 0.88,
+        pixelRatio,
+        backgroundColor: "#ffffff",
+        skipFonts: true,
+        filter: (node) => !((node as Element).classList?.contains("no-print") ?? false),
+      });
+    let dataUrl: string;
+    try {
+      dataUrl = await render(safeRatio);
+      if (dataUrl.length < 2000) throw new Error("empty canvas");
+    } catch {
+      dataUrl = await render(1);
+    }
     const img = await loadImage(dataUrl);
 
     const { jsPDF } = await import("jspdf");

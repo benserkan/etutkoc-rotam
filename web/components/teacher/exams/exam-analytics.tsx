@@ -137,6 +137,37 @@ function Delta({ value, suffix = "" }: { value: number | null; suffix?: string }
 
 // ---------------------------------------------------------------- paylaşma
 
+/** Denemenin veli karnesini WhatsApp'tan gönderme penceresi (kart + İşlemler menüsü ortak). */
+export function ExamParentWhatsAppDialog({
+  open,
+  onClose,
+  row,
+  prev,
+  studentId,
+  studentName,
+}: {
+  open: boolean;
+  onClose: () => void;
+  row: ExamResultRow;
+  prev: ExamResultRow | null;
+  studentId: number;
+  studentName?: string | null;
+}) {
+  return (
+    <ShareReportDialog
+      open={open}
+      onClose={onClose}
+      studentId={studentId}
+      kind="exam_card"
+      refId={row.id}
+      printUrl={`${examPrintUrl(studentId, row.id)}?veli=1`}
+      fileName={examCardFileName(row, studentName)}
+      title={`${row.title} deneme karnesi`}
+      message={buildParentShareMessage(row, prev, studentName)}
+    />
+  );
+}
+
 export function ExamShareMenu({
   row,
   prev,
@@ -164,16 +195,13 @@ export function ExamShareMenu({
         <MessageCircle className="size-4" aria-hidden />
         Veliye WhatsApp
       </Button>
-      <ShareReportDialog
+      <ExamParentWhatsAppDialog
         open={parentOpen}
         onClose={() => setParentOpen(false)}
+        row={row}
+        prev={prev}
         studentId={studentId}
-        kind="exam_card"
-        refId={row.id}
-        printUrl={`${examPrintUrl(studentId, row.id)}?veli=1`}
-        fileName={examCardFileName(row, studentName)}
-        title={`${row.title} deneme karnesi`}
-        message={buildParentShareMessage(row, prev, studentName)}
+        studentName={studentName}
       />
       <Button
         size={size}

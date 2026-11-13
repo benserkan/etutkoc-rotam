@@ -114,7 +114,13 @@ function Inner({
     };
   }, [printUrl, orientation, fileName]);
 
+  // Telefonda tek yol: dosya paylaşımı (WhatsApp'a PDF doğrudan gider). Bilgisayarda tek yol:
+  // PDF iner + sohbet açılır. WhatsApp bağlantıyla dosya eklemeye izin vermez; iki düğme
+  // aynı anda gösterilince koç hangisinin dosyayı ekleyeceğini bilemiyordu (2026-11-13).
+  const isTouch =
+    typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
   const canShareFile =
+    isTouch &&
     file != null &&
     typeof navigator !== "undefined" &&
     typeof navigator.canShare === "function" &&
@@ -323,21 +329,24 @@ function Inner({
                 <Send className="size-4" aria-hidden />
                 PDF&apos;i WhatsApp&apos;ta paylaş
               </Button>
-            ) : null}
-            <Button
-              type="button"
-              onClick={openChat}
-              disabled={busy}
-              variant={canShareFile ? "outline" : "default"}
-              className={cn(
-                "h-auto min-h-11 whitespace-normal py-2",
-                !canShareFile && "bg-emerald-700 text-white hover:bg-emerald-800 hover:text-white",
-              )}
-              data-testid="share-open-chat"
-            >
-              <MessageCircle className="size-4 shrink-0" aria-hidden />
-              {chatLabel}
-            </Button>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  onClick={openChat}
+                  disabled={busy}
+                  className="h-auto min-h-11 whitespace-normal bg-emerald-700 py-2 text-white hover:bg-emerald-800 hover:text-white"
+                  data-testid="share-open-chat"
+                >
+                  <MessageCircle className="size-4 shrink-0" aria-hidden />
+                  {chatLabel}
+                </Button>
+                <p className="rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-900">
+                  WhatsApp, bağlantıyla açılan sohbete dosyayı kendiliğinden eklemez. Sohbet açılınca
+                  indirilen PDF&apos;i pencereye sürükle ya da ataç simgesinden ekle.
+                </p>
+              </>
+            )}
             <Button type="button" variant="ghost" onClick={download} className="h-10" data-testid="share-download">
               <Download className="size-4" aria-hidden />
               Yalnız PDF&apos;i indir
