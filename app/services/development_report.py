@@ -233,7 +233,7 @@ def build_development_report(db: Session, student: User, *, series: str | None =
         st = ep.get("stats")
         tgt = ep.get("target")
         sx = ep.get("exams") or []
-        pre = f"{ep.get('section_label')}: " if multi else ""
+        pre = f"{_short_series(ep.get('section_label'))} · " if multi else ""
         ks = f":{ep.get('series')}" if multi else ""
         st = ep.get("stats")
         if st:
@@ -293,9 +293,9 @@ def build_development_report(db: Session, student: User, *, series: str | None =
         if st and not tgt and ep.get("target_allowed", True) and st["count"] >= 2:
             opportunities.append(_item(
                 f"opp:set_target{ks}", "info", f"{pre}Hedef net belirle",
-                f"{ep.get('section_label')} için hedef yok. Son 3 deneme ortalaması {_num(st['avg_last3'])}, "
+                f"{_short_series(ep.get('section_label'))} için hedef yok. Son 3 deneme ortalaması {_num(st['avg_last3'])}, "
                 f"en iyi {_num(st['best_net'])}; hedef girilince gereken haftalık tempo ve ders hedefleri bu rapora eklenir.",
-                agenda=f"Öğrenciyle {ep.get('section_label')} hedef netini birlikte belirle (şu an son 3 ort. {_num(st['avg_last3'])}).",
+                agenda=f"Öğrenciyle {_short_series(ep.get('section_label'))} hedef netini birlikte belirle (şu an son 3 ort. {_num(st['avg_last3'])}).",
                 cta_label="Deneme raporu", cta_href=f"/teacher/students/{sid}#exams"))
         if st and st.get("slope") is not None and st["slope"] > 0 and st["best_net"] > st["avg_last3"]:
             opportunities.append(_item(
@@ -427,7 +427,7 @@ def build_development_report(db: Session, student: User, *, series: str | None =
       for a in x.get("actions") or []:
         actions.append({
             "key": f"{a['key']}:{x.get('series')}" if multi else a["key"],
-            "title": f"{x.get('section_label')}: {a['title']}" if multi else a["title"],
+            "title": f"{_short_series(x.get('section_label'))} · {a['title']}" if multi else a["title"],
             "detail": a["detail"], "source": "exam",
             "priority": a["priority"], "agenda": f"{a['title']} — {a['detail']}",
             "cta_label": None, "cta_href": None, "queued": False, "exam_id": a.get("exam_id"),
@@ -499,6 +499,11 @@ def _exam_title(text: str) -> str:
         if needle in t:
             return title
     return "Deneme"
+
+
+def _short_series(label: str | None) -> str:
+    """Madde başlığı öneki: "TYT (genel deneme)" → "TYT" (2026-11-14, okunurluk)."""
+    return (label or "Deneme").replace(" (genel deneme)", "").strip()
 
 
 def _headline(this_week: dict | None, journey: dict | None, risks: list[dict], strengths: list[dict]) -> dict:

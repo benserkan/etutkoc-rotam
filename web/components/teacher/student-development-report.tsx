@@ -216,6 +216,7 @@ type Sel = { picked: Map<string, string>; toggle: (key: string, agenda: string) 
 function coreTitle(t: string): string {
   return t
     .replace(/^[^:]*\(genel deneme\):\s*/i, "")
+    .replace(/^[A-ZÇĞİÖŞÜ][^·:]{0,30} · /, "")
     .replace(/\s*\([^)]*\)\s*$/, "")
     .replace(/ konusunu kapat$/i, "")
     .toLocaleLowerCase("tr")
