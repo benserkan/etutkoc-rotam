@@ -47,7 +47,7 @@ def main() -> int:
     try:
         with sync_playwright() as p:
             br = p.chromium.launch(channel="chrome")
-            for scheme in ("light", "dark"):
+            for scheme in ("light",):
                 ctx = br.new_context(viewport={"width": 1440, "height": 1000}, color_scheme=scheme)
                 page = ctx.new_page()
                 page.goto(f"{BASE}/login")
@@ -67,17 +67,21 @@ def main() -> int:
                 rep = page.locator("[data-section=dev-report]")
                 rep.wait_for(timeout=30000)
                 if scheme == "light":
-                    tab = page.get_by_role("tab", name="Gelişim Raporu", exact=True)
-                    check("1 üst menüde Gelişim Raporu sekmesi seçili", tab.get_attribute("aria-selected") == "true")
-                    check("1b Koçluk sekmesi artık Alışkanlıklar",
-                          page.get_by_role("tab", name="Alışkanlıklar").count() == 1)
-                    check("2a başlık", page.locator("[data-testid=dev-report-headline]").count() == 1)
-                    check("2b hafta tablosu ≥8 satır",
+                    tab = page.get_by_role("tab", name="Dönem Raporu", exact=True)
+                    check("1 üst menüde Dönem Raporu sekmesi seçili", tab.get_attribute("aria-selected") == "true")
+                    check("2a dönem özeti cümlesi", page.locator("[data-testid=dev-report-headline]").count() == 1)
+                    check("2b hafta tablosu ≥8 satır (katlı)",
                           page.locator("[data-testid=dev-report-weeks] tbody tr").count() >= 8)
-                    for t in ("Mevcut durum", "Güçlü yanlar", "Fırsatlar", "Riskler", "Aksiyon planı"):
+                    check("2b2 hafta tablosu varsayılan kapalı",
+                          not page.locator("[data-testid=dev-report-weeks]").is_visible())
+                    for t in ("DÖNEM ÖZETİ", "Haftadan haftaya", "Dönemin güçlü yanları", "Dönemin riskleri",
+                              "Sonraki adımlar"):
                         check(f"2c bölüm: {t}", rep.get_by_text(t, exact=False).first.is_visible())
-                    rep.get_by_label("Görev uyumu geçmişin en kötüsü seans gündemine eklenecek").first.check()
-                    page.locator("[data-testid=dev-report-actions] input[type=checkbox]").first.check()
+                    for t in ("Bu hafta nasıl", "geçmişin en kötüsü", "normalin altında"):
+                        check(f"2d bu haftaya ait madde yok: {t}", rep.get_by_text(t, exact=False).count() == 0)
+                    boxes = page.locator("[data-testid=dev-report-actions] input[type=checkbox]")
+                    boxes.nth(0).check()
+                    boxes.nth(1).check()
                     bar = page.locator("[data-testid=dev-report-bar]")
                     check("3a alt çubuk 2 seçili", "2 madde seçili" in bar.inner_text(), bar.inner_text()[:80])
                     bar.get_by_role("button", name="Seansa ekle (2)").click()

@@ -19,7 +19,6 @@ import {
   ArrowRight,
   CheckCircle2,
   ClipboardList,
-  Flag,
   Gauge,
   ListChecks,
   RefreshCw,
@@ -140,55 +139,42 @@ export function StudentDevelopmentReport({
   };
   const sel = { picked, toggle };
 
+  const periodActions = d.actions.filter((a) => a.source !== "weekly");
+  const strengths = d.strengths.filter((it) => isPeriodItem(it.key));
+  const risks = notInPlan(d.risks.filter((it) => isPeriodItem(it.key)), periodActions);
+  const opportunities = notInPlan(d.opportunities, periodActions);
+
   return (
-    <div className="space-y-4" data-section="dev-report">
+    <div className="space-y-5" data-section="dev-report">
       <Header d={d} fetching={q.isFetching} onRefresh={() => q.refetch()} />
 
-      {d.this_week ? null : (
-        <p className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">
-          Bu öğrencinin henüz program haftası yok; haftalık kıyas program verildikçe oluşur.
-        </p>
-      )}
+      <PeriodSummary d={d} />
 
       {d.weeks.length || d.exam.exams.length ? <WeeksSection d={d} /> : null}
-
-      {d.journey ? <Journey d={d} /> : null}
       {(d.exam_series ?? []).length ? <ExamSeriesSection series={d.exam_series ?? []} /> : null}
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <FindingBox
           icon={Sparkles}
-          title="Güçlü yanlar"
-          desc="Öğrencinin kendi normalinin üstünde olduğu ya da yükselen alanlar."
+          title="Dönemin güçlü yanları"
+          desc="Başlangıca göre yükselen ya da öğrencinin normalinin üstündeki alanlar."
           tone="good"
-          items={d.strengths}
+          items={strengths}
           sel={sel}
-          empty="Şu an normalinin belirgin üstünde olduğu bir alan yok."
+          empty="Dönem boyunca belirgin bir yükseliş görünmüyor."
         />
-        {notInPlan(d.opportunities, d.actions).length ? (
-        <FindingBox
-            icon={TrendingUp}
-            title="Diğer fırsatlar"
-            desc="Az emekle net ya da uyum kazandıracak noktalar (aksiyon planındakiler hariç)."
-            tone="info"
-            items={notInPlan(d.opportunities, d.actions)}
-            sel={sel}
-            empty="Aksiyon planı dışında kalan bir fırsat yok."
-          />
-        ) : null}
-      </div>
-      {notInPlan(d.risks, d.actions).length ? (
         <FindingBox
           icon={ShieldAlert}
-          title="İzlenecek riskler"
-          desc="Normalin altına düşen ya da kötüleşen alanlar (aksiyon planındakiler hariç)."
+          title="Dönemin riskleri"
+          desc="Başlangıca göre gerileyen ya da süregelen sorunlar."
           tone="warn"
-          items={notInPlan(d.risks, d.actions)}
+          items={risks}
           sel={sel}
+          empty="Dönem boyunca süregelen bir sorun görünmüyor."
         />
-      ) : null}
+      </div>
 
-      <ActionPlan actions={d.actions} sel={sel} />
+      <ActionPlan actions={periodActions} opportunities={opportunities} sel={sel} />
 
       <div
         className={cn(
@@ -244,38 +230,35 @@ function notInPlan(items: DRItem[], actions: DRAction[]): DRItem[] {
   });
 }
 
+/** Bu haftaya ait bulgular (haftalık ölçü kartları, ders dengesi) Genel sekmesinde; dönem
+ *  raporu yalnız dönem boyunca süren eğilimleri gösterir (2026-11-14). */
+function isPeriodItem(key: string): boolean {
+  return !key.startsWith("risk:wk:") && !key.startsWith("good:wk:") && key !== "risk:balance";
+}
+
 // ---------------------------------------------------------------- başlık
 
 function Header({ d, fetching, onRefresh }: { d: DRReport; fetching: boolean; onRefresh: () => void }) {
-  const lvl = {
-    risk: "border-rose-300 bg-rose-50 text-rose-950",
-    watch: "border-amber-300 bg-amber-50 text-amber-950",
-    good: "border-emerald-300 bg-emerald-50 text-emerald-950",
-  }[d.headline.level];
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h4 className="flex items-center gap-2 text-base font-semibold">
-            <Gauge className="size-5 text-cyan-700" aria-hidden />
-            Dönem Raporu
-          </h4>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Sınıf döneminin tamamına geriye dönük bakış: haftadan haftaya program uyumu, denemeler seri seri,
-            güçlü yanlar, fırsatlar ve aksiyon planı. Bu haftanın ayrıntısı Genel sekmesinde. Rapor her
-            açılışta güncel veriden yeniden hesaplanır. Son hesaplama {ago(d.generated_at)} · son görev işaretleme{" "}
-            {ago(d.activity.last_tick_at)} · son deneme kaydı {ago(d.activity.last_exam_at)}
-            {d.queue_count ? ` · seans gündeminde ${d.queue_count} madde` : ""}.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" onClick={onRefresh} disabled={fetching}>
-          <RefreshCw className={cn("size-4", fetching && "animate-spin")} aria-hidden />
-          {fetching ? "Güncelleniyor…" : "Yenile"}
-        </Button>
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="min-w-0 max-w-2xl">
+        <h2 className="flex items-center gap-2 text-xl font-bold">
+          <Gauge className="size-5 text-cyan-700" aria-hidden />
+          Dönem Raporu
+        </h2>
+        <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">
+          Öğrencinin dönem başından bugüne nereden nereye geldiğini tek sayfada gösterir. Aylık
+          değerlendirmede ve veli görüşmesinden önce hazırlık için kullan.
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Son işaretleme {ago(d.activity.last_tick_at)} · son deneme {ago(d.activity.last_exam_at)}
+          {d.queue_count ? ` · seans gündeminde ${d.queue_count} madde` : ""}
+        </p>
       </div>
-      <p className={cn("rounded-lg border px-3 py-2 text-sm font-medium", lvl)} data-testid="dev-report-headline">
-        {d.headline.text}
-      </p>
+      <Button size="sm" variant="outline" onClick={onRefresh} disabled={fetching}>
+        <RefreshCw className={cn("size-4", fetching && "animate-spin")} aria-hidden />
+        {fetching ? "Güncelleniyor…" : "Yenile"}
+      </Button>
     </div>
   );
 }
@@ -294,14 +277,14 @@ function Section({
   actions?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-4">
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+    <section className="rounded-xl border border-border bg-card p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <h5 className="flex items-center gap-2 text-sm font-semibold">
-            <Icon className="size-4 text-cyan-700" aria-hidden />
+          <h3 className="flex items-center gap-2 text-base font-bold">
+            <Icon className="size-5 text-cyan-700" aria-hidden />
             {title}
-          </h5>
-          {desc ? <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p> : null}
+          </h3>
+          {desc ? <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p> : null}
         </div>
         {actions}
       </div>
@@ -326,8 +309,8 @@ function WeeksSection({ d }: { d: DRReport }) {
   return (
     <Section
       icon={TrendingUp}
-      title="Haftadan haftaya: görev uyumu ve deneme neti"
-      desc={`Sınıf dönemindeki tüm program haftaları. Sütun = görev uyumu (yapılan ÷ verilen); nokta = o hafta girilen ${d.exam.section_label ?? "genel deneme"} neti. Koyu sütun ${ended ? "son program haftası" : "bu hafta"}.`}
+      title="Haftadan haftaya"
+      desc={`Sütun: görev uyumu. Mor nokta: o hafta girilen ${(d.exam.section_label ?? "genel deneme").replace(/\s*\(genel deneme\)$/, "")} neti.`}
     >
       {rows.length ? (
         <div className="relative -mx-1 overflow-x-auto px-1">
@@ -361,7 +344,11 @@ function WeeksSection({ d }: { d: DRReport }) {
       ) : null}
 
       {rows.length ? (
-        <div className="relative mt-3 overflow-x-auto">
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm font-semibold text-cyan-800 hover:underline">
+            Hafta hafta tablo ({rows.length} hafta)
+          </summary>
+        <div className="relative mt-2 overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm" data-testid="dev-report-weeks">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
@@ -383,6 +370,7 @@ function WeeksSection({ d }: { d: DRReport }) {
             </tbody>
           </table>
         </div>
+        </details>
       ) : null}
     </Section>
   );
@@ -439,26 +427,75 @@ function WeekTip({ active, payload }: { active?: boolean; payload?: { payload: {
 
 // ---------------------------------------------------------------- gelinen nokta
 
-function Journey({ d }: { d: DRReport }) {
-  const j = d.journey!;
+function PeriodSummary({ d }: { d: DRReport }) {
+  const j = d.journey;
+  const main = (d.exam_series ?? []).find((x) => x.stats && x.exams.length >= 2) ?? null;
+  if (!j && !main) {
+    return (
+      <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground" data-testid="dev-report-headline">
+        Dönem özeti için birkaç program haftası ya da en az iki deneme gerekiyor.
+      </p>
+    );
+  }
+  const uyumDiff =
+    j && j.start_gorev_pct != null && j.recent_gorev_pct != null ? j.recent_gorev_pct - j.start_gorev_pct : null;
+  const label = main ? (main.label ?? "Deneme").replace(/\s*\(genel deneme\)$/, "") : "";
+  const slope = main?.stats?.slope ?? null;
+  const parts: string[] = [];
+  if (j) {
+    parts.push(
+      `${j.weeks} tamamlanan haftada görev uyumu ${pct(j.start_gorev_pct)} → ${pct(j.recent_gorev_pct)}` +
+        (uyumDiff == null ? "" : uyumDiff >= 5 ? " (yükseliyor)" : uyumDiff <= -5 ? " (düşüyor)" : " (yatay)"),
+    );
+  }
+  if (main?.stats) {
+    parts.push(
+      `${label} neti ${fmtNet(main.stats.first_net)} → ${fmtNet(main.stats.last_net)}` +
+        (slope == null ? "" : slope >= 0.5 ? " (yükseliyor)" : slope <= -0.5 ? " (düşüyor)" : " (yatay)"),
+    );
+  }
   return (
-    <Section
-      icon={Flag}
-      title="Gelişim döneminde gelinen nokta"
-      desc={`İlk haftalar ile son haftaların karşılaştırması${j.first_week ? ` (ilk hafta ${j.first_week})` : ""}. Denemeler aşağıda seri seri.`}
+    <section
+      className="rounded-xl border border-border border-l-4 border-l-cyan-700 bg-card p-4 sm:p-5"
+      data-section="dev-report:summary"
     >
-      <div className="grid gap-2 sm:grid-cols-3">
-        <Stat label="Program haftası" value={`${j.weeks} hafta`}
-          sub={`toplam ${j.tests_total} test çözüldü${j.median_gorev_pct != null ? ` · ortanca uyum ${pct(j.median_gorev_pct)}` : ""}`} />
-        <Stat label="Görev uyumu (ilk 3 → son 3 hafta)"
-          value={`${pct(j.start_gorev_pct)} → ${pct(j.recent_gorev_pct)}`}
-          sub={j.best_week ? `en iyi ${j.best_week.label} ${pct(j.best_week.value)}${j.worst_week ? ` · en düşük ${j.worst_week.label} ${pct(j.worst_week.value)}` : ""}` : undefined}
-          tone={j.start_gorev_pct != null && j.recent_gorev_pct != null ? (j.recent_gorev_pct - j.start_gorev_pct >= 5 ? "good" : j.recent_gorev_pct - j.start_gorev_pct <= -5 ? "bad" : null) : null} />
-        <Stat label="Haftalık test (ilk 3 → son 3 hafta)"
-          value={`${j.start_tests_per_week == null ? "—" : Math.round(j.start_tests_per_week)} → ${j.recent_tests_per_week == null ? "—" : Math.round(j.recent_tests_per_week)}`}
-          sub="test / hafta, deneme hariç" />
+      <p className="text-xs font-bold tracking-wide text-cyan-800">
+        DÖNEM ÖZETİ{j?.first_week ? ` · ${j.first_week} haftasından bugüne` : ""}
+      </p>
+      <p className="mt-1 text-lg font-semibold leading-snug" data-testid="dev-report-headline">
+        {parts.join("; ")}.
+      </p>
+      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {j ? (
+          <>
+            <Stat label="Tamamlanan hafta" value={`${j.weeks} hafta`} sub={`${j.tests_total} test çözüldü`} />
+            <Stat
+              label="Görev uyumu"
+              value={`${pct(j.start_gorev_pct)} → ${pct(j.recent_gorev_pct)}`}
+              sub="ilk 3 hafta → son 3 hafta"
+              tone={uyumDiff == null ? null : uyumDiff >= 5 ? "good" : uyumDiff <= -5 ? "bad" : null}
+            />
+            <Stat
+              label="Haftalık test"
+              value={`${j.start_tests_per_week == null ? "—" : Math.round(j.start_tests_per_week)} → ${j.recent_tests_per_week == null ? "—" : Math.round(j.recent_tests_per_week)}`}
+              sub="ilk 3 hafta → son 3 hafta"
+            />
+          </>
+        ) : null}
+        {main?.stats ? (
+          <Stat
+            label={`${label} neti`}
+            value={`${fmtNet(main.stats.first_net)} → ${fmtNet(main.stats.last_net)}`}
+            sub={
+              main.target
+                ? `hedef ${fmtNet(main.target.target_net)} · son 3 ort. ${fmtNet(main.stats.avg_last3)}`
+                : `son 3 ortalama ${fmtNet(main.stats.avg_last3)}`
+            }
+            tone={slope == null ? null : slope >= 0.5 ? "good" : slope <= -0.5 ? "bad" : null}
+          />
+        ) : null}
       </div>
-    </Section>
+    </section>
   );
 }
 
@@ -471,8 +508,8 @@ function ExamSeriesSection({ series }: { series: DRExamSeries[] }) {
   return (
     <Section
       icon={ClipboardList}
-      title="Denemeler — seri seri"
-      desc="Her deneme türü kendi ölçeğinde: TYT, AYT ve okul denemesi birbiriyle kıyaslanmaz. Soru sayısı değişen denemelerde (okul denemesi) net yüzdesi kullanılır."
+      title="Denemeler"
+      desc="Her deneme türü kendi içinde kıyaslanır; TYT ile AYT karıştırılmaz."
     >
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {series.map((x) => (
@@ -626,13 +663,13 @@ function FindingBox({
   empty?: string;
 }) {
   return (
-    <section className={cn("rounded-xl border border-border border-t-4 bg-card p-4", BOX_TONE[tone])}>
-      <h5 className="flex items-center gap-2 text-sm font-semibold">
-        <Icon className="size-4" aria-hidden />
+    <section className={cn("rounded-xl border border-border border-t-4 bg-card p-4 sm:p-5", BOX_TONE[tone])}>
+      <h3 className="flex items-center gap-2 text-base font-bold">
+        <Icon className="size-5" aria-hidden />
         {title}
-        <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums">{items.length}</span>
-      </h5>
-      <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+        <span className="rounded-full bg-muted px-2 text-xs tabular-nums">{items.length}</span>
+      </h3>
+      <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p>
       {items.length ? (
         <ul className="mt-3 space-y-2">
           {items.map((it) => (
@@ -657,14 +694,32 @@ function FindingBox({
   );
 }
 
-function ActionPlan({ actions, sel }: { actions: DRAction[]; sel: Sel }) {
+function ActionPlan({ actions, opportunities, sel }: { actions: DRAction[]; opportunities: DRItem[]; sel: Sel }) {
   const selectable = actions.filter((a) => !a.queued);
   const allPicked = selectable.length > 0 && selectable.every((a) => sel.picked.has(a.key));
+  const top = actions.filter((a) => a.priority === 1).slice(0, 6);
+  const shown = top.length ? top : actions.slice(0, 4);
+  const rest = actions.filter((a) => !shown.includes(a));
+  const row = (a: DRAction) => (
+    <SelectableRow
+      key={a.key}
+      id={a.key}
+      agenda={a.agenda}
+      queued={a.queued}
+      sel={sel}
+      title={a.title}
+      badge={PRIORITY[a.priority] ?? PRIORITY[3]}
+      tag={SOURCE_LABEL[a.source]}
+      detail={a.detail}
+      ctaLabel={a.cta_label}
+      ctaHref={a.cta_href}
+    />
+  );
   return (
     <Section
       icon={ListChecks}
-      title="Aksiyon planı"
-      desc="Haftalık programdan, denemelerden ve veri girişinden türetilen öneriler; öncelik sırasıyla. Seçtiklerini seans gündemine taşıyabilirsin (yukarıdaki bulgular da seçilebilir)."
+      title="Sonraki adımlar"
+      desc="Dönemin verisinden çıkan öneriler, önem sırasıyla. İşaretlediklerin seans gündemine eklenir."
       actions={
         selectable.length ? (
           <Button
@@ -683,25 +738,41 @@ function ActionPlan({ actions, sel }: { actions: DRAction[]; sel: Sel }) {
     >
       {actions.length ? (
         <ul className="space-y-2" data-testid="dev-report-actions">
-          {actions.map((a) => (
-            <SelectableRow
-              key={a.key}
-              id={a.key}
-              agenda={a.agenda}
-              queued={a.queued}
-              sel={sel}
-              title={a.title}
-              badge={PRIORITY[a.priority] ?? PRIORITY[3]}
-              tag={SOURCE_LABEL[a.source]}
-              detail={a.detail}
-              ctaLabel={a.cta_label}
-              ctaHref={a.cta_href}
-            />
-          ))}
+          {shown.map(row)}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">Şu an önerilen bir aksiyon yok.</p>
+        <p className="text-sm text-muted-foreground">Şu an önerilen bir adım yok.</p>
       )}
+      {rest.length ? (
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm font-semibold text-cyan-800 hover:underline">
+            {rest.length} öneri daha
+          </summary>
+          <ul className="mt-2 space-y-2">{rest.map(row)}</ul>
+        </details>
+      ) : null}
+      {opportunities.length ? (
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm font-semibold text-cyan-800 hover:underline">
+            Diğer fırsatlar ({opportunities.length})
+          </summary>
+          <ul className="mt-2 space-y-2">
+            {opportunities.map((it) => (
+              <SelectableRow
+                key={it.key}
+                id={it.key}
+                agenda={it.agenda}
+                queued={it.queued}
+                sel={sel}
+                title={it.title}
+                detail={it.text}
+                ctaLabel={it.cta_label}
+                ctaHref={it.cta_href}
+              />
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </Section>
   );
 }
@@ -743,11 +814,11 @@ function SelectableRow({
           </span>
         ) : null}
       </div>
-      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{detail}</p>
+      <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{detail}</p>
       {ctaHref ? (
         <Link
           href={ctaHref}
-          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-cyan-700 hover:underline"
+          className="mt-1 inline-flex items-center gap-1 text-[13px] font-medium text-cyan-800 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {ctaLabel ?? "Aç"}
