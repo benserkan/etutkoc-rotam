@@ -152,6 +152,13 @@ export function MessageSuggestionsClient({ studentId }: { studentId: number | nu
   );
 }
 
+/** Metin kutusu içeriğe göre büyür (2026-11-14, koç: uzun mesajda kaydırma istemiyor). */
+function autoGrow(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight + 2}px`;
+}
+
 function SuggestionCard({ item }: { item: SuggestionItem }) {
   const qc = useQueryClient();
   const [text, setText] = React.useState(item.text);
@@ -214,12 +221,16 @@ function SuggestionCard({ item }: { item: SuggestionItem }) {
         {item.reason ? <p className="mt-0.5 text-sm text-muted-foreground">{item.reason}</p> : null}
       </div>
       <textarea
+        ref={autoGrow}
         value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={5}
+        onChange={(e) => {
+          setText(e.target.value);
+          autoGrow(e.target);
+        }}
+        rows={3}
         maxLength={2000}
         aria-label={`${item.title} mesaj metni`}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed"
+        className="w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed"
       />
       {text.includes(LINK_TOKEN) ? (
         <p className="-mt-1 text-xs text-muted-foreground">

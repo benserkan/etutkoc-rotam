@@ -69,13 +69,92 @@ def _genitive(name: str) -> str:
     return genitive(name)
 
 
+def _num(v) -> str:
+    if v is None:
+        return ""
+    return f"{v:.2f}".replace(".", ",").rstrip("0").rstrip(",")
+
+
+def _join(items: list[str], more_word: str = "konu") -> str:
+    """"A, B ve C" — en çok 3 ad; fazlası "ve N konu daha"."""
+    items = [x for x in items if x]
+    if not items:
+        return ""
+    head, rest = items[:3], len(items) - 3
+    if rest > 0:
+        return ", ".join(head) + f" ve {rest} {more_word} daha"
+    return head[0] if len(head) == 1 else ", ".join(head[:-1]) + " ve " + head[-1]
+
+
+def _panel_url(student: User) -> str:
+    from app.config import settings
+
+    base = (getattr(settings, "app_base_url", "") or "").rstrip("/")
+    return f"{base}/parent/students/{student.id}"
+
+
+def _short_topic(t: Task) -> list[str]:
+    """Yapılmayan görevin kısa konu adı: "Kimya · Sıvı Çözeltiler" yerine "Sıvı Çözeltiler (Kimya)"."""
+    out: list[str] = []
+    for bi in t.book_items or []:
+        rem = (bi.planned_count or 0) - (bi.completed_count or 0)
+        if rem <= 0:
+            continue
+        subj = None
+        if bi.book is not None and getattr(bi.book, "subject", None) is not None:
+            subj = bi.book.subject.name
+        elif getattr(bi, "exam_subject", None) is not None:
+            subj = bi.exam_subject.name
+        if getattr(bi, "exam_kind", None):
+            out.append(f"{subj} branş denemesi" if subj else "deneme")
+            continue
+        name = None
+        if bi.section is not None:
+            name = bi.section.label
+        elif getattr(bi, "topic", None) is not None:
+            name = bi.topic.name
+        if name:
+            name = name.split("·")[-1].split(" — ")[-1].strip()
+            out.append(f"{name} ({subj})" if subj and subj.lower() not in name.lower() else name)
+    if not out:
+        title = (t.title or "").split(":")[0].split(" — ")[-1].strip()
+        if title:
+            out.append(title)
+    return out
+
+
+def _missing_topics(db: Session, student: User, start: date, end: date) -> list[str]:
+    from sqlalchemy.orm import selectinload
+
+    from app.models import TaskBookItem
+
+    tasks = (db.query(Task).options(selectinload(Task.book_items).joinedload(TaskBookItem.book))
+             .filter(Task.student_id == student.id, Task.is_draft.is_(False),
+                     Task.date >= start, Task.date <= end).order_by(Task.date, Task.id).all())
+    seen: list[str] = []
+    for t in tasks:
+        if t.status == TaskStatus.COMPLETED:
+            continue
+        for name in _short_topic(t):
+            if name not in seen:
+                seen.append(name)
+    return seen
+
+
 def build_for_student(db: Session, student: User, today: date | None = None) -> list[Suggestion]:
-    """Bir öğrenci için bugünün aday mesajları (karar verilmiş olanlar dahil — süzme ayrıca)."""
+    """Bir öğrenci için bugünün aday mesajları (karar verilmiş olanlar dahil — süzme ayrıca).
+
+    Dil (2026-11-14, koç): öğrenciye SOHBET açan mesaj ("dikkatimi çekti, sence ne oldu?"),
+    veliye kısa BİLGİ + ayrıntı için Rotam bağlantısı. Konular kısa adla, virgülle, en çok 3."""
     from app.services.student_flags import evaluate_flags
 
+    if getattr(student, "is_paused", False) or not student.is_active:
+        return []  # molada / pasif öğrenciye ve velisine öneri yok
     today = today or _tr_today()
     first = _first(student.full_name) or "Öğrencimiz"
     gen = _genitive(first)
+    more = f"Ayrıntıları Rotam'da görebilirsiniz: {_panel_url(student)}"
+    wk = _iso_week(today)
     out: list[Suggestion] = []
 
     rep = evaluate_flags(db, student, today)
@@ -83,87 +162,80 @@ def build_for_student(db: Session, student: User, today: date | None = None) -> 
     goods = list(rep.good)
     codes = {w.code: w for w in warns}
 
-    # --- sorunlar → veliye bilgi
-    for w in warns:
-        code = w.code
-        base = code if code in PARENT_PROBLEM_CODES else ("subject_avoid" if code.startswith("subject_avoid_") else None)
-        if base is None or getattr(w, "coach_only", False):
-            continue
-        detail = (w.detail or "").strip()
-        out.append(Suggestion(
-            key=f"{code}:{_iso_week(today)}",
-            audience="parent", kind="problem",
-            title=w.title, reason=detail,
-            text=(f"Merhaba, {gen} programıyla ilgili kısa bir bilgi vermek istedim: {w.title.rstrip('.')}. "
-                  f"{detail} Bu konuyu {first} ile konuşacağım; evde de hatırlatırsanız çok faydalı olur."),
-            order=10,
-        ))
-
-    # --- olumlu gelişmeler → öğrenciye tebrik + veliye bilgi
-    for w in goods:
-        if w.code not in POSITIVE_CODES:
-            continue
-        detail = (w.detail or "").strip()
-        k = f"{w.code}:{_iso_week(today)}"
-        out.append(Suggestion(
-            key=k, audience="student", kind="positive", title=w.title, reason=detail,
-            text=f"Tebrikler {first}! {w.title.rstrip('.')}. {detail} Böyle devam, seninle gurur duyuyorum.",
-            order=30,
-        ))
-        out.append(Suggestion(
-            key=k, audience="parent", kind="positive", title=w.title, reason=detail,
-            text=(f"Merhaba, {gen} güzel bir gelişmesini paylaşmak istedim: {w.title.rstrip('.')}. {detail} "
-                  f"Onu tebrik ederseniz çok sevinir."),
-            order=30,
-        ))
-
-    # --- haftalık ilerleme (Genel sekmesiyle AYNI ölçü): görev birikmesi, kaçınılan ders,
-    #     branş denemeleri → veliye bilgi. Zamanlama/yük/doğruluk koç işi, veliye gitmez.
-    wk = _iso_week(today)
+    # --- haftalık ilerleme (Genel sekmesiyle AYNI ölçü)
     try:
         from app.services.weekly_progress import build_weekly_progress
 
         wp = build_weekly_progress(db, student, today=today)
     except Exception:  # noqa: BLE001
         wp = {}
-    for a in wp.get("actions") or []:
-        if a.get("key") == "carry":
-            n = a["title"].split()[1] if a["title"].startswith("Kalan ") else ""
-            why = a.get("why", "")
-            out.append(Suggestion(
-                key=f"carry:{wk}:{n}", audience="parent", kind="problem",
-                title=f"Bu hafta {n} görev yapılmadı", reason=why,
-                text=(f"Merhaba, {gen} bu haftaki programıyla ilgili bilgi vermek istedim: {why} "
-                      f"Kalan görevleri birlikte planlayacağız; evde günlük programını tamamlamasını "
-                      f"hatırlatırsanız çok faydalı olur."),
-                order=8,
-            ))
-            out.append(Suggestion(
-                key=f"carry:{wk}:{n}", audience="student", kind="reminder",
-                title=f"Bu hafta {n} görev kaldı", reason=why,
-                text=(f"Merhaba {first}, bu hafta {n} görevin yapılmadan kaldı. Bugünkü programınla başla, "
-                      f"kalanları birlikte planlayalım. Takipteyim, yapabilirsin."),
-                order=9,
-            ))
-        elif a.get("key") == "avoid":
-            why = a.get("why", "")
-            subj = a["title"].split(" için ")[0]
-            out.append(Suggestion(
-                key=f"avoid:{wk}:{subj}", audience="parent", kind="problem",
-                title=f"{subj} dersinde görevler aksıyor", reason=why,
-                text=(f"Merhaba, {gen} programında {subj} dersi geride kalıyor. {why} "
-                      f"Bu konuyu seansta konuşacağız; evde de sorarsanız destek olur."),
-                order=11,
-            ))
-        elif a.get("key") == "brans" and a["title"].startswith("Branş denemelerini"):
-            why = a.get("why", "")
-            out.append(Suggestion(
-                key=f"brans:{wk}", audience="parent", kind="problem",
-                title="Branş denemeleri çözülmüyor", reason=why,
-                text=(f"Merhaba, {gen} programındaki branş denemeleriyle ilgili bilgi vermek istedim: {why} "
-                      f"Bu denemeler hangi konuda net kaybettiğini görmemizi sağlıyor; çözmesi için desteğiniz önemli."),
-                order=12,
-            ))
+    week = wp.get("week") or {}
+    actions = {a.get("key"): a for a in wp.get("actions") or []}
+
+    carry = actions.get("carry")
+    if carry and week.get("start"):
+        n = carry["title"].split()[1] if carry["title"].startswith("Kalan ") else ""
+        ws = date.fromisoformat(week["start"])
+        topics = _missing_topics(db, student, ws, today - timedelta(days=1))
+        tl = _join(topics)
+        out.append(Suggestion(
+            key=f"carry:{wk}:{n}", audience="parent", kind="problem",
+            title=f"Bu hafta {n} görev yapılmadı", reason=tl or carry.get("why", ""),
+            text=(f"Merhaba, {gen} bu haftaki programından kısa bir bilgi: {n} görev yapılmadan kaldı"
+                  + (f". Aksayan konular: {tl}." if tl else ".")
+                  + f" Kalanları birlikte planlayacağız; evde günlük programını sormanız çok destek olur.\n{more}"),
+            order=8,
+        ))
+        out.append(Suggestion(
+            key=f"carry:{wk}:{n}", audience="student", kind="problem",
+            title=f"Bu hafta {n} görev kaldı", reason=tl or carry.get("why", ""),
+            text=(f"Merhaba {first}, bu hafta {n} görevin yapılmadan kaldı"
+                  + (f"; özellikle {tl} dikkatimi çekti." if tl else ", bu dikkatimi çekti.")
+                  + " Sence ne oldu, zorlandığın bir yer mi var? Yazarsan kalanları birlikte planlayalım."),
+            order=9,
+        ))
+
+    avoid = actions.get("avoid")
+    if avoid:
+        subj = avoid["title"].split(" için ")[0]
+        why = avoid.get("why", "")
+        out.append(Suggestion(
+            key=f"avoid:{wk}:{subj}", audience="parent", kind="problem",
+            title=f"{subj} dersi geride kalıyor", reason=why,
+            text=(f"Merhaba, {gen} programından kısa bir bilgi: son haftalarda {subj} görevleri diğer derslere "
+                  f"göre daha az yapılıyor. Bu konuyu seansta konuşacağız.\n{more}"),
+            order=11,
+        ))
+        out.append(Suggestion(
+            key=f"avoid:{wk}:{subj}", audience="student", kind="problem",
+            title=f"{subj} geride kalıyor", reason=why,
+            text=(f"Merhaba {first}, son haftalarda {subj} görevlerinin diğer derslerden geride kaldığını fark ettim. "
+                  f"Bu derste seni zorlayan bir şey mi var? Konuşalım, birlikte çözelim."),
+            order=11,
+        ))
+
+    brans = actions.get("brans")
+    if brans and brans["title"].startswith("Branş denemelerini"):
+        import re
+
+        m = re.search(r"(\d+) branş denemesi kondu, (\d+) tanesi çözüldü", brans.get("why", ""))
+        given, solved = (m.group(1), m.group(2)) if m else ("", "")
+        fact = (f"son 4 haftada programa konan {given} branş denemesinin {solved} tanesi çözüldü" if m
+                else "programdaki branş denemelerinin bir kısmı çözülmedi")
+        out.append(Suggestion(
+            key=f"brans:{wk}", audience="parent", kind="problem",
+            title="Branş denemeleri çözülmüyor", reason=brans.get("why", ""),
+            text=(f"Merhaba, {gen} branş denemeleriyle ilgili kısa bir bilgi: {fact}. Bu denemeler hangi "
+                  f"konularda net kaybettiğini görmemizi sağlıyor.\n{more}"),
+            order=12,
+        ))
+        out.append(Suggestion(
+            key=f"brans:{wk}", audience="student", kind="problem",
+            title="Branş denemeleri çözülmüyor", reason=brans.get("why", ""),
+            text=(f"Merhaba {first}, programındaki branş denemelerinin bir kısmını çözmediğini gördüm. "
+                  f"Süre mi yetmiyor, yoksa zor mu geliyor? Hangisi olduğunu bilirsem programı ona göre ayarlarım."),
+            order=12,
+        ))
 
     # --- denemeler ve hedef (Genel sekmesindeki deneme satırlarıyla aynı)
     try:
@@ -173,45 +245,96 @@ def build_for_student(db: Session, student: User, today: date | None = None) -> 
     except Exception:  # noqa: BLE001
         eo = {}
     for ex in eo.get("exams") or []:
+        if (ex.get("count") or 0) < 2:
+            continue
         label = (ex.get("series_label") or "Deneme").replace(" (genel deneme)", "")
-        txt = (ex.get("text") or "").strip()
+        diff = ex.get("diff")
+        last = f"son denemesinde {_num(ex.get('last_net'))} net yaptı"
+        if diff is not None:
+            last += f" (öncekine göre {'+' if diff >= 0 else '−'}{_num(abs(diff))})"
         k = f"exam_trend:{ex.get('series_key')}:{wk}"
-        if ex.get("tone") == "warn" and (ex.get("count") or 0) >= 2:
+        if ex.get("tone") == "warn":
             out.append(Suggestion(
-                key=k, audience="parent", kind="problem", title=f"{label} denemelerinde düşüş", reason=txt,
-                text=(f"Merhaba, {gen} {label} denemeleriyle ilgili bilgi vermek istedim: {txt} "
-                      f"Eksik konular üzerinde birlikte çalışacağız."),
+                key=k, audience="parent", kind="problem", title=f"{label} denemelerinde eğilim aşağı",
+                reason=ex.get("text", ""),
+                text=(f"Merhaba, {gen} {label} denemelerinden kısa bir bilgi: {last}. Son "
+                      f"{ex.get('slope_window') or ''} denemenin genel eğilimi ise aşağı yönlü; eksik konular "
+                      f"üzerinde birlikte çalışacağız.\n{more}").replace("Son  denemenin", "Son denemelerin"),
                 order=13,
             ))
-        elif ex.get("tone") == "good" and (ex.get("count") or 0) >= 2:
             out.append(Suggestion(
-                key=k, audience="student", kind="positive", title=f"{label} netleri yükseliyor", reason=txt,
-                text=f"Tebrikler {first}! {label} denemelerinde netlerin yükseliyor. {txt} Böyle devam!",
+                key=k, audience="student", kind="problem", title=f"{label} denemelerinde eğilim aşağı",
+                reason=ex.get("text", ""),
+                text=(f"Merhaba {first}, son {label} denemende {_num(ex.get('last_net'))} net yaptın. "
+                      f"Ama son denemelere birlikte bakınca netlerin biraz aşağı gidiyor. Sence hangi derste "
+                      f"zorlanıyorsun? Bir sonraki seansta üzerine gidelim."),
+                order=13,
+            ))
+        elif ex.get("tone") == "good":
+            out.append(Suggestion(
+                key=k, audience="student", kind="positive", title=f"{label} netleri yükseliyor",
+                reason=ex.get("text", ""),
+                text=(f"Tebrikler {first}! {label} denemelerinde netlerin yükseliyor; son denemende "
+                      f"{_num(ex.get('last_net'))} net. Sence bu yükselişte en çok ne işe yaradı? Böyle devam!"),
                 order=31,
             ))
             out.append(Suggestion(
-                key=k, audience="parent", kind="positive", title=f"{label} netleri yükseliyor", reason=txt,
+                key=k, audience="parent", kind="positive", title=f"{label} netleri yükseliyor",
+                reason=ex.get("text", ""),
                 text=(f"Merhaba, {gen} güzel bir gelişmesini paylaşmak istedim: {label} denemelerinde netleri "
-                      f"yükseliyor. {txt} Onu tebrik ederseniz çok sevinir."),
+                      f"yükseliyor, {last}. Onu tebrik ederseniz çok sevinir.\n{more}"),
                 order=31,
             ))
     for tg in eo.get("targets") or []:
         if tg.get("tone") != "good":
             continue
         label = (tg.get("series_label") or "").replace(" (genel deneme)", "")
-        txt = (tg.get("text") or "").strip()
         k = f"target_good:{tg.get('series_key')}:{wk}"
         out.append(Suggestion(
             key=k, audience="student", kind="positive", title=f"{label} hedefine doğru gidiyor".strip(),
-            reason=txt, text=f"Tebrikler {first}! Hedefine doğru ilerliyorsun. {txt}", order=32,
+            reason=tg.get("text", ""),
+            text=f"Tebrikler {first}! {label} hedefine doğru ilerliyorsun. Bu tempoyu korumak için neye ihtiyacın var?",
+            order=32,
         ))
         out.append(Suggestion(
             key=k, audience="parent", kind="positive", title=f"{label} hedefine doğru gidiyor".strip(),
-            reason=txt, text=f"Merhaba, {first} hedefine doğru ilerliyor. {txt} Desteğiniz için teşekkürler.",
+            reason=tg.get("text", ""),
+            text=f"Merhaba, {first} {label} hedefine doğru ilerliyor. Desteğiniz için teşekkürler.\n{more}",
             order=32,
         ))
 
-    # --- hatırlatmalar → öğrenciye
+    # --- sistem uyarıları (boş gün serisi, tamamlama düşüşü, deneme atlandı) → veliye bilgi
+    for w in warns:
+        code = w.code
+        if code not in PARENT_PROBLEM_CODES or getattr(w, "coach_only", False):
+            continue
+        if code in ("completion_low", "completion_drop") and carry:
+            continue  # aynı şeyi "görev yapılmadı" mesajı zaten söylüyor
+        out.append(Suggestion(
+            key=f"{code}:{wk}", audience="parent", kind="problem",
+            title=w.title, reason=(w.detail or "").strip(),
+            text=f"Merhaba, {gen} programından kısa bir bilgi: {w.title[0].lower() + w.title[1:]}.\n{more}",
+            order=10,
+        ))
+
+    # --- olumlu gelişmeler (eksiksiz günler, yüksek tamamlama) → tebrik + bilgi
+    for w in goods:
+        if w.code not in POSITIVE_CODES or w.code == "good_net_up":
+            continue  # net artışı yukarıdaki deneme satırında
+        k = f"{w.code}:{wk}"
+        t = w.title[0].lower() + w.title[1:]
+        out.append(Suggestion(
+            key=k, audience="student", kind="positive", title=w.title, reason=(w.detail or "").strip(),
+            text=f"Tebrikler {first}! {w.title.rstrip('.')}. Bu düzen çok değerli; seninle gurur duyuyorum.",
+            order=30,
+        ))
+        out.append(Suggestion(
+            key=k, audience="parent", kind="positive", title=w.title, reason=(w.detail or "").strip(),
+            text=f"Merhaba, {gen} güzel bir gelişmesini paylaşmak istedim: {t}. Onu tebrik ederseniz çok sevinir.\n{more}",
+            order=30,
+        ))
+
+    # --- hatırlatmalar → öğrenciye (sohbet)
     y = today - timedelta(days=1)
     y_tasks = (db.query(Task).filter(Task.student_id == student.id, Task.date == y,
                                      Task.is_draft.is_(False)).all())
@@ -221,17 +344,16 @@ def build_for_student(db: Session, student: User, today: date | None = None) -> 
             key=f"remind_mark:{y.isoformat()}", audience="student", kind="reminder",
             title="Dünkü program işaretlenmemiş",
             reason=f"Dün {len(y_tasks)} görev vardı; hiçbiri işaretlenmedi.",
-            text=(f"Merhaba {first}, dünkü programında {len(y_tasks)} görev vardı ama hiçbirini işaretlemedin. "
-                  f"Yaptıklarını bugün işaretlersen ilerlemeni görebilirim. Takipteyim."),
+            text=(f"Merhaba {first}, dünkü programında {len(y_tasks)} görev vardı ama hiç işaret göremedim. "
+                  f"Yapabildin mi, yoksa bir şey mi oldu? İşaretlersen nerede olduğunu birlikte görürüz."),
             order=20,
         ))
     if "today_no_tick" in codes:
-        w = codes["today_no_tick"]
         out.append(Suggestion(
             key=f"today_no_tick:{today.isoformat()}", audience="student", kind="reminder",
-            title="Bugün henüz başlamadı", reason=(w.detail or "").strip(),
-            text=(f"Merhaba {first}, bugünkü programında henüz bir görevi işaretlemedin. "
-                  f"Bir görevle başla, gerisi gelir. Seni takip ediyorum, başarabilirsin."),
+            title="Bugün henüz başlamadı", reason=(codes["today_no_tick"].detail or "").strip(),
+            text=(f"Merhaba {first}, bugün henüz bir görev işaretlemedin. Nasıl gidiyor, başlayabildin mi? "
+                  f"İlk görevle başlarsan gerisi kolaylaşır."),
             order=21,
         ))
 

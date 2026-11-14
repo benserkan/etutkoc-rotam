@@ -141,6 +141,17 @@ def main():
             "target_user_id": d["p"]})
         check("18 öğrenci önerisini veliye gönderme 404", r.status_code == 404, str(r.status_code))
 
+        par = [i for i in after if i["audience"] == "parent"]
+        check("21 veli mesajında Rotam panel bağlantısı",
+              all(f"/parent/students/{d['s']}" in i["text"] or ms.LINK_TOKEN in i["text"] for i in par), str(len(par)))
+        with SessionLocal() as db:
+            st = db.get(User, d["s"]); st.is_paused = True; db.commit()
+        r = c.get("/api/v2/teacher/message-suggestions", params={"student_id": d["s"]})
+        check("22 moladaki öğrenciye öneri yok", r.status_code in (200, 404) and not (r.json().get("items") if r.status_code == 200 else []),
+              r.text[:120])
+        with SessionLocal() as db:
+            st = db.get(User, d["s"]); st.is_paused = False; db.commit()
+
         c2 = TestClient(app)
         login(c2, "t2")
         r = c2.get("/api/v2/teacher/message-suggestions", params={"student_id": d["s"]})
