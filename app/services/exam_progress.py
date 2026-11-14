@@ -139,6 +139,17 @@ def get_queue(db: Session, student_id: int) -> list[dict]:
     return [_item_dict(q) for q in rows]
 
 
+def agenda_key_in(key: str | None, keys: set) -> bool:
+    """Gündem anahtarı kuyrukta mı? Seri eki gelmeden önce eklenmiş eski anahtarlar
+    ("topic:12") yeni biçimle ("topic:12:tyt") eşleşir."""
+    if not key:
+        return False
+    if key in keys:
+        return True
+    head = key.rsplit(":", 1)[0]
+    return ":" in key and head in keys
+
+
 def add_to_queue(db: Session, student_id: int, items: list[dict], *, actor: User) -> tuple[list[dict], int]:
     """Kuyruğa ekle; aynı `key` (ya da aynı metin) zaten varsa tekrar eklenmez."""
     existing = db.query(SessionAgendaItem).filter(SessionAgendaItem.student_id == student_id).all()
@@ -151,7 +162,7 @@ def add_to_queue(db: Session, student_id: int, items: list[dict], *, actor: User
         if not text:
             continue
         key = (it.get("key") or "").strip()[:80] or None
-        if (key and key in keys) or text in texts:
+        if agenda_key_in(key, keys) or text in texts:
             continue
         if count >= QUEUE_MAX:
             break
@@ -387,7 +398,7 @@ def build_progress_report(db: Session, student: User, *, section: str | None = N
     opps = ta.get("opportunities", [])[:6]
 
     commentary = _commentary(stats, series, subjects, tinfo, penalty)
-    actions = _actions(stats, series, subjects, tinfo, opps, ta.get("forgotten", []), exams[-1].id)
+    actions = _actions(stats, series, subjects, tinfo, opps, ta.get("forgotten", []), exams[-1].id, skey=skey)
 
     base.update({
         "exams": series, "stats": stats, "subjects": subjects, "target": tinfo,
@@ -466,11 +477,13 @@ def _commentary(stats, series, subjects, tinfo, penalty) -> list[dict]:
     return out
 
 
-def _actions(stats, series, subjects, tinfo, opps, forgotten, last_exam_id) -> list[dict]:
+def _actions(stats, series, subjects, tinfo, opps, forgotten, last_exam_id, *, skey=None) -> list[dict]:
     acts: list[dict] = []
 
     def add(key, kind, priority, title, detail, subject=None, topic_id=None):
-        acts.append({"key": key, "kind": kind, "priority": priority, "title": title,
+        # Seri her anahtarda (2026-11-14): Denemeler sekmesi ile Dönem Raporu AYNI anahtarı
+        # üretsin — aynı madde iki yerden seansa eklenince iki kayıt oluşmasın.
+        acts.append({"key": f"{key}:{skey}" if skey else key, "kind": kind, "priority": priority, "title": title,
                      "detail": detail, "subject": subject, "topic_id": topic_id,
                      "exam_id": last_exam_id})
 

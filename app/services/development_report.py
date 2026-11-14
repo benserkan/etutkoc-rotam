@@ -426,7 +426,7 @@ def build_development_report(db: Session, student: User, *, series: str | None =
     for x in eps:
       for a in x.get("actions") or []:
         actions.append({
-            "key": f"{a['key']}:{x.get('series')}" if multi else a["key"],
+            "key": a["key"],
             "title": f"{_short_series(x.get('section_label'))} · {a['title']}" if multi else a["title"],
             "detail": a["detail"], "source": "exam",
             "priority": a["priority"], "agenda": f"{a['title']} — {a['detail']}",

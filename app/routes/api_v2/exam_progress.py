@@ -82,7 +82,7 @@ def teacher_exam_progress(student_id: int, section: str | None = None, period: s
     rep = _report(db, student, section, period)
     qkeys = {q.get("key") for q in svc.get_queue(db, student.id) if q.get("key")}
     for a in rep.actions:
-        a.queued = a.key in qkeys
+        a.queued = svc.agenda_key_in(a.key, qkeys)
     return rep
 
 
@@ -99,7 +99,7 @@ def teacher_development_report(student_id: int, series: str | None = None, perio
     qkeys = {q.get("key") for q in queue if q.get("key")}
     for lst in ("state", "strengths", "opportunities", "risks", "actions"):
         for it in rep[lst]:
-            it["queued"] = it["key"] in qkeys
+            it["queued"] = svc.agenda_key_in(it["key"], qkeys)
     rep["queue_count"] = len(queue)
     return rep
 

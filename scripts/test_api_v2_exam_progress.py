@@ -92,7 +92,7 @@ try:
     texts = " ".join(c["text"] for c in d["commentary"])
     chk("5 yorum: gerileyen ders Matematik + boş uyarısı", "gerileyen ders TYT Matematik" in texts and "boş kaldı" in texts, texts)
     keys = {a["key"] for a in d["actions"]}
-    chk("6 aksiyon: ders düşüşü + boş davranışı", "subjdrop:tyt matematik" in keys and "behavior:blank" in keys, keys)
+    chk("6 aksiyon: ders düşüşü + boş davranışı", "subjdrop:tyt matematik:tyt" in keys and "behavior:blank:tyt" in keys, keys)
 
     r = ct2.get(f"/api/v2/teacher/students/{sid}/exam-progress")
     chk("7 başka koç 404", r.status_code == 404)
@@ -107,7 +107,7 @@ try:
     chk("10 hedef farkı + hafta", d["target"]["gap"] > 0 and d["target"]["weeks_left"] == 10, d["target"])
     mat = next(x for x in d["subjects"] if x["name"] == "TYT Matematik")
     chk("11 ders hedefi farkı", mat["target"] == 30 and mat["gap"] == round(30 - mat["last"], 2))
-    chk("12 aksiyonda ders hedefi açığı", any(a["key"] == "subjgap:tyt matematik" for a in d["actions"]))
+    chk("12 aksiyonda ders hedefi açığı", any(a["key"] == "subjgap:tyt matematik:tyt" for a in d["actions"]))
     r = ct.post(f"/api/v2/teacher/students/{sid}/exam-targets", json={"section": "tyt", "target_net": 900})
     chk("13 geçersiz hedef 422", r.status_code == 422)
     r = ct.post(f"/api/v2/teacher/students/{sid}/exam-targets", json={"section": "xx", "target_net": 50})
