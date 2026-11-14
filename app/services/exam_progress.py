@@ -146,8 +146,21 @@ def agenda_key_in(key: str | None, keys: set) -> bool:
         return False
     if key in keys:
         return True
+    if _canon_key(key) in {_canon_key(k) for k in keys if k}:
+        return True
     head = key.rsplit(":", 1)[0]
     return ":" in key and head in keys
+
+
+def _canon_key(key: str) -> str:
+    """Aynı konuyu farklı yüzeylerden gelen anahtarlarla eşle: Konu Analizi fırsatı
+    ("opp:12"), aksiyon ("topic:12:tyt") ve unutulan konu ("forgot:12[:tyt]")."""
+    p = key.split(":")
+    if p[0] in ("opp", "topic") and len(p) > 1 and p[1].isdigit():
+        return f"topic:{p[1]}"
+    if p[0] == "forgot" and len(p) > 1:
+        return f"forgot:{p[1]}"
+    return key
 
 
 def add_to_queue(db: Session, student_id: int, items: list[dict], *, actor: User) -> tuple[list[dict], int]:
