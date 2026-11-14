@@ -53,6 +53,20 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   kurum raporlarının tamamı içerik dahil gözden geçirilir; aynı başlıkta farklı rapor üretilmez, her
   rapor tek kaynaktan, ortak rapor diliyle.
 
+## ÖĞRENCİ DETAYI BİLGİ MİMARİSİ — Genel + Dönem Raporu (2026-11-14, CANLI, commit `6d5261c3`, migration YOK)
+
+- **Genel sekmesi sırası:** 1 Bu hafta (cetvel + gün gün) → 2 **Bu hafta konuşulacaklar** (eski "Özet" + "Önlemler"
+  TEK liste: dikkat isteyenler kart, yalnız bilgi verenler altta "BİLGİ" satırları) → 3 Gidişat → **Veliye haftalık
+  rapor** (3 açıklama kartı: raporda ne var / veli ne yapar / nasıl gönderilir + hafta seçici + Veliye WhatsApp) →
+  4 Tüm ölçüler (katlanır) → 5 Programdaki denemeler. Görev adları kırpılmaz (`weekly_progress` titles[:3]).
+- **"Gelişim Raporu" sekmesi → "Dönem Raporu"**: bu haftanın tekrarları (Bu hafta/Kıyas/Mevcut durum) çıkarıldı,
+  aksiyon planındaki maddeler fırsat/risk listelerinde tekrar etmez, boş liste gösterilmez.
+- **Veli rapor türleri (aynı altyapı, `exam_parent_reports.kind`):** exam · progress (Denemeler → Rapor & Puan,
+  yeşil "Veliye WhatsApp") · weekly (Genel → Veliye haftalık rapor; veli haftalık e-postasında da bağlantı).
+  Migration `f6h9m2n3m88i`. Uçlar `/teacher/students/{id}/parent-report-link` + `.pdf`.
+- **İsim çakışması (denetimde ele alınacak):** öğrenci detayı "Dönem Raporu" ≠ Denemeler "Gelişim Raporu" (veliye giden).
+- **Açık gözlem:** Genel gün kartında "Gününde · 07:12" yazarken aynı hafta "gününde tamamlama %0" diyor — tanım uyuşmazlığı, denetimde bakılacak.
+
 ## VELİ DENEME ANALİZ RAPORU — bağlantı + Rota sesi + sunucu PDF (2026-11-13, CANLI, migration `e5g8l1m2l77h`)
 
 - **Saha bulguları (koç, telefonda):** iki düğme kafa karıştırıyordu; "PDF'i indir, sohbeti aç" dosyayı EKLEMİYOR (WhatsApp
