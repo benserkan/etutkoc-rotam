@@ -53,6 +53,35 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   kurum raporlarının tamamı içerik dahil gözden geçirilir; aynı başlıkta farklı rapor üretilmez, her
   rapor tek kaynaktan, ortak rapor diliyle.
 
+## BUGÜNÜN MESAJLARI — WhatsApp mesaj önerileri (2026-11-14, 2. adım, migration `g7i0n3o4n99j`)
+
+- **Kullanıcı kararları:** veliye öncelik ama öğrenciye de; sistemin öğrenci bağlamında fark ettiği HER sorun ve
+  olumlu gelişme mesaj adayı; **sınır YOK** (koç seçer) ama "bugün N mesaj gönderdin" sayacı (≥20 uyarı);
+  veri güvenilirliği (toplu işaretleme, D/Y girilmiyor) veliye GİTMEZ — listede yok; kurum öğretmenleri de kullanır;
+  cevap takibi YOK. Gönderim Meta hattı (3. adım) gelene kadar koçun WhatsApp'ından (wa.me, `build_share_dispatch`
+  kind `coach_message`).
+- `app/services/message_suggestions.py` (ölçüm YENİ DEĞİL): student_flags (boş gün serisi, tamamlama düşük/düştü,
+  kaçınılan ders, deneme atlandı, olumlu G katmanı) + weekly_progress aksiyonları (carry/avoid/brans — Genel
+  "konuşulacaklar" ile aynı) + student_overview.exam_overview (seri eğilimi warn/good, hedef good) + hatırlatma
+  (dünkü program hiç işaretlenmedi, today_no_tick) + yeni rapor (son 3 günde girilen karne/elle deneme → veli+öğrenci;
+  Pzt–Sal geçen haftanın haftalık raporu → veli). Rapor metninde `[rapor bağlantısı]` yer tutucusu GÖNDERİMDE
+  gerçek `/rapor/{token}` ile değişir (bağlantı listede değil gönderimde üretilir). Hazır metinler söz verir,
+  yapılmamış iş iddia etmez ("konuşacağım").
+- Tablo `message_suggestion_actions` (student×audience×key tekil; sent|skipped) → karar verilen öneri bir daha
+  çıkmaz. Anahtarlar hafta/gün/deneme kimliğiyle (ör. `carry:2026w46:12`).
+- Uçlar `api_v2/message_suggestions.py`: GET `/teacher/message-suggestions[?student_id=]` · POST `/send` ·
+  POST `/skip` (yalnız kendi öğrencisi, başkası 404; geçersiz öneri 409; öğrenci önerisi veliye 404).
+- Web `/teacher/messages` (menü İletişim → "Bugünün mesajları"): öğrenci gruplu kartlar (Dikkat/Tebrik/Hatırlatma/
+  Yeni rapor + Veliye/Öğrenciye), düzenlenebilir metin, alıcı seçimi, Atla / WhatsApp'ta gönder, süzgeç; Genel
+  sekmesi "Bu hafta konuşulacaklar"da öğrenci süzgeçli bağlantı.
+- Test YENİ `test_api_v2_message_suggestions.py` 20/20 · YENİ `live_message_suggestions.py` 9/9.
+- Aynı gün: seans gündemi çift kayıt düzeltmesi (`exam_progress.agenda_key_in` + `_canon_key`: Denemeler aksiyonu,
+  Konu Analizi fırsatı `opp:`, Dönem Raporu aynı konu = tek madde; anahtar seri ekli `topic:12:tyt`) ·
+  `#exams-target` / `#exams-report` derin bağlantı (Hedefi düzenle → Rapor & Puan + hedef penceresi) · kart
+  zeminleri bir kademe koyu · gün kartında "Gününde" yerine "ilk işaret HH:MM".
+- **SIRADA:** 3. adım Meta otomatik WhatsApp hattı (aynı öneriler otomatik gönderime) → 4. adım raporlama denetimi.
+  Emir'in gündeminde eski çift madde #67/#69 duruyor (koç Seanslar'dan silebilir).
+
 ## ÖĞRENCİ DETAYI BİLGİ MİMARİSİ — Genel + Dönem Raporu (2026-11-14, CANLI, commit `6d5261c3`, migration YOK)
 
 - **Genel sekmesi sırası:** 1 Bu hafta (cetvel + gün gün) → 2 **Bu hafta konuşulacaklar** (eski "Özet" + "Önlemler"
