@@ -45,34 +45,60 @@ ${trGenitive(firstNameOf(studentName))} ${label} haftasının raporunu hazırlad
 Ayrıntılar raporda; sesli olarak da dinleyebilirsiniz.`;
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3">
-      <div className="min-w-0 flex-1 basis-56">
-        <p className="text-sm font-bold text-emerald-950">Veliye haftalık rapor</p>
-        <p className="text-xs text-emerald-900">
-          Pazartesi–Pazar haftası; veli bağlantıyla açar, sesli dinler, PDF indirebilir.
+    <section className="flex flex-col gap-4 rounded-2xl border border-emerald-300 bg-emerald-50 p-5" data-section="student:parent-weekly">
+      <div className="flex flex-col gap-1">
+        <div className="text-xs font-extrabold tracking-[.08em] text-emerald-800">VELİYLE PAYLAŞ</div>
+        <h2 className="text-xl font-extrabold text-emerald-950 sm:text-[22px]">Veliye haftalık rapor</h2>
+        <p className="text-sm leading-relaxed text-emerald-950">
+          Seçtiğin Pazartesi–Pazar haftasının veli için hazırlanmış özeti. Sayılar bu sayfadakilerle aynı
+          hesaptan gelir; koça özel uyarılar (toplu işaretleme, veri güvenilirliği gibi) veliye gitmez.
         </p>
       </div>
-      <select
-        value={week}
-        onChange={(e) => setWeek(e.target.value)}
-        aria-label="Rapor haftası"
-        className="h-9 rounded-md border border-emerald-400 bg-white px-2 text-sm text-slate-900"
-      >
-        {weeks.map((w) => (
-          <option key={w.value} value={w.value}>
-            {w.label}
-          </option>
-        ))}
-      </select>
-      <Button
-        size="sm"
-        onClick={() => setOpen(true)}
-        className="bg-emerald-700 text-white hover:bg-emerald-800 hover:text-white"
-        data-testid="weekly-share-parent"
-      >
-        <MessageCircle className="size-4" aria-hidden />
-        Veliye WhatsApp
-      </Button>
+      <div className="grid gap-3 text-sm text-emerald-950 md:grid-cols-3">
+        <div className="rounded-xl border border-emerald-200 bg-white p-3">
+          <p className="font-bold">Raporda ne var?</p>
+          <p className="mt-1 text-[13px] leading-relaxed">
+            Görev uyumu, haftadan haftaya gidiş, ders ders ve gün gün durum, denemeler, gelecek hafta ve
+            evde nasıl destek olunacağı.
+          </p>
+        </div>
+        <div className="rounded-xl border border-emerald-200 bg-white p-3">
+          <p className="font-bold">Veli ne yapar?</p>
+          <p className="mt-1 text-[13px] leading-relaxed">
+            Bağlantıyı giriş yapmadan açar, raporu Rota&apos;nın sesiyle dinler, isterse PDF indirir.
+            Bağlantı 60 gün açık kalır.
+          </p>
+        </div>
+        <div className="rounded-xl border border-emerald-200 bg-white p-3">
+          <p className="font-bold">Nasıl gönderilir?</p>
+          <p className="mt-1 text-[13px] leading-relaxed">
+            Haftayı seç, &quot;Veliye WhatsApp&quot;a bas: veliyi seçersin, mesaj hazır gelir, kendi
+            WhatsApp&apos;ından gönderirsin. Velilere Pazartesi akşamı e-postayla da gider.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={week}
+          onChange={(e) => setWeek(e.target.value)}
+          aria-label="Rapor haftası"
+          className="h-10 rounded-md border border-emerald-400 bg-white px-2 text-sm text-slate-900"
+        >
+          {weeks.map((w) => (
+            <option key={w.value} value={w.value}>
+              {w.label}
+            </option>
+          ))}
+        </select>
+        <Button
+          onClick={() => setOpen(true)}
+          className="bg-emerald-700 text-white hover:bg-emerald-800 hover:text-white"
+          data-testid="weekly-share-parent"
+        >
+          <MessageCircle className="size-4" aria-hidden />
+          Veliye WhatsApp
+        </Button>
+      </div>
       <StudentReportShareDialog
         key={week}
         open={open}
@@ -83,6 +109,6 @@ Ayrıntılar raporda; sesli olarak da dinleyebilirsiniz.`;
         title={`${label} haftalık raporu`}
         message={message}
       />
-    </div>
+    </section>
   );
 }

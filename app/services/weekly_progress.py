@@ -813,7 +813,8 @@ def _actions(student: User, cards: list[dict], days: list[dict], balance: dict |
     if left:
         n = sum(len(d["missing"]) for d in left)
         titles = [m["title"] for d in left for m in d["missing"]]
-        short = [(t if len(t) <= 42 else t[:40].rstrip() + "…") for t in titles[:3]]
+        # Görev adı KIRPILMAZ (koç kuralı: "…" yasak) — en çok 3 ad tam yazılır.
+        short = titles[:3]
         names = ", ".join(short) + (f" ve {len(titles) - 3} görev daha" if len(titles) > 3 else "")
         last = left[-1]
         out.append({

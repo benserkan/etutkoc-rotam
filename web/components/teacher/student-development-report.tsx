@@ -16,11 +16,9 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Activity,
   ArrowRight,
   CheckCircle2,
   ClipboardList,
-  Compass,
   Flag,
   Gauge,
   ListChecks,
@@ -46,7 +44,6 @@ import {
   developmentReportKeys,
   getDevelopmentReport,
   type DRAction,
-  type DRCompare,
   type DRExamSeries,
   type DRItem,
   type DRReport,
@@ -68,26 +65,7 @@ const SOURCE_LABEL: Record<string, string> = {
   data: "Veri girişi",
 };
 
-const DAY_STATE: Record<string, { cls: string; label: string }> = {
-  done: { cls: "bg-emerald-600 text-white", label: "tamam" },
-  partial: { cls: "bg-amber-500 text-amber-950", label: "kısmen" },
-  missed: { cls: "bg-rose-600 text-white", label: "yapılmadı" },
-  none: { cls: "bg-muted text-muted-foreground", label: "görev yok" },
-  today: { cls: "bg-cyan-700 text-white", label: "bugün" },
-  pending: { cls: "border border-dashed border-amber-400 bg-amber-50 text-amber-900", label: "işaretlenecek" },
-  future: { cls: "border border-dashed border-border text-muted-foreground", label: "gelecek" },
-};
 
-const STATUS: Record<string, { label: string; cls: string }> = {
-  above: { label: "Normalinden iyi", cls: "bg-emerald-700 text-white" },
-  normal: { label: "Her zamanki", cls: "bg-slate-600 text-white" },
-  below: { label: "Normalin altında", cls: "bg-amber-600 text-white" },
-  critical: { label: "Geçmişin en kötüsü", cls: "bg-rose-700 text-white" },
-  high: { label: "Normalden yüksek", cls: "bg-sky-700 text-white" },
-  low: { label: "Normalden düşük", cls: "bg-sky-700 text-white" },
-  insufficient: { label: "Veri az", cls: "bg-muted text-muted-foreground" },
-  info: { label: "Bilgi", cls: "bg-muted text-muted-foreground" },
-};
 
 function pct(v: number | null | undefined): string {
   return v == null ? "—" : `%${Math.round(v)}`;
@@ -166,7 +144,7 @@ export function StudentDevelopmentReport({
     <div className="space-y-4" data-section="dev-report">
       <Header d={d} fetching={q.isFetching} onRefresh={() => q.refetch()} />
 
-      {d.this_week ? <ThisWeek d={d} /> : (
+      {d.this_week ? null : (
         <p className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">
           Bu öğrencinin henüz program haftası yok; haftalık kıyas program verildikçe oluşur.
         </p>
@@ -179,14 +157,6 @@ export function StudentDevelopmentReport({
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <FindingBox
-          icon={Compass}
-          title="Mevcut durum"
-          desc="Ölçülen gerçekler: bu hafta, haftalar boyunca ve denemelerde neredesin."
-          tone="info"
-          items={d.state}
-          sel={sel}
-        />
-        <FindingBox
           icon={Sparkles}
           title="Güçlü yanlar"
           desc="Öğrencinin kendi normalinin üstünde olduğu ya da yükselen alanlar."
@@ -195,25 +165,28 @@ export function StudentDevelopmentReport({
           sel={sel}
           empty="Şu an normalinin belirgin üstünde olduğu bir alan yok."
         />
+        {notInPlan(d.opportunities, d.actions).length ? (
         <FindingBox
-          icon={TrendingUp}
-          title="Fırsatlar"
-          desc="Az emekle net ya da uyum kazandıracak noktalar."
-          tone="info"
-          items={d.opportunities}
-          sel={sel}
-          empty="Konu bazlı fırsat için soru satırlı (PDF karne) deneme gerekir."
-        />
+            icon={TrendingUp}
+            title="Diğer fırsatlar"
+            desc="Az emekle net ya da uyum kazandıracak noktalar (aksiyon planındakiler hariç)."
+            tone="info"
+            items={notInPlan(d.opportunities, d.actions)}
+            sel={sel}
+            empty="Aksiyon planı dışında kalan bir fırsat yok."
+          />
+        ) : null}
+      </div>
+      {notInPlan(d.risks, d.actions).length ? (
         <FindingBox
           icon={ShieldAlert}
-          title="Riskler"
-          desc="Normalin altına düşen, kötüleşen ya da ölçülemeyen alanlar."
+          title="İzlenecek riskler"
+          desc="Normalin altına düşen ya da kötüleşen alanlar (aksiyon planındakiler hariç)."
           tone="warn"
-          items={d.risks}
+          items={notInPlan(d.risks, d.actions)}
           sel={sel}
-          empty="Belirgin bir risk yok."
         />
-      </div>
+      ) : null}
 
       <ActionPlan actions={d.actions} sel={sel} />
 
@@ -252,6 +225,25 @@ export function StudentDevelopmentReport({
 
 type Sel = { picked: Map<string, string>; toggle: (key: string, agenda: string) => void };
 
+/** Aynı bulgu hem Riskler/Fırsatlar'da hem Aksiyon planında çıkmasın (2026-11-14):
+ *  başlığı bir aksiyonun başlığında geçen madde (seri öneki ve parantez hariç) plandadır. */
+function coreTitle(t: string): string {
+  return t
+    .replace(/^[^:]*\(genel deneme\):\s*/i, "")
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .replace(/ konusunu kapat$/i, "")
+    .toLocaleLowerCase("tr")
+    .trim();
+}
+
+function notInPlan(items: DRItem[], actions: DRAction[]): DRItem[] {
+  const plan = actions.map((a) => coreTitle(a.title));
+  return items.filter((it) => {
+    const c = coreTitle(it.title);
+    return !plan.some((p) => p === c || (c.length >= 6 && p.length >= 6 && (p.includes(c) || c.includes(p))));
+  });
+}
+
 // ---------------------------------------------------------------- başlık
 
 function Header({ d, fetching, onRefresh }: { d: DRReport; fetching: boolean; onRefresh: () => void }) {
@@ -266,11 +258,12 @@ function Header({ d, fetching, onRefresh }: { d: DRReport; fetching: boolean; on
         <div className="min-w-0">
           <h4 className="flex items-center gap-2 text-base font-semibold">
             <Gauge className="size-5 text-cyan-700" aria-hidden />
-            Gelişim Raporu (360°)
+            Dönem Raporu
           </h4>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Bu hafta, geçmiş haftalar ve denemeler birlikte. Rapor saklanmaz; her açılışta güncel veriden
-            yeniden hesaplanır. Son hesaplama {ago(d.generated_at)} · son görev işaretleme{" "}
+            Sınıf döneminin tamamına geriye dönük bakış: haftadan haftaya program uyumu, denemeler seri seri,
+            güçlü yanlar, fırsatlar ve aksiyon planı. Bu haftanın ayrıntısı Genel sekmesinde. Rapor her
+            açılışta güncel veriden yeniden hesaplanır. Son hesaplama {ago(d.generated_at)} · son görev işaretleme{" "}
             {ago(d.activity.last_tick_at)} · son deneme kaydı {ago(d.activity.last_exam_at)}
             {d.queue_count ? ` · seans gündeminde ${d.queue_count} madde` : ""}.
           </p>
@@ -318,71 +311,6 @@ function Section({
 }
 
 // ---------------------------------------------------------------- bu hafta
-
-function ThisWeek({ d }: { d: DRReport }) {
-  const tw = d.this_week!;
-  const w = tw.week;
-  return (
-    <Section
-      icon={Activity}
-      title={w.ended ? `Son program haftası · ${w.label}` : `Bu hafta · ${w.label}`}
-      desc={
-        w.ended
-          ? "Hafta tamamlandı; geçmiş haftalarla tam hafta olarak kıyaslanır."
-          : `${w.day_index}/${w.days}. gün. Kıyas, geçmiş haftaların aynı gününe kadar yapılır (${w.compare_days} gün); bugün henüz sürdüğü için sayılmaz.`
-      }
-    >
-      <div className="mb-4 grid grid-cols-7 gap-1.5">
-        {tw.days.map((day) => {
-          const s = DAY_STATE[day.state] ?? DAY_STATE.none;
-          return (
-            <div
-              key={day.date}
-              className={cn("rounded-lg px-1 py-1.5 text-center", s.cls)}
-              title={
-                day.missing.length
-                  ? `Yapılmayan: ${day.missing.map((m) => m.title).join(", ")}`
-                  : s.label
-              }
-            >
-              <p className="text-[11px] font-semibold">{day.day}</p>
-              <p className="text-sm font-bold tabular-nums">
-                {day.total ? `${day.done}/${day.total}` : "—"}
-              </p>
-              <p className="text-[10px]">{s.label}</p>
-            </div>
-          );
-        })}
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-        {tw.compare.map((c) => (
-          <CompareCard key={c.key} c={c} />
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-function CompareCard({ c }: { c: DRCompare }) {
-  const st = STATUS[c.status] ?? STATUS.info;
-  const showBand = c.low != null && c.high != null;
-  return (
-    <div className="rounded-lg border border-border p-3" title={c.hint}>
-      <div className="flex flex-wrap items-center justify-between gap-1">
-        <p className="text-xs font-medium text-muted-foreground">{c.name}</p>
-        <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", st.cls)}>{st.label}</span>
-      </div>
-      <p className="mt-1 text-xl font-semibold tabular-nums">{c.value_label}</p>
-      <p className="text-[11px] text-muted-foreground">
-        Geçen hafta {c.prev_label}
-        {showBand ? ` · genelde ${Math.round(c.low!)}–${Math.round(c.high!)}${c.unit === "%" ? "%" : ` ${c.unit}`}` : ""}
-      </p>
-      <p className="mt-1 text-xs leading-relaxed">{c.verdict}</p>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------- haftalar
 
 function WeeksSection({ d }: { d: DRReport }) {
   const rows = d.weeks;

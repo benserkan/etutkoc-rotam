@@ -78,7 +78,6 @@ import { CurriculumPanel } from "@/components/teacher/curriculum-panel";
 import { ProgramHistoryPanel } from "@/components/teacher/program-history-panel";
 import { StudentDevHub } from "@/components/teacher/student-dev-hub";
 import { StudentDevelopmentReportTab } from "@/components/teacher/student-development-report";
-import { ParentWeeklyShareBar } from "@/components/teacher/parent-weekly-share-bar";
 import { StudentWeeklyProgress } from "@/components/teacher/student-weekly-progress";
 import {
   DropdownMenu,
@@ -121,7 +120,7 @@ const TAB_GROUPS: Array<{
       { key: "summary", label: "Genel", icon: LayoutDashboard },
       // 2026-10-27: 360° rapor Denemeler'in alt sekmesiydi; program + deneme + aksiyon planını
       // birlikte anlattığı için öğrencinin bütününe ait → Genel'in yanında kendi sekmesi.
-      { key: "report", label: "Gelişim Raporu", icon: Gauge },
+      { key: "report", label: "Dönem Raporu", icon: Gauge },
     ],
   },
   {
@@ -342,8 +341,7 @@ export function StudentTabs({ studentId, initial }: Props) {
         >
           {/* 2026-10-20: haftalık ilerleme (manşet + gidişat + önlemler + 13 başlık + deneme).
               Eski üst özet şeridi kaldırıldı; uyarı ve ayar kartları en altta katlı. */}
-          <ParentWeeklyShareBar studentId={studentId} studentName={s.full_name} />
-          <StudentWeeklyProgress studentId={studentId} />
+          <StudentWeeklyProgress studentId={studentId} studentName={s.full_name} />
 
           <details className="group rounded-2xl border border-border bg-card px-5 py-4">
             <summary className="flex min-h-[28px] cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-bold">

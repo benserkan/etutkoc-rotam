@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CalendarDays, Info, Plus } from "lucide-react";
 
+import { ParentWeeklyShareBar } from "@/components/teacher/parent-weekly-share-bar";
 import { Button } from "@/components/ui/button";
 import { useAddAgendaItems } from "@/lib/hooks/use-exam-progress-mutations";
 import {
@@ -373,121 +374,126 @@ function OverviewItem({
   );
 }
 
-function Overview({ data, studentId }: { data: WeeklyProgressResponse; studentId: number }) {
+type PriorityItem = {
+  key: string;
+  tone: string;
+  title: string;
+  text: string;
+  agenda?: string | null;
+  link?: { href: string; label: string };
+};
+
+/** "Bu hafta konuşulacaklar" — eski "Özet" (veri güvenilirliği · deneme · hedef) ile
+ *  "Önlemler" TEK listede (2026-11-14, bilgi mimarisi): aynı ekranda iki ayrı "önce
+ *  bunlara bak" listesi koçu iki kez okumaya zorluyordu. Dikkat isteyenler kart,
+ *  yalnız bilgi verenler altta kısa satır. */
+function Priorities({ data, studentId }: { data: WeeklyProgressResponse; studentId: number }) {
   const ov = data.overview;
-  if (!ov) return null;
-  const exams = ov.exams && ov.exams.length ? ov.exams : ov.exam ? [ov.exam] : [];
-  const targets = ov.targets && ov.targets.length ? ov.targets : ov.target ? [ov.target] : [];
-  const examRows: { label: string; desc: string; body: React.ReactNode }[] =
-    exams.length === 0
-      ? [
-          {
-            label: "Deneme gidişatı",
-            desc: "Genel deneme",
-            body: (
-              <>
-                <p className="text-sm text-muted-foreground">Henüz genel deneme sonucu yok.</p>
-                {ov.exam_note ? <p className="text-xs text-muted-foreground">{ov.exam_note}</p> : null}
-              </>
-            ),
-          },
-        ]
-      : exams.map((ex, i) => ({
-          label: exams.length > 1 ? `Deneme gidişatı · ${ex.series_label.replace(/\s*\(genel deneme\)$/, "")}` : "Deneme gidişatı",
-          desc: `${ex.series_label} · ${ex.count} deneme`,
-          body: (
-            <>
-              <OverviewItem
-                tone={ex.tone}
-                title={ex.count < 2 ? "Tek deneme" : ex.tone === "warn" ? "Eğilim aşağı" : ex.tone === "good" ? "Eğilim yukarı" : "Deneme netleri"}
-                text={ex.text}
-                agendaKey={`exam-${ex.series_key ?? i}`}
-                studentId={studentId}
-                link={{ href: `/teacher/students/${studentId}#report`, label: "Gelişim raporu" }}
-              />
-              {i === exams.length - 1 && ov.exam_note ? (
-                <p className="text-xs text-muted-foreground">{ov.exam_note}</p>
-              ) : null}
-            </>
-          ),
-        }));
-  const targetRows: { label: string; desc: string; body: React.ReactNode }[] =
-    targets.length === 0
-      ? [
-          {
-            label: "Hedef",
-            desc: "Hedef nete gereken tempo ile gerçek tempo",
-            body: (
-              <OverviewItem
-                tone="info"
-                title="Hedef net belirlenmemiş"
-                text="Hedef net ve tarih girilince gereken haftalık artış ile gerçek tempo burada kıyaslanır."
-                agendaKey="target"
-                studentId={studentId}
-                link={{ href: `/teacher/students/${studentId}#exams`, label: "Hedef belirle" }}
-              />
-            ),
-          },
-        ]
-      : targets.map((t, i) => ({
-          label: targets.length > 1 || exams.length > 1 ? `Hedef · ${(t.series_label ?? "").replace(/\s*\(genel deneme\)$/, "")}` : "Hedef",
-          desc: "Hedef nete gereken tempo ile gerçek tempo",
-          body: (
-            <OverviewItem
-              tone={t.tone}
-              title={t.realistic === false ? "Hedef tarihi gerçekçi değil" : t.tone === "good" ? "Hedefe doğru gidiyor" : "Hedefe uzaklık"}
-              text={t.text}
-              agenda={t.agenda}
-              agendaKey={`target-${t.series_key ?? i}`}
-              studentId={studentId}
-              link={{ href: `/teacher/students/${studentId}#exams`, label: "Hedefi düzenle" }}
-            />
-          ),
-        }));
-  const rows: { label: string; desc: string; body: React.ReactNode }[] = [
-    {
-      label: "Veri güvenilirliği",
-      desc: "İşaretleme düzeni ve doğru/yanlış girme",
-      body:
-        ov.reliability.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Son iki haftada değerlendirecek kadar işaretleme yok.</p>
-        ) : (
-          ov.reliability.map((r) => (
-            <OverviewItem
-              key={r.key}
-              tone={r.tone}
-              title={r.title}
-              text={r.text}
-              agenda={r.agenda}
-              agendaKey={r.key}
-              studentId={studentId}
-              link={r.key === "results" && r.tone === "warn" ? { href: `/teacher/students/${studentId}#topics`, label: "Konu performansı" } : undefined}
-            />
-          ))
-        ),
-    },
-    ...examRows,
-    ...targetRows,
-  ];
+  const items: PriorityItem[] = data.actions.map((a) => ({
+    key: `wp:${a.key}`,
+    tone: "warn",
+    title: a.title,
+    text: a.why,
+    agenda: a.agenda,
+    link: { href: a.cta_href, label: a.cta_label },
+  }));
+  if (ov) {
+    for (const r of ov.reliability) {
+      items.push({
+        key: `ov:${r.key}`,
+        tone: r.tone,
+        title: r.title,
+        text: r.text,
+        agenda: r.agenda,
+        link: r.key === "results" && r.tone === "warn" ? { href: `/teacher/students/${studentId}#topics`, label: "Konu performansı" } : undefined,
+      });
+    }
+    const exams = ov.exams && ov.exams.length ? ov.exams : ov.exam ? [ov.exam] : [];
+    exams.forEach((ex, i) => {
+      const series = ex.series_label.replace(/\s*\(genel deneme\)$/, "");
+      items.push({
+        key: `ov:exam-${ex.series_key ?? i}`,
+        tone: ex.tone,
+        title: `${series} denemeleri: ${ex.count < 2 ? "tek deneme" : ex.tone === "warn" ? "eğilim aşağı" : ex.tone === "good" ? "eğilim yukarı" : "netler"}`,
+        text: ex.text,
+        link: { href: `/teacher/students/${studentId}#exams`, label: "Denemeler" },
+      });
+    });
+    const targets = ov.targets && ov.targets.length ? ov.targets : ov.target ? [ov.target] : [];
+    if (targets.length === 0) {
+      items.push({
+        key: "ov:target",
+        tone: "info",
+        title: "Hedef net belirlenmemiş",
+        text: "Hedef net ve tarih girilince gereken haftalık artış ile gerçek tempo burada kıyaslanır.",
+        link: { href: `/teacher/students/${studentId}#exams`, label: "Hedef belirle" },
+      });
+    }
+    targets.forEach((t, i) => {
+      const series = (t.series_label ?? "").replace(/\s*\(genel deneme\)$/, "");
+      items.push({
+        key: `ov:target-${t.series_key ?? i}`,
+        tone: t.tone,
+        title: `${series ? `${series} hedefi: ` : "Hedef: "}${t.realistic === false ? "tarih gerçekçi değil" : t.tone === "good" ? "hedefe doğru gidiyor" : "hedefe uzaklık"}`,
+        text: t.text,
+        agenda: t.agenda,
+        link: { href: `/teacher/students/${studentId}#exams`, label: "Hedefi düzenle" },
+      });
+    });
+  }
+  const warn = items.filter((i) => i.tone === "warn");
+  const rest = items.filter((i) => i.tone !== "warn");
+
   return (
     <Zone
-      no={1}
-      eyebrow="ÖZET"
-      tone="violet"
-      title="Önce bunlara bak"
-      desc="Verinin ne kadar güvenilir olduğu, deneme gidişatı ve hedefin gerçekçiliği. Bu bölümü yalnız sen görürsün; öğrenci ve veli görmez."
+      no={2}
+      eyebrow="KONUŞULACAKLAR"
+      tone="amber"
+      title="Bu hafta konuşulacaklar"
+      desc="Programdan, işaretleme düzeninden, denemelerden ve hedeften çıkan, dikkat isteyen konular. Her madde bir ölçüme dayanır; karar senin. Bu bölümü yalnız sen görürsün."
     >
-      <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
-        {rows.map((r) => (
-          <div key={r.label} className="grid gap-3 p-4 md:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-extrabold">{r.label}</span>
-              <span className="text-xs text-muted-foreground">{r.desc}</span>
-            </div>
-            <div className="flex min-w-0 flex-col gap-2.5">{r.body}</div>
+      {warn.length === 0 ? (
+        <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+          Bu hafta dikkat isteyen bir konu yok.
+        </p>
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {warn.map((it) => (
+            <OverviewItem
+              key={it.key}
+              tone={it.tone}
+              title={it.title}
+              text={it.text}
+              agenda={it.agenda}
+              agendaKey={it.key}
+              studentId={studentId}
+              link={it.link}
+            />
+          ))}
+        </div>
+      )}
+      {rest.length ? (
+        <div className="rounded-xl border border-border bg-card">
+          <div className="border-b border-border px-4 py-2 text-xs font-bold tracking-wide text-muted-foreground">
+            BİLGİ
           </div>
-        ))}
-      </div>
+          <ul className="divide-y divide-border">
+            {rest.map((it) => (
+              <li key={it.key} className="flex flex-wrap items-start justify-between gap-2 px-4 py-2.5">
+                <div className="min-w-0 flex-1 basis-64">
+                  <p className="text-sm font-semibold">{it.title}</p>
+                  <p className="text-[13px] leading-relaxed text-muted-foreground">{it.text}</p>
+                </div>
+                {it.link ? (
+                  <Link href={it.link.href} className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-cyan-800 hover:underline">
+                    {it.link.label} <ArrowRight className="size-3.5" aria-hidden />
+                  </Link>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </Zone>
   );
 }
@@ -509,7 +515,7 @@ function ThisWeek({ data, studentId }: { data: WeeklyProgressResponse; studentId
       : "henüz geçen gün yok";
   return (
     <Zone
-      no={3}
+      no={1}
       eyebrow={isPeriod ? "BU DÖNEM" : "BU HAFTA"}
       tone="cyan"
       title={isPeriod ? "Bu dönem nasıl gidiyor?" : "Bu hafta nasıl gidiyor?"}
@@ -619,12 +625,11 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
   const pos = (v: number) => Math.max(0, Math.min(100, (100 * (v - floor)) / (100 - floor || 1)));
   return (
     <Zone
-      no={4}
+      no={3}
       eyebrow="GİDİŞAT"
       tone="indigo"
       title="Haftalar arası gidişat"
       desc="Son 8 program haftasında görev uyumu (tam haftalar; bu hafta bugüne kadar)."
-      className="min-w-0 flex-[999_1_560px]"
     >
       <div className="flex flex-col gap-2 rounded-xl border border-indigo-200 bg-card px-4 pb-3 pt-5">
         <div className="mt-6 flex gap-2.5">
@@ -721,51 +726,6 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
   );
 }
 
-// ---------------------------------------------------------------- 3 ÖNLEMLER
-
-function Actions({ data, studentId }: { data: WeeklyProgressResponse; studentId: number }) {
-  const add = useAddAgendaItems(studentId);
-  return (
-    <Zone
-      no={2}
-      eyebrow="ÖNLEMLER"
-      tone="amber"
-      title="Önerilen önlemler"
-      desc="Her öneri bir ölçüme dayanır; karar senin."
-      >
-      {data.actions.length === 0 ? (
-        <p className="rounded-xl border border-amber-200 bg-card p-4 text-sm text-muted-foreground">
-          Bu hafta öne çıkan bir sorun yok.
-        </p>
-      ) : (
-        data.actions.map((a) => (
-          <div key={a.key} className="flex flex-col gap-2.5 rounded-xl border border-amber-200 bg-card p-3.5">
-            <div className="text-sm font-bold leading-snug">{a.title}</div>
-            <div className="text-xs leading-relaxed text-muted-foreground">
-              <b className="text-foreground">Neden:</b> {a.why}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button asChild size="sm" className="bg-cyan-700 text-white hover:bg-cyan-800">
-                <Link href={a.cta_href}>
-                  {a.cta_label} <ArrowRight className="size-3.5" aria-hidden />
-                </Link>
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={add.isPending}
-                onClick={() => add.mutate([{ text: a.agenda, key: `wp:${a.key}`, source: "weekly" }])}
-              >
-                <Plus className="size-3.5" aria-hidden /> Seansa ekle
-              </Button>
-            </div>
-          </div>
-        ))
-      )}
-    </Zone>
-  );
-}
-
 // ---------------------------------------------------------------- 4 KARTLAR
 
 function MetricCard({ card }: { card: WPCard }) {
@@ -808,19 +768,27 @@ function Metrics({ data }: { data: WeeklyProgressResponse }) {
   const lw = data.last_week ?? null;
   // 1. gün: ölçülen kartlar geçen haftanın tam sonucu; bilgi kartları (deneme, arşiv, denge, talep) güncel kalır.
   const lwKeys = new Set(lw?.cards.map((c) => c.key) ?? []);
-  const shown = lw ? [...lw.cards, ...data.cards.filter((c) => !lwKeys.has(c.key))] : data.cards;
+  const all = lw ? [...lw.cards, ...data.cards.filter((c) => !lwKeys.has(c.key))] : data.cards;
+  // Görev uyumu ve çözülen test "Bu hafta" bölümünde zaten büyük kart — burada tekrar edilmez.
+  const shown = all.filter((c) => c.key !== "gorev_pct" && c.key !== "test_done");
   return (
     <Zone
-      no={5}
-      eyebrow="13 BAŞLIK"
+      no={4}
+      eyebrow="TÜM ÖLÇÜLER"
       tone="slate"
-      title={lw ? `Geçen hafta (${lw.label}), öğrencinin kendi normaline göre` : "Bu hafta, öğrencinin kendi normaline göre"}
+      title={lw ? `Geçen hafta (${lw.label}): diğer ölçüler` : "Bu haftanın diğer ölçüleri"}
       desc={
         lw
           ? "Bugün haftanın ilk günü; bu haftanın kıyası ilk gün bitince başlar. Kartlar geçen haftanın tam sonucunu, öğrencinin geçmiş tam haftalarıyla kıyaslar."
-          : "Her kart, öğrencinin geçmiş program haftalarının aynı noktasıyla kıyaslanır."
+          : "Doğruluk, deneme neti, yeni konu, verilen yük, gününde tamamlama, gece çalışma, boş gün ve ders dengesi. Her kart öğrencinin geçmiş haftalarının aynı noktasıyla kıyaslanır."
       }
     >
+      <details className="group flex flex-col gap-4">
+        <summary className="flex w-fit cursor-pointer list-none items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold hover:bg-muted">
+          <span className="group-open:hidden">{shown.length} ölçüyü göster</span>
+          <span className="hidden group-open:inline">Ölçüleri gizle</span>
+        </summary>
+        <div className="mt-4 flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-slate-50 px-3.5 py-2.5 text-xs">
         <b>Cetveller nasıl okunur?</b>
         <span className="inline-flex items-center gap-1.5">
@@ -858,6 +826,8 @@ function Metrics({ data }: { data: WeeklyProgressResponse }) {
           </div>
         );
       })}
+        </div>
+      </details>
     </Zone>
   );
 }
@@ -968,11 +938,11 @@ function Deneme({ data, studentId }: { data: WeeklyProgressResponse; studentId: 
   const genel = (dn?.series ?? []).filter((s) => s.kind === "genel");
   return (
     <Zone
-      no={6}
-      eyebrow="DENEMELER"
+      no={5}
+      eyebrow="PROGRAM DENEMELERİ"
       tone="violet"
-      title="Deneme analizi"
-      desc="Programdaki deneme görevlerinden; net yüzdesi = net ÷ soru sayısı (farklı soru sayılı denemeler yan yana konur)."
+      title="Programdaki denemeler"
+      desc="Haftalık programa konan deneme görevlerinin sonuçları (çoğunlukla branş denemeleri). Karne denemeleri ve deneme gelişim raporu Denemeler sekmesinde. Net yüzdesi = net ÷ soru sayısı."
       right={
         <div className="flex flex-wrap items-center gap-2">
           {dn && dn.summary.pending > 0 ? (
@@ -1004,7 +974,7 @@ function Deneme({ data, studentId }: { data: WeeklyProgressResponse; studentId: 
 
 // ---------------------------------------------------------------- kök
 
-export function StudentWeeklyProgress({ studentId }: { studentId: number }) {
+export function StudentWeeklyProgress({ studentId, studentName }: { studentId: number; studentName?: string | null }) {
   const q = useQuery({
     queryKey: weeklyProgressKeys.detail(studentId),
     queryFn: () => getWeeklyProgress(studentId),
@@ -1036,10 +1006,10 @@ export function StudentWeeklyProgress({ studentId }: { studentId: number }) {
   }
   return (
     <div className="flex flex-col gap-10" data-section="student:weekly-progress">
-      <Overview data={data} studentId={studentId} />
-      <Actions data={data} studentId={studentId} />
       <ThisWeek data={data} studentId={studentId} />
+      <Priorities data={data} studentId={studentId} />
       <Trend data={data} />
+      <ParentWeeklyShareBar studentId={studentId} studentName={studentName} />
       <Metrics data={data} />
       <Deneme data={data} studentId={studentId} />
     </div>
