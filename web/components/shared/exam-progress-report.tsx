@@ -29,6 +29,8 @@ import {
 import { toast } from "sonner";
 
 import { ExamSection } from "@/components/teacher/exams/exam-analytics";
+import { StudentReportShareDialog } from "@/components/shared/exam-report-share-dialog";
+import { firstNameOf, trGenitive } from "@/lib/tr-genitive";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -700,8 +702,38 @@ function ReportShare({
   studentId: number | null;
 }) {
   const text = () => buildProgressShareText(data, studentName);
+  const [parentOpen, setParentOpen] = React.useState(false);
+  const s = data.stats;
+  const parentMessage = s
+    ? `Merhaba,
+${trGenitive(firstNameOf(studentName))} ${(data.section_label ?? "").replace(" (genel deneme)", "")} denemelerindeki gelişim raporunu hazırladım: ${s.count} denemede net ${fmtNet(s.first_net)} → ${fmtNet(s.last_net)}.
+Ders ders gidişat ve öneriler raporda; sesli olarak da dinleyebilirsiniz.`
+    : "";
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {studentId != null && s ? (
+        <>
+          <Button
+            size="sm"
+            onClick={() => setParentOpen(true)}
+            className="bg-emerald-700 text-white hover:bg-emerald-800 hover:text-white"
+            title="Gelişim raporunu veliye WhatsApp'tan gönder (bağlantı + sesli dinleme + PDF)"
+            data-testid="progress-share-parent"
+          >
+            <MessageCircle className="size-4" aria-hidden />
+            Veliye WhatsApp
+          </Button>
+          <StudentReportShareDialog
+            open={parentOpen}
+            onClose={() => setParentOpen(false)}
+            studentId={studentId}
+            kind="progress"
+            series={data.series ?? null}
+            title={`${(data.section_label ?? "").replace(" (genel deneme)", "")} gelişim raporu`}
+            message={parentMessage}
+          />
+        </>
+      ) : null}
       {studentId != null ? (
         <Button
           size="sm"

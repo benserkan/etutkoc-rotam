@@ -8,6 +8,7 @@ paketi/onayı uygun değilse sayfa telefonun kendi sesine düşer.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -15,77 +16,23 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
-from app.models import ExamResult, User
+from app.models import User
 
 router = APIRouter(prefix="/public/exam-report", tags=["v2-exam-report-public"])
 
 
-class ReportSubject(BaseModel):
-    name: str
-    questions: int
-    correct: int
-    wrong: int
-    blank: int
-    net_text: str
-    pct: int
-    level: str
-    level_label: str
-    sentence: str
-
-
-class ReportOpportunity(BaseModel):
-    subject: str
-    topic: str
-    gain_text: str
-
-
-class ReportHistoryExam(BaseModel):
+class ParentReportPublic(BaseModel):
+    """Genel rapor yapısı — tür (exam|progress|weekly) ne olursa olsun aynı biçim."""
+    kind: str
     title: str
-    date_tr: str
-    net_text: str
-    is_current: bool
-
-
-class ReportHistoryRow(BaseModel):
-    subject: str
-    nets: list[str | None]
-    direction: str | None = None
-
-
-class ReportHistory(BaseModel):
-    has_data: bool = False
-    exams: list[ReportHistoryExam] = []
-    rows: list[ReportHistoryRow] = []
-    totals: list[str] = []
-
-
-class ExamReportPublic(BaseModel):
+    subtitle: str
     student_first: str
-    student_gen: str
-    exam_title: str
-    exam_date_tr: str
-    section_label: str | None = None
     brand_name: str
     brand_logo_url: str | None = None
     coach_name: str | None = None
-    net_text: str
-    correct: int
-    wrong: int
-    blank: int
-    total_questions: int
-    correct_pct: int
-    headline: str
-    trend_text: str
-    delta_direction: str | None = None
-    prev_net_text: str | None = None
-    narrative: list[str]
-    explain: str
-    subjects: list[ReportSubject]
-    history: ReportHistory
-    opportunities: list[ReportOpportunity]
-    opportunity_total_text: str | None = None
-    opportunity_exam_count: int = 0
-    tips: list[str]
+    hero: dict[str, Any]
+    #: bölümler: bullets · levels · bars · table · gains · tips · text
+    sections: list[dict[str, Any]]
     speech_text: str
     #: Rota'nın sesi kullanılabilir mi (hazır ya da üretilebilir). False →
     #: sayfa telefonun kendi sesini kullanır.
@@ -107,40 +54,38 @@ def _not_found() -> HTTPException:
 
 
 def _load(db: Session, token: str):
-    from app.services.exam_parent_report import get_usable_by_token
+    """(bağlantı, rapor verisi) — bağlantı geçersizse ya da kaynağı silinmişse 404."""
+    from app.services.exam_parent_report import build_link_data, get_usable_by_token
 
     rep = get_usable_by_token(db, token)
     if rep is None:
         raise _not_found()
-    exam = db.get(ExamResult, rep.exam_id)
-    if exam is None:
+    data = build_link_data(db, rep)
+    if data is None:
         raise _not_found()
-    return rep, exam
+    return rep, data
 
 
-def _voice_gate(db: Session, exam: ExamResult) -> tuple[User | None, bool]:
+def _voice_gate(db: Session, student_id: int) -> tuple[User | None, bool]:
     from app.routes.api_v2.parent import _parent_insight_gate
 
-    student = db.get(User, exam.student_id)
+    student = db.get(User, student_id)
     if student is None:
         return None, False
     coach, ok, _ = _parent_insight_gate(db, student)
     return coach, ok
 
 
-@router.get("/{token}", response_model=ExamReportPublic)
+@router.get("/{token}", response_model=ParentReportPublic)
 def exam_report_view(token: str, db: Session = Depends(get_db)):
-    from app.services.exam_parent_report import build_report_data
-
-    rep, exam = _load(db, token)
-    data = build_report_data(db, exam)
-    _, gate_ok = _voice_gate(db, exam)
+    rep, data = _load(db, token)
+    _, gate_ok = _voice_gate(db, rep.student_id)
     voice_ready = bool(rep.audio_content_type) and rep.audio_signature == data["speech_signature"]
     rep.view_count = (rep.view_count or 0) + 1
     rep.last_viewed_at = datetime.now(timezone.utc)
     db.commit()
-    return ExamReportPublic(
-        **{k: v for k, v in data.items() if k in ExamReportPublic.model_fields},
+    return ParentReportPublic(
+        **{k: v for k, v in data.items() if k in ParentReportPublic.model_fields},
         voice_available=voice_ready or gate_ok,
         voice_ready=voice_ready,
         expires_at=rep.expires_at.isoformat(),
@@ -155,16 +100,15 @@ def exam_report_voice(token: str, db: Session = Depends(get_db)):
     from app.models import UsageKind
     from app.services.ai_book_template import AIServiceUnavailable
     from app.services.credits import CreditBlocked, CreditOwner, check_credit_available, consume_credits
-    from app.services.exam_parent_report import build_report_data
     from app.services.tts import synthesize_speech
 
-    rep, exam = _load(db, token)
-    data = build_report_data(db, exam)
+    rep, data = _load(db, token)
     sig = data["speech_signature"]
     if rep.audio_content_type and rep.audio_signature == sig:
         return ReportVoiceResult(ready=True)
 
-    coach, ok = _voice_gate(db, exam)
+    coach, ok = _voice_gate(db, rep.student_id)
+    student_id = rep.student_id
     if not ok or coach is None:
         return ReportVoiceResult(ready=False, fallback=True)
     owner = CreditOwner.for_user(coach)
@@ -192,7 +136,7 @@ def exam_report_voice(token: str, db: Session = Depends(get_db)):
             db, owner=owner, kind=UsageKind.AI_PARENT_COMMENTARY_VOICE,
             actor_user_id=None, autocommit=False,
         ) as ctx:
-            ctx.set_metadata({"student_id": exam.student_id, "exam_id": exam.id, "by": "exam_report"})
+            ctx.set_metadata({"student_id": student_id, "report_kind": data["kind"], "by": "parent_report"})
         rep.audio = audio
         rep.audio_content_type = content_type
         rep.audio_signature = sig
@@ -222,10 +166,9 @@ def exam_report_audio(token: str, db: Session = Depends(get_db)):
 
 @router.get("/{token}/pdf")
 def exam_report_pdf(token: str, db: Session = Depends(get_db)):
-    from app.services.exam_parent_report import build_report_data, pdf_filename, render_report_pdf
+    from app.services.exam_parent_report import pdf_filename, render_report_pdf
 
-    _, exam = _load(db, token)
-    data = build_report_data(db, exam)
+    _, data = _load(db, token)
     pdf = render_report_pdf(data)
     return Response(content=pdf, media_type="application/pdf", headers={
         "Content-Disposition": f'inline; filename="{pdf_filename(data)}"',

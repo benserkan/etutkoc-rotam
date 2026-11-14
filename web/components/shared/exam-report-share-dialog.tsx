@@ -9,7 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ApiError } from "@/lib/api";
 import { buildShareLink, getShareTargets, messagingKeys } from "@/lib/api/messaging";
-import { downloadExamParentReportPdf, getExamParentReportLink } from "@/lib/api/teacher";
+import {
+  downloadExamParentReportPdf,
+  downloadStudentParentReportPdf,
+  getExamParentReportLink,
+  getStudentParentReportLink,
+  type ExamParentReportLink,
+} from "@/lib/api/teacher";
+import type { ShareReportKind } from "@/lib/types/messaging";
 import { SELF, ShareRecipients } from "@/components/shared/share-report-dialog";
 
 /**
@@ -38,22 +45,77 @@ export function ExamReportShareDialog({
 }) {
   if (!open) return null;
   return (
-    <Inner onClose={onClose} examId={examId} studentId={studentId} title={title} message={message} />
+    <ParentReportShareInner
+      onClose={onClose}
+      studentId={studentId}
+      title={title}
+      message={message}
+      shareKind="exam_card"
+      refId={examId}
+      linkKey={["teacher", "me", "exams", examId, "parent-report-link"]}
+      getLink={() => getExamParentReportLink(examId)}
+      downloadPdf={() => downloadExamParentReportPdf(examId)}
+    />
   );
 }
 
-function Inner({
+/** Gelişim / haftalık raporu veliye WhatsApp'tan gönder (aynı pencere). */
+export function StudentReportShareDialog({
+  open,
   onClose,
-  examId,
   studentId,
+  kind,
+  series,
+  weekStart,
   title,
   message,
 }: {
+  open: boolean;
   onClose: () => void;
-  examId: number;
+  studentId: number;
+  kind: "progress" | "weekly";
+  series?: string | null;
+  weekStart?: string | null;
+  title: string;
+  message: string;
+}) {
+  if (!open) return null;
+  const body = { kind, series: series ?? null, week_start: weekStart ?? null };
+  return (
+    <ParentReportShareInner
+      onClose={onClose}
+      studentId={studentId}
+      title={title}
+      message={message}
+      shareKind={kind === "weekly" ? "parent_weekly" : "exam_progress"}
+      refId={null}
+      linkKey={["teacher", "me", "students", studentId, "parent-report-link", kind, series ?? "", weekStart ?? ""]}
+      getLink={() => getStudentParentReportLink(studentId, body)}
+      downloadPdf={() => downloadStudentParentReportPdf(studentId, body)}
+    />
+  );
+}
+
+function ParentReportShareInner({
+  onClose,
+  studentId,
+  title,
+  message,
+  shareKind,
+  refId,
+  linkKey,
+  getLink,
+  downloadPdf,
+}: {
+  onClose: () => void;
   studentId: number;
   title: string;
   message: string;
+  shareKind: ShareReportKind;
+  refId: number | null;
+  linkKey: readonly unknown[];
+  getLink: () => Promise<ExamParentReportLink>;
+  downloadPdf: () => Promise<void>;
 }) {
   const [text, setText] = React.useState(message);
   const [picked, setPicked] = React.useState<number | null>(null);
@@ -65,8 +127,8 @@ function Inner({
     queryFn: () => getShareTargets(studentId),
   });
   const linkQ = useQuery({
-    queryKey: ["teacher", "me", "exams", examId, "parent-report-link"],
-    queryFn: () => getExamParentReportLink(examId),
+    queryKey: linkKey,
+    queryFn: getLink,
     staleTime: 5 * 60_000,
   });
   const targets = React.useMemo(() => targetsQ.data?.targets ?? [], [targetsQ.data]);
@@ -88,10 +150,10 @@ function Inner({
     try {
       const res = await buildShareLink({
         student_id: studentId,
-        kind: "exam_card",
+        kind: shareKind,
         text: fullText,
         target_user_id: selected === SELF ? null : selected,
-        ref_id: examId,
+        ref_id: refId,
       });
       if (win) win.location.href = res.wa_url;
       else window.location.href = res.wa_url;
@@ -110,7 +172,7 @@ function Inner({
   async function pdf() {
     setPdfBusy(true);
     try {
-      await downloadExamParentReportPdf(examId);
+      await downloadPdf();
     } catch {
       toast.error("PDF hazırlanamadı, biraz sonra tekrar dene.");
     } finally {
@@ -129,7 +191,7 @@ function Inner({
         <DialogHeader>
           <DialogTitle>Veliye WhatsApp&apos;tan gönder</DialogTitle>
           <DialogDescription>
-            {`${title}: veli analiz raporunu bir bağlantıyla açar, Rota'nın sesiyle dinleyebilir ve isterse PDF olarak indirir.`}
+            {`${title}: veli raporu bir bağlantıyla açar, Rota'nın sesiyle dinleyebilir ve isterse PDF olarak indirir.`}
           </DialogDescription>
         </DialogHeader>
 

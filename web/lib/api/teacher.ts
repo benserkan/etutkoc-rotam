@@ -1041,3 +1041,42 @@ export async function downloadExamParentReportPdf(
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
+
+/** Gelişim / haftalık veli raporu — istek gövdesi. */
+export interface StudentParentReportBody {
+  kind: "progress" | "weekly";
+  series?: string | null;
+  week_start?: string | null;
+}
+
+export function getStudentParentReportLink(studentId: number, body: StudentParentReportBody) {
+  return api<ExamParentReportLink>(`/api/v2/teacher/students/${studentId}/parent-report-link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function downloadStudentParentReportPdf(studentId: number, body: StudentParentReportBody) {
+  const res = await api<Response>(`/api/v2/teacher/students/${studentId}/parent-report.pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    raw: true,
+  });
+  await saveBlobResponse(res, "veli-raporu.pdf");
+}
+
+async function saveBlobResponse(res: Response, fallback: string) {
+  const blob = await res.blob();
+  const cd = res.headers.get("Content-Disposition") ?? "";
+  const name = /filename="([^"]+)"/.exec(cd)?.[1] ?? fallback;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

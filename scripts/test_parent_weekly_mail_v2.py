@@ -110,6 +110,8 @@ def cleanup(d):
         db.execute(delete(Task).where(Task.student_id == d["s"]))
         db.execute(delete(ExamResult).where(ExamResult.student_id == d["s"]))
         db.execute(delete(NotificationLog).where(NotificationLog.parent_id == d["p"]))
+        from app.models.exam_parent_report import ExamParentReport
+        db.execute(delete(ExamParentReport).where(ExamParentReport.student_id == d["s"]))
         db.execute(delete(ParentStudentLink).where(ParentStudentLink.parent_id == d["p"]))
         for b in db.query(Book).filter(Book.teacher_id == d["t"]).all():
             db.execute(delete(BookSection).where(BookSection.book_id == b.id))
@@ -172,6 +174,7 @@ def main() -> int:
             if logs:
                 pj = json.loads(logs[0].payload_json or "{}")
                 check("payload sürüm 2", pj.get("version") == 2, str(pj.get("version")))
+                check("mailde girişsiz rapor bağlantısı", "/rapor/" in (pj.get("report_url") or ""), str(pj.get("report_url")))
             cron_jobs.parent_weekly_report(db, now=run_at + timedelta(hours=1))
             db.commit()
             n2 = db.query(NotificationLog).filter(NotificationLog.parent_id == d["p"],

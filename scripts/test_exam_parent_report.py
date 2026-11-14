@@ -101,10 +101,12 @@ def main():
         v = anon.get(f"/api/v2/public/exam-report/{tok}")
         check("4 veli girişsiz açar", v.status_code == 200, v.text[:200])
         j = v.json()
-        check("5 başlık + artış", "80 sorunun 45 tanesini" in j["headline"] and j["delta_direction"] == "up", j["headline"])
-        lv = {s["name"]: s["level"] for s in j["subjects"]}
+        check("5 başlık + artış", "80 sorunun 45 tanesini" in j["hero"]["headline"] and j["hero"]["trend_dir"] == "up", str(j["hero"]))
+        levels = next(sx for sx in j["sections"] if sx["type"] == "levels")["items"]
+        lv = {s["name"]: s["level"] for s in levels}
         check("6 ders seviyeleri", lv.get("Türkçe") == "strong" and lv.get("Matematik") == "support", str(lv))
-        check("7 ev önerileri + seslendirme metni", 1 <= len(j["tips"]) <= 3 and "Rota" in j["speech_text"]
+        tips = next(sx for sx in j["sections"] if sx["type"] == "tips")["items"]
+        check("7 ev önerileri + seslendirme metni", 1 <= len(tips) <= 3 and "Rota" in j["speech_text"]
               and "T Y T" in j["speech_text"])
         check("8 ücretsiz koçta Rota sesi yok (cihaz sesi)", j["voice_available"] is False)
         vv = anon.post(f"/api/v2/public/exam-report/{tok}/voice")
@@ -146,6 +148,28 @@ def main():
             check("9d sayfa sesi hazır görür", anon.get(f"/api/v2/public/exam-report/{tok}").json()["voice_ready"])
         finally:
             tts_mod.synthesize_speech = orig
+
+        # --- gelişim + haftalık bağlantıları (2026-11-14)
+        sid = d["s"]
+        g1 = c.post(f"/api/v2/teacher/students/{sid}/parent-report-link", json={"kind": "progress"})
+        g2 = c.post(f"/api/v2/teacher/students/{sid}/parent-report-link", json={"kind": "progress"})
+        check("18 gelişim bağlantısı + aynı bağlantı", g1.status_code == 200 and g1.json()["token"] == g2.json()["token"], g1.text[:200])
+        gv = anon.get(f"/api/v2/public/exam-report/{g1.json()['token']}").json()
+        check("19 gelişim raporu: 2 deneme, 35 → 41", gv.get("kind") == "progress" and "35" in gv["hero"]["headline"]
+              and "41" in gv["hero"]["headline"] and any(sx["type"] == "bars" for sx in gv["sections"]), str(gv.get("hero")))
+        w1 = c.post(f"/api/v2/teacher/students/{sid}/parent-report-link", json={"kind": "weekly", "week_start": "2026-11-04"})
+        w2 = c.post(f"/api/v2/teacher/students/{sid}/parent-report-link", json={"kind": "weekly", "week_start": "2026-11-02"})
+        check("20 haftalık bağlantı Pazartesi'ye çekilir (aynı hafta = aynı bağlantı)", w1.status_code == 200
+              and w1.json()["token"] == w2.json()["token"], w1.text[:200])
+        wv = anon.get(f"/api/v2/public/exam-report/{w1.json()['token']}").json()
+        check("21 haftalık rapor açılır", wv.get("kind") == "weekly" and "Kasım" in wv["subtitle"], str(wv.get("subtitle")))
+        wp = c.post(f"/api/v2/teacher/students/{sid}/parent-report.pdf", json={"kind": "weekly"})
+        gp = anon.get(f"/api/v2/public/exam-report/{g1.json()['token']}/pdf")
+        check("22 haftalık + gelişim PDF", wp.content[:4] == b"%PDF" and gp.content[:4] == b"%PDF")
+        check("23 başka koç gelişim bağlantısı alamaz",
+              c2.post(f"/api/v2/teacher/students/{sid}/parent-report-link", json={"kind": "progress"}).status_code == 404)
+        check("24 geçersiz tür 422",
+              c.post(f"/api/v2/teacher/students/{sid}/parent-report-link", json={"kind": "baska"}).status_code == 422)
 
         rv = c.post(f"/api/v2/teacher/exams/{d['e2']}/parent-report/revoke")
         check("15 iptal", rv.status_code == 200)

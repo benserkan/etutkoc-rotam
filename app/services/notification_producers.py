@@ -414,6 +414,19 @@ def produce_weekly_report(
 
     base_payload: dict[str, Any] = build_mail_payload(db, parent, student, today=today)
     base_payload["unsubscribe_token"] = _unsub_token(db, parent.id)
+    # Girişsiz açılan rapor bağlantısı (sesli dinleme + PDF) — koçun WhatsApp'la
+    # gönderdiğiyle aynı rapor (2026-11-14). Kardeşler/iki veli aynı bağlantıyı paylaşır.
+    try:
+        from datetime import date as _date
+
+        from app.services.exam_parent_report import get_or_create_link, report_url
+
+        rep, _ = get_or_create_link(
+            db, kind="weekly", student_id=student.id, actor_id=None,
+            week_start=_date.fromisoformat(base_payload["week_start"]))
+        base_payload["report_url"] = report_url(rep.token)
+    except Exception:  # bağlantı kurulamazsa mail yine gider
+        base_payload["report_url"] = None
     completed = base_payload["gorev_done"]
     planned = base_payload["gorev_total"]
     rate_pct = base_payload["completion_pct"]

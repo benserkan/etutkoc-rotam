@@ -6,58 +6,56 @@ import { ArrowDownRight, ArrowRight, ArrowUpRight, Download, Loader2, Pause, Pla
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-export interface ExamReportSubject {
-  name: string;
-  questions: number;
-  correct: number;
-  wrong: number;
-  blank: number;
-  net_text: string;
-  pct: number;
-  level: "strong" | "ok" | "support";
-  level_label: string;
-  sentence: string;
-}
+type Tone = "strong" | "ok" | "support";
+
+export type ReportSection =
+  | { type: "bullets" | "tips"; title: string; note?: string; items: string[] }
+  | { type: "text"; title: string; note?: string; text: string }
+  | {
+      type: "levels";
+      title: string;
+      note?: string;
+      items: { name: string; pct: number; level: Tone; level_label: string; sentence: string; meta?: string }[];
+    }
+  | {
+      type: "bars";
+      title: string;
+      note?: string;
+      items: { label: string; value: string; pct: number; tone: "accent" | "neutral" }[];
+    }
+  | { type: "table"; title: string; note?: string; columns: string[]; rows: string[][]; total_row?: string[] }
+  | {
+      type: "gains";
+      title: string;
+      note?: string;
+      items: { label: string; sub: string; value: string }[];
+      total?: { label: string; value: string } | null;
+    };
 
 export interface ExamReport {
+  kind: "exam" | "progress" | "weekly";
+  title: string;
+  subtitle: string;
   student_first: string;
-  student_gen: string;
-  exam_title: string;
-  exam_date_tr: string;
-  section_label: string | null;
   brand_name: string;
   brand_logo_url: string | null;
   coach_name: string | null;
-  net_text: string;
-  correct: number;
-  wrong: number;
-  blank: number;
-  total_questions: number;
-  correct_pct: number;
-  headline: string;
-  trend_text: string;
-  delta_direction: "up" | "down" | "flat" | null;
-  prev_net_text: string | null;
-  narrative: string[];
-  explain: string;
-  subjects: ExamReportSubject[];
-  history: {
-    has_data: boolean;
-    exams: { title: string; date_tr: string; net_text: string; is_current: boolean }[];
-    rows: { subject: string; nets: (string | null)[]; direction: string | null }[];
-    totals: string[];
+  hero: {
+    big: string;
+    unit: string;
+    headline: string;
+    trend_text: string;
+    trend_dir: "up" | "down" | "flat" | null;
+    stats: { label: string; value: string }[];
   };
-  opportunities: { subject: string; topic: string; gain_text: string }[];
-  opportunity_total_text: string | null;
-  opportunity_exam_count: number;
-  tips: string[];
+  sections: ReportSection[];
   speech_text: string;
   voice_available: boolean;
   voice_ready: boolean;
   expires_at: string;
 }
 
-const LEVEL_TONE: Record<ExamReportSubject["level"], { chip: string; bar: string }> = {
+const LEVEL_TONE: Record<Tone, { chip: string; bar: string }> = {
   strong: { chip: "bg-emerald-700 text-white", bar: "bg-emerald-600" },
   ok: { chip: "bg-amber-600 text-white", bar: "bg-amber-500" },
   support: { chip: "bg-rose-700 text-white", bar: "bg-rose-500" },
@@ -65,7 +63,8 @@ const LEVEL_TONE: Record<ExamReportSubject["level"], { chip: string; bar: string
 
 export function ReportView({ token, report: r }: { token: string; report: ExamReport }) {
   const base = `/api/v2/public/exam-report/${encodeURIComponent(token)}`;
-  const TrendIcon = r.delta_direction === "up" ? ArrowUpRight : r.delta_direction === "down" ? ArrowDownRight : ArrowRight;
+  const h = r.hero;
+  const TrendIcon = h.trend_dir === "up" ? ArrowUpRight : h.trend_dir === "down" ? ArrowDownRight : ArrowRight;
 
   return (
     <main className="force-light min-h-screen bg-slate-100 pb-16 text-slate-900">
@@ -78,140 +77,34 @@ export function ReportView({ token, report: r }: { token: string; report: ExamRe
           <p className="text-sm font-bold text-cyan-800">{r.brand_name}</p>
         </header>
 
-        <h1 className="text-2xl font-extrabold leading-tight">{r.student_gen} deneme raporu</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {r.exam_title} · {r.exam_date_tr}
-          {r.section_label ? ` · ${r.section_label}` : ""}
-        </p>
+        <h1 className="text-2xl font-extrabold leading-tight">{r.title}</h1>
+        <p className="mt-1 text-sm text-slate-600">{r.subtitle}</p>
 
-        {/* Özet */}
         <section className="mt-4 rounded-2xl bg-cyan-800 p-5 text-white">
-          <p className="text-4xl font-extrabold tabular-nums">{r.net_text} <span className="text-xl font-bold">net</span></p>
-          <p className="mt-2 text-base leading-snug">{r.headline}</p>
-          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-semibold">
-            <TrendIcon className="size-4" aria-hidden />
-            {r.trend_text}
-            {r.prev_net_text ? ` (önceki ${r.prev_net_text} net)` : ""}
+          <p className="text-4xl font-extrabold tabular-nums">
+            {h.big} {h.unit ? <span className="text-xl font-bold">{h.unit}</span> : null}
           </p>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-            <Stat label="Doğru" value={r.correct} />
-            <Stat label="Yanlış" value={r.wrong} />
-            <Stat label="Boş" value={r.blank} />
-          </div>
+          {h.headline ? <p className="mt-2 text-base leading-snug">{h.headline}</p> : null}
+          {h.trend_text ? (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-semibold">
+              <TrendIcon className="size-4 shrink-0" aria-hidden />
+              {h.trend_text}
+            </p>
+          ) : null}
+          {h.stats.length ? (
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+              {h.stats.map((s) => (
+                <Stat key={s.label} label={s.label} value={s.value} />
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <VoiceCard base={base} report={r} />
 
-        {r.narrative.length ? (
-          <Section title="Kısaca">
-            <ul className="space-y-2">
-              {r.narrative.map((line, i) => (
-                <li key={i} className="flex gap-2 text-[15px] leading-relaxed">
-                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-cyan-700" aria-hidden />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        ) : null}
-
-        {r.subjects.length ? (
-          <Section title="Ders ders" note="Her derste doğru yaptığı soruların oranı.">
-            <ul className="space-y-3">
-              {r.subjects.map((s) => (
-                <li key={s.name} className="rounded-xl border border-slate-300 bg-white p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-bold">{s.name}</p>
-                    <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-bold", LEVEL_TONE[s.level].chip)}>
-                      {s.level_label}
-                    </span>
-                  </div>
-                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-200">
-                    <div className={cn("h-full rounded-full", LEVEL_TONE[s.level].bar)} style={{ width: `${s.pct}%` }} />
-                  </div>
-                  <p className="mt-2 text-sm text-slate-700">{s.sentence}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {s.correct} doğru · {s.wrong} yanlış · {s.blank} boş · {s.net_text} net
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        ) : null}
-
-        {r.history.has_data ? (
-          <Section title="Önceki denemelerle karşılaştırma" note="Aynı türdeki son denemelerin ders netleri.">
-            <div className="relative overflow-x-auto rounded-xl border border-slate-300 bg-white">
-              <table className="w-full min-w-[420px] text-sm">
-                <thead>
-                  <tr className="bg-slate-100 text-left">
-                    <th className="px-3 py-2 font-semibold">Ders</th>
-                    {r.history.exams.map((e, i) => (
-                      <th key={i} className={cn("px-3 py-2 text-right font-semibold", e.is_current && "text-cyan-800")}>
-                        {e.date_tr}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {r.history.rows.map((row) => (
-                    <tr key={row.subject} className="border-t border-slate-200">
-                      <td className="px-3 py-2">{row.subject}</td>
-                      {row.nets.map((v, i) => (
-                        <td key={i} className="px-3 py-2 text-right tabular-nums">{v ?? "—"}</td>
-                      ))}
-                    </tr>
-                  ))}
-                  <tr className="border-t border-slate-300 font-bold">
-                    <td className="px-3 py-2">Toplam net</td>
-                    {r.history.totals.map((t, i) => (
-                      <td key={i} className="px-3 py-2 text-right tabular-nums">{t}</td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </Section>
-        ) : null}
-
-        {r.opportunities.length ? (
-          <Section
-            title="Nerede net kazanabilir?"
-            note={`${r.opportunity_exam_count > 1 ? `Son ${r.opportunity_exam_count} denemeye göre` : "Bu denemeye göre"}, bu konular kapandığında deneme başına kazanç.`}
-          >
-            <ul className="divide-y divide-slate-200 rounded-xl border border-slate-300 bg-white">
-              {r.opportunities.map((o, i) => (
-                <li key={i} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
-                  <span>
-                    <span className="font-semibold">{o.topic}</span>
-                    <span className="text-slate-500"> · {o.subject}</span>
-                  </span>
-                  <span className="shrink-0 font-bold text-emerald-700">+{o.gain_text} net</span>
-                </li>
-              ))}
-              {r.opportunity_total_text ? (
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm font-bold">
-                  <span>Hepsi kapanırsa</span>
-                  <span className="text-emerald-700">+{r.opportunity_total_text} net</span>
-                </li>
-              ) : null}
-            </ul>
-          </Section>
-        ) : null}
-
-        <Section title="Evde nasıl destek olabilirsiniz?">
-          <ul className="space-y-2">
-            {r.tips.map((t, i) => (
-              <li key={i} className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[15px] leading-relaxed text-emerald-950">
-                {t}
-              </li>
-            ))}
-          </ul>
-        </Section>
-
-        <Section title="Net nasıl hesaplanır?">
-          <p className="text-sm leading-relaxed text-slate-700">{r.explain}</p>
-        </Section>
+        {r.sections.map((sec, i) => (
+          <SectionView key={i} sec={sec} />
+        ))}
 
         <a
           href={`${base}/pdf`}
@@ -231,7 +124,135 @@ export function ReportView({ token, report: r }: { token: string; report: ExamRe
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function SectionView({ sec }: { sec: ReportSection }) {
+  let body: React.ReactNode = null;
+  if (sec.type === "bullets") {
+    body = (
+      <ul className="space-y-2">
+        {sec.items.map((line, i) => (
+          <li key={i} className="flex gap-2 text-[15px] leading-relaxed">
+            <span className="mt-2 size-1.5 shrink-0 rounded-full bg-cyan-700" aria-hidden />
+            <span>{line}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  } else if (sec.type === "tips") {
+    body = (
+      <ul className="space-y-2">
+        {sec.items.map((t, i) => (
+          <li key={i} className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[15px] leading-relaxed text-emerald-950">
+            {t}
+          </li>
+        ))}
+      </ul>
+    );
+  } else if (sec.type === "text") {
+    body = <p className="text-[15px] leading-relaxed text-slate-700">{sec.text}</p>;
+  } else if (sec.type === "levels") {
+    body = (
+      <ul className="space-y-3">
+        {sec.items.map((s) => (
+          <li key={s.name} className="rounded-xl border border-slate-300 bg-white p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-bold">{s.name}</p>
+              <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-bold", LEVEL_TONE[s.level].chip)}>
+                {s.level_label}
+              </span>
+            </div>
+            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-200">
+              <div className={cn("h-full rounded-full", LEVEL_TONE[s.level].bar)} style={{ width: `${s.pct}%` }} />
+            </div>
+            <p className="mt-2 text-sm text-slate-700">{s.sentence}</p>
+            {s.meta ? <p className="mt-1 text-xs text-slate-500">{s.meta}</p> : null}
+          </li>
+        ))}
+      </ul>
+    );
+  } else if (sec.type === "bars") {
+    body = (
+      <ul className="space-y-2 rounded-xl border border-slate-300 bg-white p-3">
+        {sec.items.map((b, i) => (
+          <li key={i}>
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="text-slate-700">{b.label}</span>
+              <span className="shrink-0 font-bold tabular-nums">{b.value}</span>
+            </div>
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className={cn("h-full rounded-full", b.tone === "accent" ? "bg-cyan-700" : "bg-slate-400")}
+                style={{ width: `${b.pct}%` }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+    );
+  } else if (sec.type === "table") {
+    body = (
+      <div className="relative overflow-x-auto rounded-xl border border-slate-300 bg-white">
+        <table className="w-full min-w-[320px] text-sm">
+          <thead>
+            <tr className="bg-slate-100 text-left">
+              {sec.columns.map((c, i) => (
+                <th key={i} className={cn("px-3 py-2 font-semibold", i > 0 && "text-right")}>
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sec.rows.map((row, ri) => (
+              <tr key={ri} className="border-t border-slate-200">
+                {row.map((v, i) => (
+                  <td key={i} className={cn("px-3 py-2", i > 0 && "text-right tabular-nums")}>
+                    {v}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {sec.total_row ? (
+              <tr className="border-t border-slate-300 font-bold">
+                {sec.total_row.map((v, i) => (
+                  <td key={i} className={cn("px-3 py-2", i > 0 && "text-right tabular-nums")}>
+                    {v}
+                  </td>
+                ))}
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    );
+  } else if (sec.type === "gains") {
+    body = (
+      <ul className="divide-y divide-slate-200 rounded-xl border border-slate-300 bg-white">
+        {sec.items.map((o, i) => (
+          <li key={i} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
+            <span>
+              <span className="font-semibold">{o.label}</span>
+              <span className="text-slate-500"> · {o.sub}</span>
+            </span>
+            <span className="shrink-0 font-bold text-emerald-700">{o.value}</span>
+          </li>
+        ))}
+        {sec.total ? (
+          <li className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm font-bold">
+            <span>{sec.total.label}</span>
+            <span className="text-emerald-700">{sec.total.value}</span>
+          </li>
+        ) : null}
+      </ul>
+    );
+  }
+  return (
+    <Section title={sec.title} note={sec.note}>
+      {body}
+    </Section>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-white/10 py-2">
       <p className="text-xl font-extrabold tabular-nums">{value}</p>

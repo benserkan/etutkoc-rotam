@@ -12811,6 +12811,69 @@ def teacher_exam_parent_report_pdf_v2(
     })
 
 
+class StudentParentReportBody(BaseModel):
+    kind: str = Field(pattern="^(progress|weekly)$")
+    #: gelişim raporu deneme serisi (exam_scope anahtarı; boş = varsayılan seri)
+    series: str | None = Field(default=None, max_length=64)
+    #: haftalık rapor haftası (herhangi bir gün → Pazartesi'ye çekilir; boş = son biten hafta)
+    week_start: date | None = None
+
+
+def _student_report_args(body: StudentParentReportBody) -> dict:
+    from datetime import timedelta as _td
+
+    from app.services.parent_weekly_mail import report_week
+
+    if body.kind == "weekly":
+        ws = body.week_start
+        ws = (ws - _td(days=ws.weekday())) if ws else report_week(date.today())
+        return {"kind": "weekly", "week_start": ws}
+    return {"kind": "progress", "series": (body.series or None)}
+
+
+@router.post("/students/{student_id}/parent-report-link", response_model=ExamParentReportLink)
+def teacher_student_parent_report_link_v2(
+    student_id: int,
+    body: StudentParentReportBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Gelişim / haftalık veli raporu bağlantısı (varsa geçerli olan, yoksa yeni — 60 gün)."""
+    from app.services.exam_parent_report import get_or_create_link, report_url
+
+    student = _get_owned_student(db, student_id, user.id)
+    rep, created = get_or_create_link(db, student_id=student.id, actor_id=user.id,
+                                      **_student_report_args(body))
+    db.commit()
+    return ExamParentReportLink(url=report_url(rep.token), token=rep.token,
+                                expires_at=rep.expires_at.isoformat(), created=created)
+
+
+@router.post("/students/{student_id}/parent-report.pdf")
+def teacher_student_parent_report_pdf_v2(
+    student_id: int,
+    body: StudentParentReportBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Gelişim / haftalık veli raporunun PDF'i (veliye giden bağlantıyla aynı içerik)."""
+    from fastapi.responses import Response as _Resp
+
+    from app.services.exam_parent_report import (
+        build_progress_data, build_weekly_data, pdf_filename, render_report_pdf,
+    )
+
+    student = _get_owned_student(db, student_id, user.id)
+    args = _student_report_args(body)
+    data = (build_weekly_data(db, student, args["week_start"]) if args["kind"] == "weekly"
+            else build_progress_data(db, student, args["series"]))
+    pdf = render_report_pdf(data)
+    return _Resp(content=pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f'attachment; filename="{pdf_filename(data)}"',
+        "Cache-Control": "private, max-age=0, no-store",
+    })
+
+
 @router.post("/exams/{exam_id}/parent-preview.html", response_class=HTMLResponse)
 def teacher_exam_parent_preview_html_v2(
     exam_id: int,

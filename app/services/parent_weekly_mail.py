@@ -160,7 +160,7 @@ def _next_week(db: Session, student_id: int, mon: date) -> dict | None:
             "top": [{"subject": s, "count": n} for s, n in cnt.most_common(3)]}
 
 
-def build_mail_payload(db: Session, parent: User, student: User, *, today: date | None = None) -> dict[str, Any]:
+def build_mail_payload(db: Session, parent: User | None, student: User, *, today: date | None = None) -> dict[str, Any]:
     from app.routes.api_v2.parent import _parent_insight_gate
     from app.services import branding
     from app.services.parent_weekly_report import build_weekly_report
@@ -168,7 +168,11 @@ def build_mail_payload(db: Session, parent: User, student: User, *, today: date 
     today = today or date.today()
     mon = report_week(today)
     sun = mon + timedelta(days=6)
-    rep = build_weekly_report(db, parent, student.id, mon, today=today)
+    if parent is not None:
+        rep = build_weekly_report(db, parent, student.id, mon, today=today)
+    else:  # koçun gönderdiği veli bağlantısı — erişim çağıranda denetlendi
+        from app.services.parent_weekly_report import build_weekly_report_for_student
+        rep = build_weekly_report_for_student(db, student, mon, today=today)
 
     coach = db.get(User, student.teacher_id) if student.teacher_id else None
     brand = branding.brand_for_user(db, student)
@@ -225,6 +229,9 @@ def build_mail_payload(db: Session, parent: User, student: User, *, today: date 
         "topics": topics,
         "next_week": nxt,
         "teacher_notes": rep["teacher_notes"][:2],
+        # veli bağlantılı rapor sayfası (2026-11-14) — tüm dersler + gün gün
+        "subjects_all": rep["subjects"],
+        "daily": rep["daily"],
         "rota": bool(rota_on),
         # geriye uyum (WhatsApp şablonu + eski alanlar)
         "completed": rep["test_completed"], "planned": rep["test_planned"],

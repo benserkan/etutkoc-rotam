@@ -78,6 +78,7 @@ import { CurriculumPanel } from "@/components/teacher/curriculum-panel";
 import { ProgramHistoryPanel } from "@/components/teacher/program-history-panel";
 import { StudentDevHub } from "@/components/teacher/student-dev-hub";
 import { StudentDevelopmentReportTab } from "@/components/teacher/student-development-report";
+import { ParentWeeklyShareBar } from "@/components/teacher/parent-weekly-share-bar";
 import { StudentWeeklyProgress } from "@/components/teacher/student-weekly-progress";
 import {
   DropdownMenu,
@@ -341,6 +342,7 @@ export function StudentTabs({ studentId, initial }: Props) {
         >
           {/* 2026-10-20: haftalık ilerleme (manşet + gidişat + önlemler + 13 başlık + deneme).
               Eski üst özet şeridi kaldırıldı; uyarı ve ayar kartları en altta katlı. */}
+          <ParentWeeklyShareBar studentId={studentId} studentName={s.full_name} />
           <StudentWeeklyProgress studentId={studentId} />
 
           <details className="group rounded-2xl border border-border bg-card px-5 py-4">

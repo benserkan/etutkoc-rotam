@@ -213,6 +213,17 @@ def build_weekly_report(
     Raises ParentAccessDenied if parent not linked (router 404'e çevirir).
     """
     student = assert_parent_can_view(db, parent, student_id)
+    return build_weekly_report_for_student(db, student, week_start, today=today)
+
+
+def build_weekly_report_for_student(
+    db: Session,
+    student: User,
+    week_start: date | None = None,
+    *,
+    today: date | None = None,
+) -> dict[str, Any]:
+    """Erişim denetimi YAPILMIŞ öğrenci için haftalık rapor (koçun veli bağlantısı, 2026-11-14)."""
     today = today or date.today()
 
     # Hafta sınırları — week_start daima Pazartesi'ye snap'lenir

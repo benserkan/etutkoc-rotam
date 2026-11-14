@@ -34,6 +34,7 @@ import { toast } from "sonner";
 
 import { ExamAveragesButton } from "@/components/teacher/exams/exam-averages-dialog";
 import { ExamReportShareDialog } from "@/components/shared/exam-report-share-dialog";
+import { firstNameOf, trGenitive } from "@/lib/tr-genitive";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -271,8 +272,8 @@ function buildParentShareMessage(
   prev: ExamResultRow | null,
   studentName?: string | null,
 ): string {
-  const first = (studentName ?? "").trim().split(/\s+/)[0];
-  const who = first ? `${first}'${genitiveSuffix(first)}` : "Öğrencinin";
+  const first = firstNameOf(studentName);
+  const who = trGenitive(first);
   let line = `${who} ${row.section_label} denemesi (${row.title}, ${longTRDate(row.exam_date)}): ${shortNet(row.net)} net`;
   if (prev) {
     const d = row.net - prev.net;
@@ -295,13 +296,6 @@ function shortNet(n: number): string {
   return String(Math.round(n * 100) / 100).replace(".", ",");
 }
 
-function genitiveSuffix(name: string): string {
-  const vowels = "aıoueiöü";
-  const lower = name.toLocaleLowerCase("tr");
-  const last = [...lower].reverse().find((c) => vowels.includes(c)) ?? "e";
-  const v = ({ a: "ı", ı: "ı", o: "u", u: "u", e: "i", i: "i", ö: "ü", ü: "ü" } as Record<string, string>)[last];
-  return `${vowels.includes(lower[lower.length - 1]) ? "n" : ""}${v}n`;
-}
 
 
 // ---------------------------------------------------------------- Genel Bakış

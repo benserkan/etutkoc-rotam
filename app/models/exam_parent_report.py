@@ -13,12 +13,20 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, LargeBinary, String, func
+from datetime import date
+
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, LargeBinary, String, func
 from sqlalchemy.orm import Mapped, deferred, mapped_column
 
 from app.database import Base
 
 REPORT_TTL_DAYS = 60
+
+# Rapor türleri (2026-11-14): deneme karnesi · gelişim raporu · haftalık rapor
+REPORT_KIND_EXAM = "exam"
+REPORT_KIND_PROGRESS = "progress"
+REPORT_KIND_WEEKLY = "weekly"
+REPORT_KINDS = (REPORT_KIND_EXAM, REPORT_KIND_PROGRESS, REPORT_KIND_WEEKLY)
 
 
 class ExamParentReport(Base):
@@ -26,8 +34,13 @@ class ExamParentReport(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    exam_id: Mapped[int] = mapped_column(
-        ForeignKey("exam_results.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(16), default=REPORT_KIND_EXAM, server_default="exam")
+    exam_id: Mapped[int | None] = mapped_column(
+        ForeignKey("exam_results.id", ondelete="CASCADE"), index=True, nullable=True)
+    #: haftalık raporda haftanın Pazartesi'si
+    week_start: Mapped[date | None] = mapped_column(Date, nullable=True)
+    #: gelişim raporunda deneme serisi (exam_scope anahtarı; boş = varsayılan)
+    series: Mapped[str | None] = mapped_column(String(64), nullable=True)
     student_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True)
     created_by_id: Mapped[int | None] = mapped_column(
