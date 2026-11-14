@@ -959,3 +959,4 @@ __all__ = [
 from app.services import deneme_bridge as _deneme_bridge  # noqa: E402,F401
 
 from app.models.exam_parent_report import ExamParentReport  # noqa: E402,F401
+from app.models.message_suggestion import MessageSuggestionAction  # noqa: E402,F401

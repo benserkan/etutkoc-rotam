@@ -452,6 +452,13 @@ function Priorities({ data, studentId }: { data: WeeklyProgressResponse; student
       title="Bu hafta konuşulacaklar"
       desc="Programdan, işaretleme düzeninden, denemelerden ve hedeften çıkan, dikkat isteyen konular. Her madde bir ölçüme dayanır; karar senin. Bu bölümü yalnız sen görürsün."
     >
+      <Link
+        href={`/teacher/messages?student=${studentId}`}
+        className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-emerald-700 px-3 py-1.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+      >
+        Bu öğrenci için WhatsApp mesaj önerileri
+        <ArrowRight className="size-4" aria-hidden />
+      </Link>
       {warn.length === 0 ? (
         <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
           Bu hafta dikkat isteyen bir konu yok.

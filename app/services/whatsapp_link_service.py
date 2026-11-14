@@ -298,6 +298,7 @@ SHARE_KINDS: dict[str, str] = {
     "exam_progress": "Gelişim raporu",
     "parent_weekly": "Haftalık rapor",
     "program": "Haftalık program",
+    "coach_message": "Koç mesajı",
 }
 
 _RELATION_LABELS = {"anne": "Annesi", "baba": "Babası", "vasi": "Vasisi", "diger": "Velisi"}

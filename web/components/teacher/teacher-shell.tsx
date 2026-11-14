@@ -20,6 +20,7 @@ import {
   Loader2,
   LogOut,
   Menu,
+  MessageCircle,
   MessageSquare,
   Settings,
   UserCog,
@@ -84,6 +85,7 @@ const TEACHER_GROUPS: NavGroup[] = [
   {
     label: "İletişim",
     items: [
+      { href: "/teacher/messages", label: "Bugünün mesajları", icon: MessageCircle },
       { href: "/teacher/requests", label: "Öğrenci talepleri", icon: Inbox, badgeKey: "pending_request_count" },
       { href: "/teacher/bulk-wa", label: "Toplu WhatsApp", icon: MessageSquare },
       { href: "/teacher/support-inbox", label: "Kurumdan gelenler", icon: Inbox, badgeKey: "support_inbox_pending", institutionOnly: true },
