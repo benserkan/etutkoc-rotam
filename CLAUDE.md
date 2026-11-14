@@ -79,6 +79,15 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   Konu Analizi fırsatı `opp:`, Dönem Raporu aynı konu = tek madde; anahtar seri ekli `topic:12:tyt`) ·
   `#exams-target` / `#exams-report` derin bağlantı (Hedefi düzenle → Rapor & Puan + hedef penceresi) · kart
   zeminleri bir kademe koyu · gün kartında "Gününde" yerine "ilk işaret HH:MM".
+- **Devamı (aynı gün):** moladaki/pasif öğrenci HARİÇ (önbellekten önce) · öğrenciye SOHBET açan ("…dikkatimi
+  çekti, sence ne oldu?"), veliye kısa BİLGİ + `…/parent/students/{id}` Rotam bağlantısı · yapılmayan görevler kısa
+  konu adıyla virgüllü en çok 3 (`_missing_topics`) · hazır metin söz verir, yapılmamış işi iddia etmez ·
+  **iki panelli ortak gelen kutusu** `web/components/shared/suggestion-inbox.tsx` (solda aranabilir liste kendi içinde
+  kayar, sağda seçilenin önerileri kapalı satır/akordeon, gönder/atla sonrası sıradakine geçer, telefonda liste→ayrıntı)
+  · 5 dk süreç önbelleği (`cached_for_student/institution`; öğrenci başı ~0,15 sn) · **kurum yöneticisi "Koçlara
+  mesajlar"** `/institution/messages` + `api_v2/institution_message_suggestions.py` (programsız öğrenci, son 7 gün
+  tamamlama <%60, risk sinyali, programını yapmayan öğrenci, ≥%85 tebrik; aynı tablo audience=`coach`,
+  `dispatch_direct`). Test koç 22/22 · kurum 13/13 · tarayıcı 14/14.
 - **SIRADA:** 3. adım Meta otomatik WhatsApp hattı (aynı öneriler otomatik gönderime) → 4. adım raporlama denetimi.
   Emir'in gündeminde eski çift madde #67/#69 duruyor (koç Seanslar'dan silebilir).
 
