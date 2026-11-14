@@ -23,6 +23,7 @@ import {
   LogOut,
   Mail,
   Menu,
+  MessageCircle,
   MessageSquare,
   ScrollText,
   Target,
@@ -93,6 +94,7 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/institution/teachers", label: "Öğretmenler", icon: Users },
       { href: "/institution/roster", label: "Tüm Öğrenciler", icon: ScrollText },
+      { href: "/institution/messages", label: "Koçlara mesajlar", icon: MessageCircle },
       { href: "/institution/bulk-wa", label: "Toplu WhatsApp", icon: MessageSquare },
     ],
   },

@@ -49,6 +49,7 @@ from app.routes.api_v2 import messaging as v2_messaging
 from app.routes.api_v2 import offers_public as v2_offers_public
 from app.routes.api_v2 import exam_report_public as v2_exam_report_public
 from app.routes.api_v2 import message_suggestions as v2_message_suggestions
+from app.routes.api_v2 import institution_message_suggestions as v2_inst_message_suggestions
 from app.routes.api_v2 import tools_public as v2_tools_public
 from app.routes.api_v2 import brand_public as v2_brand_public
 from app.routes.api_v2 import parent as v2_parent
@@ -90,6 +91,7 @@ router.include_router(v2_payment.router)
 router.include_router(v2_offers_public.router)
 router.include_router(v2_exam_report_public.router)
 router.include_router(v2_message_suggestions.router)
+router.include_router(v2_inst_message_suggestions.router)
 router.include_router(v2_brand_public.router)
 router.include_router(v2_membership_public.router)
 router.include_router(v2_admin_membership.router)

@@ -2,7 +2,7 @@
 
 import { api } from "@/lib/api";
 
-export type SuggestionAudience = "parent" | "student";
+export type SuggestionAudience = "parent" | "student" | "coach";
 
 export interface SuggestionTarget {
   user_id: number;
@@ -13,6 +13,8 @@ export interface SuggestionTarget {
 }
 
 export interface SuggestionItem {
+  group_id: number;
+  group_name: string;
   student_id: number;
   student_name: string;
   key: string;
@@ -59,4 +61,25 @@ export function skipMessageSuggestion(body: {
   key: string;
 }): Promise<{ ok: boolean }> {
   return api(`/api/v2/teacher/message-suggestions/skip`, { method: "POST", body: JSON.stringify(body) });
+}
+
+// ---- Kurum yöneticisi → koç ("Koçlara mesajlar")
+export const instMessageSuggestionKeys = {
+  all: ["institution", "me", "message-suggestions"] as const,
+};
+
+export function getInstMessageSuggestions(): Promise<SuggestionsResponse> {
+  return api<SuggestionsResponse>(`/api/v2/institution/message-suggestions`);
+}
+
+export function sendInstMessageSuggestion(body: {
+  coach_id: number;
+  key: string;
+  text: string;
+}): Promise<{ wa_url: string; target_name: string | null; sent_today: number }> {
+  return api(`/api/v2/institution/message-suggestions/send`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function skipInstMessageSuggestion(body: { coach_id: number; key: string }): Promise<{ ok: boolean }> {
+  return api(`/api/v2/institution/message-suggestions/skip`, { method: "POST", body: JSON.stringify(body) });
 }

@@ -33,10 +33,13 @@ class SuggestionTarget(BaseModel):
 
 
 class SuggestionItem(BaseModel):
+    #: listede gruplama: koç ekranında öğrenci, kurum ekranında koç
+    group_id: int
+    group_name: str
     student_id: int
     student_name: str
     key: str
-    audience: Literal["parent", "student"]
+    audience: Literal["parent", "student", "coach"]
     kind: str
     kind_label: str
     title: str
@@ -103,7 +106,7 @@ def list_suggestions(student_id: int | None = None, user: User = Depends(_requir
     items: list[SuggestionItem] = []
     for st in students:
         try:
-            sugg = ms.build_for_student(db, st)
+            sugg = ms.cached_for_student(db, st)
         except Exception:  # noqa: BLE001 — bir öğrencinin hatası listeyi düşürmesin
             import logging
 
@@ -118,6 +121,7 @@ def list_suggestions(student_id: int | None = None, user: User = Depends(_requir
             if s.audience == "parent" and not targets:
                 continue  # velisi bağlı değil
             items.append(SuggestionItem(
+                group_id=st.id, group_name=st.full_name,
                 student_id=st.id, student_name=st.full_name, key=s.key, audience=s.audience, kind=s.kind,
                 kind_label=ms.KIND_LABELS.get(s.kind, s.kind), title=s.title, reason=s.reason, text=s.text,
                 has_report=s.report is not None, targets=[SuggestionTarget(**t) for t in targets],

@@ -466,3 +466,170 @@ def report_link(db: Session, *, student: User, report: dict, actor_id: int) -> s
                                     week_start=ws)
         return report_url(rep.token)
     return None
+
+
+# =============================================================================
+# Önbellek (2026-11-14): öğrenci başına ~0,15 sn; çok öğrencili koçta liste yavaşlamasın.
+# 5 dakika; karar verilenler önbellekten SONRA süzülür (gönder/atla anında düşer).
+# =============================================================================
+import time as _time
+
+_CACHE: dict[tuple, tuple[float, list]] = {}
+CACHE_TTL = 300.0
+
+
+def cached_for_student(db: Session, student: User, today: date | None = None) -> list[Suggestion]:
+    if getattr(student, "is_paused", False) or not student.is_active:
+        return []  # mola/pasif önbellekten ÖNCE — molaya alınan öğrenci anında düşer
+    today = today or _tr_today()
+    k = ("s", student.id, today.isoformat())
+    hit = _CACHE.get(k)
+    now = _time.monotonic()
+    if hit and now - hit[0] < CACHE_TTL:
+        return hit[1]
+    val = build_for_student(db, student, today)
+    _CACHE[k] = (now, val)
+    if len(_CACHE) > 5000:
+        _CACHE.clear()
+    return val
+
+
+# =============================================================================
+# Kurum yöneticisi → koç (2026-11-14): koçun öğrencilerinde görülen durumlar için
+# koça hazır WhatsApp mesajı. Ölçüm YENİ DEĞİL: kurum Program Uyumu + risk analizi
+# (Müdahale Merkezi ile aynı). Koça sohbet açan, kısa, isimli mesajlar.
+# =============================================================================
+
+def build_for_institution(db: Session, institution_id: int, today: date | None = None) -> dict[int, list[Suggestion]]:
+    """Koç id → öneriler."""
+    from app.models import UserRole
+    from app.services.institution_compliance import compute_compliance
+    from app.services.risk_analysis import bulk_risk_assessment, filter_at_risk
+
+    today = today or _tr_today()
+    wk = _iso_week(today)
+    comp = compute_compliance(db, institution_id=institution_id, weeks=2, today=today)
+    coaches = {int(u.id): u for u in db.query(User).filter(
+        User.role == UserRole.TEACHER, User.institution_id == institution_id, User.is_active.is_(True)).all()}
+    out: dict[int, list[Suggestion]] = {cid: [] for cid in coaches}
+
+    def coach_first(cid: int) -> str:
+        return _first(coaches[cid].full_name) or "Hocam"
+
+    for e in comp.get("empty_program") or []:
+        cid = e.get("teacher_id")
+        if cid not in coaches:
+            continue
+        names = _join(e.get("sample_students") or [], "öğrenci")
+        out[cid].append(Suggestion(
+            key=f"inst_empty:{wk}:{e['count']}", audience="coach", kind="problem",
+            title=f"{e['count']} öğrencinin bu hafta programı yok", reason=names,
+            text=(f"Merhaba {coach_first(cid)} Hocam, bu hafta {names} için henüz program görünmüyor. "
+                  f"Fırsat bulduğunda programlarını girebilir misin? Yardımcı olabileceğim bir şey varsa yaz lütfen."),
+            order=5,
+        ))
+    for t in comp.get("teachers") or []:
+        cid = t.get("teacher_id")
+        if cid not in coaches or not t.get("student_count"):
+            continue
+        rate, last = t.get("rate"), t.get("last_rate")
+        if rate is not None and rate < 60:
+            prev = f" (geçen hafta %{last})" if last is not None else ""
+            out[cid].append(Suggestion(
+                key=f"inst_low:{wk}", audience="coach", kind="problem",
+                title=f"Son 7 günde tamamlama %{rate}", reason=f"{t['student_count']} öğrenci{prev}",
+                text=(f"Merhaba {coach_first(cid)} Hocam, son 7 günde öğrencilerin planlanan testlerin "
+                      f"%{rate} kadarını çözmüş görünüyor{prev}. Sence programların yükü mü fazla, yoksa öğrencilerde "
+                      f"başka bir şey mi var? Bu hafta kısaca konuşalım mı?"),
+                order=8,
+            ))
+        elif rate is not None and rate >= 85 and t["student_count"] >= 2:
+            out[cid].append(Suggestion(
+                key=f"inst_good:{wk}", audience="coach", kind="positive",
+                title=f"Son 7 günde tamamlama %{rate}", reason=f"{t['student_count']} öğrenci",
+                text=(f"Merhaba {coach_first(cid)} Hocam, son 7 günde öğrencilerin planlanan testlerin "
+                      f"%{rate} kadarını çözmüş. Emeğin için teşekkürler, harika gidiyor!"),
+                order=30,
+            ))
+
+    students = db.query(User).filter(User.role == UserRole.STUDENT, User.teacher_id.in_(list(coaches)),
+                                     User.is_active.is_(True)).all() if coaches else []
+    students = [st for st in students if not getattr(st, "is_paused", False)]
+    if students:
+        assess = bulk_risk_assessment(db, students=students)
+        risky: dict[int, list] = {}
+        idle: dict[int, list] = {}
+        for a in filter_at_risk(assess, min_level="high"):
+            risky.setdefault(a.student.teacher_id, []).append(a)
+        rset = {int(a.student.id) for v in risky.values() for a in v}
+        for a in assess:
+            if int(a.student.id) in rset:
+                continue
+            if any(i.code == "consecutive_empty" for i in a.indicators):
+                idle.setdefault(a.student.teacher_id, []).append(a)
+        for cid, lst in risky.items():
+            if cid not in coaches:
+                continue
+            lst.sort(key=lambda a: -a.score)
+            names = _join([a.student.full_name for a in lst], "öğrenci")
+            reasons = _join(sorted({i.title for a in lst for i in a.indicators[:2]}), "neden")
+            out[cid].append(Suggestion(
+                key=f"inst_risk:{wk}:{len(lst)}", audience="coach", kind="problem",
+                title=f"{len(lst)} öğrencide risk sinyali", reason=reasons,
+                text=(f"Merhaba {coach_first(cid)} Hocam, sistemde {names} için risk sinyali görünüyor "
+                      f"({reasons.lower()}). Bu öğrencilerle bu hafta birebir görüşme fırsatın olur mu?"),
+                order=6,
+            ))
+        for cid, lst in idle.items():
+            if cid not in coaches:
+                continue
+            names = _join([a.student.full_name for a in lst], "öğrenci")
+            out[cid].append(Suggestion(
+                key=f"inst_idle:{wk}:{len(lst)}", audience="coach", kind="problem",
+                title=f"{len(lst)} öğrenci programını yapmıyor", reason=names,
+                text=(f"Merhaba {coach_first(cid)} Hocam, {names} birkaç gündür programını yapmıyor görünüyor. "
+                      f"Öğrencilerle iletişime geçebilir misin? Destek gerekirse buradayım."),
+                order=7,
+            ))
+    for cid in out:
+        out[cid].sort(key=lambda x: x.order)
+    return out
+
+
+def cached_for_institution(db: Session, institution_id: int) -> dict[int, list[Suggestion]]:
+    today = _tr_today()
+    k = ("i", institution_id, today.isoformat())
+    hit = _CACHE.get(k)
+    now = _time.monotonic()
+    if hit and now - hit[0] < CACHE_TTL:
+        return hit[1]  # type: ignore[return-value]
+    val = build_for_institution(db, institution_id, today)
+    _CACHE[k] = (now, val)  # type: ignore[assignment]
+    return val
+
+
+def dispatch_direct(db: Session, *, sender: User, target: User, text: str, key: str) -> dict:
+    """Kişiye doğrudan WhatsApp bağlantısı + denetim kaydı (kurum → koç)."""
+    import json
+
+    from app.models.whatsapp_dispatch_log import WhatsAppDispatchLog
+    from app.services import comm_log
+    from app.services.whatsapp_link_service import (
+        WaDispatchError, build_wa_url, can_message_phone, can_send_wa_to, mask_phone_e164)
+    from urllib.parse import quote
+
+    if not can_send_wa_to(db, sender=sender, target=target):
+        raise WaDispatchError("target_not_found", "Kişi bulunamadı.", status=404)
+    clean = (text or "").strip()
+    wa_url = build_wa_url(target.phone, clean) if can_message_phone(target) else \
+        f"https://wa.me/?text={quote(clean, safe='')}"
+    db.add(WhatsAppDispatchLog(sender_user_id=sender.id, target_user_id=target.id,
+                               template_key=f"sugg:{key}"[:80], template_id=None,
+                               params_json=json.dumps({"key": key}, ensure_ascii=False),
+                               character_count=len(clean)))
+    db.flush()
+    comm_log.log_whatsapp(db=db, status="sent", to_user_id=target.id,
+                          to_address=mask_phone_e164(target.phone) if target.phone else "kişi WhatsApp'ta seçildi",
+                          category="coach_message", subject=f"Kurum mesajı · {target.full_name}"[:120],
+                          meta_json=json.dumps({"sender_id": sender.id, "key": key}))
+    return {"wa_url": wa_url, "target_name": target.full_name if can_message_phone(target) else None}
