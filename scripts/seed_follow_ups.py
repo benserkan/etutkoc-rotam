@@ -104,8 +104,27 @@ SEEDS = [
             "kvkk_retention_inactive gece işinin sonucunu doğrula."
         ),
     ),
+    dict(
+        key="reporting-system-audit",
+        title="Raporlama sistemi denetimi — tüm raporlar tek dil, tek kaynak",
+        due_on=date(2026, 12, 1), category="urun", priority="high",
+        description=(
+            "SIRA (kullanıcı 2026-11-14): (1) bağlantı + Rota sesini diğer veli raporlarına yaymak "
+            "→ (2) WhatsApp kişiler arası iletişim (önce birlikte tartışılacak) → (3) Meta otomatik "
+            "WhatsApp hattı → (4) BU İŞ. "
+            "Kapsam: sistemin ürettiği TÜM raporlar — koça, öğrenciye, veliye ve kurum yöneticisine "
+            "özel (gelişim, deneme analizi, haftalık, seans/koç haftalık raporu, kurum haftalık özeti, "
+            "karne yazdırmaları vb.) — İÇERİK DAHİL gözden geçirilecek. "
+            "İlke: sistemin en önemli kısmı analiz/raporlama; analiz dağınık ve kafa karıştırıcı "
+            "olmamalı. AYNI BAŞLIKTA FARKLI RAPOR ÜRETİLMEZ: bir rapor (ör. gelişim analizi) hangi "
+            "noktadan açılırsa açılsın tek kaynaktan aynı içeriği üretir (deneme detayındaki analiz "
+            "PDF'i ile son deneme PDF'inin farklı olması yaşandı — deneme raporunda tek kaynağa "
+            "bağlandı: exam_parent_report). Rapor başlıkları altında ortak rapor dili kullanılır. "
+            "Önce envanter: her rapor türü için üreten servis, açıldığı tüm yüzeyler, kitle (rol) ve "
+            "içerik farkları tablosu; sonra tekleştirme planı kullanıcı onayıyla."
+        ),
+    ),
 ]
-
 
 def main() -> int:
     added = skipped = 0

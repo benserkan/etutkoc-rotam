@@ -47,7 +47,11 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   Test YENİ `test_parent_weekly_mail_v2.py` 27/27 · parent_weekly_report 14 · parent 20 · wa_channel 14 ·
   comm_log 28 · push 9 · admin_digest_v2 33 · pool_step5 34 · trial 4 · exam_notify 39. Emir'in maili test
   olarak benserkan@gmail.com'a gönderildi (kuyruğa yazılmadan). Yedek `pre_parentmail_20261112_0910.dump`.
-  **SIRADA:** WhatsApp stratejisi (PDF rapor, kurum↔koç↔öğrenci↔veli iletişimi).
+  **SIRA (kullanıcı 2026-11-14):** (1) bağlantı + Rota sesi diğer veli raporlarına (gelişim + haftalık
+  CANLI) → (2) WhatsApp kişiler arası iletişim (önce birlikte tartışılacak) → (3) Meta otomatik WhatsApp
+  hattı → (4) **RAPORLAMA SİSTEMİ DENETİMİ** (takip listesi `reporting-system-audit`): koç/öğrenci/veli/
+  kurum raporlarının tamamı içerik dahil gözden geçirilir; aynı başlıkta farklı rapor üretilmez, her
+  rapor tek kaynaktan, ortak rapor diliyle.
 
 ## VELİ DENEME ANALİZ RAPORU — bağlantı + Rota sesi + sunucu PDF (2026-11-13, CANLI, migration `e5g8l1m2l77h`)
 
