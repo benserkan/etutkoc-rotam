@@ -96,6 +96,8 @@ type TabKey =
   | "topics"
   | "exams"
   | "program-exams"
+  | "exams-report"
+  | "exams-target"
   | "wrongs"
   | "sessions"
   | "surveys"
@@ -158,6 +160,8 @@ function isValidTab(v: string): v is TabKey {
     v === "history" ||
     v === "topics" ||
     v === "exams" ||
+    v === "exams-report" ||
+    v === "exams-target" ||
     v === "program-exams" ||
     v === "wrongs" ||
     v === "sessions" ||
@@ -192,7 +196,12 @@ export function StudentTabs({ studentId, initial }: Props) {
   // Denemeler sekmesi içinde "Branş denemeleri" görünümünü açar; bağlantılar bozulmasın diye
   // hash geçerli kalır, sekme şeridinde "Denemeler" seçili görünür.
   const rawActive = useHashTab();
-  const active: TabKey = rawActive === "program-exams" ? "exams" : rawActive;
+  // "#exams-report" / "#exams-target" (2026-11-14): Denemeler → Rapor & Puan alt sekmesi
+  // (hedefte hedef penceresi açık) — "Hedefi düzenle" gibi bağlantılar doğrudan yerine gitsin.
+  const active: TabKey =
+    rawActive === "program-exams" || rawActive === "exams-report" || rawActive === "exams-target"
+      ? "exams"
+      : rawActive;
   const qc = useQueryClient();
   // Sayfanın aşağısındaki bir bağlantıyla sekme değişince yeni içerik ekranın dışında kalmasın.
   const prevTab = React.useRef(rawActive);
@@ -445,6 +454,8 @@ export function StudentTabs({ studentId, initial }: Props) {
       {active === "exams" ? (
         <div role="tabpanel" id="tab-panel-exams" aria-labelledby="tab-exams">
           <StudentExamsPanel
+            key={rawActive}
+            focus={rawActive === "exams-target" ? "target" : rawActive === "exams-report" ? "report" : null}
             studentId={studentId}
             studentName={s.full_name}
             branchView={rawActive === "program-exams"}
@@ -1402,7 +1413,8 @@ function subscribeHash(callback: () => void): () => void {
 }
 
 function getHashTab(): TabKey {
-  const h = window.location.hash.replace(/^#/, "");
+  // "#report#exams" gibi üst üste eklenmiş hash'te sonuncusu geçerli.
+  const h = window.location.hash.split("#").filter(Boolean).pop() ?? "";
   return isValidTab(h) ? h : "summary";
 }
 

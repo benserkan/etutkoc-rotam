@@ -52,7 +52,7 @@ export function StatusChip({ card }: { card: WPCard }) {
   if (card.key === "exam_net" && card.status === "above") label = "Yükseliyor";
   if (card.key === "exam_net" && card.status === "below") label = "Düştü";
   if (card.status === "critical") cls = "bg-rose-700 text-white";
-  else if (card.status === "below") cls = "bg-orange-100 text-orange-800";
+  else if (card.status === "below") cls = "bg-orange-200 text-orange-800";
   else if (card.status === "above") cls = "bg-blue-100 text-blue-800";
   if (card.trend && (card.status === "normal" || card.status === "above" || card.status === "insufficient")) {
     label = `${card.trend_run} hafta üst üste kötüleşme`;
@@ -202,7 +202,7 @@ function HeadlineCard({ card, title, sub }: { card: WPCard | undefined; title: s
       className={cn(
         "flex flex-col gap-3 rounded-xl border p-4",
         warn
-          ? "border-orange-300 bg-orange-50"
+          ? "border-orange-400 bg-orange-100"
           : "border-border bg-card",
       )}
     >
@@ -237,11 +237,11 @@ function DayCard({
 }) {
   const [open, setOpen] = React.useState(false);
   const tone = {
-    done: "border-sky-200 bg-sky-50",
-    partial: "border-orange-300 bg-orange-50",
-    missed: "border-rose-300 bg-rose-50",
+    done: "border-sky-400 bg-sky-100",
+    partial: "border-orange-400 bg-orange-100",
+    missed: "border-rose-400 bg-rose-100",
     today: "border-2 border-cyan-700 bg-card",
-    pending: "border-dashed border-amber-400 bg-amber-50",
+    pending: "border-dashed border-amber-400 bg-amber-100",
     future: "border-dashed border-slate-300 bg-card",
     none: "border-dashed border-slate-300 bg-card",
   }[d.state];
@@ -259,7 +259,7 @@ function DayCard({
           : d.missing.length
             ? `${d.missing.length} görev yapılmadı`
             : d.first_tick
-              ? `Gününde · ${d.first_tick}`
+              ? `Tamamlandı · ilk işaret ${d.first_tick}`
               : "Tamamlandı";
   const popTitle =
     d.state === "today"
@@ -317,7 +317,7 @@ function DayCard({
 // ---------------------------------------------------------------- 1 ÖZET (yalnız koç)
 
 const TONE_BOX: Record<string, { box: string; chip: string; label: string }> = {
-  warn: { box: "border-amber-300 bg-amber-50", chip: "bg-amber-600 text-white", label: "Dikkat" },
+  warn: { box: "border-amber-400 bg-amber-100", chip: "bg-amber-600 text-white", label: "Dikkat" },
   info: { box: "border-border bg-card", chip: "bg-slate-200 text-slate-800", label: "Bilgi" },
   ok: { box: "border-border bg-card", chip: "bg-emerald-700 text-white", label: "Yolunda" },
   good: { box: "border-border bg-card", chip: "bg-emerald-700 text-white", label: "Yolunda" },
@@ -426,7 +426,7 @@ function Priorities({ data, studentId }: { data: WeeklyProgressResponse; student
         tone: "info",
         title: "Hedef net belirlenmemiş",
         text: "Hedef net ve tarih girilince gereken haftalık artış ile gerçek tempo burada kıyaslanır.",
-        link: { href: `/teacher/students/${studentId}#exams`, label: "Hedef belirle" },
+        link: { href: `/teacher/students/${studentId}#exams-target`, label: "Hedef belirle" },
       });
     }
     targets.forEach((t, i) => {
@@ -437,7 +437,7 @@ function Priorities({ data, studentId }: { data: WeeklyProgressResponse; student
         title: `${series ? `${series} hedefi: ` : "Hedef: "}${t.realistic === false ? "tarih gerçekçi değil" : t.tone === "good" ? "hedefe doğru gidiyor" : "hedefe uzaklık"}`,
         text: t.text,
         agenda: t.agenda,
-        link: { href: `/teacher/students/${studentId}#exams`, label: "Hedefi düzenle" },
+        link: { href: `/teacher/students/${studentId}#exams-target`, label: "Hedefi düzenle" },
       });
     });
   }
@@ -713,7 +713,7 @@ function Trend({ data }: { data: WeeklyProgressResponse }) {
         </div>
       ) : null}
       {ps && ps.decline_run >= 3 ? (
-        <div className="rounded-xl border border-orange-300 bg-card px-3.5 py-3 text-[13px] leading-relaxed">
+        <div className="rounded-xl border border-orange-400 bg-card px-3.5 py-3 text-[13px] leading-relaxed">
           <b className="text-orange-800">Eğilim bilgisi:</b> görev uyumu son {ps.decline_run} haftadır
           her hafta düşüyor. Aralık içinde kalan düşüşler alarm değil, buradan izlenir.
         </div>
@@ -734,7 +734,7 @@ function MetricCard({ card }: { card: WPCard }) {
     <div
       className={cn(
         "flex min-w-0 flex-col gap-2.5 rounded-xl border bg-card p-4",
-        warn ? "border-orange-300" : "border-border",
+        warn ? "border-orange-400" : "border-border",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -841,7 +841,7 @@ export function SeriesCard({ s }: { s: DenemeAnalysisSeries }) {
     <div
       className={cn(
         "flex min-w-0 flex-col gap-3 rounded-xl border bg-card p-4",
-        warn ? "border-orange-300" : "border-violet-200",
+        warn ? "border-orange-400" : "border-violet-200",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -859,7 +859,7 @@ export function SeriesCard({ s }: { s: DenemeAnalysisSeries }) {
               : s.normal_low == null
                 ? "bg-slate-100 text-slate-700"
                 : s.last_position === "below"
-                  ? "bg-orange-100 text-orange-800"
+                  ? "bg-orange-200 text-orange-800"
                   : "bg-slate-100 text-slate-700",
           )}
         >
@@ -946,7 +946,7 @@ function Deneme({ data, studentId }: { data: WeeklyProgressResponse; studentId: 
       right={
         <div className="flex flex-wrap items-center gap-2">
           {dn && dn.summary.pending > 0 ? (
-            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">
+            <span className="rounded-full bg-amber-200 px-2.5 py-1 text-xs font-bold text-amber-900">
               {dn.summary.pending} denemenin sonucu girilmedi
             </span>
           ) : null}
@@ -993,7 +993,7 @@ export function StudentWeeklyProgress({ studentId, studentName }: { studentId: n
   const data = q.data;
   if (!data.has_program || !data.week) {
     return (
-      <div className="flex items-start gap-3 rounded-2xl border border-cyan-300 bg-cyan-50 p-5 text-sm">
+      <div className="flex items-start gap-3 rounded-2xl border border-cyan-400 bg-cyan-100 p-5 text-sm">
         <Info className="mt-0.5 size-5 shrink-0 text-cyan-800" aria-hidden />
         <div>
           <p className="font-semibold">Henüz program haftası yok.</p>

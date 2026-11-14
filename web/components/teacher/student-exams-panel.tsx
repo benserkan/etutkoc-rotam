@@ -135,6 +135,8 @@ interface Props {
   /** true → karne denemeleri yerine "Branş denemeleri analizi" görünümü (#program-exams). */
   branchView?: boolean;
   onBranchView?: (open: boolean) => void;
+  /** Bağlantıdan gelen hedef: "report" → Rapor & Puan, "target" → ayrıca hedef penceresi açık. */
+  focus?: "report" | "target" | null;
 }
 
 /**
@@ -194,7 +196,7 @@ function ExamKindSwitch({
   );
 }
 
-export function StudentExamsPanel({ studentId, studentName, branchView, onBranchView }: Props) {
+export function StudentExamsPanel({ studentId, studentName, branchView, onBranchView, focus }: Props) {
   // P3: varsayılan GÜNCEL dönem — geçen yılın denemeleri "bu yılın gidişatı"
   // tablosunu bozmaz; seçiciyle geri getirilir (veri hiçbir zaman silinmez).
   const [period, setPeriod] = React.useState<string | undefined>(undefined);
@@ -207,7 +209,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
   const [addOpen, setAddOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
   const [importFile, setImportFile] = React.useState<File | null>(null);
-  const [tab, setTab] = React.useState<ExamTab>("overview");
+  const [tab, setTab] = React.useState<ExamTab>(focus ? "report" : "overview");
   const [detailId, setDetailId] = React.useState<number | null>(null);
   const data = q.data;
   const sharesQ = useQuery({
@@ -425,6 +427,7 @@ export function StudentExamsPanel({ studentId, studentName, branchView, onBranch
                   section={activeSeries}
                   period={period}
                   studentName={studentName}
+                  openTarget={focus === "target"}
                 />
                 <ScoreEstimatePanel source={{ kind: "teacher", studentId }} />
               </div>

@@ -296,7 +296,7 @@ def build_development_report(db: Session, student: User, *, series: str | None =
                 f"{_short_series(ep.get('section_label'))} için hedef yok. Son 3 deneme ortalaması {_num(st['avg_last3'])}, "
                 f"en iyi {_num(st['best_net'])}; hedef girilince gereken haftalık tempo ve ders hedefleri bu rapora eklenir.",
                 agenda=f"Öğrenciyle {_short_series(ep.get('section_label'))} hedef netini birlikte belirle (şu an son 3 ort. {_num(st['avg_last3'])}).",
-                cta_label="Deneme raporu", cta_href=f"/teacher/students/{sid}#exams"))
+                cta_label="Hedef belirle", cta_href=f"/teacher/students/{sid}#exams-target"))
         if st and st.get("slope") is not None and st["slope"] > 0 and st["best_net"] > st["avg_last3"]:
             opportunities.append(_item(
                 f"opp:best_net{ks}", "info", f"{pre}En iyi neti kalıcı kılma fırsatı",

@@ -88,10 +88,13 @@ export function ExamProgressReport({
   section,
   period,
   studentName,
+  openTarget = false,
 }: {
   source: ProgressSource;
   section: string | null;
   period?: string;
+  /** true → hedef penceresi açık gelir ("Hedefi düzenle" bağlantısı). */
+  openTarget?: boolean;
   studentName?: string | null;
 }) {
   const isTeacher = source.kind === "teacher";
@@ -100,7 +103,7 @@ export function ExamProgressReport({
     queryFn: () => getExamProgress(source, section, period),
     staleTime: 30_000,
   });
-  const [targetOpen, setTargetOpen] = React.useState(false);
+  const [targetOpen, setTargetOpen] = React.useState(openTarget);
 
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Gelişim raporu hazırlanıyor…</p>;
   if (q.isError || !q.data) {
