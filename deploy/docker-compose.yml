@@ -92,6 +92,8 @@ services:
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}  # Video Sepeti (panelden de girilir)
       GEMINI_PAID_MODEL: ${GEMINI_PAID_MODEL:-gemini-2.5-pro}
       GEMINI_FREE_MODEL: ${GEMINI_FREE_MODEL:-gemini-2.5-flash}
+      # Rota sesi model sırası (virgüllü). Boşsa koddaki varsayılan zincir.
+      GEMINI_TTS_MODELS: ${GEMINI_TTS_MODELS:-}
       # ---- Google OAuth (randevu sistemi — koçun kendi hesabından Meet linki) ----
       # Boşsa "Google ile bağlan" yüzeyleri gizli; elle link yapıştırma çalışır.
       # Kurulum: deploy/GOOGLE_OAUTH_SETUP.md

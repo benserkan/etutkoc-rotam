@@ -934,7 +934,7 @@ function AiSuggestTab({ book }: { book: LibraryBookDetailResponse }) {
             <Sparkles className="size-4" aria-hidden /> AI ünite önerisi
           </p>
           <p className="text-sm text-muted-foreground">
-            Anthropic Claude bu kitabın muhtemel bölümlerini önerir; sonuçlar
+            Yapay zekâ (Google Gemini) bu kitabın muhtemel bölümlerini önerir; sonuçlar
             kitaba eklenir ve aynı zamanda doğrulanmamış bir şablon olarak
             kaydedilir. AI çağrısı 30 saniyeye kadar sürebilir.
           </p>

@@ -18,7 +18,7 @@ import httpx
 
 from app.services.system_secrets import get_gemini_paid_key, get_gemini_free_keys
 
-MODEL = "gemini-2.5-flash-preview-tts"
+MODEL = "gemini-3.8-flash-tts"
 URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
 VOICE = "Kore"  # net, ciddi ton; alternatif: Aoede, Puck, Charon, Zephyr
 TEXT = ("Merhaba. Bu, Etütkoç Rotam demo seslendirme testidir. "
@@ -63,17 +63,11 @@ def main():
         part = data["candidates"][0]["content"]["parts"][0]
         inline = part["inlineData"]
         mime = inline.get("mimeType", "")
-        pcm = base64.b64decode(inline["data"])
-    except (KeyError, IndexError) as e:
+        from app.services.tts import decode_audio_part
+        pcm, rate = decode_audio_part(inline)
+    except (KeyError, IndexError, ValueError) as e:
         print(f"Beklenmeyen yanıt: {e} · {str(data)[:400]}")
         return 1
-    # mime "audio/L16;codec=pcm;rate=24000" → rate çek
-    rate = 24000
-    if "rate=" in mime:
-        try:
-            rate = int(mime.split("rate=")[1].split(";")[0])
-        except Exception:
-            pass
     out = Path(__file__).resolve().parent / "_tts_test.wav"
     pcm_to_wav(pcm, out, rate=rate)
     secs = len(pcm) / 2 / rate

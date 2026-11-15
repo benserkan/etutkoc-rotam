@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
+import os
 import subprocess
 import tempfile
 import wave
@@ -24,12 +26,54 @@ import httpx
 from app.services.ai_book_template import AIServiceUnavailable
 from app.services.system_secrets import get_gemini_paid_key
 
-TTS_MODEL = "gemini-2.5-flash-preview-tts"
-TTS_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{TTS_MODEL}:generateContent"
+logger = logging.getLogger(__name__)
+
+# Model sırası (2026-11-15): Google 2.5 "preview-tts" modellerini en erken
+# 18 Aralık 2026'da kapatıyor; yerine 3.8 Flash TTS öneriliyor. İlk model yanıt
+# vermezse (kapandı / erişim yok / geçici hata) sıradakine düşülür — tek bir
+# modelin kapanması Rota'nın sesini susturmaz. `GEMINI_TTS_MODELS` (virgüllü)
+# ile dağıtım yapmadan değiştirilebilir.
+DEFAULT_TTS_MODELS = (
+    "gemini-3.8-flash-tts",
+    "gemini-3.8-flash-lite-tts",
+    "gemini-2.5-flash-preview-tts",
+)
+TTS_MODEL = DEFAULT_TTS_MODELS[0]
 ROTA_VOICE = "Kore"
 
 # Tek yorum seslendirmesi için üst sınır — TTS modeli çok uzun metinde kesebilir.
 MAX_SPEECH_CHARS = 4500
+
+
+def tts_models() -> list[str]:
+    raw = os.environ.get("GEMINI_TTS_MODELS", "")
+    models = [m.strip() for m in raw.split(",") if m.strip()]
+    return models or list(DEFAULT_TTS_MODELS)
+
+
+def _tts_url(model: str) -> str:
+    return f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+
+
+def decode_audio_part(part: dict) -> tuple[bytes, int]:
+    """generateContent `inlineData` parçası → (ham 16-bit mono PCM, örnekleme hızı).
+
+    2.5 modelleri başlıksız PCM döndürür ("audio/L16;codec=pcm;rate=24000");
+    3.8 modelleri RIFF başlıklı WAV döndürür ("audio/wav"). İkisi de buradan
+    aynı biçimde çıkar — WAV başlığı PCM sanılıp sese karışmaz.
+    """
+    raw = base64.b64decode(part["data"])
+    mime = part.get("mimeType", "") or ""
+    if raw[:4] == b"RIFF":
+        with wave.open(io.BytesIO(raw), "rb") as w:
+            if w.getsampwidth() != 2 or w.getnchannels() != 1:
+                raise ValueError(
+                    f"beklenmeyen WAV biçimi: {w.getnchannels()} kanal, "
+                    f"{w.getsampwidth() * 8} bit"
+                )
+            return w.readframes(w.getnframes()), w.getframerate()
+    rate = int(mime.split("rate=")[1].split(";")[0]) if "rate=" in mime else 24000
+    return raw, rate
 
 
 def _tts_pcm(text: str, voice: str, timeout: float) -> tuple[bytes, int]:
@@ -47,25 +91,29 @@ def _tts_pcm(text: str, voice: str, timeout: float) -> tuple[bytes, int]:
         },
     }
     last = ""
-    for _ in range(2):  # geçici 429/503 için tek kısa tekrar
-        try:
-            with httpx.Client(timeout=timeout) as c:
-                r = c.post(
-                    TTS_URL, json=body,
-                    headers={"x-goog-api-key": key, "content-type": "application/json"},
-                )
-        except httpx.HTTPError as e:  # ağ hatası
-            last = str(e)
-            continue
-        if r.status_code == 200:
+    for model in tts_models():
+        for _ in range(2):  # geçici 429/503 için tek kısa tekrar
             try:
-                part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
-                mime = part.get("mimeType", "")
-                rate = int(mime.split("rate=")[1].split(";")[0]) if "rate=" in mime else 24000
-                return base64.b64decode(part["data"]), rate
-            except (KeyError, IndexError, ValueError) as e:
-                raise AIServiceUnavailable(f"TTS yanıtı çözülemedi: {e}") from e
-        last = f"{r.status_code}: {r.text[:200]}"
+                with httpx.Client(timeout=timeout) as c:
+                    r = c.post(
+                        _tts_url(model), json=body,
+                        headers={"x-goog-api-key": key, "content-type": "application/json"},
+                    )
+            except httpx.HTTPError as e:  # ağ hatası
+                last = f"{model}: {e}"
+                continue
+            if r.status_code == 200:
+                try:
+                    part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
+                    return decode_audio_part(part)
+                except (KeyError, IndexError, ValueError, wave.Error) as e:
+                    last = f"{model}: yanıt çözülemedi ({e})"
+                    break  # bu modelin yanıtı bozuk → sıradaki model
+            last = f"{model}: {r.status_code}: {r.text[:200]}"
+            if r.status_code in (400, 403, 404):
+                break  # model kapalı / erişim yok → tekrar deneme, sıradakine geç
+        if last:
+            logger.warning("TTS modeli yanıt vermedi, sıradakine geçiliyor · %s", last)
     raise AIServiceUnavailable(f"TTS başarısız: {last}")
 
 

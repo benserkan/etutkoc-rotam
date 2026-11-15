@@ -32,7 +32,7 @@ import httpx
 from app.services.system_secrets import get_gemini_paid_key, get_gemini_free_keys
 
 BASE = "http://127.0.0.1:8081/demos?play="
-MODEL = "gemini-2.5-flash-preview-tts"
+MODEL = "gemini-3.8-flash-tts"  # 2.5 preview-tts en erken 18.12.2026'da kapanıyor
 URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
 OUT_ROOT = Path(__file__).resolve().parent.parent / "app" / "static" / "demos" / "audio"
 # Seslendirme metni anlık görüntüsü — dev sunucu (:8081) kapalıyken üretim için yedek.
@@ -165,9 +165,9 @@ def tts(
                 continue
             if r.status_code == 200:
                 part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
-                mime = part.get("mimeType", "")
-                rate = int(mime.split("rate=")[1].split(";")[0]) if "rate=" in mime else 24000
-                return base64.b64decode(part["data"]), rate
+                # 3.8 modelleri WAV, 2.5 modelleri başlıksız PCM döndürür.
+                from app.services.tts import decode_audio_part
+                return decode_audio_part(part)
             full = r.text
             qids, retry = [], None
             try:

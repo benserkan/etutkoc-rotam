@@ -5,7 +5,7 @@
 <article class="max-w-3xl mx-auto prose prose-slate">
   <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Veri Koruma</p>
   <h1 class="text-3xl font-bold text-slate-900 mt-2 mb-2">KVKK Aydınlatma Metni</h1>
-  <p class="text-sm text-slate-500 mb-8">Son güncelleme: 9 Mayıs 2026</p>
+  <p class="text-sm text-slate-500 mb-8">Son güncelleme: 15 Kasım 2026</p>
 
   <section class="bg-white border border-slate-200 rounded-xl p-6 mb-6">
     <h2 class="text-lg font-semibold text-slate-900 mt-0">Veri Sorumlusu</h2>
@@ -31,6 +31,8 @@
       <li><b>Eğitim bilgileri:</b> Sınıf seviyesi, hedef sınav (LGS/YKS), alan tercihi, çalışma programı.</li>
       <li><b>İşlem güvenliği bilgileri:</b> Giriş kayıtları, IP adresi, cihaz bilgisi, etkinlik audit logları.</li>
       <li><b>Performans bilgileri:</b> Görev tamamlama oranı, çalışma istatistikleri.</li>
+      <li><b>Deneme ve değerlendirme bilgileri:</b> Deneme sonuçları ve yüklenen sonuç belgeleri, yanlış soru fotoğrafları, anket yanıtları.</li>
+      <li><b>Koçluk kayıtları:</b> Koçun tuttuğu görüşme notları, öğrencinin günlük notları ve talepleri.</li>
     </ul>
   </section>
 
@@ -62,11 +64,39 @@
       <li><b>Bulut hizmet sağlayıcıları:</b> Sunucu barındırma (yurt içi/AB ülkeleri).</li>
       <li><b>E-posta sağlayıcısı:</b> SMTP ile veli/öğretmen bildirimi.</li>
       <li><b>WhatsApp Business API (Meta):</b> Veli WhatsApp bildirimi (yalnız onay verilmişse).</li>
-      <li><b>OpenAI / Anthropic:</b> Yapay zeka ile çalışma planı önerisi (anonimleştirilmiş veri).</li>
+      <li><b>Ödeme kuruluşu (iyzico):</b> Kartla ödemede kart bilgileri doğrudan iyzico'ya iletilir; sistemimizde saklanmaz.</li>
+      <li><b>Google (Gemini yapay zekâ hizmeti):</b> Yapay zekâ özellikleri kullanıldığında ilgili içerik işlenmek üzere Google'a gönderilir. Ayrıntısı aşağıdaki “Yapay Zekâ Özellikleri” bölümündedir.</li>
     </ul>
     <p class="text-xs text-slate-500 mt-3">
       Yurt dışı aktarım sadece yeterlilik kararı bulunan ülkelere veya KVKK madde 9'a uygun
       açık rıza/sözleşmeye dayalı yapılır.
+    </p>
+  </section>
+
+  <section id="yapay-zeka" class="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+    <h2 class="text-lg font-semibold text-slate-900 mt-0">Yapay Zekâ Özellikleri</h2>
+    <p class="text-sm text-slate-700 leading-relaxed">
+      Sistemdeki yapay zekâ özellikleri Google'ın Gemini hizmetiyle çalışır. Bu hizmetin
+      sunucuları yurt dışındadır. Aşağıdaki içerikler <b>anonimleştirilmeden</b>, yalnızca
+      ilgili özellik kullanıldığı anda gönderilir:
+    </p>
+    <ul class="text-sm text-slate-700 leading-relaxed space-y-2 mt-3">
+      <li><b>Deneme sonuç belgesi (karne) okuma:</b> Yüklenen belgenin tamamı. Belgede öğrencinin adı, okulu, sınıfı ve sınav sonuçları yer alabilir.</li>
+      <li><b>Koçluk görüşmesi notları:</b> Koçun yazdığı ya da fotoğrafını çektiği görüşme notu ve sesli dikte kaydı; görüşme hazırlığı için öğrencinin çalışma ve deneme özeti.</li>
+      <li><b>Yanlış soru fotoğrafı:</b> Konu etiketi ve yaklaşım ipucu için sorunun fotoğrafı.</li>
+      <li><b>Veliye durum anlatımı ve soru-cevap:</b> Öğrencinin adı, haftalık program ve deneme özeti, velinin yazdığı ya da sesle sorduğu soru. Sesli anlatım için hazırlanan metin de seslendirilmek üzere gönderilir.</li>
+      <li><b>Anket değerlendirmesi:</b> Öğrencinin doldurduğu tanıma anketlerinin sonuçları ve akademik özeti.</li>
+    </ul>
+    <p class="text-sm text-slate-700 leading-relaxed mt-3">
+      Bu özellikler yalnızca öğrencinin koçu yapay zekâ kullanımını onayladıysa çalışır.
+      Koç onayını dilediği zaman geri alabilir; ayrıca her öğrenci ve velisi için yapay zekâ
+      özelliklerini ayrı ayrı kapatabilir. Kuruma bağlı koçlarda kurum yöneticisi de
+      kapatabilir. Yapay zekâ kapalıyken sistemin diğer bölümleri çalışmaya devam eder.
+    </p>
+    <p class="text-sm text-slate-700 leading-relaxed mt-3">
+      Kişisel veri içeren işlemler Google'ın ücretli hizmeti üzerinden yapılır. Sesli dikte
+      kayıtları ve velinin sesli soruları yazıya çevrildikten sonra sistemimizde saklanmaz.
+      Yapay zekânın ürettiği sonuçlar öneri niteliğindedir ve koç tarafından değerlendirilir.
     </p>
   </section>
 
